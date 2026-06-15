@@ -33,9 +33,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 #country-info{display:none;flex-direction:column;flex:1;overflow:hidden}
 #country-header{padding:18px 22px 12px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
 .c-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.02em}
-.c-sub{font-size:11.5px;color:#333;margin-top:3px;font-weight:400}
+.c-sub{font-size:11.5px;color:#777;margin-top:3px;font-weight:400}
 #tab-nav{display:flex;padding:0 22px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
-.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#333;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#555;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:-1px}
 .tab-btn:hover{color:#666}
 .tab-btn.active{color:#fff;border-bottom-color:#fff}
 #tab-panels{flex:1;overflow-y:auto;padding:16px 22px}
@@ -45,13 +45,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .panel{display:none}
 .panel.active{display:block}
 .metric{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #0a0a0a;font-size:13px}
-.m-lbl{color:#333;font-weight:400}
+.m-lbl{color:#ccc;font-weight:400}
 .m-val{color:#fff;font-weight:700}
-.sec-title{font-size:10px;color:#333;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-weight:700}
+.sec-title{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-weight:700}
 /* Trade items — bar chart */
 .ti-row{margin:7px 0}
 .ti-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-.ti-name{color:#777;font-weight:400}
+.ti-name{color:#bbb;font-weight:400}
 .ti-val{color:#fff;font-weight:700}
 .ti-bg{background:rgba(255,255,255,0.04);border-radius:3px;height:6px;overflow:hidden}
 .ti-fill{height:100%;border-radius:3px;transition:width .4s}
@@ -60,7 +60,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* Agriculture */
 .agri-row{margin:8px 0}
 .agri-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-.agri-name{color:#777;font-weight:400}
+.agri-name{color:#bbb;font-weight:400}
 .agri-val{color:#fff;font-weight:700}
 .agri-bg{background:rgba(255,255,255,0.04);border-radius:3px;height:6px;overflow:hidden}
 .agri-fill{background:linear-gradient(90deg,#0a3214,#2acc5a);height:100%;border-radius:3px}
@@ -75,9 +75,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .trade-btn{background:rgba(255,255,255,0.04);border:1px solid #1a1a1a;border-radius:6px;color:#666;padding:8px 0;cursor:pointer;font-size:13px;font-weight:700;width:100%;transition:all .15s}
 .trade-btn:hover{background:rgba(255,255,255,0.07);color:#fff}
 .trade-card{background:#060606;border-radius:9px;padding:12px;flex:1;border:1px solid #111}
-.trade-card-lbl{font-size:11px;color:#333;margin-bottom:4px;font-weight:400}
+.trade-card-lbl{font-size:11px;color:#888;margin-bottom:4px;font-weight:400}
 .trade-card-gdp{font-size:14px;color:#fff;font-weight:700}
-.trade-card-gpc{font-size:11.5px;color:#333;margin-top:2px;font-weight:400}
+.trade-card-gpc{font-size:11.5px;color:#666;margin-top:2px;font-weight:400}
 </style>
 </head>
 <body>
@@ -140,157 +140,196 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 <script>
 // exp / imp: [{nm, val}] — val in billion USD (2023 estimates)
 const CD = {
-  '840':{nm:'美國',pop:335,gdpC:80035,gdp:26.9,def:103.5,cpi:314.2,ccpi:320.1,
+  '840':{nm:'美國',pop:335,gdpC:80035,gdp:26.9,def:103.5,cpi:314.2,ccpi:320.1,cpiYoy:3.4,
     exp:[{nm:'機械設備',val:218},{nm:'飛機',val:130},{nm:'石油產品',val:110},{nm:'醫療器材',val:90},{nm:'汽車',val:66}],
     imp:[{nm:'石油',val:190},{nm:'汽車',val:178},{nm:'電子產品',val:165},{nm:'機械',val:140},{nm:'醫藥品',val:80}],
     age:[18.3,65.0,16.7],
     agri:[{nm:'大豆',val:26.8},{nm:'玉米',val:18.5},{nm:'牛肉',val:10.2},{nm:'小麥',val:9.8},{nm:'棉花',val:8.3},{nm:'豬肉',val:7.4}],
     tr:{'156':-382,'124':41,'276':-71,'392':68,'484':-152,'704':-104}},
-  '156':{nm:'中國',pop:1412,gdpC:12720,gdp:17.9,def:100.2,cpi:100.3,ccpi:100.6,
+  '156':{nm:'中國',pop:1412,gdpC:12720,gdp:17.9,def:100.2,cpi:100.3,ccpi:100.6,cpiYoy:0.2,
     exp:[{nm:'電子產品',val:580},{nm:'機械',val:420},{nm:'服裝',val:150},{nm:'鋼鐵',val:110},{nm:'汽車',val:85}],
     imp:[{nm:'石油',val:360},{nm:'半導體',val:280},{nm:'鐵礦砂',val:120},{nm:'汽車',val:70},{nm:'大豆',val:50}],
     age:[17.5,69.3,13.2],
     agri:[{nm:'水產品',val:15.6},{nm:'蔬菜',val:12.4},{nm:'豬肉',val:4.2},{nm:'茶葉',val:3.8},{nm:'大蒜',val:2.5},{nm:'蘋果',val:2.1}],
     tr:{'840':382,'276':18,'392':25,'410':28,'356':-87,'036':76}},
-  '276':{nm:'德國',pop:84,gdpC:48756,gdp:4.1,def:104.5,cpi:127.5,ccpi:131.2,
+  '276':{nm:'德國',pop:84,gdpC:48756,gdp:4.1,def:104.5,cpi:127.5,ccpi:131.2,cpiYoy:5.9,
     exp:[{nm:'汽車',val:280},{nm:'機械',val:250},{nm:'化學品',val:130},{nm:'醫藥品',val:100},{nm:'電子設備',val:80}],
     imp:[{nm:'機械',val:100},{nm:'電子產品',val:90},{nm:'汽車',val:80},{nm:'石油',val:80},{nm:'天然氣',val:70}],
     age:[14.0,64.0,22.0],
     agri:[{nm:'豬肉',val:5.8},{nm:'小麥',val:4.1},{nm:'牛奶',val:3.6},{nm:'啤酒',val:2.4},{nm:'甜菜',val:2.2},{nm:'馬鈴薯',val:1.8}],
     tr:{'156':-18,'840':71,'250':58,'380':29,'616':28}},
-  '392':{nm:'日本',pop:124,gdpC:33834,gdp:4.2,def:102.0,cpi:106.4,ccpi:104.0,
+  '392':{nm:'日本',pop:124,gdpC:33834,gdp:4.2,def:102.0,cpi:106.4,ccpi:104.0,cpiYoy:3.2,
     exp:[{nm:'汽車',val:140},{nm:'機械',val:80},{nm:'電子零件',val:70},{nm:'化學品',val:40},{nm:'鋼鐵',val:35}],
     imp:[{nm:'石油',val:100},{nm:'液化天然氣',val:50},{nm:'半導體',val:40},{nm:'食品',val:35},{nm:'煤炭',val:30}],
     age:[11.8,59.5,28.7],
     agri:[{nm:'水產品',val:4.2},{nm:'蔬菜',val:1.8},{nm:'清酒',val:1.4},{nm:'茶葉',val:0.9},{nm:'牛肉',val:0.7},{nm:'米',val:0.5}],
     tr:{'156':-25,'840':-68,'276':18,'410':15}},
-  '356':{nm:'印度',pop:1428,gdpC:2389,gdp:3.4,def:105.5,cpi:179.2,ccpi:172.5,
+  '356':{nm:'印度',pop:1428,gdpC:2389,gdp:3.4,def:105.5,cpi:179.2,ccpi:172.5,cpiYoy:5.4,
     exp:[{nm:'石油產品',val:80},{nm:'珠寶',val:45},{nm:'醫藥品',val:25},{nm:'紡織品',val:18},{nm:'機械',val:12}],
     imp:[{nm:'石油',val:180},{nm:'電子產品',val:70},{nm:'金',val:45},{nm:'機械',val:35},{nm:'煤炭',val:30}],
     age:[25.0,67.0,8.0],
     agri:[{nm:'稻米',val:8.2},{nm:'香料',val:4.5},{nm:'小麥',val:3.1},{nm:'棉花',val:2.8},{nm:'糖',val:2.2},{nm:'茶葉',val:1.9}],
     tr:{'840':-31,'156':87,'784':-8,'276':-12}},
-  '826':{nm:'英國',pop:67,gdpC:46371,gdp:3.1,def:105.8,cpi:131.6,ccpi:134.2,
+  '826':{nm:'英國',pop:67,gdpC:46371,gdp:3.1,def:105.8,cpi:131.6,ccpi:134.2,cpiYoy:7.3,
     exp:[{nm:'機械',val:100},{nm:'金',val:80},{nm:'醫藥品',val:75},{nm:'汽車',val:45},{nm:'石油',val:40}],
     imp:[{nm:'機械',val:110},{nm:'汽車',val:80},{nm:'石油',val:70},{nm:'醫藥品',val:60},{nm:'食品',val:50}],
     age:[17.8,63.8,18.4],
     agri:[{nm:'威士忌',val:6.2},{nm:'小麥',val:3.2},{nm:'乳製品',val:2.4},{nm:'大麥',val:1.8},{nm:'牛肉',val:1.6},{nm:'羊肉',val:1.2}],
     tr:{'840':-1,'276':-59,'250':8,'156':8}},
-  '250':{nm:'法國',pop:68,gdpC:43659,gdp:3.0,def:105.2,cpi:120.8,ccpi:122.5,
+  '250':{nm:'法國',pop:68,gdpC:43659,gdp:3.0,def:105.2,cpi:120.8,ccpi:122.5,cpiYoy:5.7,
     exp:[{nm:'飛機',val:70},{nm:'醫藥品',val:60},{nm:'汽車',val:50},{nm:'農產品',val:45},{nm:'化妝品',val:40}],
     imp:[{nm:'機械',val:70},{nm:'石油',val:60},{nm:'汽車',val:55},{nm:'電子產品',val:45},{nm:'化學品',val:40}],
     age:[18.0,62.0,20.0],
     agri:[{nm:'葡萄酒',val:12.8},{nm:'農產加工品',val:8.5},{nm:'乳製品',val:7.2},{nm:'小麥',val:5.4},{nm:'牛肉',val:3.8},{nm:'糖',val:2.6}],
     tr:{'276':-58,'840':2,'156':36,'826':-8}},
-  '380':{nm:'義大利',pop:59,gdpC:35711,gdp:2.1,def:104.1,cpi:121.4,ccpi:122.8,
+  '380':{nm:'義大利',pop:59,gdpC:35711,gdp:2.1,def:104.1,cpi:121.4,ccpi:122.8,cpiYoy:5.7,
     exp:[{nm:'機械',val:120},{nm:'汽車',val:40},{nm:'醫藥品',val:38},{nm:'時裝',val:35},{nm:'食品',val:32}],
     imp:[{nm:'石油',val:60},{nm:'天然氣',val:55},{nm:'機械',val:50},{nm:'電子產品',val:40},{nm:'汽車',val:35}],
     age:[12.8,63.5,23.7],
     agri:[{nm:'葡萄酒',val:7.5},{nm:'乳酪',val:4.5},{nm:'水果',val:3.4},{nm:'橄欖油',val:3.2},{nm:'番茄',val:2.8},{nm:'義大利麵',val:2.1}],
     tr:{'276':-29,'840':44,'156':20}},
-  '124':{nm:'加拿大',pop:40,gdpC:53247,gdp:2.1,def:106.0,cpi:157.8,ccpi:162.3,
+  '124':{nm:'加拿大',pop:40,gdpC:53247,gdp:2.1,def:106.0,cpi:157.8,ccpi:162.3,cpiYoy:3.9,
     exp:[{nm:'石油',val:110},{nm:'汽車',val:60},{nm:'貴金屬',val:55},{nm:'機械',val:35},{nm:'農產品',val:30}],
     imp:[{nm:'汽車',val:60},{nm:'機械',val:55},{nm:'電子產品',val:50},{nm:'石油',val:40},{nm:'醫藥品',val:25}],
     age:[16.3,66.2,17.5],
     agri:[{nm:'油菜籽',val:11.2},{nm:'小麥',val:8.5},{nm:'牛肉',val:4.8},{nm:'豬肉',val:3.2},{nm:'龍蝦',val:2.8},{nm:'大麥',val:2.4}],
     tr:{'840':-41,'156':14,'276':5,'392':2}},
-  '076':{nm:'巴西',pop:215,gdpC:10295,gdp:2.1,def:108.5,cpi:168.4,ccpi:172.1,
+  '076':{nm:'巴西',pop:215,gdpC:10295,gdp:2.1,def:108.5,cpi:168.4,ccpi:172.1,cpiYoy:4.6,
     exp:[{nm:'鐵礦砂',val:40},{nm:'大豆',val:30},{nm:'石油',val:30},{nm:'牛肉',val:12},{nm:'糖',val:8}],
     imp:[{nm:'機械',val:25},{nm:'石油',val:25},{nm:'電子產品',val:18},{nm:'汽車',val:15},{nm:'化學品',val:12}],
     age:[21.5,68.5,10.0],
     agri:[{nm:'大豆',val:48.2},{nm:'牛肉',val:12.8},{nm:'糖',val:9.5},{nm:'雞肉',val:8.9},{nm:'咖啡',val:8.4},{nm:'玉米',val:7.2}],
     tr:{'156':-36,'840':4,'276':-2}},
-  '643':{nm:'俄羅斯',pop:144,gdpC:13073,gdp:1.9,def:119.0,cpi:162.5,ccpi:168.4,
+  '643':{nm:'俄羅斯',pop:144,gdpC:13073,gdp:1.9,def:119.0,cpi:162.5,ccpi:168.4,cpiYoy:7.4,
     exp:[{nm:'石油',val:160},{nm:'天然氣',val:60},{nm:'鋼鐵',val:25},{nm:'化學品',val:15},{nm:'小麥',val:10}],
     imp:[{nm:'機械',val:30},{nm:'電子產品',val:20},{nm:'汽車',val:15},{nm:'醫藥品',val:12},{nm:'食品',val:10}],
     age:[17.5,65.8,16.7],
     agri:[{nm:'小麥',val:14.8},{nm:'水產品',val:6.2},{nm:'葵花籽',val:5.6},{nm:'大麥',val:4.2},{nm:'玉米',val:3.8},{nm:'豬肉',val:2.4}],
     tr:{'156':-18,'276':-8,'356':-5}},
-  '410':{nm:'南韓',pop:52,gdpC:33393,gdp:1.7,def:105.2,cpi:117.8,ccpi:119.5,
+  '410':{nm:'南韓',pop:52,gdpC:33393,gdp:1.7,def:105.2,cpi:117.8,ccpi:119.5,cpiYoy:3.6,
     exp:[{nm:'半導體',val:130},{nm:'汽車',val:70},{nm:'石化產品',val:55},{nm:'電子產品',val:30},{nm:'船舶',val:22}],
     imp:[{nm:'石油',val:100},{nm:'半導體',val:50},{nm:'液化天然氣',val:35},{nm:'機械',val:25},{nm:'煤炭',val:25}],
     age:[11.5,71.2,17.3],
     agri:[{nm:'水產品',val:2.8},{nm:'飲料',val:1.8},{nm:'泡菜加工',val:1.2},{nm:'蔬菜',val:1.0},{nm:'乳製品',val:0.8},{nm:'米',val:0.5}],
     tr:{'156':28,'840':-44,'276':15,'392':-15}},
-  '036':{nm:'澳洲',pop:26,gdpC:65099,gdp:1.7,def:107.8,cpi:128.4,ccpi:132.1,
+  '036':{nm:'澳洲',pop:26,gdpC:65099,gdp:1.7,def:107.8,cpi:128.4,ccpi:132.1,cpiYoy:5.6,
     exp:[{nm:'鐵礦砂',val:130},{nm:'煤炭',val:60},{nm:'液化天然氣',val:55},{nm:'金',val:20},{nm:'牛肉',val:10}],
     imp:[{nm:'機械',val:35},{nm:'石油',val:30},{nm:'汽車',val:22},{nm:'電子產品',val:20},{nm:'醫藥品',val:12}],
     age:[18.7,64.8,16.5],
     agri:[{nm:'牛肉',val:9.8},{nm:'小麥',val:8.4},{nm:'羊肉',val:4.5},{nm:'大麥',val:3.2},{nm:'羊毛',val:2.8},{nm:'棉花',val:2.4}],
     tr:{'156':-76,'392':6,'840':-15,'356':8}},
-  '724':{nm:'西班牙',pop:47,gdpC:30284,gdp:1.4,def:104.8,cpi:119.4,ccpi:121.8,
+  '724':{nm:'西班牙',pop:47,gdpC:30284,gdp:1.4,def:104.8,cpi:119.4,ccpi:121.8,cpiYoy:3.5,
     exp:[{nm:'汽車',val:40},{nm:'機械',val:30},{nm:'石油產品',val:25},{nm:'食品',val:22},{nm:'醫藥品',val:18}],
     imp:[{nm:'石油',val:40},{nm:'汽車',val:30},{nm:'天然氣',val:25},{nm:'機械',val:25},{nm:'電子產品',val:18}],
     age:[14.2,65.2,20.6],
     agri:[{nm:'豬肉',val:6.8},{nm:'蔬菜',val:5.4},{nm:'葡萄酒',val:4.2},{nm:'橄欖油',val:3.8},{nm:'柑橘',val:2.5},{nm:'番茄',val:2.1}],
     tr:{'276':-28,'250':20,'380':-15}},
-  '484':{nm:'墨西哥',pop:127,gdpC:10814,gdp:1.3,def:107.2,cpi:146.9,ccpi:152.4,
+  '484':{nm:'墨西哥',pop:127,gdpC:10814,gdp:1.3,def:107.2,cpi:146.9,ccpi:152.4,cpiYoy:5.5,
     exp:[{nm:'汽車',val:90},{nm:'電子產品',val:80},{nm:'石油',val:40},{nm:'醫療器材',val:25},{nm:'農產品',val:15}],
     imp:[{nm:'電子產品',val:100},{nm:'機械',val:80},{nm:'石油',val:35},{nm:'汽車',val:30},{nm:'化學品',val:20}],
     age:[26.3,65.3,8.4],
     agri:[{nm:'啤酒',val:5.4},{nm:'酪梨',val:3.8},{nm:'番茄',val:3.2},{nm:'漿果',val:2.8},{nm:'辣椒',val:1.6},{nm:'玉米',val:1.2}],
     tr:{'840':-152,'156':10,'124':4}},
-  '360':{nm:'印尼',pop:278,gdpC:4941,gdp:1.3,def:106.5,cpi:118.5,ccpi:121.5,
+  '360':{nm:'印尼',pop:278,gdpC:4941,gdp:1.3,def:106.5,cpi:118.5,ccpi:121.5,cpiYoy:2.8,
     exp:[{nm:'煤炭',val:30},{nm:'棕櫚油',val:25},{nm:'液化天然氣',val:15},{nm:'鎳',val:12},{nm:'電子產品',val:10}],
     imp:[{nm:'石油',val:18},{nm:'機械',val:16},{nm:'電子產品',val:14},{nm:'化學品',val:10},{nm:'鋼鐵',val:8}],
     age:[25.5,67.5,7.0],
     agri:[{nm:'棕櫚油',val:28.5},{nm:'水產品',val:5.2},{nm:'天然橡膠',val:4.2},{nm:'香料',val:2.4},{nm:'咖啡',val:1.8},{nm:'可可',val:1.5}],
     tr:{'156':-11,'840':11,'410':8}},
-  '682':{nm:'沙烏地阿拉伯',pop:36,gdpC:28891,gdp:1.1,def:102.5,cpi:103.5,ccpi:105.2,
+  '682':{nm:'沙烏地阿拉伯',pop:36,gdpC:28891,gdp:1.1,def:102.5,cpi:103.5,ccpi:105.2,cpiYoy:2.3,
     exp:[{nm:'石油',val:220},{nm:'石化產品',val:40},{nm:'化學品',val:20},{nm:'塑料',val:12},{nm:'金屬',val:8}],
     imp:[{nm:'機械',val:35},{nm:'汽車',val:25},{nm:'電子產品',val:20},{nm:'食品',val:18},{nm:'醫藥品',val:12}],
     age:[28.5,67.5,4.0],
     agri:[{nm:'椰棗',val:1.2},{nm:'乳製品',val:0.8},{nm:'水產品',val:0.6},{nm:'家禽',val:0.5},{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3}],
     tr:{'156':-62,'840':-15,'356':-18,'392':-12}},
-  '528':{nm:'荷蘭',pop:17.9,gdpC:57768,gdp:1.0,def:106.2,cpi:140.2,ccpi:143.5,
+  '528':{nm:'荷蘭',pop:17.9,gdpC:57768,gdp:1.0,def:106.2,cpi:140.2,ccpi:143.5,cpiYoy:3.7,
     exp:[{nm:'機械',val:80},{nm:'石油產品',val:70},{nm:'化學品',val:65},{nm:'食品',val:60},{nm:'電子產品',val:50}],
     imp:[{nm:'石油',val:60},{nm:'機械',val:60},{nm:'電子產品',val:55},{nm:'化學品',val:50},{nm:'金屬',val:25}],
     age:[15.8,64.5,19.7],
     agri:[{nm:'花卉',val:10.2},{nm:'蔬菜',val:8.5},{nm:'乳製品',val:7.8},{nm:'豬肉',val:4.2},{nm:'種子',val:3.5},{nm:'啤酒',val:2.8}],
     tr:{'276':25,'826':18,'250':32}},
-  '792':{nm:'土耳其',pop:85,gdpC:10674,gdp:0.9,def:132.5,cpi:189.5,ccpi:198.4,
+  '792':{nm:'土耳其',pop:85,gdpC:10674,gdp:0.9,def:132.5,cpi:189.5,ccpi:198.4,cpiYoy:65.2,
     exp:[{nm:'汽車',val:22},{nm:'機械',val:20},{nm:'紡織品',val:18},{nm:'化學品',val:12},{nm:'農產品',val:10}],
     imp:[{nm:'石油',val:40},{nm:'天然氣',val:30},{nm:'金',val:25},{nm:'機械',val:20},{nm:'電子產品',val:18}],
     age:[23.5,68.0,8.5],
     agri:[{nm:'蔬菜',val:4.5},{nm:'乾果',val:3.2},{nm:'榛果',val:2.8},{nm:'棉花',val:1.8},{nm:'橄欖油',val:1.6},{nm:'菸草',val:1.4}],
     tr:{'276':-14,'840':-6}},
-  '756':{nm:'瑞士',pop:8.7,gdpC:93259,gdp:0.8,def:103.2,cpi:108.4,ccpi:109.8,
+  '756':{nm:'瑞士',pop:8.7,gdpC:93259,gdp:0.8,def:103.2,cpi:108.4,ccpi:109.8,cpiYoy:2.2,
     exp:[{nm:'醫藥品',val:120},{nm:'醫療設備',val:30},{nm:'鐘錶珠寶',val:25},{nm:'化學品',val:20},{nm:'機械',val:15}],
     imp:[{nm:'金',val:60},{nm:'機械',val:35},{nm:'電子產品',val:28},{nm:'汽車',val:22},{nm:'醫藥品',val:20}],
     age:[14.8,66.2,19.0],
     agri:[{nm:'咖啡加工',val:3.2},{nm:'巧克力',val:1.8},{nm:'乳酪',val:2.4},{nm:'肉類',val:0.8},{nm:'葡萄酒',val:0.6},{nm:'穀物',val:0.5}],
     tr:{'276':45,'840':15,'250':30}},
-  '616':{nm:'波蘭',pop:37.7,gdpC:21002,gdp:0.8,def:107.5,cpi:118.5,ccpi:125.4,
+  '616':{nm:'波蘭',pop:37.7,gdpC:21002,gdp:0.8,def:107.5,cpi:118.5,ccpi:125.4,cpiYoy:11.4,
     exp:[{nm:'機械',val:55},{nm:'汽車',val:30},{nm:'電子產品',val:28},{nm:'食品',val:15},{nm:'家具',val:12}],
     imp:[{nm:'機械',val:40},{nm:'石油',val:25},{nm:'電子產品',val:22},{nm:'汽車',val:18},{nm:'化學品',val:15}],
     age:[15.5,67.5,17.0],
     agri:[{nm:'家禽',val:4.5},{nm:'穀物',val:3.8},{nm:'乳製品',val:3.2},{nm:'牛肉',val:2.8},{nm:'蔬菜',val:2.4},{nm:'蘋果',val:1.6}],
     tr:{'276':28,'826':12,'250':8}},
-  '056':{nm:'比利時',pop:11.7,gdpC:49893,gdp:0.6,def:108.5,cpi:132.4,ccpi:135.8,
+  '056':{nm:'比利時',pop:11.7,gdpC:49893,gdp:0.6,def:108.5,cpi:132.4,ccpi:135.8,cpiYoy:4.0,
     exp:[{nm:'化學品',val:80},{nm:'機械',val:45},{nm:'汽車',val:30},{nm:'醫藥品',val:28},{nm:'食品',val:22}],
     imp:[{nm:'機械',val:40},{nm:'石油',val:35},{nm:'化學品',val:30},{nm:'汽車',val:25},{nm:'電子產品',val:20}],
     age:[16.8,63.2,20.0],
     agri:[{nm:'巧克力',val:3.8},{nm:'乳製品',val:3.2},{nm:'豬肉',val:2.8},{nm:'啤酒',val:2.4},{nm:'蔬菜',val:2.1},{nm:'糖',val:1.8}],
     tr:{'276':18,'250':25,'528':15}},
-  '032':{nm:'阿根廷',pop:46,gdpC:13720,gdp:0.6,def:355.0,cpi:425.4,ccpi:438.2,
+  '032':{nm:'阿根廷',pop:46,gdpC:13720,gdp:0.6,def:355.0,cpi:425.4,ccpi:438.2,cpiYoy:211.4,
     exp:[{nm:'大豆/油',val:15},{nm:'玉米',val:8},{nm:'牛肉',val:5},{nm:'小麥',val:4},{nm:'石油',val:4}],
     imp:[{nm:'機械',val:8},{nm:'石油',val:6},{nm:'化學品',val:5},{nm:'電子產品',val:4},{nm:'汽車',val:3}],
     age:[24.5,64.5,11.0],
     agri:[{nm:'大豆',val:12.8},{nm:'玉米',val:8.4},{nm:'牛肉',val:5.8},{nm:'小麥',val:4.2},{nm:'葵花籽油',val:3.2},{nm:'葡萄酒',val:1.8}],
     tr:{'156':-8,'276':-4,'076':-6}},
-  '752':{nm:'瑞典',pop:10.5,gdpC:55697,gdp:0.6,def:109.8,cpi:128.4,ccpi:132.5,
+  '752':{nm:'瑞典',pop:10.5,gdpC:55697,gdp:0.6,def:109.8,cpi:128.4,ccpi:132.5,cpiYoy:8.5,
     exp:[{nm:'機械',val:45},{nm:'汽車',val:25},{nm:'醫藥品',val:22},{nm:'電子產品',val:20},{nm:'紙漿',val:15}],
     imp:[{nm:'機械',val:22},{nm:'石油',val:18},{nm:'汽車',val:18},{nm:'電子產品',val:16},{nm:'化學品',val:12}],
     age:[17.5,62.5,20.0],
     agri:[{nm:'紙漿/木材',val:8.5},{nm:'乳製品',val:2.2},{nm:'穀物',val:1.8},{nm:'鮭魚',val:1.4},{nm:'豬肉',val:1.2},{nm:'漿果',val:0.8}],
     tr:{'276':10,'826':8,'528':5}},
-  '578':{nm:'挪威',pop:5.4,gdpC:108740,gdp:0.6,def:112.5,cpi:124.5,ccpi:128.4,
+  '578':{nm:'挪威',pop:5.4,gdpC:108740,gdp:0.6,def:112.5,cpi:124.5,ccpi:128.4,cpiYoy:5.5,
     exp:[{nm:'石油',val:90},{nm:'天然氣',val:50},{nm:'魚類',val:12},{nm:'機械',val:8},{nm:'金屬',val:6}],
     imp:[{nm:'機械',val:20},{nm:'汽車',val:12},{nm:'電子產品',val:10},{nm:'食品',val:8},{nm:'化學品',val:6}],
     age:[17.2,65.8,17.0],
     agri:[{nm:'鮭魚',val:12.8},{nm:'鱈魚',val:4.5},{nm:'鯡魚',val:3.2},{nm:'鯖魚',val:2.4},{nm:'蝦',val:1.8},{nm:'乳製品',val:1.2}],
     tr:{'276':20,'826':15,'752':8}},
 };
+
+// Bilateral trade volumes ($B, 2023 estimates) — used for flow chart proportions
+const TRV={'840-156':585,'840-124':782,'840-276':202,'840-392':215,'840-484':798,'840-826':155,'156-276':218,'156-392':312,'156-410':310,'156-356':118,'156-036':175,'276-250':168,'276-380':128,'276-616':138,'276-826':105,'392-410':88,'826-250':90,'250-380':85,'076-156':128,'076-840':98,'528-276':145,'528-250':130};
+function getBiVol(cA,cB){return TRV[`${cA}-${cB}`]||TRV[`${cB}-${cA}`]||null;}
+
+function buildFlowSVG(dA,dB,bal,biVol){
+  const W=284,BW=80,BH=68,BY=14,AZL=BW+5,AZR=W-BW-5,MX=W/2;
+  const AR1=BY+20,AR2=BY+48;
+  let eAB=null,eBA=null,wA=6,wB=6;
+  if(biVol&&bal!==null){
+    eAB=Math.round((biVol+bal)/2);eBA=Math.round((biVol-bal)/2);
+    const r=Math.max(0.05,Math.min(0.95,eAB/biVol));wA=3+r*16;wB=3+(1-r)*16;
+  }else if(bal!==null){wA=bal>0?14:4;wB=bal<0?14:4;}
+  const H=BY+BH+44;
+  const pf=d=>d.pop>=1000?(d.pop/1000).toFixed(1)+'B':d.pop+'M';
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="mB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3a78dd"/></marker>
+    <marker id="mR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#dd3a3a"/></marker>
+  </defs>
+  <rect x="0" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="#080808" stroke="#181818"/>
+  <text x="${BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="sans-serif">${dA.nm}</text>
+  <text x="${BW/2}" y="${BY+34}" text-anchor="middle" fill="#888" font-size="10" font-family="sans-serif">$${dA.gdp.toFixed(1)}T</text>
+  <text x="${BW/2}" y="${BY+50}" text-anchor="middle" fill="#555" font-size="9" font-family="sans-serif">${pf(dA)}</text>
+  <rect x="${W-BW}" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="#080808" stroke="#181818"/>
+  <text x="${W-BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="sans-serif">${dB.nm}</text>
+  <text x="${W-BW/2}" y="${BY+34}" text-anchor="middle" fill="#888" font-size="10" font-family="sans-serif">$${dB.gdp.toFixed(1)}T</text>
+  <text x="${W-BW/2}" y="${BY+50}" text-anchor="middle" fill="#555" font-size="9" font-family="sans-serif">${pf(dB)}</text>
+  <line x1="${AZL}" y1="${AR1}" x2="${AZR-2}" y2="${AR1}" stroke="#3a78dd" stroke-width="${wA.toFixed(1)}" marker-end="url(#mB)" stroke-linecap="round" opacity="0.9"/>
+  <line x1="${AZR}" y1="${AR2}" x2="${AZL+2}" y2="${AR2}" stroke="#dd3a3a" stroke-width="${wB.toFixed(1)}" marker-end="url(#mR)" stroke-linecap="round" opacity="0.9"/>
+  ${eAB!==null?`<text x="${MX}" y="${AR1-8}" text-anchor="middle" fill="#88aaff" font-size="10" font-weight="700" font-family="sans-serif">$${eAB}B →</text>`:''}
+  ${eBA!==null?`<text x="${MX}" y="${AR2+18}" text-anchor="middle" fill="#ff8888" font-size="10" font-weight="700" font-family="sans-serif">← $${eBA}B</text>`:''}
+  <rect x="${MX-60}" y="${BY+BH+8}" width="10" height="4" fill="#3a78dd" rx="1"/>
+  <text x="${MX-48}" y="${BY+BH+14}" fill="#5588ee" font-size="9" font-family="sans-serif">${dA.nm} 出口</text>
+  <rect x="${MX+20}" y="${BY+BH+8}" width="10" height="4" fill="#dd3a3a" rx="1"/>
+  <text x="${MX+32}" y="${BY+BH+14}" fill="#ee5555" font-size="9" font-family="sans-serif">${dB.nm} 出口</text>
+  ${biVol?`<text x="${MX}" y="${BY+BH+30}" text-anchor="middle" fill="#2a2a2a" font-size="8.5" font-family="sans-serif">估計雙邊貿易總量 ≈ $${biVol}B</text>`:''}
+  </svg>`;
+}
 
 const R=2;
 let scene,cam,rend,ctrl,gMesh,feat=null,selLn=null,curCode=null,curTab='overview';
@@ -465,10 +504,19 @@ function renderOverview(code){
     <div class="metric"><span class="m-lbl">GDP 平減指數</span><span class="m-val">${d.def.toFixed(1)}</span></div>
     <div class="metric"><span class="m-lbl">CPI</span><span class="m-val">${d.cpi.toFixed(1)}</span></div>
     <div class="metric"><span class="m-lbl">核心 CPI</span><span class="m-val">${d.ccpi.toFixed(1)}</span></div>
+    <div class="metric"><span class="m-lbl">CPI 年增率</span><span class="m-val" style="color:${d.cpiYoy>50?'#ee4444':d.cpiYoy>10?'#ee9922':d.cpiYoy<2?'#44cc66':'#fff'}">${d.cpiYoy}%</span></div>
     <div class="sec-title">▲ 主要出口商品（十億美元）</div>
     ${d.exp.map(x=>barRow(x,maxE,'ti-exp')).join('')}
     <div class="sec-title">▼ 主要進口商品（十億美元）</div>
-    ${d.imp.map(x=>barRow(x,maxI,'ti-imp')).join('')}`;
+    ${d.imp.map(x=>barRow(x,maxI,'ti-imp')).join('')}
+    <div class="sec-title" style="margin-top:20px;padding-top:12px;border-top:1px solid #0a0a0a">資料來源</div>
+    <div style="font-size:11px;color:#555;line-height:2.1;font-weight:400">
+      GDP / 人口：IMF World Economic Outlook 2023<br>
+      CPI / 通膨：OECD Statistics & 各國統計局<br>
+      貿易數據：UN Comtrade / WTO 2023<br>
+      農業出口：FAO / UN Comtrade 2023<br>
+      人口結構：UN Population Division 2023
+    </div>`;
 }
 
 // ===== POPULATION PYRAMID =====
@@ -549,25 +597,26 @@ function calcTrade(){
   if(cA===cB){el.innerHTML='<span style="color:#222">請選擇不同的國家</span>';return;}
   const dA=CD[cA],dB=CD[cB];
   const bal=dA.tr?.[cB]!==undefined?dA.tr[cB]:dB.tr?.[cA]!==undefined?-dB.tr[cA]:null;
+  const biVol=getBiVol(cA,cB);
   const card=d=>`<div class="trade-card"><div class="trade-card-lbl">${d.nm}</div><div class="trade-card-gdp">$${d.gdp.toFixed(1)}T</div><div class="trade-card-gpc">$${d.gdpC.toLocaleString()} / 人</div></div>`;
+  let html=`<div class="sec-title">雙邊貿易流量圖</div><div style="margin:10px -4px 12px">${buildFlowSVG(dA,dB,bal,biVol)}</div>`;
   if(bal!==null){
     const pos=bal>=0,abs=Math.abs(bal),col=pos?'#2acc5a':'#cc2a3a',bA=Math.max(6,Math.min(94,50+bal*0.1));
-    el.innerHTML=`
-      <div style="font-size:11px;color:#333;margin-bottom:10px">${dA.nm} ↔ ${dB.nm}</div>
-      <div style="font-size:28px;font-weight:700;color:${col}">${pos?'+':'-'}$${abs}B</div>
-      <div style="font-size:12px;color:#444;margin:4px 0 14px;font-weight:400">${pos?dA.nm:dB.nm} 享有貿易順差</div>
-      <div style="display:flex;height:10px;border-radius:4px;overflow:hidden;gap:2px">
+    html+=`<div style="font-size:26px;font-weight:700;color:${col};margin-bottom:4px">${pos?'+':'-'}$${abs}B</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px;font-weight:400">${pos?dA.nm:dB.nm} 享有貿易順差</div>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px">
         <div style="width:${bA}%;background:#1a5a2a;border-radius:3px 0 0 3px;min-width:4px"></div>
         <div style="width:${100-bA}%;background:#5a1a1a;border-radius:0 3px 3px 0;min-width:4px"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:5px;color:#333;font-weight:400">
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:5px;color:#555;font-weight:400">
         <span>${dA.nm} 出口</span><span>${dB.nm} 出口</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">${card(dA)}${card(dB)}</div>`;
-  } else {
-    el.innerHTML=`<div style="font-size:11px;color:#333;margin-bottom:10px">暫無 ${dA.nm} ↔ ${dB.nm} 詳細貿易數據</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">${card(dA)}${card(dB)}</div>`;
+  }else{
+    html+=`<div style="font-size:11px;color:#555;margin-bottom:10px">暫無 ${dA.nm} ↔ ${dB.nm} 詳細數據</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${card(dA)}${card(dB)}</div>`;
   }
+  el.innerHTML=html;
 }
 window.calcTrade=calcTrade;
 
