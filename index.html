@@ -290,10 +290,16 @@ const CD = {
     age:[17.2,65.8,17.0],
     agri:[{nm:'鮭魚',val:12.8},{nm:'鱈魚',val:4.5},{nm:'鯡魚',val:3.2},{nm:'鯖魚',val:2.4},{nm:'蝦',val:1.8},{nm:'乳製品',val:1.2}],
     tr:{'276':20,'826':15,'752':8}},
+  '158':{nm:'台灣',pop:23.5,gdpC:32980,gdp:0.76,def:101.2,cpi:107.5,ccpi:106.8,cpiYoy:2.5,
+    exp:[{nm:'半導體',val:185},{nm:'電子產品',val:110},{nm:'機械',val:42},{nm:'塑料',val:22},{nm:'光學儀器',val:18}],
+    imp:[{nm:'電子零件',val:82},{nm:'石油',val:38},{nm:'機械',val:32},{nm:'化學品',val:22},{nm:'金屬',val:18}],
+    age:[12.0,72.5,15.5],
+    agri:[{nm:'水產品',val:1.4},{nm:'豬肉',val:0.9},{nm:'稻米',val:0.8},{nm:'雞肉',val:0.5},{nm:'蔬菜',val:0.6},{nm:'茶葉',val:0.3}],
+    tr:{'840':50,'156':-20,'392':18,'410':15}},
 };
 
 // Bilateral trade volumes ($B, 2023 estimates) — used for flow chart proportions
-const TRV={'840-156':585,'840-124':782,'840-276':202,'840-392':215,'840-484':798,'840-826':155,'156-276':218,'156-392':312,'156-410':310,'156-356':118,'156-036':175,'276-250':168,'276-380':128,'276-616':138,'276-826':105,'392-410':88,'826-250':90,'250-380':85,'076-156':128,'076-840':98,'528-276':145,'528-250':130};
+const TRV={'840-156':585,'840-124':782,'840-276':202,'840-392':215,'840-484':798,'840-826':155,'156-276':218,'156-392':312,'156-410':310,'156-356':118,'156-036':175,'276-250':168,'276-380':128,'276-616':138,'276-826':105,'392-410':88,'826-250':90,'250-380':85,'076-156':128,'076-840':98,'528-276':145,'528-250':130,'158-840':100,'158-156':220,'158-392':65,'158-410':35};
 function getBiVol(cA,cB){return TRV[`${cA}-${cB}`]||TRV[`${cB}-${cA}`]||null;}
 
 function buildFlowSVG(dA,dB,bal,biVol){
@@ -460,8 +466,43 @@ function flyTo(lat,lon){
   (function s(){t=Math.min(1,t+0.022);const e=t<.5?2*t*t:-1+(4-2*t)*t;cam.position.lerpVectors(src,tgt,e);cam.lookAt(0,0,0);if(t<1)requestAnimationFrame(s);})();
 }
 
+// ===== TRADE ARCS ON GLOBE =====
+let tradeArcs=[];
+function clearTradeArcs(){tradeArcs.forEach(o=>scene.remove(o));tradeArcs=[];}
+function drawTradeArcs(cA,cB,bal){
+  clearTradeArcs();
+  if(!feat)return;
+  const fA=feat.features.find(x=>String(x.id)===cA);
+  const fB=feat.features.find(x=>String(x.id)===cB);
+  if(!fA||!fB)return;
+  const gA=d3.geoCentroid(fA),gB=d3.geoCentroid(fB);
+  if(!gA||!gB)return;
+  const vA=ll2v(gA[1],gA[0],1).normalize();
+  const vB=ll2v(gB[1],gB[0],1).normalize();
+  function slerpArc(from,to,elev,steps=80){
+    const pts=[],dot=Math.max(-1,Math.min(1,from.dot(to))),theta=Math.acos(dot),sinT=Math.sin(theta);
+    for(let i=0;i<=steps;i++){
+      const t=i/steps;
+      const v=theta<1e-4?from.clone().lerp(to,t):from.clone().multiplyScalar(Math.sin((1-t)*theta)/sinT).add(to.clone().multiplyScalar(Math.sin(t*theta)/sinT));
+      pts.push(v.normalize().multiplyScalar(R*(1+elev*Math.sin(Math.PI*t))));
+    }
+    return pts;
+  }
+  const colA=0x4a88dd,colB=0xdd4a4a;
+  // Blue arc: cA → cB (first country exports)
+  const lineA=new THREE.Line(new THREE.BufferGeometry().setFromPoints(slerpArc(vA,vB,0.28)),new THREE.LineBasicMaterial({color:colA,opacity:0.85,transparent:true}));
+  scene.add(lineA);tradeArcs.push(lineA);
+  // Red arc: cB → cA (second country exports), slightly lower elevation to visually separate
+  const lineB=new THREE.Line(new THREE.BufferGeometry().setFromPoints(slerpArc(vB,vA,0.22)),new THREE.LineBasicMaterial({color:colB,opacity:0.85,transparent:true}));
+  scene.add(lineB);tradeArcs.push(lineB);
+  // Endpoint dot markers
+  const mkDot=(v,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8),new THREE.MeshBasicMaterial({color:c}));m.position.copy(v.clone().multiplyScalar(R*1.01));scene.add(m);tradeArcs.push(m);};
+  mkDot(vA,colB);mkDot(vB,colA);
+}
+
 // ===== SELECT COUNTRY =====
 function selectCountry(code,fly=true){
+  clearTradeArcs();
   curCode=code; hilight(code);
   if(fly&&feat){const f=feat.features.find(x=>String(x.id)===code);if(f){const c=d3.geoCentroid(f);if(c)flyTo(c[1],c[0]);}}
   const d=CD[code];
@@ -520,49 +561,55 @@ function renderOverview(code){
 }
 
 // ===== POPULATION PYRAMID =====
+function getAgeBands(y,w,o){
+  // Distribute each age group across 5-year bands (ratios must sum to 1 per group)
+  const yR=[0.355,0.335,0.310];                                                          // 0-4, 5-9, 10-14
+  const wR=[0.118,0.128,0.122,0.112,0.105,0.098,0.092,0.085,0.072,0.068];              // 15-19 … 60-64
+  const oR=[0.340,0.270,0.215,0.175];                                                   // 65-69, 70-74, 75-79, 80+
+  return [...yR.map(r=>y*r),...wR.map(r=>w*r),...oR.map(r=>o*r)];
+}
 function renderPopulation(code){
   const d=CD[code],[y,w,o]=d.age;
-  const groups=[
-    ['0–14歲',y*0.515,y*0.485],
-    ['15–29歲',w*0.300*0.510,w*0.300*0.490],
-    ['30–44歲',w*0.300*0.506,w*0.300*0.494],
-    ['45–64歲',w*0.400*0.500,w*0.400*0.500],
-    ['65–79歲',o*0.650*0.487,o*0.650*0.513],
-    ['80歲以上',o*0.350*0.442,o*0.350*0.558],
-  ];
-  const maxV=Math.max(...groups.flatMap(([,m,f])=>[m,f]));
-  const TW=268,TH=210,mL=50,mR=6,mT=6,mB=28;
-  const iW=TW-mL-mR,iH=TH-mT-mB,bH=Math.floor(iH/groups.length),mid=iW/2,sc=(mid-5)/maxV;
-  let svg=`<svg width="${TW}" height="${TH}" xmlns="http://www.w3.org/2000/svg"><defs>
-    <linearGradient id="mg" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#2a6acc"/><stop offset="100%" stop-color="#0a3266"/></linearGradient>
-    <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#cc2a3a"/><stop offset="100%" stop-color="#660a14"/></linearGradient>
+  const labels=['0–4','5–9','10–14','15–19','20–24','25–29','30–34','35–39','40–44','45–49','50–54','55–59','60–64','65–69','70–74','75–79','80+'];
+  // Male fraction per band: slightly higher for youth, lower for elderly
+  const maleFrac=[0.512,0.512,0.511,0.510,0.509,0.507,0.505,0.503,0.501,0.499,0.496,0.492,0.486,0.478,0.465,0.447,0.408];
+  const bands=getAgeBands(y,w,o);
+  const mBands=bands.map((v,i)=>v*maleFrac[i]);
+  const fBands=bands.map((v,i)=>v*(1-maleFrac[i]));
+  const n=17,bH=11,TW=268,mL=52,mR=6,mT=8,mB=36;
+  const iW=TW-mL-mR,iH=n*bH,mid=iW/2;
+  const maxV=Math.max(...mBands,...fBands)*1.05;
+  const sc=(mid-3)/maxV;
+  let svg=`<svg width="${TW}" height="${mT+iH+mB}" xmlns="http://www.w3.org/2000/svg"><defs>
+    <linearGradient id="mg" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#4a7a9b"/><stop offset="100%" stop-color="#2a4e6a"/></linearGradient>
+    <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#9b4a5e"/><stop offset="100%" stop-color="#6a2a38"/></linearGradient>
   </defs><g transform="translate(${mL},${mT})">`;
-  [maxV*0.5,maxV].forEach(v=>{
+  [maxV*0.33,maxV*0.67,maxV].forEach(v=>{
     svg+=`<line x1="${mid-v*sc}" y1="0" x2="${mid-v*sc}" y2="${iH}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
     svg+=`<line x1="${mid+v*sc}" y1="0" x2="${mid+v*sc}" y2="${iH}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
   });
-  [...groups].reverse().forEach(([lbl,m,f],i)=>{
-    const y2=i*bH,mW=m*sc,fW=f*sc;
-    svg+=`<rect x="${mid-mW-1}" y="${y2+2}" width="${mW}" height="${bH-4}" fill="url(#mg)" rx="2"/>`;
-    svg+=`<rect x="${mid+1}" y="${y2+2}" width="${fW}" height="${bH-4}" fill="url(#fg)" rx="2"/>`;
-    svg+=`<text x="-3" y="${y2+bH/2+4}" text-anchor="end" font-size="8.5" fill="#333" font-family="sans-serif">${lbl}</text>`;
+  [...Array(n)].forEach((_,i)=>{
+    const ri=n-1-i,y2=i*bH,mW=mBands[ri]*sc,fW=fBands[ri]*sc;
+    svg+=`<rect x="${mid-mW-1}" y="${y2+1}" width="${mW}" height="${bH-2}" fill="url(#mg)" rx="1"/>`;
+    svg+=`<rect x="${mid+1}" y="${y2+1}" width="${fW}" height="${bH-2}" fill="url(#fg)" rx="1"/>`;
+    svg+=`<text x="-3" y="${y2+bH/2+3.5}" text-anchor="end" font-size="8" fill="#555" font-family="sans-serif">${labels[ri]}</text>`;
   });
   svg+=`<line x1="${mid}" y1="0" x2="${mid}" y2="${iH}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`;
   [maxV*0.5,maxV].forEach(v=>{
-    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#222" font-family="sans-serif">${v.toFixed(1)}%</text>`;
-    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#222" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#333" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#333" font-family="sans-serif">${v.toFixed(1)}%</text>`;
   });
-  svg+=`<rect x="${mid-52}" y="${iH+15}" width="8" height="8" fill="url(#mg)" rx="1"/>`;
-  svg+=`<text x="${mid-41}" y="${iH+23}" font-size="9" fill="#2a6acc" font-family="sans-serif" font-weight="bold">男性</text>`;
-  svg+=`<rect x="${mid+18}" y="${iH+15}" width="8" height="8" fill="url(#fg)" rx="1"/>`;
-  svg+=`<text x="${mid+29}" y="${iH+23}" font-size="9" fill="#cc2a3a" font-family="sans-serif" font-weight="bold">女性</text>`;
+  svg+=`<rect x="${mid-52}" y="${iH+18}" width="8" height="8" fill="url(#mg)" rx="1"/>`;
+  svg+=`<text x="${mid-41}" y="${iH+26}" font-size="9" fill="#4a7a9b" font-family="sans-serif" font-weight="bold">男性</text>`;
+  svg+=`<rect x="${mid+18}" y="${iH+18}" width="8" height="8" fill="url(#fg)" rx="1"/>`;
+  svg+=`<text x="${mid+29}" y="${iH+26}" font-size="9" fill="#9b4a5e" font-family="sans-serif" font-weight="bold">女性</text>`;
   svg+=`</g></svg>`;
   const dep=((y+o)/w*100).toFixed(1),agi=(o/y*100).toFixed(1);
   document.getElementById('panel-population').innerHTML=`
     <div class="sec-title">人口金字塔</div>
     <div style="margin:8px -4px 16px">${svg}</div>
     <div class="sec-title">年齡分佈</div>
-    ${[['0–14 歲（少年）',y,'#2a6acc'],['15–64 歲（工作人口）',w,'#2acc5a'],['65 歲以上（老年）',o,'#cc2a3a']].map(([l,v,c])=>`
+    ${[['0–14 歲（少年）',y,'#4a7a9b'],['15–64 歲（工作人口）',w,'#3a8a4a'],['65 歲以上（老年）',o,'#9b4a5e']].map(([l,v,c])=>`
     <div class="pop-bar-row">
       <div class="pop-bar-top"><span style="color:#444;font-weight:400">${l}</span><span style="color:#fff;font-weight:700">${v}%</span></div>
       <div class="pop-bar-bg"><div class="pop-bar-fill" style="background:${c};opacity:.75;width:${Math.round(v)}%"></div></div>
@@ -617,6 +664,7 @@ function calcTrade(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${card(dA)}${card(dB)}</div>`;
   }
   el.innerHTML=html;
+  drawTradeArcs(cA,cB,bal);
 }
 window.calcTrade=calcTrade;
 
