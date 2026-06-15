@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球經濟地球儀</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#06091a;color:#d0e4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+#app{display:flex;height:100vh;overflow:hidden}
+#globe-wrap{flex:1;position:relative;overflow:hidden}
+#globe-canvas{display:block;width:100%;height:100%;cursor:grab}
+#globe-canvas:active{cursor:grabbing}
+#search-box{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:300px;z-index:10}
+#search-input{width:100%;padding:10px 18px;background:rgba(6,12,32,0.88);border:1px solid rgba(80,140,220,0.35);border-radius:24px;color:#c8dcf4;font-size:14px;outline:none;backdrop-filter:blur(12px)}
+#search-input::placeholder{color:rgba(120,160,210,0.5)}
+#search-input:focus{border-color:rgba(80,140,220,0.65)}
+#search-results{display:none;margin-top:6px;background:rgba(6,12,32,0.96);border:1px solid rgba(80,140,220,0.2);border-radius:12px;overflow:hidden;backdrop-filter:blur(12px)}
+.sr-item{padding:10px 18px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(80,140,220,0.08);color:#90b8e0}
+.sr-item:last-child{border-bottom:none}
+.sr-item:hover{background:rgba(80,140,220,0.12);color:#c8dcf4}
+#tooltip{position:absolute;background:rgba(6,12,32,0.92);color:#6ab0f0;border:1px solid rgba(80,140,220,0.3);border-radius:7px;padding:5px 13px;font-size:13px;pointer-events:none;display:none;white-space:nowrap;backdrop-filter:blur(8px)}
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#06091a;z-index:100;transition:opacity .4s}
+.ld-spin{width:44px;height:44px;border:3px solid rgba(80,140,220,0.18);border-top-color:#5a9ade;border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-txt{color:#3a5a7a;font-size:14px}
+#sidebar{width:320px;min-width:320px;background:#080d20;border-left:1px solid rgba(80,140,220,0.1);display:flex;flex-direction:column;overflow:hidden}
+#hero{padding:28px 22px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.hero-title{font-size:18px;font-weight:600;color:#88b4e0;margin-bottom:10px}
+.hero-desc{font-size:13px;color:#3a5870;line-height:1.8}
+.hero-hint{margin-top:20px;padding:14px 16px;background:rgba(30,55,110,0.2);border:1px solid rgba(80,140,220,0.13);border-radius:10px;font-size:12px;color:#3a5870;line-height:1.9}
+.hero-hint strong{color:#5a8ab0;display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+#country-info{display:none;flex-direction:column;flex:1;overflow:hidden}
+#country-header{padding:18px 22px 12px;border-bottom:1px solid rgba(80,140,220,0.08);flex-shrink:0}
+.c-name{font-size:20px;font-weight:600;color:#b0d2f5;line-height:1.2}
+.c-sub{font-size:11.5px;color:#2e4a68;margin-top:3px}
+#tab-nav{display:flex;padding:0 22px;border-bottom:1px solid rgba(80,140,220,0.08);flex-shrink:0}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 11px;color:#2e4a68;font-size:13px;cursor:pointer;transition:all .18s;margin-bottom:-1px}
+.tab-btn:hover{color:#7ab8f0}
+.tab-btn.active{color:#7ab8f0;border-bottom-color:#7ab8f0}
+#tab-panels{flex:1;overflow-y:auto;padding:16px 22px}
+#tab-panels::-webkit-scrollbar{width:4px}
+#tab-panels::-webkit-scrollbar-track{background:transparent}
+#tab-panels::-webkit-scrollbar-thumb{background:rgba(80,140,220,0.18);border-radius:2px}
+.panel{display:none}
+.panel.active{display:block}
+.metric{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid rgba(80,140,220,0.07);font-size:13px}
+.m-lbl{color:#2e4a68}
+.m-val{color:#a8c8e8;font-weight:500}
+.sec-title{font-size:10.5px;color:#24405a;text-transform:uppercase;letter-spacing:.1em;margin:14px 0 7px}
+.tag{display:inline-block;background:rgba(35,70,130,0.22);border:1px solid rgba(80,140,220,0.16);border-radius:4px;padding:3px 8px;font-size:11.5px;margin:2px;color:#587898}
+.agri-row{margin:8px 0}
+.agri-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.agri-name{color:rgba(130,200,130,0.85)}
+.agri-val{color:#38925a;font-weight:500}
+.agri-bg{background:rgba(16,50,16,0.4);border-radius:4px;height:7px;overflow:hidden}
+.agri-fill{background:linear-gradient(90deg,#1e6e2a,#3aaa4a);height:100%;border-radius:4px}
+.pop-bar-row{margin:6px 0}
+.pop-bar-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.pop-bar-bg{background:rgba(22,40,80,0.4);border-radius:3px;height:6px;overflow:hidden}
+.pop-bar-fill{height:100%;border-radius:3px}
+.trade-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.trade-row select{flex:1;background:rgba(10,22,52,0.8);border:1px solid rgba(80,140,220,0.18);border-radius:6px;color:#a8c8e8;padding:7px 9px;font-size:12.5px;outline:none}
+.trade-btn{background:rgba(35,80,170,0.28);border:1px solid rgba(80,140,220,0.26);border-radius:6px;color:#6aa8e8;padding:8px 0;cursor:pointer;font-size:13px;width:100%;transition:background .15s}
+.trade-btn:hover{background:rgba(35,80,170,0.45)}
+.trade-card{background:rgba(10,22,52,0.5);border-radius:9px;padding:12px;flex:1}
+.trade-card-lbl{font-size:11px;color:#24405a;margin-bottom:4px}
+.trade-card-gdp{font-size:14px;color:#a8c8e8}
+.trade-card-gpc{font-size:11.5px;color:#245a7a;margin-top:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="globe-wrap">
+    <canvas id="globe-canvas"></canvas>
+    <div id="search-box">
+      <input type="text" id="search-input" placeholder="搜尋國家… Search country" autocomplete="off">
+      <div id="search-results"></div>
+    </div>
+    <div id="tooltip"></div>
+    <div id="loading"><div class="ld-spin"></div><div class="ld-txt">載入地球資料中…</div></div>
+  </div>
+  <div id="sidebar">
+    <div id="hero">
+      <div class="hero-title">全球經濟地球儀</div>
+      <div class="hero-desc">互動式 3D 地球<br>涵蓋全球前 25 大 GDP 國家<br>完整經濟與人口數據</div>
+      <div class="hero-hint">
+        <strong>操作說明</strong>
+        🌍 點擊地球上的國家查看數據<br>
+        🔍 使用搜尋欄快速定位<br>
+        🖱 拖曳旋轉地球<br>
+        ⇄ 貿易分頁可比較任意兩國
+      </div>
+    </div>
+    <div id="country-info">
+      <div id="country-header">
+        <div class="c-name" id="c-name">—</div>
+        <div class="c-sub" id="c-sub">—</div>
+      </div>
+      <div id="tab-nav">
+        <button class="tab-btn active" data-tab="overview"    onclick="switchTab('overview')">概覽</button>
+        <button class="tab-btn"        data-tab="population"  onclick="switchTab('population')">人口</button>
+        <button class="tab-btn"        data-tab="agriculture" onclick="switchTab('agriculture')">農業</button>
+        <button class="tab-btn"        data-tab="trade"       onclick="switchTab('trade')">貿易</button>
+      </div>
+      <div id="tab-panels">
+        <div id="panel-overview"    class="panel active"></div>
+        <div id="panel-population"  class="panel"></div>
+        <div id="panel-agriculture" class="panel"></div>
+        <div id="panel-trade" class="panel">
+          <div class="sec-title">雙邊貿易比較</div>
+          <div class="trade-row">
+            <select id="trade-a"><option value="">選擇國家 A</option></select>
+            <span style="color:#24405a;font-size:18px">⇄</span>
+            <select id="trade-b"><option value="">選擇國家 B</option></select>
+          </div>
+          <div style="margin-bottom:16px"><button class="trade-btn" onclick="calcTrade()">查詢雙邊貿易差額</button></div>
+          <div id="trade-result" style="color:#24405a;font-size:13px">請選擇兩個國家後點擊查詢</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+// ===== COUNTRY DATA — Top 25 GDP (2023 estimates) =====
+const CD = {
+  '840':{nm:'美國',pop:335,gdpC:80035,gdp:26.9,def:103.5,cpi:314.2,ccpi:320.1,
+    exp:['機械設備','飛機','石油產品','醫療器材','汽車'],imp:['機械','電子產品','石油','汽車','醫藥品'],
+    age:[18.3,65.0,16.7],
+    agri:[{nm:'大豆',val:26.8},{nm:'玉米',val:18.5},{nm:'牛肉',val:10.2},{nm:'小麥',val:9.8},{nm:'棉花',val:8.3},{nm:'豬肉',val:7.4}],
+    tr:{'156':-382,'124':41,'276':-71,'392':68,'484':-152,'704':-104}},
+  '156':{nm:'中國',pop:1412,gdpC:12720,gdp:17.9,def:100.2,cpi:100.3,ccpi:100.6,
+    exp:['電子產品','機械','鋼鐵','汽車','服裝'],imp:['石油','半導體','鐵礦砂','大豆','汽車'],
+    age:[17.5,69.3,13.2],
+    agri:[{nm:'水產品',val:15.6},{nm:'蔬菜',val:12.4},{nm:'豬肉',val:4.2},{nm:'茶葉',val:3.8},{nm:'大蒜',val:2.5},{nm:'蘋果',val:2.1}],
+    tr:{'840':382,'276':18,'392':25,'410':28,'356':-87,'036':76}},
+  '276':{nm:'德國',pop:84,gdpC:48756,gdp:4.1,def:104.5,cpi:127.5,ccpi:131.2,
+    exp:['汽車','機械','化學品','電子設備','醫藥品'],imp:['石油','天然氣','機械','電子產品','食品'],
+    age:[14.0,64.0,22.0],
+    agri:[{nm:'豬肉',val:5.8},{nm:'牛奶',val:3.6},{nm:'小麥',val:4.1},{nm:'啤酒',val:2.4},{nm:'甜菜',val:2.2},{nm:'馬鈴薯',val:1.8}],
+    tr:{'156':-18,'840':71,'250':58,'380':29,'616':28}},
+  '392':{nm:'日本',pop:124,gdpC:33834,gdp:4.2,def:102.0,cpi:106.4,ccpi:104.0,
+    exp:['汽車','機械','電子零件','精密儀器','鋼鐵'],imp:['石油','液化天然氣','半導體','煤炭','食品'],
+    age:[11.8,59.5,28.7],
+    agri:[{nm:'水產品',val:4.2},{nm:'蔬菜',val:1.8},{nm:'清酒',val:1.4},{nm:'茶葉',val:0.9},{nm:'牛肉',val:0.7},{nm:'米',val:0.5}],
+    tr:{'156':-25,'840':-68,'276':18,'410':15}},
+  '356':{nm:'印度',pop:1428,gdpC:2389,gdp:3.4,def:105.5,cpi:179.2,ccpi:172.5,
+    exp:['石油產品','珠寶','機械','醫藥品','紡織品'],imp:['石油','電子產品','金','機械','煤炭'],
+    age:[25.0,67.0,8.0],
+    agri:[{nm:'稻米',val:8.2},{nm:'香料',val:4.5},{nm:'小麥',val:3.1},{nm:'棉花',val:2.8},{nm:'糖',val:2.2},{nm:'茶葉',val:1.9}],
+    tr:{'840':-31,'156':87,'784':-8,'276':-12}},
+  '826':{nm:'英國',pop:67,gdpC:46371,gdp:3.1,def:105.8,cpi:131.6,ccpi:134.2,
+    exp:['機械','汽車','醫藥品','石油','金融服務'],imp:['機械','汽車','石油','食品','電子產品'],
+    age:[17.8,63.8,18.4],
+    agri:[{nm:'威士忌',val:6.2},{nm:'小麥',val:3.2},{nm:'乳製品',val:2.4},{nm:'大麥',val:1.8},{nm:'牛肉',val:1.6},{nm:'羊肉',val:1.2}],
+    tr:{'840':-1,'276':-59,'250':8,'156':8}},
+  '250':{nm:'法國',pop:68,gdpC:43659,gdp:3.0,def:105.2,cpi:120.8,ccpi:122.5,
+    exp:['飛機','汽車','機械','醫藥品','農產品'],imp:['石油','機械','汽車','電子產品','農產品'],
+    age:[18.0,62.0,20.0],
+    agri:[{nm:'葡萄酒',val:12.8},{nm:'農產加工品',val:8.5},{nm:'乳製品',val:7.2},{nm:'小麥',val:5.4},{nm:'牛肉',val:3.8},{nm:'糖',val:2.6}],
+    tr:{'276':-58,'840':2,'156':36,'826':-8}},
+  '380':{nm:'義大利',pop:59,gdpC:35711,gdp:2.1,def:104.1,cpi:121.4,ccpi:122.8,
+    exp:['機械','汽車','醫藥品','食品','化學品'],imp:['石油','天然氣','機械','電子產品','汽車'],
+    age:[12.8,63.5,23.7],
+    agri:[{nm:'葡萄酒',val:7.5},{nm:'乳酪',val:4.5},{nm:'水果',val:3.4},{nm:'橄欖油',val:3.2},{nm:'番茄',val:2.8},{nm:'義大利麵',val:2.1}],
+    tr:{'276':-29,'840':44,'156':20}},
+  '124':{nm:'加拿大',pop:40,gdpC:53247,gdp:2.1,def:106.0,cpi:157.8,ccpi:162.3,
+    exp:['石油','礦物','汽車','機械','農產品'],imp:['汽車','機械','電子產品','石油','醫藥品'],
+    age:[16.3,66.2,17.5],
+    agri:[{nm:'油菜籽',val:11.2},{nm:'小麥',val:8.5},{nm:'牛肉',val:4.8},{nm:'豬肉',val:3.2},{nm:'龍蝦',val:2.8},{nm:'大麥',val:2.4}],
+    tr:{'840':-41,'156':14,'276':5,'392':2}},
+  '076':{nm:'巴西',pop:215,gdpC:10295,gdp:2.1,def:108.5,cpi:168.4,ccpi:172.1,
+    exp:['大豆','石油','鐵礦砂','玉米','肉類'],imp:['石油','機械','電子產品','汽車','化學品'],
+    age:[21.5,68.5,10.0],
+    agri:[{nm:'大豆',val:48.2},{nm:'牛肉',val:12.8},{nm:'雞肉',val:8.9},{nm:'糖',val:9.5},{nm:'咖啡',val:8.4},{nm:'玉米',val:7.2}],
+    tr:{'156':-36,'840':4,'276':-2}},
+  '643':{nm:'俄羅斯',pop:144,gdpC:13073,gdp:1.9,def:119.0,cpi:162.5,ccpi:168.4,
+    exp:['石油','天然氣','鋼鐵','化學品','小麥'],imp:['機械','電子產品','汽車','藥品','食品'],
+    age:[17.5,65.8,16.7],
+    agri:[{nm:'小麥',val:14.8},{nm:'水產品',val:6.2},{nm:'葵花籽',val:5.6},{nm:'大麥',val:4.2},{nm:'玉米',val:3.8},{nm:'豬肉',val:2.4}],
+    tr:{'156':-18,'276':-8,'356':-5}},
+  '410':{nm:'南韓',pop:52,gdpC:33393,gdp:1.7,def:105.2,cpi:117.8,ccpi:119.5,
+    exp:['半導體','汽車','石化產品','船舶','電子產品'],imp:['石油','半導體','液化天然氣','煤炭','機械'],
+    age:[11.5,71.2,17.3],
+    agri:[{nm:'水產品',val:2.8},{nm:'飲料',val:1.8},{nm:'泡菜加工',val:1.2},{nm:'蔬菜',val:1.0},{nm:'乳製品',val:0.8},{nm:'米',val:0.5}],
+    tr:{'156':28,'840':-44,'276':15,'392':-15}},
+  '036':{nm:'澳洲',pop:26,gdpC:65099,gdp:1.7,def:107.8,cpi:128.4,ccpi:132.1,
+    exp:['鐵礦砂','煤炭','天然氣','金','農產品'],imp:['機械','石油','汽車','電子產品','醫藥品'],
+    age:[18.7,64.8,16.5],
+    agri:[{nm:'牛肉',val:9.8},{nm:'小麥',val:8.4},{nm:'羊肉',val:4.5},{nm:'大麥',val:3.2},{nm:'羊毛',val:2.8},{nm:'棉花',val:2.4}],
+    tr:{'156':-76,'392':6,'840':-15,'356':8}},
+  '724':{nm:'西班牙',pop:47,gdpC:30284,gdp:1.4,def:104.8,cpi:119.4,ccpi:121.8,
+    exp:['汽車','機械','石油產品','農產品','醫藥品'],imp:['石油','汽車','天然氣','機械','電子產品'],
+    age:[14.2,65.2,20.6],
+    agri:[{nm:'豬肉',val:6.8},{nm:'蔬菜',val:5.4},{nm:'葡萄酒',val:4.2},{nm:'橄欖油',val:3.8},{nm:'柑橘',val:2.5},{nm:'番茄',val:2.1}],
+    tr:{'276':-28,'250':20,'380':-15}},
+  '484':{nm:'墨西哥',pop:127,gdpC:10814,gdp:1.3,def:107.2,cpi:146.9,ccpi:152.4,
+    exp:['汽車','機械','電子產品','石油','農產品'],imp:['電子產品','機械','石油','汽車','化學品'],
+    age:[26.3,65.3,8.4],
+    agri:[{nm:'啤酒',val:5.4},{nm:'酪梨',val:3.8},{nm:'番茄',val:3.2},{nm:'漿果',val:2.8},{nm:'辣椒',val:1.6},{nm:'玉米',val:1.2}],
+    tr:{'840':-152,'156':10,'124':4}},
+  '360':{nm:'印尼',pop:278,gdpC:4941,gdp:1.3,def:106.5,cpi:118.5,ccpi:121.5,
+    exp:['煤炭','棕櫚油','天然氣','礦物','電子產品'],imp:['石油','機械','電子產品','化學品','鋼鐵'],
+    age:[25.5,67.5,7.0],
+    agri:[{nm:'棕櫚油',val:28.5},{nm:'水產品',val:5.2},{nm:'天然橡膠',val:4.2},{nm:'香料',val:2.4},{nm:'咖啡',val:1.8},{nm:'可可',val:1.5}],
+    tr:{'156':-11,'840':11,'410':8}},
+  '682':{nm:'沙烏地阿拉伯',pop:36,gdpC:28891,gdp:1.1,def:102.5,cpi:103.5,ccpi:105.2,
+    exp:['石油','石化產品','化學品','金屬','塑料'],imp:['機械','汽車','電子產品','食品','醫藥品'],
+    age:[28.5,67.5,4.0],
+    agri:[{nm:'椰棗',val:1.2},{nm:'乳製品',val:0.8},{nm:'水產品',val:0.6},{nm:'家禽',val:0.5},{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3}],
+    tr:{'156':-62,'840':-15,'356':-18,'392':-12}},
+  '528':{nm:'荷蘭',pop:17.9,gdpC:57768,gdp:1.0,def:106.2,cpi:140.2,ccpi:143.5,
+    exp:['機械','石油產品','化學品','農產品','電子產品'],imp:['石油','機械','電子產品','農產品','金屬'],
+    age:[15.8,64.5,19.7],
+    agri:[{nm:'花卉',val:10.2},{nm:'蔬菜',val:8.5},{nm:'乳製品',val:7.8},{nm:'豬肉',val:4.2},{nm:'種子',val:3.5},{nm:'啤酒',val:2.8}],
+    tr:{'276':25,'826':18,'250':32}},
+  '792':{nm:'土耳其',pop:85,gdpC:10674,gdp:0.9,def:132.5,cpi:189.5,ccpi:198.4,
+    exp:['機械','汽車','紡織品','化學品','農產品'],imp:['石油','天然氣','金','機械','電子產品'],
+    age:[23.5,68.0,8.5],
+    agri:[{nm:'蔬菜',val:4.5},{nm:'乾果',val:3.2},{nm:'榛果',val:2.8},{nm:'橄欖油',val:1.6},{nm:'棉花',val:1.8},{nm:'菸草',val:1.4}],
+    tr:{'276':-14,'840':-6}},
+  '756':{nm:'瑞士',pop:8.7,gdpC:93259,gdp:0.8,def:103.2,cpi:108.4,ccpi:109.8,
+    exp:['醫藥品','珠寶','機械','化學品','精密儀器'],imp:['金','機械','電子產品','汽車','醫藥品'],
+    age:[14.8,66.2,19.0],
+    agri:[{nm:'咖啡加工',val:3.2},{nm:'乳酪',val:2.4},{nm:'巧克力',val:1.8},{nm:'肉類',val:0.8},{nm:'葡萄酒',val:0.6},{nm:'穀物',val:0.5}],
+    tr:{'276':45,'840':15,'250':30}},
+  '616':{nm:'波蘭',pop:37.7,gdpC:21002,gdp:0.8,def:107.5,cpi:118.5,ccpi:125.4,
+    exp:['機械','汽車','電子產品','家具','食品'],imp:['機械','石油','電子產品','汽車','化學品'],
+    age:[15.5,67.5,17.0],
+    agri:[{nm:'家禽',val:4.5},{nm:'穀物',val:3.8},{nm:'乳製品',val:3.2},{nm:'牛肉',val:2.8},{nm:'蔬菜',val:2.4},{nm:'蘋果',val:1.6}],
+    tr:{'276':28,'826':12,'250':8}},
+  '056':{nm:'比利時',pop:11.7,gdpC:49893,gdp:0.6,def:108.5,cpi:132.4,ccpi:135.8,
+    exp:['化學品','機械','汽車','食品','金屬'],imp:['機械','石油','化學品','食品','電子產品'],
+    age:[16.8,63.2,20.0],
+    agri:[{nm:'巧克力',val:3.8},{nm:'乳製品',val:3.2},{nm:'豬肉',val:2.8},{nm:'啤酒',val:2.4},{nm:'蔬菜',val:2.1},{nm:'糖',val:1.8}],
+    tr:{'276':18,'250':25,'528':15}},
+  '032':{nm:'阿根廷',pop:46,gdpC:13720,gdp:0.6,def:355.0,cpi:425.4,ccpi:438.2,
+    exp:['大豆','玉米','豆粕','石油','汽車'],imp:['機械','石油','化學品','電子產品','農業機械'],
+    age:[24.5,64.5,11.0],
+    agri:[{nm:'大豆',val:12.8},{nm:'玉米',val:8.4},{nm:'牛肉',val:5.8},{nm:'小麥',val:4.2},{nm:'葵花籽油',val:3.2},{nm:'葡萄酒',val:1.8}],
+    tr:{'156':-8,'276':-4,'076':-6}},
+  '752':{nm:'瑞典',pop:10.5,gdpC:55697,gdp:0.6,def:109.8,cpi:128.4,ccpi:132.5,
+    exp:['機械','汽車','醫藥品','電子產品','紙漿'],imp:['石油','機械','汽車','電子產品','化學品'],
+    age:[17.5,62.5,20.0],
+    agri:[{nm:'紙漿/木材',val:8.5},{nm:'乳製品',val:2.2},{nm:'穀物',val:1.8},{nm:'鮭魚',val:1.4},{nm:'豬肉',val:1.2},{nm:'漿果',val:0.8}],
+    tr:{'276':10,'826':8,'528':5}},
+  '578':{nm:'挪威',pop:5.4,gdpC:108740,gdp:0.6,def:112.5,cpi:124.5,ccpi:128.4,
+    exp:['石油','天然氣','魚類','機械','金屬'],imp:['機械','汽車','電子產品','食品','化學品'],
+    age:[17.2,65.8,17.0],
+    agri:[{nm:'鮭魚',val:12.8},{nm:'鱈魚',val:4.5},{nm:'鯡魚',val:3.2},{nm:'鯖魚',val:2.4},{nm:'蝦',val:1.8},{nm:'乳製品',val:1.2}],
+    tr:{'276':20,'826':15,'752':8}},
+};
+
+// ===== THREE.JS GLOBALS =====
+const R = 2;
+let scene, cam, rend, ctrl, gMesh, feat = null, selLn = null;
+let curCode = null, curTab = 'overview';
+
+function ll2v(lat, lon, r) {
+  const phi = (90 - lat) * Math.PI / 180, theta = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta));
+}
+
+function v2ll(v) {
+  const n = v.clone().normalize();
+  const lat = 90 - Math.acos(Math.max(-1, Math.min(1, n.y))) * 180 / Math.PI;
+  let t = Math.atan2(n.z, -n.x);
+  if (t < 0) t += 2 * Math.PI;
+  return [lat, t * 180 / Math.PI - 180];
+}
+
+// Generate Earth texture from TopoJSON land data via D3 canvas projection
+function createEarthTexture(topo) {
+  const TW = 1024, TH = 512;
+  const cv = document.createElement('canvas'); cv.width = TW; cv.height = TH;
+  const ctx = cv.getContext('2d');
+  // Ocean gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, TH);
+  grad.addColorStop(0, '#050f28'); grad.addColorStop(0.5, '#0b2248'); grad.addColorStop(1, '#050f28');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, TW, TH);
+  // Equirectangular projection — aligns with THREE.js sphere UVs
+  const proj = d3.geoEquirectangular().scale(TW / (2 * Math.PI)).translate([TW / 2, TH / 2]);
+  const path = d3.geoPath(proj, ctx);
+  try {
+    const land = topojson.feature(topo, topo.objects.land);
+    ctx.fillStyle = '#1c4a1c'; ctx.beginPath(); path(land); ctx.fill();
+    ctx.fillStyle = '#2e7830'; ctx.globalAlpha = 0.32; ctx.beginPath(); path(land); ctx.fill();
+    ctx.globalAlpha = 1;
+    const brd = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+    ctx.strokeStyle = '#4aaa3a'; ctx.lineWidth = 0.7; ctx.globalAlpha = 0.45;
+    ctx.beginPath(); path(brd); ctx.stroke(); ctx.globalAlpha = 1;
+  } catch(e) {}
+  // Ice caps
+  ctx.fillStyle = '#cde8ff';
+  ctx.fillRect(0, 0, TW, Math.round(TH * 0.11));
+  ctx.fillRect(0, Math.round(TH * 0.87), TW, TH);
+  // Subtle deep-water darkening
+  ctx.globalAlpha = 0.12; ctx.fillStyle = '#000820';
+  ctx.fillRect(0, Math.round(TH * 0.11), TW, Math.round(TH * 0.76));
+  ctx.globalAlpha = 1;
+  return new THREE.CanvasTexture(cv);
+}
+
+// ===== BOOT =====
+async function boot() {
+  const wrap = document.getElementById('globe-wrap');
+  const cv   = document.getElementById('globe-canvas');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+
+  rend = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+  rend.setPixelRatio(Math.min(devicePixelRatio, 2));
+  rend.setSize(W, H);
+  rend.setClearColor(0x06091a);
+
+  scene = new THREE.Scene();
+  cam   = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+  cam.position.z = 5;
+
+  // Starfield
+  const sp = new Float32Array(12000);
+  for (let i = 0; i < 4000; i++) {
+    const a = Math.random() * Math.PI * 2, b = Math.acos(2 * Math.random() - 1), r = 38 + Math.random() * 16;
+    sp[i*3] = r*Math.sin(b)*Math.cos(a); sp[i*3+1] = r*Math.cos(b); sp[i*3+2] = r*Math.sin(b)*Math.sin(a);
+  }
+  const sg = new THREE.BufferGeometry();
+  sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.055, sizeAttenuation: true })));
+
+  // Globe mesh
+  gMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(R, 80, 80),
+    new THREE.MeshLambertMaterial({ color: 0x0b2248 })
+  );
+  scene.add(gMesh);
+
+  // Atmosphere glow
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.048, 64, 64),
+    new THREE.MeshLambertMaterial({ color:0x1a7acc, transparent:true, opacity:0.07, side:THREE.BackSide })));
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.022, 64, 64),
+    new THREE.MeshLambertMaterial({ color:0x55aaee, transparent:true, opacity:0.025, side:THREE.BackSide })));
+
+  // Lighting — directional sun only; no AmbientLight ⟹ no "internal glow"
+  const sun = new THREE.DirectionalLight(0xfff2e0, 2.5); sun.position.set(6, 2, 4); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0x1a2d5a, 0.15); fill.position.set(-5, -2, -3); scene.add(fill);
+
+  // OrbitControls — rotation only, zoom DISABLED
+  ctrl = new THREE.OrbitControls(cam, rend.domElement);
+  ctrl.enablePan = false; ctrl.enableZoom = false;
+  ctrl.enableDamping = true; ctrl.dampingFactor = 0.07;
+  ctrl.autoRotate = true; ctrl.autoRotateSpeed = 0.45;
+  ctrl.addEventListener('start', () => ctrl.autoRotate = false);
+
+  // Load world topology
+  const topo = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+  feat = topojson.feature(topo, topo.objects.countries);
+  gMesh.material = new THREE.MeshLambertMaterial({ map: createEarthTexture(topo) });
+
+  // 3D country border lines
+  const mesh = topojson.mesh(topo, topo.objects.countries);
+  const pts = [];
+  const addL = c => { for (let i=0;i<c.length-1;i++){pts.push(ll2v(c[i][1],c[i][0],R*1.001));pts.push(ll2v(c[i+1][1],c[i+1][0],R*1.001));} };
+  if (mesh.type==='MultiLineString') mesh.coordinates.forEach(addL);
+  else if (mesh.type==='LineString') addL(mesh.coordinates);
+  scene.add(new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color:0x3aaa38, opacity:0.42, transparent:true })));
+
+  // Events
+  rend.domElement.addEventListener('click', onClick);
+  rend.domElement.addEventListener('mousemove', onHover);
+  window.addEventListener('resize', onResize);
+
+  // Trade dropdowns
+  const sorted = Object.entries(CD).sort(([,a],[,b]) => a.nm.localeCompare(b.nm,'zh'));
+  sorted.forEach(([c,d]) => {
+    ['trade-a','trade-b'].forEach(id => {
+      const o = document.createElement('option'); o.value=c; o.textContent=d.nm;
+      document.getElementById(id).appendChild(o);
+    });
+  });
+
+  const ld = document.getElementById('loading');
+  ld.style.opacity = '0'; setTimeout(() => ld.style.display='none', 400);
+  (function loop(){ requestAnimationFrame(loop); ctrl.update(); rend.render(scene,cam); })();
+}
+
+function onResize() {
+  const w = document.getElementById('globe-wrap');
+  cam.aspect = w.clientWidth / w.clientHeight; cam.updateProjectionMatrix();
+  rend.setSize(w.clientWidth, w.clientHeight);
+}
+
+// ===== INTERACTION =====
+function doCast(e) {
+  const rect = rend.domElement.getBoundingClientRect();
+  const m = new THREE.Vector2(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);
+  const ray = new THREE.Raycaster(); ray.setFromCamera(m, cam);
+  const h = ray.intersectObject(gMesh); return h.length ? v2ll(h[0].point) : null;
+}
+
+function getCode(lat, lon) {
+  if (!feat) return null;
+  for (const f of feat.features) if (d3.geoContains(f, [lon, lat])) return String(f.id);
+  return null;
+}
+
+function onClick(e) {
+  const ll = doCast(e); if (!ll) return;
+  const code = getCode(ll[0], ll[1]);
+  if (code && CD[code]) selectCountry(code);
+}
+
+let lastHov = 0;
+function onHover(e) {
+  if (Date.now()-lastHov < 55) return; lastHov = Date.now();
+  const tip = document.getElementById('tooltip');
+  const ll = doCast(e);
+  if (!ll) { tip.style.display='none'; return; }
+  const code = getCode(ll[0], ll[1]);
+  if (code && CD[code]) {
+    const rect = rend.domElement.getBoundingClientRect();
+    tip.textContent=CD[code].nm; tip.style.display='block';
+    tip.style.left=(e.clientX-rect.left+16)+'px'; tip.style.top=(e.clientY-rect.top-36)+'px';
+  } else tip.style.display='none';
+}
+
+function hilight(code) {
+  if (selLn) { scene.remove(selLn); selLn=null; }
+  if (!feat) return;
+  const f = feat.features.find(x => String(x.id)===code); if (!f?.geometry) return;
+  const pts=[];
+  const addR = ring => { for(let i=0;i<ring.length-1;i++){pts.push(ll2v(ring[i][1],ring[i][0],R*1.003));pts.push(ll2v(ring[i+1][1],ring[i+1][0],R*1.003));} };
+  const g=f.geometry;
+  if (g.type==='Polygon') g.coordinates.forEach(addR);
+  else if (g.type==='MultiPolygon') g.coordinates.forEach(p=>p.forEach(addR));
+  selLn=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xffcc33}));
+  scene.add(selLn);
+}
+
+function flyTo(lat, lon) {
+  ctrl.autoRotate=false;
+  const tgt=ll2v(lat,lon,5.0),src=cam.position.clone(); let t=0;
+  (function s(){ t=Math.min(1,t+0.022); const e=t<.5?2*t*t:-1+(4-2*t)*t;
+    cam.position.lerpVectors(src,tgt,e); cam.lookAt(0,0,0); if(t<1) requestAnimationFrame(s); })();
+}
+
+// ===== COUNTRY SELECTION =====
+function selectCountry(code, fly=true) {
+  curCode=code; hilight(code);
+  if (fly && feat) {
+    const f=feat.features.find(x=>String(x.id)===code);
+    if (f){const c=d3.geoCentroid(f); if(c) flyTo(c[1],c[0]);}
+  }
+  const d=CD[code];
+  const rank=Object.entries(CD).sort(([,a],[,b])=>b.gdp-a.gdp).findIndex(([c])=>c===code)+1;
+  document.getElementById('c-name').textContent=d.nm;
+  document.getElementById('c-sub').textContent=`ISO ${code}  ·  GDP 全球第 ${rank} 大  ·  2023 年估計`;
+  document.getElementById('hero').style.display='none';
+  document.getElementById('country-info').style.display='flex';
+  switchTab(curTab);
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  curTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (!curCode) return;
+  if (tab==='overview') renderOverview(curCode);
+  else if (tab==='population') renderPopulation(curCode);
+  else if (tab==='agriculture') renderAgriculture(curCode);
+}
+window.switchTab=switchTab;
+
+// ===== OVERVIEW =====
+function renderOverview(code) {
+  const d=CD[code];
+  const pop=d.pop>=1000?(d.pop/1000).toFixed(2)+'B':d.pop.toLocaleString()+'M';
+  document.getElementById('panel-overview').innerHTML=`
+    <div class="metric"><span class="m-lbl">人口數</span><span class="m-val">${pop}</span></div>
+    <div class="metric"><span class="m-lbl">人均 GDP</span><span class="m-val">$${d.gdpC.toLocaleString()}</span></div>
+    <div class="metric"><span class="m-lbl">總 GDP</span><span class="m-val">$${d.gdp.toFixed(1)} 兆美元</span></div>
+    <div class="metric"><span class="m-lbl">GDP 平減指數</span><span class="m-val">${d.def.toFixed(1)}</span></div>
+    <div class="metric"><span class="m-lbl">CPI</span><span class="m-val">${d.cpi.toFixed(1)}</span></div>
+    <div class="metric"><span class="m-lbl">核心 CPI</span><span class="m-val">${d.ccpi.toFixed(1)}</span></div>
+    <div class="sec-title">主要出口商品</div>
+    <div>${d.exp.map(x=>`<span class="tag">${x}</span>`).join('')}</div>
+    <div class="sec-title">主要進口商品</div>
+    <div>${d.imp.map(x=>`<span class="tag">${x}</span>`).join('')}</div>`;
+}
+
+// ===== POPULATION PYRAMID =====
+function renderPopulation(code) {
+  const d=CD[code], [y,w,o]=d.age;
+  const groups=[
+    ['0–14歲',  y*0.515,  y*0.485],
+    ['15–29歲', w*0.300*0.510, w*0.300*0.490],
+    ['30–44歲', w*0.300*0.506, w*0.300*0.494],
+    ['45–64歲', w*0.400*0.500, w*0.400*0.500],
+    ['65–79歲', o*0.650*0.487, o*0.650*0.513],
+    ['80歲以上', o*0.350*0.442, o*0.350*0.558],
+  ];
+  const maxV=Math.max(...groups.flatMap(([,m,f])=>[m,f]));
+  const TW=268,TH=210,mL=48,mR=6,mT=6,mB=28;
+  const iW=TW-mL-mR,iH=TH-mT-mB,bH=Math.floor(iH/groups.length),mid=iW/2,sc=(mid-5)/maxV;
+  let svg=`<svg width="${TW}" height="${TH}" xmlns="http://www.w3.org/2000/svg"><defs>
+    <linearGradient id="mg" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#4a90e2"/><stop offset="100%" stop-color="#1a5aaa"/></linearGradient>
+    <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#e07050"/><stop offset="100%" stop-color="#aa3820"/></linearGradient>
+  </defs><g transform="translate(${mL},${mT})">`;
+  [maxV*0.5,maxV].forEach(v=>{
+    svg+=`<line x1="${mid-v*sc}" y1="0" x2="${mid-v*sc}" y2="${iH}" stroke="rgba(80,140,220,0.1)" stroke-width="1"/>`;
+    svg+=`<line x1="${mid+v*sc}" y1="0" x2="${mid+v*sc}" y2="${iH}" stroke="rgba(80,140,220,0.1)" stroke-width="1"/>`;
+  });
+  [...groups].reverse().forEach(([lbl,m,f],i)=>{
+    const y2=i*bH,mW=m*sc,fW=f*sc;
+    svg+=`<rect x="${mid-mW-1}" y="${y2+2}" width="${mW}" height="${bH-4}" fill="url(#mg)" rx="2"/>`;
+    svg+=`<rect x="${mid+1}" y="${y2+2}" width="${fW}" height="${bH-4}" fill="url(#fg)" rx="2"/>`;
+    svg+=`<text x="-3" y="${y2+bH/2+4}" text-anchor="end" font-size="8.5" fill="rgba(110,160,220,0.65)">${lbl}</text>`;
+  });
+  svg+=`<line x1="${mid}" y1="0" x2="${mid}" y2="${iH}" stroke="rgba(100,160,220,0.22)" stroke-width="1"/>`;
+  [maxV*0.5,maxV].forEach(v=>{
+    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="rgba(70,120,180,0.55)">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="rgba(70,120,180,0.55)">${v.toFixed(1)}%</text>`;
+  });
+  svg+=`<rect x="${mid-52}" y="${iH+15}" width="8" height="8" fill="url(#mg)" rx="1"/>`;
+  svg+=`<text x="${mid-41}" y="${iH+23}" font-size="9" fill="#4a90e2">男性</text>`;
+  svg+=`<rect x="${mid+18}" y="${iH+15}" width="8" height="8" fill="url(#fg)" rx="1"/>`;
+  svg+=`<text x="${mid+29}" y="${iH+23}" font-size="9" fill="#e07050">女性</text>`;
+  svg+=`</g></svg>`;
+
+  const dep=((y+o)/w*100).toFixed(1), agi=(o/y*100).toFixed(1);
+  document.getElementById('panel-population').innerHTML=`
+    <div class="sec-title">人口金字塔</div>
+    <div style="margin:8px -4px 16px">${svg}</div>
+    <div class="sec-title">年齡分佈</div>
+    ${[['0–14 歲（少年）',y,'#4a90e2'],['15–64 歲（工作人口）',w,'#3aaa4a'],['65 歲以上（老年）',o,'#e07050']].map(([l,v,c])=>`
+    <div class="pop-bar-row">
+      <div class="pop-bar-top"><span style="color:rgba(130,180,240,0.7)">${l}</span><span style="color:${c};font-weight:500">${v}%</span></div>
+      <div class="pop-bar-bg"><div class="pop-bar-fill" style="background:${c};opacity:.75;width:${Math.round(v)}%"></div></div>
+    </div>`).join('')}
+    <div class="sec-title" style="margin-top:16px">關鍵指標</div>
+    <div class="metric"><span class="m-lbl">總人口</span><span class="m-val">${d.pop>=1000?(d.pop/1000).toFixed(2)+'B':d.pop+'M'}</span></div>
+    <div class="metric"><span class="m-lbl">扶養比</span><span class="m-val">${dep}%</span></div>
+    <div class="metric"><span class="m-lbl">老化指數</span><span class="m-val">${agi}</span></div>`;
+}
+
+// ===== AGRICULTURE =====
+function renderAgriculture(code) {
+  const d=CD[code], maxV=Math.max(...d.agri.map(a=>a.val));
+  const total=d.agri.reduce((s,a)=>s+a.val,0);
+  document.getElementById('panel-agriculture').innerHTML=`
+    <div class="sec-title">主要農產品出口</div>
+    ${d.agri.map(a=>`
+    <div class="agri-row">
+      <div class="agri-top"><span class="agri-name">${a.nm}</span><span class="agri-val">$${a.val.toFixed(1)}B</span></div>
+      <div class="agri-bg"><div class="agri-fill" style="width:${Math.round(a.val/maxV*100)}%"></div></div>
+    </div>`).join('')}
+    <div class="sec-title" style="margin-top:16px">農業摘要</div>
+    <div class="metric"><span class="m-lbl">農業出口估算</span><span class="m-val">$${total.toFixed(1)}B</span></div>
+    <div class="metric"><span class="m-lbl">最大項目</span><span class="m-val">${d.agri[0].nm}</span></div>
+    <div class="metric"><span class="m-lbl">最大項目佔比</span><span class="m-val">${(d.agri[0].val/total*100).toFixed(0)}%</span></div>`;
+}
+
+// ===== BILATERAL TRADE =====
+function calcTrade() {
+  const cA=document.getElementById('trade-a').value, cB=document.getElementById('trade-b').value;
+  const el=document.getElementById('trade-result');
+  if (!cA||!cB){el.innerHTML='<span style="color:#24405a">請選擇兩個國家</span>';return;}
+  if (cA===cB){el.innerHTML='<span style="color:#24405a">請選擇不同的國家</span>';return;}
+  const dA=CD[cA],dB=CD[cB];
+  const bal=dA.tr?.[cB]!==undefined?dA.tr[cB]:dB.tr?.[cA]!==undefined?-dB.tr[cA]:null;
+  const card=(d)=>`<div class="trade-card"><div class="trade-card-lbl">${d.nm}</div><div class="trade-card-gdp">$${d.gdp.toFixed(1)}T</div><div class="trade-card-gpc">$${d.gdpC.toLocaleString()} / 人</div></div>`;
+  if (bal!==null) {
+    const pos=bal>=0,abs=Math.abs(bal),col=pos?'#3aaa44':'#e05050',bA=Math.max(6,Math.min(94,50+bal*0.1));
+    el.innerHTML=`
+      <div style="font-size:11px;color:#24405a;margin-bottom:10px">${dA.nm} ↔ ${dB.nm}</div>
+      <div style="font-size:28px;font-weight:700;color:${col}">${pos?'+':'-'}$${abs}B</div>
+      <div style="font-size:12px;color:#305a72;margin:4px 0 14px">${pos?dA.nm:dB.nm} 享有貿易順差</div>
+      <div style="display:flex;height:14px;border-radius:4px;overflow:hidden;gap:2px">
+        <div style="width:${bA}%;background:#1a7a3a;border-radius:3px 0 0 3px;min-width:4px"></div>
+        <div style="width:${100-bA}%;background:#7a1a1a;border-radius:0 3px 3px 0;min-width:4px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px;color:#24405a">
+        <span>${dA.nm} 出口</span><span>${dB.nm} 出口</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">${card(dA)}${card(dB)}</div>`;
+  } else {
+    el.innerHTML=`<div style="font-size:11px;color:#24405a;margin-bottom:10px">暫無 ${dA.nm} ↔ ${dB.nm} 詳細貿易數據</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${card(dA)}${card(dB)}</div>`;
+  }
+}
+window.calcTrade=calcTrade;
+
+// ===== SEARCH =====
+const si=document.getElementById('search-input'), sd=document.getElementById('search-results');
+si.addEventListener('input',function(){
+  const q=this.value.trim();
+  if (!q){sd.style.display='none';return;}
+  const m=Object.entries(CD).filter(([,d])=>d.nm.includes(q));
+  if (!m.length){sd.style.display='none';return;}
+  sd.innerHTML=m.slice(0,6).map(([c,d])=>`<div class="sr-item" onclick="searchSel('${c}')">${d.nm}</div>`).join('');
+  sd.style.display='block';
+});
+function searchSel(code){sd.style.display='none';si.value='';selectCountry(code,true);}
+window.searchSel=searchSel;
+document.addEventListener('click',e=>{if(!e.target.closest('#search-box'))sd.style.display='none';});
+
+boot();
+</script>
+</body>
+</html>
