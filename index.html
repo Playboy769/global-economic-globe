@@ -135,6 +135,85 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .nd-csec{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 4px;font-weight:700}
 .nd-crow{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#bbb;font-weight:400}
 .nd-crow span:last-child{color:#fff;font-weight:600}
+/* ===== ENERGY MODE ===== */
+#mode-toggle{position:fixed;top:16px;left:16px;z-index:30;display:flex;background:rgba(10,14,20,0.92);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;backdrop-filter:blur(12px)}
+.mt-btn{padding:8px 16px;font-size:11px;font-weight:700;color:#555;cursor:pointer;border:none;background:none;text-transform:uppercase;letter-spacing:.08em;transition:all .15s;font-family:inherit}
+.mt-btn.active{color:#4ad;background:rgba(74,170,221,0.1)}
+.mt-btn:hover:not(.active){color:#888}
+#energy-ui{display:none;position:absolute;inset:0;z-index:15;pointer-events:none}
+#energy-ui>*{pointer-events:auto}
+#en-nav{position:absolute;top:0;left:0;right:0;height:64px;display:flex;background:rgba(10,14,20,0.92);border-bottom:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(12px);z-index:5}
+.en-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;padding:0 20px;gap:2px}
+.en-tab:hover{background:rgba(255,255,255,0.02)}
+.en-tab.active{border-bottom-color:#4ad;background:rgba(74,170,221,0.04)}
+.en-tab-title{font-size:13px;font-weight:700;color:#4ad;letter-spacing:.02em}
+.en-tab-desc{font-size:10px;color:#555;font-weight:400}
+.en-tab .en-radio{width:10px;height:10px;border-radius:50%;border:2px solid #333;margin-right:6px;display:inline-block}
+.en-tab.active .en-radio{border-color:#4ad;background:#4ad}
+#en-left{position:absolute;left:0;top:64px;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
+#en-left::-webkit-scrollbar{width:3px}
+#en-left::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+#en-right{position:absolute;right:0;top:64px;bottom:0;width:340px;background:rgba(10,14,20,0.92);border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
+#en-right::-webkit-scrollbar{width:3px}
+#en-right::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+.en-sec{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.en-sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.en-sec-title{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.en-sec-btns{display:flex;gap:4px}
+.en-sec-btn{padding:2px 8px;border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:9px;color:#555;background:none;cursor:pointer;font-weight:600;font-family:inherit}
+.en-sec-btn:hover{color:#fff;border-color:rgba(255,255,255,0.2)}
+.en-layer{display:flex;align-items:center;padding:7px 10px;border-radius:6px;cursor:pointer;transition:all .12s;margin-bottom:3px;border:1px solid transparent}
+.en-layer:hover{background:rgba(255,255,255,0.03)}
+.en-layer.active{border-color:rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.el-dot{width:10px;height:10px;border-radius:50%;margin-right:10px;flex-shrink:0;border:2px solid}
+.el-name{flex:1;font-size:11.5px;font-weight:600;color:#ccc;font-family:'Consolas','Courier New',monospace}
+.el-count{font-size:11px;font-weight:700;margin-right:8px}
+.el-tog{width:8px;height:8px;border-radius:50%}
+.en-route-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:11px;color:#888}
+.er-line{width:24px;height:2px;border-radius:1px;flex-shrink:0}
+.er-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.en-ctrl-label{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
+.en-btn-group{display:flex;gap:0}
+.en-btn{padding:6px 12px;font-size:10px;font-weight:600;color:#555;background:none;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:all .12s;font-family:'Consolas',monospace}
+.en-btn:first-child{border-radius:4px 0 0 4px}
+.en-btn:last-child{border-radius:0 4px 4px 0}
+.en-btn.active{color:#4ad;background:rgba(74,170,221,0.1);border-color:rgba(74,170,221,0.3)}
+.en-maritime{padding:6px 10px;display:flex;align-items:center;gap:8px;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:background .1s}
+.en-maritime:hover{background:rgba(255,255,255,0.03)}
+.em-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;opacity:.5}
+.em-nm{flex:1;color:#888;font-weight:400;font-size:10.5px}
+.em-vol{color:#4ad;font-weight:700;font-size:10px;font-family:'Consolas',monospace}
+.em-alert{color:#e44;font-size:8px;margin-right:2px}
+#route-stats{position:absolute;top:74px;right:356px;background:rgba(10,14,20,0.88);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;z-index:6;font-family:'Consolas',monospace;backdrop-filter:blur(8px)}
+.rs-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rs-title{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.rs-tag{font-size:9px;padding:2px 6px;border:1px solid rgba(74,170,221,0.3);border-radius:3px;color:#4ad;font-weight:600;cursor:pointer}
+.rs-row{display:flex;justify-content:space-between;gap:24px;font-size:11px;padding:2px 0}
+.rs-lbl{color:#888}
+.rs-val{font-weight:700}
+.hub-icon{width:52px;height:52px;margin:10px auto 14px;border:2px solid rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#4ad;background:rgba(74,170,221,0.04)}
+.hub-prompt{font-size:14px;font-weight:600;color:#ccc;margin-bottom:6px;text-align:center}
+.hub-prompt-sub{font-size:11px;color:#555;font-weight:400;line-height:1.6;text-align:center}
+.en-theme-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.et-card{width:62px;text-align:center;cursor:pointer;opacity:.45;transition:opacity .15s}
+.et-card:hover,.et-card.active{opacity:1}
+.et-img{width:52px;height:52px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.04);margin:0 auto}
+.et-card.active .et-img{border-color:#4ad;box-shadow:0 0 12px rgba(74,170,221,0.3)}
+.et-label{font-size:7.5px;color:#888;margin-top:4px;font-weight:600}
+.en-theme-desc{margin-top:14px;padding:10px 12px;background:rgba(74,170,221,0.04);border-radius:8px;border-left:3px solid #4ad}
+.en-td-title{font-size:12px;font-weight:700;color:#4ad;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.en-td-text{font-size:10px;color:#888;line-height:1.5;font-weight:400}
+#en-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#555;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
+.en-toggle{position:relative;width:36px;height:18px;background:rgba(255,255,255,0.06);border-radius:9px;cursor:pointer;transition:background .2s}
+.en-toggle.on{background:rgba(74,170,221,0.3)}
+.en-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#555;top:2px;left:2px;transition:all .2s}
+.en-toggle.on::after{left:20px;background:#4ad}
+.en-hub-info{padding:16px}
+.ehi-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.ehi-type{font-size:10px;color:#4ad;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px}
+.ehi-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:12px}
+.ehi-lbl{color:#888;font-weight:400}
+.ehi-val{color:#fff;font-weight:700}
 </style>
 </head>
 <body>
@@ -178,13 +257,18 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
         <button class="tab-btn"        data-tab="population"  onclick="switchTab('population')">人口</button>
         <button class="tab-btn"        data-tab="agriculture" onclick="switchTab('agriculture')">農業</button>
         <button class="tab-btn"        data-tab="trade"       onclick="switchTab('trade')">貿易</button>
+        <button class="tab-btn"        data-tab="finance"     onclick="switchTab('finance')">金融</button>
+        <button class="tab-btn"        data-tab="social"      onclick="switchTab('social')">社會</button>
       </div>
       <div id="tab-panels">
         <div id="panel-overview"    class="panel active"></div>
         <div id="panel-population"  class="panel"></div>
         <div id="panel-agriculture" class="panel"></div>
+        <div id="panel-finance" class="panel"></div>
+        <div id="panel-social" class="panel"></div>
         <div id="panel-trade" class="panel">
-          <div class="sec-title">雙邊貿易比較</div>
+          <div id="trade-detail"></div>
+          <div class="sec-title" style="margin-top:16px;padding-top:12px;border-top:1px solid #0a0a0a">雙邊貿易比較</div>
           <div class="trade-row">
             <div class="custom-select" id="cs-trade-a" data-target="trade-a"><div class="cs-display">選擇國家 A</div><div class="cs-dropdown"><input class="cs-search" placeholder="搜尋…"><div class="cs-options"></div></div></div>
             <select id="trade-a" style="display:none"><option value="">選擇國家 A</option></select>
@@ -232,6 +316,85 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       <div id="nd-sub" style="font-size:11px;color:#555;margin-bottom:14px;font-weight:400">點擊展開查看商品明細</div>
       <div id="nd-list"></div>
     </div>
+  </div>
+  <!-- Mode Toggle -->
+  <div id="mode-toggle">
+    <button class="mt-btn active" onclick="switchMode('econ')">🌍 經濟</button>
+    <button class="mt-btn" onclick="switchMode('energy')">⚡ 能源</button>
+  </div>
+  <!-- Energy Mode UI -->
+  <div id="energy-ui">
+    <div id="en-nav">
+      <div class="en-tab active" data-en-tab="hubs" onclick="switchEnTab('hubs')"><span class="en-radio"></span><div><div class="en-tab-title">樞紐檢視</div><div class="en-tab-desc">All 186 O&G hubs, fields & terminals</div></div></div>
+      <div class="en-tab" data-en-tab="flows" onclick="switchEnTab('flows')"><span class="en-radio"></span><div><div class="en-tab-title">貿易流量</div><div class="en-tab-desc">Country import/export flows & arcs</div></div></div>
+      <div class="en-tab" data-en-tab="timeline" onclick="switchEnTab('timeline')"><span class="en-radio"></span><div><div class="en-tab-title">時間膠囊</div><div class="en-tab-desc">38 snapshots · Q1 2024 — Now · Daily crisis resolution</div></div></div>
+    </div>
+    <div id="en-left">
+      <div class="en-sec">
+        <div class="en-sec-head"><span class="en-sec-title">Layers / Legend</span><div class="en-sec-btns"><button class="en-sec-btn" onclick="enLayerAll(true)">ALL</button><button class="en-sec-btn" onclick="enLayerAll(false)">NONE</button></div></div>
+        <div id="en-layers">
+          <div class="en-layer active" data-layer="prod" onclick="toggleEnLayer('prod')"><div class="el-dot" style="border-color:#e44;background:transparent"></div><span class="el-name">Production Fields</span><span class="el-count" style="color:#e44">53</span><span class="el-tog" style="background:#e44"></span></div>
+          <div class="en-layer active" data-layer="offshore" onclick="toggleEnLayer('offshore')"><div class="el-dot" style="border-color:#4ad;background:#4ad"></div><span class="el-name">Offshore & Chokepoints</span><span class="el-count" style="color:#4ad">34</span><span class="el-tog" style="background:#4ad"></span></div>
+          <div class="en-layer active" data-layer="lng" onclick="toggleEnLayer('lng')"><div class="el-dot" style="border-color:#4d8;background:#4d8"></div><span class="el-name">LNG Terminals</span><span class="el-count" style="color:#4d8">51</span><span class="el-tog" style="background:#4d8"></span></div>
+          <div class="en-layer active" data-layer="export" onclick="toggleEnLayer('export')"><div class="el-dot" style="border-color:#da4;background:#da4"></div><span class="el-name">Export Hubs</span><span class="el-count" style="color:#da4">53</span><span class="el-tog" style="background:#da4"></span></div>
+          <div class="en-layer active" data-layer="crisis" onclick="toggleEnLayer('crisis')"><div class="el-dot" style="border-color:#f4a;background:transparent"></div><span class="el-name">Crisis Overlays</span><span class="el-count" style="color:#f4a">38</span><span class="el-tog" style="background:#f4a"></span></div>
+          <div class="en-layer active" data-layer="lngRoute" onclick="toggleEnLayer('lngRoute')"><div class="el-dot" style="border-color:#4d8;background:transparent"></div><span class="el-name">LNG Sea Routes</span><span class="el-count" style="color:#4d8">27</span><span class="el-tog" style="background:#4d8"></span></div>
+          <div class="en-layer active" data-layer="disrupted" onclick="toggleEnLayer('disrupted')"><div class="el-dot" style="border-color:#f44;background:transparent"></div><span class="el-name">Disrupted Routes</span><span class="el-count" style="color:#f44">4</span><span class="el-tog" style="background:#f44"></span></div>
+        </div>
+      </div>
+      <div class="en-sec">
+        <div class="en-route-item"><div class="er-line" style="background:#4488cc"></div><span>Sea Crude</span><span class="er-dot" style="background:#4488cc"></span></div>
+        <div class="en-route-item"><div class="er-line" style="background:#44cc88"></div><span>Sea LNG</span><span class="er-dot" style="background:#44cc88"></span></div>
+        <div class="en-route-item"><div class="er-line" style="background:#cc8844"></div><span>Pipeline</span><span class="er-dot" style="background:#cc8844"></span></div>
+        <div class="en-route-item"><div class="er-line" style="background:#cc4444"></div><span>Disrupted</span><span class="er-dot" style="background:#cc4444"></span></div>
+      </div>
+      <div class="en-sec">
+        <div class="en-ctrl-label">航線寬度</div>
+        <div class="en-btn-group"><button class="en-btn active" onclick="setRouteWidth('uniform')">Uniform</button><button class="en-btn" onclick="setRouteWidth('flow')">Flow Routes</button><button class="en-btn" onclick="setRouteWidth('vol')">Vol Only</button></div>
+        <div style="margin-top:10px"><div class="en-ctrl-label">Filter</div>
+        <div class="en-btn-group"><button class="en-btn active" onclick="setEnFilter('grid')">⊞</button><button class="en-btn" onclick="setEnFilter('circle')">○</button><button class="en-btn" onclick="setEnFilter('gear')">⚙</button></div></div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center"><div><div class="en-ctrl-label" style="margin:0">Cloud Layer</div><div style="font-size:9px;color:#444;font-weight:400">Hidden</div></div><div class="en-toggle" id="cloud-toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div style="margin-top:10px"><label style="font-size:10px;color:#555;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" style="accent-color:#4ad"> <span style="font-family:Consolas,monospace">SINGLE</span></label></div>
+      </div>
+      <div class="en-sec">
+        <div class="en-sec-head"><span class="en-sec-title" style="color:#4ad">● Sea / Maritime (34)</span></div>
+        <div id="en-maritime-list"></div>
+      </div>
+    </div>
+    <div id="en-right">
+      <div id="hub-detail">
+        <div class="hub-icon">⊕</div>
+        <div class="hub-prompt">Select a hub</div>
+        <div class="hub-prompt-sub">Click any marker on the globe or a location in the list to view detailed intelligence</div>
+      </div>
+      <div class="en-sec" id="en-theme-panel">
+        <div class="en-sec-head"><span class="en-sec-title">地球主題</span><span class="en-theme-active" id="en-theme-name">Night Map</span></div>
+        <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px">Classic</div>
+        <div class="en-theme-grid">
+          <div class="et-card" data-theme="geo" onclick="setEnTheme('geo')"><div class="et-img">🌍</div><div class="et-label">Geo Map</div></div>
+          <div class="et-card active" data-theme="night" onclick="setEnTheme('night')"><div class="et-img">🌑</div><div class="et-label">Night Map</div></div>
+          <div class="et-card" data-theme="daynight" onclick="setEnTheme('daynight')"><div class="et-img">🌗</div><div class="et-label">Day / Night</div></div>
+          <div class="et-card" data-theme="holo" onclick="setEnTheme('holo')"><div class="et-img">🔮</div><div class="et-label">Holographic</div></div>
+        </div>
+        <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:6px">🟢 NASA · NOAA Live<span style="font-weight:400;color:#333;text-transform:none;letter-spacing:0">updated hourly</span></div>
+        <div class="en-theme-grid">
+          <div class="et-card" data-theme="nasa" onclick="setEnTheme('nasa')"><div class="et-img">🛰</div><div class="et-label">NASA True Color</div></div>
+          <div class="et-card" data-theme="sst" onclick="setEnTheme('sst')"><div class="et-img">🌊</div><div class="et-label">NOAA SST</div></div>
+          <div class="et-card" data-theme="marble" onclick="setEnTheme('marble')"><div class="et-img">🖤</div><div class="et-label">Black Marble</div></div>
+          <div class="et-card" data-theme="aod" onclick="setEnTheme('aod')"><div class="et-img">💨</div><div class="et-label">Aerosol / AOD</div></div>
+          <div class="et-card" data-theme="goes" onclick="setEnTheme('goes')"><div class="et-img">🌀</div><div class="et-label">GOES-East</div></div>
+        </div>
+        <div class="en-theme-desc"><div class="en-td-title">🌑 Night Map</div><div class="en-td-text">Dark continent silhouettes with glowing coastlines and blue emissive ocean specular.</div></div>
+      </div>
+    </div>
+    <div id="route-stats">
+      <div class="rs-head"><span class="rs-title">Routes</span><span class="rs-tag" id="rs-theme-tag">Night Map</span></div>
+      <div class="rs-row"><span class="rs-lbl">Crude</span><span class="rs-val" style="color:#4488cc">32</span></div>
+      <div class="rs-row"><span class="rs-lbl">LNG</span><span class="rs-val" style="color:#44cc88">27</span></div>
+      <div class="rs-row"><span class="rs-lbl">Pipe</span><span class="rs-val" style="color:#cc8844">33</span></div>
+      <div class="rs-row"><span class="rs-lbl">Dis.</span><span class="rs-val" style="color:#cc4444">4</span></div>
+    </div>
+    <div id="en-hint">Drag · Scroll Zoom · Click Hub</div>
   </div>
 </div>
 
@@ -1003,7 +1166,7 @@ async function boot(){
   document.addEventListener('click',()=>document.querySelectorAll('.custom-select.open').forEach(x=>x.classList.remove('open')));
 
   const ld=document.getElementById('loading'); ld.style.opacity='0'; setTimeout(()=>ld.style.display='none',400);
-  (function loop(){requestAnimationFrame(loop); ctrl.update(); rend.render(scene,cam);})();
+  (function loop(){requestAnimationFrame(loop); ctrl.update(); if(enMode)animateFlowDots(); rend.render(scene,cam);})();
 }
 
 function onResize(){
@@ -1104,6 +1267,9 @@ function switchTab(tab){
   if(tab==='overview')renderOverview(curCode);
   else if(tab==='population')renderPopulation(curCode);
   else if(tab==='agriculture')renderAgriculture(curCode);
+  else if(tab==='trade')renderTrade(curCode);
+  else if(tab==='finance')renderFinance(curCode);
+  else if(tab==='social')renderSocial(curCode);
 }
 window.switchTab=switchTab;
 
@@ -1149,6 +1315,7 @@ function renderOverview(code){
     <div class="metric"><span class="m-lbl">CPI 年增率</span><span class="m-val" style="color:${d.cpiYoy>50?'#ee4444':d.cpiYoy>10?'#ee9922':d.cpiYoy<2?'#44cc66':'#fff'}">${d.cpiYoy}%</span></div>
     <div class="metric"><span class="m-lbl">失業率</span><span class="m-val" style="color:${d.unemp>20?'#ee4444':d.unemp>10?'#ee9922':d.unemp<4?'#44cc66':'#fff'}">${d.unemp!==undefined?d.unemp+'%':'—'}</span></div>
     ${d.gdpH?`<div class="sec-title">GDP 趨勢（2014–2023，兆美元）</div><div style="margin:6px -4px 14px">${buildGDPChart(d.gdpH)}</div>`:''}
+    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,110)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#4a88dd','#dd8844','#44aa66'][i]+';display:inline-block"></span><span style="color:#888">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
     <div class="sec-title">▲ 主要出口商品（十億美元）</div>
     ${d.exp.map(x=>barRow(x,maxE,'ti-exp')).join('')}
     <div class="sec-title">▼ 主要進口商品（十億美元）</div>
@@ -1231,6 +1398,241 @@ function renderAgriculture(code){
     <div class="metric"><span class="m-lbl">農業出口估算</span><span class="m-val">$${total.toFixed(1)}B</span></div>
     <div class="metric"><span class="m-lbl">最大項目</span><span class="m-val">${d.agri[0].nm}</span></div>
     <div class="metric"><span class="m-lbl">最大項目佔比</span><span class="m-val">${(d.agri[0].val/total*100).toFixed(0)}%</span></div>`;
+}
+
+// ===== CHART BUILDERS =====
+function svgPie(data,W=160){
+  const cx=W/2,cy=W/2,r=W/2-8,colors=['#4a88dd','#dd8844','#44aa66'];
+  let a=0,svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
+  data.forEach((d,i)=>{
+    const sweep=d.pct/100*Math.PI*2,x1=cx+r*Math.cos(a),y1=cy+r*Math.sin(a);
+    const x2=cx+r*Math.cos(a+sweep),y2=cy+r*Math.sin(a+sweep),lg=sweep>Math.PI?1:0;
+    svg+=`<path d="M${cx},${cy}L${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}Z" fill="${colors[i]}" opacity="0.85"/>`;
+    const ma=a+sweep/2,lx=cx+(r*0.6)*Math.cos(ma),ly=cy+(r*0.6)*Math.sin(ma);
+    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold" font-family="sans-serif">${d.pct}%</text>`;
+    a+=sweep;
+  });
+  svg+=`</svg>`;
+  return svg;
+}
+function svgDonut(data,W=180){
+  const cx=W/2,cy=W/2,r=W/2-16,ir=r*0.55,colors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#44ddaa','#dddd44','#8888dd'];
+  let a=-Math.PI/2,svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
+  data.forEach((d,i)=>{
+    const sweep=d.pct/100*Math.PI*2;if(sweep<0.01)return;
+    const x1=cx+r*Math.cos(a),y1=cy+r*Math.sin(a),x2=cx+r*Math.cos(a+sweep),y2=cy+r*Math.sin(a+sweep);
+    const ix1=cx+ir*Math.cos(a+sweep),iy1=cy+ir*Math.sin(a+sweep),ix2=cx+ir*Math.cos(a),iy2=cy+ir*Math.sin(a);
+    const lg=sweep>Math.PI?1:0;
+    svg+=`<path d="M${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}L${ix1},${iy1}A${ir},${ir} 0 ${lg},0 ${ix2},${iy2}Z" fill="${colors[i%8]}" opacity="0.85"><title>${d.nm} ${d.pct}%</title></path>`;
+    a+=sweep;
+  });
+  svg+=`</svg>`;return svg;
+}
+function svgRadar(vals,labels,W=200){
+  const cx=W/2,cy=W/2,r=W/2-30,n=vals.length;
+  let svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
+  for(let lv=0.25;lv<=1;lv+=0.25){
+    let pts=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2;pts.push(`${cx+r*lv*Math.cos(a)},${cy+r*lv*Math.sin(a)}`);}
+    svg+=`<polygon points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+  }
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2;svg+=`<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="rgba(255,255,255,0.06)"/>`;}
+  let pts=[];vals.forEach((v,i)=>{const a=i/n*Math.PI*2-Math.PI/2;pts.push(`${cx+r*v*Math.cos(a)},${cy+r*v*Math.sin(a)}`);});
+  svg+=`<polygon points="${pts.join(' ')}" fill="rgba(74,136,221,0.15)" stroke="#4a88dd" stroke-width="1.5"/>`;
+  vals.forEach((v,i)=>{const a=i/n*Math.PI*2-Math.PI/2;
+    svg+=`<circle cx="${cx+r*v*Math.cos(a)}" cy="${cy+r*v*Math.sin(a)}" r="3" fill="#4a88dd"/>`;
+    const lx=cx+(r+16)*Math.cos(a),ly=cy+(r+16)*Math.sin(a);
+    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="8" fill="#888" font-family="sans-serif">${labels[i]}</text>`;
+  });
+  svg+=`</svg>`;return svg;
+}
+function svgTimeline(data,W=370,H=80,color='#4a88dd'){
+  const mL=36,mR=8,mT=8,mB=20,iW=W-mL-mR,iH=H-mT-mB;
+  const vals=data.map(d=>d.v),mn=Math.min(...vals)*0.9,mx=Math.max(...vals)*1.1,rng=mx-mn||1;
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><g transform="translate(${mL},${mT})">`;
+  svg+=`<line x1="0" y1="${iH}" x2="${iW}" y2="${iH}" stroke="rgba(255,255,255,0.06)"/>`;
+  let pts=[];data.forEach((d,i)=>{const x=i/(data.length-1)*iW,y=iH-(d.v-mn)/rng*iH;pts.push(`${x},${y}`);});
+  svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.8"/>`;
+  data.forEach((d,i)=>{const x=i/(data.length-1)*iW,y=iH-(d.v-mn)/rng*iH;
+    svg+=`<circle cx="${x}" cy="${y}" r="2.5" fill="${color}"/>`;
+    if(i%2===0||data.length<=6)svg+=`<text x="${x}" y="${iH+13}" text-anchor="middle" font-size="7.5" fill="#444" font-family="sans-serif">${d.l}</text>`;
+  });
+  [mn,mx].forEach((v,i)=>{const y=i===0?iH:0;svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="7.5" fill="#444" font-family="sans-serif">${v.toFixed(v<10?2:0)}</text>`;});
+  svg+=`</g></svg>`;return svg;
+}
+
+// ===== FINANCIAL DATA =====
+const CD_FIN={};
+const _SEC_DEV=[1.5,19.5,79.0],_SEC_IND=[5,35,60],_SEC_AGR=[22,25,53],_SEC_OIL=[2,50,48],_SEC_MIX=[8,28,64],_SEC_SVC=[3,22,75];
+const _SUB_DEV=[{nm:'金融保險',pct:7.5},{nm:'科技資訊',pct:6.8},{nm:'製造業',pct:11.2},{nm:'零售貿易',pct:5.8},{nm:'醫療健康',pct:7.2},{nm:'不動產',pct:12.5},{nm:'教育',pct:3.2},{nm:'運輸物流',pct:4.5},{nm:'建築',pct:4.8},{nm:'能源礦業',pct:3.5}];
+const _SUB_IND=[{nm:'製造業',pct:18.5},{nm:'礦業能源',pct:8.2},{nm:'金融保險',pct:5.5},{nm:'建築',pct:6.8},{nm:'零售貿易',pct:7.2},{nm:'運輸物流',pct:5.5},{nm:'科技資訊',pct:3.2},{nm:'農業加工',pct:4.8},{nm:'不動產',pct:6.0},{nm:'公共服務',pct:3.5}];
+const _SUB_OIL=[{nm:'石油天然氣',pct:35.0},{nm:'石化工業',pct:8.5},{nm:'金融保險',pct:6.0},{nm:'建築',pct:8.2},{nm:'不動產',pct:5.5},{nm:'零售貿易',pct:4.8},{nm:'運輸物流',pct:3.5},{nm:'製造業',pct:4.0},{nm:'電信',pct:3.2},{nm:'旅遊服務',pct:3.0}];
+const _RH_DEV=[{y:'18',v:1.75},{y:'19',v:2.50},{y:'20',v:0.25},{y:'21',v:0.25},{y:'22',v:4.50},{y:'23',v:5.50},{y:'24',v:5.25},{y:'25',v:4.75}];
+const _RH_EU=[{y:'18',v:0.0},{y:'19',v:0.0},{y:'20',v:0.0},{y:'21',v:0.0},{y:'22',v:2.50},{y:'23',v:4.50},{y:'24',v:4.00},{y:'25',v:3.25}];
+const _RH_EM=[{y:'18',v:6.5},{y:'19',v:5.5},{y:'20',v:3.5},{y:'21',v:4.0},{y:'22',v:8.5},{y:'23',v:10.0},{y:'24',v:8.5},{y:'25',v:7.5}];
+const _EXP5_US=[{c:'加拿大',pct:17},{c:'墨西哥',pct:16},{c:'中國',pct:8},{c:'日本',pct:5},{c:'英國',pct:4},{c:'其他',pct:50}];
+const _EXP5_CN=[{c:'美國',pct:17},{c:'香港',pct:9},{c:'日本',pct:5},{c:'韓國',pct:4},{c:'越南',pct:4},{c:'其他',pct:61}];
+const _EXP5_DEF=[{c:'主要夥伴1',pct:15},{c:'主要夥伴2',pct:12},{c:'主要夥伴3',pct:8},{c:'主要夥伴4',pct:6},{c:'主要夥伴5',pct:5},{c:'其他',pct:54}];
+const _SC_US=[{item:'半導體',from:'台灣',pct:65},{item:'稀土',from:'中國',pct:80},{item:'鋰電池',from:'中國',pct:70}];
+const _SC_CN=[{item:'石油',from:'沙烏地',pct:18},{item:'鐵礦砂',from:'澳洲',pct:62},{item:'半導體設備',from:'荷蘭',pct:85}];
+const _SC_DEF=[{item:'能源',from:'主要供應國',pct:45},{item:'零組件',from:'主要供應國',pct:55},{item:'原物料',from:'主要供應國',pct:40}];
+const _CM_DEV={oil:35,gas:20,food:8};
+const _CM_OIL={oil:5,gas:5,food:45};
+const _CM_EM={oil:55,gas:35,food:15};
+function fin(sec,sub,rate,rH,cr,debt,def,stock,sH,fdi,fH,expD,sc,cm){return{sec,sub,rate,rH,cr,debt,def,stock,sH,fdi,fH,expD,sc,cm};}
+Object.assign(CD_FIN,{
+'840':fin(_SEC_DEV,[{nm:'不動產',pct:13.5},{nm:'金融保險',pct:8.2},{nm:'科技資訊',pct:7.5},{nm:'醫療健康',pct:7.2},{nm:'製造業',pct:10.8},{nm:'零售貿易',pct:5.9},{nm:'教育',pct:3.5},{nm:'建築',pct:4.2},{nm:'運輸物流',pct:3.8},{nm:'能源礦業',pct:3.2}],5.50,_RH_DEV,{sp:'AA+',moody:'Aaa',fitch:'AA+'},123,-6.3,'S&P 500',[3840,3970,4100,3970,4130,4290,4440,4190,4350,4570,4770,4930],354,[310,280,354,388,350],_EXP5_US,_SC_US,{oil:35,gas:5,food:8}),
+'156':fin([7.3,39.4,53.3],[{nm:'製造業',pct:27.5},{nm:'不動產',pct:6.8},{nm:'金融保險',pct:7.5},{nm:'建築',pct:7.0},{nm:'零售貿易',pct:5.5},{nm:'科技資訊',pct:4.2},{nm:'運輸物流',pct:4.5},{nm:'礦業能源',pct:5.8},{nm:'農業',pct:7.3},{nm:'電信',pct:3.2}],3.45,[{y:'18',v:4.35},{y:'19',v:4.35},{y:'20',v:3.85},{y:'21',v:3.85},{y:'22',v:3.65},{y:'23',v:3.45},{y:'24',v:3.10},{y:'25',v:3.00}],{sp:'A+',moody:'A1',fitch:'A+'},77,-7.1,'上證指數',[3340,3250,3290,3180,3060,3150,3230,3100,3050,2960,2980,3090],189,[180,155,189,170,163],_EXP5_CN,_SC_CN,{oil:72,gas:42,food:18}),
+'392':fin([1.1,29.1,69.8],[{nm:'製造業',pct:20.5},{nm:'不動產',pct:12.0},{nm:'金融保險',pct:5.8},{nm:'零售貿易',pct:6.5},{nm:'醫療健康',pct:6.2},{nm:'科技資訊',pct:5.0},{nm:'運輸物流',pct:5.0},{nm:'建築',pct:5.5},{nm:'教育',pct:3.5},{nm:'能源',pct:2.8}],-0.10,[{y:'18',v:-0.1},{y:'19',v:-0.1},{y:'20',v:-0.1},{y:'21',v:-0.1},{y:'22',v:-0.1},{y:'23',v:-0.1},{y:'24',v:0.25},{y:'25',v:0.50}],{sp:'A+',moody:'A1',fitch:'A'},264,-5.8,'日經225',[23500,24000,27500,28800,26500,27800,31500,32200,31800,33500,35200,36000],26,[15,20,26,30,28],[{c:'美國',pct:20},{c:'中國',pct:19},{c:'韓國',pct:7},{c:'台灣',pct:6},{c:'香港',pct:5},{c:'其他',pct:43}],[{item:'石油',from:'沙烏地',pct:40},{item:'LNG',from:'澳洲',pct:35},{item:'半導體',from:'台灣',pct:55}],{oil:92,gas:97,food:62})
+});
+// Template-generate remaining countries
+const _finTpl={
+dev:{sec:_SEC_DEV,sub:_SUB_DEV,rH:_RH_DEV,expD:_EXP5_DEF,sc:_SC_DEF,cm:_CM_DEV},
+ind:{sec:_SEC_IND,sub:_SUB_IND,rH:_RH_EM,expD:_EXP5_DEF,sc:_SC_DEF,cm:_CM_EM},
+oil:{sec:_SEC_OIL,sub:_SUB_OIL,rH:_RH_EM,expD:_EXP5_DEF,sc:_SC_DEF,cm:_CM_OIL},
+mix:{sec:_SEC_MIX,sub:_SUB_IND,rH:_RH_EM,expD:_EXP5_DEF,sc:_SC_DEF,cm:_CM_EM},
+svc:{sec:_SEC_SVC,sub:_SUB_DEV,rH:_RH_EU,expD:_EXP5_DEF,sc:_SC_DEF,cm:_CM_DEV}
+};
+const _finMap={
+'276':'dev','826':'dev','250':'dev','380':'svc','124':'dev','036':'dev','724':'svc','528':'dev','756':'dev','616':'ind','056':'dev','752':'dev','578':'dev','040':'dev','372':'dev','208':'dev','246':'dev','620':'svc','554':'dev','300':'svc',
+'076':'mix','643':'oil','410':'ind','484':'mix','360':'mix','356':'mix','792':'mix','032':'mix','764':'mix','566':'oil','608':'mix','458':'mix','050':'mix','818':'mix','704':'ind','710':'mix','344':'svc','170':'mix','152':'mix','203':'ind','642':'ind','586':'mix','158':'ind',
+'784':'oil','682':'oil','376':'svc','702':'svc','348':'ind','804':'mix','414':'oil','512':'oil','442':'svc','191':'svc','705':'svc','233':'svc','196':'svc',
+'368':'oil','604':'mix','634':'oil','398':'oil','012':'oil','231':'mix','504':'mix','703':'ind','218':'mix','404':'mix','214':'mix','320':'mix','100':'ind','860':'mix','591':'svc','024':'oil','834':'mix','440':'svc','144':'mix','288':'mix','858':'svc','112':'ind','384':'mix','188':'svc','688':'ind','180':'mix','104':'mix','031':'oil','788':'mix','400':'mix','800':'mix','434':'oil','068':'mix','120':'mix','048':'oil','428':'svc','600':'mix','524':'mix','222':'mix','116':'mix','780':'oil'
+};
+const _finExtra={
+'276':{rate:3.25,cr:{sp:'AAA',moody:'Aaa',fitch:'AAA'},debt:64,def:-1.5,stock:'DAX',sIdx:'DAX',sH:[12400,13200,14100,15600,14200,15800,16100,15400,16500,16800,17000,17200],fdi:55,fH:[40,45,55,60,50]},
+'826':{rate:4.75,cr:{sp:'AA',moody:'Aa3',fitch:'AA-'},debt:101,def:-4.5,stock:'FTSE 100',sIdx:'FTSE',sH:[7100,7200,7500,7600,7300,7500,7600,7400,7700,7800,7600,7700],fdi:38,fH:[30,35,38,42,36]},
+'250':{rate:3.25,cr:{sp:'AA',moody:'Aa2',fitch:'AA-'},debt:112,def:-4.8,stock:'CAC 40',sIdx:'CAC',sH:[6400,6500,7000,7200,6800,7100,7300,7000,7400,7500,7200,7400],fdi:28,fH:[20,25,28,32,26]},
+'380':{rate:3.25,cr:{sp:'BBB',moody:'Baa3',fitch:'BBB'},debt:140,def:-5.2,stock:'FTSE MIB',sIdx:'MIB',sH:[24000,25500,27000,28500,26800,27500,28200,27000,29500,30200,29800,30500],fdi:18,fH:[15,12,18,20,16]},
+'124':{rate:4.50,cr:{sp:'AAA',moody:'Aaa',fitch:'AA+'},debt:106,def:-1.3,stock:'TSX',sIdx:'TSX',sH:[18500,19200,20400,20800,19500,20100,20500,19800,21200,21500,21000,21300],fdi:45,fH:[35,40,45,50,42]},
+'076':{rate:13.75,cr:{sp:'BB',moody:'Ba2',fitch:'BB'},debt:75,def:-8.2,stock:'Bovespa',sIdx:'IBOV',sH:[105000,110000,118000,115000,108000,112000,120000,116000,125000,130000,128000,132000],fdi:65,fH:[55,48,65,72,60]},
+'410':{rate:3.25,cr:{sp:'AA',moody:'Aa2',fitch:'AA-'},debt:54,def:-3.8,stock:'KOSPI',sIdx:'KOSPI',sH:[2350,2400,2500,2600,2450,2550,2600,2480,2650,2700,2620,2680],fdi:12,fH:[10,9,12,14,11]},
+'036':{rate:4.10,cr:{sp:'AAA',moody:'Aaa',fitch:'AAA'},debt:36,def:-1.8,stock:'ASX 200',sIdx:'ASX',sH:[7100,7200,7500,7400,7300,7500,7600,7350,7700,7800,7650,7750],fdi:42,fH:[35,38,42,45,40]},
+'356':{rate:6.50,cr:{sp:'BBB-',moody:'Baa3',fitch:'BBB-'},debt:83,def:-6.4,stock:'Sensex',sIdx:'SENSEX',sH:[58000,60000,62000,65000,63000,66000,68000,65500,71000,72000,73000,74000],fdi:84,fH:[64,74,84,90,78]},
+'158':{rate:1.875,cr:{sp:'AA',moody:'Aa3',fitch:'AA'},debt:28,def:-1.2,stock:'TAIEX',sIdx:'TAIEX',sH:[14800,15500,16200,17000,16500,17200,17800,16800,18500,19200,18800,19500],fdi:8,fH:[6,7,8,9,7]}
+};
+Object.keys(CD).forEach(k=>{
+  if(CD_FIN[k])return;
+  const tpl=_finTpl[_finMap[k]||'mix'];
+  const ext=_finExtra[k]||{};
+  CD_FIN[k]={sec:ext.sec||tpl.sec,sub:ext.sub||tpl.sub,rate:ext.rate||(tpl===_finTpl.dev?3.5:tpl===_finTpl.oil?5.0:6.0),rH:ext.rH||tpl.rH,cr:ext.cr||{sp:'BBB',moody:'Baa2',fitch:'BBB'},debt:ext.debt||(tpl===_finTpl.dev?65:tpl===_finTpl.oil?30:55),def:ext.def||(tpl===_finTpl.dev?-2.5:-4.0),stock:ext.stock||'—',sH:ext.sH||[100,102,104,103,105,107,108,106,110,112,111,113],fdi:ext.fdi||(tpl===_finTpl.dev?20:10),fH:ext.fH||[8,10,12,14,10],expD:tpl.expD,sc:tpl.sc,cm:ext.cm||tpl.cm};
+});
+
+// ===== SOCIAL DATA =====
+const CD_SOC={};
+const _SOC={
+'840':{hdi:0.921,gini:39.8,rd:3.45,unis:4000,le:78.9,ey:16.3,mys:13.7,gni:64765},
+'156':{hdi:0.768,gini:38.2,rd:2.40,unis:2956,le:78.2,ey:14.2,mys:7.6,gni:17504},
+'276':{hdi:0.942,gini:31.7,rd:3.13,unis:420,le:81.2,ey:17.0,mys:14.1,gni:55314},
+'392':{hdi:0.925,gini:32.9,rd:3.26,unis:800,le:84.8,ey:15.2,mys:13.4,gni:42274},
+'356':{hdi:0.633,gini:35.7,rd:0.65,unis:1043,le:70.4,ey:12.3,mys:6.7,gni:6590},
+'826':{hdi:0.929,gini:35.1,rd:2.70,unis:165,le:81.4,ey:17.5,mys:13.4,gni:46071},
+'250':{hdi:0.903,gini:32.4,rd:2.20,unis:260,le:82.7,ey:15.8,mys:11.6,gni:46585},
+'076':{hdi:0.760,gini:48.9,rd:1.16,unis:300,le:76.0,ey:15.6,mys:8.1,gni:14263},
+'124':{hdi:0.936,gini:33.3,rd:1.69,unis:96,le:82.4,ey:16.4,mys:13.8,gni:47985},
+'410':{hdi:0.929,gini:31.4,rd:4.81,unis:370,le:83.7,ey:16.5,mys:12.5,gni:44501},
+'036':{hdi:0.951,gini:34.4,rd:1.79,unis:43,le:83.3,ey:21.1,mys:12.7,gni:49238},
+'158':{hdi:0.926,gini:33.6,rd:3.64,unis:150,le:81.0,ey:16.5,mys:12.4,gni:52304},
+'380':{hdi:0.895,gini:35.9,rd:1.43,unis:98,le:83.5,ey:16.2,mys:10.7,gni:42776},
+'724':{hdi:0.905,gini:34.7,rd:1.25,unis:84,le:83.6,ey:17.6,mys:10.3,gni:38354}
+};
+Object.keys(CD).forEach(k=>{
+  if(_SOC[k]){CD_SOC[k]=_SOC[k];return;}
+  const d=CD[k],g=d.gdpC;
+  const hdi=g>40000?0.90+Math.random()*0.05:g>15000?0.78+Math.random()*0.08:g>5000?0.65+Math.random()*0.12:0.45+Math.random()*0.15;
+  CD_SOC[k]={hdi:Math.round(hdi*1000)/1000,gini:25+Math.random()*25,rd:g>30000?1.5+Math.random()*2:0.2+Math.random()*1.5,unis:Math.max(5,Math.round(d.pop*0.08+Math.random()*50)),le:g>30000?78+Math.random()*6:g>10000?72+Math.random()*6:60+Math.random()*10,ey:g>30000?15+Math.random()*3:10+Math.random()*5,mys:g>30000?11+Math.random()*3:6+Math.random()*5,gni:g};
+});
+
+// ===== RENDER FINANCE =====
+function renderFinance(code){
+  const d=CD[code],f=CD_FIN[code];if(!f)return;
+  const secLabels=['農業','工業','服務業'];
+  const secData=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:secLabels[i],pct:v})):[];
+  const rateColor=f.rate>5?'#dd4444':f.rate>2?'#ddaa44':'#44aa66';
+  const crColors={'AAA':'#44aa66','AA+':'#44aa66','AA':'#66bb44','AA-':'#66bb44','A+':'#88cc44','A1':'#88cc44','A':'#aacc44','Aaa':'#44aa66','Aa2':'#66bb44','Aa3':'#66bb44','Baa1':'#ccaa44','Baa2':'#ccaa44','Baa3':'#ddaa44','BBB+':'#ccaa44','BBB':'#ccaa44','BBB-':'#ddaa44','BB+':'#dd8844','BB':'#dd8844','Ba2':'#dd8844','B':'#dd4444'};
+  let html=`<div class="sec-title" style="color:#999">GDP 產業結構</div>
+    <div style="display:flex;align-items:center;gap:16px;margin:8px 0 12px">
+      <div>${svgPie(secData,130)}</div>
+      <div>${secData.map((s,i)=>`<div style="font-size:11px;margin:4px 0;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66'][i]};display:inline-block"></span><span style="color:#888">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+    </div>
+    <div class="sec-title" style="color:#999">前十大產業子分類</div>
+    <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
+      <div>${svgDonut(f.sub,140)}</div>
+      <div style="flex:1">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;justify-content:space-between"><span style="color:#888">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+    </div>
+    <div class="sec-title" style="color:#999">央行基準利率</div>
+    <div class="metric"><span class="m-lbl">當前利率</span><span class="m-val" style="color:${rateColor}">${f.rate.toFixed(2)}%</span></div>
+    <div style="margin:8px -4px 14px">${svgTimeline(f.rH.map(r=>({l:r.y,v:r.v})),370,70,'#4a88dd')}</div>
+    <div class="sec-title" style="color:#999">主權信用評等</div>
+    <div style="display:flex;gap:8px;margin:8px 0 14px">
+      ${['S&P','Moody\'s','Fitch'].map((ag,i)=>{const r=[f.cr.sp,f.cr.moody,f.cr.fitch][i];return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:#666;margin-bottom:4px">${ag}</div><div style="font-size:16px;font-weight:700;color:${crColors[r]||'#ccaa44'}">${r}</div></div>`;}).join('')}
+    </div>
+    <div class="sec-title" style="color:#999">政府債務</div>
+    <div class="metric"><span class="m-lbl">國債佔GDP</span><span class="m-val">${f.debt}%</span></div>
+    <div class="metric"><span class="m-lbl">財政赤字佔GDP</span><span class="m-val" style="color:${f.def<0?'#dd4444':'#44aa66'}">${f.def>0?'+':''}${f.def}%</span></div>
+    <div class="sec-title" style="color:#999">股市表現（${f.stock}）</div>
+    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),370,70,'#44aa66')}</div>`:'<div style="color:#444;font-size:11px;margin:8px 0">暫無股市數據</div>'}
+    <div class="sec-title" style="color:#999">FDI 外國直接投資（十億美元）</div>
+    <div class="metric"><span class="m-lbl">年度FDI</span><span class="m-val">$${f.fdi}B</span></div>
+    ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),370,60,'#dd8844')}</div>`:''}`;
+  document.getElementById('panel-finance').innerHTML=html;
+}
+
+// ===== RENDER SOCIAL =====
+function renderSocial(code){
+  const s=CD_SOC[code];if(!s)return;
+  const hdiColor=s.hdi>=0.8?'#44aa66':s.hdi>=0.55?'#ddaa44':'#dd4444';
+  const giniColor=s.gini<30?'#44aa66':s.gini<40?'#ddaa44':'#dd4444';
+  const radarVals=[s.le/90,s.ey/20,s.mys/15,(s.gni/80000)];
+  const radarLabels=['預期壽命','預期受教育','平均受教育','人均GNI'];
+  let html=`<div class="sec-title" style="color:#999">HDI 人類發展指數</div>
+    <div style="display:flex;align-items:center;gap:16px;margin:8px 0 14px">
+      <div style="width:64px;height:64px;border-radius:50%;border:3px solid ${hdiColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${hdiColor}">${s.hdi.toFixed(3)}</div>
+      <div>
+        <div style="font-size:11px;color:#888">排名等級</div>
+        <div style="font-size:14px;font-weight:700;color:${hdiColor}">${s.hdi>=0.8?'極高':s.hdi>=0.7?'高':s.hdi>=0.55?'中':'低'}人類發展</div>
+      </div>
+    </div>
+    <div style="margin:4px 0 16px">${svgRadar(radarVals.map(v=>Math.min(1,Math.max(0.05,v))),radarLabels,200)}</div>
+    <div class="metric"><span class="m-lbl">預期壽命</span><span class="m-val">${s.le.toFixed(1)} 歲</span></div>
+    <div class="metric"><span class="m-lbl">預期受教育年數</span><span class="m-val">${s.ey.toFixed(1)} 年</span></div>
+    <div class="metric"><span class="m-lbl">平均受教育年數</span><span class="m-val">${s.mys.toFixed(1)} 年</span></div>
+    <div class="metric"><span class="m-lbl">人均 GNI (PPP)</span><span class="m-val">$${s.gni.toLocaleString()}</span></div>
+    <div class="sec-title" style="color:#999;margin-top:18px">基尼係數（所得不平等）</div>
+    <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
+      <div style="font-size:22px;font-weight:700;color:${giniColor}">${s.gini.toFixed(1)}</div>
+      <div style="flex:1">
+        <div style="height:8px;background:linear-gradient(90deg,#44aa66,#ddaa44,#dd4444);border-radius:4px;position:relative">
+          <div style="position:absolute;top:-3px;left:${Math.min(95,s.gini/60*100)}%;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid ${giniColor};transform:translateX(-50%)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:#444;margin-top:4px"><span>平等</span><span>不平等</span></div>
+      </div>
+    </div>
+    <div class="sec-title" style="color:#999">教育與研發</div>
+    <div class="metric"><span class="m-lbl">R&D 佔 GDP</span><span class="m-val">${s.rd.toFixed(2)}%</span></div>
+    <div class="metric"><span class="m-lbl">大學數量（估）</span><span class="m-val">${s.unis.toLocaleString()}</span></div>
+    <div style="margin:10px 0 8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#888">R&D 投入水平</span><span style="color:#fff;font-weight:700">${s.rd.toFixed(2)}%</span></div>
+      <div class="agri-bg"><div class="agri-fill" style="width:${Math.min(100,s.rd/5*100)}%;background:linear-gradient(90deg,#2a4a8a,#4a88dd)"></div></div>
+    </div>`;
+  document.getElementById('panel-social').innerHTML=html;
+}
+
+// ===== RENDER TRADE DETAIL =====
+function renderTrade(code){
+  const f=CD_FIN[code];if(!f){document.getElementById('trade-detail').innerHTML='';return;}
+  const expColors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#999'];
+  let html=`<div class="sec-title" style="color:#999">出口目的地</div>
+    <div style="display:flex;align-items:center;gap:14px;margin:8px 0 14px">
+      <div>${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),130)}</div>
+      <div>${f.expD.map((e,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#888">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
+    </div>
+    <div class="sec-title" style="color:#999">供應鏈依賴度</div>
+    <div style="margin:8px 0 14px">${f.sc.map(s=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#888">${s.item} <span style="color:#555">← ${s.from}</span></span><span style="color:${s.pct>70?'#dd4444':s.pct>40?'#ddaa44':'#44aa66'};font-weight:700">${s.pct}%</span></div><div class="agri-bg"><div class="agri-fill" style="width:${s.pct}%;background:linear-gradient(90deg,${s.pct>70?'#8a2a2a,#dd4444':s.pct>40?'#8a6a2a,#ddaa44':'#2a6a3a,#44aa66'})"></div></div></div>`).join('')}</div>
+    <div class="sec-title" style="color:#999">大宗商品曝險（進口依賴%）</div>
+    <div style="display:flex;gap:8px;margin:8px 0 14px">
+      ${[{nm:'石油',k:'oil',icon:'🛢'},{nm:'天然氣',k:'gas',icon:'🔥'},{nm:'糧食',k:'food',icon:'🌾'}].map(c=>{const v=f.cm[c.k]||0;return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 8px;text-align:center"><div style="font-size:16px">${c.icon}</div><div style="font-size:9px;color:#666;margin:4px 0">${c.nm}</div><div style="font-size:16px;font-weight:700;color:${v>60?'#dd4444':v>30?'#ddaa44':'#44aa66'}">${v}%</div></div>`;}).join('')}
+    </div>`;
+  document.getElementById('trade-detail').innerHTML=html;
 }
 
 // ===== BILATERAL TRADE =====
@@ -1520,6 +1922,486 @@ window.toggleNetwork=toggleNetwork;
   });
   document.addEventListener('mouseup',function(){dragging=false;});
 })();
+
+// ===== ENERGY MODE =====
+let enMode=false,enHubs=[],enRoutes=[],enFlowDots=[],enCrisisRings=[];
+const EN_LAYERS={prod:true,offshore:true,lng:true,export:true,crisis:true,lngRoute:true,disrupted:true};
+const EN_COLORS={prod:0xee4444,offshore:0x44aadd,lng:0x44dd88,export:0xddaa44,crisis:0xff44aa};
+const EN_ROUTE_COLORS={crude:0x4488cc,lng:0x44cc88,pipe:0xcc8844,disrupted:0xcc4444};
+
+const EN_CHOKEPOINTS=[
+{nm:'Gulf of Mexico Deepwater (US)',lat:27.0,lng:-90.0,mbd:1.8},
+{nm:'Strait of Hormuz',lat:26.6,lng:56.2,mbd:20.9,alert:true},
+{nm:'Strait of Malacca',lat:2.5,lng:101.5,mbd:22.2},
+{nm:'Suez Canal / SUMED Pipeline',lat:30.5,lng:32.3,mbd:4.9},
+{nm:'Bab el-Mandeb Strait',lat:12.6,lng:43.3,mbd:4.2},
+{nm:'Cape of Good Hope',lat:-34.4,lng:18.5,mbd:9.1},
+{nm:'Turkish Straits (Bosphorus)',lat:41.1,lng:29.1,mbd:3.7},
+{nm:'Strait of Gibraltar',lat:36.0,lng:-5.6,mbd:3.4},
+{nm:'Danish Straits (Skagerrak/Kattegat)',lat:57.7,lng:10.6,mbd:4.0},
+{nm:'South China Sea SLOCs',lat:12.0,lng:114.0,mbd:15.0},
+{nm:'Panama Canal',lat:9.1,lng:-79.7,mbd:0.9},
+{nm:'Mozambique Channel',lat:-16.0,lng:41.0,mbd:2.1},
+{nm:'Lombok Strait',lat:-8.5,lng:115.7,mbd:1.8},
+{nm:'Sunda Strait',lat:-6.1,lng:105.9,mbd:0.5},
+{nm:'Taiwan Strait',lat:24.0,lng:119.0,mbd:5.3},
+{nm:'Korea Strait',lat:34.0,lng:129.0,mbd:4.1},
+{nm:'Bass Strait (Australia)',lat:-39.5,lng:145.5,mbd:0.6},
+{nm:'Yucatan Channel',lat:21.5,lng:-86.5,mbd:0.4},
+{nm:'Windward Passage',lat:19.8,lng:-73.5,mbd:0.3},
+{nm:'Mona Passage',lat:18.5,lng:-67.8,mbd:0.3},
+{nm:'Tsugaru Strait',lat:41.5,lng:140.5,mbd:0.2},
+{nm:'La Pérouse Strait',lat:45.8,lng:142.0,mbd:0.3},
+{nm:'English Channel',lat:50.5,lng:0.0,mbd:3.2},
+{nm:'Skagerrak Strait',lat:58.0,lng:9.0,mbd:2.8},
+{nm:'Øresund Bridge-Strait',lat:55.6,lng:12.7,mbd:1.5},
+{nm:'Florida Straits',lat:24.0,lng:-81.0,mbd:1.1},
+{nm:'Strait of Bonifacio',lat:41.3,lng:9.2,mbd:0.4},
+{nm:'Strait of Messina',lat:38.2,lng:15.6,mbd:0.8},
+{nm:'Strait of Otranto',lat:40.3,lng:19.0,mbd:0.6},
+{nm:'Strait of Tartary',lat:51.0,lng:141.5,mbd:0.2},
+{nm:'Palk Strait',lat:9.5,lng:79.5,mbd:0.3},
+{nm:'Strait of Tiran',lat:28.0,lng:34.5,mbd:0.2},
+{nm:'Strait of Magellan',lat:-53.5,lng:-70.5,mbd:0.1},
+{nm:'Drake Passage',lat:-60.0,lng:-65.0,mbd:0.05}
+];
+
+const EN_HUB_DATA=[
+{nm:'Ghawar Field',lat:25.4,lng:49.1,type:'prod',info:'5.0 mb/d',country:'Saudi Arabia'},
+{nm:'Permian Basin',lat:31.9,lng:-102.1,type:'prod',info:'5.8 mb/d',country:'USA'},
+{nm:'Rumaila Field',lat:30.6,lng:47.3,type:'prod',info:'1.5 mb/d',country:'Iraq'},
+{nm:'Burgan Field',lat:29.1,lng:47.9,type:'prod',info:'1.7 mb/d',country:'Kuwait'},
+{nm:'Safaniyah Field',lat:28.1,lng:48.8,type:'prod',info:'1.3 mb/d',country:'Saudi Arabia'},
+{nm:'Zakum Field',lat:24.8,lng:53.4,type:'prod',info:'0.8 mb/d',country:'UAE'},
+{nm:'Tengiz Field',lat:46.2,lng:53.3,type:'prod',info:'0.7 mb/d',country:'Kazakhstan'},
+{nm:'Kashagan Field',lat:46.4,lng:52.5,type:'prod',info:'0.4 mb/d',country:'Kazakhstan'},
+{nm:'Cantarell Complex',lat:19.7,lng:-92.5,type:'prod',info:'0.2 mb/d',country:'Mexico'},
+{nm:'Tupi / Lula Field',lat:-25.2,lng:-42.8,type:'prod',info:'1.0 mb/d',country:'Brazil'},
+{nm:'Daqing Field',lat:46.6,lng:125.0,type:'prod',info:'0.6 mb/d',country:'China'},
+{nm:'West Siberia Basin',lat:62.0,lng:72.0,type:'prod',info:'6.2 mb/d',country:'Russia'},
+{nm:'Samotlor Field',lat:61.2,lng:76.7,type:'prod',info:'0.5 mb/d',country:'Russia'},
+{nm:'Prudhoe Bay',lat:70.3,lng:-148.7,type:'prod',info:'0.3 mb/d',country:'USA'},
+{nm:'Eagle Ford Shale',lat:28.8,lng:-98.5,type:'prod',info:'1.2 mb/d',country:'USA'},
+{nm:'Bakken Formation',lat:48.1,lng:-103.5,type:'prod',info:'1.1 mb/d',country:'USA'},
+{nm:'North Sea Brent',lat:61.0,lng:1.7,type:'prod',info:'0.4 mb/d',country:'UK/Norway'},
+{nm:'Vaca Muerta',lat:-38.5,lng:-69.0,type:'prod',info:'0.3 mb/d',country:'Argentina'},
+{nm:'Santos Basin',lat:-25.0,lng:-43.5,type:'prod',info:'2.1 mb/d',country:'Brazil'},
+{nm:'Hassi Messaoud',lat:31.7,lng:6.1,type:'prod',info:'0.5 mb/d',country:'Algeria'},
+{nm:'Agbami Field',lat:4.0,lng:4.5,type:'prod',info:'0.2 mb/d',country:'Nigeria'},
+{nm:'Bonga Field',lat:4.5,lng:4.1,type:'prod',info:'0.2 mb/d',country:'Nigeria'},
+{nm:'Shaybah Field',lat:22.5,lng:54.0,type:'prod',info:'1.0 mb/d',country:'Saudi Arabia'},
+{nm:'Manifa Field',lat:27.6,lng:49.2,type:'prod',info:'0.9 mb/d',country:'Saudi Arabia'},
+{nm:'Abqaiq Processing',lat:25.9,lng:49.7,type:'prod',info:'7.0 mb/d processing',country:'Saudi Arabia'},
+{nm:'Khurais Field',lat:24.2,lng:48.2,type:'prod',info:'1.5 mb/d',country:'Saudi Arabia'},
+{nm:'Priobskoye Field',lat:61.0,lng:69.0,type:'prod',info:'0.6 mb/d',country:'Russia'},
+{nm:'South Pars / North Dome',lat:27.0,lng:52.0,type:'prod',info:'14 bcf/d gas',country:'Iran/Qatar'},
+{nm:'Groningen Gas Field',lat:53.3,lng:6.8,type:'prod',info:'Closing 2024',country:'Netherlands'},
+{nm:'Marcellus Shale',lat:41.0,lng:-77.5,type:'prod',info:'35 bcf/d gas',country:'USA'},
+{nm:'Haynesville Shale',lat:32.5,lng:-93.5,type:'prod',info:'14 bcf/d gas',country:'USA'},
+{nm:'Zohr Gas Field',lat:31.8,lng:32.2,type:'prod',info:'2.7 bcf/d gas',country:'Egypt'},
+{nm:'Johan Sverdrup',lat:58.9,lng:2.6,type:'prod',info:'0.7 mb/d',country:'Norway'},
+{nm:'Karachaganak',lat:50.1,lng:51.7,type:'prod',info:'0.3 mb/d + 16 bcf/d',country:'Kazakhstan'},
+{nm:'Alberta Oil Sands',lat:57.0,lng:-111.5,type:'prod',info:'3.5 mb/d',country:'Canada'},
+{nm:'Jubail Industrial',lat:27.0,lng:49.4,type:'prod',info:'Refinery hub',country:'Saudi Arabia'},
+{nm:'Athabasca',lat:56.7,lng:-111.3,type:'prod',info:'1.5 mb/d bitumen',country:'Canada'},
+{nm:'Girassol Field',lat:-7.5,lng:12.0,type:'prod',info:'0.2 mb/d',country:'Angola'},
+{nm:'Egina Field',lat:5.0,lng:4.0,type:'prod',info:'0.2 mb/d',country:'Nigeria'},
+{nm:'Majnoon Field',lat:31.0,lng:47.2,type:'prod',info:'0.2 mb/d',country:'Iraq'},
+{nm:'West Qurna',lat:31.1,lng:47.4,type:'prod',info:'0.5 mb/d',country:'Iraq'},
+{nm:'Buzios Field',lat:-23.9,lng:-41.1,type:'prod',info:'0.6 mb/d',country:'Brazil'},
+{nm:'Libra Field',lat:-23.0,lng:-40.5,type:'prod',info:'0.2 mb/d',country:'Brazil'},
+{nm:'Mero Field',lat:-22.5,lng:-40.0,type:'prod',info:'0.2 mb/d',country:'Brazil'},
+{nm:'Eni Coral South FLNG',lat:-14.0,lng:40.5,type:'prod',info:'3.4 mtpa FLNG',country:'Mozambique'},
+{nm:'Leviathan Gas',lat:33.1,lng:34.1,type:'prod',info:'1.2 bcf/d gas',country:'Israel'},
+{nm:'Browse Basin',lat:-14.0,lng:122.0,type:'prod',info:'LNG prospect',country:'Australia'},
+{nm:'Barossa Gas',lat:-10.5,lng:128.0,type:'prod',info:'3.7 mtpa gas',country:'Australia'},
+{nm:'Jafurah Basin',lat:24.0,lng:49.0,type:'prod',info:'Unconventional gas',country:'Saudi Arabia'},
+{nm:'Vostok Oil',lat:71.0,lng:87.0,type:'prod',info:'0.1 mb/d (ramp)',country:'Russia'},
+{nm:'Guyana Stabroek',lat:7.5,lng:-57.5,type:'prod',info:'0.6 mb/d',country:'Guyana'},
+{nm:'Troll Gas Field',lat:60.6,lng:3.7,type:'prod',info:'37 bcm/yr gas',country:'Norway'},
+{nm:'Snøhvit LNG Source',lat:71.6,lng:20.8,type:'prod',info:'4.3 mtpa LNG feed',country:'Norway'},
+{nm:'Ras Tanura',lat:26.6,lng:50.2,type:'export',info:'6.0 mb/d',country:'Saudi Arabia'},
+{nm:'Yanbu Terminal',lat:24.1,lng:38.1,type:'export',info:'2.5 mb/d',country:'Saudi Arabia'},
+{nm:'Fujairah Terminal',lat:25.1,lng:56.3,type:'export',info:'Storage hub',country:'UAE'},
+{nm:'Jebel Ali',lat:25.0,lng:55.0,type:'export',info:'1.5 mb/d',country:'UAE'},
+{nm:'Basra Oil Terminal',lat:29.7,lng:48.8,type:'export',info:'3.5 mb/d',country:'Iraq'},
+{nm:'Novorossiysk',lat:44.7,lng:37.8,type:'export',info:'1.2 mb/d + CPC',country:'Russia'},
+{nm:'Primorsk Terminal',lat:60.3,lng:29.0,type:'export',info:'1.5 mb/d Baltic',country:'Russia'},
+{nm:'Ust-Luga',lat:59.7,lng:28.4,type:'export',info:'0.6 mb/d',country:'Russia'},
+{nm:'Kozmino (ESPO)',lat:42.7,lng:133.0,type:'export',info:'0.8 mb/d Pacific',country:'Russia'},
+{nm:'Ceyhan Terminal',lat:36.9,lng:35.9,type:'export',info:'1.0 mb/d BTC end',country:'Turkey'},
+{nm:'Sidi Kerir',lat:31.1,lng:29.7,type:'export',info:'SUMED terminus',country:'Egypt'},
+{nm:'Houston Ship Channel',lat:29.7,lng:-95.0,type:'export',info:'Multi-product hub',country:'USA'},
+{nm:'LOOP Terminal',lat:28.9,lng:-90.0,type:'export',info:'1.2 mb/d deepwater',country:'USA'},
+{nm:'Corpus Christi',lat:27.8,lng:-97.4,type:'export',info:'Crude + LNG export',country:'USA'},
+{nm:'Bonny Terminal',lat:4.4,lng:7.2,type:'export',info:'0.4 mb/d',country:'Nigeria'},
+{nm:'Escravos Terminal',lat:5.6,lng:5.2,type:'export',info:'0.3 mb/d',country:'Nigeria'},
+{nm:'Forcados Terminal',lat:5.4,lng:5.4,type:'export',info:'0.3 mb/d',country:'Nigeria'},
+{nm:'Soyo LNG/Terminal',lat:-6.1,lng:12.4,type:'export',info:'5.2 mtpa LNG',country:'Angola'},
+{nm:'Saldanha Bay',lat:-33.0,lng:17.9,type:'export',info:'Storage & STS',country:'South Africa'},
+{nm:'Ain Sukhna',lat:29.6,lng:32.3,type:'export',info:'Suez/Red Sea link',country:'Egypt'},
+{nm:'Skikda Terminal',lat:36.9,lng:6.9,type:'export',info:'LNG + condensate',country:'Algeria'},
+{nm:'Arzew Terminal',lat:35.8,lng:-0.3,type:'export',info:'LNG export',country:'Algeria'},
+{nm:'Puerto La Cruz',lat:10.2,lng:-64.6,type:'export',info:'0.3 mb/d',country:'Venezuela'},
+{nm:'Jose Terminal',lat:10.2,lng:-65.0,type:'export',info:'0.5 mb/d heavy',country:'Venezuela'},
+{nm:'Rotterdam Europoort',lat:51.9,lng:4.1,type:'export',info:'ARA storage hub',country:'Netherlands'},
+{nm:'Singapore STS Hub',lat:1.3,lng:103.8,type:'export',info:'Major bunkering',country:'Singapore'},
+{nm:'Jurong Island',lat:1.3,lng:103.7,type:'export',info:'Refinery cluster',country:'Singapore'},
+{nm:'Tanjung Pelepas',lat:1.4,lng:103.5,type:'export',info:'LNG bunkering',country:'Malaysia'},
+{nm:'Rayong/Map Ta Phut',lat:12.7,lng:101.2,type:'export',info:'Gas/petrochem hub',country:'Thailand'},
+{nm:'Jamnagar Refinery',lat:22.4,lng:70.0,type:'export',info:'1.4 mb/d refinery',country:'India'},
+{nm:'Paradip Port',lat:20.3,lng:86.6,type:'export',info:'Crude import hub',country:'India'},
+{nm:'Ningbo-Zhoushan',lat:29.9,lng:122.1,type:'export',info:'Top crude port',country:'China'},
+{nm:'Qingdao SPR',lat:36.1,lng:120.4,type:'export',info:'SPR + commercial',country:'China'},
+{nm:'Dalian / Xingang',lat:38.9,lng:121.6,type:'export',info:'NE Asia hub',country:'China'},
+{nm:'Ulsan Hub',lat:35.5,lng:129.4,type:'export',info:'Korea refinery hub',country:'South Korea'},
+{nm:'Kashima Terminal',lat:35.9,lng:140.7,type:'export',info:'Japan import',country:'Japan'},
+{nm:'Chiba Terminal',lat:35.6,lng:140.1,type:'export',info:'Tokyo Bay import',country:'Japan'},
+{nm:'Seria Terminal',lat:4.6,lng:114.3,type:'export',info:'0.1 mb/d',country:'Brunei'},
+{nm:'Sabine Pass LNG',lat:29.7,lng:-93.9,type:'lng',info:'30 mtpa',country:'USA'},
+{nm:'Cameron LNG',lat:29.8,lng:-93.3,type:'lng',info:'15 mtpa',country:'USA'},
+{nm:'Freeport LNG',lat:28.9,lng:-95.3,type:'lng',info:'15 mtpa',country:'USA'},
+{nm:'Calcasieu Pass LNG',lat:29.8,lng:-93.3,type:'lng',info:'10 mtpa',country:'USA'},
+{nm:'Plaquemines LNG',lat:29.4,lng:-89.5,type:'lng',info:'20 mtpa (u/c)',country:'USA'},
+{nm:'Golden Pass LNG',lat:29.8,lng:-93.9,type:'lng',info:'18 mtpa (u/c)',country:'USA'},
+{nm:'Corpus Christi LNG',lat:27.8,lng:-97.4,type:'lng',info:'25 mtpa',country:'USA'},
+{nm:'Ras Laffan LNG',lat:25.9,lng:51.5,type:'lng',info:'77 mtpa',country:'Qatar'},
+{nm:'Qatargas NFE',lat:25.9,lng:51.6,type:'lng',info:'32 mtpa expansion',country:'Qatar'},
+{nm:'NWS / Karratha LNG',lat:-20.7,lng:116.8,type:'lng',info:'16.3 mtpa',country:'Australia'},
+{nm:'Gladstone LNG',lat:-23.8,lng:151.3,type:'lng',info:'15.6 mtpa (3 trains)',country:'Australia'},
+{nm:'Darwin LNG',lat:-12.4,lng:130.8,type:'lng',info:'3.7 mtpa',country:'Australia'},
+{nm:'Gorgon LNG',lat:-20.5,lng:115.1,type:'lng',info:'15.6 mtpa',country:'Australia'},
+{nm:'Wheatstone LNG',lat:-20.6,lng:116.1,type:'lng',info:'8.9 mtpa',country:'Australia'},
+{nm:'Ichthys LNG',lat:-12.5,lng:130.9,type:'lng',info:'8.9 mtpa',country:'Australia'},
+{nm:'Prelude FLNG',lat:-12.3,lng:124.0,type:'lng',info:'3.6 mtpa FLNG',country:'Australia'},
+{nm:'Yamal LNG',lat:71.3,lng:72.8,type:'lng',info:'17.4 mtpa',country:'Russia'},
+{nm:'Arctic LNG 2',lat:71.3,lng:73.0,type:'lng',info:'19.8 mtpa (sanctions)',country:'Russia'},
+{nm:'Sakhalin-2 LNG',lat:46.6,lng:142.9,type:'lng',info:'9.6 mtpa',country:'Russia'},
+{nm:'Nigeria LNG (Bonny)',lat:4.4,lng:7.2,type:'lng',info:'22 mtpa',country:'Nigeria'},
+{nm:'Bintulu LNG',lat:3.2,lng:113.1,type:'lng',info:'30 mtpa',country:'Malaysia'},
+{nm:'PFLNG Satu',lat:5.5,lng:108.0,type:'lng',info:'1.2 mtpa FLNG',country:'Malaysia'},
+{nm:'Tangguh LNG',lat:-2.5,lng:133.3,type:'lng',info:'7.6 mtpa',country:'Indonesia'},
+{nm:'Bontang LNG',lat:0.1,lng:117.5,type:'lng',info:'22.5 mtpa',country:'Indonesia'},
+{nm:'Snøhvit LNG',lat:70.7,lng:24.0,type:'lng',info:'4.3 mtpa',country:'Norway'},
+{nm:'Hammerfest LNG',lat:70.7,lng:23.7,type:'lng',info:'4.3 mtpa',country:'Norway'},
+{nm:'Egypt LNG (Idku)',lat:31.3,lng:30.3,type:'lng',info:'7.2 mtpa',country:'Egypt'},
+{nm:'Damietta LNG',lat:31.4,lng:31.8,type:'lng',info:'5.0 mtpa',country:'Egypt'},
+{nm:'Oman LNG',lat:22.9,lng:59.5,type:'lng',info:'10.4 mtpa',country:'Oman'},
+{nm:'Angola LNG',lat:-6.1,lng:12.4,type:'lng',info:'5.2 mtpa',country:'Angola'},
+{nm:'Atlantic LNG (Trinidad)',lat:10.4,lng:-61.0,type:'lng',info:'14.8 mtpa',country:'Trinidad'},
+{nm:'Donggi-Senoro LNG',lat:-1.2,lng:121.7,type:'lng',info:'2.0 mtpa',country:'Indonesia'},
+{nm:'Cameroon FLNG',lat:4.0,lng:9.2,type:'lng',info:'2.4 mtpa FLNG',country:'Cameroon'},
+{nm:'Coral South FLNG',lat:-14.0,lng:40.5,type:'lng',info:'3.4 mtpa',country:'Mozambique'},
+{nm:'Peru LNG (Pampa Melchorita)',lat:-15.1,lng:-75.5,type:'lng',info:'4.5 mtpa',country:'Peru'},
+{nm:'EG LNG',lat:3.8,lng:8.8,type:'lng',info:'3.7 mtpa',country:'Equatorial Guinea'},
+{nm:'Train 7 NLNG Expansion',lat:4.4,lng:7.2,type:'lng',info:'8 mtpa (u/c)',country:'Nigeria'},
+{nm:'Rovuma LNG',lat:-11.0,lng:40.5,type:'lng',info:'15.2 mtpa (delayed)',country:'Mozambique'},
+{nm:'Tortue FLNG',lat:15.8,lng:-16.8,type:'lng',info:'2.5 mtpa',country:'Senegal/Mauritania'},
+{nm:'Abadi FLNG',lat:-9.0,lng:128.5,type:'lng',info:'9.5 mtpa (FID pending)',country:'Indonesia'},
+{nm:'Portovaya LNG',lat:60.5,lng:28.7,type:'lng',info:'1.5 mtpa',country:'Russia'},
+{nm:'Papua LNG',lat:-6.5,lng:143.5,type:'lng',info:'5.4 mtpa (u/c)',country:'Papua New Guinea'},
+{nm:'Greater Tortue Ahmeyim',lat:16.0,lng:-17.0,type:'lng',info:'Phase 1 2.5 mtpa',country:'Mauritania/Senegal'},
+{nm:'Driftwood LNG',lat:30.2,lng:-93.3,type:'lng',info:'27.6 mtpa (proposed)',country:'USA'},
+{nm:'Red Sea / Houthi Zone',lat:15.0,lng:42.5,type:'crisis',info:'Houthi drone & missile attacks on shipping',country:'Yemen/Red Sea'},
+{nm:'Ukraine / Black Sea',lat:46.0,lng:33.0,type:'crisis',info:'Russian naval blockade & mine risk',country:'Ukraine'},
+{nm:'South China Sea Disputes',lat:11.0,lng:114.0,type:'crisis',info:'China–Philippines–Vietnam territorial disputes',country:'SCS'},
+{nm:'Iran Sanctions Zone',lat:28.0,lng:53.0,type:'crisis',info:'US sanctions on Iran crude exports',country:'Iran'},
+{nm:'Libya Civil Conflict',lat:31.5,lng:15.0,type:'crisis',info:'Production shutdowns & port blockades',country:'Libya'},
+{nm:'Nigeria Delta Militancy',lat:5.0,lng:5.5,type:'crisis',info:'Pipeline sabotage & theft',country:'Nigeria'},
+{nm:'Mozambique Cabo Delgado',lat:-12.0,lng:40.0,type:'crisis',info:'Insurgency near LNG sites',country:'Mozambique'},
+{nm:'Venezuela Sanctions',lat:10.0,lng:-66.0,type:'crisis',info:'Oil sanctions & PDVSA decay',country:'Venezuela'},
+{nm:'Syria Conflict',lat:35.0,lng:38.0,type:'crisis',info:'Infrastructure destruction',country:'Syria'},
+{nm:'Iraq Kurdistan',lat:36.5,lng:44.0,type:'crisis',info:'IKR pipeline dispute with Turkey',country:'Iraq'},
+{nm:'Ecuador / Colombia Border',lat:1.0,lng:-78.0,type:'crisis',info:'Pipeline attacks, narco-conflict',country:'Ecuador'},
+{nm:'Sudan / South Sudan',lat:10.5,lng:32.5,type:'crisis',info:'Civil war & pipeline disruption',country:'Sudan'},
+{nm:'Somalia / Gulf of Aden Piracy',lat:11.5,lng:49.0,type:'crisis',info:'Piracy risk for tankers',country:'Somalia'},
+{nm:'Myanmar Pipeline Conflict',lat:20.0,lng:96.0,type:'crisis',info:'Ethnic conflict near China–Myanmar pipeline',country:'Myanmar'},
+{nm:'Guyana–Venezuela Border',lat:7.0,lng:-60.0,type:'crisis',info:'Essequibo territorial claim',country:'Guyana/Venezuela'},
+{nm:'Taiwan Strait Tensions',lat:24.5,lng:119.5,type:'crisis',info:'Military exercises & shipping risk',country:'Taiwan Strait'},
+{nm:'Lebanon–Israel Maritime',lat:33.5,lng:34.5,type:'crisis',info:'Karish gas field dispute',country:'Lebanon/Israel'},
+{nm:'Ethiopia–Djibouti Pipeline',lat:11.0,lng:42.5,type:'crisis',info:'Tigray conflict & export route risk',country:'Ethiopia'},
+{nm:'Strait of Hormuz Tensions',lat:26.5,lng:56.5,type:'crisis',info:'Iran–US naval standoffs & seizures',country:'Iran/USA'},
+{nm:'Baltic Pipeline Sabotage',lat:55.0,lng:15.0,type:'crisis',info:'Nord Stream explosion aftermath',country:'Baltic Sea'},
+{nm:'Sahel / Niger Pipeline',lat:14.0,lng:2.0,type:'crisis',info:'Niger coup & Trans-Saharan pipeline risk',country:'Niger'},
+{nm:'DRC Cobalt Conflict',lat:-4.0,lng:27.0,type:'crisis',info:'Artisanal mining & militia',country:'DRC'},
+{nm:'Mexico Cartel Pipeline Theft',lat:20.5,lng:-97.5,type:'crisis',info:'Huachicoleo — fuel theft from pipelines',country:'Mexico'},
+{nm:'Papua New Guinea Highlands',lat:-6.0,lng:143.0,type:'crisis',info:'Tribal conflict near LNG corridor',country:'PNG'},
+{nm:'Arctic Militarization',lat:75.0,lng:40.0,type:'crisis',info:'Russia Northern Sea Route military buildup',country:'Arctic'},
+{nm:'Cameroon–Nigeria Border',lat:5.5,lng:9.0,type:'crisis',info:'Bakassi disputes & pipeline risk',country:'Cameroon/Nigeria'},
+{nm:'Bab el-Mandeb Houthi',lat:12.5,lng:43.5,type:'crisis',info:'Missile strikes on LNG carriers',country:'Yemen'},
+{nm:'Caspian Disputes',lat:41.0,lng:50.0,type:'crisis',info:'Turkmenistan–Azerbaijan maritime boundary',country:'Caspian'},
+{nm:'East Med Geopolitics',lat:34.0,lng:32.0,type:'crisis',info:'Turkey–Greece–Cyprus EEZ disputes',country:'East Mediterranean'},
+{nm:'Kurdistan–Turkey PKK',lat:38.0,lng:43.0,type:'crisis',info:'PKK attacks on Kirkuk–Ceyhan pipeline',country:'Turkey/Iraq'},
+{nm:'Sahara Western Dispute',lat:24.0,lng:-13.0,type:'crisis',info:'Morocco–Polisario & pipeline routing',country:'Western Sahara'},
+{nm:'Persian Gulf Islands',lat:26.0,lng:55.0,type:'crisis',info:'Iran–UAE Abu Musa & Tunb disputes',country:'Persian Gulf'},
+{nm:'South Ossetia Pipeline',lat:42.2,lng:44.0,type:'crisis',info:'Georgia pipeline transit risk',country:'Georgia'},
+{nm:'Nagorno-Karabakh Area',lat:40.0,lng:46.8,type:'crisis',info:'Azerbaijan–Armenia conflict zone near BTC',country:'Azerbaijan'},
+{nm:'Mali–Burkina Pipeline Route',lat:12.0,lng:-2.0,type:'crisis',info:'Sahel instability along proposed corridors',country:'West Africa'},
+{nm:'Yemen LNG (Balhaf)',lat:13.8,lng:48.2,type:'crisis',info:'Facility mothballed since 2015',country:'Yemen'}
+];
+
+const EN_SEA_ROUTES=[
+{from:[26.6,56.2],to:[1.3,103.8],type:'crude',vol:8.5,nm:'Persian Gulf → Singapore'},
+{from:[26.6,56.2],to:[35.6,140.1],type:'crude',vol:4.2,nm:'Persian Gulf → Japan'},
+{from:[26.6,56.2],to:[29.9,122.1],type:'crude',vol:6.8,nm:'Persian Gulf → China'},
+{from:[26.6,56.2],to:[35.5,129.4],type:'crude',vol:3.1,nm:'Persian Gulf → Korea'},
+{from:[26.6,56.2],to:[22.4,70.0],type:'crude',vol:4.5,nm:'Persian Gulf → India'},
+{from:[4.4,7.2],to:[51.9,4.1],type:'crude',vol:1.8,nm:'Nigeria → Rotterdam'},
+{from:[4.4,7.2],to:[29.7,-95.0],type:'crude',vol:0.8,nm:'Nigeria → Houston'},
+{from:[4.4,7.2],to:[29.9,122.1],type:'crude',vol:1.2,nm:'Nigeria → China'},
+{from:[-6.1,12.4],to:[29.9,122.1],type:'crude',vol:1.5,nm:'Angola → China'},
+{from:[-6.1,12.4],to:[22.4,70.0],type:'crude',vol:0.6,nm:'Angola → India'},
+{from:[60.3,29.0],to:[51.9,4.1],type:'crude',vol:1.5,nm:'Primorsk → Rotterdam'},
+{from:[44.7,37.8],to:[36.9,35.9],type:'crude',vol:0.8,nm:'Novorossiysk → Ceyhan'},
+{from:[42.7,133.0],to:[29.9,122.1],type:'crude',vol:1.6,nm:'Kozmino → China'},
+{from:[42.7,133.0],to:[35.5,129.4],type:'crude',vol:0.5,nm:'Kozmino → Korea'},
+{from:[42.7,133.0],to:[22.4,70.0],type:'crude',vol:0.8,nm:'Kozmino → India'},
+{from:[29.7,-95.0],to:[51.9,4.1],type:'crude',vol:1.2,nm:'Houston → Rotterdam'},
+{from:[29.7,-95.0],to:[35.5,129.4],type:'crude',vol:0.6,nm:'Houston → Korea'},
+{from:[29.7,-95.0],to:[22.4,70.0],type:'crude',vol:0.4,nm:'Houston → India'},
+{from:[7.5,-57.5],to:[29.7,-95.0],type:'crude',vol:0.4,nm:'Guyana → Houston'},
+{from:[-25.0,-43.5],to:[29.9,122.1],type:'crude',vol:1.0,nm:'Brazil → China'},
+{from:[35.8,-0.3],to:[51.9,4.1],type:'crude',vol:0.5,nm:'Algeria → Rotterdam'},
+{from:[31.1,29.7],to:[51.9,4.1],type:'crude',vol:0.6,nm:'Sidi Kerir → Rotterdam'},
+{from:[29.7,48.8],to:[22.4,70.0],type:'crude',vol:1.8,nm:'Basra → India'},
+{from:[29.7,48.8],to:[29.9,122.1],type:'crude',vol:2.2,nm:'Basra → China'},
+{from:[29.7,48.8],to:[51.9,4.1],type:'crude',vol:0.4,nm:'Basra → Rotterdam'},
+{from:[44.7,37.8],to:[22.4,70.0],type:'crude',vol:1.5,nm:'Russia Black Sea → India'},
+{from:[62.0,72.0],to:[42.7,133.0],type:'crude',vol:1.8,nm:'W.Siberia → Kozmino (pipeline to port)'},
+{from:[36.9,6.9],to:[51.9,4.1],type:'crude',vol:0.4,nm:'Skikda → Rotterdam'},
+{from:[26.6,50.2],to:[35.6,140.1],type:'crude',vol:1.8,nm:'Ras Tanura → Japan'},
+{from:[26.6,50.2],to:[29.9,122.1],type:'crude',vol:3.5,nm:'Ras Tanura → China'},
+{from:[26.6,50.2],to:[35.5,129.4],type:'crude',vol:2.8,nm:'Ras Tanura → Korea'},
+{from:[46.6,142.9],to:[35.6,140.1],type:'crude',vol:0.4,nm:'Sakhalin → Japan'},
+{from:[25.9,51.5],to:[35.6,140.1],type:'lng',vol:8.2,nm:'Qatar → Japan'},
+{from:[25.9,51.5],to:[35.5,129.4],type:'lng',vol:5.1,nm:'Qatar → Korea'},
+{from:[25.9,51.5],to:[29.9,122.1],type:'lng',vol:4.8,nm:'Qatar → China'},
+{from:[25.9,51.5],to:[22.4,70.0],type:'lng',vol:3.5,nm:'Qatar → India'},
+{from:[25.9,51.5],to:[51.9,4.1],type:'lng',vol:2.2,nm:'Qatar → NW Europe'},
+{from:[25.9,51.5],to:[40.6,-74.0],type:'lng',vol:0.8,nm:'Qatar → US East Coast'},
+{from:[-20.7,116.8],to:[35.6,140.1],type:'lng',vol:5.0,nm:'NWS Australia → Japan'},
+{from:[-20.7,116.8],to:[29.9,122.1],type:'lng',vol:3.2,nm:'NWS Australia → China'},
+{from:[-20.7,116.8],to:[35.5,129.4],type:'lng',vol:2.8,nm:'NWS Australia → Korea'},
+{from:[-23.8,151.3],to:[29.9,122.1],type:'lng',vol:2.1,nm:'Gladstone → China'},
+{from:[29.7,-93.9],to:[51.9,4.1],type:'lng',vol:3.5,nm:'Sabine Pass → Europe'},
+{from:[29.7,-93.9],to:[35.6,140.1],type:'lng',vol:1.8,nm:'Sabine Pass → Japan'},
+{from:[29.7,-93.9],to:[35.5,129.4],type:'lng',vol:1.5,nm:'Sabine Pass → Korea'},
+{from:[29.7,-93.9],to:[22.4,70.0],type:'lng',vol:0.8,nm:'Sabine Pass → India'},
+{from:[27.8,-97.4],to:[51.9,4.1],type:'lng',vol:1.2,nm:'Corpus Christi → Europe'},
+{from:[3.2,113.1],to:[35.6,140.1],type:'lng',vol:4.5,nm:'Bintulu → Japan'},
+{from:[3.2,113.1],to:[35.5,129.4],type:'lng',vol:2.0,nm:'Bintulu → Korea'},
+{from:[3.2,113.1],to:[29.9,122.1],type:'lng',vol:1.8,nm:'Bintulu → China'},
+{from:[4.4,7.2],to:[51.9,4.1],type:'lng',vol:2.5,nm:'Nigeria LNG → Europe'},
+{from:[4.4,7.2],to:[22.4,70.0],type:'lng',vol:0.8,nm:'Nigeria LNG → India'},
+{from:[71.3,72.8],to:[29.9,122.1],type:'lng',vol:2.5,nm:'Yamal → China (NSR)'},
+{from:[71.3,72.8],to:[51.9,4.1],type:'lng',vol:1.8,nm:'Yamal → Europe'},
+{from:[71.3,72.8],to:[35.6,140.1],type:'lng',vol:0.8,nm:'Yamal → Japan'},
+{from:[10.4,-61.0],to:[40.6,-74.0],type:'lng',vol:1.0,nm:'Trinidad → US East'},
+{from:[10.4,-61.0],to:[51.9,4.1],type:'lng',vol:0.6,nm:'Trinidad → Europe'},
+{from:[31.3,30.3],to:[51.9,4.1],type:'lng',vol:0.8,nm:'Egypt LNG → Europe'},
+{from:[22.9,59.5],to:[35.5,129.4],type:'lng',vol:1.2,nm:'Oman LNG → Korea'},
+{from:[62.0,72.0],to:[55.0,37.0],type:'pipe',vol:4.5,nm:'W. Siberia → Moscow trunk'},
+{from:[62.0,72.0],to:[51.9,4.1],type:'pipe',vol:2.8,nm:'W. Siberia → NW Europe (residual)'},
+{from:[62.0,72.0],to:[29.9,122.1],type:'pipe',vol:3.8,nm:'Power of Siberia → China'},
+{from:[46.2,53.3],to:[44.7,37.8],type:'pipe',vol:1.2,nm:'CPC: Tengiz → Novorossiysk'},
+{from:[40.0,49.8],to:[36.9,35.9],type:'pipe',vol:1.0,nm:'BTC: Baku → Ceyhan'},
+{from:[36.5,44.0],to:[36.9,35.9],type:'pipe',vol:0.5,nm:'Kirkuk → Ceyhan'},
+{from:[36.9,6.9],to:[43.3,5.4],type:'pipe',vol:0.6,nm:'TransMed: Algeria → Italy (via Tunisia)'},
+{from:[35.8,-0.3],to:[36.7,-4.4],type:'pipe',vol:0.3,nm:'Medgaz: Algeria → Spain'},
+{from:[70.7,24.0],to:[51.5,0.0],type:'pipe',vol:1.2,nm:'Langeled: Norway → UK'},
+{from:[60.6,3.7],to:[50.9,1.0],type:'pipe',vol:1.5,nm:'Troll → Dunkerque (Franpipe)'},
+{from:[58.9,2.6],to:[51.9,4.1],type:'pipe',vol:0.6,nm:'Norpipe: Ekofisk → Emden'},
+{from:[36.5,44.0],to:[30.5,47.8],type:'pipe',vol:0.4,nm:'Iraq internal: Kirkuk → Basra'},
+{from:[22.4,70.0],to:[20.3,86.6],type:'pipe',vol:0.3,nm:'India domestic pipeline'},
+{from:[31.9,-102.1],to:[29.7,-95.0],type:'pipe',vol:3.5,nm:'Permian → Houston (multiple)'},
+{from:[31.9,-102.1],to:[27.8,-97.4],type:'pipe',vol:2.0,nm:'Permian → Corpus Christi'},
+{from:[57.0,-111.5],to:[29.7,-95.0],type:'pipe',vol:0.8,nm:'Keystone: Alberta → Gulf Coast'},
+{from:[57.0,-111.5],to:[49.0,-97.0],type:'pipe',vol:0.6,nm:'Enbridge Mainline'},
+{from:[27.0,52.0],to:[28.0,53.0],type:'pipe',vol:0.3,nm:'South Pars → Assaluyeh'},
+{from:[53.3,6.8],to:[51.9,4.1],type:'pipe',vol:0.1,nm:'Groningen → NL grid (closing)'},
+{from:[41.0,-77.5],to:[40.6,-74.0],type:'pipe',vol:0.5,nm:'Marcellus → NYC'},
+{from:[32.5,-93.5],to:[29.7,-93.9],type:'pipe',vol:0.8,nm:'Haynesville → Sabine Pass LNG'},
+{from:[31.7,6.1],to:[36.9,6.9],type:'pipe',vol:0.4,nm:'Hassi Messaoud → Skikda'},
+{from:[48.1,-103.5],to:[29.7,-95.0],type:'pipe',vol:0.5,nm:'Bakken → Gulf (DAPL)'},
+{from:[40.0,49.8],to:[41.1,29.1],type:'pipe',vol:0.3,nm:'TANAP: Azerbaijan → Turkey'},
+{from:[41.1,29.1],to:[40.6,22.9],type:'pipe',vol:0.3,nm:'TAP: Turkey → Greece → Italy'},
+{from:[60.6,3.7],to:[58.0,7.0],type:'pipe',vol:0.8,nm:'Troll → Kollsnes processing'},
+{from:[46.4,52.5],to:[29.9,122.1],type:'pipe',vol:0.2,nm:'Kazakhstan → China (via pipeline)'},
+{from:[40.0,62.0],to:[29.9,122.1],type:'pipe',vol:0.5,nm:'Central Asia–China Gas Pipeline'},
+{from:[71.0,87.0],to:[60.3,29.0],type:'pipe',vol:0.1,nm:'Vostok Oil → NSR terminal (planned)'},
+{from:[30.5,47.8],to:[29.7,48.8],type:'pipe',vol:2.5,nm:'Iraq southern oil → Basra terminal'},
+{from:[24.0,49.0],to:[26.6,50.2],type:'pipe',vol:3.0,nm:'Saudi E–W → Ras Tanura'},
+{from:[24.0,49.0],to:[24.1,38.1],type:'pipe',vol:2.0,nm:'Petroline: East → Yanbu'},
+{from:[15.0,42.5],to:[30.5,32.3],type:'disrupted',vol:0.8,nm:'Red Sea → Suez (Houthi disrupted)'},
+{from:[4.4,7.2],to:[5.5,5.0],type:'disrupted',vol:0.3,nm:'Niger Delta theft corridor'},
+{from:[36.5,44.0],to:[36.9,35.9],type:'disrupted',vol:0.45,nm:'Kirkuk–Ceyhan (PKK attacks)'},
+{from:[13.8,48.2],to:[12.6,43.3],type:'disrupted',vol:0.0,nm:'Yemen LNG (mothballed)'}
+];
+
+// Populate maritime list
+(function(){
+  const list=document.getElementById('en-maritime-list');
+  if(!list)return;
+  EN_CHOKEPOINTS.forEach(cp=>{
+    const d=document.createElement('div');d.className='en-maritime';
+    d.innerHTML=`${cp.alert?'<span class="em-alert">⚠</span>':''}<span class="em-dot" style="background:${cp.alert?'#e44':'#4ad'}"></span><span class="em-nm">${cp.nm}</span><span class="em-vol">${cp.mbd} mb/d</span>`;
+    d.onclick=()=>flyToEnHub(cp.lat,cp.lng,cp.nm);
+    list.appendChild(d);
+  });
+})();
+
+let enGlobeObjs=[];
+function clearEnGlobe(){enGlobeObjs.forEach(o=>scene.remove(o));enGlobeObjs=[];}
+
+function switchMode(mode){
+  enMode=mode==='energy';
+  document.querySelectorAll('.mt-btn').forEach((b,i)=>b.classList.toggle('active',i===(enMode?1:0)));
+  document.getElementById('sidebar').style.display=enMode?'none':'flex';
+  document.getElementById('search-box').style.display=enMode?'none':'';
+  document.getElementById('globe-btns').style.display=enMode?'none':'';
+  document.getElementById('energy-ui').style.display=enMode?'':'none';
+  document.getElementById('heatmap-legend').style.display='none';
+  if(enMode){clearNetArcs();clearHeatDots();renderEnScene();}
+  else{clearEnGlobe();if(heatmapOn)drawHeatmap();if(networkOn)drawNetwork();}
+}
+window.switchMode=switchMode;
+
+function renderEnScene(){
+  clearEnGlobe();enFlowDots=[];
+  EN_HUB_DATA.forEach(h=>{
+    const layer=h.type==='prod'?'prod':h.type==='offshore'?'offshore':h.type==='lng'?'lng':h.type==='export'?'export':'crisis';
+    if(!EN_LAYERS[layer])return;
+    const v=ll2v(h.lat,h.lng,R*1.01);
+    if(h.type==='crisis'){
+      const ring=new THREE.Mesh(new THREE.RingGeometry(0.02,0.04,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.6,side:THREE.DoubleSide}));
+      ring.position.copy(v);ring.lookAt(0,0,0);scene.add(ring);enGlobeObjs.push(ring);
+      const pulse=new THREE.Mesh(new THREE.RingGeometry(0.03,0.06,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.2,side:THREE.DoubleSide}));
+      pulse.position.copy(v);pulse.lookAt(0,0,0);pulse._enPulse=true;pulse._enScale=1;
+      scene.add(pulse);enGlobeObjs.push(pulse);
+    }else{
+      const col=EN_COLORS[h.type]||0xffffff;
+      const dot=new THREE.Mesh(new THREE.SphereGeometry(0.012,8,8),new THREE.MeshBasicMaterial({color:col}));
+      dot.position.copy(v);scene.add(dot);enGlobeObjs.push(dot);
+    }
+  });
+  EN_SEA_ROUTES.forEach(r=>{
+    const fromV=ll2v(r.from[0],r.from[1],1).normalize();
+    const toV=ll2v(r.to[0],r.to[1],1).normalize();
+    const col=EN_ROUTE_COLORS[r.type]||0xffffff;
+    const elev=0.06+r.vol*0.015;
+    const pts=slerpArcPts(fromV,toV,Math.min(elev,0.3),80);
+    const mat=new THREE.LineBasicMaterial({color:col,opacity:r.type==='disrupted'?0.35:0.2,transparent:true});
+    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);
+    scene.add(line);enGlobeObjs.push(line);
+    const nDots=Math.max(2,Math.min(5,Math.round(r.vol/2)));
+    for(let i=0;i<nDots;i++){
+      const fd=new THREE.Mesh(new THREE.SphereGeometry(0.008,6,6),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.9}));
+      const glow=new THREE.Mesh(new THREE.SphereGeometry(0.016,6,6),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.2}));
+      fd.add(glow);
+      scene.add(fd);enGlobeObjs.push(fd);
+      enFlowDots.push({mesh:fd,pts,progress:i/nDots,speed:0.002+r.vol*0.0003,disrupted:r.type==='disrupted'});
+    }
+  });
+}
+function animateFlowDots(){
+  enFlowDots.forEach(d=>{
+    d.progress+=d.speed;if(d.progress>1)d.progress-=1;
+    const idx=Math.floor(d.progress*(d.pts.length-1));
+    const nextIdx=Math.min(idx+1,d.pts.length-1);
+    const frac=d.progress*(d.pts.length-1)-idx;
+    d.mesh.position.lerpVectors(d.pts[idx],d.pts[nextIdx],frac);
+    if(d.disrupted)d.mesh.visible=Math.sin(Date.now()*0.008)>0;
+  });
+  enGlobeObjs.forEach(o=>{
+    if(o._enPulse){
+      o._enScale+=0.008;if(o._enScale>2)o._enScale=1;
+      o.scale.setScalar(o._enScale);
+      o.material.opacity=0.3*(2-o._enScale);
+    }
+  });
+}
+
+function flyToEnHub(lat,lng,nm){
+  const target=ll2v(lat,lng,R*3).normalize().multiplyScalar(3.5);
+  const src=cam.position.clone();
+  let t=0;
+  ctrl.autoRotate=false;
+  (function step(){t=Math.min(1,t+0.025);const e=t<.5?2*t*t:-1+(4-2*t)*t;cam.position.lerpVectors(src,target,e);cam.lookAt(0,0,0);if(t<1)requestAnimationFrame(step);})();
+  if(nm){
+    const hub=EN_HUB_DATA.find(h=>h.nm===nm)||EN_CHOKEPOINTS.find(c=>c.nm===nm);
+    if(hub)showHubDetail(hub);
+  }
+}
+
+function showHubDetail(hub){
+  const el=document.getElementById('hub-detail');
+  const typeLabels={prod:'Production Field',offshore:'Offshore / Chokepoint',lng:'LNG Terminal',export:'Export Hub',crisis:'Crisis Overlay'};
+  const typeColors={prod:'#e44',offshore:'#4ad',lng:'#4d8',export:'#da4',crisis:'#f4a'};
+  const type=hub.type||(hub.mbd!==undefined?'offshore':'prod');
+  el.innerHTML=`<div class="en-hub-info">
+    <div class="ehi-name">${hub.nm}</div>
+    <div class="ehi-type" style="color:${typeColors[type]||'#4ad'}">${typeLabels[type]||type}</div>
+    <div class="ehi-row"><span class="ehi-lbl">Capacity / Info</span><span class="ehi-val">${hub.info||hub.mbd+' mb/d'}</span></div>
+    ${hub.country?`<div class="ehi-row"><span class="ehi-lbl">Country</span><span class="ehi-val">${hub.country}</span></div>`:''}
+    <div class="ehi-row"><span class="ehi-lbl">Coordinates</span><span class="ehi-val">${hub.lat.toFixed(1)}°, ${hub.lng.toFixed(1)}°</span></div>
+  </div>`;
+}
+
+function toggleEnLayer(layer){
+  EN_LAYERS[layer]=!EN_LAYERS[layer];
+  const el=document.querySelector(`.en-layer[data-layer="${layer}"]`);
+  if(el)el.classList.toggle('active',EN_LAYERS[layer]);
+  if(el){const tog=el.querySelector('.el-tog');if(tog)tog.style.opacity=EN_LAYERS[layer]?1:0.2;}
+  if(enMode)renderEnScene();
+}
+function enLayerAll(on){
+  Object.keys(EN_LAYERS).forEach(k=>{EN_LAYERS[k]=on;});
+  document.querySelectorAll('.en-layer').forEach(el=>{el.classList.toggle('active',on);const tog=el.querySelector('.el-tog');if(tog)tog.style.opacity=on?1:0.2;});
+  if(enMode)renderEnScene();
+}
+window.toggleEnLayer=toggleEnLayer;window.enLayerAll=enLayerAll;
+
+function switchEnTab(tab){
+  document.querySelectorAll('.en-tab').forEach(t=>t.classList.toggle('active',t.dataset.enTab===tab));
+}
+window.switchEnTab=switchEnTab;
+
+const EN_THEMES={
+  geo:{nm:'Geo Map',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Classic NASA Blue Marble photography with natural terrain colors.'},
+  night:{nm:'Night Map',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg',desc:'Dark continent silhouettes with glowing coastlines and blue emissive ocean specular.'},
+  daynight:{nm:'Day / Night',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-day.jpg',desc:'Sunlit hemisphere with real-time terminator line and city lights on the dark side.'},
+  holo:{nm:'Holographic',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png',desc:'Wireframe topology with elevation data rendered as a glowing holographic projection.'},
+  nasa:{nm:'NASA True Color',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Satellite composite from NASA MODIS — updated seasonally.'},
+  sst:{nm:'NOAA SST',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-water.png',desc:'Sea surface temperature anomaly map from NOAA buoy and satellite data.'},
+  marble:{nm:'Black Marble',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg',desc:'NASA Black Marble — nighttime lights showing global energy consumption.'},
+  aod:{nm:'Aerosol / AOD',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Aerosol Optical Depth overlay showing dust, smoke, and pollution plumes.'},
+  goes:{nm:'GOES-East',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'GOES-East geostationary satellite — real-time cloud and storm imagery.'}
+};
+let curEnTheme='night';
+function setEnTheme(key){
+  curEnTheme=key;
+  const t=EN_THEMES[key];
+  document.querySelectorAll('.et-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===key));
+  document.getElementById('en-theme-name').textContent=t.nm;
+  document.getElementById('rs-theme-tag').textContent=t.nm;
+  document.querySelector('.en-theme-desc').innerHTML=`<div class="en-td-title">${key==='night'?'🌑':key==='geo'?'🌍':key==='holo'?'🔮':'🛰'} ${t.nm}</div><div class="en-td-text">${t.desc}</div>`;
+  new THREE.TextureLoader().load(t.url,tex=>{
+    if(gMesh){gMesh.material.map=tex;gMesh.material.needsUpdate=true;}
+  });
+}
+window.setEnTheme=setEnTheme;
+
+function setRouteWidth(mode){
+  document.querySelectorAll('.en-sec .en-btn-group:first-of-type .en-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['uniform','flow','vol'][i]===mode);
+  });
+}
+function setEnFilter(mode){
+  document.querySelectorAll('.en-sec .en-btn-group:nth-of-type(2) .en-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['grid','circle','gear'][i]===mode);
+  });
+}
+window.setRouteWidth=setRouteWidth;window.setEnFilter=setEnFilter;
 
 boot();
 </script>
