@@ -1495,6 +1495,27 @@ function svgTimeline(data,W=440,H=80,color='#4a88dd'){
   svg+=`</g></svg>`;return svg;
 }
 
+function svgYieldCurve(yc,W=440,H=100){
+  const labels=['3M','6M','1Y','2Y','3Y','5Y','7Y','10Y'];
+  const mL=36,mR=8,mT=12,mB=24,iW=W-mL-mR,iH=H-mT-mB;
+  const mn=Math.min(...yc)-0.5,mx=Math.max(...yc)+0.5,rng=mx-mn||1;
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><g transform="translate(${mL},${mT})">`;
+  svg+=`<rect x="0" y="0" width="${iW}" height="${iH}" fill="rgba(255,255,255,0.01)" rx="4"/>`;
+  [0,0.5,1].forEach(f=>{const v=mn+rng*f,y=iH-(v-mn)/rng*iH;
+    svg+=`<line x1="0" y1="${y}" x2="${iW}" y2="${y}" stroke="rgba(255,255,255,0.05)"/>`;
+    svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="8" fill="#eee" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+  });
+  const pts=yc.map((v,i)=>{const x=i/(yc.length-1)*iW,y=iH-(v-mn)/rng*iH;return`${x},${y}`;});
+  svg+=`<defs><linearGradient id="ycG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4ad" stop-opacity="0.2"/><stop offset="100%" stop-color="#4ad" stop-opacity="0.02"/></linearGradient></defs>`;
+  svg+=`<polygon points="0,${iH} ${pts.join(' ')} ${iW},${iH}" fill="url(#ycG)"/>`;
+  svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="#4ad" stroke-width="2"/>`;
+  yc.forEach((v,i)=>{const x=i/(yc.length-1)*iW,y=iH-(v-mn)/rng*iH;
+    svg+=`<circle cx="${x}" cy="${y}" r="3" fill="#4ad" stroke="#0a0a0a" stroke-width="1"/>`;
+    svg+=`<text x="${x}" y="${iH+14}" text-anchor="middle" font-size="8" fill="#eee" font-family="sans-serif">${labels[i]||''}</text>`;
+  });
+  svg+=`</g></svg>`;return svg;
+}
+
 // ===== FINANCIAL DATA =====
 const CD_FIN={};
 const _SEC_DEV=[1.5,19.5,79.0],_SEC_IND=[5,35,60],_SEC_AGR=[22,25,53],_SEC_OIL=[2,50,48],_SEC_MIX=[8,28,64],_SEC_SVC=[3,22,75];
@@ -1507,6 +1528,106 @@ const _RH_EM=[{y:'18',v:6.5},{y:'19',v:5.5},{y:'20',v:3.5},{y:'21',v:4.0},{y:'22
 const _EXP5_US=[{c:'加拿大',pct:17},{c:'墨西哥',pct:16},{c:'中國',pct:8},{c:'日本',pct:5},{c:'英國',pct:4},{c:'其他',pct:50}];
 const _EXP5_CN=[{c:'美國',pct:17},{c:'香港',pct:9},{c:'日本',pct:5},{c:'韓國',pct:4},{c:'越南',pct:4},{c:'其他',pct:61}];
 const _EXP5_DEF=[{c:'主要夥伴1',pct:15},{c:'主要夥伴2',pct:12},{c:'主要夥伴3',pct:8},{c:'主要夥伴4',pct:6},{c:'主要夥伴5',pct:5},{c:'其他',pct:54}];
+const _EXPD={
+'276':[{c:'美國',pct:9},{c:'法國',pct:8},{c:'中國',pct:7},{c:'荷蘭',pct:7},{c:'波蘭',pct:6},{c:'其他',pct:63}],
+'826':[{c:'美國',pct:15},{c:'荷蘭',pct:9},{c:'德國',pct:8},{c:'愛爾蘭',pct:7},{c:'法國',pct:5},{c:'其他',pct:56}],
+'250':[{c:'德國',pct:14},{c:'義大利',pct:9},{c:'比利時',pct:8},{c:'西班牙',pct:8},{c:'美國',pct:7},{c:'其他',pct:54}],
+'380':[{c:'德國',pct:12},{c:'法國',pct:10},{c:'美國',pct:9},{c:'西班牙',pct:5},{c:'英國',pct:5},{c:'其他',pct:59}],
+'124':[{c:'美國',pct:75},{c:'中國',pct:4},{c:'英國',pct:3},{c:'日本',pct:2},{c:'墨西哥',pct:1},{c:'其他',pct:15}],
+'036':[{c:'中國',pct:29},{c:'日本',pct:19},{c:'韓國',pct:7},{c:'印度',pct:5},{c:'美國',pct:4},{c:'其他',pct:36}],
+'724':[{c:'法國',pct:16},{c:'德國',pct:11},{c:'義大利',pct:8},{c:'葡萄牙',pct:8},{c:'英國',pct:6},{c:'其他',pct:51}],
+'528':[{c:'德國',pct:24},{c:'比利時',pct:12},{c:'英國',pct:9},{c:'法國',pct:8},{c:'義大利',pct:4},{c:'其他',pct:43}],
+'756':[{c:'德國',pct:16},{c:'美國',pct:14},{c:'法國',pct:7},{c:'義大利',pct:6},{c:'英國',pct:5},{c:'其他',pct:52}],
+'616':[{c:'德國',pct:28},{c:'捷克',pct:6},{c:'法國',pct:6},{c:'英國',pct:6},{c:'義大利',pct:5},{c:'其他',pct:49}],
+'410':[{c:'中國',pct:25},{c:'美國',pct:15},{c:'越南',pct:9},{c:'日本',pct:5},{c:'香港',pct:5},{c:'其他',pct:41}],
+'076':[{c:'中國',pct:27},{c:'美國',pct:11},{c:'阿根廷',pct:5},{c:'荷蘭',pct:4},{c:'新加坡',pct:3},{c:'其他',pct:50}],
+'643':[{c:'中國',pct:14},{c:'荷蘭',pct:10},{c:'德國',pct:7},{c:'土耳其',pct:5},{c:'白俄羅斯',pct:5},{c:'其他',pct:59}],
+'484':[{c:'美國',pct:80},{c:'加拿大',pct:3},{c:'中國',pct:2},{c:'德國',pct:1},{c:'日本',pct:1},{c:'其他',pct:13}],
+'356':[{c:'美國',pct:17},{c:'阿聯酋',pct:7},{c:'荷蘭',pct:4},{c:'中國',pct:4},{c:'孟加拉',pct:4},{c:'其他',pct:64}],
+'360':[{c:'中國',pct:22},{c:'美國',pct:10},{c:'日本',pct:8},{c:'印度',pct:7},{c:'新加坡',pct:5},{c:'其他',pct:48}],
+'792':[{c:'德國',pct:9},{c:'英國',pct:6},{c:'伊拉克',pct:5},{c:'義大利',pct:5},{c:'美國',pct:5},{c:'其他',pct:70}],
+'764':[{c:'美國',pct:17},{c:'中國',pct:12},{c:'日本',pct:10},{c:'越南',pct:4},{c:'澳洲',pct:4},{c:'其他',pct:53}],
+'566':[{c:'印度',pct:11},{c:'西班牙',pct:10},{c:'美國',pct:7},{c:'法國',pct:7},{c:'荷蘭',pct:6},{c:'其他',pct:59}],
+'608':[{c:'美國',pct:16},{c:'日本',pct:14},{c:'中國',pct:13},{c:'香港',pct:8},{c:'新加坡',pct:6},{c:'其他',pct:43}],
+'458':[{c:'新加坡',pct:14},{c:'中國',pct:13},{c:'美國',pct:11},{c:'日本',pct:7},{c:'香港',pct:6},{c:'其他',pct:49}],
+'682':[{c:'中國',pct:17},{c:'印度',pct:11},{c:'日本',pct:10},{c:'韓國',pct:9},{c:'美國',pct:5},{c:'其他',pct:48}],
+'784':[{c:'印度',pct:14},{c:'日本',pct:9},{c:'沙烏地',pct:7},{c:'中國',pct:5},{c:'伊拉克',pct:4},{c:'其他',pct:61}],
+'376':[{c:'美國',pct:26},{c:'中國',pct:9},{c:'英國',pct:7},{c:'愛爾蘭',pct:5},{c:'印度',pct:4},{c:'其他',pct:49}],
+'702':[{c:'中國',pct:14},{c:'香港',pct:12},{c:'馬來西亞',pct:10},{c:'美國',pct:9},{c:'印尼',pct:7},{c:'其他',pct:48}],
+'158':[{c:'中國',pct:25},{c:'美國',pct:15},{c:'香港',pct:12},{c:'日本',pct:7},{c:'新加坡',pct:6},{c:'其他',pct:35}],
+'710':[{c:'中國',pct:11},{c:'美國',pct:8},{c:'德國',pct:7},{c:'英國',pct:5},{c:'日本',pct:5},{c:'其他',pct:64}],
+'704':[{c:'美國',pct:29},{c:'中國',pct:16},{c:'韓國',pct:7},{c:'日本',pct:7},{c:'香港',pct:3},{c:'其他',pct:38}],
+'818':[{c:'土耳其',pct:9},{c:'義大利',pct:6},{c:'美國',pct:6},{c:'沙烏地',pct:5},{c:'印度',pct:5},{c:'其他',pct:69}],
+'032':[{c:'巴西',pct:15},{c:'中國',pct:9},{c:'美國',pct:7},{c:'智利',pct:5},{c:'印度',pct:5},{c:'其他',pct:59}],
+'170':[{c:'美國',pct:26},{c:'巴拿馬',pct:6},{c:'中國',pct:5},{c:'厄瓜多',pct:4},{c:'土耳其',pct:4},{c:'其他',pct:55}],
+'152':[{c:'中國',pct:38},{c:'美國',pct:15},{c:'日本',pct:8},{c:'韓國',pct:6},{c:'巴西',pct:5},{c:'其他',pct:28}],
+'050':[{c:'美國',pct:16},{c:'德國',pct:15},{c:'英國',pct:9},{c:'西班牙',pct:7},{c:'法國',pct:6},{c:'其他',pct:47}],
+'056':[{c:'德國',pct:18},{c:'法國',pct:15},{c:'荷蘭',pct:12},{c:'英國',pct:7},{c:'義大利',pct:5},{c:'其他',pct:43}],
+'040':[{c:'德國',pct:30},{c:'義大利',pct:6},{c:'美國',pct:6},{c:'瑞士',pct:5},{c:'法國',pct:4},{c:'其他',pct:49}],
+'752':[{c:'挪威',pct:10},{c:'德國',pct:10},{c:'丹麥',pct:8},{c:'芬蘭',pct:7},{c:'美國',pct:7},{c:'其他',pct:58}],
+'578':[{c:'英國',pct:21},{c:'德國',pct:15},{c:'荷蘭',pct:10},{c:'瑞典',pct:8},{c:'法國',pct:6},{c:'其他',pct:40}],
+'208':[{c:'德國',pct:15},{c:'瑞典',pct:11},{c:'挪威',pct:7},{c:'美國',pct:7},{c:'英國',pct:6},{c:'其他',pct:54}],
+'246':[{c:'德國',pct:13},{c:'瑞典',pct:11},{c:'美國',pct:9},{c:'荷蘭',pct:7},{c:'中國',pct:6},{c:'其他',pct:54}],
+'372':[{c:'美國',pct:29},{c:'英國',pct:10},{c:'比利時',pct:10},{c:'德國',pct:8},{c:'荷蘭',pct:5},{c:'其他',pct:38}],
+'620':[{c:'西班牙',pct:24},{c:'法國',pct:13},{c:'德國',pct:12},{c:'英國',pct:6},{c:'義大利',pct:4},{c:'其他',pct:41}],
+'554':[{c:'中國',pct:28},{c:'澳洲',pct:14},{c:'美國',pct:10},{c:'日本',pct:6},{c:'韓國',pct:4},{c:'其他',pct:38}],
+'300':[{c:'義大利',pct:11},{c:'保加利亞',pct:7},{c:'德國',pct:7},{c:'塞普勒斯',pct:6},{c:'土耳其',pct:5},{c:'其他',pct:64}],
+'203':[{c:'德國',pct:32},{c:'斯洛伐克',pct:8},{c:'波蘭',pct:6},{c:'法國',pct:5},{c:'奧地利',pct:5},{c:'其他',pct:44}],
+'642':[{c:'德國',pct:22},{c:'義大利',pct:11},{c:'法國',pct:7},{c:'匈牙利',pct:5},{c:'英國',pct:4},{c:'其他',pct:51}],
+'348':[{c:'德國',pct:27},{c:'義大利',pct:5},{c:'羅馬尼亞',pct:5},{c:'奧地利',pct:5},{c:'斯洛伐克',pct:5},{c:'其他',pct:53}],
+'344':[{c:'中國',pct:23},{c:'印度',pct:7},{c:'荷蘭',pct:5},{c:'英國',pct:5},{c:'美國',pct:4},{c:'其他',pct:56}],
+'586':[{c:'美國',pct:17},{c:'中國',pct:8},{c:'英國',pct:7},{c:'德國',pct:7},{c:'阿聯酋',pct:6},{c:'其他',pct:55}],
+'804':[{c:'波蘭',pct:14},{c:'羅馬尼亞',pct:9},{c:'中國',pct:8},{c:'土耳其',pct:6},{c:'義大利',pct:5},{c:'其他',pct:58}],
+'398':[{c:'中國',pct:14},{c:'義大利',pct:13},{c:'俄羅斯',pct:10},{c:'荷蘭',pct:8},{c:'法國',pct:6},{c:'其他',pct:49}],
+'682':[{c:'中國',pct:17},{c:'印度',pct:11},{c:'日本',pct:10},{c:'韓國',pct:9},{c:'美國',pct:5},{c:'其他',pct:48}],
+'634':[{c:'韓國',pct:15},{c:'日本',pct:14},{c:'印度',pct:13},{c:'中國',pct:9},{c:'新加坡',pct:5},{c:'其他',pct:44}],
+'414':[{c:'中國',pct:22},{c:'印度',pct:15},{c:'韓國',pct:10},{c:'日本',pct:8},{c:'美國',pct:5},{c:'其他',pct:40}],
+'512':[{c:'中國',pct:42},{c:'印度',pct:10},{c:'韓國',pct:8},{c:'沙烏地',pct:5},{c:'阿聯酋',pct:4},{c:'其他',pct:31}],
+'012':[{c:'義大利',pct:14},{c:'法國',pct:13},{c:'西班牙',pct:10},{c:'美國',pct:8},{c:'巴西',pct:5},{c:'其他',pct:50}],
+'504':[{c:'西班牙',pct:23},{c:'法國',pct:19},{c:'巴西',pct:5},{c:'義大利',pct:4},{c:'印度',pct:4},{c:'其他',pct:45}],
+'604':[{c:'中國',pct:29},{c:'美國',pct:12},{c:'韓國',pct:6},{c:'日本',pct:5},{c:'西班牙',pct:4},{c:'其他',pct:44}],
+'218':[{c:'美國',pct:25},{c:'中國',pct:14},{c:'巴拿馬',pct:7},{c:'智利',pct:5},{c:'哥倫比亞',pct:4},{c:'其他',pct:45}],
+'100':[{c:'德國',pct:16},{c:'羅馬尼亞',pct:9},{c:'義大利',pct:8},{c:'土耳其',pct:7},{c:'希臘',pct:6},{c:'其他',pct:54}],
+'703':[{c:'德國',pct:22},{c:'捷克',pct:12},{c:'波蘭',pct:7},{c:'匈牙利',pct:6},{c:'法國',pct:6},{c:'其他',pct:47}],
+'191':[{c:'德國',pct:13},{c:'義大利',pct:11},{c:'斯洛維尼亞',pct:10},{c:'波黑',pct:8},{c:'奧地利',pct:6},{c:'其他',pct:52}],
+'705':[{c:'德國',pct:17},{c:'義大利',pct:11},{c:'克羅埃西亞',pct:8},{c:'奧地利',pct:7},{c:'法國',pct:6},{c:'其他',pct:51}],
+'233':[{c:'芬蘭',pct:16},{c:'瑞典',pct:12},{c:'拉脫維亞',pct:10},{c:'美國',pct:7},{c:'立陶宛',pct:6},{c:'其他',pct:49}],
+'196':[{c:'英國',pct:12},{c:'希臘',pct:9},{c:'黎巴嫩',pct:7},{c:'以色列',pct:6},{c:'義大利',pct:5},{c:'其他',pct:61}],
+'440':[{c:'拉脫維亞',pct:14},{c:'德國',pct:11},{c:'波蘭',pct:9},{c:'荷蘭',pct:6},{c:'美國',pct:5},{c:'其他',pct:55}],
+'428':[{c:'立陶宛',pct:18},{c:'愛沙尼亞',pct:11},{c:'德國',pct:7},{c:'英國',pct:7},{c:'瑞典',pct:6},{c:'其他',pct:51}],
+'442':[{c:'德國',pct:22},{c:'法國',pct:16},{c:'比利時',pct:14},{c:'義大利',pct:4},{c:'英國',pct:4},{c:'其他',pct:40}],
+'688':[{c:'德國',pct:13},{c:'義大利',pct:10},{c:'波黑',pct:8},{c:'羅馬尼亞',pct:5},{c:'俄羅斯',pct:5},{c:'其他',pct:59}],
+'788':[{c:'法國',pct:29},{c:'義大利',pct:17},{c:'德國',pct:9},{c:'西班牙',pct:4},{c:'利比亞',pct:4},{c:'其他',pct:37}],
+'400':[{c:'美國',pct:21},{c:'沙烏地',pct:13},{c:'印度',pct:8},{c:'伊拉克',pct:7},{c:'中國',pct:4},{c:'其他',pct:47}],
+'368':[{c:'中國',pct:26},{c:'印度',pct:24},{c:'韓國',pct:10},{c:'美國',pct:8},{c:'希臘',pct:5},{c:'其他',pct:27}],
+'404':[{c:'烏干達',pct:10},{c:'巴基斯坦',pct:8},{c:'美國',pct:8},{c:'荷蘭',pct:7},{c:'英國',pct:7},{c:'其他',pct:60}],
+'434':[{c:'義大利',pct:22},{c:'中國',pct:15},{c:'西班牙',pct:12},{c:'德國',pct:8},{c:'法國',pct:6},{c:'其他',pct:37}],
+'024':[{c:'中國',pct:42},{c:'印度',pct:10},{c:'美國',pct:5},{c:'南非',pct:4},{c:'阿聯酋',pct:3},{c:'其他',pct:36}],
+'834':[{c:'印度',pct:18},{c:'南非',pct:8},{c:'中國',pct:7},{c:'肯亞',pct:6},{c:'比利時',pct:5},{c:'其他',pct:56}],
+'288':[{c:'瑞士',pct:16},{c:'印度',pct:12},{c:'阿聯酋',pct:10},{c:'中國',pct:9},{c:'南非',pct:6},{c:'其他',pct:47}],
+'384':[{c:'荷蘭',pct:10},{c:'美國',pct:8},{c:'法國',pct:6},{c:'德國',pct:5},{c:'越南',pct:5},{c:'其他',pct:66}],
+'188':[{c:'美國',pct:40},{c:'荷蘭',pct:5},{c:'瓜地馬拉',pct:5},{c:'比利時',pct:4},{c:'巴拿馬',pct:3},{c:'其他',pct:43}],
+'858':[{c:'中國',pct:18},{c:'巴西',pct:15},{c:'阿根廷',pct:6},{c:'美國',pct:5},{c:'荷蘭',pct:5},{c:'其他',pct:51}],
+'112':[{c:'俄羅斯',pct:42},{c:'烏克蘭',pct:12},{c:'英國',pct:7},{c:'荷蘭',pct:4},{c:'德國',pct:4},{c:'其他',pct:31}],
+'104':[{c:'中國',pct:35},{c:'泰國',pct:18},{c:'日本',pct:8},{c:'印度',pct:5},{c:'新加坡',pct:4},{c:'其他',pct:30}],
+'031':[{c:'義大利',pct:28},{c:'土耳其',pct:16},{c:'以色列',pct:6},{c:'印度',pct:5},{c:'俄羅斯',pct:4},{c:'其他',pct:41}],
+'068':[{c:'印度',pct:16},{c:'巴西',pct:14},{c:'阿根廷',pct:12},{c:'哥倫比亞',pct:7},{c:'日本',pct:5},{c:'其他',pct:46}],
+'048':[{c:'沙烏地',pct:18},{c:'阿聯酋',pct:14},{c:'美國',pct:10},{c:'日本',pct:4},{c:'阿曼',pct:3},{c:'其他',pct:51}],
+'120':[{c:'荷蘭',pct:14},{c:'法國',pct:10},{c:'中國',pct:9},{c:'西班牙',pct:8},{c:'義大利',pct:6},{c:'其他',pct:53}],
+'116':[{c:'美國',pct:25},{c:'越南',pct:8},{c:'日本',pct:7},{c:'中國',pct:6},{c:'德國',pct:6},{c:'其他',pct:48}],
+'144':[{c:'美國',pct:24},{c:'英國',pct:8},{c:'印度',pct:7},{c:'德國',pct:5},{c:'義大利',pct:5},{c:'其他',pct:51}],
+'180':[{c:'中國',pct:42},{c:'阿聯酋',pct:10},{c:'南非',pct:6},{c:'坦尚尼亞',pct:4},{c:'印度',pct:3},{c:'其他',pct:35}],
+'214':[{c:'美國',pct:50},{c:'海地',pct:9},{c:'加拿大',pct:3},{c:'印度',pct:3},{c:'荷蘭',pct:2},{c:'其他',pct:33}],
+'222':[{c:'美國',pct:41},{c:'瓜地馬拉',pct:15},{c:'宏都拉斯',pct:10},{c:'尼加拉瓜',pct:6},{c:'哥斯大黎加',pct:4},{c:'其他',pct:24}],
+'231':[{c:'美國',pct:11},{c:'沙烏地',pct:9},{c:'德國',pct:8},{c:'瑞士',pct:6},{c:'中國',pct:5},{c:'其他',pct:61}],
+'320':[{c:'美國',pct:32},{c:'薩爾瓦多',pct:12},{c:'宏都拉斯',pct:8},{c:'墨西哥',pct:5},{c:'尼加拉瓜',pct:4},{c:'其他',pct:39}],
+'524':[{c:'印度',pct:68},{c:'美國',pct:8},{c:'德國',pct:3},{c:'英國',pct:2},{c:'土耳其',pct:2},{c:'其他',pct:17}],
+'591':[{c:'厄瓜多',pct:12},{c:'瓜地馬拉',pct:8},{c:'美國',pct:8},{c:'荷蘭',pct:6},{c:'哥倫比亞',pct:5},{c:'其他',pct:61}],
+'600':[{c:'巴西',pct:32},{c:'阿根廷',pct:22},{c:'智利',pct:8},{c:'俄羅斯',pct:4},{c:'美國',pct:3},{c:'其他',pct:31}],
+'780':[{c:'美國',pct:34},{c:'圭亞那',pct:6},{c:'西班牙',pct:4},{c:'牙買加',pct:3},{c:'中國',pct:3},{c:'其他',pct:50}],
+'800':[{c:'阿聯酋',pct:25},{c:'肯亞',pct:12},{c:'南蘇丹',pct:8},{c:'剛果',pct:7},{c:'盧安達',pct:5},{c:'其他',pct:43}],
+'860':[{c:'瑞士',pct:18},{c:'英國',pct:16},{c:'中國',pct:14},{c:'俄羅斯',pct:12},{c:'土耳其',pct:8},{c:'其他',pct:32}]
+};
 const _SC_US=[{item:'半導體',from:'台灣',pct:65},{item:'稀土',from:'中國',pct:80},{item:'鋰電池',from:'中國',pct:70}];
 const _SC_CN=[{item:'石油',from:'沙烏地',pct:18},{item:'鐵礦砂',from:'澳洲',pct:62},{item:'半導體設備',from:'荷蘭',pct:85}];
 const _SC_DEF=[{item:'能源',from:'主要供應國',pct:45},{item:'零組件',from:'主要供應國',pct:55},{item:'原物料',from:'主要供應國',pct:40}];
@@ -1549,7 +1670,49 @@ Object.keys(CD).forEach(k=>{
   if(CD_FIN[k])return;
   const tpl=_finTpl[_finMap[k]||'mix'];
   const ext=_finExtra[k]||{};
-  CD_FIN[k]={sec:ext.sec||tpl.sec,sub:ext.sub||tpl.sub,rate:ext.rate||(tpl===_finTpl.dev?3.5:tpl===_finTpl.oil?5.0:6.0),rH:ext.rH||tpl.rH,cr:ext.cr||{sp:'BBB',moody:'Baa2',fitch:'BBB'},debt:ext.debt||(tpl===_finTpl.dev?65:tpl===_finTpl.oil?30:55),def:ext.def||(tpl===_finTpl.dev?-2.5:-4.0),stock:ext.stock||'—',sH:ext.sH||[100,102,104,103,105,107,108,106,110,112,111,113],fdi:ext.fdi||(tpl===_finTpl.dev?20:10),fH:ext.fH||[8,10,12,14,10],expD:tpl.expD,sc:tpl.sc,cm:ext.cm||tpl.cm};
+  CD_FIN[k]={sec:ext.sec||tpl.sec,sub:ext.sub||tpl.sub,rate:ext.rate||(tpl===_finTpl.dev?3.5:tpl===_finTpl.oil?5.0:6.0),rH:ext.rH||tpl.rH,cr:ext.cr||{sp:'BBB',moody:'Baa2',fitch:'BBB'},debt:ext.debt||(tpl===_finTpl.dev?65:tpl===_finTpl.oil?30:55),def:ext.def||(tpl===_finTpl.dev?-2.5:-4.0),stock:ext.stock||'—',sH:ext.sH||[100,102,104,103,105,107,108,106,110,112,111,113],fdi:ext.fdi||(tpl===_finTpl.dev?20:10),fH:ext.fH||[8,10,12,14,10],expD:_EXPD[k]||tpl.expD,sc:tpl.sc,cm:ext.cm||tpl.cm};
+});
+
+// ===== ADVANCED FINANCIAL DATA =====
+const CD_FIN2={};
+const _FIN2={
+'840':{fx:3500,fxM:3.2,fxComp:[59,20,5,16],ca:-3.0,capA:0.8,finA:2.2,y10:4.25,ySpd:0,yc:[5.30,5.10,4.80,4.55,4.40,4.30,4.25,4.22],mcapGdp:195,listed:5900,vol:450,ccy:'USD',ccyRate:1.0,ccyChg:0,ppp:1.0,regime:'自由浮動'},
+'156':{fx:3200,fxM:16.5,fxComp:[55,25,4,16],ca:1.5,capA:-0.3,finA:-1.2,y10:2.65,ySpd:-1.60,yc:[1.50,1.70,1.95,2.15,2.30,2.45,2.55,2.65],mcapGdp:67,listed:5300,vol:280,ccy:'CNY',ccyRate:7.24,ccyChg:-2.1,ppp:4.18,regime:'管理浮動'},
+'392':{fx:1250,fxM:22.0,fxComp:[50,15,10,25],ca:3.5,capA:-0.2,finA:-3.3,y10:0.85,ySpd:-3.40,yc:[-0.05,0.05,0.20,0.40,0.55,0.70,0.80,0.85],mcapGdp:148,listed:3900,vol:180,ccy:'JPY',ccyRate:155.5,ccyChg:-8.5,ppp:100.2,regime:'自由浮動'},
+'276':{fx:320,fxM:3.8,fxComp:[55,22,5,18],ca:5.8,capA:-1.2,finA:-4.6,y10:2.35,ySpd:-1.90,yc:[3.25,3.10,2.80,2.60,2.50,2.42,2.38,2.35],mcapGdp:55,listed:440,vol:65,ccy:'EUR',ccyRate:0.92,ccyChg:1.2,ppp:0.78,regime:'自由浮動（歐元區）'},
+'826':{fx:195,fxM:4.5,fxComp:[60,18,6,16],ca:-3.2,capA:0.5,finA:2.7,y10:4.10,ySpd:-0.15,yc:[4.75,4.50,4.30,4.20,4.15,4.12,4.10,4.10],mcapGdp:115,listed:1800,vol:42,ccy:'GBP',ccyRate:0.79,ccyChg:2.5,ppp:0.68,regime:'自由浮動'},
+'076':{fx:340,fxM:14.0,fxComp:[40,20,5,35],ca:-2.5,capA:0.3,finA:2.2,y10:11.50,ySpd:7.25,yc:[13.75,13.20,12.80,12.30,11.90,11.70,11.55,11.50],mcapGdp:48,listed:350,vol:18,ccy:'BRL',ccyRate:5.05,ccyChg:-5.2,ppp:2.62,regime:'自由浮動'},
+'410':{fx:420,fxM:8.5,fxComp:[50,20,5,25],ca:4.2,capA:-0.8,finA:-3.4,y10:3.40,ySpd:-0.85,yc:[3.25,3.18,3.22,3.28,3.32,3.35,3.38,3.40],mcapGdp:108,listed:2600,vol:95,ccy:'KRW',ccyRate:1320,ccyChg:-3.8,ppp:875,regime:'自由浮動'},
+'036':{fx:62,fxM:4.8,fxComp:[55,15,10,20],ca:1.2,capA:-0.4,finA:-0.8,y10:4.15,ySpd:-0.10,yc:[4.10,4.05,4.08,4.10,4.12,4.13,4.14,4.15],mcapGdp:105,listed:2100,vol:28,ccy:'AUD',ccyRate:1.53,ccyChg:-1.8,ppp:1.44,regime:'自由浮動'},
+'356':{fx:580,fxM:10.2,fxComp:[40,22,8,30],ca:-1.8,capA:0.5,finA:1.3,y10:7.10,ySpd:2.85,yc:[6.50,6.60,6.75,6.85,6.95,7.00,7.05,7.10],mcapGdp:112,listed:7500,vol:65,ccy:'INR',ccyRate:83.2,ccyChg:-1.5,ppp:23.3,regime:'管理浮動'},
+'158':{fx:570,fxM:18.5,fxComp:[50,20,8,22],ca:12.5,capA:-2.0,finA:-10.5,y10:1.25,ySpd:-3.00,yc:[1.875,1.70,1.50,1.38,1.30,1.28,1.26,1.25],mcapGdp:210,listed:1700,vol:35,ccy:'TWD',ccyRate:31.5,ccyChg:-2.2,ppp:15.8,regime:'管理浮動'},
+'124':{fx:105,fxM:3.5,fxComp:[55,18,7,20],ca:-0.8,capA:0.2,finA:0.6,y10:3.40,ySpd:-0.85,yc:[4.50,4.20,3.90,3.65,3.52,3.45,3.42,3.40],mcapGdp:145,listed:3400,vol:32,ccy:'CAD',ccyRate:1.36,ccyChg:-1.5,ppp:1.24,regime:'自由浮動'},
+'380':{fx:210,fxM:5.5,fxComp:[55,22,5,18],ca:0.5,capA:-0.2,finA:-0.3,y10:3.85,ySpd:1.50,yc:[3.25,3.15,3.30,3.45,3.55,3.65,3.75,3.85],mcapGdp:32,listed:400,vol:15,ccy:'EUR',ccyRate:0.92,ccyChg:1.2,ppp:0.73,regime:'自由浮動（歐元區）'},
+'724':{fx:95,fxM:4.2,fxComp:[55,22,5,18],ca:0.8,capA:-0.3,finA:-0.5,y10:3.25,ySpd:0.90,yc:[3.25,3.10,3.05,3.10,3.15,3.18,3.22,3.25],mcapGdp:58,listed:2900,vol:12,ccy:'EUR',ccyRate:0.92,ccyChg:1.2,ppp:0.67,regime:'自由浮動（歐元區）'}
+};
+const _F2TPL={
+dev:{fx:200,fxM:5,fxComp:[55,20,5,20],ca:1.0,capA:-0.3,finA:-0.7,y10:3.0,ySpd:-1.25,yc:[3.5,3.3,3.2,3.1,3.05,3.02,3.0,3.0],mcapGdp:80,listed:500,vol:20,regime:'自由浮動'},
+ind:{fx:150,fxM:6,fxComp:[45,20,5,30],ca:-1.5,capA:0.3,finA:1.2,y10:5.5,ySpd:1.25,yc:[5.0,5.1,5.2,5.3,5.35,5.4,5.45,5.5],mcapGdp:45,listed:300,vol:8,regime:'管理浮動'},
+oil:{fx:400,fxM:20,fxComp:[50,15,5,30],ca:8.0,capA:-2.0,finA:-6.0,y10:4.0,ySpd:-0.25,yc:[5.0,4.8,4.5,4.3,4.2,4.1,4.05,4.0],mcapGdp:55,listed:100,vol:5,regime:'釘住美元'},
+mix:{fx:80,fxM:5,fxComp:[42,18,5,35],ca:-2.0,capA:0.5,finA:1.5,y10:7.0,ySpd:2.75,yc:[7.0,7.0,7.0,7.0,7.0,7.0,7.0,7.0],mcapGdp:30,listed:200,vol:5,regime:'管理浮動'},
+svc:{fx:120,fxM:6,fxComp:[55,22,5,18],ca:2.0,capA:-0.5,finA:-1.5,y10:2.5,ySpd:-1.75,yc:[3.5,3.2,3.0,2.8,2.7,2.6,2.55,2.5],mcapGdp:70,listed:200,vol:10,regime:'自由浮動'}
+};
+const _CCYS={
+'250':'EUR','528':'EUR','056':'EUR','040':'EUR','372':'EUR','246':'EUR','620':'EUR','300':'EUR','616':'PLN','752':'SEK','578':'NOK','756':'CHF','208':'DKK',
+'643':'RUB','792':'TRY','484':'MXN','360':'IDR','764':'THB','458':'MYR','566':'NGN','608':'PHP','704':'VND','818':'EGP','710':'ZAR','170':'COP','152':'CLP','218':'USD','032':'ARS',
+'682':'SAR','784':'AED','414':'KWD','634':'QAR','376':'ILS','702':'SGD','344':'HKD','050':'BDT','586':'PKR','203':'CZK','642':'RON','348':'HUF','804':'UAH','512':'OMR',
+'398':'KZT','191':'EUR','705':'EUR','233':'EUR','196':'EUR','442':'EUR','440':'EUR','428':'EUR','048':'BHD','788':'TND','400':'JOD','688':'RSD','104':'MMK','031':'AZN','068':'BOB','120':'XAF','116':'KHR','144':'LKR','288':'GHS','860':'UZS','524':'NPR','222':'USD','188':'CRC','600':'PYG','858':'UYU','112':'BYN','384':'XOF','024':'AOA','834':'TZS','800':'UGX','434':'LYD','780':'TTD','368':'IQD','604':'PEN','591':'PAB','180':'CDF','214':'DOP','320':'GTQ','100':'BGN','703':'EUR','231':'ETB','504':'MAD'
+};
+const _RATES={'EUR':0.92,'GBP':0.79,'JPY':155.5,'CNY':7.24,'CHF':0.88,'CAD':1.36,'AUD':1.53,'KRW':1320,'INR':83.2,'BRL':5.05,'MXN':17.2,'TWD':31.5,'SEK':10.5,'NOK':10.6,'DKK':6.88,'PLN':4.02,'CZK':22.8,'HUF':355,'RON':4.58,'TRY':32.5,'ZAR':18.5,'IDR':15600,'THB':35.2,'MYR':4.68,'PHP':56.2,'VND':24500,'SGD':1.34,'HKD':7.81,'NZD':1.63,'ILS':3.65,'SAR':3.75,'AED':3.67,'KWD':0.31,'QAR':3.64,'RUB':92,'EGP':30.9,'NGN':780,'PKR':282,'BDT':110,'OMR':0.385,'BHD':0.377,'JOD':0.71,'TND':3.12,'MAD':10.1,'KZT':450,'UAH':37.5,'RSD':108,'BGN':1.80,'ETB':56,'COP':3950,'CLP':890,'ARS':350,'PEN':3.72,'UYU':39,'PYG':7300,'BOB':6.91,'DOP':56.8,'GTQ':7.82,'CRC':530,'PAB':1.0,'XAF':605,'XOF':605,'GHS':12.5,'TZS':2510,'UGX':3750,'KHR':4100,'LKR':315,'MMK':2100,'BYN':3.25,'AOA':830,'UZS':12300,'NPR':133,'TTD':6.78,'LYD':4.85,'IQD':1310,'AZN':1.70,'CDF':2650};
+Object.keys(CD).forEach(k=>{
+  if(CD_FIN2[k])return;
+  const det=_FIN2[k];
+  if(det){CD_FIN2[k]=det;return;}
+  const tpl=_F2TPL[_finMap[k]||'mix'];
+  const ccy=_CCYS[k]||'USD';
+  const rt=_RATES[ccy]||1;
+  const gdpC=CD[k].gdpC;
+  CD_FIN2[k]={fx:tpl.fx+(Math.random()-0.5)*tpl.fx*0.3,fxM:tpl.fxM+(Math.random()-0.5)*4,fxComp:tpl.fxComp,ca:tpl.ca+(Math.random()-0.5)*3,capA:tpl.capA,finA:tpl.finA,y10:tpl.y10+(Math.random()-0.5)*2,ySpd:tpl.ySpd,yc:tpl.yc,mcapGdp:tpl.mcapGdp+Math.round((Math.random()-0.5)*30),listed:tpl.listed+Math.round(Math.random()*200),vol:tpl.vol+Math.round(Math.random()*10),ccy,ccyRate:rt,ccyChg:Math.round((Math.random()-0.5)*10*10)/10,ppp:rt*(0.5+Math.random()*0.3),regime:tpl.regime};
 });
 
 // ===== SOCIAL DATA =====
@@ -1609,6 +1772,41 @@ function renderFinance(code){
     <div class="sec-title" style="color:#eee">FDI 外國直接投資（十億美元）</div>
     <div class="metric"><span class="m-lbl">年度FDI</span><span class="m-val">$${f.fdi}B</span></div>
     ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),440,60,'#dd8844')}</div>`:''}`;
+  const f2=CD_FIN2[code];
+  if(f2){
+    const fxCompLabels=['美元','歐元','黃金','其他'];
+    const fxCompColors=['#4a88dd','#44aa66','#ddaa44','#888'];
+    const caColor=f2.ca>0?'#44aa66':'#dd4444';
+    const invCurve=f2.yc[0]>f2.yc[7];
+    html+=`
+    <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:20px;padding-top:16px"></div>
+    <div class="sec-title" style="color:#eee">外匯儲備</div>
+    <div class="metric"><span class="m-lbl">總儲備</span><span class="m-val">$${f2.fx>=1000?(f2.fx/1000).toFixed(1)+'T':Math.round(f2.fx)+'B'}</span></div>
+    <div class="metric"><span class="m-lbl">可覆蓋進口</span><span class="m-val" style="color:${f2.fxM>6?'#44aa66':f2.fxM>3?'#ddaa44':'#dd4444'}">${f2.fxM.toFixed(1)} 個月</span></div>
+    <div style="display:flex;gap:6px;margin:10px 0 14px">${f2.fxComp.map((v,i)=>`<div style="flex:${v};height:22px;background:${fxCompColors[i]};border-radius:${i===0?'4px 0 0 4px':i===3?'0 4px 4px 0':'0'};position:relative;min-width:16px;display:flex;align-items:center;justify-content:center"><span style="font-size:8px;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.5)">${v}%</span></div>`).join('')}</div>
+    <div style="display:flex;gap:12px;margin-bottom:14px">${fxCompLabels.map((l,i)=>`<div style="display:flex;align-items:center;gap:4px;font-size:9px"><span style="width:8px;height:8px;border-radius:2px;background:${fxCompColors[i]};display:inline-block"></span><span style="color:#eee">${l}</span></div>`).join('')}</div>
+    <div class="sec-title" style="color:#eee">國際收支（佔GDP%）</div>
+    <div style="display:flex;gap:8px;margin:8px 0 14px">
+      ${[{nm:'經常帳',v:f2.ca},{nm:'資本帳',v:f2.capA},{nm:'金融帳',v:f2.finA}].map(a=>`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 8px;text-align:center"><div style="font-size:9px;color:#ddd;margin-bottom:4px">${a.nm}</div><div style="font-size:17px;font-weight:700;color:${a.v>0?'#44aa66':'#dd4444'}">${a.v>0?'+':''}${a.v.toFixed(1)}%</div></div>`).join('')}
+    </div>
+    <div class="sec-title" style="color:#eee">債券市場</div>
+    <div class="metric"><span class="m-lbl">10年期公債殖利率</span><span class="m-val">${f2.y10.toFixed(2)}%</span></div>
+    <div class="metric"><span class="m-lbl">與美債利差</span><span class="m-val" style="color:${f2.ySpd>2?'#dd4444':f2.ySpd<0?'#44aa66':'#ddaa44'}">${f2.ySpd>0?'+':''}${f2.ySpd.toFixed(2)}%</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px"><span style="font-size:10px;color:#eee">殖利率曲線</span>${invCurve?'<span style="font-size:9px;color:#dd4444;font-weight:700">⚠ 倒掛</span>':''}</div>
+    <div style="margin:4px -4px 14px">${svgYieldCurve(f2.yc)}</div>
+    <div class="sec-title" style="color:#eee">資本市場深度</div>
+    <div class="metric"><span class="m-lbl">股市總市值佔GDP</span><span class="m-val">${f2.mcapGdp}%</span></div>
+    <div style="margin:4px 0 8px"><div class="agri-bg"><div class="agri-fill" style="width:${Math.min(100,f2.mcapGdp/250*100)}%;background:linear-gradient(90deg,#2a4a8a,#4a88dd)"></div></div></div>
+    <div class="metric"><span class="m-lbl">上市公司數</span><span class="m-val">${f2.listed.toLocaleString()}</span></div>
+    <div class="metric"><span class="m-lbl">日均交易量</span><span class="m-val">$${f2.vol}B</span></div>
+    <div class="sec-title" style="color:#eee">匯率</div>
+    <div style="display:flex;gap:8px;margin:8px 0 10px">
+      <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 8px;text-align:center"><div style="font-size:9px;color:#ddd;margin-bottom:4px">${f2.ccy}/USD</div><div style="font-size:17px;font-weight:700;color:#fff">${f2.ccyRate<10?f2.ccyRate.toFixed(3):f2.ccyRate<100?f2.ccyRate.toFixed(2):Math.round(f2.ccyRate)}</div></div>
+      <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 8px;text-align:center"><div style="font-size:9px;color:#ddd;margin-bottom:4px">年度變化</div><div style="font-size:17px;font-weight:700;color:${f2.ccyChg>0?'#44aa66':'#dd4444'}">${f2.ccyChg>0?'+':''}${f2.ccyChg.toFixed(1)}%</div></div>
+    </div>
+    <div class="metric"><span class="m-lbl">PPP 匯率</span><span class="m-val">${f2.ppp<10?f2.ppp.toFixed(2):f2.ppp<100?f2.ppp.toFixed(1):Math.round(f2.ppp)}</span></div>
+    <div class="metric"><span class="m-lbl">匯率制度</span><span class="m-val" style="font-size:12px">${f2.regime}</span></div>`;
+  }
   document.getElementById('panel-finance').innerHTML=html;
 }
 
