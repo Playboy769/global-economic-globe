@@ -16,30 +16,30 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 #search-input::placeholder{color:rgba(255,255,255,0.28);font-weight:400}
 #search-input:focus{border-color:rgba(255,255,255,0.3)}
 #search-results{display:none;margin-top:6px;background:rgba(0,0,0,0.96);border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;backdrop-filter:blur(12px)}
-.sr-item{padding:10px 18px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);color:#bbb;font-weight:500}
+.sr-item{padding:10px 18px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);color:#eee;font-weight:500}
 .sr-item:last-child{border-bottom:none}
 .sr-item:hover{background:rgba(255,255,255,0.06);color:#fff}
 #tooltip{position:absolute;background:rgba(0,0,0,0.92);color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:5px 13px;font-size:13px;font-weight:700;pointer-events:none;display:none;white-space:nowrap}
 #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#000;z-index:100;transition:opacity .4s}
 .ld-spin{width:44px;height:44px;border:2px solid rgba(255,255,255,0.06);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ld-txt{color:#333;font-size:14px;font-weight:400}
+.ld-txt{color:#eee;font-size:14px;font-weight:400}
 #sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:440px;z-index:20;background:rgba(62,58,52,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
 .drag-handle{height:28px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .drag-handle:active{cursor:grabbing}
 .drag-pill{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.12)}
 #hero{padding:28px 22px;flex:1;display:flex;flex-direction:column;justify-content:center}
 .hero-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;letter-spacing:-.02em}
-.hero-desc{font-size:13px;color:#ccc;line-height:1.9;font-weight:400}
-.hero-hint{margin-top:20px;padding:14px 16px;background:rgba(255,255,255,0.02);border:1px solid #0f0f0f;border-radius:10px;font-size:12px;color:#ccc;line-height:2.1;font-weight:400}
+.hero-desc{font-size:13px;color:#eee;line-height:1.9;font-weight:400}
+.hero-hint{margin-top:20px;padding:14px 16px;background:rgba(255,255,255,0.02);border:1px solid #0f0f0f;border-radius:10px;font-size:12px;color:#eee;line-height:2.1;font-weight:400}
 .hero-hint strong{color:#fff;display:block;margin-bottom:4px;font-size:10px;text-transform:uppercase;letter-spacing:.1em}
 #country-info{display:none;flex-direction:column;flex:1;overflow:hidden}
 #country-header{padding:18px 22px 12px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
 .c-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.02em;font-family:'Calibri','Segoe UI',sans-serif}
 .c-sub{font-size:11.5px;color:rgba(255,255,255,0.85);margin-top:3px;font-weight:400}
 #tab-nav{display:flex;padding:0 22px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
-.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#555;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:-1px}
-.tab-btn:hover{color:#666}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#eee;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.tab-btn:hover{color:#ddd}
 .tab-btn.active{color:#fff;border-bottom-color:#fff}
 #tab-panels{flex:1;overflow-y:auto;padding:16px 22px}
 #tab-panels::-webkit-scrollbar{width:3px}
@@ -48,13 +48,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .panel{display:none}
 .panel.active{display:block}
 .metric{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #0a0a0a;font-size:13px}
-.m-lbl{color:#ccc;font-weight:400}
+.m-lbl{color:#eee;font-weight:400}
 .m-val{color:#fff;font-weight:700}
-.sec-title{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-weight:700}
+.sec-title{font-size:10px;color:#eee;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-weight:700}
 /* Trade items — bar chart */
 .ti-row{margin:7px 0}
 .ti-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-.ti-name{color:#bbb;font-weight:400}
+.ti-name{color:#eee;font-weight:400}
 .ti-val{color:#fff;font-weight:700}
 .ti-bg{background:rgba(255,255,255,0.04);border-radius:3px;height:6px;overflow:hidden}
 .ti-fill{height:100%;border-radius:3px;transition:width .4s}
@@ -63,7 +63,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* Agriculture */
 .agri-row{margin:8px 0}
 .agri-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-.agri-name{color:#bbb;font-weight:400}
+.agri-name{color:#eee;font-weight:400}
 .agri-val{color:#fff;font-weight:700}
 .agri-bg{background:rgba(255,255,255,0.04);border-radius:3px;height:6px;overflow:hidden}
 .agri-fill{background:linear-gradient(90deg,#0a3214,#2acc5a);height:100%;border-radius:3px}
@@ -74,15 +74,15 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .pop-bar-fill{height:100%;border-radius:3px}
 /* Bilateral trade */
 .trade-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.trade-row select,.trade-row select option,#sidebar select{flex:1;appearance:none;-webkit-appearance:none;background:rgba(255,255,255,0.03) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23555' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#ccc;padding:9px 30px 9px 12px;font-size:12.5px;font-weight:500;outline:none;cursor:pointer;transition:border-color .15s}
+.trade-row select,.trade-row select option,#sidebar select{flex:1;appearance:none;-webkit-appearance:none;background:rgba(255,255,255,0.03) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23555' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#eee;padding:9px 30px 9px 12px;font-size:12.5px;font-weight:500;outline:none;cursor:pointer;transition:border-color .15s}
 #sidebar select:hover{border-color:rgba(255,255,255,0.16)}
 #sidebar select:focus{border-color:rgba(100,160,255,0.3)}
-#sidebar select option{background:#2a2822;color:#ccc;padding:6px}
+#sidebar select option{background:#2a2822;color:#eee;padding:6px}
 .trade-row select{padding:11px 34px 11px 14px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background-color:rgba(255,255,255,0.05)}
 .trade-row select:hover{border-color:rgba(100,160,255,0.25);background-color:rgba(255,255,255,0.07)}
 .trade-row select:focus{border-color:rgba(100,160,255,0.4);box-shadow:0 0 0 2px rgba(100,160,255,0.08)}
 .custom-select{position:relative;flex:1}
-.custom-select .cs-display{padding:11px 34px 11px 14px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23888' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 12px center;color:#ccc;cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.custom-select .cs-display{padding:11px 34px 11px 14px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23888' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 12px center;color:#eee;cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .custom-select .cs-display:hover{border-color:rgba(100,160,255,0.25);background-color:rgba(255,255,255,0.07)}
 .custom-select.open .cs-display{border-color:rgba(100,160,255,0.4);box-shadow:0 0 0 2px rgba(100,160,255,0.08);border-radius:10px 10px 0 0}
 .cs-dropdown{display:none;position:absolute;top:100%;left:0;right:0;max-height:260px;overflow-y:auto;background:rgba(38,36,32,0.97);border:1px solid rgba(100,160,255,0.2);border-top:none;border-radius:0 0 10px 10px;z-index:50;backdrop-filter:blur(12px)}
@@ -96,29 +96,29 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .cs-opt:hover{background:rgba(100,160,255,0.1);color:#fff}
 .cs-opt.selected{background:rgba(100,160,255,0.15);color:#fff;font-weight:700}
 .cs-opt .cs-code{font-size:10px;color:rgba(100,160,255,0.5);font-weight:700;min-width:22px;font-family:'Calibri',monospace}
-.trade-btn{background:rgba(255,255,255,0.04);border:1px solid #1a1a1a;border-radius:6px;color:#666;padding:8px 0;cursor:pointer;font-size:13px;font-weight:700;width:100%;transition:all .15s}
+.trade-btn{background:rgba(255,255,255,0.04);border:1px solid #1a1a1a;border-radius:6px;color:#ddd;padding:8px 0;cursor:pointer;font-size:13px;font-weight:700;width:100%;transition:all .15s}
 .trade-btn:hover{background:rgba(255,255,255,0.07);color:#fff}
 .trade-card{background:#060606;border-radius:9px;padding:12px;flex:1;border:1px solid #111}
-.trade-card-lbl{font-size:11px;color:#888;margin-bottom:4px;font-weight:400}
+.trade-card-lbl{font-size:11px;color:#eee;margin-bottom:4px;font-weight:400}
 .trade-card-gdp{font-size:14px;color:#fff;font-weight:700}
-.trade-card-gpc{font-size:11.5px;color:#666;margin-top:2px;font-weight:400}
+.trade-card-gpc{font-size:11.5px;color:#ddd;margin-top:2px;font-weight:400}
 #globe-btns{position:absolute;bottom:14px;left:14px;display:flex;gap:6px;z-index:10}
-.g-btn{width:32px;height:32px;border-radius:50%;border:1px solid #222;background:rgba(0,0,0,0.7);color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.g-btn{width:32px;height:32px;border-radius:50%;border:1px solid #222;background:rgba(0,0,0,0.7);color:#eee;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .g-btn:hover{background:rgba(60,60,60,0.8)}
 .g-btn.on{background:rgba(40,80,140,0.7);border-color:#4a88dd;color:#fff}
-#heatmap-legend{position:absolute;bottom:54px;left:14px;display:flex;align-items:center;gap:6px;font-size:10px;color:#888;z-index:10;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
+#heatmap-legend{position:absolute;bottom:54px;left:14px;display:flex;align-items:center;gap:6px;font-size:10px;color:#eee;z-index:10;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
 .hm-bar{width:80px;height:8px;border-radius:4px;background:linear-gradient(90deg,#1a2a4a,#2a5a8a,#ddaa22,#dd4444)}
-.rs-btn{padding:3px 8px;border:1px solid #222;background:#0a0a0a;color:#888;font-size:10px;border-radius:4px;cursor:pointer;font-weight:600}
+.rs-btn{padding:3px 8px;border:1px solid #222;background:#0a0a0a;color:#eee;font-size:10px;border-radius:4px;cursor:pointer;font-weight:600}
 .rs-btn.active{background:#1a3a5a;color:#4a88dd;border-color:#4a88dd}
 .rank-row{display:flex;align-items:center;padding:8px 6px;border-bottom:1px solid #0a0a0a;cursor:pointer;gap:8px;transition:background .1s}
 .rank-row:hover{background:rgba(255,255,255,0.03)}
-.rank-num{width:22px;font-size:11px;color:#555;text-align:right;font-weight:700}
+.rank-num{width:22px;font-size:11px;color:#eee;text-align:right;font-weight:700}
 .rank-flag{font-size:16px;width:22px;text-align:center}
-.rank-nm{flex:1;font-size:12px;color:#ccc;font-weight:600}
+.rank-nm{flex:1;font-size:12px;color:#eee;font-weight:600}
 .rank-val{font-size:12px;color:#fff;font-weight:700;text-align:right}
 #ranking-panel,#compare-panel{flex-direction:column;padding:18px 22px;flex:1;overflow-y:auto}
 #compare-result .cmp-row{display:flex;align-items:center;margin-bottom:6px}
-#compare-result .cmp-lbl{width:80px;font-size:11px;color:#888;flex-shrink:0;font-weight:400}
+#compare-result .cmp-lbl{width:80px;font-size:11px;color:#eee;flex-shrink:0;font-weight:400}
 #compare-result .cmp-bars{flex:1;display:flex;height:16px;gap:2px}
 #compare-result .cmp-a{background:#2a5a8a;border-radius:3px 0 0 3px;display:flex;align-items:center;justify-content:flex-end;padding:0 4px;font-size:9px;color:#fff;font-weight:600;min-width:20px}
 #compare-result .cmp-b{background:#8a2a5a;border-radius:0 3px 3px 0;display:flex;align-items:center;padding:0 4px;font-size:9px;color:#fff;font-weight:600;min-width:20px}
@@ -127,19 +127,19 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .nd-partner:hover{border-color:#2a5a8a}
 .nd-partner.expanded{border-color:#3a78dd}
 .nd-head{display:flex;justify-content:space-between;align-items:center}
-.nd-nm{font-size:13px;font-weight:700;color:#ccc}
+.nd-nm{font-size:13px;font-weight:700;color:#eee}
 .nd-vol{font-size:12px;font-weight:700;color:#4a88dd}
-.nd-bal{font-size:11px;color:#666;margin-top:3px;font-weight:400}
+.nd-bal{font-size:11px;color:#ddd;margin-top:3px;font-weight:400}
 .nd-commod{display:none;margin-top:10px;padding-top:8px;border-top:1px solid #111}
 .nd-partner.expanded .nd-commod{display:block}
-.nd-csec{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 4px;font-weight:700}
-.nd-crow{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#bbb;font-weight:400}
+.nd-csec{font-size:9px;color:#eee;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 4px;font-weight:700}
+.nd-crow{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#eee;font-weight:400}
 .nd-crow span:last-child{color:#fff;font-weight:600}
 /* ===== ENERGY MODE ===== */
 #mode-toggle{position:fixed;top:16px;left:16px;z-index:30;display:flex;background:rgba(10,14,20,0.92);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;backdrop-filter:blur(12px)}
-.mt-btn{padding:8px 16px;font-size:11px;font-weight:700;color:#555;cursor:pointer;border:none;background:none;text-transform:uppercase;letter-spacing:.08em;transition:all .15s;font-family:inherit}
+.mt-btn{padding:8px 16px;font-size:11px;font-weight:700;color:#eee;cursor:pointer;border:none;background:none;text-transform:uppercase;letter-spacing:.08em;transition:all .15s;font-family:inherit}
 .mt-btn.active{color:#4ad;background:rgba(74,170,221,0.1)}
-.mt-btn:hover:not(.active){color:#888}
+.mt-btn:hover:not(.active){color:#eee}
 #energy-ui{display:none;position:absolute;inset:0;z-index:15;pointer-events:none}
 #energy-ui>*{pointer-events:auto}
 #en-nav{position:absolute;top:0;left:0;right:0;height:64px;display:flex;background:rgba(10,14,20,0.92);border-bottom:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(12px);z-index:5}
@@ -147,7 +147,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .en-tab:hover{background:rgba(255,255,255,0.02)}
 .en-tab.active{border-bottom-color:#4ad;background:rgba(74,170,221,0.04)}
 .en-tab-title{font-size:13px;font-weight:700;color:#4ad;letter-spacing:.02em}
-.en-tab-desc{font-size:10px;color:#555;font-weight:400}
+.en-tab-desc{font-size:10px;color:#eee;font-weight:400}
 .en-tab .en-radio{width:10px;height:10px;border-radius:50%;border:2px solid #333;margin-right:6px;display:inline-block}
 .en-tab.active .en-radio{border-color:#4ad;background:#4ad}
 #en-left{position:absolute;left:0;top:64px;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
@@ -158,52 +158,52 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 #en-right::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
 .en-sec{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
 .en-sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.en-sec-title{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.en-sec-title{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
 .en-sec-btns{display:flex;gap:4px}
-.en-sec-btn{padding:2px 8px;border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:9px;color:#555;background:none;cursor:pointer;font-weight:600;font-family:inherit}
+.en-sec-btn{padding:2px 8px;border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:9px;color:#eee;background:none;cursor:pointer;font-weight:600;font-family:inherit}
 .en-sec-btn:hover{color:#fff;border-color:rgba(255,255,255,0.2)}
 .en-layer{display:flex;align-items:center;padding:7px 10px;border-radius:6px;cursor:pointer;transition:all .12s;margin-bottom:3px;border:1px solid transparent}
 .en-layer:hover{background:rgba(255,255,255,0.03)}
 .en-layer.active{border-color:rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
 .el-dot{width:10px;height:10px;border-radius:50%;margin-right:10px;flex-shrink:0;border:2px solid}
-.el-name{flex:1;font-size:11.5px;font-weight:600;color:#ccc;font-family:'Consolas','Courier New',monospace}
+.el-name{flex:1;font-size:11.5px;font-weight:600;color:#eee;font-family:'Consolas','Courier New',monospace}
 .el-count{font-size:11px;font-weight:700;margin-right:8px}
 .el-tog{width:8px;height:8px;border-radius:50%}
-.en-route-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:11px;color:#888}
+.en-route-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:11px;color:#eee}
 .er-line{width:24px;height:2px;border-radius:1px;flex-shrink:0}
 .er-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.en-ctrl-label{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
+.en-ctrl-label{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
 .en-btn-group{display:flex;gap:0}
-.en-btn{padding:6px 12px;font-size:10px;font-weight:600;color:#555;background:none;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:all .12s;font-family:'Consolas',monospace}
+.en-btn{padding:6px 12px;font-size:10px;font-weight:600;color:#eee;background:none;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:all .12s;font-family:'Consolas',monospace}
 .en-btn:first-child{border-radius:4px 0 0 4px}
 .en-btn:last-child{border-radius:0 4px 4px 0}
 .en-btn.active{color:#4ad;background:rgba(74,170,221,0.1);border-color:rgba(74,170,221,0.3)}
 .en-maritime{padding:6px 10px;display:flex;align-items:center;gap:8px;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:background .1s}
 .en-maritime:hover{background:rgba(255,255,255,0.03)}
 .em-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;opacity:.5}
-.em-nm{flex:1;color:#888;font-weight:400;font-size:10.5px}
+.em-nm{flex:1;color:#eee;font-weight:400;font-size:10.5px}
 .em-vol{color:#4ad;font-weight:700;font-size:10px;font-family:'Consolas',monospace}
 .em-alert{color:#e44;font-size:8px;margin-right:2px}
 #route-stats{position:absolute;top:74px;right:356px;background:rgba(10,14,20,0.88);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;z-index:6;font-family:'Consolas',monospace;backdrop-filter:blur(8px)}
 .rs-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.rs-title{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.rs-title{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
 .rs-tag{font-size:9px;padding:2px 6px;border:1px solid rgba(74,170,221,0.3);border-radius:3px;color:#4ad;font-weight:600;cursor:pointer}
 .rs-row{display:flex;justify-content:space-between;gap:24px;font-size:11px;padding:2px 0}
-.rs-lbl{color:#888}
+.rs-lbl{color:#eee}
 .rs-val{font-weight:700}
 .hub-icon{width:52px;height:52px;margin:10px auto 14px;border:2px solid rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#4ad;background:rgba(74,170,221,0.04)}
-.hub-prompt{font-size:14px;font-weight:600;color:#ccc;margin-bottom:6px;text-align:center}
-.hub-prompt-sub{font-size:11px;color:#555;font-weight:400;line-height:1.6;text-align:center}
+.hub-prompt{font-size:14px;font-weight:600;color:#eee;margin-bottom:6px;text-align:center}
+.hub-prompt-sub{font-size:11px;color:#eee;font-weight:400;line-height:1.6;text-align:center}
 .en-theme-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .et-card{width:62px;text-align:center;cursor:pointer;opacity:.45;transition:opacity .15s}
 .et-card:hover,.et-card.active{opacity:1}
 .et-img{width:52px;height:52px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.04);margin:0 auto}
 .et-card.active .et-img{border-color:#4ad;box-shadow:0 0 12px rgba(74,170,221,0.3)}
-.et-label{font-size:7.5px;color:#888;margin-top:4px;font-weight:600}
+.et-label{font-size:7.5px;color:#eee;margin-top:4px;font-weight:600}
 .en-theme-desc{margin-top:14px;padding:10px 12px;background:rgba(74,170,221,0.04);border-radius:8px;border-left:3px solid #4ad}
 .en-td-title{font-size:12px;font-weight:700;color:#4ad;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.en-td-text{font-size:10px;color:#888;line-height:1.5;font-weight:400}
-#en-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#555;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
+.en-td-text{font-size:10px;color:#eee;line-height:1.5;font-weight:400}
+#en-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#eee;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
 .en-toggle{position:relative;width:36px;height:18px;background:rgba(255,255,255,0.06);border-radius:9px;cursor:pointer;transition:background .2s}
 .en-toggle.on{background:rgba(74,170,221,0.3)}
 .en-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#555;top:2px;left:2px;transition:all .2s}
@@ -212,7 +212,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .ehi-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
 .ehi-type{font-size:10px;color:#4ad;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px}
 .ehi-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:12px}
-.ehi-lbl{color:#888;font-weight:400}
+.ehi-lbl{color:#eee;font-weight:400}
 .ehi-val{color:#fff;font-weight:700}
 </style>
 </head>
@@ -272,12 +272,12 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
           <div class="trade-row">
             <div class="custom-select" id="cs-trade-a" data-target="trade-a"><div class="cs-display">選擇國家 A</div><div class="cs-dropdown"><input class="cs-search" placeholder="搜尋…"><div class="cs-options"></div></div></div>
             <select id="trade-a" style="display:none"><option value="">選擇國家 A</option></select>
-            <span style="color:#555;font-size:16px;flex-shrink:0">⇄</span>
+            <span style="color:#eee;font-size:16px;flex-shrink:0">⇄</span>
             <div class="custom-select" id="cs-trade-b" data-target="trade-b"><div class="cs-display">選擇國家 B</div><div class="cs-dropdown"><input class="cs-search" placeholder="搜尋…"><div class="cs-options"></div></div></div>
             <select id="trade-b" style="display:none"><option value="">選擇國家 B</option></select>
           </div>
           <div style="margin-bottom:16px"><button class="trade-btn" onclick="calcTrade()">查詢雙邊貿易差額</button></div>
-          <div id="trade-result" style="color:#333;font-size:13px;font-weight:400">請選擇兩個國家後點擊查詢</div>
+          <div id="trade-result" style="color:#eee;font-size:13px;font-weight:400">請選擇兩個國家後點擊查詢</div>
         </div>
       </div>
     </div>
@@ -313,7 +313,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
         <button class="g-btn" onclick="closeNetDetail()" style="position:static">✕</button>
       </div>
       <div id="nd-country" style="font-size:14px;font-weight:700;color:#fff;margin-bottom:4px"></div>
-      <div id="nd-sub" style="font-size:11px;color:#555;margin-bottom:14px;font-weight:400">點擊展開查看商品明細</div>
+      <div id="nd-sub" style="font-size:11px;color:#eee;margin-bottom:14px;font-weight:400">點擊展開查看商品明細</div>
       <div id="nd-list"></div>
     </div>
   </div>
@@ -353,8 +353,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
         <div class="en-btn-group"><button class="en-btn active" onclick="setRouteWidth('uniform')">Uniform</button><button class="en-btn" onclick="setRouteWidth('flow')">Flow Routes</button><button class="en-btn" onclick="setRouteWidth('vol')">Vol Only</button></div>
         <div style="margin-top:10px"><div class="en-ctrl-label">Filter</div>
         <div class="en-btn-group"><button class="en-btn active" onclick="setEnFilter('grid')">⊞</button><button class="en-btn" onclick="setEnFilter('circle')">○</button><button class="en-btn" onclick="setEnFilter('gear')">⚙</button></div></div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center"><div><div class="en-ctrl-label" style="margin:0">Cloud Layer</div><div style="font-size:9px;color:#444;font-weight:400">Hidden</div></div><div class="en-toggle" id="cloud-toggle" onclick="this.classList.toggle('on')"></div></div>
-        <div style="margin-top:10px"><label style="font-size:10px;color:#555;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" style="accent-color:#4ad"> <span style="font-family:Consolas,monospace">SINGLE</span></label></div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center"><div><div class="en-ctrl-label" style="margin:0">Cloud Layer</div><div style="font-size:9px;color:#eee;font-weight:400">Hidden</div></div><div class="en-toggle" id="cloud-toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div style="margin-top:10px"><label style="font-size:10px;color:#eee;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" style="accent-color:#4ad"> <span style="font-family:Consolas,monospace">SINGLE</span></label></div>
       </div>
       <div class="en-sec">
         <div class="en-sec-head"><span class="en-sec-title" style="color:#4ad">● Sea / Maritime (34)</span></div>
@@ -369,14 +369,14 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       </div>
       <div class="en-sec" id="en-theme-panel">
         <div class="en-sec-head"><span class="en-sec-title">地球主題</span><span class="en-theme-active" id="en-theme-name">Night Map</span></div>
-        <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px">Classic</div>
+        <div style="font-size:8px;color:#eee;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px">Classic</div>
         <div class="en-theme-grid">
           <div class="et-card" data-theme="geo" onclick="setEnTheme('geo')"><div class="et-img">🌍</div><div class="et-label">Geo Map</div></div>
           <div class="et-card active" data-theme="night" onclick="setEnTheme('night')"><div class="et-img">🌑</div><div class="et-label">Night Map</div></div>
           <div class="et-card" data-theme="daynight" onclick="setEnTheme('daynight')"><div class="et-img">🌗</div><div class="et-label">Day / Night</div></div>
           <div class="et-card" data-theme="holo" onclick="setEnTheme('holo')"><div class="et-img">🔮</div><div class="et-label">Holographic</div></div>
         </div>
-        <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:6px">🟢 NASA · NOAA Live<span style="font-weight:400;color:#333;text-transform:none;letter-spacing:0">updated hourly</span></div>
+        <div style="font-size:8px;color:#eee;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:6px">🟢 NASA · NOAA Live<span style="font-weight:400;color:#eee;text-transform:none;letter-spacing:0">updated hourly</span></div>
         <div class="en-theme-grid">
           <div class="et-card" data-theme="nasa" onclick="setEnTheme('nasa')"><div class="et-img">🛰</div><div class="et-label">NASA True Color</div></div>
           <div class="et-card" data-theme="sst" onclick="setEnTheme('sst')"><div class="et-img">🌊</div><div class="et-label">NOAA SST</div></div>
@@ -982,17 +982,29 @@ const AGRI_EXT={
 };
 Object.entries(AGRI_EXT).forEach(([k,v])=>{if(CD[k])CD[k].agri.push(...v);});
 let countryLabels=[];
-function makeLabel(text){
-  const c=document.createElement('canvas');c.width=128;c.height=48;
-  const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=5;
-  ctx.font='400 26px -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,sans-serif';
-  ctx.fillStyle='rgba(255,255,255,0.92)';
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(text,64,24);
-  const tex=new THREE.CanvasTexture(c);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,sizeAttenuation:true,depthWrite:false}));
-  sp.scale.set(0.15,0.056,1);
+function makeLabel(text,fullName){
+  const cW=512,cH=128;
+  function renderTex(str,isFull){
+    const c=document.createElement('canvas');c.width=cW;c.height=cH;
+    const ctx=c.getContext('2d');
+    const fs=isFull?44:56;
+    ctx.font=`700 ${fs}px 'Calibri','Segoe UI',sans-serif`;
+    const tw=ctx.measureText(str).width;
+    const px=28,py=12,bw=tw+px*2,bh=fs+py*2;
+    const bx=(cW-bw)/2,by=(cH-bh)/2;
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    const cr=bh/2;
+    ctx.beginPath();ctx.moveTo(bx+cr,by);ctx.lineTo(bx+bw-cr,by);ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+cr);ctx.lineTo(bx+bw,by+bh-cr);ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-cr,by+bh);ctx.lineTo(bx+cr,by+bh);ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-cr);ctx.lineTo(bx,by+cr);ctx.quadraticCurveTo(bx,by,bx+cr,by);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.95)';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(str,cW/2,cH/2);
+    return new THREE.CanvasTexture(c);
+  }
+  const texShort=renderTex(text,false);
+  const texLong=fullName?renderTex(fullName,true):null;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:texShort,transparent:true,sizeAttenuation:true,depthWrite:false}));
+  sp.scale.set(0.30,0.075,1);
+  sp._texShort=texShort;sp._texLong=texLong;sp._labelMode='short';sp._code=text;
   return sp;
 }
 function makeArcLabel(text,color){
@@ -1026,12 +1038,12 @@ function buildFlowSVG(dA,dB,bal,biVol){
   </defs>
   <rect x="0" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="#080808" stroke="#181818"/>
   <text x="${BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="sans-serif">${dA.nm}</text>
-  <text x="${BW/2}" y="${BY+34}" text-anchor="middle" fill="#888" font-size="10" font-family="sans-serif">$${dA.gdp.toFixed(1)}T</text>
-  <text x="${BW/2}" y="${BY+50}" text-anchor="middle" fill="#555" font-size="9" font-family="sans-serif">${pf(dA)}</text>
+  <text x="${BW/2}" y="${BY+34}" text-anchor="middle" fill="#eee" font-size="10" font-family="sans-serif">$${dA.gdp.toFixed(1)}T</text>
+  <text x="${BW/2}" y="${BY+50}" text-anchor="middle" fill="#eee" font-size="9" font-family="sans-serif">${pf(dA)}</text>
   <rect x="${W-BW}" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="#080808" stroke="#181818"/>
   <text x="${W-BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="sans-serif">${dB.nm}</text>
-  <text x="${W-BW/2}" y="${BY+34}" text-anchor="middle" fill="#888" font-size="10" font-family="sans-serif">$${dB.gdp.toFixed(1)}T</text>
-  <text x="${W-BW/2}" y="${BY+50}" text-anchor="middle" fill="#555" font-size="9" font-family="sans-serif">${pf(dB)}</text>
+  <text x="${W-BW/2}" y="${BY+34}" text-anchor="middle" fill="#eee" font-size="10" font-family="sans-serif">$${dB.gdp.toFixed(1)}T</text>
+  <text x="${W-BW/2}" y="${BY+50}" text-anchor="middle" fill="#eee" font-size="9" font-family="sans-serif">${pf(dB)}</text>
   <line x1="${AZL}" y1="${AR1}" x2="${AZR-2}" y2="${AR1}" stroke="#3a78dd" stroke-width="${wA.toFixed(1)}" marker-end="url(#mB)" stroke-linecap="round" opacity="0.9"/>
   <line x1="${AZR}" y1="${AR2}" x2="${AZL+2}" y2="${AR2}" stroke="#dd3a3a" stroke-width="${wB.toFixed(1)}" marker-end="url(#mR)" stroke-linecap="round" opacity="0.9"/>
   ${eAB!==null?`<text x="${MX}" y="${AR1-8}" text-anchor="middle" fill="#88aaff" font-size="10" font-weight="700" font-family="sans-serif">$${eAB}B →</text>`:''}
@@ -1122,10 +1134,10 @@ async function boot(){
 
   // Country labels at centroids
   feat.features.forEach(f=>{
-    const code=String(f.id),a2=ISO_A2[code];
-    if(!a2||!CD[code])return;
+    const code=String(f.id),a2=ISO_A2[code],d=CD[code];
+    if(!a2||!d)return;
     const cen=d3.geoCentroid(f);if(!cen)return;
-    const sp=makeLabel(a2);
+    const sp=makeLabel(a2,d.nm);
     sp.position.copy(ll2v(cen[1],cen[0],R*1.025));
     scene.add(sp);countryLabels.push(sp);
   });
@@ -1166,7 +1178,30 @@ async function boot(){
   document.addEventListener('click',()=>document.querySelectorAll('.custom-select.open').forEach(x=>x.classList.remove('open')));
 
   const ld=document.getElementById('loading'); ld.style.opacity='0'; setTimeout(()=>ld.style.display='none',400);
-  (function loop(){requestAnimationFrame(loop); ctrl.update(); if(enMode)animateFlowDots(); rend.render(scene,cam);})();
+  const _v3=new THREE.Vector3(),_projTmp=new THREE.Vector3();
+  let _labelFrame=0;
+  function updateLabels(){
+    if(enMode){countryLabels.forEach(s=>s.visible=false);return;}
+    const dist=cam.position.length();
+    const wantFull=dist<3.2;
+    const hw=rend.domElement.width/2,hh=rend.domElement.height/2;
+    const rects=[];
+    countryLabels.forEach(s=>{
+      _v3.copy(s.position);
+      const dot=_v3.normalize().dot(cam.position.clone().normalize());
+      if(dot<0.15){s.visible=false;return;}
+      if(wantFull&&s._texLong&&s._labelMode!=='full'){s.material.map=s._texLong;s._labelMode='full';s.scale.set(0.45,0.075,1);}
+      else if(!wantFull&&s._labelMode!=='short'){s.material.map=s._texShort;s._labelMode='short';s.scale.set(0.30,0.075,1);}
+      _projTmp.copy(s.position).project(cam);
+      const sx=(_projTmp.x+1)*hw,sy=(1-_projTmp.y)*hh;
+      const rw=wantFull?110:60,rh=24;
+      const rect={x:sx-rw/2,y:sy-rh/2,w:rw,h:rh,s};
+      let overlap=false;
+      for(let i=0;i<rects.length;i++){const r=rects[i];if(!(rect.x>r.x+r.w||rect.x+rect.w<r.x||rect.y>r.y+r.h||rect.y+rect.h<r.y)){overlap=true;break;}}
+      if(overlap){s.visible=false;}else{s.visible=true;rects.push(rect);}
+    });
+  }
+  (function loop(){requestAnimationFrame(loop); ctrl.update(); if(enMode)animateFlowDots(); updateLabels(); rend.render(scene,cam);})();
 }
 
 function onResize(){
@@ -1284,13 +1319,13 @@ function buildGDPChart(h){
   svg+=`<defs><linearGradient id="gdpG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a88dd" stop-opacity="0.3"/><stop offset="100%" stop-color="#4a88dd" stop-opacity="0.02"/></linearGradient></defs>`;
   [0,0.5,1].forEach(f=>{const v=mn+rY*f;
     svg+=`<line x1="${mL}" y1="${y(v).toFixed(1)}" x2="${W-mR}" y2="${y(v).toFixed(1)}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
-    svg+=`<text x="${mL-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#444" font-family="sans-serif">${v.toFixed(1)}</text>`;
+    svg+=`<text x="${mL-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#eee" font-family="sans-serif">${v.toFixed(1)}</text>`;
   });
   svg+=`<polygon points="${area}" fill="url(#gdpG)"/>`;
   svg+=`<polyline points="${pts}" fill="none" stroke="#4a88dd" stroke-width="1.5" stroke-linejoin="round"/>`;
   h.forEach((v,i)=>{svg+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.5" fill="#4a88dd" stroke="#0a0a0a" stroke-width="1"/>`;});
   const yrs=[2014,2016,2018,2020,2022];
-  yrs.forEach(yr=>{const i=yr-2014;if(i<h.length)svg+=`<text x="${x(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="7.5" fill="#444" font-family="sans-serif">${yr}</text>`;});
+  yrs.forEach(yr=>{const i=yr-2014;if(i<h.length)svg+=`<text x="${x(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${yr}</text>`;});
   svg+=`</svg>`;return svg;
 }
 
@@ -1315,13 +1350,13 @@ function renderOverview(code){
     <div class="metric"><span class="m-lbl">CPI 年增率</span><span class="m-val" style="color:${d.cpiYoy>50?'#ee4444':d.cpiYoy>10?'#ee9922':d.cpiYoy<2?'#44cc66':'#fff'}">${d.cpiYoy}%</span></div>
     <div class="metric"><span class="m-lbl">失業率</span><span class="m-val" style="color:${d.unemp>20?'#ee4444':d.unemp>10?'#ee9922':d.unemp<4?'#44cc66':'#fff'}">${d.unemp!==undefined?d.unemp+'%':'—'}</span></div>
     ${d.gdpH?`<div class="sec-title">GDP 趨勢（2014–2023，兆美元）</div><div style="margin:6px -4px 14px">${buildGDPChart(d.gdpH)}</div>`:''}
-    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,110)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#4a88dd','#dd8844','#44aa66'][i]+';display:inline-block"></span><span style="color:#888">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
+    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,110)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#4a88dd','#dd8844','#44aa66'][i]+';display:inline-block"></span><span style="color:#eee">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
     <div class="sec-title">▲ 主要出口商品（十億美元）</div>
     ${d.exp.map(x=>barRow(x,maxE,'ti-exp')).join('')}
     <div class="sec-title">▼ 主要進口商品（十億美元）</div>
     ${d.imp.map(x=>barRow(x,maxI,'ti-imp')).join('')}
     <div class="sec-title" style="margin-top:20px;padding-top:12px;border-top:1px solid #0a0a0a">資料來源</div>
-    <div style="font-size:11px;color:#555;line-height:2.1;font-weight:400">
+    <div style="font-size:11px;color:#eee;line-height:2.1;font-weight:400">
       GDP / 人口：IMF World Economic Outlook 2023<br>
       CPI / 通膨：OECD Statistics & 各國統計局<br>
       貿易數據：UN Comtrade / WTO 2023<br>
@@ -1356,12 +1391,12 @@ function renderPopulation(code){
     const ri=n-1-i,y2=i*bH,mW=mBands[ri]*sc,fW=fBands[ri]*sc;
     svg+=`<rect x="${mid-mW-1}" y="${y2+1}" width="${mW}" height="${bH-2}" fill="url(#mg)" rx="1"/>`;
     svg+=`<rect x="${mid+1}" y="${y2+1}" width="${fW}" height="${bH-2}" fill="url(#fg)" rx="1"/>`;
-    svg+=`<text x="-3" y="${y2+bH/2+3.5}" text-anchor="end" font-size="8" fill="#555" font-family="sans-serif">${labels[ri]}</text>`;
+    svg+=`<text x="-3" y="${y2+bH/2+3.5}" text-anchor="end" font-size="8" fill="#eee" font-family="sans-serif">${labels[ri]}</text>`;
   });
   svg+=`<line x1="${mid}" y1="0" x2="${mid}" y2="${iH}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`;
   [maxV*0.5,maxV].forEach(v=>{
-    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#333" font-family="sans-serif">${v.toFixed(1)}%</text>`;
-    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#333" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${v.toFixed(1)}%</text>`;
   });
   svg+=`<rect x="${mid-52}" y="${iH+18}" width="8" height="8" fill="url(#mg)" rx="1"/>`;
   svg+=`<text x="${mid-41}" y="${iH+26}" font-size="9" fill="#4a7a9b" font-family="sans-serif" font-weight="bold">男性</text>`;
@@ -1375,7 +1410,7 @@ function renderPopulation(code){
     <div class="sec-title">年齡分佈</div>
     ${[['0–14 歲（少年）',y,'#4a7a9b'],['15–64 歲（工作人口）',w,'#3a8a4a'],['65 歲以上（老年）',o,'#9b4a5e']].map(([l,v,c])=>`
     <div class="pop-bar-row">
-      <div class="pop-bar-top"><span style="color:#444;font-weight:400">${l}</span><span style="color:#fff;font-weight:700">${v}%</span></div>
+      <div class="pop-bar-top"><span style="color:#eee;font-weight:400">${l}</span><span style="color:#fff;font-weight:700">${v}%</span></div>
       <div class="pop-bar-bg"><div class="pop-bar-fill" style="background:${c};opacity:.75;width:${Math.round(v)}%"></div></div>
     </div>`).join('')}
     <div class="sec-title" style="margin-top:16px">關鍵指標</div>
@@ -1388,7 +1423,7 @@ function renderPopulation(code){
 function renderAgriculture(code){
   const d=CD[code],maxV=Math.max(...d.agri.map(a=>a.val)),total=d.agri.reduce((s,a)=>s+a.val,0);
   document.getElementById('panel-agriculture').innerHTML=`
-    <div class="sec-title" style="color:#999">主要農產品出口（十億美元）</div>
+    <div class="sec-title" style="color:#eee">主要農產品出口（十億美元）</div>
     ${d.agri.slice(0,10).map(a=>`
     <div class="agri-row">
       <div class="agri-top"><span class="agri-name">${a.nm}</span><span class="agri-val">$${a.val.toFixed(1)}B</span></div>
@@ -1441,7 +1476,7 @@ function svgRadar(vals,labels,W=200){
   vals.forEach((v,i)=>{const a=i/n*Math.PI*2-Math.PI/2;
     svg+=`<circle cx="${cx+r*v*Math.cos(a)}" cy="${cy+r*v*Math.sin(a)}" r="3" fill="#4a88dd"/>`;
     const lx=cx+(r+16)*Math.cos(a),ly=cy+(r+16)*Math.sin(a);
-    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="8" fill="#888" font-family="sans-serif">${labels[i]}</text>`;
+    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="8" fill="#eee" font-family="sans-serif">${labels[i]}</text>`;
   });
   svg+=`</svg>`;return svg;
 }
@@ -1454,9 +1489,9 @@ function svgTimeline(data,W=370,H=80,color='#4a88dd'){
   svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.8"/>`;
   data.forEach((d,i)=>{const x=i/(data.length-1)*iW,y=iH-(d.v-mn)/rng*iH;
     svg+=`<circle cx="${x}" cy="${y}" r="2.5" fill="${color}"/>`;
-    if(i%2===0||data.length<=6)svg+=`<text x="${x}" y="${iH+13}" text-anchor="middle" font-size="7.5" fill="#444" font-family="sans-serif">${d.l}</text>`;
+    if(i%2===0||data.length<=6)svg+=`<text x="${x}" y="${iH+13}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${d.l}</text>`;
   });
-  [mn,mx].forEach((v,i)=>{const y=i===0?iH:0;svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="7.5" fill="#444" font-family="sans-serif">${v.toFixed(v<10?2:0)}</text>`;});
+  [mn,mx].forEach((v,i)=>{const y=i===0?iH:0;svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="7.5" fill="#eee" font-family="sans-serif">${v.toFixed(v<10?2:0)}</text>`;});
   svg+=`</g></svg>`;return svg;
 }
 
@@ -1549,29 +1584,29 @@ function renderFinance(code){
   const secData=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:secLabels[i],pct:v})):[];
   const rateColor=f.rate>5?'#dd4444':f.rate>2?'#ddaa44':'#44aa66';
   const crColors={'AAA':'#44aa66','AA+':'#44aa66','AA':'#66bb44','AA-':'#66bb44','A+':'#88cc44','A1':'#88cc44','A':'#aacc44','Aaa':'#44aa66','Aa2':'#66bb44','Aa3':'#66bb44','Baa1':'#ccaa44','Baa2':'#ccaa44','Baa3':'#ddaa44','BBB+':'#ccaa44','BBB':'#ccaa44','BBB-':'#ddaa44','BB+':'#dd8844','BB':'#dd8844','Ba2':'#dd8844','B':'#dd4444'};
-  let html=`<div class="sec-title" style="color:#999">GDP 產業結構</div>
+  let html=`<div class="sec-title" style="color:#eee">GDP 產業結構</div>
     <div style="display:flex;align-items:center;gap:16px;margin:8px 0 12px">
       <div>${svgPie(secData,130)}</div>
-      <div>${secData.map((s,i)=>`<div style="font-size:11px;margin:4px 0;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66'][i]};display:inline-block"></span><span style="color:#888">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+      <div>${secData.map((s,i)=>`<div style="font-size:11px;margin:4px 0;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66'][i]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
-    <div class="sec-title" style="color:#999">前十大產業子分類</div>
+    <div class="sec-title" style="color:#eee">前十大產業子分類</div>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
       <div>${svgDonut(f.sub,140)}</div>
-      <div style="flex:1">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;justify-content:space-between"><span style="color:#888">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+      <div style="flex:1">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;justify-content:space-between"><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
-    <div class="sec-title" style="color:#999">央行基準利率</div>
+    <div class="sec-title" style="color:#eee">央行基準利率</div>
     <div class="metric"><span class="m-lbl">當前利率</span><span class="m-val" style="color:${rateColor}">${f.rate.toFixed(2)}%</span></div>
     <div style="margin:8px -4px 14px">${svgTimeline(f.rH.map(r=>({l:r.y,v:r.v})),370,70,'#4a88dd')}</div>
-    <div class="sec-title" style="color:#999">主權信用評等</div>
+    <div class="sec-title" style="color:#eee">主權信用評等</div>
     <div style="display:flex;gap:8px;margin:8px 0 14px">
-      ${['S&P','Moody\'s','Fitch'].map((ag,i)=>{const r=[f.cr.sp,f.cr.moody,f.cr.fitch][i];return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:#666;margin-bottom:4px">${ag}</div><div style="font-size:16px;font-weight:700;color:${crColors[r]||'#ccaa44'}">${r}</div></div>`;}).join('')}
+      ${['S&P','Moody\'s','Fitch'].map((ag,i)=>{const r=[f.cr.sp,f.cr.moody,f.cr.fitch][i];return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:#ddd;margin-bottom:4px">${ag}</div><div style="font-size:16px;font-weight:700;color:${crColors[r]||'#ccaa44'}">${r}</div></div>`;}).join('')}
     </div>
-    <div class="sec-title" style="color:#999">政府債務</div>
+    <div class="sec-title" style="color:#eee">政府債務</div>
     <div class="metric"><span class="m-lbl">國債佔GDP</span><span class="m-val">${f.debt}%</span></div>
     <div class="metric"><span class="m-lbl">財政赤字佔GDP</span><span class="m-val" style="color:${f.def<0?'#dd4444':'#44aa66'}">${f.def>0?'+':''}${f.def}%</span></div>
-    <div class="sec-title" style="color:#999">股市表現（${f.stock}）</div>
-    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),370,70,'#44aa66')}</div>`:'<div style="color:#444;font-size:11px;margin:8px 0">暫無股市數據</div>'}
-    <div class="sec-title" style="color:#999">FDI 外國直接投資（十億美元）</div>
+    <div class="sec-title" style="color:#eee">股市表現（${f.stock}）</div>
+    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),370,70,'#44aa66')}</div>`:'<div style="color:#eee;font-size:11px;margin:8px 0">暫無股市數據</div>'}
+    <div class="sec-title" style="color:#eee">FDI 外國直接投資（十億美元）</div>
     <div class="metric"><span class="m-lbl">年度FDI</span><span class="m-val">$${f.fdi}B</span></div>
     ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),370,60,'#dd8844')}</div>`:''}`;
   document.getElementById('panel-finance').innerHTML=html;
@@ -1584,11 +1619,11 @@ function renderSocial(code){
   const giniColor=s.gini<30?'#44aa66':s.gini<40?'#ddaa44':'#dd4444';
   const radarVals=[s.le/90,s.ey/20,s.mys/15,(s.gni/80000)];
   const radarLabels=['預期壽命','預期受教育','平均受教育','人均GNI'];
-  let html=`<div class="sec-title" style="color:#999">HDI 人類發展指數</div>
+  let html=`<div class="sec-title" style="color:#eee">HDI 人類發展指數</div>
     <div style="display:flex;align-items:center;gap:16px;margin:8px 0 14px">
       <div style="width:64px;height:64px;border-radius:50%;border:3px solid ${hdiColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${hdiColor}">${s.hdi.toFixed(3)}</div>
       <div>
-        <div style="font-size:11px;color:#888">排名等級</div>
+        <div style="font-size:11px;color:#eee">排名等級</div>
         <div style="font-size:14px;font-weight:700;color:${hdiColor}">${s.hdi>=0.8?'極高':s.hdi>=0.7?'高':s.hdi>=0.55?'中':'低'}人類發展</div>
       </div>
     </div>
@@ -1597,21 +1632,21 @@ function renderSocial(code){
     <div class="metric"><span class="m-lbl">預期受教育年數</span><span class="m-val">${s.ey.toFixed(1)} 年</span></div>
     <div class="metric"><span class="m-lbl">平均受教育年數</span><span class="m-val">${s.mys.toFixed(1)} 年</span></div>
     <div class="metric"><span class="m-lbl">人均 GNI (PPP)</span><span class="m-val">$${s.gni.toLocaleString()}</span></div>
-    <div class="sec-title" style="color:#999;margin-top:18px">基尼係數（所得不平等）</div>
+    <div class="sec-title" style="color:#eee;margin-top:18px">基尼係數（所得不平等）</div>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
       <div style="font-size:22px;font-weight:700;color:${giniColor}">${s.gini.toFixed(1)}</div>
       <div style="flex:1">
         <div style="height:8px;background:linear-gradient(90deg,#44aa66,#ddaa44,#dd4444);border-radius:4px;position:relative">
           <div style="position:absolute;top:-3px;left:${Math.min(95,s.gini/60*100)}%;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid ${giniColor};transform:translateX(-50%)"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:8px;color:#444;margin-top:4px"><span>平等</span><span>不平等</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:#eee;margin-top:4px"><span>平等</span><span>不平等</span></div>
       </div>
     </div>
-    <div class="sec-title" style="color:#999">教育與研發</div>
+    <div class="sec-title" style="color:#eee">教育與研發</div>
     <div class="metric"><span class="m-lbl">R&D 佔 GDP</span><span class="m-val">${s.rd.toFixed(2)}%</span></div>
     <div class="metric"><span class="m-lbl">大學數量（估）</span><span class="m-val">${s.unis.toLocaleString()}</span></div>
     <div style="margin:10px 0 8px">
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#888">R&D 投入水平</span><span style="color:#fff;font-weight:700">${s.rd.toFixed(2)}%</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#eee">R&D 投入水平</span><span style="color:#fff;font-weight:700">${s.rd.toFixed(2)}%</span></div>
       <div class="agri-bg"><div class="agri-fill" style="width:${Math.min(100,s.rd/5*100)}%;background:linear-gradient(90deg,#2a4a8a,#4a88dd)"></div></div>
     </div>`;
   document.getElementById('panel-social').innerHTML=html;
@@ -1621,16 +1656,16 @@ function renderSocial(code){
 function renderTrade(code){
   const f=CD_FIN[code];if(!f){document.getElementById('trade-detail').innerHTML='';return;}
   const expColors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#999'];
-  let html=`<div class="sec-title" style="color:#999">出口目的地</div>
+  let html=`<div class="sec-title" style="color:#eee">出口目的地</div>
     <div style="display:flex;align-items:center;gap:14px;margin:8px 0 14px">
       <div>${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),130)}</div>
-      <div>${f.expD.map((e,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#888">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
+      <div>${f.expD.map((e,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#eee">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
     </div>
-    <div class="sec-title" style="color:#999">供應鏈依賴度</div>
-    <div style="margin:8px 0 14px">${f.sc.map(s=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#888">${s.item} <span style="color:#555">← ${s.from}</span></span><span style="color:${s.pct>70?'#dd4444':s.pct>40?'#ddaa44':'#44aa66'};font-weight:700">${s.pct}%</span></div><div class="agri-bg"><div class="agri-fill" style="width:${s.pct}%;background:linear-gradient(90deg,${s.pct>70?'#8a2a2a,#dd4444':s.pct>40?'#8a6a2a,#ddaa44':'#2a6a3a,#44aa66'})"></div></div></div>`).join('')}</div>
-    <div class="sec-title" style="color:#999">大宗商品曝險（進口依賴%）</div>
+    <div class="sec-title" style="color:#eee">供應鏈依賴度</div>
+    <div style="margin:8px 0 14px">${f.sc.map(s=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#eee">${s.item} <span style="color:#eee">← ${s.from}</span></span><span style="color:${s.pct>70?'#dd4444':s.pct>40?'#ddaa44':'#44aa66'};font-weight:700">${s.pct}%</span></div><div class="agri-bg"><div class="agri-fill" style="width:${s.pct}%;background:linear-gradient(90deg,${s.pct>70?'#8a2a2a,#dd4444':s.pct>40?'#8a6a2a,#ddaa44':'#2a6a3a,#44aa66'})"></div></div></div>`).join('')}</div>
+    <div class="sec-title" style="color:#eee">大宗商品曝險（進口依賴%）</div>
     <div style="display:flex;gap:8px;margin:8px 0 14px">
-      ${[{nm:'石油',k:'oil',icon:'🛢'},{nm:'天然氣',k:'gas',icon:'🔥'},{nm:'糧食',k:'food',icon:'🌾'}].map(c=>{const v=f.cm[c.k]||0;return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 8px;text-align:center"><div style="font-size:16px">${c.icon}</div><div style="font-size:9px;color:#666;margin:4px 0">${c.nm}</div><div style="font-size:16px;font-weight:700;color:${v>60?'#dd4444':v>30?'#ddaa44':'#44aa66'}">${v}%</div></div>`;}).join('')}
+      ${[{nm:'石油',k:'oil',icon:'🛢'},{nm:'天然氣',k:'gas',icon:'🔥'},{nm:'糧食',k:'food',icon:'🌾'}].map(c=>{const v=f.cm[c.k]||0;return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 8px;text-align:center"><div style="font-size:16px">${c.icon}</div><div style="font-size:9px;color:#ddd;margin:4px 0">${c.nm}</div><div style="font-size:16px;font-weight:700;color:${v>60?'#dd4444':v>30?'#ddaa44':'#44aa66'}">${v}%</div></div>`;}).join('')}
     </div>`;
   document.getElementById('trade-detail').innerHTML=html;
 }
@@ -1649,17 +1684,17 @@ function calcTrade(){
   if(bal!==null){
     const pos=bal>=0,abs=Math.abs(bal),col=pos?'#2acc5a':'#cc2a3a',bA=Math.max(6,Math.min(94,50+bal*0.1));
     html+=`<div style="font-size:26px;font-weight:700;color:${col};margin-bottom:4px">${pos?'+':'-'}$${abs}B</div>
-      <div style="font-size:12px;color:#888;margin-bottom:12px;font-weight:400">${pos?dA.nm:dB.nm} 享有貿易順差</div>
+      <div style="font-size:12px;color:#eee;margin-bottom:12px;font-weight:400">${pos?dA.nm:dB.nm} 享有貿易順差</div>
       <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px">
         <div style="width:${bA}%;background:#1a5a2a;border-radius:3px 0 0 3px;min-width:4px"></div>
         <div style="width:${100-bA}%;background:#5a1a1a;border-radius:0 3px 3px 0;min-width:4px"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:5px;color:#555;font-weight:400">
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:5px;color:#eee;font-weight:400">
         <span>${dA.nm} 出口</span><span>${dB.nm} 出口</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">${card(dA)}${card(dB)}</div>`;
   }else{
-    html+=`<div style="font-size:11px;color:#555;margin-bottom:10px">暫無 ${dA.nm} ↔ ${dB.nm} 詳細數據</div>
+    html+=`<div style="font-size:11px;color:#eee;margin-bottom:10px">暫無 ${dA.nm} ↔ ${dB.nm} 詳細數據</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${card(dA)}${card(dB)}</div>`;
   }
   el.innerHTML=html;
@@ -1718,8 +1753,8 @@ function toggleCompare(){
 function runCompare(){
   const cA=document.getElementById('cmp-a').value,cB=document.getElementById('cmp-b').value;
   const el=document.getElementById('compare-result');
-  if(!cA||!cB){el.innerHTML='<div style="color:#333;font-size:12px">請選擇兩個國家</div>';return;}
-  if(cA===cB){el.innerHTML='<div style="color:#333;font-size:12px">請選擇不同的國家</div>';return;}
+  if(!cA||!cB){el.innerHTML='<div style="color:#eee;font-size:12px">請選擇兩個國家</div>';return;}
+  if(cA===cB){el.innerHTML='<div style="color:#eee;font-size:12px">請選擇不同的國家</div>';return;}
   const dA=CD[cA],dB=CD[cB];
   const metrics=[
     ['GDP',dA.gdp,dB.gdp,'$','T'],['人均GDP',dA.gdpC,dB.gdpC,'$',''],
@@ -1879,7 +1914,7 @@ function showNetworkDetail(code){
       </div>
     </div>`;
   });
-  if(!pairs.length)html='<div style="color:#333;font-size:12px;margin-top:10px">尚無此國家的貿易網絡數據</div>';
+  if(!pairs.length)html='<div style="color:#eee;font-size:12px;margin-top:10px">尚無此國家的貿易網絡數據</div>';
   document.getElementById('nd-list').innerHTML=html;
   document.getElementById('hero').style.display='none';
   document.getElementById('country-info').style.display='none';
