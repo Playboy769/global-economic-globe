@@ -24,7 +24,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .ld-spin{width:44px;height:44px;border:2px solid rgba(255,255,255,0.06);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ld-txt{color:#333;font-size:14px;font-weight:400}
-#sidebar{position:fixed;right:16px;top:16px;bottom:16px;width:360px;z-index:20;background:rgba(6,6,10,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,0.5)}
+#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:360px;z-index:20;background:rgba(6,6,10,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+.drag-handle{height:28px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.drag-handle:active{cursor:grabbing}
+.drag-pill{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.12)}
 #hero{padding:28px 22px;flex:1;display:flex;flex-direction:column;justify-content:center}
 .hero-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;letter-spacing:-.02em}
 .hero-desc{font-size:13px;color:#ccc;line-height:1.9;font-weight:400}
@@ -71,7 +74,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .pop-bar-fill{height:100%;border-radius:3px}
 /* Bilateral trade */
 .trade-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.trade-row select{flex:1;background:#080808;border:1px solid #1a1a1a;border-radius:6px;color:#fff;padding:7px 9px;font-size:12.5px;font-weight:600;outline:none}
+.trade-row select,.trade-row select option,#sidebar select{flex:1;appearance:none;-webkit-appearance:none;background:rgba(255,255,255,0.03) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23555' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#ccc;padding:9px 30px 9px 12px;font-size:12.5px;font-weight:500;outline:none;cursor:pointer;transition:border-color .15s}
+#sidebar select:hover{border-color:rgba(255,255,255,0.16)}
+#sidebar select:focus{border-color:rgba(100,160,255,0.3)}
+#sidebar select option{background:#0a0a0e;color:#ccc;padding:6px}
 .trade-btn{background:rgba(255,255,255,0.04);border:1px solid #1a1a1a;border-radius:6px;color:#666;padding:8px 0;cursor:pointer;font-size:13px;font-weight:700;width:100%;transition:all .15s}
 .trade-btn:hover{background:rgba(255,255,255,0.07);color:#fff}
 .trade-card{background:#060606;border-radius:9px;padding:12px;flex:1;border:1px solid #111}
@@ -93,7 +99,6 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .rank-nm{flex:1;font-size:12px;color:#ccc;font-weight:600}
 .rank-val{font-size:12px;color:#fff;font-weight:700;text-align:right}
 #ranking-panel,#compare-panel{flex-direction:column;padding:18px 22px;flex:1;overflow-y:auto}
-#ranking-panel select,#compare-panel select{background:#080808;border:1px solid #1a1a1a;border-radius:6px;color:#fff;padding:7px 9px;font-size:12.5px;font-weight:600;outline:none}
 #compare-result .cmp-row{display:flex;align-items:center;margin-bottom:6px}
 #compare-result .cmp-lbl{width:80px;font-size:11px;color:#888;flex-shrink:0;font-weight:400}
 #compare-result .cmp-bars{flex:1;display:flex;height:16px;gap:2px}
@@ -133,6 +138,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
     <div id="loading"><div class="ld-spin"></div><div class="ld-txt">載入地球資料中…</div></div>
   </div>
   <div id="sidebar">
+    <div class="drag-handle" id="drag-handle"><div class="drag-pill"></div></div>
     <div id="hero">
       <div class="hero-title">全球經濟地球儀</div>
       <div class="hero-desc">互動式 3D 地球<br>涵蓋全球前 50 大 GDP 國家<br>完整經濟、人口、貿易數據</div>
@@ -580,16 +586,16 @@ Object.entries(CD_X).forEach(([k,v])=>Object.assign(CD[k],v));
 const ISO_A2={'840':'US','156':'CN','276':'DE','392':'JP','356':'IN','826':'GB','250':'FR','380':'IT','124':'CA','076':'BR','643':'RU','410':'KR','036':'AU','724':'ES','484':'MX','360':'ID','682':'SA','528':'NL','792':'TR','756':'CH','616':'PL','056':'BE','032':'AR','752':'SE','578':'NO','158':'TW','784':'AE','764':'TH','040':'AT','372':'IE','376':'IL','566':'NG','208':'DK','702':'SG','608':'PH','458':'MY','050':'BD','818':'EG','704':'VN','710':'ZA','344':'HK','170':'CO','152':'CL','203':'CZ','246':'FI','642':'RO','620':'PT','554':'NZ','586':'PK','300':'GR'};
 let countryLabels=[];
 function makeLabel(text){
-  const c=document.createElement('canvas');c.width=256;c.height=128;
+  const c=document.createElement('canvas');c.width=128;c.height=48;
   const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=8;
-  ctx.font='bold 72px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
-  ctx.fillStyle='rgba(200,215,245,0.92)';
+  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=5;
+  ctx.font='400 26px -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,sans-serif';
+  ctx.fillStyle='rgba(230,235,250,0.82)';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(text,128,64);
+  ctx.fillText(text,64,24);
   const tex=new THREE.CanvasTexture(c);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,sizeAttenuation:true,depthWrite:false}));
-  sp.scale.set(0.32,0.16,1);
+  sp.scale.set(0.15,0.056,1);
   return sp;
 }
 function makeArcLabel(text,color){
@@ -678,14 +684,15 @@ async function boot(){
   const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
   scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.055,sizeAttenuation:true})));
 
-  // Globe sphere
+  // Globe sphere — NASA Blue Marble texture
+  const earthTex=new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg');
   gMesh=new THREE.Mesh(
     new THREE.SphereGeometry(R,80,80),
-    new THREE.MeshBasicMaterial({color:0x06122a})
+    new THREE.MeshBasicMaterial({map:earthTex})
   );
   scene.add(gMesh);
   // Atmosphere glow layers
-  [[1.025,0x1a4488,0.10],[1.055,0x2266aa,0.05],[1.09,0x3388cc,0.025]].forEach(([s,c,o])=>{
+  [[1.02,0x4488cc,0.08],[1.045,0x3366aa,0.04],[1.08,0x2255aa,0.02]].forEach(([s,c,o])=>{
     scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*s,60,60),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o,side:THREE.BackSide})));
   });
   // Graticule grid
@@ -722,7 +729,7 @@ async function boot(){
     if(!a2||!CD[code])return;
     const cen=d3.geoCentroid(f);if(!cen)return;
     const sp=makeLabel(a2);
-    sp.position.copy(ll2v(cen[1],cen[0],R*1.04));
+    sp.position.copy(ll2v(cen[1],cen[0],R*1.025));
     scene.add(sp);countryLabels.push(sp);
   });
 
@@ -1120,6 +1127,14 @@ function slerpArcPts(from,to,elev,steps){
   for(let i=0;i<=steps;i++){const t=i/steps;const v=theta<1e-4?from.clone().lerp(to,t):from.clone().multiplyScalar(Math.sin((1-t)*theta)/sinT).add(to.clone().multiplyScalar(Math.sin(t*theta)/sinT));pts.push(v.normalize().multiplyScalar(R*(1+elev*Math.sin(Math.PI*t))));}
   return pts;
 }
+function addArc(from,to,elev,color,op){
+  const pts=slerpArcPts(from,to,elev,80);
+  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color,opacity:op,transparent:true}));
+  scene.add(line);netArcs.push(line);
+  const glow=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color,opacity:op*0.25,transparent:true}));
+  scene.add(glow);netArcs.push(glow);
+  return pts;
+}
 function drawNetwork(){
   clearNetArcs();
   if(!feat||!networkOn)return;
@@ -1135,28 +1150,17 @@ function drawNetwork(){
     const gA=d3.geoCentroid(fA),gB=d3.geoCentroid(fB);
     if(!gA||!gB)return;
     const vA=ll2v(gA[1],gA[0],1).normalize(),vB=ll2v(gB[1],gB[0],1).normalize();
-    const elev=0.14+0.22*(vol/maxVol);
-    // A→B arc (blue — A exports)
-    const pts1=slerpArcPts(vA,vB,elev);
-    const op=0.3+0.55*(vol/maxVol);
-    const line1=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1),new THREE.LineBasicMaterial({color:0x4488cc,opacity:op,transparent:true}));
-    scene.add(line1);netArcs.push(line1);
-    // B→A arc (orange — B exports)
-    const pts2=slerpArcPts(vB,vA,elev*0.7);
-    const line2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),new THREE.LineBasicMaterial({color:0xcc6633,opacity:op*0.8,transparent:true}));
-    scene.add(line2);netArcs.push(line2);
-    // Commodity labels for top 15 pairs
+    const t=vol/maxVol,elev=0.12+0.24*t,op=0.35+0.5*t;
+    const pts1=addArc(vA,vB,elev,0x5599dd,op);
+    const pts2=addArc(vB,vA,elev*0.65,0xdd8844,op*0.85);
     if(idx<15&&dA.exp&&dB.exp){
-      const m1=pts1[Math.floor(pts1.length*0.42)];
-      const lbl1=makeArcLabel(dA.exp[0].nm,'rgba(130,180,255,0.92)');
-      lbl1.position.copy(m1);scene.add(lbl1);netArcs.push(lbl1);
-      const m2=pts2[Math.floor(pts2.length*0.42)];
-      const lbl2=makeArcLabel(dB.exp[0].nm,'rgba(255,160,100,0.92)');
-      lbl2.position.copy(m2);scene.add(lbl2);netArcs.push(lbl2);
+      const lbl1=makeArcLabel(dA.exp[0].nm,'rgba(140,190,255,0.9)');
+      lbl1.position.copy(pts1[Math.floor(pts1.length*0.4)]);scene.add(lbl1);netArcs.push(lbl1);
+      const lbl2=makeArcLabel(dB.exp[0].nm,'rgba(255,170,110,0.9)');
+      lbl2.position.copy(pts2[Math.floor(pts2.length*0.4)]);scene.add(lbl2);netArcs.push(lbl2);
     }
-    // Endpoint dots
-    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.025,8,8),new THREE.MeshBasicMaterial({color:c}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
-    mkD(vA,0x4488cc);mkD(vB,0xcc6633);
+    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.022,8,8),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.9}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
+    mkD(vA,0x5599dd);mkD(vB,0xdd8844);
   });
 }
 function drawCountryArcs(code){
@@ -1175,24 +1179,14 @@ function drawCountryArcs(code){
     const gA=d3.geoCentroid(fA),gB=d3.geoCentroid(fB);
     if(!gA||!gB)return;
     const vA=ll2v(gA[1],gA[0],1).normalize(),vB=ll2v(gB[1],gB[0],1).normalize();
-    const elev=0.18+0.2*(vol/maxVol);
-    // Export arc (blue)
-    const pts1=slerpArcPts(vA,vB,elev);
-    const line1=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1),new THREE.LineBasicMaterial({color:0x4488cc,opacity:0.85,transparent:true}));
-    scene.add(line1);netArcs.push(line1);
-    // Import arc (orange)
-    const pts2=slerpArcPts(vB,vA,elev*0.65);
-    const line2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),new THREE.LineBasicMaterial({color:0xcc6633,opacity:0.7,transparent:true}));
-    scene.add(line2);netArcs.push(line2);
-    // Commodity labels
-    const m1=pts1[Math.floor(pts1.length*0.4)];
-    const lbl1=makeArcLabel(d.exp[0].nm,'rgba(130,180,255,0.95)');
-    lbl1.position.copy(m1);scene.add(lbl1);netArcs.push(lbl1);
-    const m2=pts2[Math.floor(pts2.length*0.4)];
-    const lbl2=makeArcLabel(pd.exp[0].nm,'rgba(255,160,100,0.95)');
-    lbl2.position.copy(m2);scene.add(lbl2);netArcs.push(lbl2);
-    // Dots
-    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,8),new THREE.MeshBasicMaterial({color:c}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
+    const elev=0.16+0.22*(vol/maxVol);
+    const pts1=addArc(vA,vB,elev,0x5599dd,0.85);
+    const pts2=addArc(vB,vA,elev*0.6,0xdd8844,0.7);
+    const lbl1=makeArcLabel(d.exp[0].nm,'rgba(140,190,255,0.95)');
+    lbl1.position.copy(pts1[Math.floor(pts1.length*0.38)]);scene.add(lbl1);netArcs.push(lbl1);
+    const lbl2=makeArcLabel(pd.exp[0].nm,'rgba(255,170,110,0.95)');
+    lbl2.position.copy(pts2[Math.floor(pts2.length*0.38)]);scene.add(lbl2);netArcs.push(lbl2);
+    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.025,8,8),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.9}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
     mkD(vA,0x4488cc);mkD(vB,0xcc6633);
   });
 }
@@ -1243,6 +1237,22 @@ function toggleNetwork(){
   if(networkOn){drawNetwork();}else{clearNetArcs();closeNetDetail();}
 }
 window.toggleNetwork=toggleNetwork;
+
+// ===== DRAGGABLE SIDEBAR =====
+(function(){
+  const sb=document.getElementById('sidebar'),dh=document.getElementById('drag-handle');
+  let dragging=false,ox=0,oy=0;
+  dh.addEventListener('mousedown',function(e){
+    dragging=true;ox=e.clientX-sb.offsetLeft;oy=e.clientY-sb.offsetTop;
+    sb.style.transition='none';e.preventDefault();
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!dragging)return;
+    sb.style.left=(e.clientX-ox)+'px';sb.style.top=(e.clientY-oy)+'px';
+    sb.style.right='auto';
+  });
+  document.addEventListener('mouseup',function(){dragging=false;});
+})();
 
 boot();
 </script>
