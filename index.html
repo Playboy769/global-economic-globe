@@ -7,8 +7,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600}
-#app{display:flex;height:100vh;overflow:hidden}
-#globe-wrap{flex:1;position:relative;overflow:hidden;background:#000}
+#app{height:100vh;overflow:hidden;position:relative}
+#globe-wrap{position:absolute;inset:0;overflow:hidden;background:#000}
 #globe-canvas{display:block;width:100%;height:100%;cursor:grab}
 #globe-canvas:active{cursor:grabbing}
 #search-box{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:300px;z-index:10}
@@ -24,7 +24,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .ld-spin{width:44px;height:44px;border:2px solid rgba(255,255,255,0.06);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ld-txt{color:#333;font-size:14px;font-weight:400}
-#sidebar{width:330px;min-width:330px;background:#000;border-left:1px solid #0f0f0f;display:flex;flex-direction:column;overflow:hidden}
+#sidebar{position:fixed;right:16px;top:16px;bottom:16px;width:360px;z-index:20;background:rgba(6,6,10,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,0.5)}
 #hero{padding:28px 22px;flex:1;display:flex;flex-direction:column;justify-content:center}
 .hero-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;letter-spacing:-.02em}
 .hero-desc{font-size:13px;color:#ccc;line-height:1.9;font-weight:400}
@@ -78,6 +78,40 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .trade-card-lbl{font-size:11px;color:#888;margin-bottom:4px;font-weight:400}
 .trade-card-gdp{font-size:14px;color:#fff;font-weight:700}
 .trade-card-gpc{font-size:11.5px;color:#666;margin-top:2px;font-weight:400}
+#globe-btns{position:absolute;bottom:14px;left:14px;display:flex;gap:6px;z-index:10}
+.g-btn{width:32px;height:32px;border-radius:50%;border:1px solid #222;background:rgba(0,0,0,0.7);color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.g-btn:hover{background:rgba(60,60,60,0.8)}
+.g-btn.on{background:rgba(40,80,140,0.7);border-color:#4a88dd;color:#fff}
+#heatmap-legend{position:absolute;bottom:54px;left:14px;display:flex;align-items:center;gap:6px;font-size:10px;color:#888;z-index:10;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
+.hm-bar{width:80px;height:8px;border-radius:4px;background:linear-gradient(90deg,#1a2a4a,#2a5a8a,#ddaa22,#dd4444)}
+.rs-btn{padding:3px 8px;border:1px solid #222;background:#0a0a0a;color:#888;font-size:10px;border-radius:4px;cursor:pointer;font-weight:600}
+.rs-btn.active{background:#1a3a5a;color:#4a88dd;border-color:#4a88dd}
+.rank-row{display:flex;align-items:center;padding:8px 6px;border-bottom:1px solid #0a0a0a;cursor:pointer;gap:8px;transition:background .1s}
+.rank-row:hover{background:rgba(255,255,255,0.03)}
+.rank-num{width:22px;font-size:11px;color:#555;text-align:right;font-weight:700}
+.rank-flag{font-size:16px;width:22px;text-align:center}
+.rank-nm{flex:1;font-size:12px;color:#ccc;font-weight:600}
+.rank-val{font-size:12px;color:#fff;font-weight:700;text-align:right}
+#ranking-panel,#compare-panel{flex-direction:column;padding:18px 22px;flex:1;overflow-y:auto}
+#ranking-panel select,#compare-panel select{background:#080808;border:1px solid #1a1a1a;border-radius:6px;color:#fff;padding:7px 9px;font-size:12.5px;font-weight:600;outline:none}
+#compare-result .cmp-row{display:flex;align-items:center;margin-bottom:6px}
+#compare-result .cmp-lbl{width:80px;font-size:11px;color:#888;flex-shrink:0;font-weight:400}
+#compare-result .cmp-bars{flex:1;display:flex;height:16px;gap:2px}
+#compare-result .cmp-a{background:#2a5a8a;border-radius:3px 0 0 3px;display:flex;align-items:center;justify-content:flex-end;padding:0 4px;font-size:9px;color:#fff;font-weight:600;min-width:20px}
+#compare-result .cmp-b{background:#8a2a5a;border-radius:0 3px 3px 0;display:flex;align-items:center;padding:0 4px;font-size:9px;color:#fff;font-weight:600;min-width:20px}
+#net-detail{flex-direction:column;padding:18px 22px;flex:1;overflow-y:auto}
+.nd-partner{background:#060606;border:1px solid #111;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.nd-partner:hover{border-color:#2a5a8a}
+.nd-partner.expanded{border-color:#3a78dd}
+.nd-head{display:flex;justify-content:space-between;align-items:center}
+.nd-nm{font-size:13px;font-weight:700;color:#ccc}
+.nd-vol{font-size:12px;font-weight:700;color:#4a88dd}
+.nd-bal{font-size:11px;color:#666;margin-top:3px;font-weight:400}
+.nd-commod{display:none;margin-top:10px;padding-top:8px;border-top:1px solid #111}
+.nd-partner.expanded .nd-commod{display:block}
+.nd-csec{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 4px;font-weight:700}
+.nd-crow{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#bbb;font-weight:400}
+.nd-crow span:last-child{color:#fff;font-weight:600}
 </style>
 </head>
 <body>
@@ -89,12 +123,19 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       <div id="search-results"></div>
     </div>
     <div id="tooltip"></div>
+    <div id="globe-btns">
+      <button class="g-btn" id="btn-heatmap" onclick="toggleHeatmap()" title="GDP 熱力圖">🌡</button>
+      <button class="g-btn" id="btn-network" onclick="toggleNetwork()" title="貿易網絡">🕸</button>
+      <button class="g-btn" id="btn-ranking" onclick="toggleRanking()" title="排行榜">🏆</button>
+      <button class="g-btn" id="btn-compare" onclick="toggleCompare()" title="國家比較">⚖</button>
+    </div>
+    <div id="heatmap-legend" style="display:none"><span>低</span><div class="hm-bar"></div><span>高</span><span id="hm-mode" onclick="cycleHeatmap()" style="cursor:pointer;text-decoration:underline">GDP</span></div>
     <div id="loading"><div class="ld-spin"></div><div class="ld-txt">載入地球資料中…</div></div>
   </div>
   <div id="sidebar">
     <div id="hero">
       <div class="hero-title">全球經濟地球儀</div>
-      <div class="hero-desc">互動式 3D 地球<br>涵蓋全球前 25 大 GDP 國家<br>完整經濟、人口、貿易數據</div>
+      <div class="hero-desc">互動式 3D 地球<br>涵蓋全球前 50 大 GDP 國家<br>完整經濟、人口、貿易數據</div>
       <div class="hero-hint">
         <strong>操作說明</strong>
         🌍 點擊地球上的國家查看數據<br>
@@ -129,6 +170,41 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
           <div id="trade-result" style="color:#333;font-size:13px;font-weight:400">請選擇兩個國家後點擊查詢</div>
         </div>
       </div>
+    </div>
+    <div id="ranking-panel" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="hero-title" style="margin:0">排行榜</div>
+        <button class="g-btn" onclick="toggleRanking()" style="position:static">✕</button>
+      </div>
+      <div id="rank-sort" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="rs-btn active" onclick="sortRank('gdp')">GDP</button>
+        <button class="rs-btn" onclick="sortRank('gdpC')">人均GDP</button>
+        <button class="rs-btn" onclick="sortRank('pop')">人口</button>
+        <button class="rs-btn" onclick="sortRank('cpiYoy')">CPI年增率</button>
+        <button class="rs-btn" onclick="sortRank('unemp')">失業率</button>
+      </div>
+      <div id="rank-list" style="overflow-y:auto;max-height:calc(100vh - 140px)"></div>
+    </div>
+    <div id="compare-panel" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="hero-title" style="margin:0">國家比較</div>
+        <button class="g-btn" onclick="toggleCompare()" style="position:static">✕</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <select id="cmp-a" style="flex:1"><option value="">選擇國家 A</option></select>
+        <select id="cmp-b" style="flex:1"><option value="">選擇國家 B</option></select>
+        <button class="trade-btn" onclick="runCompare()" style="padding:4px 10px">比較</button>
+      </div>
+      <div id="compare-result"></div>
+    </div>
+    <div id="net-detail" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="hero-title" style="margin:0">貿易網絡</div>
+        <button class="g-btn" onclick="closeNetDetail()" style="position:static">✕</button>
+      </div>
+      <div id="nd-country" style="font-size:14px;font-weight:700;color:#fff;margin-bottom:4px"></div>
+      <div id="nd-sub" style="font-size:11px;color:#555;margin-bottom:14px;font-weight:400">點擊展開查看商品明細</div>
+      <div id="nd-list"></div>
     </div>
   </div>
 </div>
@@ -296,11 +372,239 @@ const CD = {
     age:[3.5,4.0,4.5,5.0,5.8,6.5,6.8,7.0,7.5,7.8,7.5,7.0,6.5,5.8,5.0,3.8,6.0],
     agri:[{nm:'水產品',val:1.4},{nm:'豬肉',val:0.9},{nm:'稻米',val:0.8},{nm:'雞肉',val:0.5},{nm:'蔬菜',val:0.6},{nm:'茶葉',val:0.3}],
     tr:{'840':50,'156':-20,'392':18,'410':15}},
+  '784':{nm:'阿聯酋',pop:9.4,gdpC:53708,gdp:0.50,def:102.5,cpi:105.2,ccpi:104.8,cpiYoy:3.1,
+    exp:[{nm:'石油',val:95},{nm:'液化天然氣',val:18},{nm:'黃金',val:15},{nm:'鋁',val:8},{nm:'化學品',val:6}],
+    imp:[{nm:'機械',val:25},{nm:'汽車',val:18},{nm:'電子產品',val:15},{nm:'珠寶',val:12},{nm:'食品',val:10}],
+    age:[4.8,4.5,4.2,5.0,8.5,12.5,12.0,10.5,9.0,7.5,6.0,4.5,3.5,2.8,2.0,1.4,1.3],
+    agri:[{nm:'椰棗',val:0.5},{nm:'蔬菜',val:0.3},{nm:'家禽',val:0.2},{nm:'乳製品',val:0.2},{nm:'水產品',val:0.2},{nm:'蛋',val:0.1}],
+    tr:{'156':-35,'356':-30,'840':8}},
+  '764':{nm:'泰國',pop:72,gdpC:7066,gdp:0.51,def:103.5,cpi:112.8,ccpi:114.2,cpiYoy:1.2,
+    exp:[{nm:'電子產品',val:42},{nm:'汽車',val:28},{nm:'機械',val:22},{nm:'橡膠',val:12},{nm:'食品',val:10}],
+    imp:[{nm:'石油',val:35},{nm:'電子零件',val:28},{nm:'機械',val:22},{nm:'鋼鐵',val:12},{nm:'化學品',val:10}],
+    age:[4.8,5.2,5.5,5.8,6.5,7.0,7.5,7.8,7.5,7.0,6.5,6.0,5.5,5.2,4.5,3.2,4.5],
+    agri:[{nm:'稻米',val:5.2},{nm:'橡膠',val:4.8},{nm:'糖',val:3.5},{nm:'水產品',val:3.2},{nm:'雞肉',val:2.8},{nm:'木薯',val:2.2}],
+    tr:{'156':-20,'840':15,'392':10}},
+  '040':{nm:'奧地利',pop:9.1,gdpC:56802,gdp:0.52,def:105.8,cpi:128.5,ccpi:130.2,cpiYoy:7.7,
+    exp:[{nm:'機械',val:40},{nm:'汽車',val:18},{nm:'醫藥品',val:12},{nm:'電子產品',val:10},{nm:'鋼鐵',val:8}],
+    imp:[{nm:'機械',val:35},{nm:'汽車',val:15},{nm:'石油',val:12},{nm:'電子產品',val:10},{nm:'化學品',val:8}],
+    age:[4.8,4.9,5.0,5.2,5.6,6.2,6.8,7.0,6.5,6.0,6.5,7.0,6.8,5.8,5.0,3.8,7.1],
+    agri:[{nm:'乳製品',val:2.8},{nm:'牛肉',val:1.5},{nm:'葡萄酒',val:1.2},{nm:'穀物',val:1.0},{nm:'豬肉',val:0.8},{nm:'木材',val:0.6}],
+    tr:{'276':25,'380':10,'756':8}},
+  '372':{nm:'愛爾蘭',pop:5.1,gdpC:106742,gdp:0.55,def:104.2,cpi:125.8,ccpi:128.5,cpiYoy:5.2,
+    exp:[{nm:'醫藥品',val:85},{nm:'有機化學品',val:40},{nm:'電腦設備',val:30},{nm:'醫療器材',val:18},{nm:'食品',val:15}],
+    imp:[{nm:'飛機',val:30},{nm:'電腦設備',val:20},{nm:'石油',val:12},{nm:'機械',val:10},{nm:'醫藥品',val:8}],
+    age:[6.0,6.5,6.8,6.2,6.5,8.5,8.8,7.5,6.8,6.0,5.5,5.2,5.0,4.5,3.5,2.5,4.2],
+    agri:[{nm:'乳製品',val:6.5},{nm:'牛肉',val:3.8},{nm:'豬肉',val:1.2},{nm:'穀物',val:0.8},{nm:'蘑菇',val:0.5},{nm:'海鮮',val:0.4}],
+    tr:{'840':55,'826':30,'276':15}},
+  '376':{nm:'以色列',pop:9.8,gdpC:54659,gdp:0.52,def:104.5,cpi:118.2,ccpi:116.8,cpiYoy:3.3,
+    exp:[{nm:'鑽石加工',val:20},{nm:'電子產品',val:18},{nm:'醫藥品',val:12},{nm:'機械',val:10},{nm:'化學品',val:8}],
+    imp:[{nm:'石油',val:15},{nm:'鑽石原石',val:12},{nm:'機械',val:10},{nm:'汽車',val:8},{nm:'電子產品',val:8}],
+    age:[7.5,7.5,7.2,6.8,6.5,6.2,6.0,6.0,5.8,5.5,5.5,5.5,5.2,4.8,3.8,2.8,7.4],
+    agri:[{nm:'柑橘',val:1.2},{nm:'蔬菜',val:0.8},{nm:'花卉',val:0.6},{nm:'酪梨',val:0.5},{nm:'香草',val:0.4},{nm:'橄欖',val:0.3}],
+    tr:{'840':18,'156':8,'826':5}},
+  '566':{nm:'奈及利亞',pop:224,gdpC:2184,gdp:0.47,def:118.5,cpi:185.4,ccpi:192.5,cpiYoy:24.1,
+    exp:[{nm:'石油',val:55},{nm:'液化天然氣',val:15},{nm:'可可',val:2},{nm:'橡膠',val:1},{nm:'水產品',val:0.5}],
+    imp:[{nm:'石油產品',val:15},{nm:'機械',val:12},{nm:'化學品',val:8},{nm:'食品',val:8},{nm:'汽車',val:5}],
+    age:[14.5,13.5,12.0,10.5,9.0,7.8,6.8,5.8,4.8,4.0,3.2,2.5,2.0,1.5,1.0,0.6,0.5],
+    agri:[{nm:'可可',val:2.5},{nm:'腰果',val:1.8},{nm:'芝麻',val:1.2},{nm:'棕櫚油',val:0.8},{nm:'橡膠',val:0.6},{nm:'花生',val:0.5}],
+    tr:{'356':-12,'840':-5,'156':-8}},
+  '208':{nm:'丹麥',pop:5.9,gdpC:67803,gdp:0.40,def:107.2,cpi:125.4,ccpi:128.2,cpiYoy:3.3,
+    exp:[{nm:'醫藥品',val:22},{nm:'機械',val:18},{nm:'食品',val:15},{nm:'風力發電設備',val:12},{nm:'電子產品',val:8}],
+    imp:[{nm:'機械',val:18},{nm:'汽車',val:12},{nm:'電子產品',val:10},{nm:'化學品',val:8},{nm:'食品',val:6}],
+    age:[5.2,5.5,5.8,5.8,6.2,6.5,6.5,6.2,6.0,6.0,6.5,6.8,6.5,5.5,4.5,3.5,7.0],
+    agri:[{nm:'豬肉',val:5.5},{nm:'乳製品',val:4.2},{nm:'種子',val:2.0},{nm:'魚',val:1.5},{nm:'穀物',val:1.2},{nm:'毛皮',val:0.8}],
+    tr:{'276':10,'752':8,'578':5}},
+  '702':{nm:'新加坡',pop:5.9,gdpC:72795,gdp:0.42,def:101.5,cpi:112.5,ccpi:114.8,cpiYoy:4.8,
+    exp:[{nm:'電子產品',val:140},{nm:'石油產品',val:80},{nm:'化學品',val:45},{nm:'機械',val:35},{nm:'醫藥品',val:20}],
+    imp:[{nm:'電子零件',val:120},{nm:'石油',val:85},{nm:'機械',val:40},{nm:'化學品',val:30},{nm:'食品',val:15}],
+    age:[3.5,4.0,4.5,5.0,6.0,7.5,8.0,7.5,7.0,6.5,7.0,7.2,6.8,5.8,5.0,3.8,4.9],
+    agri:[{nm:'觀賞魚',val:0.3},{nm:'蔬菜',val:0.1},{nm:'蛋',val:0.1},{nm:'水產品',val:0.1},{nm:'家禽',val:0.05},{nm:'蘑菇',val:0.03}],
+    tr:{'156':-22,'458':15,'840':10}},
+  '608':{nm:'菲律賓',pop:117,gdpC:3859,gdp:0.44,def:105.2,cpi:138.5,ccpi:135.8,cpiYoy:6.0,
+    exp:[{nm:'電子產品',val:40},{nm:'半導體',val:15},{nm:'機械',val:8},{nm:'椰子油',val:3},{nm:'水果',val:3}],
+    imp:[{nm:'電子零件',val:25},{nm:'石油',val:15},{nm:'機械',val:12},{nm:'鋼鐵',val:8},{nm:'汽車',val:5}],
+    age:[9.5,9.8,10.0,9.5,9.0,8.2,7.5,6.8,6.0,5.2,4.5,3.8,3.2,2.5,1.8,1.2,1.5],
+    agri:[{nm:'椰子',val:2.5},{nm:'香蕉',val:2.0},{nm:'鳳梨',val:1.5},{nm:'糖',val:1.2},{nm:'水產品',val:1.0},{nm:'稻米',val:0.8}],
+    tr:{'156':-28,'392':8,'840':5}},
+  '458':{nm:'馬來西亞',pop:34,gdpC:13034,gdp:0.43,def:104.8,cpi:122.5,ccpi:124.2,cpiYoy:2.5,
+    exp:[{nm:'電子產品',val:85},{nm:'棕櫚油',val:18},{nm:'石油',val:15},{nm:'液化天然氣',val:12},{nm:'橡膠',val:5}],
+    imp:[{nm:'電子零件',val:60},{nm:'石油',val:20},{nm:'機械',val:15},{nm:'化學品',val:10},{nm:'鋼鐵',val:8}],
+    age:[7.5,7.8,8.0,8.0,7.8,7.2,7.0,7.0,6.5,6.0,5.5,5.0,4.5,3.8,2.8,2.0,3.6],
+    agri:[{nm:'棕櫚油',val:15.5},{nm:'橡膠',val:3.2},{nm:'可可',val:0.8},{nm:'胡椒',val:0.5},{nm:'水產品',val:0.4},{nm:'木材',val:0.3}],
+    tr:{'156':-15,'702':-10,'840':12}},
+  '050':{nm:'孟加拉',pop:173,gdpC:2688,gdp:0.46,def:108.5,cpi:168.5,ccpi:172.4,cpiYoy:9.0,
+    exp:[{nm:'成衣',val:42},{nm:'紡織品',val:8},{nm:'皮革',val:1.5},{nm:'水產品',val:1},{nm:'黃麻',val:0.5}],
+    imp:[{nm:'石油',val:8},{nm:'紡織原料',val:6},{nm:'機械',val:5},{nm:'化學品',val:4},{nm:'鋼鐵',val:3}],
+    age:[7.8,8.2,9.0,9.5,9.2,8.5,7.8,7.0,6.2,5.5,4.8,4.0,3.5,3.0,2.2,1.5,2.3],
+    agri:[{nm:'稻米',val:2.5},{nm:'黃麻',val:1.2},{nm:'茶葉',val:0.8},{nm:'水產品',val:0.6},{nm:'蔬菜',val:0.5},{nm:'香料',val:0.4}],
+    tr:{'840':5,'156':-12,'356':-8}},
+  '818':{nm:'埃及',pop:112,gdpC:3614,gdp:0.40,def:125.5,cpi:195.8,ccpi:202.5,cpiYoy:33.8,
+    exp:[{nm:'石油',val:12},{nm:'液化天然氣',val:8},{nm:'化學品',val:5},{nm:'柑橘',val:2},{nm:'紡織品',val:2}],
+    imp:[{nm:'小麥',val:5},{nm:'石油產品',val:5},{nm:'機械',val:4},{nm:'鋼鐵',val:3},{nm:'汽車',val:3}],
+    age:[10.0,9.5,9.0,8.5,8.2,7.8,7.0,6.5,5.8,5.2,4.5,3.8,3.5,3.2,2.8,2.2,2.5],
+    agri:[{nm:'柑橘',val:2.2},{nm:'棉花',val:1.5},{nm:'稻米',val:1.2},{nm:'馬鈴薯',val:0.8},{nm:'洋蔥',val:0.6},{nm:'蔬菜',val:0.5}],
+    tr:{'682':-8,'840':-5,'156':-6}},
+  '704':{nm:'越南',pop:100,gdpC:4346,gdp:0.43,def:103.2,cpi:128.5,ccpi:125.8,cpiYoy:3.3,
+    exp:[{nm:'電子產品',val:50},{nm:'紡織品',val:35},{nm:'鞋類',val:22},{nm:'機械',val:15},{nm:'水產品',val:10}],
+    imp:[{nm:'電子零件',val:55},{nm:'機械',val:25},{nm:'鋼鐵',val:12},{nm:'布料',val:10},{nm:'塑料',val:8}],
+    age:[7.0,7.5,7.2,7.0,7.2,7.8,8.0,7.5,7.0,6.5,5.5,4.8,4.2,3.8,3.2,2.5,3.3],
+    agri:[{nm:'咖啡',val:3.8},{nm:'水產品',val:3.5},{nm:'稻米',val:3.2},{nm:'腰果',val:2.8},{nm:'胡椒',val:1.5},{nm:'橡膠',val:1.2}],
+    tr:{'840':104,'156':-50,'410':20}},
+  '710':{nm:'南非',pop:60,gdpC:6485,gdp:0.40,def:108.5,cpi:145.2,ccpi:148.5,cpiYoy:5.9,
+    exp:[{nm:'鉑金屬',val:18},{nm:'鐵礦砂',val:12},{nm:'煤炭',val:10},{nm:'汽車',val:8},{nm:'黃金',val:6}],
+    imp:[{nm:'石油',val:15},{nm:'機械',val:10},{nm:'電子產品',val:8},{nm:'汽車',val:6},{nm:'化學品',val:5}],
+    age:[8.5,8.8,9.0,9.0,8.5,8.0,7.5,7.0,6.2,5.5,4.8,4.2,3.5,3.0,2.2,1.6,2.7],
+    agri:[{nm:'柑橘',val:2.2},{nm:'葡萄酒',val:1.8},{nm:'玉米',val:1.5},{nm:'糖',val:1.2},{nm:'牛肉',val:1.0},{nm:'羊毛',val:0.8}],
+    tr:{'156':-12,'276':8,'840':5}},
+  '344':{nm:'香港',pop:7.5,gdpC:50700,gdp:0.38,def:101.0,cpi:108.5,ccpi:107.2,cpiYoy:1.9,
+    exp:[{nm:'電子產品',val:85},{nm:'珠寶',val:18},{nm:'服裝',val:12},{nm:'鐘錶',val:8},{nm:'機械',val:6}],
+    imp:[{nm:'電子產品',val:95},{nm:'珠寶',val:22},{nm:'食品',val:12},{nm:'機械',val:10},{nm:'服裝',val:8}],
+    age:[3.0,3.5,3.8,4.2,5.5,6.5,7.0,7.5,7.8,8.0,7.5,7.0,6.5,6.2,5.5,4.2,6.3],
+    agri:[{nm:'蔬菜',val:0.1},{nm:'家禽',val:0.08},{nm:'水產品',val:0.06},{nm:'豬肉',val:0.05},{nm:'花卉',val:0.03},{nm:'水果',val:0.02}],
+    tr:{'156':-25,'840':10,'392':5}},
+  '170':{nm:'哥倫比亞',pop:52,gdpC:6630,gdp:0.33,def:112.5,cpi:158.2,ccpi:162.5,cpiYoy:11.8,
+    exp:[{nm:'石油',val:18},{nm:'煤炭',val:8},{nm:'咖啡',val:4},{nm:'花卉',val:2},{nm:'黃金',val:2}],
+    imp:[{nm:'機械',val:8},{nm:'化學品',val:5},{nm:'汽車',val:4},{nm:'電子產品',val:4},{nm:'食品',val:3}],
+    age:[7.0,7.2,7.5,7.8,8.0,7.8,7.5,7.0,6.5,6.0,5.5,5.0,4.5,3.8,3.0,2.2,3.7],
+    agri:[{nm:'咖啡',val:3.2},{nm:'花卉',val:2.0},{nm:'香蕉',val:1.5},{nm:'糖',val:1.2},{nm:'棕櫚油',val:1.0},{nm:'水果',val:0.8}],
+    tr:{'840':5,'156':-8,'076':3}},
+  '152':{nm:'智利',pop:19.5,gdpC:17000,gdp:0.34,def:110.5,cpi:135.8,ccpi:138.2,cpiYoy:7.6,
+    exp:[{nm:'銅',val:45},{nm:'鋰',val:8},{nm:'水果',val:6},{nm:'鮭魚',val:5},{nm:'葡萄酒',val:2}],
+    imp:[{nm:'石油',val:10},{nm:'機械',val:8},{nm:'汽車',val:5},{nm:'電子產品',val:5},{nm:'化學品',val:4}],
+    age:[5.8,6.2,6.5,6.8,7.2,7.5,7.5,7.0,6.5,6.2,5.8,5.5,5.0,4.5,3.5,2.5,6.0],
+    agri:[{nm:'鮭魚',val:5.8},{nm:'葡萄',val:2.5},{nm:'蘋果',val:1.8},{nm:'葡萄酒',val:2.2},{nm:'藍莓',val:1.5},{nm:'酪梨',val:1.0}],
+    tr:{'156':-15,'840':5,'392':3}},
+  '203':{nm:'捷克',pop:10.8,gdpC:30500,gdp:0.33,def:108.5,cpi:125.4,ccpi:128.2,cpiYoy:10.7,
+    exp:[{nm:'汽車',val:30},{nm:'機械',val:25},{nm:'電子產品',val:15},{nm:'鋼鐵',val:8},{nm:'化學品',val:6}],
+    imp:[{nm:'機械',val:22},{nm:'電子產品',val:18},{nm:'石油',val:10},{nm:'汽車',val:8},{nm:'化學品',val:7}],
+    age:[5.0,5.2,5.0,4.5,4.8,5.8,7.2,7.5,6.8,6.0,6.2,7.0,7.2,6.2,5.0,3.5,7.1],
+    agri:[{nm:'啤酒',val:1.2},{nm:'小麥',val:0.8},{nm:'牛奶',val:0.6},{nm:'油菜',val:0.5},{nm:'啤酒花',val:0.3},{nm:'馬鈴薯',val:0.2}],
+    tr:{'276':18,'724':5,'616':8}},
+  '246':{nm:'芬蘭',pop:5.6,gdpC:53983,gdp:0.30,def:108.2,cpi:118.5,ccpi:120.4,cpiYoy:4.3,
+    exp:[{nm:'紙漿',val:12},{nm:'機械',val:10},{nm:'電子產品',val:8},{nm:'鋼鐵',val:6},{nm:'化學品',val:5}],
+    imp:[{nm:'石油',val:10},{nm:'機械',val:8},{nm:'汽車',val:6},{nm:'電子產品',val:5},{nm:'化學品',val:4}],
+    age:[4.8,5.2,5.5,5.6,6.0,6.0,5.8,5.8,6.0,6.2,6.5,7.0,6.8,6.0,5.2,3.8,7.8],
+    agri:[{nm:'木材',val:8.5},{nm:'乳製品',val:1.2},{nm:'穀物',val:0.8},{nm:'毛皮',val:0.5},{nm:'漿果',val:0.4},{nm:'豬肉',val:0.3}],
+    tr:{'276':5,'752':8,'643':-3}},
+  '642':{nm:'羅馬尼亞',pop:19,gdpC:16800,gdp:0.32,def:115.5,cpi:142.5,ccpi:148.2,cpiYoy:10.4,
+    exp:[{nm:'汽車',val:12},{nm:'機械',val:10},{nm:'電子產品',val:8},{nm:'穀物',val:5},{nm:'傢具',val:4}],
+    imp:[{nm:'機械',val:12},{nm:'石油',val:8},{nm:'汽車',val:8},{nm:'電子產品',val:6},{nm:'化學品',val:5}],
+    age:[4.8,5.0,5.2,5.0,5.0,5.5,6.5,7.5,7.8,7.0,6.5,6.2,6.0,5.8,5.2,3.8,7.2],
+    agri:[{nm:'小麥',val:2.5},{nm:'玉米',val:2.0},{nm:'葵花籽',val:1.5},{nm:'葡萄酒',val:0.8},{nm:'牛肉',val:0.5},{nm:'乳製品',val:0.4}],
+    tr:{'276':12,'380':5,'250':3}},
+  '620':{nm:'葡萄牙',pop:10.3,gdpC:28165,gdp:0.29,def:106.5,cpi:122.8,ccpi:125.5,cpiYoy:5.3,
+    exp:[{nm:'汽車',val:10},{nm:'機械',val:8},{nm:'燃料',val:5},{nm:'服裝',val:4},{nm:'軟木',val:2}],
+    imp:[{nm:'石油',val:8},{nm:'機械',val:7},{nm:'汽車',val:5},{nm:'電子產品',val:4},{nm:'化學品',val:3}],
+    age:[4.2,4.5,4.8,5.0,5.2,5.5,6.0,6.8,7.2,7.5,7.2,6.8,6.5,6.0,5.2,4.0,7.6],
+    agri:[{nm:'葡萄酒',val:2.5},{nm:'橄欖油',val:1.2},{nm:'軟木',val:1.0},{nm:'番茄',val:0.8},{nm:'水果',val:0.6},{nm:'水產品',val:0.5}],
+    tr:{'724':8,'276':5,'250':3}},
+  '554':{nm:'紐西蘭',pop:5.2,gdpC:48350,gdp:0.25,def:107.2,cpi:128.5,ccpi:132.4,cpiYoy:5.7,
+    exp:[{nm:'乳製品',val:15},{nm:'牛肉',val:5},{nm:'木材',val:4},{nm:'水果',val:3},{nm:'葡萄酒',val:2}],
+    imp:[{nm:'機械',val:8},{nm:'汽車',val:5},{nm:'石油',val:4},{nm:'電子產品',val:3},{nm:'食品',val:2}],
+    age:[5.8,6.2,6.5,6.2,6.5,7.0,6.8,6.5,6.2,6.0,6.2,6.0,5.8,5.2,4.2,3.0,5.9],
+    agri:[{nm:'乳製品',val:15.2},{nm:'牛肉',val:4.8},{nm:'羊肉',val:3.5},{nm:'奇異果',val:2.8},{nm:'葡萄酒',val:2.2},{nm:'木材',val:1.8}],
+    tr:{'036':5,'156':-8,'840':3}},
+  '586':{nm:'巴基斯坦',pop:240,gdpC:1505,gdp:0.34,def:128.5,cpi:225.8,ccpi:232.5,cpiYoy:29.2,
+    exp:[{nm:'紡織品',val:18},{nm:'稻米',val:4},{nm:'皮革',val:1.5},{nm:'運動用品',val:1},{nm:'水產品',val:0.5}],
+    imp:[{nm:'石油',val:18},{nm:'機械',val:8},{nm:'化學品',val:5},{nm:'食用油',val:4},{nm:'鋼鐵',val:3}],
+    age:[10.5,10.2,9.8,9.5,9.0,8.2,7.5,6.5,5.5,4.8,4.2,3.5,3.0,2.5,2.0,1.5,1.8],
+    agri:[{nm:'稻米',val:3.5},{nm:'小麥',val:2.2},{nm:'棉花',val:2.0},{nm:'糖',val:1.5},{nm:'水果',val:1.2},{nm:'蔬菜',val:1.0}],
+    tr:{'156':-15,'682':-10,'840':3}},
+  '300':{nm:'希臘',pop:10.4,gdpC:23068,gdp:0.24,def:105.8,cpi:118.2,ccpi:120.5,cpiYoy:4.2,
+    exp:[{nm:'石油產品',val:12},{nm:'食品',val:5},{nm:'醫藥品',val:4},{nm:'鋁',val:3},{nm:'機械',val:2}],
+    imp:[{nm:'石油',val:14},{nm:'機械',val:6},{nm:'汽車',val:4},{nm:'電子產品',val:3},{nm:'化學品',val:3}],
+    age:[4.2,4.5,4.8,5.0,5.5,5.8,6.2,6.8,7.0,7.2,7.0,6.5,6.2,5.8,5.2,4.0,8.3],
+    agri:[{nm:'橄欖油',val:2.5},{nm:'水果',val:1.2},{nm:'蔬菜',val:0.8},{nm:'乳製品',val:0.6},{nm:'水產品',val:0.5},{nm:'棉花',val:0.4}],
+    tr:{'276':-8,'380':5,'792':3}},
 };
 
 // Bilateral trade volumes ($B, 2023 estimates) — used for flow chart proportions
 const TRV={'840-156':585,'840-124':782,'840-276':202,'840-392':215,'840-484':798,'840-826':155,'156-276':218,'156-392':312,'156-410':310,'156-356':118,'156-036':175,'276-250':168,'276-380':128,'276-616':138,'276-826':105,'392-410':88,'826-250':90,'250-380':85,'076-156':128,'076-840':98,'528-276':145,'528-250':130,'158-840':100,'158-156':220,'158-392':65,'158-410':35};
 function getBiVol(cA,cB){return TRV[`${cA}-${cB}`]||TRV[`${cB}-${cA}`]||null;}
+
+// Merge extra fields: unemployment, flag emoji, 10-year GDP history (2014-2023, trillion USD)
+const CD_X={
+'840':{unemp:3.6,flag:'🇺🇸',gdpH:[17.5,18.2,18.7,19.5,20.5,21.4,21.0,23.3,25.5,26.9]},
+'156':{unemp:5.2,flag:'🇨🇳',gdpH:[10.5,11.1,11.2,12.3,13.9,14.3,14.7,17.7,18.0,17.9]},
+'276':{unemp:3.0,flag:'🇩🇪',gdpH:[3.9,3.4,3.5,3.7,4.0,3.9,3.8,4.3,4.1,4.1]},
+'392':{unemp:2.6,flag:'🇯🇵',gdpH:[4.9,4.4,5.0,4.9,5.0,5.1,5.0,5.0,4.2,4.2]},
+'356':{unemp:7.7,flag:'🇮🇳',gdpH:[2.0,2.1,2.3,2.7,2.7,2.8,2.7,3.2,3.4,3.6]},
+'826':{unemp:4.0,flag:'🇬🇧',gdpH:[3.0,2.9,2.7,2.6,2.8,2.8,2.7,3.1,3.1,3.1]},
+'250':{unemp:7.3,flag:'🇫🇷',gdpH:[2.9,2.4,2.5,2.6,2.8,2.7,2.6,2.9,2.8,3.0]},
+'380':{unemp:7.6,flag:'🇮🇹',gdpH:[2.2,1.8,1.9,2.0,2.1,2.0,1.9,2.1,2.0,2.1]},
+'124':{unemp:5.4,flag:'🇨🇦',gdpH:[1.8,1.6,1.5,1.6,1.7,1.7,1.6,2.0,2.1,2.1]},
+'076':{unemp:7.9,flag:'🇧🇷',gdpH:[2.5,1.8,1.8,2.1,1.9,1.9,1.4,1.6,1.9,2.1]},
+'643':{unemp:3.2,flag:'🇷🇺',gdpH:[2.1,1.4,1.3,1.6,1.7,1.7,1.5,1.8,2.2,1.9]},
+'410':{unemp:2.7,flag:'🇰🇷',gdpH:[1.5,1.4,1.4,1.6,1.7,1.6,1.6,1.8,1.7,1.7]},
+'036':{unemp:3.7,flag:'🇦🇺',gdpH:[1.5,1.3,1.3,1.4,1.4,1.4,1.3,1.6,1.7,1.7]},
+'724':{unemp:12.1,flag:'🇪🇸',gdpH:[1.4,1.2,1.2,1.3,1.4,1.4,1.3,1.4,1.4,1.4]},
+'484':{unemp:2.8,flag:'🇲🇽',gdpH:[1.3,1.2,1.1,1.2,1.2,1.3,1.1,1.3,1.3,1.3]},
+'360':{unemp:5.4,flag:'🇮🇩',gdpH:[0.89,0.86,0.93,1.02,1.04,1.12,1.06,1.19,1.32,1.37]},
+'682':{unemp:4.9,flag:'🇸🇦',gdpH:[0.76,0.65,0.64,0.69,0.79,0.79,0.70,0.83,1.11,1.07]},
+'528':{unemp:3.6,flag:'🇳🇱',gdpH:[0.88,0.77,0.78,0.83,0.91,0.91,0.91,1.01,1.01,1.09]},
+'792':{unemp:9.4,flag:'🇹🇷',gdpH:[0.93,0.86,0.86,0.85,0.77,0.76,0.72,0.82,0.91,0.91]},
+'756':{unemp:2.0,flag:'🇨🇭',gdpH:[0.71,0.68,0.67,0.68,0.71,0.73,0.74,0.80,0.82,0.88]},
+'616':{unemp:2.8,flag:'🇵🇱',gdpH:[0.55,0.48,0.47,0.53,0.59,0.60,0.60,0.67,0.69,0.81]},
+'056':{unemp:5.5,flag:'🇧🇪',gdpH:[0.53,0.46,0.47,0.50,0.54,0.53,0.52,0.58,0.58,0.63]},
+'032':{unemp:6.2,flag:'🇦🇷',gdpH:[0.56,0.59,0.56,0.64,0.52,0.45,0.39,0.49,0.63,0.64]},
+'752':{unemp:7.7,flag:'🇸🇪',gdpH:[0.57,0.50,0.51,0.54,0.55,0.53,0.54,0.64,0.59,0.59]},
+'578':{unemp:3.5,flag:'🇳🇴',gdpH:[0.50,0.39,0.37,0.40,0.43,0.40,0.36,0.48,0.58,0.55]},
+'158':{unemp:3.5,flag:'🇹🇼',gdpH:[0.53,0.53,0.53,0.57,0.59,0.61,0.67,0.79,0.76,0.76]},
+'784':{unemp:2.8,flag:'🇦🇪',gdpH:[0.40,0.36,0.37,0.38,0.41,0.42,0.36,0.40,0.50,0.50]},
+'764':{unemp:1.0,flag:'🇹🇭',gdpH:[0.41,0.40,0.41,0.46,0.51,0.54,0.50,0.51,0.50,0.51]},
+'040':{unemp:5.1,flag:'🇦🇹',gdpH:[0.44,0.38,0.39,0.42,0.46,0.45,0.43,0.48,0.47,0.52]},
+'372':{unemp:4.3,flag:'🇮🇪',gdpH:[0.26,0.29,0.30,0.33,0.38,0.40,0.43,0.50,0.53,0.55]},
+'376':{unemp:3.4,flag:'🇮🇱',gdpH:[0.31,0.30,0.32,0.35,0.37,0.39,0.40,0.48,0.52,0.52]},
+'566':{unemp:33.3,flag:'🇳🇬',gdpH:[0.57,0.49,0.40,0.38,0.42,0.45,0.43,0.44,0.47,0.47]},
+'208':{unemp:5.1,flag:'🇩🇰',gdpH:[0.35,0.30,0.31,0.33,0.36,0.35,0.35,0.40,0.40,0.40]},
+'702':{unemp:1.9,flag:'🇸🇬',gdpH:[0.31,0.31,0.32,0.34,0.37,0.37,0.34,0.40,0.42,0.42]},
+'608':{unemp:4.3,flag:'🇵🇭',gdpH:[0.28,0.29,0.30,0.32,0.33,0.36,0.36,0.39,0.40,0.44]},
+'458':{unemp:3.6,flag:'🇲🇾',gdpH:[0.34,0.30,0.30,0.32,0.36,0.36,0.34,0.37,0.41,0.43]},
+'050':{unemp:5.2,flag:'🇧🇩',gdpH:[0.17,0.20,0.22,0.25,0.27,0.30,0.32,0.42,0.46,0.46]},
+'818':{unemp:7.0,flag:'🇪🇬',gdpH:[0.31,0.33,0.33,0.24,0.25,0.30,0.37,0.40,0.48,0.40]},
+'704':{unemp:2.3,flag:'🇻🇳',gdpH:[0.19,0.19,0.21,0.22,0.25,0.26,0.27,0.37,0.41,0.43]},
+'710':{unemp:32.9,flag:'🇿🇦',gdpH:[0.35,0.32,0.30,0.35,0.37,0.35,0.34,0.42,0.41,0.40]},
+'344':{unemp:2.9,flag:'🇭🇰',gdpH:[0.29,0.31,0.32,0.34,0.36,0.37,0.35,0.37,0.36,0.38]},
+'170':{unemp:10.2,flag:'🇨🇴',gdpH:[0.38,0.29,0.28,0.31,0.33,0.32,0.27,0.32,0.34,0.33]},
+'152':{unemp:8.5,flag:'🇨🇱',gdpH:[0.26,0.24,0.25,0.28,0.30,0.28,0.25,0.32,0.30,0.34]},
+'203':{unemp:2.6,flag:'🇨🇿',gdpH:[0.21,0.19,0.20,0.22,0.25,0.25,0.24,0.28,0.29,0.33]},
+'246':{unemp:7.2,flag:'🇫🇮',gdpH:[0.27,0.24,0.24,0.26,0.28,0.27,0.27,0.30,0.28,0.30]},
+'642':{unemp:5.6,flag:'🇷🇴',gdpH:[0.20,0.18,0.19,0.21,0.24,0.25,0.25,0.28,0.30,0.32]},
+'620':{unemp:6.5,flag:'🇵🇹',gdpH:[0.23,0.20,0.21,0.22,0.24,0.24,0.23,0.25,0.26,0.29]},
+'554':{unemp:3.9,flag:'🇳🇿',gdpH:[0.20,0.18,0.19,0.20,0.21,0.21,0.21,0.25,0.24,0.25]},
+'586':{unemp:6.3,flag:'🇵🇰',gdpH:[0.24,0.27,0.28,0.30,0.31,0.28,0.26,0.35,0.37,0.34]},
+'300':{unemp:11.1,flag:'🇬🇷',gdpH:[0.24,0.20,0.19,0.20,0.22,0.21,0.19,0.22,0.22,0.24]},
+};
+Object.entries(CD_X).forEach(([k,v])=>Object.assign(CD[k],v));
+
+const ISO_A2={'840':'US','156':'CN','276':'DE','392':'JP','356':'IN','826':'GB','250':'FR','380':'IT','124':'CA','076':'BR','643':'RU','410':'KR','036':'AU','724':'ES','484':'MX','360':'ID','682':'SA','528':'NL','792':'TR','756':'CH','616':'PL','056':'BE','032':'AR','752':'SE','578':'NO','158':'TW','784':'AE','764':'TH','040':'AT','372':'IE','376':'IL','566':'NG','208':'DK','702':'SG','608':'PH','458':'MY','050':'BD','818':'EG','704':'VN','710':'ZA','344':'HK','170':'CO','152':'CL','203':'CZ','246':'FI','642':'RO','620':'PT','554':'NZ','586':'PK','300':'GR'};
+let countryLabels=[];
+function makeLabel(text){
+  const c=document.createElement('canvas');c.width=256;c.height=128;
+  const ctx=c.getContext('2d');
+  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=8;
+  ctx.font='bold 72px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
+  ctx.fillStyle='rgba(200,215,245,0.92)';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,128,64);
+  const tex=new THREE.CanvasTexture(c);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,sizeAttenuation:true,depthWrite:false}));
+  sp.scale.set(0.32,0.16,1);
+  return sp;
+}
+function makeArcLabel(text,color){
+  const c=document.createElement('canvas');c.width=512;c.height=64;
+  const ctx=c.getContext('2d');
+  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=6;
+  ctx.font='bold 28px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
+  ctx.fillStyle=color||'rgba(200,220,255,0.9)';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,256,32);
+  const tex=new THREE.CanvasTexture(c);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));
+  sp.scale.set(0.5,0.062,1);
+  return sp;
+}
 
 function buildFlowSVG(dA,dB,bal,biVol){
   const W=284,BW=80,BH=68,BY=14,AZL=BW+5,AZR=W-BW-5,MX=W/2;
@@ -374,13 +678,21 @@ async function boot(){
   const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
   scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.055,sizeAttenuation:true})));
 
-  // Globe sphere — MeshBasicMaterial ignores ALL lights → zero day/night terminator
+  // Globe sphere
   gMesh=new THREE.Mesh(
     new THREE.SphereGeometry(R,80,80),
-    new THREE.MeshBasicMaterial({color:0x040810}) // very dark navy, not reactive to light
+    new THREE.MeshBasicMaterial({color:0x06122a})
   );
   scene.add(gMesh);
-  // NO lights, NO atmosphere mesh, NO texture
+  // Atmosphere glow layers
+  [[1.025,0x1a4488,0.10],[1.055,0x2266aa,0.05],[1.09,0x3388cc,0.025]].forEach(([s,c,o])=>{
+    scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*s,60,60),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o,side:THREE.BackSide})));
+  });
+  // Graticule grid
+  const gPts=[];
+  for(let lat=-60;lat<=60;lat+=30)for(let lon=-180;lon<180;lon+=3){gPts.push(ll2v(lat,lon,R*1.0005));gPts.push(ll2v(lat,lon+3,R*1.0005));}
+  for(let lon=-180;lon<180;lon+=30)for(let lat=-80;lat<80;lat+=3){gPts.push(ll2v(lat,lon,R*1.0005));gPts.push(ll2v(lat+3,lon,R*1.0005));}
+  scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gPts),new THREE.LineBasicMaterial({color:0x1a3358,opacity:0.45,transparent:true})));
 
   // OrbitControls
   ctrl=new THREE.OrbitControls(cam,rend.domElement);
@@ -401,17 +713,27 @@ async function boot(){
   else if(mesh.type==='LineString') addL(mesh.coordinates);
   scene.add(new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({color:0x3a70bb,opacity:0.65,transparent:true})
+    new THREE.LineBasicMaterial({color:0x2a2a2a,opacity:0.7,transparent:true})
   ));
+
+  // Country labels at centroids
+  feat.features.forEach(f=>{
+    const code=String(f.id),a2=ISO_A2[code];
+    if(!a2||!CD[code])return;
+    const cen=d3.geoCentroid(f);if(!cen)return;
+    const sp=makeLabel(a2);
+    sp.position.copy(ll2v(cen[1],cen[0],R*1.04));
+    scene.add(sp);countryLabels.push(sp);
+  });
 
   rend.domElement.addEventListener('click',onClick);
   rend.domElement.addEventListener('mousemove',onHover);
   window.addEventListener('resize',onResize);
 
-  // Populate trade dropdowns
+  // Populate trade + compare dropdowns
   Object.entries(CD).sort(([,a],[,b])=>a.nm.localeCompare(b.nm,'zh')).forEach(([c,d])=>{
-    ['trade-a','trade-b'].forEach(id=>{
-      const o=document.createElement('option'); o.value=c; o.textContent=d.nm;
+    ['trade-a','trade-b','cmp-a','cmp-b'].forEach(id=>{
+      const o=document.createElement('option'); o.value=c; o.textContent=(d.flag||'')+' '+d.nm;
       document.getElementById(id).appendChild(o);
     });
   });
@@ -435,18 +757,12 @@ function getCode(lat,lon){
   for(const f of feat.features) if(d3.geoContains(f,[lon,lat])) return String(f.id);
   return null;
 }
-function onClick(e){const ll=doCast(e); if(!ll)return; const c=getCode(ll[0],ll[1]); if(c&&CD[c])selectCountry(c);}
+function onClick(e){const ll=doCast(e); if(!ll)return; const c=getCode(ll[0],ll[1]); if(!c||!CD[c])return; if(networkOn){showNetworkDetail(c);return;} selectCountry(c);}
 let lastHov=0;
 function onHover(e){
   if(Date.now()-lastHov<55)return; lastHov=Date.now();
-  const tip=document.getElementById('tooltip'),ll=doCast(e);
-  if(!ll){tip.style.display='none';return;}
-  const c=getCode(ll[0],ll[1]);
-  if(c&&CD[c]){
-    const rect=rend.domElement.getBoundingClientRect();
-    tip.textContent=CD[c].nm; tip.style.display='block';
-    tip.style.left=(e.clientX-rect.left+16)+'px'; tip.style.top=(e.clientY-rect.top-36)+'px';
-  } else tip.style.display='none';
+  const ll=doCast(e);
+  rend.domElement.style.cursor=(ll&&getCode(ll[0],ll[1]))?'pointer':'grab';
 }
 function hilight(code){
   if(selLn){scene.remove(selLn);selLn=null;}
@@ -507,7 +823,7 @@ function selectCountry(code,fly=true){
   if(fly&&feat){const f=feat.features.find(x=>String(x.id)===code);if(f){const c=d3.geoCentroid(f);if(c)flyTo(c[1],c[0]);}}
   const d=CD[code];
   const rank=Object.entries(CD).sort(([,a],[,b])=>b.gdp-a.gdp).findIndex(([c])=>c===code)+1;
-  document.getElementById('c-name').textContent=d.nm;
+  document.getElementById('c-name').textContent=(d.flag||'')+' '+d.nm;
   document.getElementById('c-sub').textContent=`ISO ${code}  ·  GDP 全球第 ${rank} 大  ·  2023 年估計`;
   document.getElementById('hero').style.display='none';
   document.getElementById('country-info').style.display='flex';
@@ -526,6 +842,27 @@ function switchTab(tab){
   else if(tab==='agriculture')renderAgriculture(curCode);
 }
 window.switchTab=switchTab;
+
+// ===== GDP TREND CHART =====
+function buildGDPChart(h){
+  const W=268,H=100,mL=38,mR=8,mT=8,mB=22,iW=W-mL-mR,iH=H-mT-mB;
+  const mn=Math.min(...h)*0.85,mx=Math.max(...h)*1.1,rY=mx-mn;
+  const x=i=>mL+(i/(h.length-1))*iW, y=v=>mT+(1-(v-mn)/rY)*iH;
+  const pts=h.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const area=`${x(0).toFixed(1)},${(mT+iH).toFixed(1)} ${pts} ${x(h.length-1).toFixed(1)},${(mT+iH).toFixed(1)}`;
+  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<defs><linearGradient id="gdpG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a88dd" stop-opacity="0.3"/><stop offset="100%" stop-color="#4a88dd" stop-opacity="0.02"/></linearGradient></defs>`;
+  [0,0.5,1].forEach(f=>{const v=mn+rY*f;
+    svg+=`<line x1="${mL}" y1="${y(v).toFixed(1)}" x2="${W-mR}" y2="${y(v).toFixed(1)}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+    svg+=`<text x="${mL-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#444" font-family="sans-serif">${v.toFixed(1)}</text>`;
+  });
+  svg+=`<polygon points="${area}" fill="url(#gdpG)"/>`;
+  svg+=`<polyline points="${pts}" fill="none" stroke="#4a88dd" stroke-width="1.5" stroke-linejoin="round"/>`;
+  h.forEach((v,i)=>{svg+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.5" fill="#4a88dd" stroke="#0a0a0a" stroke-width="1"/>`;});
+  const yrs=[2014,2016,2018,2020,2022];
+  yrs.forEach(yr=>{const i=yr-2014;if(i<h.length)svg+=`<text x="${x(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="7.5" fill="#444" font-family="sans-serif">${yr}</text>`;});
+  svg+=`</svg>`;return svg;
+}
 
 // ===== OVERVIEW — with exp/imp bar charts =====
 function renderOverview(code){
@@ -546,6 +883,8 @@ function renderOverview(code){
     <div class="metric"><span class="m-lbl">CPI</span><span class="m-val">${d.cpi.toFixed(1)}</span></div>
     <div class="metric"><span class="m-lbl">核心 CPI</span><span class="m-val">${d.ccpi.toFixed(1)}</span></div>
     <div class="metric"><span class="m-lbl">CPI 年增率</span><span class="m-val" style="color:${d.cpiYoy>50?'#ee4444':d.cpiYoy>10?'#ee9922':d.cpiYoy<2?'#44cc66':'#fff'}">${d.cpiYoy}%</span></div>
+    <div class="metric"><span class="m-lbl">失業率</span><span class="m-val" style="color:${d.unemp>20?'#ee4444':d.unemp>10?'#ee9922':d.unemp<4?'#44cc66':'#fff'}">${d.unemp!==undefined?d.unemp+'%':'—'}</span></div>
+    ${d.gdpH?`<div class="sec-title">GDP 趨勢（2014–2023，兆美元）</div><div style="margin:6px -4px 14px">${buildGDPChart(d.gdpH)}</div>`:''}
     <div class="sec-title">▲ 主要出口商品（十億美元）</div>
     ${d.exp.map(x=>barRow(x,maxE,'ti-exp')).join('')}
     <div class="sec-title">▼ 主要進口商品（十億美元）</div>
@@ -675,6 +1014,235 @@ si.addEventListener('input',function(){
 function searchSel(code){sd.style.display='none';si.value='';selectCountry(code,true);}
 window.searchSel=searchSel;
 document.addEventListener('click',e=>{if(!e.target.closest('#search-box'))sd.style.display='none';});
+
+// ===== RANKING PANEL =====
+let rankVisible=false,curRankField='gdp';
+function toggleRanking(){
+  rankVisible=!rankVisible;
+  document.getElementById('ranking-panel').style.display=rankVisible?'flex':'none';
+  document.getElementById('hero').style.display=rankVisible?'none':(curCode?'none':'flex');
+  document.getElementById('country-info').style.display=rankVisible?'none':(curCode?'flex':'none');
+  document.getElementById('btn-ranking').classList.toggle('on',rankVisible);
+  if(rankVisible)sortRank(curRankField);
+}
+function sortRank(field){
+  curRankField=field;
+  document.querySelectorAll('.rs-btn').forEach(b=>b.classList.toggle('active',b.textContent==={gdp:'GDP',gdpC:'人均GDP',pop:'人口',cpiYoy:'CPI年增率',unemp:'失業率'}[field]));
+  const fmt={gdp:v=>'$'+v.toFixed(1)+'T',gdpC:v=>'$'+v.toLocaleString(),pop:v=>v>=1000?(v/1000).toFixed(2)+'B':v+'M',cpiYoy:v=>v+'%',unemp:v=>v!==undefined?v+'%':'—'};
+  const entries=Object.entries(CD).map(([c,d])=>[c,d,d[field]??0]).sort((a,b)=>field==='cpiYoy'?b[2]-a[2]:b[2]-a[2]);
+  document.getElementById('rank-list').innerHTML=entries.map(([c,d,v],i)=>
+    `<div class="rank-row" onclick="selectCountry('${c}');toggleRanking()">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-flag">${d.flag||''}</span>
+      <span class="rank-nm">${d.nm}</span>
+      <span class="rank-val">${(fmt[field]||String)(v)}</span>
+    </div>`).join('');
+}
+window.toggleRanking=toggleRanking;window.sortRank=sortRank;
+
+// ===== COMPARE PANEL =====
+let cmpVisible=false;
+function toggleCompare(){
+  cmpVisible=!cmpVisible;
+  document.getElementById('compare-panel').style.display=cmpVisible?'flex':'none';
+  document.getElementById('hero').style.display=cmpVisible?'none':(curCode?'none':'flex');
+  document.getElementById('country-info').style.display=cmpVisible?'none':(curCode?'flex':'none');
+  document.getElementById('btn-compare').classList.toggle('on',cmpVisible);
+}
+function runCompare(){
+  const cA=document.getElementById('cmp-a').value,cB=document.getElementById('cmp-b').value;
+  const el=document.getElementById('compare-result');
+  if(!cA||!cB){el.innerHTML='<div style="color:#333;font-size:12px">請選擇兩個國家</div>';return;}
+  if(cA===cB){el.innerHTML='<div style="color:#333;font-size:12px">請選擇不同的國家</div>';return;}
+  const dA=CD[cA],dB=CD[cB];
+  const metrics=[
+    ['GDP',dA.gdp,dB.gdp,'$','T'],['人均GDP',dA.gdpC,dB.gdpC,'$',''],
+    ['人口(M)',dA.pop,dB.pop,'','M'],['CPI年增率',dA.cpiYoy,dB.cpiYoy,'','%'],
+    ['失業率',dA.unemp||0,dB.unemp||0,'','%'],['GDP平減指數',dA.def,dB.def,'','']
+  ];
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:12px;font-weight:700">
+    <span style="color:#4a88dd">${dA.flag||''} ${dA.nm}</span><span style="color:#aa4a8a">${dB.flag||''} ${dB.nm}</span></div>`+
+    metrics.map(([lbl,vA,vB,pre,suf])=>{
+      const tot=vA+vB||1,pA=Math.round(vA/tot*100),pB=100-pA;
+      return `<div class="cmp-row"><span class="cmp-lbl">${lbl}</span><div class="cmp-bars">
+        <div class="cmp-a" style="width:${pA}%">${pre}${typeof vA==='number'?vA.toLocaleString():'—'}${suf}</div>
+        <div class="cmp-b" style="width:${pB}%">${pre}${typeof vB==='number'?vB.toLocaleString():'—'}${suf}</div>
+      </div></div>`;
+    }).join('')+
+    `<div style="margin-top:14px">${buildFlowSVG(dA,dB,dA.tr?.[cB]??null,getBiVol(cA,cB))}</div>`;
+}
+window.toggleCompare=toggleCompare;window.runCompare=runCompare;
+
+// ===== HEATMAP =====
+let heatmapOn=false,heatmapMode='gdp',heatDots=[];
+function clearHeatDots(){heatDots.forEach(o=>scene.remove(o));heatDots=[];}
+function valToColor(t){
+  const r=t<0.5?Math.round(26+t*2*180):Math.round(206+((t-0.5)*2)*50);
+  const g=t<0.5?Math.round(42+t*2*148):Math.round(190-((t-0.5)*2)*150);
+  const b=t<0.5?Math.round(74+t*2*64):Math.round(138-((t-0.5)*2)*104);
+  return (r<<16)|(g<<8)|b;
+}
+function drawHeatmap(){
+  clearHeatDots();
+  if(!feat||!heatmapOn)return;
+  const vals=Object.entries(CD).map(([c,d])=>[c,heatmapMode==='gdp'?d.gdp:d.gdpC]);
+  const mn=Math.min(...vals.map(v=>v[1])),mx=Math.max(...vals.map(v=>v[1])),rng=mx-mn||1;
+  vals.forEach(([code,val])=>{
+    const f=feat.features.find(x=>String(x.id)===code);if(!f)return;
+    const cen=d3.geoCentroid(f);if(!cen)return;
+    const t=(val-mn)/rng;
+    const sz=0.04+t*0.08;
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(sz,12,12),new THREE.MeshBasicMaterial({color:valToColor(t),transparent:true,opacity:0.85}));
+    const pos=ll2v(cen[1],cen[0],R*1.01);
+    mesh.position.copy(pos);
+    scene.add(mesh);heatDots.push(mesh);
+  });
+}
+function toggleHeatmap(){
+  heatmapOn=!heatmapOn;
+  document.getElementById('btn-heatmap').classList.toggle('on',heatmapOn);
+  document.getElementById('heatmap-legend').style.display=heatmapOn?'flex':'none';
+  if(heatmapOn)drawHeatmap();else clearHeatDots();
+}
+function cycleHeatmap(){
+  heatmapMode=heatmapMode==='gdp'?'gdpC':'gdp';
+  document.getElementById('hm-mode').textContent=heatmapMode==='gdp'?'GDP':'人均GDP';
+  if(heatmapOn)drawHeatmap();
+}
+window.toggleHeatmap=toggleHeatmap;window.cycleHeatmap=cycleHeatmap;
+
+// ===== TRADE NETWORK =====
+let networkOn=false,netArcs=[];
+function clearNetArcs(){netArcs.forEach(o=>scene.remove(o));netArcs=[];}
+function slerpArcPts(from,to,elev,steps){
+  steps=steps||60;
+  const pts=[],dot=Math.max(-1,Math.min(1,from.dot(to))),theta=Math.acos(dot),sinT=Math.sin(theta);
+  for(let i=0;i<=steps;i++){const t=i/steps;const v=theta<1e-4?from.clone().lerp(to,t):from.clone().multiplyScalar(Math.sin((1-t)*theta)/sinT).add(to.clone().multiplyScalar(Math.sin(t*theta)/sinT));pts.push(v.normalize().multiplyScalar(R*(1+elev*Math.sin(Math.PI*t))));}
+  return pts;
+}
+function drawNetwork(){
+  clearNetArcs();
+  if(!feat||!networkOn)return;
+  const sorted=Object.entries(TRV).sort((a,b)=>b[1]-a[1]);
+  const maxVol=sorted[0][1];
+  sorted.forEach(([key,vol],idx)=>{
+    const [cA,cB]=key.split('-');
+    const dA=CD[cA],dB=CD[cB];
+    if(!dA||!dB)return;
+    const fA=feat.features.find(x=>String(x.id)===cA);
+    const fB=feat.features.find(x=>String(x.id)===cB);
+    if(!fA||!fB)return;
+    const gA=d3.geoCentroid(fA),gB=d3.geoCentroid(fB);
+    if(!gA||!gB)return;
+    const vA=ll2v(gA[1],gA[0],1).normalize(),vB=ll2v(gB[1],gB[0],1).normalize();
+    const elev=0.14+0.22*(vol/maxVol);
+    // A→B arc (blue — A exports)
+    const pts1=slerpArcPts(vA,vB,elev);
+    const op=0.3+0.55*(vol/maxVol);
+    const line1=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1),new THREE.LineBasicMaterial({color:0x4488cc,opacity:op,transparent:true}));
+    scene.add(line1);netArcs.push(line1);
+    // B→A arc (orange — B exports)
+    const pts2=slerpArcPts(vB,vA,elev*0.7);
+    const line2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),new THREE.LineBasicMaterial({color:0xcc6633,opacity:op*0.8,transparent:true}));
+    scene.add(line2);netArcs.push(line2);
+    // Commodity labels for top 15 pairs
+    if(idx<15&&dA.exp&&dB.exp){
+      const m1=pts1[Math.floor(pts1.length*0.42)];
+      const lbl1=makeArcLabel(dA.exp[0].nm,'rgba(130,180,255,0.92)');
+      lbl1.position.copy(m1);scene.add(lbl1);netArcs.push(lbl1);
+      const m2=pts2[Math.floor(pts2.length*0.42)];
+      const lbl2=makeArcLabel(dB.exp[0].nm,'rgba(255,160,100,0.92)');
+      lbl2.position.copy(m2);scene.add(lbl2);netArcs.push(lbl2);
+    }
+    // Endpoint dots
+    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.025,8,8),new THREE.MeshBasicMaterial({color:c}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
+    mkD(vA,0x4488cc);mkD(vB,0xcc6633);
+  });
+}
+function drawCountryArcs(code){
+  clearNetArcs();
+  if(!feat)return;
+  const d=CD[code];
+  const pairs=Object.entries(TRV).filter(([k])=>{const p=k.split('-');return p[0]===code||p[1]===code;}).sort((a,b)=>b[1]-a[1]);
+  const maxVol=Math.max(...pairs.map(([,v])=>v));
+  pairs.forEach(([key,vol])=>{
+    const [cA,cB]=key.split('-');
+    const partner=cA===code?cB:cA;
+    const pd=CD[partner];if(!pd)return;
+    const fA=feat.features.find(x=>String(x.id)===code);
+    const fB=feat.features.find(x=>String(x.id)===partner);
+    if(!fA||!fB)return;
+    const gA=d3.geoCentroid(fA),gB=d3.geoCentroid(fB);
+    if(!gA||!gB)return;
+    const vA=ll2v(gA[1],gA[0],1).normalize(),vB=ll2v(gB[1],gB[0],1).normalize();
+    const elev=0.18+0.2*(vol/maxVol);
+    // Export arc (blue)
+    const pts1=slerpArcPts(vA,vB,elev);
+    const line1=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1),new THREE.LineBasicMaterial({color:0x4488cc,opacity:0.85,transparent:true}));
+    scene.add(line1);netArcs.push(line1);
+    // Import arc (orange)
+    const pts2=slerpArcPts(vB,vA,elev*0.65);
+    const line2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),new THREE.LineBasicMaterial({color:0xcc6633,opacity:0.7,transparent:true}));
+    scene.add(line2);netArcs.push(line2);
+    // Commodity labels
+    const m1=pts1[Math.floor(pts1.length*0.4)];
+    const lbl1=makeArcLabel(d.exp[0].nm,'rgba(130,180,255,0.95)');
+    lbl1.position.copy(m1);scene.add(lbl1);netArcs.push(lbl1);
+    const m2=pts2[Math.floor(pts2.length*0.4)];
+    const lbl2=makeArcLabel(pd.exp[0].nm,'rgba(255,160,100,0.95)');
+    lbl2.position.copy(m2);scene.add(lbl2);netArcs.push(lbl2);
+    // Dots
+    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,8),new THREE.MeshBasicMaterial({color:c}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
+    mkD(vA,0x4488cc);mkD(vB,0xcc6633);
+  });
+}
+
+function showNetworkDetail(code){
+  hilight(code);
+  drawCountryArcs(code);
+  if(feat){const f=feat.features.find(x=>String(x.id)===code);if(f){const c=d3.geoCentroid(f);if(c)flyTo(c[1],c[0]);}}
+  const d=CD[code];
+  document.getElementById('nd-country').textContent=(d.flag||'')+' '+(ISO_A2[code]||'')+' '+d.nm;
+  const pairs=Object.entries(TRV).filter(([k])=>{const p=k.split('-');return p[0]===code||p[1]===code;}).sort((a,b)=>b[1]-a[1]);
+  let html='';
+  pairs.forEach(([key,vol])=>{
+    const [cA,cB]=key.split('-');
+    const partner=cA===code?cB:cA;
+    const pd=CD[partner];if(!pd)return;
+    const bal=d.tr?.[partner]!==undefined?d.tr[partner]:pd.tr?.[code]!==undefined?-pd.tr[code]:null;
+    const balStr=bal!==null?(bal>=0?`<span style="color:#2acc5a">順差 $${Math.abs(bal)}B</span>`:`<span style="color:#cc2a3a">逆差 $${Math.abs(bal)}B</span>`):'';
+    html+=`<div class="nd-partner" onclick="this.classList.toggle('expanded')">
+      <div class="nd-head"><span class="nd-nm">${pd.flag||''} ${ISO_A2[partner]||''} ${pd.nm}</span><span class="nd-vol">$${vol}B</span></div>
+      ${balStr?`<div class="nd-bal">${balStr}</div>`:''}
+      <div class="nd-commod">
+        <div class="nd-csec">▲ ${d.nm} 主要出口</div>
+        ${d.exp.slice(0,4).map(x=>`<div class="nd-crow"><span>${x.nm}</span><span>$${x.val}B</span></div>`).join('')}
+        <div class="nd-csec" style="margin-top:8px">▼ ${pd.nm} 主要出口</div>
+        ${pd.exp.slice(0,4).map(x=>`<div class="nd-crow"><span>${x.nm}</span><span>$${x.val}B</span></div>`).join('')}
+      </div>
+    </div>`;
+  });
+  if(!pairs.length)html='<div style="color:#333;font-size:12px;margin-top:10px">尚無此國家的貿易網絡數據</div>';
+  document.getElementById('nd-list').innerHTML=html;
+  document.getElementById('hero').style.display='none';
+  document.getElementById('country-info').style.display='none';
+  document.getElementById('ranking-panel').style.display='none';
+  document.getElementById('compare-panel').style.display='none';
+  document.getElementById('net-detail').style.display='flex';
+}
+function closeNetDetail(){
+  document.getElementById('net-detail').style.display='none';
+  document.getElementById('hero').style.display='flex';
+  if(networkOn)drawNetwork();else clearNetArcs();
+}
+window.showNetworkDetail=showNetworkDetail;window.closeNetDetail=closeNetDetail;
+
+function toggleNetwork(){
+  networkOn=!networkOn;
+  document.getElementById('btn-network').classList.toggle('on',networkOn);
+  if(networkOn){drawNetwork();}else{clearNetArcs();closeNetDetail();}
+}
+window.toggleNetwork=toggleNetwork;
 
 boot();
 </script>
