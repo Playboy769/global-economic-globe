@@ -24,7 +24,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .ld-spin{width:44px;height:44px;border:2px solid rgba(255,255,255,0.06);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ld-txt{color:#eee;font-size:14px;font-weight:400}
-#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:440px;z-index:20;background:rgba(62,58,52,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:500px;z-index:20;background:rgba(62,58,52,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
 .drag-handle{height:28px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .drag-handle:active{cursor:grabbing}
 .drag-pill{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.12)}
@@ -1022,7 +1022,7 @@ function makeArcLabel(text,color){
 }
 
 function buildFlowSVG(dA,dB,bal,biVol){
-  const W=370,BW=95,BH=68,BY=14,AZL=BW+5,AZR=W-BW-5,MX=W/2;
+  const W=440,BW=95,BH=68,BY=14,AZL=BW+5,AZR=W-BW-5,MX=W/2;
   const AR1=BY+20,AR2=BY+48;
   let eAB=null,eBA=null,wA=6,wB=6;
   if(biVol&&bal!==null){
@@ -1310,7 +1310,7 @@ window.switchTab=switchTab;
 
 // ===== GDP TREND CHART =====
 function buildGDPChart(h){
-  const W=370,H=110,mL=38,mR=8,mT=8,mB=22,iW=W-mL-mR,iH=H-mT-mB;
+  const W=440,H=110,mL=38,mR=8,mT=8,mB=22,iW=W-mL-mR,iH=H-mT-mB;
   const mn=Math.min(...h)*0.85,mx=Math.max(...h)*1.1,rY=mx-mn;
   const x=i=>mL+(i/(h.length-1))*iW, y=v=>mT+(1-(v-mn)/rY)*iH;
   const pts=h.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
@@ -1350,7 +1350,7 @@ function renderOverview(code){
     <div class="metric"><span class="m-lbl">CPI 年增率</span><span class="m-val" style="color:${d.cpiYoy>50?'#ee4444':d.cpiYoy>10?'#ee9922':d.cpiYoy<2?'#44cc66':'#fff'}">${d.cpiYoy}%</span></div>
     <div class="metric"><span class="m-lbl">失業率</span><span class="m-val" style="color:${d.unemp>20?'#ee4444':d.unemp>10?'#ee9922':d.unemp<4?'#44cc66':'#fff'}">${d.unemp!==undefined?d.unemp+'%':'—'}</span></div>
     ${d.gdpH?`<div class="sec-title">GDP 趨勢（2014–2023，兆美元）</div><div style="margin:6px -4px 14px">${buildGDPChart(d.gdpH)}</div>`:''}
-    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,110)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#4a88dd','#dd8844','#44aa66'][i]+';display:inline-block"></span><span style="color:#eee">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
+    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,180)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#4a88dd','#dd8844','#44aa66'][i]+';display:inline-block"></span><span style="color:#eee">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
     <div class="sec-title">▲ 主要出口商品（十億美元）</div>
     ${d.exp.map(x=>barRow(x,maxE,'ti-exp')).join('')}
     <div class="sec-title">▼ 主要進口商品（十億美元）</div>
@@ -1375,7 +1375,7 @@ function renderPopulation(code){
   const y=bands[0]+bands[1]+bands[2];
   const w=bands.slice(3,13).reduce((s,v)=>s+v,0);
   const o=bands[13]+bands[14]+bands[15]+bands[16];
-  const n=17,bH=14,TW=370,mL=52,mR=6,mT=8,mB=36;
+  const n=17,bH=20,TW=420,mL=52,mR=6,mT=8,mB=36;
   const iW=TW-mL-mR,iH=n*bH,mid=iW/2;
   const maxV=Math.max(...mBands,...fBands)*1.05;
   const sc=(mid-3)/maxV;
@@ -1480,7 +1480,7 @@ function svgRadar(vals,labels,W=200){
   });
   svg+=`</svg>`;return svg;
 }
-function svgTimeline(data,W=370,H=80,color='#4a88dd'){
+function svgTimeline(data,W=440,H=80,color='#4a88dd'){
   const mL=36,mR=8,mT=8,mB=20,iW=W-mL-mR,iH=H-mT-mB;
   const vals=data.map(d=>d.v),mn=Math.min(...vals)*0.9,mx=Math.max(...vals)*1.1,rng=mx-mn||1;
   let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><g transform="translate(${mL},${mT})">`;
@@ -1586,17 +1586,17 @@ function renderFinance(code){
   const crColors={'AAA':'#44aa66','AA+':'#44aa66','AA':'#66bb44','AA-':'#66bb44','A+':'#88cc44','A1':'#88cc44','A':'#aacc44','Aaa':'#44aa66','Aa2':'#66bb44','Aa3':'#66bb44','Baa1':'#ccaa44','Baa2':'#ccaa44','Baa3':'#ddaa44','BBB+':'#ccaa44','BBB':'#ccaa44','BBB-':'#ddaa44','BB+':'#dd8844','BB':'#dd8844','Ba2':'#dd8844','B':'#dd4444'};
   let html=`<div class="sec-title" style="color:#eee">GDP 產業結構</div>
     <div style="display:flex;align-items:center;gap:16px;margin:8px 0 12px">
-      <div>${svgPie(secData,130)}</div>
+      <div>${svgPie(secData,200)}</div>
       <div>${secData.map((s,i)=>`<div style="font-size:11px;margin:4px 0;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66'][i]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">前十大產業子分類</div>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
-      <div>${svgDonut(f.sub,140)}</div>
+      <div>${svgDonut(f.sub,200)}</div>
       <div style="flex:1">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;justify-content:space-between"><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">央行基準利率</div>
     <div class="metric"><span class="m-lbl">當前利率</span><span class="m-val" style="color:${rateColor}">${f.rate.toFixed(2)}%</span></div>
-    <div style="margin:8px -4px 14px">${svgTimeline(f.rH.map(r=>({l:r.y,v:r.v})),370,70,'#4a88dd')}</div>
+    <div style="margin:8px -4px 14px">${svgTimeline(f.rH.map(r=>({l:r.y,v:r.v})),440,70,'#4a88dd')}</div>
     <div class="sec-title" style="color:#eee">主權信用評等</div>
     <div style="display:flex;gap:8px;margin:8px 0 14px">
       ${['S&P','Moody\'s','Fitch'].map((ag,i)=>{const r=[f.cr.sp,f.cr.moody,f.cr.fitch][i];return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:#ddd;margin-bottom:4px">${ag}</div><div style="font-size:16px;font-weight:700;color:${crColors[r]||'#ccaa44'}">${r}</div></div>`;}).join('')}
@@ -1605,10 +1605,10 @@ function renderFinance(code){
     <div class="metric"><span class="m-lbl">國債佔GDP</span><span class="m-val">${f.debt}%</span></div>
     <div class="metric"><span class="m-lbl">財政赤字佔GDP</span><span class="m-val" style="color:${f.def<0?'#dd4444':'#44aa66'}">${f.def>0?'+':''}${f.def}%</span></div>
     <div class="sec-title" style="color:#eee">股市表現（${f.stock}）</div>
-    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),370,70,'#44aa66')}</div>`:'<div style="color:#eee;font-size:11px;margin:8px 0">暫無股市數據</div>'}
+    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),440,70,'#44aa66')}</div>`:'<div style="color:#eee;font-size:11px;margin:8px 0">暫無股市數據</div>'}
     <div class="sec-title" style="color:#eee">FDI 外國直接投資（十億美元）</div>
     <div class="metric"><span class="m-lbl">年度FDI</span><span class="m-val">$${f.fdi}B</span></div>
-    ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),370,60,'#dd8844')}</div>`:''}`;
+    ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),440,60,'#dd8844')}</div>`:''}`;
   document.getElementById('panel-finance').innerHTML=html;
 }
 
@@ -1658,7 +1658,7 @@ function renderTrade(code){
   const expColors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#999'];
   let html=`<div class="sec-title" style="color:#eee">出口目的地</div>
     <div style="display:flex;align-items:center;gap:14px;margin:8px 0 14px">
-      <div>${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),130)}</div>
+      <div>${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),180)}</div>
       <div>${f.expD.map((e,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#eee">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">供應鏈依賴度</div>
