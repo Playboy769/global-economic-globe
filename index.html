@@ -24,7 +24,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .ld-spin{width:44px;height:44px;border:2px solid rgba(255,255,255,0.06);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ld-txt{color:#333;font-size:14px;font-weight:400}
-#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:360px;z-index:20;background:rgba(6,6,10,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:440px;z-index:20;background:rgba(62,58,52,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
 .drag-handle{height:28px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .drag-handle:active{cursor:grabbing}
 .drag-pill{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.12)}
@@ -35,8 +35,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .hero-hint strong{color:#fff;display:block;margin-bottom:4px;font-size:10px;text-transform:uppercase;letter-spacing:.1em}
 #country-info{display:none;flex-direction:column;flex:1;overflow:hidden}
 #country-header{padding:18px 22px 12px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
-.c-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.02em}
-.c-sub{font-size:11.5px;color:#777;margin-top:3px;font-weight:400}
+.c-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.02em;font-family:'Calibri','Segoe UI',sans-serif}
+.c-sub{font-size:11.5px;color:rgba(255,255,255,0.85);margin-top:3px;font-weight:400}
 #tab-nav{display:flex;padding:0 22px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
 .tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#555;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:-1px}
 .tab-btn:hover{color:#666}
@@ -77,7 +77,25 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .trade-row select,.trade-row select option,#sidebar select{flex:1;appearance:none;-webkit-appearance:none;background:rgba(255,255,255,0.03) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23555' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#ccc;padding:9px 30px 9px 12px;font-size:12.5px;font-weight:500;outline:none;cursor:pointer;transition:border-color .15s}
 #sidebar select:hover{border-color:rgba(255,255,255,0.16)}
 #sidebar select:focus{border-color:rgba(100,160,255,0.3)}
-#sidebar select option{background:#0a0a0e;color:#ccc;padding:6px}
+#sidebar select option{background:#2a2822;color:#ccc;padding:6px}
+.trade-row select{padding:11px 34px 11px 14px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background-color:rgba(255,255,255,0.05)}
+.trade-row select:hover{border-color:rgba(100,160,255,0.25);background-color:rgba(255,255,255,0.07)}
+.trade-row select:focus{border-color:rgba(100,160,255,0.4);box-shadow:0 0 0 2px rgba(100,160,255,0.08)}
+.custom-select{position:relative;flex:1}
+.custom-select .cs-display{padding:11px 34px 11px 14px;font-size:13px;font-weight:600;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5' stroke='%23888' fill='none' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 12px center;color:#ccc;cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.custom-select .cs-display:hover{border-color:rgba(100,160,255,0.25);background-color:rgba(255,255,255,0.07)}
+.custom-select.open .cs-display{border-color:rgba(100,160,255,0.4);box-shadow:0 0 0 2px rgba(100,160,255,0.08);border-radius:10px 10px 0 0}
+.cs-dropdown{display:none;position:absolute;top:100%;left:0;right:0;max-height:260px;overflow-y:auto;background:rgba(38,36,32,0.97);border:1px solid rgba(100,160,255,0.2);border-top:none;border-radius:0 0 10px 10px;z-index:50;backdrop-filter:blur(12px)}
+.custom-select.open .cs-dropdown{display:block}
+.cs-dropdown::-webkit-scrollbar{width:4px}
+.cs-dropdown::-webkit-scrollbar-track{background:transparent}
+.cs-dropdown::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:2px}
+.cs-search{width:100%;padding:8px 12px;background:rgba(255,255,255,0.04);border:none;border-bottom:1px solid rgba(255,255,255,0.06);color:#fff;font-size:12px;outline:none;font-family:inherit}
+.cs-search::placeholder{color:rgba(255,255,255,0.25)}
+.cs-opt{padding:9px 14px;font-size:12.5px;color:rgba(255,255,255,0.7);cursor:pointer;transition:all .1s;display:flex;align-items:center;gap:8px}
+.cs-opt:hover{background:rgba(100,160,255,0.1);color:#fff}
+.cs-opt.selected{background:rgba(100,160,255,0.15);color:#fff;font-weight:700}
+.cs-opt .cs-code{font-size:10px;color:rgba(100,160,255,0.5);font-weight:700;min-width:22px;font-family:'Calibri',monospace}
 .trade-btn{background:rgba(255,255,255,0.04);border:1px solid #1a1a1a;border-radius:6px;color:#666;padding:8px 0;cursor:pointer;font-size:13px;font-weight:700;width:100%;transition:all .15s}
 .trade-btn:hover{background:rgba(255,255,255,0.07);color:#fff}
 .trade-card{background:#060606;border-radius:9px;padding:12px;flex:1;border:1px solid #111}
@@ -141,7 +159,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
     <div class="drag-handle" id="drag-handle"><div class="drag-pill"></div></div>
     <div id="hero">
       <div class="hero-title">全球經濟地球儀</div>
-      <div class="hero-desc">互動式 3D 地球<br>涵蓋全球前 50 大 GDP 國家<br>完整經濟、人口、貿易數據</div>
+      <div class="hero-desc">互動式 3D 地球<br>涵蓋全球前 100 大 GDP 國家<br>完整經濟、人口、貿易數據</div>
       <div class="hero-hint">
         <strong>操作說明</strong>
         🌍 點擊地球上的國家查看數據<br>
@@ -168,9 +186,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
         <div id="panel-trade" class="panel">
           <div class="sec-title">雙邊貿易比較</div>
           <div class="trade-row">
-            <select id="trade-a"><option value="">選擇國家 A</option></select>
-            <span style="color:#222;font-size:16px">⇄</span>
-            <select id="trade-b"><option value="">選擇國家 B</option></select>
+            <div class="custom-select" id="cs-trade-a" data-target="trade-a"><div class="cs-display">選擇國家 A</div><div class="cs-dropdown"><input class="cs-search" placeholder="搜尋…"><div class="cs-options"></div></div></div>
+            <select id="trade-a" style="display:none"><option value="">選擇國家 A</option></select>
+            <span style="color:#555;font-size:16px;flex-shrink:0">⇄</span>
+            <div class="custom-select" id="cs-trade-b" data-target="trade-b"><div class="cs-display">選擇國家 B</div><div class="cs-dropdown"><input class="cs-search" placeholder="搜尋…"><div class="cs-options"></div></div></div>
+            <select id="trade-b" style="display:none"><option value="">選擇國家 B</option></select>
           </div>
           <div style="margin-bottom:16px"><button class="trade-btn" onclick="calcTrade()">查詢雙邊貿易差額</button></div>
           <div id="trade-result" style="color:#333;font-size:13px;font-weight:400">請選擇兩個國家後點擊查詢</div>
@@ -583,14 +603,228 @@ const CD_X={
 };
 Object.entries(CD_X).forEach(([k,v])=>Object.assign(CD[k],v));
 
+const _AY=[7.5,7.8,8.0,8.2,8.0,7.5,7.0,6.2,5.5,5.0,4.5,3.8,3.2,2.5,1.8,1.2,2.3],_AM=[6.8,7.0,7.2,7.5,7.8,7.5,7.2,6.8,6.2,5.8,5.2,4.8,4.2,3.5,2.8,1.8,3.8],_AL=[6.5,6.8,7.0,7.5,7.8,7.5,7.2,6.8,6.5,6.0,5.5,5.0,4.5,3.8,3.0,2.0,3.6],_AE=[4.5,4.8,5.0,5.2,5.5,6.0,6.5,7.0,7.5,7.2,6.8,6.5,6.0,5.5,5.0,4.0,7.0],_AO=[4.2,4.5,4.8,5.0,5.2,5.5,6.0,6.5,7.0,7.5,7.2,6.8,6.5,6.0,5.2,4.0,8.1],_AG=[4.0,4.2,5.0,6.5,8.5,9.5,9.0,8.0,7.5,7.0,6.0,5.0,4.0,3.2,2.5,1.8,3.3],_AT=[5.5,5.8,6.0,6.2,6.5,6.8,7.0,7.2,7.0,6.5,6.0,5.8,5.5,5.0,4.2,3.0,5.0];
+const CD2={
+'368':{nm:'伊拉克',pop:43,gdpC:6210,gdp:0.267,def:115.2,cpi:148.5,ccpi:152.2,cpiYoy:5.0,exp:[{nm:'石油',val:95},{nm:'天然氣',val:5},{nm:'化學品',val:2},{nm:'食品',val:1},{nm:'鋼鐵',val:0.5}],imp:[{nm:'機械',val:12},{nm:'食品',val:8},{nm:'汽車',val:6},{nm:'鋼鐵',val:4},{nm:'醫藥品',val:3}],age:_AM,agri:[{nm:'椰棗',val:1.5},{nm:'小麥',val:0.8},{nm:'大麥',val:0.5},{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3},{nm:'稻米',val:0.2}],tr:{'156':-18,'356':-15}},
+'604':{nm:'秘魯',pop:34,gdpC:7768,gdp:0.264,def:104.2,cpi:124.5,ccpi:126.1,cpiYoy:3.2,exp:[{nm:'銅',val:15},{nm:'金',val:8},{nm:'鋅',val:4},{nm:'咖啡',val:1.5},{nm:'魚粉',val:1.2}],imp:[{nm:'石油',val:8},{nm:'機械',val:5},{nm:'電子產品',val:4},{nm:'汽車',val:3},{nm:'化學品',val:2.5}],age:_AL,agri:[{nm:'咖啡',val:1.2},{nm:'蘆筍',val:0.8},{nm:'葡萄',val:0.6},{nm:'酪梨',val:0.5},{nm:'可可',val:0.4},{nm:'藍莓',val:0.3}],tr:{'156':-12,'840':3}},
+'634':{nm:'卡達',pop:3,gdpC:87660,gdp:0.236,def:101.5,cpi:108.2,ccpi:106.5,cpiYoy:3.0,exp:[{nm:'液化天然氣',val:70},{nm:'石油',val:25},{nm:'化學品',val:5},{nm:'鋁',val:3},{nm:'塑料',val:2}],imp:[{nm:'機械',val:12},{nm:'汽車',val:5},{nm:'電子產品',val:4},{nm:'食品',val:3},{nm:'鋼鐵',val:2}],age:_AG,agri:[{nm:'蔬菜',val:0.1},{nm:'家禽',val:0.08},{nm:'乳製品',val:0.06},{nm:'水果',val:0.04},{nm:'穀物',val:0.03},{nm:'水產品',val:0.02}],tr:{'392':-15,'156':-10}},
+'398':{nm:'哈薩克',pop:20,gdpC:11000,gdp:0.220,def:112.5,cpi:145.8,ccpi:148.2,cpiYoy:14.6,exp:[{nm:'石油',val:35},{nm:'金屬',val:8},{nm:'鈾',val:5},{nm:'穀物',val:3},{nm:'化學品',val:2}],imp:[{nm:'機械',val:12},{nm:'金屬製品',val:5},{nm:'汽車',val:4},{nm:'電子產品',val:3},{nm:'化學品',val:2.5}],age:_AT,agri:[{nm:'小麥',val:2.5},{nm:'棉花',val:0.8},{nm:'牛肉',val:0.5},{nm:'羊毛',val:0.3},{nm:'蔬菜',val:0.2},{nm:'乳製品',val:0.2}],tr:{'156':-8,'643':-5}},
+'012':{nm:'阿爾及利亞',pop:45,gdpC:4330,gdp:0.195,def:118.5,cpi:155.2,ccpi:158.5,cpiYoy:7.2,exp:[{nm:'石油',val:25},{nm:'天然氣',val:15},{nm:'化學品',val:2},{nm:'磷酸鹽',val:1},{nm:'金屬',val:0.5}],imp:[{nm:'機械',val:8},{nm:'食品',val:5},{nm:'汽車',val:4},{nm:'鋼鐵',val:3},{nm:'電子產品',val:2}],age:_AM,agri:[{nm:'椰棗',val:0.5},{nm:'柑橘',val:0.4},{nm:'小麥',val:0.3},{nm:'橄欖油',val:0.3},{nm:'蔬菜',val:0.2},{nm:'葡萄',val:0.2}],tr:{'250':-8,'156':-5}},
+'348':{nm:'匈牙利',pop:10,gdpC:18770,gdp:0.188,def:112.5,cpi:135.8,ccpi:138.2,cpiYoy:17.6,exp:[{nm:'汽車',val:20},{nm:'機械',val:15},{nm:'電子產品',val:12},{nm:'醫藥品',val:5},{nm:'食品',val:4}],imp:[{nm:'機械',val:12},{nm:'石油',val:8},{nm:'汽車',val:6},{nm:'電子產品',val:5},{nm:'化學品',val:4}],age:_AE,agri:[{nm:'穀物',val:2.5},{nm:'豬肉',val:1.5},{nm:'葡萄酒',val:0.8},{nm:'蔬菜',val:0.5},{nm:'水果',val:0.4},{nm:'乳製品',val:0.3}],tr:{'276':15,'040':5}},
+'804':{nm:'烏克蘭',pop:37,gdpC:4840,gdp:0.179,def:128.5,cpi:182.5,ccpi:188.2,cpiYoy:12.4,exp:[{nm:'穀物',val:12},{nm:'鋼鐵',val:8},{nm:'葵花籽油',val:5},{nm:'鐵礦砂',val:3},{nm:'機械',val:2}],imp:[{nm:'石油',val:8},{nm:'機械',val:5},{nm:'化學品',val:3},{nm:'汽車',val:2},{nm:'醫藥品',val:2}],age:_AE,agri:[{nm:'小麥',val:5.5},{nm:'玉米',val:4.2},{nm:'葵花籽',val:3.5},{nm:'大麥',val:1.5},{nm:'油菜籽',val:0.8},{nm:'大豆',val:0.6}],tr:{'156':-5,'276':8}},
+'414':{nm:'科威特',pop:4.3,gdpC:37200,gdp:0.160,def:102.8,cpi:118.5,ccpi:120.2,cpiYoy:3.6,exp:[{nm:'石油',val:65},{nm:'石化產品',val:5},{nm:'化學品',val:2},{nm:'塑料',val:1},{nm:'金屬',val:0.5}],imp:[{nm:'機械',val:8},{nm:'汽車',val:5},{nm:'食品',val:4},{nm:'電子產品',val:3},{nm:'服裝',val:2}],age:_AG,agri:[{nm:'蔬菜',val:0.05},{nm:'家禽',val:0.03},{nm:'水產品',val:0.02},{nm:'乳製品',val:0.02},{nm:'蛋',val:0.01},{nm:'水果',val:0.01}],tr:{'156':-12,'356':-8}},
+'231':{nm:'衣索比亞',pop:126,gdpC:1238,gdp:0.156,def:125.5,cpi:195.8,ccpi:198.5,cpiYoy:28.5,exp:[{nm:'咖啡',val:1.2},{nm:'芝麻',val:0.5},{nm:'花卉',val:0.4},{nm:'蔬菜',val:0.3},{nm:'黃金',val:0.2}],imp:[{nm:'機械',val:4},{nm:'石油',val:3},{nm:'電子產品',val:2},{nm:'化學品',val:1.5},{nm:'鋼鐵',val:1}],age:_AY,agri:[{nm:'咖啡',val:1.2},{nm:'芝麻',val:0.5},{nm:'恰特草',val:0.4},{nm:'花卉',val:0.3},{nm:'蔬菜',val:0.2},{nm:'穀物',val:0.2}],tr:{'156':-8}},
+'504':{nm:'摩洛哥',pop:37,gdpC:3780,gdp:0.140,def:105.2,cpi:118.5,ccpi:120.2,cpiYoy:6.1,exp:[{nm:'磷酸鹽',val:8},{nm:'汽車零件',val:5},{nm:'紡織品',val:3},{nm:'食品',val:2.5},{nm:'電子產品',val:2}],imp:[{nm:'石油',val:8},{nm:'機械',val:5},{nm:'電子產品',val:3},{nm:'穀物',val:2},{nm:'化學品',val:2}],age:_AM,agri:[{nm:'柑橘',val:1.5},{nm:'番茄',val:1.0},{nm:'橄欖油',val:0.8},{nm:'磷酸鹽肥料',val:0.6},{nm:'堅果',val:0.4},{nm:'蔬菜',val:0.3}],tr:{'250':-5,'724':3}},
+'703':{nm:'斯洛伐克',pop:5.4,gdpC:23500,gdp:0.127,def:110.5,cpi:128.4,ccpi:132.5,cpiYoy:11.0,exp:[{nm:'汽車',val:25},{nm:'電子產品',val:8},{nm:'機械',val:6},{nm:'鋼鐵',val:3},{nm:'化學品',val:2}],imp:[{nm:'機械',val:10},{nm:'石油',val:5},{nm:'汽車零件',val:4},{nm:'電子產品',val:3},{nm:'化學品',val:2.5}],age:_AE,agri:[{nm:'穀物',val:0.8},{nm:'豬肉',val:0.5},{nm:'乳製品',val:0.4},{nm:'蔬菜',val:0.3},{nm:'糖',val:0.2},{nm:'葡萄酒',val:0.2}],tr:{'276':12,'203':5}},
+'218':{nm:'厄瓜多',pop:18,gdpC:6390,gdp:0.115,def:105.8,cpi:128.5,ccpi:130.2,cpiYoy:2.2,exp:[{nm:'石油',val:10},{nm:'蝦',val:5},{nm:'香蕉',val:3.5},{nm:'可可',val:1},{nm:'花卉',val:0.8}],imp:[{nm:'機械',val:5},{nm:'化學品',val:3},{nm:'汽車',val:2},{nm:'電子產品',val:2},{nm:'食品',val:1.5}],age:_AL,agri:[{nm:'蝦',val:5.0},{nm:'香蕉',val:3.5},{nm:'可可',val:1.0},{nm:'花卉',val:0.8},{nm:'棕櫚油',val:0.5},{nm:'咖啡',val:0.4}],tr:{'840':3,'156':-5}},
+'404':{nm:'肯亞',pop:54,gdpC:2093,gdp:0.113,def:108.5,cpi:162.5,ccpi:165.8,cpiYoy:7.9,exp:[{nm:'茶葉',val:1.5},{nm:'花卉',val:1.0},{nm:'咖啡',val:0.5},{nm:'蔬菜',val:0.4},{nm:'水產品',val:0.2}],imp:[{nm:'石油',val:5},{nm:'機械',val:3},{nm:'鋼鐵',val:2},{nm:'化學品',val:1.5},{nm:'食品',val:1.2}],age:_AY,agri:[{nm:'茶葉',val:1.5},{nm:'花卉',val:1.0},{nm:'咖啡',val:0.5},{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3},{nm:'堅果',val:0.2}],tr:{'156':-5,'356':-3}},
+'214':{nm:'多明尼加',pop:11,gdpC:10270,gdp:0.113,def:106.2,cpi:138.5,ccpi:142.2,cpiYoy:4.8,exp:[{nm:'金',val:2},{nm:'醫療器材',val:1.5},{nm:'雪茄',val:1},{nm:'可可',val:0.5},{nm:'紡織品',val:0.5}],imp:[{nm:'石油',val:4},{nm:'機械',val:2},{nm:'汽車',val:1.5},{nm:'食品',val:1.2},{nm:'化學品',val:1}],age:_AL,agri:[{nm:'甘蔗',val:0.5},{nm:'可可',val:0.4},{nm:'咖啡',val:0.3},{nm:'菸草',val:0.3},{nm:'香蕉',val:0.2},{nm:'稻米',val:0.2}],tr:{'840':5}},
+'512':{nm:'阿曼',pop:4.6,gdpC:22830,gdp:0.105,def:103.2,cpi:112.5,ccpi:114.8,cpiYoy:1.0,exp:[{nm:'石油',val:35},{nm:'天然氣',val:8},{nm:'金屬',val:2},{nm:'化學品',val:1},{nm:'水產品',val:0.5}],imp:[{nm:'機械',val:5},{nm:'汽車',val:3},{nm:'食品',val:2.5},{nm:'電子產品',val:2},{nm:'鋼鐵',val:1.5}],age:_AG,agri:[{nm:'椰棗',val:0.3},{nm:'蔬菜',val:0.1},{nm:'水產品',val:0.2},{nm:'水果',val:0.1},{nm:'家禽',val:0.05},{nm:'乳製品',val:0.05}],tr:{'156':-8,'356':-5}},
+'320':{nm:'瓜地馬拉',pop:18,gdpC:5670,gdp:0.102,def:106.8,cpi:142.5,ccpi:145.8,cpiYoy:6.2,exp:[{nm:'成衣',val:2},{nm:'咖啡',val:1.2},{nm:'香蕉',val:1},{nm:'棕櫚油',val:0.8},{nm:'糖',val:0.6}],imp:[{nm:'石油',val:4},{nm:'機械',val:2},{nm:'化學品',val:1.5},{nm:'汽車',val:1},{nm:'電子產品',val:1}],age:_AL,agri:[{nm:'咖啡',val:1.2},{nm:'香蕉',val:1.0},{nm:'棕櫚油',val:0.8},{nm:'糖',val:0.6},{nm:'豆蔻',val:0.5},{nm:'蔬菜',val:0.3}],tr:{'840':4}},
+'100':{nm:'保加利亞',pop:6.5,gdpC:15380,gdp:0.100,def:112.5,cpi:132.8,ccpi:135.5,cpiYoy:8.6,exp:[{nm:'燃料',val:5},{nm:'機械',val:3},{nm:'金屬',val:2.5},{nm:'食品',val:2},{nm:'化學品',val:1.5}],imp:[{nm:'石油',val:5},{nm:'機械',val:3},{nm:'汽車',val:2},{nm:'電子產品',val:1.5},{nm:'化學品',val:1.5}],age:_AE,agri:[{nm:'小麥',val:0.8},{nm:'葵花籽',val:0.6},{nm:'菸草',val:0.5},{nm:'葡萄酒',val:0.4},{nm:'玫瑰油',val:0.3},{nm:'乳製品',val:0.2}],tr:{'276':5,'792':3}},
+'442':{nm:'盧森堡',pop:0.66,gdpC:131800,gdp:0.087,def:105.5,cpi:118.8,ccpi:120.5,cpiYoy:2.9,exp:[{nm:'鋼鐵',val:4},{nm:'機械',val:3},{nm:'化學品',val:2},{nm:'橡膠',val:1},{nm:'玻璃',val:0.5}],imp:[{nm:'機械',val:4},{nm:'汽車',val:2},{nm:'金屬',val:1.5},{nm:'化學品',val:1},{nm:'食品',val:0.8}],age:_AO,agri:[{nm:'葡萄酒',val:0.1},{nm:'乳製品',val:0.08},{nm:'穀物',val:0.05},{nm:'肉類',val:0.04},{nm:'蔬菜',val:0.03},{nm:'水果',val:0.02}],tr:{'276':5,'056':3}},
+'860':{nm:'烏茲別克',pop:36,gdpC:2222,gdp:0.080,def:118.5,cpi:168.5,ccpi:172.2,cpiYoy:11.5,exp:[{nm:'黃金',val:5},{nm:'棉花',val:2},{nm:'天然氣',val:1.5},{nm:'銅',val:1},{nm:'紡織品',val:1}],imp:[{nm:'機械',val:5},{nm:'化學品',val:3},{nm:'食品',val:2},{nm:'汽車',val:2},{nm:'鋼鐵',val:1.5}],age:_AM,agri:[{nm:'棉花',val:2.0},{nm:'蔬菜',val:0.5},{nm:'水果',val:0.4},{nm:'穀物',val:0.3},{nm:'絲綢',val:0.2},{nm:'堅果',val:0.2}],tr:{'156':-5,'643':-3}},
+'191':{nm:'克羅埃西亞',pop:3.9,gdpC:20000,gdp:0.078,def:108.5,cpi:125.8,ccpi:128.2,cpiYoy:7.5,exp:[{nm:'燃料',val:3},{nm:'機械',val:2},{nm:'食品',val:1.5},{nm:'化學品',val:1},{nm:'木材',val:0.8}],imp:[{nm:'機械',val:3},{nm:'石油',val:2.5},{nm:'汽車',val:2},{nm:'電子產品',val:1.5},{nm:'化學品',val:1}],age:_AE,agri:[{nm:'穀物',val:0.5},{nm:'水產品',val:0.3},{nm:'橄欖油',val:0.2},{nm:'葡萄酒',val:0.2},{nm:'肉類',val:0.2},{nm:'乳製品',val:0.1}],tr:{'276':3,'380':2}},
+'591':{nm:'巴拿馬',pop:4.4,gdpC:17500,gdp:0.077,def:103.5,cpi:118.5,ccpi:120.2,cpiYoy:1.5,exp:[{nm:'金',val:1.5},{nm:'香蕉',val:0.8},{nm:'蝦',val:0.5},{nm:'糖',val:0.3},{nm:'魚粉',val:0.2}],imp:[{nm:'石油',val:3},{nm:'機械',val:2},{nm:'食品',val:1.5},{nm:'化學品',val:1},{nm:'汽車',val:1}],age:_AL,agri:[{nm:'香蕉',val:0.8},{nm:'蝦',val:0.5},{nm:'糖',val:0.3},{nm:'咖啡',val:0.2},{nm:'棕櫚油',val:0.1},{nm:'水產品',val:0.1}],tr:{'840':5}},
+'024':{nm:'安哥拉',pop:35,gdpC:2143,gdp:0.075,def:122.5,cpi:185.8,ccpi:188.5,cpiYoy:13.8,exp:[{nm:'石油',val:32},{nm:'鑽石',val:1.5},{nm:'天然氣',val:1},{nm:'咖啡',val:0.2},{nm:'木材',val:0.1}],imp:[{nm:'機械',val:4},{nm:'食品',val:3},{nm:'汽車',val:2},{nm:'化學品',val:1.5},{nm:'鋼鐵',val:1}],age:_AY,agri:[{nm:'咖啡',val:0.2},{nm:'糖',val:0.15},{nm:'木薯',val:0.1},{nm:'玉米',val:0.1},{nm:'蔬菜',val:0.05},{nm:'水果',val:0.05}],tr:{'156':-25}},
+'834':{nm:'坦尚尼亞',pop:65,gdpC:1154,gdp:0.075,def:108.5,cpi:148.5,ccpi:152.2,cpiYoy:3.8,exp:[{nm:'黃金',val:2.5},{nm:'菸草',val:0.5},{nm:'咖啡',val:0.4},{nm:'腰果',val:0.3},{nm:'茶葉',val:0.2}],imp:[{nm:'石油',val:3},{nm:'機械',val:2},{nm:'化學品',val:1},{nm:'食品',val:0.8},{nm:'鋼鐵',val:0.6}],age:_AY,agri:[{nm:'菸草',val:0.5},{nm:'咖啡',val:0.4},{nm:'腰果',val:0.3},{nm:'茶葉',val:0.2},{nm:'丁香',val:0.15},{nm:'棉花',val:0.1}],tr:{'156':-5,'356':-3}},
+'440':{nm:'立陶宛',pop:2.9,gdpC:25520,gdp:0.074,def:112.5,cpi:135.8,ccpi:138.2,cpiYoy:8.7,exp:[{nm:'燃料',val:5},{nm:'傢具',val:2},{nm:'化學品',val:1.5},{nm:'機械',val:1.2},{nm:'食品',val:1}],imp:[{nm:'石油',val:4},{nm:'機械',val:2},{nm:'汽車',val:1.5},{nm:'電子產品',val:1},{nm:'化學品',val:1}],age:_AE,agri:[{nm:'穀物',val:1.2},{nm:'乳製品',val:0.6},{nm:'豬肉',val:0.4},{nm:'蔬菜',val:0.2},{nm:'啤酒',val:0.15},{nm:'水果',val:0.1}],tr:{'276':3,'616':2}},
+'144':{nm:'斯里蘭卡',pop:22,gdpC:3364,gdp:0.074,def:118.5,cpi:185.2,ccpi:188.5,cpiYoy:17.0,exp:[{nm:'服裝',val:5},{nm:'茶葉',val:1.5},{nm:'橡膠',val:0.8},{nm:'香料',val:0.5},{nm:'水產品',val:0.3}],imp:[{nm:'石油',val:4},{nm:'機械',val:2},{nm:'紡織原料',val:1.5},{nm:'食品',val:1},{nm:'化學品',val:0.8}],age:_AT,agri:[{nm:'茶葉',val:1.5},{nm:'橡膠',val:0.8},{nm:'椰子',val:0.4},{nm:'香料',val:0.5},{nm:'水產品',val:0.3},{nm:'稻米',val:0.2}],tr:{'156':-5,'356':-3}},
+'288':{nm:'迦納',pop:33,gdpC:2212,gdp:0.073,def:122.5,cpi:195.8,ccpi:198.5,cpiYoy:23.2,exp:[{nm:'黃金',val:6},{nm:'石油',val:4},{nm:'可可',val:2},{nm:'木材',val:0.3},{nm:'堅果',val:0.2}],imp:[{nm:'機械',val:3},{nm:'石油',val:2},{nm:'汽車',val:1.5},{nm:'食品',val:1.2},{nm:'化學品',val:1}],age:_AY,agri:[{nm:'可可',val:2.0},{nm:'腰果',val:0.3},{nm:'棕櫚油',val:0.2},{nm:'橡膠',val:0.15},{nm:'鳳梨',val:0.1},{nm:'木薯',val:0.1}],tr:{'156':-5,'826':2}},
+'858':{nm:'烏拉圭',pop:3.4,gdpC:21170,gdp:0.072,def:108.5,cpi:142.5,ccpi:145.2,cpiYoy:5.8,exp:[{nm:'牛肉',val:2.5},{nm:'大豆',val:2},{nm:'木漿',val:1.5},{nm:'乳製品',val:1},{nm:'稻米',val:0.8}],imp:[{nm:'石油',val:2},{nm:'機械',val:1.5},{nm:'汽車',val:1},{nm:'化學品',val:0.8},{nm:'電子產品',val:0.5}],age:_AL,agri:[{nm:'牛肉',val:2.5},{nm:'大豆',val:2.0},{nm:'乳製品',val:1.0},{nm:'稻米',val:0.8},{nm:'木材',val:0.5},{nm:'羊毛',val:0.3}],tr:{'156':-3,'076':2}},
+'112':{nm:'白俄羅斯',pop:9.2,gdpC:7826,gdp:0.072,def:115.5,cpi:168.5,ccpi:172.2,cpiYoy:5.0,exp:[{nm:'鉀肥',val:5},{nm:'石油產品',val:3},{nm:'乳製品',val:2},{nm:'機械',val:1.5},{nm:'木材',val:1}],imp:[{nm:'石油',val:8},{nm:'天然氣',val:4},{nm:'機械',val:2},{nm:'化學品',val:1.5},{nm:'食品',val:1}],age:_AE,agri:[{nm:'乳製品',val:2.0},{nm:'牛肉',val:0.8},{nm:'穀物',val:0.5},{nm:'馬鈴薯',val:0.3},{nm:'亞麻',val:0.2},{nm:'糖',val:0.2}],tr:{'643':-15,'156':-3}},
+'384':{nm:'象牙海岸',pop:28,gdpC:2500,gdp:0.070,def:105.8,cpi:122.5,ccpi:125.2,cpiYoy:4.5,exp:[{nm:'可可',val:5},{nm:'腰果',val:1},{nm:'橡膠',val:0.5},{nm:'棉花',val:0.3},{nm:'棕櫚油',val:0.3}],imp:[{nm:'石油',val:3},{nm:'機械',val:2},{nm:'食品',val:1.5},{nm:'化學品',val:1},{nm:'汽車',val:0.8}],age:_AY,agri:[{nm:'可可',val:5.0},{nm:'腰果',val:1.0},{nm:'橡膠',val:0.5},{nm:'棉花',val:0.3},{nm:'棕櫚油',val:0.3},{nm:'咖啡',val:0.2}],tr:{'250':-3,'156':-2}},
+'188':{nm:'哥斯大黎加',pop:5.2,gdpC:13270,gdp:0.069,def:104.5,cpi:125.8,ccpi:128.2,cpiYoy:0.5,exp:[{nm:'醫療器材',val:4},{nm:'香蕉',val:1.2},{nm:'鳳梨',val:1},{nm:'咖啡',val:0.5},{nm:'電子產品',val:0.5}],imp:[{nm:'石油',val:2},{nm:'機械',val:1.5},{nm:'化學品',val:1},{nm:'汽車',val:0.8},{nm:'食品',val:0.6}],age:_AL,agri:[{nm:'香蕉',val:1.2},{nm:'鳳梨',val:1.0},{nm:'咖啡',val:0.5},{nm:'棕櫚油',val:0.3},{nm:'糖',val:0.2},{nm:'花卉',val:0.1}],tr:{'840':5}},
+'688':{nm:'塞爾維亞',pop:6.6,gdpC:9700,gdp:0.064,def:112.8,cpi:132.5,ccpi:135.8,cpiYoy:12.0,exp:[{nm:'汽車零件',val:3},{nm:'鋼鐵',val:2},{nm:'食品',val:1.5},{nm:'機械',val:1},{nm:'化學品',val:0.8}],imp:[{nm:'機械',val:3},{nm:'石油',val:2.5},{nm:'汽車',val:2},{nm:'電子產品',val:1.5},{nm:'化學品',val:1}],age:_AE,agri:[{nm:'玉米',val:0.8},{nm:'水果',val:0.5},{nm:'小麥',val:0.4},{nm:'蔬菜',val:0.3},{nm:'肉類',val:0.2},{nm:'乳製品',val:0.2}],tr:{'276':5,'380':3}},
+'705':{nm:'斯洛維尼亞',pop:2.1,gdpC:28570,gdp:0.060,def:108.5,cpi:122.8,ccpi:125.5,cpiYoy:7.2,exp:[{nm:'汽車',val:5},{nm:'醫藥品',val:3},{nm:'機械',val:2},{nm:'金屬',val:1.5},{nm:'化學品',val:1}],imp:[{nm:'機械',val:3},{nm:'汽車',val:2},{nm:'石油',val:1.5},{nm:'電子產品',val:1},{nm:'化學品',val:1}],age:_AE,agri:[{nm:'乳製品',val:0.3},{nm:'葡萄酒',val:0.2},{nm:'穀物',val:0.15},{nm:'肉類',val:0.15},{nm:'蔬菜',val:0.1},{nm:'水果',val:0.08}],tr:{'276':5,'380':2}},
+'180':{nm:'剛果民主共和國',pop:102,gdpC:578,gdp:0.059,def:115.8,cpi:172.5,ccpi:175.8,cpiYoy:19.0,exp:[{nm:'鈷',val:5},{nm:'銅',val:4},{nm:'鑽石',val:0.5},{nm:'黃金',val:0.3},{nm:'木材',val:0.2}],imp:[{nm:'食品',val:3},{nm:'機械',val:2},{nm:'化學品',val:1},{nm:'燃料',val:1},{nm:'鋼鐵',val:0.5}],age:_AY,agri:[{nm:'咖啡',val:0.15},{nm:'棕櫚油',val:0.1},{nm:'橡膠',val:0.08},{nm:'木薯',val:0.05},{nm:'可可',val:0.05},{nm:'木材',val:0.05}],tr:{'156':-8}},
+'104':{nm:'緬甸',pop:55,gdpC:1054,gdp:0.058,def:118.5,cpi:175.8,ccpi:178.5,cpiYoy:8.5,exp:[{nm:'天然氣',val:3},{nm:'翡翠',val:1},{nm:'稻米',val:0.5},{nm:'豆類',val:0.4},{nm:'水產品',val:0.3}],imp:[{nm:'機械',val:3},{nm:'石油',val:2},{nm:'食品',val:1},{nm:'電子產品',val:0.8},{nm:'化學品',val:0.5}],age:_AM,agri:[{nm:'稻米',val:0.5},{nm:'豆類',val:0.4},{nm:'水產品',val:0.3},{nm:'橡膠',val:0.2},{nm:'芝麻',val:0.15},{nm:'蔬菜',val:0.1}],tr:{'156':-8,'764':-3}},
+'031':{nm:'亞塞拜然',pop:10.2,gdpC:5590,gdp:0.057,def:108.5,cpi:132.5,ccpi:135.8,cpiYoy:12.5,exp:[{nm:'石油',val:18},{nm:'天然氣',val:5},{nm:'化學品',val:1},{nm:'蔬菜',val:0.3},{nm:'棉花',val:0.2}],imp:[{nm:'機械',val:3},{nm:'食品',val:2},{nm:'汽車',val:1.5},{nm:'鋼鐵',val:1},{nm:'化學品',val:0.8}],age:_AT,agri:[{nm:'蔬菜',val:0.3},{nm:'棉花',val:0.2},{nm:'水果',val:0.2},{nm:'茶葉',val:0.1},{nm:'穀物',val:0.1},{nm:'堅果',val:0.1}],tr:{'380':-5,'792':3}},
+'788':{nm:'突尼西亞',pop:12,gdpC:3917,gdp:0.047,def:108.5,cpi:148.5,ccpi:152.2,cpiYoy:9.3,exp:[{nm:'服裝',val:3},{nm:'橄欖油',val:1.5},{nm:'電子產品',val:1},{nm:'磷酸鹽',val:0.8},{nm:'機械',val:0.5}],imp:[{nm:'石油',val:3},{nm:'機械',val:2},{nm:'食品',val:1.5},{nm:'化學品',val:1},{nm:'紡織原料',val:0.8}],age:_AM,agri:[{nm:'橄欖油',val:1.5},{nm:'椰棗',val:0.4},{nm:'柑橘',val:0.3},{nm:'水產品',val:0.2},{nm:'穀物',val:0.15},{nm:'蔬菜',val:0.1}],tr:{'250':-3,'380':2}},
+'400':{nm:'約旦',pop:11.4,gdpC:4122,gdp:0.047,def:105.5,cpi:128.5,ccpi:130.2,cpiYoy:2.1,exp:[{nm:'磷酸鹽',val:2},{nm:'醫藥品',val:1},{nm:'化學品',val:0.8},{nm:'服裝',val:0.5},{nm:'食品',val:0.3}],imp:[{nm:'石油',val:4},{nm:'機械',val:2},{nm:'食品',val:1.5},{nm:'汽車',val:1},{nm:'化學品',val:0.8}],age:_AM,agri:[{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3},{nm:'橄欖油',val:0.2},{nm:'家禽',val:0.15},{nm:'乳製品',val:0.1},{nm:'穀物',val:0.08}],tr:{'682':-3,'840':2}},
+'800':{nm:'烏干達',pop:46,gdpC:1000,gdp:0.046,def:108.5,cpi:155.8,ccpi:158.5,cpiYoy:5.4,exp:[{nm:'咖啡',val:0.8},{nm:'黃金',val:0.5},{nm:'水產品',val:0.3},{nm:'茶葉',val:0.1},{nm:'菸草',val:0.1}],imp:[{nm:'石油',val:2},{nm:'機械',val:1},{nm:'鋼鐵',val:0.5},{nm:'化學品',val:0.5},{nm:'食品',val:0.4}],age:_AY,agri:[{nm:'咖啡',val:0.8},{nm:'茶葉',val:0.1},{nm:'水產品',val:0.3},{nm:'花卉',val:0.08},{nm:'可可',val:0.05},{nm:'香草',val:0.04}],tr:{'156':-3,'404':2}},
+'434':{nm:'利比亞',pop:7,gdpC:6571,gdp:0.046,def:112.5,cpi:152.5,ccpi:155.8,cpiYoy:4.5,exp:[{nm:'石油',val:25},{nm:'天然氣',val:2},{nm:'化學品',val:0.5},{nm:'金屬',val:0.2},{nm:'塑料',val:0.1}],imp:[{nm:'食品',val:3},{nm:'機械',val:2},{nm:'汽車',val:1.5},{nm:'鋼鐵',val:1},{nm:'化學品',val:0.5}],age:_AM,agri:[{nm:'橄欖油',val:0.1},{nm:'蔬菜',val:0.08},{nm:'水果',val:0.05},{nm:'穀物',val:0.04},{nm:'家禽',val:0.03},{nm:'乳製品',val:0.02}],tr:{'380':-5,'156':-3}},
+'068':{nm:'玻利維亞',pop:12,gdpC:3750,gdp:0.045,def:106.5,cpi:128.5,ccpi:132.2,cpiYoy:2.6,exp:[{nm:'天然氣',val:4},{nm:'鋅',val:1.5},{nm:'金',val:1},{nm:'大豆',val:1},{nm:'錫',val:0.5}],imp:[{nm:'機械',val:2},{nm:'石油',val:1.5},{nm:'汽車',val:1},{nm:'化學品',val:0.8},{nm:'食品',val:0.5}],age:_AL,agri:[{nm:'大豆',val:1.0},{nm:'藜麥',val:0.3},{nm:'咖啡',val:0.2},{nm:'巴西堅果',val:0.2},{nm:'糖',val:0.15},{nm:'可可',val:0.1}],tr:{'076':3,'032':2}},
+'120':{nm:'喀麥隆',pop:28,gdpC:1571,gdp:0.044,def:105.5,cpi:128.5,ccpi:132.2,cpiYoy:6.2,exp:[{nm:'石油',val:3},{nm:'可可',val:1},{nm:'木材',val:0.5},{nm:'棉花',val:0.3},{nm:'鋁',val:0.3}],imp:[{nm:'機械',val:2},{nm:'食品',val:1.5},{nm:'化學品',val:1},{nm:'石油產品',val:0.8},{nm:'鋼鐵',val:0.5}],age:_AY,agri:[{nm:'可可',val:1.0},{nm:'棉花',val:0.3},{nm:'咖啡',val:0.2},{nm:'香蕉',val:0.15},{nm:'棕櫚油',val:0.1},{nm:'橡膠',val:0.1}],tr:{'156':-3,'250':-2}},
+'048':{nm:'巴林',pop:1.5,gdpC:29333,gdp:0.044,def:102.5,cpi:112.8,ccpi:114.5,cpiYoy:0.1,exp:[{nm:'石油',val:8},{nm:'鋁',val:3},{nm:'金屬',val:1},{nm:'化學品',val:0.5},{nm:'塑料',val:0.3}],imp:[{nm:'機械',val:3},{nm:'汽車',val:2},{nm:'食品',val:1.5},{nm:'鋼鐵',val:1},{nm:'電子產品',val:0.8}],age:_AG,agri:[{nm:'蔬菜',val:0.02},{nm:'水產品',val:0.02},{nm:'家禽',val:0.01},{nm:'乳製品',val:0.01},{nm:'水果',val:0.01},{nm:'蛋',val:0.005}],tr:{'682':5}},
+'428':{nm:'拉脫維亞',pop:1.8,gdpC:23890,gdp:0.043,def:112.5,cpi:138.5,ccpi:142.2,cpiYoy:8.8,exp:[{nm:'木材',val:2.5},{nm:'金屬',val:1.5},{nm:'食品',val:1},{nm:'機械',val:0.8},{nm:'化學品',val:0.5}],imp:[{nm:'機械',val:2},{nm:'石油',val:1.5},{nm:'汽車',val:1},{nm:'電子產品',val:0.8},{nm:'化學品',val:0.5}],age:_AE,agri:[{nm:'穀物',val:0.8},{nm:'乳製品',val:0.5},{nm:'木材',val:0.4},{nm:'蔬菜',val:0.1},{nm:'水產品',val:0.1},{nm:'肉類',val:0.08}],tr:{'276':2,'440':2}},
+'600':{nm:'巴拉圭',pop:7,gdpC:5857,gdp:0.041,def:105.5,cpi:132.5,ccpi:135.8,cpiYoy:3.7,exp:[{nm:'大豆',val:3},{nm:'電力',val:2},{nm:'牛肉',val:1.5},{nm:'穀物',val:1},{nm:'糖',val:0.3}],imp:[{nm:'機械',val:2},{nm:'石油',val:1.5},{nm:'電子產品',val:1},{nm:'化學品',val:0.8},{nm:'汽車',val:0.5}],age:_AL,agri:[{nm:'大豆',val:3.0},{nm:'牛肉',val:1.5},{nm:'玉米',val:0.8},{nm:'糖',val:0.3},{nm:'小麥',val:0.2},{nm:'芝麻',val:0.15}],tr:{'076':5,'032':3}},
+'524':{nm:'尼泊爾',pop:30,gdpC:1333,gdp:0.040,def:108.5,cpi:162.5,ccpi:165.8,cpiYoy:7.7,exp:[{nm:'地毯',val:0.15},{nm:'茶葉',val:0.1},{nm:'服裝',val:0.1},{nm:'豆類',val:0.08},{nm:'香料',val:0.05}],imp:[{nm:'石油',val:2},{nm:'機械',val:1},{nm:'黃金',val:0.8},{nm:'鋼鐵',val:0.5},{nm:'食品',val:0.4}],age:_AM,agri:[{nm:'稻米',val:0.2},{nm:'茶葉',val:0.1},{nm:'豆類',val:0.08},{nm:'香料',val:0.05},{nm:'蔬菜',val:0.04},{nm:'水果',val:0.03}],tr:{'356':-8}},
+'233':{nm:'愛沙尼亞',pop:1.4,gdpC:27140,gdp:0.038,def:115.5,cpi:142.5,ccpi:145.8,cpiYoy:9.2,exp:[{nm:'電子產品',val:3},{nm:'木材',val:1.5},{nm:'食品',val:1},{nm:'機械',val:0.8},{nm:'化學品',val:0.5}],imp:[{nm:'機械',val:2},{nm:'石油',val:1.5},{nm:'汽車',val:1},{nm:'電子產品',val:0.8},{nm:'食品',val:0.5}],age:_AE,agri:[{nm:'穀物',val:0.5},{nm:'乳製品',val:0.3},{nm:'木材',val:0.3},{nm:'豬肉',val:0.1},{nm:'蔬菜',val:0.08},{nm:'水產品',val:0.05}],tr:{'246':3,'752':2}},
+'222':{nm:'薩爾瓦多',pop:6.3,gdpC:5238,gdp:0.033,def:104.5,cpi:125.8,ccpi:128.2,cpiYoy:4.0,exp:[{nm:'紡織品',val:2.5},{nm:'咖啡',val:0.4},{nm:'糖',val:0.3},{nm:'紙製品',val:0.2},{nm:'塑料',val:0.15}],imp:[{nm:'石油',val:2},{nm:'機械',val:1},{nm:'食品',val:0.8},{nm:'化學品',val:0.5},{nm:'汽車',val:0.4}],age:_AL,agri:[{nm:'咖啡',val:0.4},{nm:'糖',val:0.3},{nm:'蝦',val:0.1},{nm:'蔬菜',val:0.08},{nm:'棉花',val:0.05},{nm:'穀物',val:0.04}],tr:{'840':3,'320':1}},
+'196':{nm:'賽普勒斯',pop:1.3,gdpC:23850,gdp:0.031,def:105.2,cpi:118.5,ccpi:120.2,cpiYoy:3.5,exp:[{nm:'醫藥品',val:0.5},{nm:'柑橘',val:0.3},{nm:'馬鈴薯',val:0.2},{nm:'水產品',val:0.15},{nm:'葡萄酒',val:0.1}],imp:[{nm:'石油',val:1},{nm:'機械',val:0.8},{nm:'汽車',val:0.5},{nm:'食品',val:0.4},{nm:'化學品',val:0.3}],age:_AO,agri:[{nm:'柑橘',val:0.3},{nm:'馬鈴薯',val:0.2},{nm:'橄欖油',val:0.1},{nm:'葡萄',val:0.08},{nm:'乳製品',val:0.05},{nm:'穀物',val:0.04}],tr:{'300':2,'826':1}},
+'116':{nm:'柬埔寨',pop:17,gdpC:1765,gdp:0.030,def:104.5,cpi:118.5,ccpi:120.2,cpiYoy:2.1,exp:[{nm:'服裝',val:10},{nm:'鞋類',val:1.5},{nm:'稻米',val:0.5},{nm:'橡膠',val:0.3},{nm:'木材',val:0.2}],imp:[{nm:'紡織原料',val:5},{nm:'機械',val:2},{nm:'石油',val:1.5},{nm:'鋼鐵',val:1},{nm:'食品',val:0.5}],age:_AM,agri:[{nm:'稻米',val:0.5},{nm:'橡膠',val:0.3},{nm:'腰果',val:0.2},{nm:'木薯',val:0.15},{nm:'胡椒',val:0.1},{nm:'香蕉',val:0.05}],tr:{'156':-5,'840':5}},
+'780':{nm:'千里達及托巴哥',pop:1.4,gdpC:20000,gdp:0.028,def:105.5,cpi:128.5,ccpi:132.2,cpiYoy:4.6,exp:[{nm:'液化天然氣',val:5},{nm:'石油',val:3},{nm:'化學品',val:1.5},{nm:'鋼鐵',val:0.5},{nm:'食品',val:0.2}],imp:[{nm:'機械',val:2},{nm:'食品',val:1},{nm:'汽車',val:0.8},{nm:'化學品',val:0.5},{nm:'電子產品',val:0.3}],age:_AT,agri:[{nm:'可可',val:0.05},{nm:'咖啡',val:0.03},{nm:'柑橘',val:0.02},{nm:'蔬菜',val:0.02},{nm:'水產品',val:0.02},{nm:'糖',val:0.01}],tr:{'840':5}}
+};
+Object.entries(CD2).forEach(([k,v])=>CD[k]=v);
+const CD_X2={
+'368':{unemp:15.5,flag:'🇮🇶',gdpH:[0.23,0.17,0.17,0.20,0.22,0.23,0.17,0.21,0.26,0.27]},
+'604':{unemp:6.1,flag:'🇵🇪',gdpH:[0.20,0.19,0.19,0.21,0.22,0.23,0.20,0.22,0.24,0.26]},
+'634':{unemp:0.1,flag:'🇶🇦',gdpH:[0.21,0.16,0.15,0.17,0.19,0.18,0.15,0.18,0.24,0.24]},
+'398':{unemp:4.9,flag:'🇰🇿',gdpH:[0.22,0.18,0.14,0.16,0.18,0.18,0.17,0.19,0.22,0.22]},
+'012':{unemp:12.4,flag:'🇩🇿',gdpH:[0.21,0.17,0.16,0.17,0.17,0.17,0.15,0.16,0.19,0.20]},
+'348':{unemp:3.6,flag:'🇭🇺',gdpH:[0.14,0.12,0.13,0.14,0.16,0.16,0.16,0.18,0.18,0.19]},
+'804':{unemp:24.5,flag:'🇺🇦',gdpH:[0.13,0.09,0.09,0.11,0.13,0.15,0.16,0.20,0.16,0.18]},
+'414':{unemp:2.2,flag:'🇰🇼',gdpH:[0.17,0.11,0.11,0.12,0.14,0.14,0.11,0.13,0.18,0.16]},
+'231':{unemp:3.5,flag:'🇪🇹',gdpH:[0.06,0.06,0.07,0.08,0.08,0.10,0.10,0.11,0.13,0.16]},
+'504':{unemp:11.2,flag:'🇲🇦',gdpH:[0.11,0.10,0.10,0.11,0.12,0.12,0.11,0.13,0.13,0.14]},
+'703':{unemp:5.8,flag:'🇸🇰',gdpH:[0.10,0.09,0.09,0.10,0.11,0.11,0.10,0.12,0.12,0.13]},
+'218':{unemp:3.8,flag:'🇪🇨',gdpH:[0.10,0.10,0.10,0.10,0.11,0.11,0.10,0.11,0.11,0.12]},
+'404':{unemp:5.7,flag:'🇰🇪',gdpH:[0.06,0.06,0.07,0.08,0.09,0.10,0.10,0.11,0.11,0.11]},
+'214':{unemp:5.6,flag:'🇩🇴',gdpH:[0.07,0.07,0.07,0.08,0.09,0.09,0.08,0.09,0.11,0.11]},
+'512':{unemp:2.3,flag:'🇴🇲',gdpH:[0.08,0.07,0.06,0.07,0.08,0.08,0.06,0.07,0.11,0.11]},
+'320':{unemp:2.5,flag:'🇬🇹',gdpH:[0.06,0.06,0.07,0.08,0.08,0.09,0.08,0.09,0.10,0.10]},
+'100':{unemp:4.3,flag:'🇧🇬',gdpH:[0.06,0.05,0.05,0.06,0.07,0.07,0.07,0.08,0.09,0.10]},
+'442':{unemp:4.8,flag:'🇱🇺',gdpH:[0.07,0.06,0.06,0.06,0.07,0.07,0.07,0.08,0.08,0.09]},
+'860':{unemp:9.0,flag:'🇺🇿',gdpH:[0.06,0.06,0.06,0.05,0.05,0.06,0.06,0.07,0.08,0.08]},
+'191':{unemp:6.1,flag:'🇭🇷',gdpH:[0.06,0.05,0.05,0.06,0.06,0.06,0.06,0.07,0.07,0.08]},
+'591':{unemp:7.4,flag:'🇵🇦',gdpH:[0.05,0.05,0.06,0.06,0.07,0.07,0.05,0.06,0.07,0.08]},
+'024':{unemp:30.0,flag:'🇦🇴',gdpH:[0.13,0.10,0.06,0.12,0.11,0.09,0.06,0.07,0.12,0.08]},
+'834':{unemp:2.7,flag:'🇹🇿',gdpH:[0.05,0.05,0.05,0.05,0.06,0.06,0.06,0.07,0.07,0.08]},
+'440':{unemp:6.0,flag:'🇱🇹',gdpH:[0.05,0.04,0.04,0.05,0.05,0.05,0.06,0.07,0.07,0.07]},
+'144':{unemp:5.2,flag:'🇱🇰',gdpH:[0.08,0.08,0.08,0.09,0.09,0.08,0.08,0.09,0.07,0.07]},
+'288':{unemp:4.7,flag:'🇬🇭',gdpH:[0.05,0.05,0.06,0.06,0.07,0.07,0.07,0.08,0.07,0.07]},
+'858':{unemp:7.9,flag:'🇺🇾',gdpH:[0.06,0.05,0.05,0.06,0.06,0.06,0.05,0.06,0.07,0.07]},
+'112':{unemp:3.6,flag:'🇧🇾',gdpH:[0.08,0.06,0.05,0.05,0.06,0.06,0.06,0.07,0.07,0.07]},
+'384':{unemp:3.4,flag:'🇨🇮',gdpH:[0.04,0.04,0.04,0.04,0.04,0.06,0.06,0.07,0.07,0.07]},
+'188':{unemp:9.2,flag:'🇨🇷',gdpH:[0.05,0.05,0.06,0.06,0.06,0.06,0.06,0.06,0.07,0.07]},
+'688':{unemp:9.4,flag:'🇷🇸',gdpH:[0.04,0.04,0.04,0.04,0.05,0.05,0.05,0.06,0.06,0.06]},
+'705':{unemp:3.7,flag:'🇸🇮',gdpH:[0.05,0.04,0.05,0.05,0.05,0.05,0.05,0.06,0.06,0.06]},
+'180':{unemp:4.5,flag:'🇨🇩',gdpH:[0.04,0.04,0.04,0.04,0.05,0.05,0.05,0.06,0.06,0.06]},
+'104':{unemp:1.6,flag:'🇲🇲',gdpH:[0.07,0.06,0.06,0.07,0.07,0.07,0.06,0.07,0.06,0.06]},
+'031':{unemp:5.6,flag:'🇦🇿',gdpH:[0.08,0.05,0.04,0.04,0.05,0.05,0.04,0.05,0.07,0.06]},
+'788':{unemp:15.3,flag:'🇹🇳',gdpH:[0.05,0.04,0.04,0.04,0.04,0.04,0.04,0.05,0.05,0.05]},
+'400':{unemp:18.5,flag:'🇯🇴',gdpH:[0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.05,0.05,0.05]},
+'800':{unemp:2.8,flag:'🇺🇬',gdpH:[0.03,0.03,0.03,0.03,0.03,0.04,0.04,0.04,0.05,0.05]},
+'434':{unemp:19.0,flag:'🇱🇾',gdpH:[0.04,0.03,0.03,0.05,0.05,0.05,0.03,0.04,0.04,0.05]},
+'068':{unemp:3.5,flag:'🇧🇴',gdpH:[0.03,0.03,0.03,0.04,0.04,0.04,0.04,0.04,0.04,0.05]},
+'120':{unemp:3.6,flag:'🇨🇲',gdpH:[0.03,0.03,0.03,0.03,0.04,0.04,0.04,0.04,0.05,0.04]},
+'048':{unemp:1.3,flag:'🇧🇭',gdpH:[0.03,0.03,0.03,0.04,0.04,0.04,0.03,0.04,0.04,0.04]},
+'428':{unemp:6.3,flag:'🇱🇻',gdpH:[0.03,0.03,0.03,0.03,0.03,0.03,0.03,0.04,0.04,0.04]},
+'600':{unemp:6.8,flag:'🇵🇾',gdpH:[0.03,0.03,0.03,0.04,0.04,0.04,0.04,0.04,0.04,0.04]},
+'524':{unemp:11.4,flag:'🇳🇵',gdpH:[0.02,0.02,0.02,0.03,0.03,0.03,0.03,0.04,0.04,0.04]},
+'233':{unemp:5.4,flag:'🇪🇪',gdpH:[0.03,0.02,0.02,0.03,0.03,0.03,0.03,0.04,0.04,0.04]},
+'222':{unemp:6.5,flag:'🇸🇻',gdpH:[0.03,0.03,0.03,0.03,0.03,0.03,0.03,0.03,0.03,0.03]},
+'196':{unemp:6.1,flag:'🇨🇾',gdpH:[0.02,0.02,0.02,0.02,0.03,0.03,0.02,0.03,0.03,0.03]},
+'116':{unemp:0.5,flag:'🇰🇭',gdpH:[0.02,0.02,0.02,0.02,0.02,0.03,0.03,0.03,0.03,0.03]},
+'780':{unemp:4.0,flag:'🇹🇹',gdpH:[0.03,0.02,0.02,0.02,0.02,0.02,0.02,0.03,0.03,0.03]}
+};
+Object.entries(CD_X2).forEach(([k,v])=>Object.assign(CD[k],v));
+Object.assign(TRV,{'368-156':38,'368-356':35,'604-156':28,'604-840':18,'634-392':22,'634-156':18,'398-156':25,'398-643':18,'012-250':15,'012-380':12,'348-276':52,'804-156':12,'804-616':8,'414-156':18,'414-356':12,'231-156':8,'504-250':12,'504-724':8,'024-156':22,'288-156':8,'112-643':25,'384-250':5,'144-356':8,'116-156':8,'116-840':6});
+
 const ISO_A2={'840':'US','156':'CN','276':'DE','392':'JP','356':'IN','826':'GB','250':'FR','380':'IT','124':'CA','076':'BR','643':'RU','410':'KR','036':'AU','724':'ES','484':'MX','360':'ID','682':'SA','528':'NL','792':'TR','756':'CH','616':'PL','056':'BE','032':'AR','752':'SE','578':'NO','158':'TW','784':'AE','764':'TH','040':'AT','372':'IE','376':'IL','566':'NG','208':'DK','702':'SG','608':'PH','458':'MY','050':'BD','818':'EG','704':'VN','710':'ZA','344':'HK','170':'CO','152':'CL','203':'CZ','246':'FI','642':'RO','620':'PT','554':'NZ','586':'PK','300':'GR'};
+Object.assign(ISO_A2,{'368':'IQ','604':'PE','634':'QA','398':'KZ','012':'DZ','348':'HU','804':'UA','414':'KW','231':'ET','504':'MA','703':'SK','218':'EC','404':'KE','214':'DO','512':'OM','320':'GT','100':'BG','442':'LU','860':'UZ','191':'HR','591':'PA','024':'AO','834':'TZ','440':'LT','144':'LK','288':'GH','858':'UY','112':'BY','384':'CI','188':'CR','688':'RS','705':'SI','180':'CD','104':'MM','031':'AZ','788':'TN','400':'JO','800':'UG','434':'LY','068':'BO','120':'CM','048':'BH','428':'LV','600':'PY','524':'NP','233':'EE','222':'SV','196':'CY','116':'KH','780':'TT'});
+// Extend agriculture to 10 items per country
+const AGRI_EXT={
+'840':[{nm:'乳製品',val:5.8},{nm:'雞肉',val:5.2},{nm:'堅果',val:4.6},{nm:'水果',val:3.9}],
+'156':[{nm:'稻米',val:1.8},{nm:'花生',val:1.5},{nm:'棉花',val:1.2},{nm:'玉米',val:1.0}],
+'276':[{nm:'啤酒',val:1.5},{nm:'乳製品',val:1.2},{nm:'糖',val:0.9},{nm:'蔬菜',val:0.7}],
+'392':[{nm:'花卉',val:0.4},{nm:'柑橘',val:0.3},{nm:'牛奶',val:0.2},{nm:'菇類',val:0.2}],
+'356':[{nm:'咖啡',val:1.6},{nm:'芝麻',val:1.2},{nm:'腰果',val:0.9},{nm:'花生',val:0.8}],
+'826':[{nm:'啤酒',val:1.0},{nm:'奶油',val:0.8},{nm:'馬鈴薯',val:0.6},{nm:'豬肉',val:0.5}],
+'250':[{nm:'穀物',val:2.2},{nm:'禽肉',val:1.8},{nm:'蔬菜',val:1.4},{nm:'水果',val:1.1}],
+'380':[{nm:'咖啡',val:1.8},{nm:'蔬菜',val:1.4},{nm:'柑橘',val:1.1},{nm:'巧克力',val:0.9}],
+'124':[{nm:'鮭魚',val:2.1},{nm:'扁豆',val:1.6},{nm:'蘑菇',val:1.2},{nm:'蜂蜜',val:0.8}],
+'076':[{nm:'咖啡',val:8.2},{nm:'糖',val:7.5},{nm:'橙汁',val:4.8},{nm:'菸葉',val:2.6}],
+'643':[{nm:'葵花籽油',val:4.2},{nm:'魚類',val:2.8},{nm:'大麥',val:2.1},{nm:'甜菜',val:1.5}],
+'410':[{nm:'泡菜',val:0.3},{nm:'米',val:0.2},{nm:'梨',val:0.2},{nm:'蘑菇',val:0.1}],
+'036':[{nm:'葡萄酒',val:1.8},{nm:'堅果',val:1.2},{nm:'乳製品',val:1.0},{nm:'糖',val:0.8}],
+'724':[{nm:'葡萄酒',val:3.8},{nm:'豬肉',val:2.6},{nm:'柑橘',val:1.8},{nm:'堅果',val:1.4}],
+'484':[{nm:'啤酒',val:5.4},{nm:'番茄',val:3.8},{nm:'辣椒',val:2.1},{nm:'咖啡',val:1.6}],
+'360':[{nm:'咖啡',val:3.2},{nm:'可可',val:2.1},{nm:'橡膠',val:1.8},{nm:'茶葉',val:1.2}],
+'682':[{nm:'椰棗',val:1.2},{nm:'乳製品',val:0.5},{nm:'蛋',val:0.3},{nm:'蔬菜',val:0.2}],
+'528':[{nm:'啤酒',val:2.8},{nm:'馬鈴薯',val:2.1},{nm:'洋蔥',val:1.4},{nm:'糖',val:1.0}],
+'792':[{nm:'榛果',val:2.8},{nm:'棉花',val:1.4},{nm:'葵花籽',val:1.0},{nm:'橄欖',val:0.8}],
+'756':[{nm:'咖啡',val:2.4},{nm:'乳酪',val:1.8},{nm:'穀物',val:0.8},{nm:'水果',val:0.6}],
+'616':[{nm:'禽肉',val:2.8},{nm:'糖',val:1.4},{nm:'馬鈴薯',val:0.9},{nm:'啤酒',val:0.7}],
+'056':[{nm:'啤酒',val:1.6},{nm:'馬鈴薯',val:0.8},{nm:'蔬菜',val:0.6},{nm:'糖',val:0.5}],
+'032':[{nm:'葡萄酒',val:1.0},{nm:'花生',val:0.8},{nm:'蜂蜜',val:0.5},{nm:'茶葉',val:0.3}],
+'752':[{nm:'燕麥',val:0.6},{nm:'莓果',val:0.5},{nm:'馬鈴薯',val:0.3},{nm:'甜菜',val:0.2}],
+'578':[{nm:'鱈魚',val:2.8},{nm:'蝦',val:1.2},{nm:'乳製品',val:0.8},{nm:'穀物',val:0.4}],
+'158':[{nm:'蝴蝶蘭',val:0.3},{nm:'竹筍',val:0.2},{nm:'芒果',val:0.2},{nm:'毛豆',val:0.1}],
+'784':[{nm:'椰棗',val:0.8},{nm:'蔬菜',val:0.4},{nm:'乳製品',val:0.3},{nm:'蛋',val:0.2}],
+'764':[{nm:'蝦',val:2.8},{nm:'雞肉',val:2.2},{nm:'鳳梨',val:1.1},{nm:'芒果',val:0.8}],
+'040':[{nm:'啤酒',val:0.8},{nm:'葡萄酒',val:0.5},{nm:'甜點',val:0.4},{nm:'穀物',val:0.3}],
+'372':[{nm:'啤酒',val:0.5},{nm:'蘑菇',val:0.3},{nm:'燕麥',val:0.2},{nm:'馬鈴薯',val:0.2}],
+'376':[{nm:'酪梨',val:0.4},{nm:'花卉',val:0.3},{nm:'橄欖',val:0.2},{nm:'蜂蜜',val:0.1}],
+'566':[{nm:'腰果',val:1.2},{nm:'芝麻',val:0.8},{nm:'橡膠',val:0.6},{nm:'棉花',val:0.4}],
+'208':[{nm:'啤酒',val:0.6},{nm:'乳製品',val:0.5},{nm:'穀物',val:0.3},{nm:'蔬菜',val:0.2}],
+'702':[{nm:'蘭花',val:0.1},{nm:'蔬菜',val:0.1},{nm:'蛋',val:0.05},{nm:'魚類',val:0.05}],
+'608':[{nm:'鳳梨',val:0.8},{nm:'芒果',val:0.5},{nm:'咖啡',val:0.3},{nm:'蝦',val:0.2}],
+'458':[{nm:'可可',val:1.8},{nm:'木材',val:1.2},{nm:'胡椒',val:0.5},{nm:'鳳梨',val:0.3}],
+'050':[{nm:'蝦',val:1.8},{nm:'茶葉',val:0.8},{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3}],
+'818':[{nm:'柑橘',val:1.8},{nm:'馬鈴薯',val:0.8},{nm:'洋蔥',val:0.5},{nm:'稻米',val:0.4}],
+'704':[{nm:'腰果',val:3.2},{nm:'胡椒',val:1.8},{nm:'橡膠',val:1.4},{nm:'木薯',val:0.9}],
+'710':[{nm:'玉米',val:1.8},{nm:'羊毛',val:1.2},{nm:'糖',val:0.9},{nm:'堅果',val:0.7}],
+'344':[{nm:'花卉',val:0.1},{nm:'蔬菜',val:0.05},{nm:'魚類',val:0.04},{nm:'禽類',val:0.03}],
+'170':[{nm:'花卉',val:2.2},{nm:'糖',val:1.0},{nm:'棕櫚油',val:0.8},{nm:'可可',val:0.6}],
+'152':[{nm:'鮭魚',val:4.8},{nm:'藍莓',val:1.4},{nm:'豬肉',val:0.8},{nm:'牛奶',val:0.5}],
+'203':[{nm:'啤酒',val:0.6},{nm:'禽肉',val:0.4},{nm:'馬鈴薯',val:0.3},{nm:'啤酒花',val:0.2}],
+'246':[{nm:'燕麥',val:0.5},{nm:'莓果',val:0.3},{nm:'馬鈴薯',val:0.2},{nm:'禽肉',val:0.2}],
+'642':[{nm:'葵花籽',val:0.8},{nm:'玉米',val:0.6},{nm:'禽肉',val:0.4},{nm:'蜂蜜',val:0.2}],
+'620':[{nm:'橄欖油',val:0.8},{nm:'番茄',val:0.5},{nm:'柑橘',val:0.3},{nm:'乳酪',val:0.2}],
+'554':[{nm:'蘋果',val:0.6},{nm:'蜂蜜',val:0.3},{nm:'鹿肉',val:0.2},{nm:'獼猴桃',val:0.4}],
+'586':[{nm:'芒果',val:0.8},{nm:'柑橘',val:0.5},{nm:'洋蔥',val:0.3},{nm:'椰棗',val:0.2}],
+'300':[{nm:'橄欖',val:1.2},{nm:'乳酪',val:0.5},{nm:'蜂蜜',val:0.2},{nm:'柑橘',val:0.3}],
+'368':[{nm:'穀物',val:0.4},{nm:'蔬菜',val:0.3},{nm:'家禽',val:0.2},{nm:'乳製品',val:0.1}],
+'604':[{nm:'藜麥',val:0.5},{nm:'可可',val:0.4},{nm:'芒果',val:0.3},{nm:'酪梨',val:0.3}],
+'634':[{nm:'蔬菜',val:0.1},{nm:'乳製品',val:0.05},{nm:'蛋',val:0.03},{nm:'花卉',val:0.02}],
+'398':[{nm:'亞麻籽',val:0.5},{nm:'大麥',val:0.3},{nm:'棉花',val:0.2},{nm:'葵花籽',val:0.2}],
+'012':[{nm:'柑橘',val:0.4},{nm:'橄欖',val:0.3},{nm:'穀物',val:0.2},{nm:'葡萄酒',val:0.1}],
+'348':[{nm:'葵花籽',val:0.5},{nm:'禽肉',val:0.3},{nm:'蘋果',val:0.2},{nm:'蜂蜜',val:0.2}],
+'804':[{nm:'大麥',val:1.2},{nm:'禽肉',val:0.8},{nm:'蜂蜜',val:0.4},{nm:'乳製品',val:0.3}],
+'414':[{nm:'蔬菜',val:0.08},{nm:'魚類',val:0.05},{nm:'乳製品',val:0.04},{nm:'蛋',val:0.03}],
+'231':[{nm:'芝麻',val:0.6},{nm:'花卉',val:0.5},{nm:'豆類',val:0.4},{nm:'蔬菜',val:0.3}],
+'504':[{nm:'番茄',val:0.6},{nm:'柑橘',val:0.5},{nm:'橄欖',val:0.4},{nm:'杏仁',val:0.3}],
+'703':[{nm:'穀物',val:0.3},{nm:'禽肉',val:0.2},{nm:'啤酒',val:0.2},{nm:'糖',val:0.1}],
+'218':[{nm:'可可',val:0.6},{nm:'棕櫚油',val:0.4},{nm:'咖啡',val:0.3},{nm:'木材',val:0.2}],
+'404':[{nm:'花卉',val:1.0},{nm:'蔬菜',val:0.5},{nm:'堅果',val:0.3},{nm:'酪梨',val:0.2}],
+'214':[{nm:'可可',val:0.4},{nm:'咖啡',val:0.2},{nm:'芒果',val:0.2},{nm:'香蕉',val:0.1}],
+'512':[{nm:'魚類',val:0.3},{nm:'蔬菜',val:0.1},{nm:'乳製品',val:0.05},{nm:'蛋',val:0.03}],
+'320':[{nm:'棕櫚油',val:0.5},{nm:'堅果',val:0.3},{nm:'蔬菜',val:0.2},{nm:'芝麻',val:0.1}],
+'100':[{nm:'葵花籽',val:0.6},{nm:'穀物',val:0.3},{nm:'蔬菜',val:0.2},{nm:'蜂蜜',val:0.2}],
+'442':[{nm:'葡萄酒',val:0.2},{nm:'乳製品',val:0.1},{nm:'穀物',val:0.08},{nm:'莓果',val:0.05}],
+'860':[{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3},{nm:'穀物',val:0.2},{nm:'堅果',val:0.1}],
+'191':[{nm:'橄欖油',val:0.2},{nm:'葡萄酒',val:0.2},{nm:'蔬菜',val:0.1},{nm:'蜂蜜',val:0.1}],
+'591':[{nm:'水果',val:0.4},{nm:'蔬菜',val:0.2},{nm:'咖啡',val:0.2},{nm:'可可',val:0.1}],
+'024':[{nm:'木薯',val:0.3},{nm:'玉米',val:0.2},{nm:'花生',val:0.1},{nm:'豆類',val:0.1}],
+'834':[{nm:'腰果',val:0.6},{nm:'芝麻',val:0.3},{nm:'豆類',val:0.2},{nm:'丁香',val:0.2}],
+'440':[{nm:'穀物',val:0.4},{nm:'乳製品',val:0.2},{nm:'馬鈴薯',val:0.1},{nm:'糖',val:0.1}],
+'144':[{nm:'肉桂',val:0.3},{nm:'胡椒',val:0.2},{nm:'椰子',val:0.2},{nm:'水果',val:0.1}],
+'288':[{nm:'木材',val:0.3},{nm:'棕櫚油',val:0.2},{nm:'芒果',val:0.1},{nm:'花生',val:0.1}],
+'858':[{nm:'乳製品',val:0.5},{nm:'羊毛',val:0.3},{nm:'柑橘',val:0.2},{nm:'蜂蜜',val:0.1}],
+'112':[{nm:'亞麻',val:0.3},{nm:'馬鈴薯',val:0.2},{nm:'糖',val:0.2},{nm:'穀物',val:0.1}],
+'384':[{nm:'腰果',val:0.8},{nm:'橡膠',val:0.4},{nm:'棉花',val:0.3},{nm:'棕櫚油',val:0.2}],
+'188':[{nm:'鳳梨',val:0.5},{nm:'芒果',val:0.2},{nm:'糖',val:0.2},{nm:'花卉',val:0.1}],
+'688':[{nm:'玉米',val:0.4},{nm:'蘋果',val:0.2},{nm:'禽肉',val:0.2},{nm:'蜂蜜',val:0.1}],
+'705':[{nm:'啤酒花',val:0.2},{nm:'葡萄酒',val:0.1},{nm:'蘋果',val:0.1},{nm:'蜂蜜',val:0.08}],
+'180':[{nm:'木薯',val:0.3},{nm:'棕櫚油',val:0.2},{nm:'玉米',val:0.1},{nm:'花生',val:0.1}],
+'104':[{nm:'芝麻',val:0.3},{nm:'橡膠',val:0.2},{nm:'玉米',val:0.1},{nm:'花生',val:0.1}],
+'031':[{nm:'棉花',val:0.2},{nm:'穀物',val:0.1},{nm:'蔬菜',val:0.1},{nm:'水果',val:0.08}],
+'788':[{nm:'柑橘',val:0.3},{nm:'橄欖油',val:0.3},{nm:'椰棗',val:0.2},{nm:'穀物',val:0.1}],
+'400':[{nm:'番茄',val:0.2},{nm:'橄欖',val:0.1},{nm:'柑橘',val:0.1},{nm:'乳製品',val:0.08}],
+'800':[{nm:'芝麻',val:0.3},{nm:'玉米',val:0.2},{nm:'豆類',val:0.2},{nm:'花卉',val:0.1}],
+'434':[{nm:'橄欖',val:0.1},{nm:'穀物',val:0.08},{nm:'蔬菜',val:0.05},{nm:'柑橘',val:0.04}],
+'068':[{nm:'堅果',val:0.3},{nm:'咖啡',val:0.2},{nm:'可可',val:0.1},{nm:'芝麻',val:0.1}],
+'120':[{nm:'橡膠',val:0.3},{nm:'棕櫚油',val:0.2},{nm:'棉花',val:0.2},{nm:'木材',val:0.1}],
+'048':[{nm:'蔬菜',val:0.04},{nm:'乳製品',val:0.03},{nm:'魚類',val:0.02},{nm:'蛋',val:0.01}],
+'428':[{nm:'穀物',val:0.3},{nm:'乳製品',val:0.2},{nm:'馬鈴薯',val:0.1},{nm:'蘑菇',val:0.08}],
+'600':[{nm:'玉米',val:0.4},{nm:'芝麻',val:0.2},{nm:'棉花',val:0.1},{nm:'木薯',val:0.1}],
+'524':[{nm:'香料',val:0.2},{nm:'薑',val:0.1},{nm:'豆類',val:0.1},{nm:'蜂蜜',val:0.05}],
+'233':[{nm:'穀物',val:0.2},{nm:'乳製品',val:0.1},{nm:'馬鈴薯',val:0.08},{nm:'莓果',val:0.06}],
+'222':[{nm:'蔬菜',val:0.1},{nm:'水果',val:0.08},{nm:'芝麻',val:0.05},{nm:'蝦',val:0.04}],
+'196':[{nm:'柑橘',val:0.2},{nm:'葡萄酒',val:0.1},{nm:'乳酪',val:0.08},{nm:'蜂蜜',val:0.05}],
+'116':[{nm:'腰果',val:0.3},{nm:'胡椒',val:0.2},{nm:'芒果',val:0.1},{nm:'木薯',val:0.1}],
+'780':[{nm:'柑橘',val:0.08},{nm:'蔬菜',val:0.05},{nm:'咖啡',val:0.04},{nm:'花卉',val:0.03}]
+};
+Object.entries(AGRI_EXT).forEach(([k,v])=>{if(CD[k])CD[k].agri.push(...v);});
 let countryLabels=[];
 function makeLabel(text){
   const c=document.createElement('canvas');c.width=128;c.height=48;
   const ctx=c.getContext('2d');
   ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=5;
   ctx.font='400 26px -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,sans-serif';
-  ctx.fillStyle='rgba(230,235,250,0.82)';
+  ctx.fillStyle='rgba(255,255,255,0.92)';
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(text,64,24);
   const tex=new THREE.CanvasTexture(c);
@@ -613,7 +847,7 @@ function makeArcLabel(text,color){
 }
 
 function buildFlowSVG(dA,dB,bal,biVol){
-  const W=284,BW=80,BH=68,BY=14,AZL=BW+5,AZR=W-BW-5,MX=W/2;
+  const W=370,BW=95,BH=68,BY=14,AZL=BW+5,AZR=W-BW-5,MX=W/2;
   const AR1=BY+20,AR2=BY+48;
   let eAB=null,eBA=null,wA=6,wB=6;
   if(biVol&&bal!==null){
@@ -720,7 +954,7 @@ async function boot(){
   else if(mesh.type==='LineString') addL(mesh.coordinates);
   scene.add(new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({color:0x2a2a2a,opacity:0.7,transparent:true})
+    new THREE.LineBasicMaterial({color:0x1a1a1a,opacity:0.25,transparent:true})
   ));
 
   // Country labels at centroids
@@ -738,12 +972,35 @@ async function boot(){
   window.addEventListener('resize',onResize);
 
   // Populate trade + compare dropdowns
-  Object.entries(CD).sort(([,a],[,b])=>a.nm.localeCompare(b.nm,'zh')).forEach(([c,d])=>{
+  const sortedCD=Object.entries(CD).sort(([,a],[,b])=>a.nm.localeCompare(b.nm,'zh'));
+  sortedCD.forEach(([c,d])=>{
     ['trade-a','trade-b','cmp-a','cmp-b'].forEach(id=>{
       const o=document.createElement('option'); o.value=c; o.textContent=(d.flag||'')+' '+d.nm;
       document.getElementById(id).appendChild(o);
     });
   });
+  // Custom dropdown init
+  document.querySelectorAll('.custom-select').forEach(cs=>{
+    const tgt=cs.dataset.target,disp=cs.querySelector('.cs-display'),dd=cs.querySelector('.cs-dropdown'),opts=cs.querySelector('.cs-options'),srch=cs.querySelector('.cs-search');
+    let val='';
+    sortedCD.forEach(([c,d])=>{
+      const div=document.createElement('div');div.className='cs-opt';div.dataset.code=c;div.dataset.nm=d.nm;
+      const a2=ISO_A2[c]||'';
+      div.innerHTML=`<span class="cs-code">${a2}</span><span>${d.nm}</span>`;
+      div.addEventListener('click',()=>{val=c;disp.textContent=a2+' '+d.nm;disp.style.color='#fff';
+        document.getElementById(tgt).value=c;cs.classList.remove('open');
+        opts.querySelectorAll('.cs-opt').forEach(o=>o.classList.toggle('selected',o.dataset.code===c));
+      });
+      opts.appendChild(div);
+    });
+    disp.addEventListener('click',e=>{e.stopPropagation();
+      document.querySelectorAll('.custom-select.open').forEach(x=>{if(x!==cs)x.classList.remove('open');});
+      cs.classList.toggle('open');if(cs.classList.contains('open')){srch.value='';srch.focus();opts.querySelectorAll('.cs-opt').forEach(o=>o.style.display='');}
+    });
+    srch.addEventListener('input',()=>{const q=srch.value.toLowerCase();opts.querySelectorAll('.cs-opt').forEach(o=>{o.style.display=(o.dataset.nm.toLowerCase().includes(q)||o.dataset.code.toLowerCase().includes(q))?'':'none';});});
+    srch.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('click',()=>document.querySelectorAll('.custom-select.open').forEach(x=>x.classList.remove('open')));
 
   const ld=document.getElementById('loading'); ld.style.opacity='0'; setTimeout(()=>ld.style.display='none',400);
   (function loop(){requestAnimationFrame(loop); ctrl.update(); rend.render(scene,cam);})();
@@ -818,9 +1075,9 @@ function drawTradeArcs(cA,cB,bal){
   // Red arc: cB → cA (second country exports), slightly lower elevation to visually separate
   const lineB=new THREE.Line(new THREE.BufferGeometry().setFromPoints(slerpArc(vB,vA,0.22)),new THREE.LineBasicMaterial({color:colB,opacity:0.85,transparent:true}));
   scene.add(lineB);tradeArcs.push(lineB);
-  // Endpoint dot markers
-  const mkDot=(v,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8),new THREE.MeshBasicMaterial({color:c}));m.position.copy(v.clone().multiplyScalar(R*1.01));scene.add(m);tradeArcs.push(m);};
-  mkDot(vA,colB);mkDot(vB,colA);
+  // Arrow heads at arc endpoints
+  const addTAH=(pts,c)=>{if(pts.length<5)return;const tip=pts[pts.length-1],prev=pts[pts.length-5];const dir=tip.clone().sub(prev).normalize();const cone=new THREE.Mesh(new THREE.ConeGeometry(0.025,0.07,6),new THREE.MeshBasicMaterial({color:c}));cone.position.copy(tip);cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);scene.add(cone);tradeArcs.push(cone);};
+  addTAH(slerpArc(vA,vB,0.28),colA);addTAH(slerpArc(vB,vA,0.22),colB);
 }
 
 // ===== SELECT COUNTRY =====
@@ -852,7 +1109,7 @@ window.switchTab=switchTab;
 
 // ===== GDP TREND CHART =====
 function buildGDPChart(h){
-  const W=268,H=100,mL=38,mR=8,mT=8,mB=22,iW=W-mL-mR,iH=H-mT-mB;
+  const W=370,H=110,mL=38,mR=8,mT=8,mB=22,iW=W-mL-mR,iH=H-mT-mB;
   const mn=Math.min(...h)*0.85,mx=Math.max(...h)*1.1,rY=mx-mn;
   const x=i=>mL+(i/(h.length-1))*iW, y=v=>mT+(1-(v-mn)/rY)*iH;
   const pts=h.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
@@ -916,7 +1173,7 @@ function renderPopulation(code){
   const y=bands[0]+bands[1]+bands[2];
   const w=bands.slice(3,13).reduce((s,v)=>s+v,0);
   const o=bands[13]+bands[14]+bands[15]+bands[16];
-  const n=17,bH=11,TW=268,mL=52,mR=6,mT=8,mB=36;
+  const n=17,bH=14,TW=370,mL=52,mR=6,mT=8,mB=36;
   const iW=TW-mL-mR,iH=n*bH,mid=iW/2;
   const maxV=Math.max(...mBands,...fBands)*1.05;
   const sc=(mid-3)/maxV;
@@ -964,8 +1221,8 @@ function renderPopulation(code){
 function renderAgriculture(code){
   const d=CD[code],maxV=Math.max(...d.agri.map(a=>a.val)),total=d.agri.reduce((s,a)=>s+a.val,0);
   document.getElementById('panel-agriculture').innerHTML=`
-    <div class="sec-title">主要農產品出口（十億美元）</div>
-    ${d.agri.map(a=>`
+    <div class="sec-title" style="color:#999">主要農產品出口（十億美元）</div>
+    ${d.agri.slice(0,10).map(a=>`
     <div class="agri-row">
       <div class="agri-top"><span class="agri-name">${a.nm}</span><span class="agri-val">$${a.val.toFixed(1)}B</span></div>
       <div class="agri-bg"><div class="agri-fill" style="width:${Math.round(a.val/maxV*100)}%"></div></div>
@@ -1127,12 +1384,20 @@ function slerpArcPts(from,to,elev,steps){
   for(let i=0;i<=steps;i++){const t=i/steps;const v=theta<1e-4?from.clone().lerp(to,t):from.clone().multiplyScalar(Math.sin((1-t)*theta)/sinT).add(to.clone().multiplyScalar(Math.sin(t*theta)/sinT));pts.push(v.normalize().multiplyScalar(R*(1+elev*Math.sin(Math.PI*t))));}
   return pts;
 }
-function addArc(from,to,elev,color,op){
+function addArc(from,to,elev,color,op,arrow){
   const pts=slerpArcPts(from,to,elev,80);
   const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color,opacity:op,transparent:true}));
   scene.add(line);netArcs.push(line);
   const glow=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color,opacity:op*0.25,transparent:true}));
   scene.add(glow);netArcs.push(glow);
+  if(arrow&&pts.length>4){
+    const tip=pts[pts.length-1],prev=pts[pts.length-5];
+    const dir=tip.clone().sub(prev).normalize();
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(0.02,0.06,6),new THREE.MeshBasicMaterial({color,transparent:true,opacity:Math.min(1,op*1.3)}));
+    cone.position.copy(tip);
+    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    scene.add(cone);netArcs.push(cone);
+  }
   return pts;
 }
 function drawNetwork(){
@@ -1151,16 +1416,14 @@ function drawNetwork(){
     if(!gA||!gB)return;
     const vA=ll2v(gA[1],gA[0],1).normalize(),vB=ll2v(gB[1],gB[0],1).normalize();
     const t=vol/maxVol,elev=0.12+0.24*t,op=0.35+0.5*t;
-    const pts1=addArc(vA,vB,elev,0x5599dd,op);
-    const pts2=addArc(vB,vA,elev*0.65,0xdd8844,op*0.85);
+    const pts1=addArc(vA,vB,elev,0x5599dd,op,true);
+    const pts2=addArc(vB,vA,elev*0.65,0xdd8844,op*0.85,true);
     if(idx<15&&dA.exp&&dB.exp){
       const lbl1=makeArcLabel(dA.exp[0].nm,'rgba(140,190,255,0.9)');
       lbl1.position.copy(pts1[Math.floor(pts1.length*0.4)]);scene.add(lbl1);netArcs.push(lbl1);
       const lbl2=makeArcLabel(dB.exp[0].nm,'rgba(255,170,110,0.9)');
       lbl2.position.copy(pts2[Math.floor(pts2.length*0.4)]);scene.add(lbl2);netArcs.push(lbl2);
     }
-    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.022,8,8),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.9}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
-    mkD(vA,0x5599dd);mkD(vB,0xdd8844);
   });
 }
 function drawCountryArcs(code){
@@ -1180,14 +1443,12 @@ function drawCountryArcs(code){
     if(!gA||!gB)return;
     const vA=ll2v(gA[1],gA[0],1).normalize(),vB=ll2v(gB[1],gB[0],1).normalize();
     const elev=0.16+0.22*(vol/maxVol);
-    const pts1=addArc(vA,vB,elev,0x5599dd,0.85);
-    const pts2=addArc(vB,vA,elev*0.6,0xdd8844,0.7);
+    const pts1=addArc(vA,vB,elev,0x5599dd,0.85,true);
+    const pts2=addArc(vB,vA,elev*0.6,0xdd8844,0.7,true);
     const lbl1=makeArcLabel(d.exp[0].nm,'rgba(140,190,255,0.95)');
     lbl1.position.copy(pts1[Math.floor(pts1.length*0.38)]);scene.add(lbl1);netArcs.push(lbl1);
     const lbl2=makeArcLabel(pd.exp[0].nm,'rgba(255,170,110,0.95)');
     lbl2.position.copy(pts2[Math.floor(pts2.length*0.38)]);scene.add(lbl2);netArcs.push(lbl2);
-    const mkD=(p,c)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(0.025,8,8),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.9}));m.position.copy(p.clone().multiplyScalar(R*1.005));scene.add(m);netArcs.push(m);};
-    mkD(vA,0x4488cc);mkD(vB,0xcc6633);
   });
 }
 
@@ -1231,10 +1492,16 @@ function closeNetDetail(){
 }
 window.showNetworkDetail=showNetworkDetail;window.closeNetDetail=closeNetDetail;
 
+function viewTopDown(){
+  ctrl.autoRotate=false;
+  const src=cam.position.clone(),tgt=new THREE.Vector3(0,5.5,0.001);
+  let t=0;
+  (function s(){t=Math.min(1,t+0.02);const e=t<.5?2*t*t:-1+(4-2*t)*t;cam.position.lerpVectors(src,tgt,e);cam.lookAt(0,0,0);if(t<1)requestAnimationFrame(s);})();
+}
 function toggleNetwork(){
   networkOn=!networkOn;
   document.getElementById('btn-network').classList.toggle('on',networkOn);
-  if(networkOn){drawNetwork();}else{clearNetArcs();closeNetDetail();}
+  if(networkOn){drawNetwork();viewTopDown();}else{clearNetArcs();closeNetDetail();}
 }
 window.toggleNetwork=toggleNetwork;
 
