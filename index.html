@@ -204,6 +204,20 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .en-td-title{font-size:12px;font-weight:700;color:#4ad;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .en-td-text{font-size:10px;color:#eee;line-height:1.5;font-weight:400}
 #en-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#eee;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
+#oil-prices{position:absolute;bottom:50px;right:20px;background:rgba(10,14,20,0.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 18px;z-index:20;min-width:220px}
+.op-head{font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.op-live{display:inline-block;width:6px;height:6px;background:#44dd88;border-radius:50%;animation:opBlink 2s infinite}
+@keyframes opBlink{0%,100%{opacity:1}50%{opacity:.2}}
+.op-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.op-row:last-child{border-bottom:none}
+.op-name{font-size:10px;color:#bbb;font-weight:500}
+.op-vals{display:flex;align-items:baseline;gap:6px}
+.op-price{font-size:14px;font-weight:700;color:#fff;font-family:Consolas,monospace}
+.op-chg{font-size:9px;font-weight:700;font-family:Consolas,monospace}
+.op-up{color:#44dd88}.op-down{color:#dd4444}
+.mk-legend{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.04)}
+.mk-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:9px;color:#ccc}
+.mk-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:11px}
 .en-toggle{position:relative;width:36px;height:18px;background:rgba(255,255,255,0.06);border-radius:9px;cursor:pointer;transition:background .2s}
 .en-toggle.on{background:rgba(74,170,221,0.3)}
 .en-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#555;top:2px;left:2px;transition:all .2s}
@@ -341,6 +355,15 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
           <div class="en-layer active" data-layer="lngRoute" onclick="toggleEnLayer('lngRoute')"><div class="el-dot" style="border-color:#4d8;background:transparent"></div><span class="el-name">LNG Sea Routes</span><span class="el-count" style="color:#4d8">27</span><span class="el-tog" style="background:#4d8"></span></div>
           <div class="en-layer active" data-layer="disrupted" onclick="toggleEnLayer('disrupted')"><div class="el-dot" style="border-color:#f44;background:transparent"></div><span class="el-name">Disrupted Routes</span><span class="el-count" style="color:#f44">4</span><span class="el-tog" style="background:#f44"></span></div>
         </div>
+        <div class="mk-legend">
+          <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px">Marker Types</div>
+          <div class="mk-row"><div class="mk-icon" style="color:#e44">●</div><span>陸上油氣田 Onshore</span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#4ad">◎</div><span>海上油氣田 Offshore</span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#4d8">◆</div><span>LNG 液化天然氣</span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#da4">■</div><span>出口港 Export Port</span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#da4">△</div><span>中繼港 Transit Hub</span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#f4a">⊕</div><span>危機區 Crisis Zone</span></div>
+        </div>
       </div>
       <div class="en-sec">
         <div class="en-route-item"><div class="er-line" style="background:#4488cc"></div><span>Sea Crude</span><span class="er-dot" style="background:#4488cc"></span></div>
@@ -373,15 +396,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
         <div class="en-theme-grid">
           <div class="et-card" data-theme="geo" onclick="setEnTheme('geo')"><div class="et-img">🌍</div><div class="et-label">Geo Map</div></div>
           <div class="et-card active" data-theme="night" onclick="setEnTheme('night')"><div class="et-img">🌑</div><div class="et-label">Night Map</div></div>
-          <div class="et-card" data-theme="daynight" onclick="setEnTheme('daynight')"><div class="et-img">🌗</div><div class="et-label">Day / Night</div></div>
           <div class="et-card" data-theme="holo" onclick="setEnTheme('holo')"><div class="et-img">🔮</div><div class="et-label">Holographic</div></div>
-        </div>
-        <div style="font-size:8px;color:#eee;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:6px">🟢 NASA · NOAA Live<span style="font-weight:400;color:#eee;text-transform:none;letter-spacing:0">updated hourly</span></div>
-        <div class="en-theme-grid">
-          <div class="et-card" data-theme="nasa" onclick="setEnTheme('nasa')"><div class="et-img">🛰</div><div class="et-label">NASA True Color</div></div>
-          <div class="et-card" data-theme="sst" onclick="setEnTheme('sst')"><div class="et-img">🌊</div><div class="et-label">NOAA SST</div></div>
           <div class="et-card" data-theme="marble" onclick="setEnTheme('marble')"><div class="et-img">🖤</div><div class="et-label">Black Marble</div></div>
-          <div class="et-card" data-theme="aod" onclick="setEnTheme('aod')"><div class="et-img">💨</div><div class="et-label">Aerosol / AOD</div></div>
           <div class="et-card" data-theme="goes" onclick="setEnTheme('goes')"><div class="et-img">🌀</div><div class="et-label">GOES-East</div></div>
         </div>
         <div class="en-theme-desc"><div class="en-td-title">🌑 Night Map</div><div class="en-td-text">Dark continent silhouettes with glowing coastlines and blue emissive ocean specular.</div></div>
@@ -393,6 +409,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       <div class="rs-row"><span class="rs-lbl">LNG</span><span class="rs-val" style="color:#44cc88">27</span></div>
       <div class="rs-row"><span class="rs-lbl">Pipe</span><span class="rs-val" style="color:#cc8844">33</span></div>
       <div class="rs-row"><span class="rs-lbl">Dis.</span><span class="rs-val" style="color:#cc4444">4</span></div>
+    </div>
+    <div id="oil-prices">
+      <div class="op-head"><span class="op-live"></span>原油即時報價</div>
+      <div class="op-row"><span class="op-name">WTI Crude</span><div class="op-vals"><span class="op-price" id="op-wti">$71.24</span><span class="op-chg op-up" id="op-wti-chg">+0.38</span></div></div>
+      <div class="op-row"><span class="op-name">Brent Crude</span><div class="op-vals"><span class="op-price" id="op-brent">$75.62</span><span class="op-chg op-down" id="op-brent-chg">-0.15</span></div></div>
+      <div class="op-row"><span class="op-name">Henry Hub NG</span><div class="op-vals"><span class="op-price" id="op-ng">$2.87</span><span class="op-chg op-up" id="op-ng-chg">+0.04</span></div></div>
+      <div class="op-row"><span class="op-name">TTF (EU Gas)</span><div class="op-vals"><span class="op-price" id="op-ttf">€35.40</span><span class="op-chg op-up" id="op-ttf-chg">+0.82</span></div></div>
     </div>
     <div id="en-hint">Drag · Scroll Zoom · Click Hub</div>
   </div>
@@ -1438,13 +1461,14 @@ function renderAgriculture(code){
 // ===== CHART BUILDERS =====
 function svgPie(data,W=160){
   const cx=W/2,cy=W/2,r=W/2-8,colors=['#4a88dd','#dd8844','#44aa66'];
+  const fs=Math.max(11,Math.round(W/18));
   let a=0,svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
   data.forEach((d,i)=>{
     const sweep=d.pct/100*Math.PI*2,x1=cx+r*Math.cos(a),y1=cy+r*Math.sin(a);
     const x2=cx+r*Math.cos(a+sweep),y2=cy+r*Math.sin(a+sweep),lg=sweep>Math.PI?1:0;
     svg+=`<path d="M${cx},${cy}L${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}Z" fill="${colors[i]}" opacity="0.85"/>`;
     const ma=a+sweep/2,lx=cx+(r*0.6)*Math.cos(ma),ly=cy+(r*0.6)*Math.sin(ma);
-    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold" font-family="sans-serif">${d.pct}%</text>`;
+    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="${fs}" fill="#fff" font-weight="bold" font-family="sans-serif">${d.pct}%</text>`;
     a+=sweep;
   });
   svg+=`</svg>`;
@@ -1748,14 +1772,14 @@ function renderFinance(code){
   const rateColor=f.rate>5?'#dd4444':f.rate>2?'#ddaa44':'#44aa66';
   const crColors={'AAA':'#44aa66','AA+':'#44aa66','AA':'#66bb44','AA-':'#66bb44','A+':'#88cc44','A1':'#88cc44','A':'#aacc44','Aaa':'#44aa66','Aa2':'#66bb44','Aa3':'#66bb44','Baa1':'#ccaa44','Baa2':'#ccaa44','Baa3':'#ddaa44','BBB+':'#ccaa44','BBB':'#ccaa44','BBB-':'#ddaa44','BB+':'#dd8844','BB':'#dd8844','Ba2':'#dd8844','B':'#dd4444'};
   let html=`<div class="sec-title" style="color:#eee">GDP 產業結構</div>
-    <div style="display:flex;align-items:center;gap:16px;margin:8px 0 12px">
-      <div>${svgPie(secData,200)}</div>
-      <div>${secData.map((s,i)=>`<div style="font-size:11px;margin:4px 0;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66'][i]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+    <div style="text-align:center;margin:8px 0 12px">
+      <div style="display:inline-block">${svgPie(secData,320)}</div>
+      <div style="display:flex;justify-content:center;gap:18px;margin-top:8px">${secData.map((s,i)=>`<div style="font-size:12px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66'][i]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">前十大產業子分類</div>
-    <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
-      <div>${svgDonut(f.sub,200)}</div>
-      <div style="flex:1">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;justify-content:space-between"><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+    <div style="text-align:center;margin:8px 0 14px">
+      <div style="display:inline-block">${svgDonut(f.sub,300)}</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:11px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#44ddaa','#dddd44','#8888dd'][i%8]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">央行基準利率</div>
     <div class="metric"><span class="m-lbl">當前利率</span><span class="m-val" style="color:${rateColor}">${f.rate.toFixed(2)}%</span></div>
@@ -1855,9 +1879,9 @@ function renderTrade(code){
   const f=CD_FIN[code];if(!f){document.getElementById('trade-detail').innerHTML='';return;}
   const expColors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#999'];
   let html=`<div class="sec-title" style="color:#eee">出口目的地</div>
-    <div style="display:flex;align-items:center;gap:14px;margin:8px 0 14px">
-      <div>${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),180)}</div>
-      <div>${f.expD.map((e,i)=>`<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#eee">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
+    <div style="text-align:center;margin:8px 0 14px">
+      <div style="display:inline-block">${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),300)}</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px">${f.expD.map((e,i)=>`<div style="font-size:11px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#eee">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">供應鏈依賴度</div>
     <div style="margin:8px 0 14px">${f.sc.map(s=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#eee">${s.item} <span style="color:#eee">← ${s.from}</span></span><span style="color:${s.pct>70?'#dd4444':s.pct>40?'#ddaa44':'#44aa66'};font-weight:700">${s.pct}%</span></div><div class="agri-bg"><div class="agri-fill" style="width:${s.pct}%;background:linear-gradient(90deg,${s.pct>70?'#8a2a2a,#dd4444':s.pct>40?'#8a6a2a,#ddaa44':'#2a6a3a,#44aa66'})"></div></div></div>`).join('')}</div>
@@ -2483,6 +2507,9 @@ const EN_SEA_ROUTES=[
   });
 })();
 
+const OFFSHORE_NMS=new Set(['Safaniyah Field','Zakum Field','Tupi / Lula Field','North Sea Brent','Santos Basin','Agbami Field','Bonga Field','Girassol Field','Egina Field','Buzios Field','Libra Field','Mero Field','Guyana Stabroek','Kashagan Field','Johan Sverdrup','Troll Gas Field','Leviathan Gas','Zohr Gas Field','Browse Basin','Barossa Gas','Eni Coral South FLNG','South Pars / North Dome','Snøhvit LNG Source','Cantarell Complex','Manifa Field','Vostok Oil']);
+const TRANSIT_NMS=new Set(['Singapore STS Hub','Fujairah Terminal','Rotterdam Europoort','Saldanha Bay','Ain Sukhna','Tanjung Pelepas','Jurong Island']);
+
 let enGlobeObjs=[];
 function clearEnGlobe(){enGlobeObjs.forEach(o=>scene.remove(o));enGlobeObjs=[];}
 
@@ -2492,7 +2519,7 @@ function switchMode(mode){
   document.getElementById('sidebar').style.display=enMode?'none':'flex';
   document.getElementById('search-box').style.display=enMode?'none':'';
   document.getElementById('globe-btns').style.display=enMode?'none':'';
-  document.getElementById('energy-ui').style.display=enMode?'':'none';
+  document.getElementById('energy-ui').style.display=enMode?'block':'none';
   document.getElementById('heatmap-legend').style.display='none';
   if(enMode){clearNetArcs();clearHeatDots();renderEnScene();}
   else{clearEnGlobe();if(heatmapOn)drawHeatmap();if(networkOn)drawNetwork();}
@@ -2511,9 +2538,27 @@ function renderEnScene(){
       const pulse=new THREE.Mesh(new THREE.RingGeometry(0.03,0.06,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.2,side:THREE.DoubleSide}));
       pulse.position.copy(v);pulse.lookAt(0,0,0);pulse._enPulse=true;pulse._enScale=1;
       scene.add(pulse);enGlobeObjs.push(pulse);
+    }else if(h.type==='prod'&&OFFSHORE_NMS.has(h.nm)){
+      const ring=new THREE.Mesh(new THREE.RingGeometry(0.01,0.02,16),new THREE.MeshBasicMaterial({color:0x44aadd,transparent:true,opacity:0.85,side:THREE.DoubleSide}));
+      ring.position.copy(v);ring.lookAt(0,0,0);scene.add(ring);enGlobeObjs.push(ring);
+      const glow=new THREE.Mesh(new THREE.RingGeometry(0.005,0.025,16),new THREE.MeshBasicMaterial({color:0x44aadd,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
+      glow.position.copy(v);glow.lookAt(0,0,0);scene.add(glow);enGlobeObjs.push(glow);
+    }else if(h.type==='prod'){
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.01,0.024,6),new THREE.MeshBasicMaterial({color:0xee4444}));
+      cone.position.copy(v);cone.lookAt(new THREE.Vector3(0,0,0));cone.rotateX(Math.PI/2);
+      scene.add(cone);enGlobeObjs.push(cone);
+    }else if(h.type==='lng'){
+      const dia=new THREE.Mesh(new THREE.OctahedronGeometry(0.013),new THREE.MeshBasicMaterial({color:0x44dd88}));
+      dia.position.copy(v);scene.add(dia);enGlobeObjs.push(dia);
+    }else if(h.type==='export'&&TRANSIT_NMS.has(h.nm)){
+      const tri=new THREE.Mesh(new THREE.ConeGeometry(0.012,0.02,3),new THREE.MeshBasicMaterial({color:0xddaa44,transparent:true,opacity:0.8}));
+      tri.position.copy(v);tri.lookAt(new THREE.Vector3(0,0,0));tri.rotateX(-Math.PI/2);
+      scene.add(tri);enGlobeObjs.push(tri);
+    }else if(h.type==='export'){
+      const box=new THREE.Mesh(new THREE.BoxGeometry(0.016,0.016,0.016),new THREE.MeshBasicMaterial({color:0xddaa44}));
+      box.position.copy(v);scene.add(box);enGlobeObjs.push(box);
     }else{
-      const col=EN_COLORS[h.type]||0xffffff;
-      const dot=new THREE.Mesh(new THREE.SphereGeometry(0.012,8,8),new THREE.MeshBasicMaterial({color:col}));
+      const dot=new THREE.Mesh(new THREE.SphereGeometry(0.012,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));
       dot.position.copy(v);scene.add(dot);enGlobeObjs.push(dot);
     }
   });
@@ -2568,8 +2613,10 @@ function flyToEnHub(lat,lng,nm){
 
 function showHubDetail(hub){
   const el=document.getElementById('hub-detail');
-  const typeLabels={prod:'Production Field',offshore:'Offshore / Chokepoint',lng:'LNG Terminal',export:'Export Hub',crisis:'Crisis Overlay'};
-  const typeColors={prod:'#e44',offshore:'#4ad',lng:'#4d8',export:'#da4',crisis:'#f4a'};
+  const isOffshore=hub.type==='prod'&&OFFSHORE_NMS.has(hub.nm);
+  const isTransit=hub.type==='export'&&TRANSIT_NMS.has(hub.nm);
+  const typeLabels={prod:isOffshore?'Offshore Oil/Gas Field':'Onshore Oil/Gas Field',offshore:'Maritime Chokepoint',lng:'LNG Terminal',export:isTransit?'Transit Hub':'Export Port',crisis:'Crisis Overlay'};
+  const typeColors={prod:isOffshore?'#4ad':'#e44',offshore:'#4ad',lng:'#4d8',export:'#da4',crisis:'#f4a'};
   const type=hub.type||(hub.mbd!==undefined?'offshore':'prod');
   el.innerHTML=`<div class="en-hub-info">
     <div class="ehi-name">${hub.nm}</div>
@@ -2602,13 +2649,9 @@ window.switchEnTab=switchEnTab;
 const EN_THEMES={
   geo:{nm:'Geo Map',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Classic NASA Blue Marble photography with natural terrain colors.'},
   night:{nm:'Night Map',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg',desc:'Dark continent silhouettes with glowing coastlines and blue emissive ocean specular.'},
-  daynight:{nm:'Day / Night',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-day.jpg',desc:'Sunlit hemisphere with real-time terminator line and city lights on the dark side.'},
   holo:{nm:'Holographic',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png',desc:'Wireframe topology with elevation data rendered as a glowing holographic projection.'},
-  nasa:{nm:'NASA True Color',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Satellite composite from NASA MODIS — updated seasonally.'},
-  sst:{nm:'NOAA SST',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-water.png',desc:'Sea surface temperature anomaly map from NOAA buoy and satellite data.'},
   marble:{nm:'Black Marble',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg',desc:'NASA Black Marble — nighttime lights showing global energy consumption.'},
-  aod:{nm:'Aerosol / AOD',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Aerosol Optical Depth overlay showing dust, smoke, and pollution plumes.'},
-  goes:{nm:'GOES-East',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'GOES-East geostationary satellite — real-time cloud and storm imagery.'}
+  goes:{nm:'GOES-East',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'GOES-East 同步衛星視角，適合觀察全球能源基礎設施分布。'}
 };
 let curEnTheme='night';
 function setEnTheme(key){
@@ -2635,6 +2678,25 @@ function setEnFilter(mode){
   });
 }
 window.setRouteWidth=setRouteWidth;window.setEnFilter=setEnFilter;
+
+(function oilTicker(){
+  const init={wti:71.24,brent:75.62,ng:2.87,ttf:35.40};
+  const cur={...init};
+  function tick(){
+    ['wti','brent','ng','ttf'].forEach(k=>{
+      const step=(Math.random()-0.5)*(k==='ng'?0.02:k==='ttf'?0.3:0.12);
+      cur[k]=Math.round((cur[k]+step)*100)/100;
+      const el=document.getElementById('op-'+k);
+      const chgEl=document.getElementById('op-'+k+'-chg');
+      if(!el||!chgEl)return;
+      el.textContent=(k==='ttf'?'€':'$')+cur[k].toFixed(2);
+      const chg=cur[k]-init[k];
+      chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2);
+      chgEl.className='op-chg '+(chg>=0?'op-up':'op-down');
+    });
+  }
+  setInterval(tick,3000);
+})();
 
 boot();
 </script>
