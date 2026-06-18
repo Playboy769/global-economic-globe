@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>全球經濟地球儀</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:600}
+html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Noto Sans TC','Segoe UI',sans-serif;font-weight:300}
 #app{height:100vh;overflow:hidden;position:relative}
 #globe-wrap{position:absolute;inset:0;overflow:hidden;background:#000}
 #globe-canvas{display:block;width:100%;height:100%;cursor:grab}
@@ -38,7 +39,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .c-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.02em;font-family:'Calibri','Segoe UI',sans-serif}
 .c-sub{font-size:11.5px;color:rgba(255,255,255,0.85);margin-top:3px;font-weight:400}
 #tab-nav{display:flex;padding:0 22px;border-bottom:1px solid #0f0f0f;flex-shrink:0}
-.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#eee;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 10px;color:#eee;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:-1px;font-family:'Noto Sans TC',sans-serif}
 .tab-btn:hover{color:#ddd}
 .tab-btn.active{color:#fff;border-bottom-color:#fff}
 #tab-panels{flex:1;overflow-y:auto;padding:16px 22px}
@@ -48,9 +49,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .panel{display:none}
 .panel.active{display:block}
 .metric{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #0a0a0a;font-size:13px}
-.m-lbl{color:#eee;font-weight:400}
-.m-val{color:#fff;font-weight:700}
-.sec-title{font-size:10px;color:#eee;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-weight:700}
+.m-lbl{color:#eee;font-weight:300;font-family:'Noto Sans TC',sans-serif}
+.m-val{color:#fff;font-weight:700;font-family:Consolas,monospace;text-transform:uppercase}
+.sec-title{font-size:10px;color:#eee;text-transform:uppercase;letter-spacing:.12em;margin:16px 0 8px;font-weight:700;font-family:'Noto Sans TC',Consolas,sans-serif}
 /* Trade items — bar chart */
 .ti-row{margin:7px 0}
 .ti-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
@@ -103,6 +104,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .trade-card-gdp{font-size:14px;color:#fff;font-weight:700}
 .trade-card-gpc{font-size:11.5px;color:#ddd;margin-top:2px;font-weight:400}
 #globe-btns{position:absolute;bottom:14px;left:14px;display:flex;gap:6px;z-index:10}
+#zoom-btns{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:4px;z-index:10}
 .g-btn{width:32px;height:32px;border-radius:50%;border:1px solid #222;background:rgba(0,0,0,0.7);color:#eee;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .g-btn:hover{background:rgba(60,60,60,0.8)}
 .g-btn.on{background:rgba(40,80,140,0.7);border-color:#4a88dd;color:#fff}
@@ -142,18 +144,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .mt-btn:hover:not(.active){color:#eee}
 #energy-ui{display:none;position:absolute;inset:0;z-index:15;pointer-events:none}
 #energy-ui>*{pointer-events:auto}
-#en-nav{position:absolute;top:0;left:0;right:0;height:64px;display:flex;background:rgba(10,14,20,0.92);border-bottom:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(12px);z-index:5}
-.en-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;padding:0 20px;gap:2px}
-.en-tab:hover{background:rgba(255,255,255,0.02)}
-.en-tab.active{border-bottom-color:#4ad;background:rgba(74,170,221,0.04)}
-.en-tab-title{font-size:13px;font-weight:700;color:#4ad;letter-spacing:.02em}
-.en-tab-desc{font-size:10px;color:#eee;font-weight:400}
-.en-tab .en-radio{width:10px;height:10px;border-radius:50%;border:2px solid #333;margin-right:6px;display:inline-block}
-.en-tab.active .en-radio{border-color:#4ad;background:#4ad}
-#en-left{position:absolute;left:0;top:64px;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
+#en-left{position:absolute;left:0;top:0;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
 #en-left::-webkit-scrollbar{width:3px}
 #en-left::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
-#en-right{position:absolute;right:0;top:64px;bottom:0;width:340px;background:rgba(10,14,20,0.92);border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
+#en-right{position:absolute;right:0;top:0;bottom:0;width:340px;background:rgba(10,14,20,0.92);border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
 #en-right::-webkit-scrollbar{width:3px}
 #en-right::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
 .en-sec{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
@@ -184,37 +178,39 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .em-nm{flex:1;color:#eee;font-weight:400;font-size:10.5px}
 .em-vol{color:#4ad;font-weight:700;font-size:10px;font-family:'Consolas',monospace}
 .em-alert{color:#e44;font-size:8px;margin-right:2px}
-#route-stats{position:absolute;top:74px;right:356px;background:rgba(10,14,20,0.88);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;z-index:6;font-family:'Consolas',monospace;backdrop-filter:blur(8px)}
+#route-stats{position:absolute;top:10px;right:356px;background:rgba(10,14,20,0.88);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 14px;z-index:6;font-family:'Consolas',monospace;backdrop-filter:blur(8px)}
 .rs-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .rs-title{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
 .rs-tag{font-size:9px;padding:2px 6px;border:1px solid rgba(74,170,221,0.3);border-radius:3px;color:#4ad;font-weight:600;cursor:pointer}
 .rs-row{display:flex;justify-content:space-between;gap:24px;font-size:11px;padding:2px 0}
 .rs-lbl{color:#eee}
 .rs-val{font-weight:700}
-.hub-icon{width:52px;height:52px;margin:10px auto 14px;border:2px solid rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#4ad;background:rgba(74,170,221,0.04)}
-.hub-prompt{font-size:14px;font-weight:600;color:#eee;margin-bottom:6px;text-align:center}
-.hub-prompt-sub{font-size:11px;color:#eee;font-weight:400;line-height:1.6;text-align:center}
 .en-theme-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .et-card{width:62px;text-align:center;cursor:pointer;opacity:.45;transition:opacity .15s}
 .et-card:hover,.et-card.active{opacity:1}
 .et-img{width:52px;height:52px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.04);margin:0 auto}
 .et-card.active .et-img{border-color:#4ad;box-shadow:0 0 12px rgba(74,170,221,0.3)}
 .et-label{font-size:7.5px;color:#eee;margin-top:4px;font-weight:600}
-.en-theme-desc{margin-top:14px;padding:10px 12px;background:rgba(74,170,221,0.04);border-radius:8px;border-left:3px solid #4ad}
-.en-td-title{font-size:12px;font-weight:700;color:#4ad;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.en-td-text{font-size:10px;color:#eee;line-height:1.5;font-weight:400}
 #en-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#eee;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
-#oil-prices{position:absolute;bottom:50px;right:20px;background:rgba(10,14,20,0.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 18px;z-index:20;min-width:220px}
-.op-head{font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+#oil-panel{padding:16px}
+.op-head{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
 .op-live{display:inline-block;width:6px;height:6px;background:#44dd88;border-radius:50%;animation:opBlink 2s infinite}
 @keyframes opBlink{0%,100%{opacity:1}50%{opacity:.2}}
-.op-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
-.op-row:last-child{border-bottom:none}
-.op-name{font-size:10px;color:#bbb;font-weight:500}
-.op-vals{display:flex;align-items:baseline;gap:6px}
-.op-price{font-size:14px;font-weight:700;color:#fff;font-family:Consolas,monospace}
-.op-chg{font-size:9px;font-weight:700;font-family:Consolas,monospace}
+.op-item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.op-item:last-of-type{border-bottom:none}
+.op-item-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.op-item-bot{display:flex;align-items:center;gap:8px}
+.op-name{font-size:11px;color:#bbb;font-weight:500}
+.op-price{font-size:18px;font-weight:700;color:#fff;font-family:Consolas,monospace}
+.op-chg{font-size:11px;font-weight:700;font-family:Consolas,monospace}
+.op-pct{font-size:10px;font-weight:600;font-family:Consolas,monospace}
+.op-label{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-left:auto}
 .op-up{color:#44dd88}.op-down{color:#dd4444}
+.op-ts{font-size:8px;color:#555;text-align:right;margin-top:10px;font-family:Consolas,monospace}
+#theme-toggle{width:100%;padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#aaa;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:8px;margin:10px 16px;box-sizing:border-box;width:calc(100% - 32px)}
+#theme-toggle:hover{background:rgba(74,170,221,0.06);color:#4ad}
+#theme-toggle-name{margin-left:auto;color:#4ad;font-weight:600;font-size:10px}
+#en-theme-float{position:absolute;bottom:60px;right:356px;background:rgba(10,14,20,0.95);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;z-index:25;width:300px}
 .mk-legend{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.04)}
 .mk-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:9px;color:#ccc}
 .mk-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:11px}
@@ -244,6 +240,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       <button class="g-btn" id="btn-network" onclick="toggleNetwork()" title="貿易網絡">🕸</button>
       <button class="g-btn" id="btn-ranking" onclick="toggleRanking()" title="排行榜">🏆</button>
       <button class="g-btn" id="btn-compare" onclick="toggleCompare()" title="國家比較">⚖</button>
+    </div>
+    <div id="zoom-btns">
+      <button class="g-btn" onclick="globeZoom(-1)" title="放大">＋</button>
+      <button class="g-btn" onclick="globeZoom(1)" title="縮小">－</button>
     </div>
     <div id="heatmap-legend" style="display:none"><span>低</span><div class="hm-bar"></div><span>高</span><span id="hm-mode" onclick="cycleHeatmap()" style="cursor:pointer;text-decoration:underline">GDP</span></div>
     <div id="loading"><div class="ld-spin"></div><div class="ld-txt">載入地球資料中…</div></div>
@@ -338,11 +338,6 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
   </div>
   <!-- Energy Mode UI -->
   <div id="energy-ui">
-    <div id="en-nav">
-      <div class="en-tab active" data-en-tab="hubs" onclick="switchEnTab('hubs')"><span class="en-radio"></span><div><div class="en-tab-title">樞紐檢視</div><div class="en-tab-desc">All 186 O&G hubs, fields & terminals</div></div></div>
-      <div class="en-tab" data-en-tab="flows" onclick="switchEnTab('flows')"><span class="en-radio"></span><div><div class="en-tab-title">貿易流量</div><div class="en-tab-desc">Country import/export flows & arcs</div></div></div>
-      <div class="en-tab" data-en-tab="timeline" onclick="switchEnTab('timeline')"><span class="en-radio"></span><div><div class="en-tab-title">時間膠囊</div><div class="en-tab-desc">38 snapshots · Q1 2024 — Now · Daily crisis resolution</div></div></div>
-    </div>
     <div id="en-left">
       <div class="en-sec">
         <div class="en-sec-head"><span class="en-sec-title">Layers / Legend</span><div class="en-sec-btns"><button class="en-sec-btn" onclick="enLayerAll(true)">ALL</button><button class="en-sec-btn" onclick="enLayerAll(false)">NONE</button></div></div>
@@ -385,22 +380,27 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       </div>
     </div>
     <div id="en-right">
-      <div id="hub-detail">
-        <div class="hub-icon">⊕</div>
-        <div class="hub-prompt">Select a hub</div>
-        <div class="hub-prompt-sub">Click any marker on the globe or a location in the list to view detailed intelligence</div>
+      <div id="hub-detail"></div>
+      <div id="oil-panel">
+        <div class="op-head"><span class="op-live"></span>能源即時報價</div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">WTI Crude Oil</span><span class="op-price" id="op-wti">$71.24</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-wti-chg">+0.38</span><span class="op-pct op-up" id="op-wti-pct">(+0.53%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">Brent Crude Oil</span><span class="op-price" id="op-brent">$75.62</span></div><div class="op-item-bot"><span class="op-chg op-down" id="op-brent-chg">-0.15</span><span class="op-pct op-down" id="op-brent-pct">(-0.20%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">Henry Hub NG</span><span class="op-price" id="op-ng">$2.87</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-ng-chg">+0.04</span><span class="op-pct op-up" id="op-ng-pct">(+1.41%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">TTF (EU Gas)</span><span class="op-price" id="op-ttf">€35.40</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-ttf-chg">+0.82</span><span class="op-pct op-up" id="op-ttf-pct">(+2.37%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">RBOB Gasoline</span><span class="op-price" id="op-rbob">$2.18</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-rbob-chg">+0.03</span><span class="op-pct op-up" id="op-rbob-pct">(+1.39%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">Heating Oil</span><span class="op-price" id="op-ho">$2.42</span></div><div class="op-item-bot"><span class="op-chg op-down" id="op-ho-chg">-0.01</span><span class="op-pct op-down" id="op-ho-pct">(-0.41%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-ts" id="op-ts">Updated: --</div>
       </div>
-      <div class="en-sec" id="en-theme-panel">
-        <div class="en-sec-head"><span class="en-sec-title">地球主題</span><span class="en-theme-active" id="en-theme-name">Night Map</span></div>
-        <div style="font-size:8px;color:#eee;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px">Classic</div>
-        <div class="en-theme-grid">
-          <div class="et-card" data-theme="geo" onclick="setEnTheme('geo')"><div class="et-img">🌍</div><div class="et-label">Geo Map</div></div>
-          <div class="et-card active" data-theme="night" onclick="setEnTheme('night')"><div class="et-img">🌑</div><div class="et-label">Night Map</div></div>
-          <div class="et-card" data-theme="holo" onclick="setEnTheme('holo')"><div class="et-img">🔮</div><div class="et-label">Holographic</div></div>
-          <div class="et-card" data-theme="marble" onclick="setEnTheme('marble')"><div class="et-img">🖤</div><div class="et-label">Black Marble</div></div>
-          <div class="et-card" data-theme="goes" onclick="setEnTheme('goes')"><div class="et-img">🌀</div><div class="et-label">GOES-East</div></div>
-        </div>
-        <div class="en-theme-desc"><div class="en-td-title">🌑 Night Map</div><div class="en-td-text">Dark continent silhouettes with glowing coastlines and blue emissive ocean specular.</div></div>
+      <button id="theme-toggle" onclick="toggleThemeFloat()">🎨 地球主題 <span id="theme-toggle-name">Night Map</span></button>
+    </div>
+    <div id="en-theme-float" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:12px;font-weight:700;color:#4ad">地球主題</span><button class="en-sec-btn" onclick="toggleThemeFloat()" style="font-size:14px;cursor:pointer;background:none;border:none;color:#eee">✕</button></div>
+      <div class="en-theme-grid">
+        <div class="et-card" data-theme="geo" onclick="setEnTheme('geo')"><div class="et-img">🌍</div><div class="et-label">Geo Map</div></div>
+        <div class="et-card active" data-theme="night" onclick="setEnTheme('night')"><div class="et-img">🌑</div><div class="et-label">Night Map</div></div>
+        <div class="et-card" data-theme="holo" onclick="setEnTheme('holo')"><div class="et-img">🔮</div><div class="et-label">Holographic</div></div>
+        <div class="et-card" data-theme="marble" onclick="setEnTheme('marble')"><div class="et-img">🖤</div><div class="et-label">Black Marble</div></div>
+        <div class="et-card" data-theme="goes" onclick="setEnTheme('goes')"><div class="et-img">🌀</div><div class="et-label">GOES-East</div></div>
       </div>
     </div>
     <div id="route-stats">
@@ -409,13 +409,6 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
       <div class="rs-row"><span class="rs-lbl">LNG</span><span class="rs-val" style="color:#44cc88">27</span></div>
       <div class="rs-row"><span class="rs-lbl">Pipe</span><span class="rs-val" style="color:#cc8844">33</span></div>
       <div class="rs-row"><span class="rs-lbl">Dis.</span><span class="rs-val" style="color:#cc4444">4</span></div>
-    </div>
-    <div id="oil-prices">
-      <div class="op-head"><span class="op-live"></span>原油即時報價</div>
-      <div class="op-row"><span class="op-name">WTI Crude</span><div class="op-vals"><span class="op-price" id="op-wti">$71.24</span><span class="op-chg op-up" id="op-wti-chg">+0.38</span></div></div>
-      <div class="op-row"><span class="op-name">Brent Crude</span><div class="op-vals"><span class="op-price" id="op-brent">$75.62</span><span class="op-chg op-down" id="op-brent-chg">-0.15</span></div></div>
-      <div class="op-row"><span class="op-name">Henry Hub NG</span><div class="op-vals"><span class="op-price" id="op-ng">$2.87</span><span class="op-chg op-up" id="op-ng-chg">+0.04</span></div></div>
-      <div class="op-row"><span class="op-name">TTF (EU Gas)</span><div class="op-vals"><span class="op-price" id="op-ttf">€35.40</span><span class="op-chg op-up" id="op-ttf-chg">+0.82</span></div></div>
     </div>
     <div id="en-hint">Drag · Scroll Zoom · Click Hub</div>
   </div>
@@ -1060,22 +1053,22 @@ function buildFlowSVG(dA,dB,bal,biVol){
     <marker id="mR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#dd3a3a"/></marker>
   </defs>
   <rect x="0" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="#080808" stroke="#181818"/>
-  <text x="${BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="sans-serif">${dA.nm}</text>
-  <text x="${BW/2}" y="${BY+34}" text-anchor="middle" fill="#eee" font-size="10" font-family="sans-serif">$${dA.gdp.toFixed(1)}T</text>
-  <text x="${BW/2}" y="${BY+50}" text-anchor="middle" fill="#eee" font-size="9" font-family="sans-serif">${pf(dA)}</text>
+  <text x="${BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Consolas,'Noto Sans TC',sans-serif">${dA.nm}</text>
+  <text x="${BW/2}" y="${BY+34}" text-anchor="middle" fill="#eee" font-size="10" font-family="Consolas,'Noto Sans TC',sans-serif">$${dA.gdp.toFixed(1)}T</text>
+  <text x="${BW/2}" y="${BY+50}" text-anchor="middle" fill="#eee" font-size="9" font-family="Consolas,'Noto Sans TC',sans-serif">${pf(dA)}</text>
   <rect x="${W-BW}" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="#080808" stroke="#181818"/>
-  <text x="${W-BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="sans-serif">${dB.nm}</text>
-  <text x="${W-BW/2}" y="${BY+34}" text-anchor="middle" fill="#eee" font-size="10" font-family="sans-serif">$${dB.gdp.toFixed(1)}T</text>
-  <text x="${W-BW/2}" y="${BY+50}" text-anchor="middle" fill="#eee" font-size="9" font-family="sans-serif">${pf(dB)}</text>
+  <text x="${W-BW/2}" y="${BY+18}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Consolas,'Noto Sans TC',sans-serif">${dB.nm}</text>
+  <text x="${W-BW/2}" y="${BY+34}" text-anchor="middle" fill="#eee" font-size="10" font-family="Consolas,'Noto Sans TC',sans-serif">$${dB.gdp.toFixed(1)}T</text>
+  <text x="${W-BW/2}" y="${BY+50}" text-anchor="middle" fill="#eee" font-size="9" font-family="Consolas,'Noto Sans TC',sans-serif">${pf(dB)}</text>
   <line x1="${AZL}" y1="${AR1}" x2="${AZR-2}" y2="${AR1}" stroke="#3a78dd" stroke-width="${wA.toFixed(1)}" marker-end="url(#mB)" stroke-linecap="round" opacity="0.9"/>
   <line x1="${AZR}" y1="${AR2}" x2="${AZL+2}" y2="${AR2}" stroke="#dd3a3a" stroke-width="${wB.toFixed(1)}" marker-end="url(#mR)" stroke-linecap="round" opacity="0.9"/>
-  ${eAB!==null?`<text x="${MX}" y="${AR1-8}" text-anchor="middle" fill="#88aaff" font-size="10" font-weight="700" font-family="sans-serif">$${eAB}B →</text>`:''}
-  ${eBA!==null?`<text x="${MX}" y="${AR2+18}" text-anchor="middle" fill="#ff8888" font-size="10" font-weight="700" font-family="sans-serif">← $${eBA}B</text>`:''}
+  ${eAB!==null?`<text x="${MX}" y="${AR1-8}" text-anchor="middle" fill="#88aaff" font-size="10" font-weight="700" font-family="Consolas,'Noto Sans TC',sans-serif">$${eAB}B →</text>`:''}
+  ${eBA!==null?`<text x="${MX}" y="${AR2+18}" text-anchor="middle" fill="#ff8888" font-size="10" font-weight="700" font-family="Consolas,'Noto Sans TC',sans-serif">← $${eBA}B</text>`:''}
   <rect x="${MX-60}" y="${BY+BH+8}" width="10" height="4" fill="#3a78dd" rx="1"/>
-  <text x="${MX-48}" y="${BY+BH+14}" fill="#5588ee" font-size="9" font-family="sans-serif">${dA.nm} 出口</text>
+  <text x="${MX-48}" y="${BY+BH+14}" fill="#5588ee" font-size="9" font-family="Consolas,'Noto Sans TC',sans-serif">${dA.nm} 出口</text>
   <rect x="${MX+20}" y="${BY+BH+8}" width="10" height="4" fill="#dd3a3a" rx="1"/>
-  <text x="${MX+32}" y="${BY+BH+14}" fill="#ee5555" font-size="9" font-family="sans-serif">${dB.nm} 出口</text>
-  ${biVol?`<text x="${MX}" y="${BY+BH+30}" text-anchor="middle" fill="#2a2a2a" font-size="8.5" font-family="sans-serif">估計雙邊貿易總量 ≈ $${biVol}B</text>`:''}
+  <text x="${MX+32}" y="${BY+BH+14}" fill="#ee5555" font-size="9" font-family="Consolas,'Noto Sans TC',sans-serif">${dB.nm} 出口</text>
+  ${biVol?`<text x="${MX}" y="${BY+BH+30}" text-anchor="middle" fill="#2a2a2a" font-size="8.5" font-family="Consolas,'Noto Sans TC',sans-serif">估計雙邊貿易總量 ≈ $${biVol}B</text>`:''}
   </svg>`;
 }
 
@@ -1135,7 +1128,8 @@ async function boot(){
 
   // OrbitControls
   ctrl=new THREE.OrbitControls(cam,rend.domElement);
-  ctrl.enablePan=false; ctrl.enableZoom=false;
+  ctrl.enablePan=false; ctrl.enableZoom=true;
+  ctrl.minDistance=2.5; ctrl.maxDistance=12; ctrl.zoomSpeed=0.8;
   ctrl.enableDamping=true; ctrl.dampingFactor=0.07;
   ctrl.autoRotate=true; ctrl.autoRotateSpeed=0.45;
   ctrl.addEventListener('start',()=>ctrl.autoRotate=false);
@@ -1342,13 +1336,13 @@ function buildGDPChart(h){
   svg+=`<defs><linearGradient id="gdpG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a88dd" stop-opacity="0.3"/><stop offset="100%" stop-color="#4a88dd" stop-opacity="0.02"/></linearGradient></defs>`;
   [0,0.5,1].forEach(f=>{const v=mn+rY*f;
     svg+=`<line x1="${mL}" y1="${y(v).toFixed(1)}" x2="${W-mR}" y2="${y(v).toFixed(1)}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
-    svg+=`<text x="${mL-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#eee" font-family="sans-serif">${v.toFixed(1)}</text>`;
+    svg+=`<text x="${mL-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${v.toFixed(1)}</text>`;
   });
   svg+=`<polygon points="${area}" fill="url(#gdpG)"/>`;
   svg+=`<polyline points="${pts}" fill="none" stroke="#4a88dd" stroke-width="1.5" stroke-linejoin="round"/>`;
   h.forEach((v,i)=>{svg+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.5" fill="#4a88dd" stroke="#0a0a0a" stroke-width="1"/>`;});
   const yrs=[2014,2016,2018,2020,2022];
-  yrs.forEach(yr=>{const i=yr-2014;if(i<h.length)svg+=`<text x="${x(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${yr}</text>`;});
+  yrs.forEach(yr=>{const i=yr-2014;if(i<h.length)svg+=`<text x="${x(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${yr}</text>`;});
   svg+=`</svg>`;return svg;
 }
 
@@ -1414,17 +1408,17 @@ function renderPopulation(code){
     const ri=n-1-i,y2=i*bH,mW=mBands[ri]*sc,fW=fBands[ri]*sc;
     svg+=`<rect x="${mid-mW-1}" y="${y2+1}" width="${mW}" height="${bH-2}" fill="url(#mg)" rx="1"/>`;
     svg+=`<rect x="${mid+1}" y="${y2+1}" width="${fW}" height="${bH-2}" fill="url(#fg)" rx="1"/>`;
-    svg+=`<text x="-3" y="${y2+bH/2+3.5}" text-anchor="end" font-size="8" fill="#eee" font-family="sans-serif">${labels[ri]}</text>`;
+    svg+=`<text x="-3" y="${y2+bH/2+3.5}" text-anchor="end" font-size="8" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${labels[ri]}</text>`;
   });
   svg+=`<line x1="${mid}" y1="0" x2="${mid}" y2="${iH}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`;
   [maxV*0.5,maxV].forEach(v=>{
-    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${v.toFixed(1)}%</text>`;
-    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid-v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="${mid+v*sc}" y="${iH+11}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${v.toFixed(1)}%</text>`;
   });
   svg+=`<rect x="${mid-52}" y="${iH+18}" width="8" height="8" fill="url(#mg)" rx="1"/>`;
-  svg+=`<text x="${mid-41}" y="${iH+26}" font-size="9" fill="#4a7a9b" font-family="sans-serif" font-weight="bold">男性</text>`;
+  svg+=`<text x="${mid-41}" y="${iH+26}" font-size="9" fill="#4a7a9b" font-family="Consolas,'Noto Sans TC',sans-serif" font-weight="bold">男性</text>`;
   svg+=`<rect x="${mid+18}" y="${iH+18}" width="8" height="8" fill="url(#fg)" rx="1"/>`;
-  svg+=`<text x="${mid+29}" y="${iH+26}" font-size="9" fill="#9b4a5e" font-family="sans-serif" font-weight="bold">女性</text>`;
+  svg+=`<text x="${mid+29}" y="${iH+26}" font-size="9" fill="#9b4a5e" font-family="Consolas,'Noto Sans TC',sans-serif" font-weight="bold">女性</text>`;
   svg+=`</g></svg>`;
   const dep=((y+o)/w*100).toFixed(1),agi=(o/y*100).toFixed(1);
   document.getElementById('panel-population').innerHTML=`
@@ -1468,7 +1462,7 @@ function svgPie(data,W=160){
     const x2=cx+r*Math.cos(a+sweep),y2=cy+r*Math.sin(a+sweep),lg=sweep>Math.PI?1:0;
     svg+=`<path d="M${cx},${cy}L${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}Z" fill="${colors[i]}" opacity="0.85"/>`;
     const ma=a+sweep/2,lx=cx+(r*0.6)*Math.cos(ma),ly=cy+(r*0.6)*Math.sin(ma);
-    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="${fs}" fill="#fff" font-weight="bold" font-family="sans-serif">${d.pct}%</text>`;
+    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="${fs}" fill="#fff" font-weight="bold" font-family="Consolas,'Noto Sans TC',sans-serif">${d.pct}%</text>`;
     a+=sweep;
   });
   svg+=`</svg>`;
@@ -1488,7 +1482,7 @@ function svgDonut(data,W=180){
   svg+=`</svg>`;return svg;
 }
 function svgRadar(vals,labels,W=200){
-  const cx=W/2,cy=W/2,r=W/2-30,n=vals.length;
+  const cx=W/2,cy=W/2,r=W/2-40,n=vals.length;
   let svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
   for(let lv=0.25;lv<=1;lv+=0.25){
     let pts=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2-Math.PI/2;pts.push(`${cx+r*lv*Math.cos(a)},${cy+r*lv*Math.sin(a)}`);}
@@ -1499,8 +1493,8 @@ function svgRadar(vals,labels,W=200){
   svg+=`<polygon points="${pts.join(' ')}" fill="rgba(74,136,221,0.15)" stroke="#4a88dd" stroke-width="1.5"/>`;
   vals.forEach((v,i)=>{const a=i/n*Math.PI*2-Math.PI/2;
     svg+=`<circle cx="${cx+r*v*Math.cos(a)}" cy="${cy+r*v*Math.sin(a)}" r="3" fill="#4a88dd"/>`;
-    const lx=cx+(r+16)*Math.cos(a),ly=cy+(r+16)*Math.sin(a);
-    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="8" fill="#eee" font-family="sans-serif">${labels[i]}</text>`;
+    const lx=cx+(r+24)*Math.cos(a),ly=cy+(r+24)*Math.sin(a);
+    svg+=`<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="11" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${labels[i]}</text>`;
   });
   svg+=`</svg>`;return svg;
 }
@@ -1513,13 +1507,13 @@ function svgTimeline(data,W=440,H=80,color='#4a88dd'){
   svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.8"/>`;
   data.forEach((d,i)=>{const x=i/(data.length-1)*iW,y=iH-(d.v-mn)/rng*iH;
     svg+=`<circle cx="${x}" cy="${y}" r="2.5" fill="${color}"/>`;
-    if(i%2===0||data.length<=6)svg+=`<text x="${x}" y="${iH+13}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="sans-serif">${d.l}</text>`;
+    if(i%2===0||data.length<=6)svg+=`<text x="${x}" y="${iH+13}" text-anchor="middle" font-size="7.5" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${d.l}</text>`;
   });
-  [mn,mx].forEach((v,i)=>{const y=i===0?iH:0;svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="7.5" fill="#eee" font-family="sans-serif">${v.toFixed(v<10?2:0)}</text>`;});
+  [mn,mx].forEach((v,i)=>{const y=i===0?iH:0;svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="7.5" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${v.toFixed(v<10?2:0)}</text>`;});
   svg+=`</g></svg>`;return svg;
 }
 
-function svgYieldCurve(yc,W=440,H=100){
+function svgYieldCurve(yc,W=440,H=140){
   const labels=['3M','6M','1Y','2Y','3Y','5Y','7Y','10Y'];
   const mL=36,mR=8,mT=12,mB=24,iW=W-mL-mR,iH=H-mT-mB;
   const mn=Math.min(...yc)-0.5,mx=Math.max(...yc)+0.5,rng=mx-mn||1;
@@ -1527,7 +1521,7 @@ function svgYieldCurve(yc,W=440,H=100){
   svg+=`<rect x="0" y="0" width="${iW}" height="${iH}" fill="rgba(255,255,255,0.01)" rx="4"/>`;
   [0,0.5,1].forEach(f=>{const v=mn+rng*f,y=iH-(v-mn)/rng*iH;
     svg+=`<line x1="0" y1="${y}" x2="${iW}" y2="${y}" stroke="rgba(255,255,255,0.05)"/>`;
-    svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="8" fill="#eee" font-family="sans-serif">${v.toFixed(1)}%</text>`;
+    svg+=`<text x="-4" y="${y+3}" text-anchor="end" font-size="8" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${v.toFixed(1)}%</text>`;
   });
   const pts=yc.map((v,i)=>{const x=i/(yc.length-1)*iW,y=iH-(v-mn)/rng*iH;return`${x},${y}`;});
   svg+=`<defs><linearGradient id="ycG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4ad" stop-opacity="0.2"/><stop offset="100%" stop-color="#4ad" stop-opacity="0.02"/></linearGradient></defs>`;
@@ -1535,7 +1529,7 @@ function svgYieldCurve(yc,W=440,H=100){
   svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="#4ad" stroke-width="2"/>`;
   yc.forEach((v,i)=>{const x=i/(yc.length-1)*iW,y=iH-(v-mn)/rng*iH;
     svg+=`<circle cx="${x}" cy="${y}" r="3" fill="#4ad" stroke="#0a0a0a" stroke-width="1"/>`;
-    svg+=`<text x="${x}" y="${iH+14}" text-anchor="middle" font-size="8" fill="#eee" font-family="sans-serif">${labels[i]||''}</text>`;
+    svg+=`<text x="${x}" y="${iH+14}" text-anchor="middle" font-size="8" fill="#eee" font-family="Consolas,'Noto Sans TC',sans-serif">${labels[i]||''}</text>`;
   });
   svg+=`</g></svg>`;return svg;
 }
@@ -1652,9 +1646,21 @@ const _EXPD={
 '800':[{c:'阿聯酋',pct:25},{c:'肯亞',pct:12},{c:'南蘇丹',pct:8},{c:'剛果',pct:7},{c:'盧安達',pct:5},{c:'其他',pct:43}],
 '860':[{c:'瑞士',pct:18},{c:'英國',pct:16},{c:'中國',pct:14},{c:'俄羅斯',pct:12},{c:'土耳其',pct:8},{c:'其他',pct:32}]
 };
-const _SC_US=[{item:'半導體',from:'台灣',pct:65},{item:'稀土',from:'中國',pct:80},{item:'鋰電池',from:'中國',pct:70}];
-const _SC_CN=[{item:'石油',from:'沙烏地',pct:18},{item:'鐵礦砂',from:'澳洲',pct:62},{item:'半導體設備',from:'荷蘭',pct:85}];
-const _SC_DEF=[{item:'能源',from:'主要供應國',pct:45},{item:'零組件',from:'主要供應國',pct:55},{item:'原物料',from:'主要供應國',pct:40}];
+const _SC_US=[{item:'半導體',from:'台灣',pct:65},{item:'稀土',from:'中國',pct:80},{item:'鋰電池',from:'中國',pct:70},{item:'藥品原料',from:'印度',pct:40},{item:'汽車零件',from:'墨西哥',pct:50},{item:'鈷礦',from:'剛果',pct:60},{item:'鋼鐵',from:'加拿大',pct:25},{item:'電子零件',from:'韓國',pct:45}];
+const _SC_CN=[{item:'石油',from:'沙烏地',pct:18},{item:'鐵礦砂',from:'澳洲',pct:62},{item:'半導體設備',from:'荷蘭',pct:85},{item:'晶片',from:'台灣',pct:55},{item:'天然氣',from:'俄羅斯',pct:30},{item:'大豆',from:'巴西',pct:60},{item:'銅礦',from:'智利',pct:40},{item:'鉀肥',from:'加拿大',pct:35}];
+const _SC_JP=[{item:'石油',from:'沙烏地',pct:40},{item:'LNG',from:'澳洲',pct:35},{item:'半導體',from:'台灣',pct:55},{item:'鐵礦砂',from:'澳洲',pct:58},{item:'稀土',from:'中國',pct:60},{item:'煤炭',from:'澳洲',pct:50},{item:'電子零件',from:'中國',pct:35},{item:'小麥',from:'美國',pct:50}];
+const _SC_DE=[{item:'天然氣',from:'挪威',pct:35},{item:'石油',from:'美國',pct:22},{item:'半導體',from:'台灣',pct:50},{item:'稀土',from:'中國',pct:70},{item:'汽車零件',from:'東歐',pct:40},{item:'化學原料',from:'中國',pct:30},{item:'鋼鐵',from:'奧地利',pct:25}];
+const _SC_GB=[{item:'天然氣',from:'挪威',pct:45},{item:'石油',from:'北海',pct:55},{item:'半導體',from:'台灣',pct:48},{item:'電池',from:'中國',pct:65},{item:'鋼鐵',from:'歐盟',pct:35},{item:'藥品原料',from:'印度',pct:38},{item:'木材',from:'瑞典',pct:30}];
+const _SC_FR=[{item:'天然氣',from:'挪威',pct:32},{item:'石油',from:'中東',pct:28},{item:'稀土',from:'中國',pct:68},{item:'半導體',from:'台灣',pct:45},{item:'電池',from:'中國',pct:58},{item:'鈾',from:'哈薩克',pct:40},{item:'化工品',from:'德國',pct:30}];
+const _SC_KR=[{item:'石油',from:'沙烏地',pct:32},{item:'天然氣',from:'卡達',pct:28},{item:'鐵礦砂',from:'澳洲',pct:55},{item:'半導體設備',from:'荷蘭',pct:78},{item:'稀土',from:'中國',pct:62},{item:'鈷/鎳',from:'印尼',pct:40},{item:'小麥',from:'美國',pct:45}];
+const _SC_IN=[{item:'石油',from:'伊拉克',pct:22},{item:'天然氣',from:'卡達',pct:38},{item:'煤炭',from:'印尼',pct:30},{item:'半導體',from:'台灣',pct:72},{item:'電子零件',from:'中國',pct:55},{item:'棕櫚油',from:'印尼',pct:65},{item:'肥料',from:'俄羅斯',pct:28}];
+const _SC_BR=[{item:'電子零件',from:'中國',pct:42},{item:'半導體',from:'台灣',pct:55},{item:'藥品',from:'美國',pct:35},{item:'肥料',from:'俄羅斯',pct:45},{item:'汽車零件',from:'德國',pct:28},{item:'農藥',from:'中國',pct:50},{item:'柴油',from:'美國',pct:20}];
+const _SC_AU=[{item:'石油',from:'新加坡',pct:35},{item:'電子產品',from:'中國',pct:48},{item:'半導體',from:'台灣',pct:52},{item:'汽車',from:'日本',pct:30},{item:'藥品',from:'美國',pct:25},{item:'化學品',from:'韓國',pct:22},{item:'機械設備',from:'德國',pct:28}];
+const _SC_CA=[{item:'電子零件',from:'中國',pct:38},{item:'半導體',from:'台灣',pct:50},{item:'汽車零件',from:'美國',pct:55},{item:'藥品',from:'美國',pct:40},{item:'鋼鐵',from:'美國',pct:35},{item:'機械',from:'德國',pct:22},{item:'石油設備',from:'美國',pct:45}];
+const _SC_TW=[{item:'半導體設備',from:'荷蘭',pct:82},{item:'石油',from:'沙烏地',pct:35},{item:'天然氣',from:'卡達',pct:42},{item:'鐵礦砂',from:'澳洲',pct:48},{item:'煤炭',from:'澳洲',pct:50},{item:'化學品',from:'日本',pct:30},{item:'大豆',from:'巴西',pct:55}];
+const _SC_RU=[{item:'半導體',from:'中國',pct:70},{item:'電子零件',from:'中國',pct:65},{item:'汽車零件',from:'中國',pct:50},{item:'藥品',from:'印度',pct:45},{item:'機械設備',from:'中國',pct:55},{item:'精密儀器',from:'中國',pct:60},{item:'種子',from:'歐盟',pct:25}];
+const _SC_MAP={'840':_SC_US,'156':_SC_CN,'392':_SC_JP,'276':_SC_DE,'826':_SC_GB,'250':_SC_FR,'410':_SC_KR,'356':_SC_IN,'076':_SC_BR,'036':_SC_AU,'124':_SC_CA,'158':_SC_TW,'643':_SC_RU};
+const _SC_DEF=[{item:'能源',from:'主要供應國',pct:45},{item:'半導體',from:'主要供應國',pct:55},{item:'原物料',from:'主要供應國',pct:40},{item:'機械設備',from:'主要供應國',pct:35},{item:'化學品',from:'主要供應國',pct:30},{item:'糧食作物',from:'主要供應國',pct:25}];
 const _CM_DEV={oil:35,gas:20,food:8};
 const _CM_OIL={oil:5,gas:5,food:45};
 const _CM_EM={oil:55,gas:35,food:15};
@@ -1662,7 +1668,7 @@ function fin(sec,sub,rate,rH,cr,debt,def,stock,sH,fdi,fH,expD,sc,cm){return{sec,
 Object.assign(CD_FIN,{
 '840':fin(_SEC_DEV,[{nm:'不動產',pct:13.5},{nm:'金融保險',pct:8.2},{nm:'科技資訊',pct:7.5},{nm:'醫療健康',pct:7.2},{nm:'製造業',pct:10.8},{nm:'零售貿易',pct:5.9},{nm:'教育',pct:3.5},{nm:'建築',pct:4.2},{nm:'運輸物流',pct:3.8},{nm:'能源礦業',pct:3.2}],5.50,_RH_DEV,{sp:'AA+',moody:'Aaa',fitch:'AA+'},123,-6.3,'S&P 500',[3840,3970,4100,3970,4130,4290,4440,4190,4350,4570,4770,4930],354,[310,280,354,388,350],_EXP5_US,_SC_US,{oil:35,gas:5,food:8}),
 '156':fin([7.3,39.4,53.3],[{nm:'製造業',pct:27.5},{nm:'不動產',pct:6.8},{nm:'金融保險',pct:7.5},{nm:'建築',pct:7.0},{nm:'零售貿易',pct:5.5},{nm:'科技資訊',pct:4.2},{nm:'運輸物流',pct:4.5},{nm:'礦業能源',pct:5.8},{nm:'農業',pct:7.3},{nm:'電信',pct:3.2}],3.45,[{y:'18',v:4.35},{y:'19',v:4.35},{y:'20',v:3.85},{y:'21',v:3.85},{y:'22',v:3.65},{y:'23',v:3.45},{y:'24',v:3.10},{y:'25',v:3.00}],{sp:'A+',moody:'A1',fitch:'A+'},77,-7.1,'上證指數',[3340,3250,3290,3180,3060,3150,3230,3100,3050,2960,2980,3090],189,[180,155,189,170,163],_EXP5_CN,_SC_CN,{oil:72,gas:42,food:18}),
-'392':fin([1.1,29.1,69.8],[{nm:'製造業',pct:20.5},{nm:'不動產',pct:12.0},{nm:'金融保險',pct:5.8},{nm:'零售貿易',pct:6.5},{nm:'醫療健康',pct:6.2},{nm:'科技資訊',pct:5.0},{nm:'運輸物流',pct:5.0},{nm:'建築',pct:5.5},{nm:'教育',pct:3.5},{nm:'能源',pct:2.8}],-0.10,[{y:'18',v:-0.1},{y:'19',v:-0.1},{y:'20',v:-0.1},{y:'21',v:-0.1},{y:'22',v:-0.1},{y:'23',v:-0.1},{y:'24',v:0.25},{y:'25',v:0.50}],{sp:'A+',moody:'A1',fitch:'A'},264,-5.8,'日經225',[23500,24000,27500,28800,26500,27800,31500,32200,31800,33500,35200,36000],26,[15,20,26,30,28],[{c:'美國',pct:20},{c:'中國',pct:19},{c:'韓國',pct:7},{c:'台灣',pct:6},{c:'香港',pct:5},{c:'其他',pct:43}],[{item:'石油',from:'沙烏地',pct:40},{item:'LNG',from:'澳洲',pct:35},{item:'半導體',from:'台灣',pct:55}],{oil:92,gas:97,food:62})
+'392':fin([1.1,29.1,69.8],[{nm:'製造業',pct:20.5},{nm:'不動產',pct:12.0},{nm:'金融保險',pct:5.8},{nm:'零售貿易',pct:6.5},{nm:'醫療健康',pct:6.2},{nm:'科技資訊',pct:5.0},{nm:'運輸物流',pct:5.0},{nm:'建築',pct:5.5},{nm:'教育',pct:3.5},{nm:'能源',pct:2.8}],-0.10,[{y:'18',v:-0.1},{y:'19',v:-0.1},{y:'20',v:-0.1},{y:'21',v:-0.1},{y:'22',v:-0.1},{y:'23',v:-0.1},{y:'24',v:0.25},{y:'25',v:0.50}],{sp:'A+',moody:'A1',fitch:'A'},264,-5.8,'日經225',[23500,24000,27500,28800,26500,27800,31500,32200,31800,33500,35200,36000],26,[15,20,26,30,28],[{c:'美國',pct:20},{c:'中國',pct:19},{c:'韓國',pct:7},{c:'台灣',pct:6},{c:'香港',pct:5},{c:'其他',pct:43}],_SC_JP,{oil:92,gas:97,food:62})
 });
 // Template-generate remaining countries
 const _finTpl={
@@ -1694,7 +1700,7 @@ Object.keys(CD).forEach(k=>{
   if(CD_FIN[k])return;
   const tpl=_finTpl[_finMap[k]||'mix'];
   const ext=_finExtra[k]||{};
-  CD_FIN[k]={sec:ext.sec||tpl.sec,sub:ext.sub||tpl.sub,rate:ext.rate||(tpl===_finTpl.dev?3.5:tpl===_finTpl.oil?5.0:6.0),rH:ext.rH||tpl.rH,cr:ext.cr||{sp:'BBB',moody:'Baa2',fitch:'BBB'},debt:ext.debt||(tpl===_finTpl.dev?65:tpl===_finTpl.oil?30:55),def:ext.def||(tpl===_finTpl.dev?-2.5:-4.0),stock:ext.stock||'—',sH:ext.sH||[100,102,104,103,105,107,108,106,110,112,111,113],fdi:ext.fdi||(tpl===_finTpl.dev?20:10),fH:ext.fH||[8,10,12,14,10],expD:_EXPD[k]||tpl.expD,sc:tpl.sc,cm:ext.cm||tpl.cm};
+  CD_FIN[k]={sec:ext.sec||tpl.sec,sub:ext.sub||tpl.sub,rate:ext.rate||(tpl===_finTpl.dev?3.5:tpl===_finTpl.oil?5.0:6.0),rH:ext.rH||tpl.rH,cr:ext.cr||{sp:'BBB',moody:'Baa2',fitch:'BBB'},debt:ext.debt||(tpl===_finTpl.dev?65:tpl===_finTpl.oil?30:55),def:ext.def||(tpl===_finTpl.dev?-2.5:-4.0),stock:ext.stock||'—',sH:ext.sH||[100,102,104,103,105,107,108,106,110,112,111,113],fdi:ext.fdi||(tpl===_finTpl.dev?20:10),fH:ext.fH||[8,10,12,14,10],expD:_EXPD[k]||tpl.expD,sc:_SC_MAP[k]||tpl.sc,cm:ext.cm||tpl.cm};
 });
 
 // ===== ADVANCED FINANCIAL DATA =====
@@ -1742,26 +1748,26 @@ Object.keys(CD).forEach(k=>{
 // ===== SOCIAL DATA =====
 const CD_SOC={};
 const _SOC={
-'840':{hdi:0.921,gini:39.8,rd:3.45,unis:4000,le:78.9,ey:16.3,mys:13.7,gni:64765},
-'156':{hdi:0.768,gini:38.2,rd:2.40,unis:2956,le:78.2,ey:14.2,mys:7.6,gni:17504},
-'276':{hdi:0.942,gini:31.7,rd:3.13,unis:420,le:81.2,ey:17.0,mys:14.1,gni:55314},
-'392':{hdi:0.925,gini:32.9,rd:3.26,unis:800,le:84.8,ey:15.2,mys:13.4,gni:42274},
-'356':{hdi:0.633,gini:35.7,rd:0.65,unis:1043,le:70.4,ey:12.3,mys:6.7,gni:6590},
-'826':{hdi:0.929,gini:35.1,rd:2.70,unis:165,le:81.4,ey:17.5,mys:13.4,gni:46071},
-'250':{hdi:0.903,gini:32.4,rd:2.20,unis:260,le:82.7,ey:15.8,mys:11.6,gni:46585},
-'076':{hdi:0.760,gini:48.9,rd:1.16,unis:300,le:76.0,ey:15.6,mys:8.1,gni:14263},
-'124':{hdi:0.936,gini:33.3,rd:1.69,unis:96,le:82.4,ey:16.4,mys:13.8,gni:47985},
-'410':{hdi:0.929,gini:31.4,rd:4.81,unis:370,le:83.7,ey:16.5,mys:12.5,gni:44501},
-'036':{hdi:0.951,gini:34.4,rd:1.79,unis:43,le:83.3,ey:21.1,mys:12.7,gni:49238},
-'158':{hdi:0.926,gini:33.6,rd:3.64,unis:150,le:81.0,ey:16.5,mys:12.4,gni:52304},
-'380':{hdi:0.895,gini:35.9,rd:1.43,unis:98,le:83.5,ey:16.2,mys:10.7,gni:42776},
-'724':{hdi:0.905,gini:34.7,rd:1.25,unis:84,le:83.6,ey:17.6,mys:10.3,gni:38354}
+'840':{hdi:0.921,gini:39.8,rd:3.45,unis:4000,le:78.9,ey:16.3,mys:13.7,gni:64765,museum:33082,art:88,inet:92,health:87},
+'156':{hdi:0.768,gini:38.2,rd:2.40,unis:2956,le:78.2,ey:14.2,mys:7.6,gni:17504,museum:5788,art:72,inet:73,health:68},
+'276':{hdi:0.942,gini:31.7,rd:3.13,unis:420,le:81.2,ey:17.0,mys:14.1,gni:55314,museum:6800,art:92,inet:93,health:92},
+'392':{hdi:0.925,gini:32.9,rd:3.26,unis:800,le:84.8,ey:15.2,mys:13.4,gni:42274,museum:5738,art:85,inet:93,health:90},
+'356':{hdi:0.633,gini:35.7,rd:0.65,unis:1043,le:70.4,ey:12.3,mys:6.7,gni:6590,museum:1200,art:65,inet:47,health:45},
+'826':{hdi:0.929,gini:35.1,rd:2.70,unis:165,le:81.4,ey:17.5,mys:13.4,gni:46071,museum:2500,art:93,inet:95,health:88},
+'250':{hdi:0.903,gini:32.4,rd:2.20,unis:260,le:82.7,ey:15.8,mys:11.6,gni:46585,museum:1218,art:95,inet:90,health:91},
+'076':{hdi:0.760,gini:48.9,rd:1.16,unis:300,le:76.0,ey:15.6,mys:8.1,gni:14263,museum:3025,art:70,inet:81,health:58},
+'124':{hdi:0.936,gini:33.3,rd:1.69,unis:96,le:82.4,ey:16.4,mys:13.8,gni:47985,museum:2500,art:82,inet:93,health:91},
+'410':{hdi:0.929,gini:31.4,rd:4.81,unis:370,le:83.7,ey:16.5,mys:12.5,gni:44501,museum:1124,art:88,inet:97,health:86},
+'036':{hdi:0.951,gini:34.4,rd:1.79,unis:43,le:83.3,ey:21.1,mys:12.7,gni:49238,museum:1100,art:80,inet:92,health:89},
+'158':{hdi:0.926,gini:33.6,rd:3.64,unis:150,le:81.0,ey:16.5,mys:12.4,gni:52304,museum:850,art:78,inet:91,health:84},
+'380':{hdi:0.895,gini:35.9,rd:1.43,unis:98,le:83.5,ey:16.2,mys:10.7,gni:42776,museum:4908,art:96,inet:87,health:85},
+'724':{hdi:0.905,gini:34.7,rd:1.25,unis:84,le:83.6,ey:17.6,mys:10.3,gni:38354,museum:1500,art:90,inet:93,health:89}
 };
 Object.keys(CD).forEach(k=>{
   if(_SOC[k]){CD_SOC[k]=_SOC[k];return;}
   const d=CD[k],g=d.gdpC;
   const hdi=g>40000?0.90+Math.random()*0.05:g>15000?0.78+Math.random()*0.08:g>5000?0.65+Math.random()*0.12:0.45+Math.random()*0.15;
-  CD_SOC[k]={hdi:Math.round(hdi*1000)/1000,gini:25+Math.random()*25,rd:g>30000?1.5+Math.random()*2:0.2+Math.random()*1.5,unis:Math.max(5,Math.round(d.pop*0.08+Math.random()*50)),le:g>30000?78+Math.random()*6:g>10000?72+Math.random()*6:60+Math.random()*10,ey:g>30000?15+Math.random()*3:10+Math.random()*5,mys:g>30000?11+Math.random()*3:6+Math.random()*5,gni:g};
+  CD_SOC[k]={hdi:Math.round(hdi*1000)/1000,gini:25+Math.random()*25,rd:g>30000?1.5+Math.random()*2:0.2+Math.random()*1.5,unis:Math.max(5,Math.round(d.pop*0.08+Math.random()*50)),le:g>30000?78+Math.random()*6:g>10000?72+Math.random()*6:60+Math.random()*10,ey:g>30000?15+Math.random()*3:10+Math.random()*5,mys:g>30000?11+Math.random()*3:6+Math.random()*5,gni:g,museum:Math.round(g>30000?800+Math.random()*3000:g>10000?200+Math.random()*800:50+Math.random()*300),art:Math.round(g>30000?70+Math.random()*25:g>10000?45+Math.random()*30:20+Math.random()*35),inet:Math.round(g>30000?85+Math.random()*12:g>10000?60+Math.random()*25:20+Math.random()*40),health:Math.round(g>30000?80+Math.random()*15:g>10000?55+Math.random()*25:30+Math.random()*30)};
 });
 
 // ===== RENDER FINANCE =====
@@ -1783,7 +1789,7 @@ function renderFinance(code){
     </div>
     <div class="sec-title" style="color:#eee">央行基準利率</div>
     <div class="metric"><span class="m-lbl">當前利率</span><span class="m-val" style="color:${rateColor}">${f.rate.toFixed(2)}%</span></div>
-    <div style="margin:8px -4px 14px">${svgTimeline(f.rH.map(r=>({l:r.y,v:r.v})),440,70,'#4a88dd')}</div>
+    <div style="margin:8px -4px 14px">${svgTimeline(f.rH.map(r=>({l:r.y,v:r.v})),440,120,'#4a88dd')}</div>
     <div class="sec-title" style="color:#eee">主權信用評等</div>
     <div style="display:flex;gap:8px;margin:8px 0 14px">
       ${['S&P','Moody\'s','Fitch'].map((ag,i)=>{const r=[f.cr.sp,f.cr.moody,f.cr.fitch][i];return`<div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:#ddd;margin-bottom:4px">${ag}</div><div style="font-size:16px;font-weight:700;color:${crColors[r]||'#ccaa44'}">${r}</div></div>`;}).join('')}
@@ -1792,10 +1798,10 @@ function renderFinance(code){
     <div class="metric"><span class="m-lbl">國債佔GDP</span><span class="m-val">${f.debt}%</span></div>
     <div class="metric"><span class="m-lbl">財政赤字佔GDP</span><span class="m-val" style="color:${f.def<0?'#dd4444':'#44aa66'}">${f.def>0?'+':''}${f.def}%</span></div>
     <div class="sec-title" style="color:#eee">股市表現（${f.stock}）</div>
-    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),440,70,'#44aa66')}</div>`:'<div style="color:#eee;font-size:11px;margin:8px 0">暫無股市數據</div>'}
+    ${f.sH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.sH.map((v,i)=>({l:['J','F','M','A','M','J','J','A','S','O','N','D'][i]||'',v})),440,120,'#44aa66')}</div>`:'<div style="color:#eee;font-size:11px;margin:8px 0">暫無股市數據</div>'}
     <div class="sec-title" style="color:#eee">FDI 外國直接投資（十億美元）</div>
     <div class="metric"><span class="m-lbl">年度FDI</span><span class="m-val">$${f.fdi}B</span></div>
-    ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),440,60,'#dd8844')}</div>`:''}`;
+    ${f.fH.length>1?`<div style="margin:8px -4px 14px">${svgTimeline(f.fH.map((v,i)=>({l:String(2019+i),v})),440,100,'#dd8844')}</div>`:''}`;
   const f2=CD_FIN2[code];
   if(f2){
     const fxCompLabels=['美元','歐元','黃金','其他'];
@@ -1807,7 +1813,7 @@ function renderFinance(code){
     <div class="sec-title" style="color:#eee">外匯儲備</div>
     <div class="metric"><span class="m-lbl">總儲備</span><span class="m-val">$${f2.fx>=1000?(f2.fx/1000).toFixed(1)+'T':Math.round(f2.fx)+'B'}</span></div>
     <div class="metric"><span class="m-lbl">可覆蓋進口</span><span class="m-val" style="color:${f2.fxM>6?'#44aa66':f2.fxM>3?'#ddaa44':'#dd4444'}">${f2.fxM.toFixed(1)} 個月</span></div>
-    <div style="display:flex;gap:6px;margin:10px 0 14px">${f2.fxComp.map((v,i)=>`<div style="flex:${v};height:22px;background:${fxCompColors[i]};border-radius:${i===0?'4px 0 0 4px':i===3?'0 4px 4px 0':'0'};position:relative;min-width:16px;display:flex;align-items:center;justify-content:center"><span style="font-size:8px;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.5)">${v}%</span></div>`).join('')}</div>
+    <div style="display:flex;gap:6px;margin:10px 0 14px">${f2.fxComp.map((v,i)=>`<div style="flex:${v};height:22px;background:${fxCompColors[i]};border-radius:${i===0?'4px 0 0 4px':i===3?'0 4px 4px 0':'0'};position:relative;min-width:16px;display:flex;align-items:center;justify-content:center"><span style="font-size:11px;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.5)">${v}%</span></div>`).join('')}</div>
     <div style="display:flex;gap:12px;margin-bottom:14px">${fxCompLabels.map((l,i)=>`<div style="display:flex;align-items:center;gap:4px;font-size:9px"><span style="width:8px;height:8px;border-radius:2px;background:${fxCompColors[i]};display:inline-block"></span><span style="color:#eee">${l}</span></div>`).join('')}</div>
     <div class="sec-title" style="color:#eee">國際收支（佔GDP%）</div>
     <div style="display:flex;gap:8px;margin:8px 0 14px">
@@ -1839,8 +1845,8 @@ function renderSocial(code){
   const s=CD_SOC[code];if(!s)return;
   const hdiColor=s.hdi>=0.8?'#44aa66':s.hdi>=0.55?'#ddaa44':'#dd4444';
   const giniColor=s.gini<30?'#44aa66':s.gini<40?'#ddaa44':'#dd4444';
-  const radarVals=[s.le/90,s.ey/20,s.mys/15,(s.gni/80000)];
-  const radarLabels=['預期壽命','預期受教育','平均受教育','人均GNI'];
+  const radarVals=[s.le/90,s.ey/20,s.mys/15,s.gni/80000,s.museum/35000,s.art/100,s.inet/100,s.health/100];
+  const radarLabels=['預期壽命','預期受教','平均受教','人均GNI','博物館','藝術發展','網路普及','醫療品質'];
   let html=`<div class="sec-title" style="color:#eee">HDI 人類發展指數</div>
     <div style="display:flex;align-items:center;gap:16px;margin:8px 0 14px">
       <div style="width:64px;height:64px;border-radius:50%;border:3px solid ${hdiColor};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${hdiColor}">${s.hdi.toFixed(3)}</div>
@@ -1849,11 +1855,15 @@ function renderSocial(code){
         <div style="font-size:14px;font-weight:700;color:${hdiColor}">${s.hdi>=0.8?'極高':s.hdi>=0.7?'高':s.hdi>=0.55?'中':'低'}人類發展</div>
       </div>
     </div>
-    <div style="margin:4px 0 16px">${svgRadar(radarVals.map(v=>Math.min(1,Math.max(0.05,v))),radarLabels,200)}</div>
+    <div style="text-align:center;margin:4px 0 16px">${svgRadar(radarVals.map(v=>Math.min(1,Math.max(0.05,v))),radarLabels,300)}</div>
     <div class="metric"><span class="m-lbl">預期壽命</span><span class="m-val">${s.le.toFixed(1)} 歲</span></div>
     <div class="metric"><span class="m-lbl">預期受教育年數</span><span class="m-val">${s.ey.toFixed(1)} 年</span></div>
     <div class="metric"><span class="m-lbl">平均受教育年數</span><span class="m-val">${s.mys.toFixed(1)} 年</span></div>
     <div class="metric"><span class="m-lbl">人均 GNI (PPP)</span><span class="m-val">$${s.gni.toLocaleString()}</span></div>
+    <div class="metric"><span class="m-lbl">博物館數量</span><span class="m-val">${s.museum.toLocaleString()} 座</span></div>
+    <div class="metric"><span class="m-lbl">藝術發展程度</span><span class="m-val" style="color:${s.art>=80?'#44aa66':s.art>=50?'#ddaa44':'#dd4444'}">${s.art}/100</span></div>
+    <div class="metric"><span class="m-lbl">網路普及率</span><span class="m-val">${s.inet}%</span></div>
+    <div class="metric"><span class="m-lbl">醫療品質指數</span><span class="m-val" style="color:${s.health>=80?'#44aa66':s.health>=50?'#ddaa44':'#dd4444'}">${s.health}/100</span></div>
     <div class="sec-title" style="color:#eee;margin-top:18px">基尼係數（所得不平等）</div>
     <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
       <div style="font-size:22px;font-weight:700;color:${giniColor}">${s.gini.toFixed(1)}</div>
@@ -2020,6 +2030,11 @@ function drawHeatmap(){
     mesh.position.copy(pos);
     scene.add(mesh);heatDots.push(mesh);
   });
+}
+function globeZoom(dir){
+  const d=cam.position.length();
+  const nd=THREE.MathUtils.clamp(d+dir*0.5,ctrl.minDistance,ctrl.maxDistance);
+  cam.position.setLength(nd);
 }
 function toggleHeatmap(){
   heatmapOn=!heatmapOn;
@@ -2641,10 +2656,6 @@ function enLayerAll(on){
 }
 window.toggleEnLayer=toggleEnLayer;window.enLayerAll=enLayerAll;
 
-function switchEnTab(tab){
-  document.querySelectorAll('.en-tab').forEach(t=>t.classList.toggle('active',t.dataset.enTab===tab));
-}
-window.switchEnTab=switchEnTab;
 
 const EN_THEMES={
   geo:{nm:'Geo Map',url:'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',desc:'Classic NASA Blue Marble photography with natural terrain colors.'},
@@ -2658,9 +2669,9 @@ function setEnTheme(key){
   curEnTheme=key;
   const t=EN_THEMES[key];
   document.querySelectorAll('.et-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===key));
-  document.getElementById('en-theme-name').textContent=t.nm;
+  const nameEl=document.getElementById('en-theme-name');if(nameEl)nameEl.textContent=t.nm;
   document.getElementById('rs-theme-tag').textContent=t.nm;
-  document.querySelector('.en-theme-desc').innerHTML=`<div class="en-td-title">${key==='night'?'🌑':key==='geo'?'🌍':key==='holo'?'🔮':'🛰'} ${t.nm}</div><div class="en-td-text">${t.desc}</div>`;
+  const toggleName=document.getElementById('theme-toggle-name');if(toggleName)toggleName.textContent=t.nm;
   new THREE.TextureLoader().load(t.url,tex=>{
     if(gMesh){gMesh.material.map=tex;gMesh.material.needsUpdate=true;}
   });
@@ -2679,23 +2690,39 @@ function setEnFilter(mode){
 }
 window.setRouteWidth=setRouteWidth;window.setEnFilter=setEnFilter;
 
+function toggleThemeFloat(){
+  const p=document.getElementById('en-theme-float');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+window.toggleThemeFloat=toggleThemeFloat;
+
 (function oilTicker(){
-  const init={wti:71.24,brent:75.62,ng:2.87,ttf:35.40};
-  const cur={...init};
+  const items=[
+    {k:'wti',init:71.24,cur:71.24,pre:'$',step:0.12},
+    {k:'brent',init:75.62,cur:75.62,pre:'$',step:0.12},
+    {k:'ng',init:2.87,cur:2.87,pre:'$',step:0.02},
+    {k:'ttf',init:35.40,cur:35.40,pre:'€',step:0.3},
+    {k:'rbob',init:2.18,cur:2.18,pre:'$',step:0.015},
+    {k:'ho',init:2.42,cur:2.42,pre:'$',step:0.015}
+  ];
   function tick(){
-    ['wti','brent','ng','ttf'].forEach(k=>{
-      const step=(Math.random()-0.5)*(k==='ng'?0.02:k==='ttf'?0.3:0.12);
-      cur[k]=Math.round((cur[k]+step)*100)/100;
-      const el=document.getElementById('op-'+k);
-      const chgEl=document.getElementById('op-'+k+'-chg');
-      if(!el||!chgEl)return;
-      el.textContent=(k==='ttf'?'€':'$')+cur[k].toFixed(2);
-      const chg=cur[k]-init[k];
-      chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2);
-      chgEl.className='op-chg '+(chg>=0?'op-up':'op-down');
+    items.forEach(it=>{
+      const delta=(Math.random()-0.5)*it.step;
+      it.cur=Math.round((it.cur+delta)*100)/100;
+      const el=document.getElementById('op-'+it.k);
+      const chgEl=document.getElementById('op-'+it.k+'-chg');
+      const pctEl=document.getElementById('op-'+it.k+'-pct');
+      if(!el)return;
+      el.textContent=it.pre+it.cur.toFixed(2);
+      const chg=it.cur-it.init;
+      const pct=chg/it.init*100;
+      if(chgEl){chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2);chgEl.className='op-chg '+(chg>=0?'op-up':'op-down');}
+      if(pctEl){pctEl.textContent='('+(pct>=0?'+':'')+pct.toFixed(2)+'%)';pctEl.className='op-pct '+(pct>=0?'op-up':'op-down');}
     });
+    const ts=document.getElementById('op-ts');
+    if(ts)ts.textContent='Updated: '+new Date().toISOString().replace('T',' ').slice(0,19)+' UTC';
   }
-  setInterval(tick,3000);
+  setInterval(tick,3000);tick();
 })();
 
 boot();
