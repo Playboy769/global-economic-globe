@@ -151,7 +151,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .mt-btn:hover:not(.active){color:#eee}
 #energy-ui{display:none;position:absolute;inset:0;z-index:15;pointer-events:none}
 #energy-ui>*{pointer-events:auto}
-#en-left{position:absolute;left:0;top:0;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
+#en-left{position:absolute;left:0;top:0;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4;font-size:12px}
+#en-font-ctrl{position:sticky;top:0;z-index:5;display:flex;justify-content:flex-end;gap:4px;padding:6px 10px;background:rgba(10,14,20,0.95);border-bottom:1px solid rgba(255,255,255,0.06)}
+#en-font-ctrl button{width:26px;height:22px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#eee;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:Consolas,monospace}
+#en-font-ctrl button:hover{background:rgba(255,255,255,0.12)}
+#en-font-ctrl span{color:#888;font-size:10px;display:flex;align-items:center;margin-right:2px}
 #en-left::-webkit-scrollbar{width:6px}
 #en-left::-webkit-scrollbar-track{background:rgba(255,255,255,0.02);border-radius:3px}
 #en-left::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3a6fb5,#1a3a6a);border-radius:3px;border:1px solid rgba(255,255,255,0.05)}
@@ -217,6 +221,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .op-pct{font-size:10px;font-weight:600;font-family:Consolas,monospace}
 .op-label{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-left:auto}
 .op-up{color:#44dd88}.op-down{color:#dd4444}
+.op-spark{width:100%;height:40px;margin-top:4px;border-radius:4px;display:block}
 .op-ts{font-size:8px;color:#555;text-align:right;margin-top:10px;font-family:Consolas,monospace}
 #theme-toggle{width:100%;padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:#aaa;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:8px;margin:10px 16px;box-sizing:border-box;width:calc(100% - 32px)}
 #theme-toggle:hover{background:rgba(74,170,221,0.06);color:#4ad}
@@ -349,6 +354,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
   <!-- Energy Mode UI -->
   <div id="energy-ui">
     <div id="en-left">
+      <div id="en-font-ctrl"><span id="en-clock" style="color:#aaa;font-size:10px;font-family:Consolas,monospace;margin-right:auto"></span><span>FONT</span><button onclick="enFontSize(-1)">A-</button><button onclick="enFontSize(1)">A+</button></div>
       <div class="en-sec">
         <div class="en-sec-head"><span class="en-sec-title">Layers / Legend</span><div class="en-sec-btns"><button class="en-sec-btn" onclick="enLayerAll(true)">ALL</button><button class="en-sec-btn" onclick="enLayerAll(false)">NONE</button></div></div>
         <div id="en-layers">
@@ -389,13 +395,14 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
       <div id="hub-detail"></div>
       <div id="oil-panel">
         <div class="op-head"><span class="op-live"></span>能源即時報價</div>
-        <div class="op-item"><div class="op-item-top"><span class="op-name">WTI Crude Oil</span><span class="op-price" id="op-wti">$71.24</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-wti-chg">+0.38</span><span class="op-pct op-up" id="op-wti-pct">(+0.53%)</span><span class="op-label">Daily Chg</span></div></div>
-        <div class="op-item"><div class="op-item-top"><span class="op-name">Brent Crude Oil</span><span class="op-price" id="op-brent">$75.62</span></div><div class="op-item-bot"><span class="op-chg op-down" id="op-brent-chg">-0.15</span><span class="op-pct op-down" id="op-brent-pct">(-0.20%)</span><span class="op-label">Daily Chg</span></div></div>
-        <div class="op-item"><div class="op-item-top"><span class="op-name">Henry Hub NG</span><span class="op-price" id="op-ng">$2.87</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-ng-chg">+0.04</span><span class="op-pct op-up" id="op-ng-pct">(+1.41%)</span><span class="op-label">Daily Chg</span></div></div>
-        <div class="op-item"><div class="op-item-top"><span class="op-name">TTF (EU Gas)</span><span class="op-price" id="op-ttf">€35.40</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-ttf-chg">+0.82</span><span class="op-pct op-up" id="op-ttf-pct">(+2.37%)</span><span class="op-label">Daily Chg</span></div></div>
-        <div class="op-item"><div class="op-item-top"><span class="op-name">RBOB Gasoline</span><span class="op-price" id="op-rbob">$2.18</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-rbob-chg">+0.03</span><span class="op-pct op-up" id="op-rbob-pct">(+1.39%)</span><span class="op-label">Daily Chg</span></div></div>
-        <div class="op-item"><div class="op-item-top"><span class="op-name">Heating Oil</span><span class="op-price" id="op-ho">$2.42</span></div><div class="op-item-bot"><span class="op-chg op-down" id="op-ho-chg">-0.01</span><span class="op-pct op-down" id="op-ho-pct">(-0.41%)</span><span class="op-label">Daily Chg</span></div></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">WTI Crude Oil</span><span class="op-price" id="op-wti">$71.24</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-wti-chg">+0.38</span><span class="op-pct op-up" id="op-wti-pct">(+0.53%)</span><span class="op-label">Daily Chg</span></div><canvas id="op-spark-wti" class="op-spark" width="300" height="40"></canvas></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">Brent Crude Oil</span><span class="op-price" id="op-brent">$75.62</span></div><div class="op-item-bot"><span class="op-chg op-down" id="op-brent-chg">-0.15</span><span class="op-pct op-down" id="op-brent-pct">(-0.20%)</span><span class="op-label">Daily Chg</span></div><canvas id="op-spark-brent" class="op-spark" width="300" height="40"></canvas></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">Henry Hub NG</span><span class="op-price" id="op-ng">$2.87</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-ng-chg">+0.04</span><span class="op-pct op-up" id="op-ng-pct">(+1.41%)</span><span class="op-label">Daily Chg</span></div><canvas id="op-spark-ng" class="op-spark" width="300" height="40"></canvas></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">TTF (EU Gas)</span><span class="op-price" id="op-ttf">€35.40</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-ttf-chg">+0.82</span><span class="op-pct op-up" id="op-ttf-pct">(+2.37%)</span><span class="op-label">Daily Chg</span></div><canvas id="op-spark-ttf" class="op-spark" width="300" height="40"></canvas></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">RBOB Gasoline</span><span class="op-price" id="op-rbob">$2.18</span></div><div class="op-item-bot"><span class="op-chg op-up" id="op-rbob-chg">+0.03</span><span class="op-pct op-up" id="op-rbob-pct">(+1.39%)</span><span class="op-label">Daily Chg</span></div><canvas id="op-spark-rbob" class="op-spark" width="300" height="40"></canvas></div>
+        <div class="op-item"><div class="op-item-top"><span class="op-name">Heating Oil</span><span class="op-price" id="op-ho">$2.42</span></div><div class="op-item-bot"><span class="op-chg op-down" id="op-ho-chg">-0.01</span><span class="op-pct op-down" id="op-ho-pct">(-0.41%)</span><span class="op-label">Daily Chg</span></div><canvas id="op-spark-ho" class="op-spark" width="300" height="40"></canvas></div>
         <div class="op-ts" id="op-ts">Updated: --</div>
+        <div class="op-ts" id="op-src">⏳ Connecting...</div>
       </div>
       <button id="theme-toggle" onclick="toggleThemeFloat()">🎨 地球主題 <span id="theme-toggle-name">Night Map</span></button>
     </div>
@@ -1228,7 +1235,7 @@ async function boot(){
       if(overlap){s.visible=false;}else{s.visible=true;rects.push(rect);}
     });
   }
-  (function loop(){requestAnimationFrame(loop); ctrl.update(); if(enMode)animateFlowDots(); updateLabels(); rend.render(scene,cam);})();
+  (function loop(){requestAnimationFrame(loop); ctrl.update(); if(enMode){animateFlowDots();animateEnPointer(0.016);} updateLabels(); rend.render(scene,cam);})();
 }
 
 function onResize(){
@@ -2266,40 +2273,40 @@ const EN_COLORS={prod:0xee4444,offshore:0x44aadd,lng:0x44dd88,export:0xddaa44,cr
 const EN_ROUTE_COLORS={crude:0x4488cc,lng:0x44cc88,pipe:0xcc8844,disrupted:0xcc4444};
 
 const EN_CHOKEPOINTS=[
-{nm:'Gulf of Mexico Deepwater (US)',lat:27.0,lng:-90.0,mbd:1.8},
-{nm:'Strait of Hormuz',lat:26.6,lng:56.2,mbd:20.9,alert:true},
-{nm:'Strait of Malacca',lat:2.5,lng:101.5,mbd:22.2},
-{nm:'Suez Canal / SUMED Pipeline',lat:30.5,lng:32.3,mbd:4.9},
-{nm:'Bab el-Mandeb Strait',lat:12.6,lng:43.3,mbd:4.2},
-{nm:'Cape of Good Hope',lat:-34.4,lng:18.5,mbd:9.1},
-{nm:'Turkish Straits (Bosphorus)',lat:41.1,lng:29.1,mbd:3.7},
-{nm:'Strait of Gibraltar',lat:36.0,lng:-5.6,mbd:3.4},
-{nm:'Danish Straits (Skagerrak/Kattegat)',lat:57.7,lng:10.6,mbd:4.0},
-{nm:'South China Sea SLOCs',lat:12.0,lng:114.0,mbd:15.0},
-{nm:'Panama Canal',lat:9.1,lng:-79.7,mbd:0.9},
-{nm:'Mozambique Channel',lat:-16.0,lng:41.0,mbd:2.1},
-{nm:'Lombok Strait',lat:-8.5,lng:115.7,mbd:1.8},
-{nm:'Sunda Strait',lat:-6.1,lng:105.9,mbd:0.5},
-{nm:'Taiwan Strait',lat:24.0,lng:119.0,mbd:5.3},
-{nm:'Korea Strait',lat:34.0,lng:129.0,mbd:4.1},
-{nm:'Bass Strait (Australia)',lat:-39.5,lng:145.5,mbd:0.6},
-{nm:'Yucatan Channel',lat:21.5,lng:-86.5,mbd:0.4},
-{nm:'Windward Passage',lat:19.8,lng:-73.5,mbd:0.3},
-{nm:'Mona Passage',lat:18.5,lng:-67.8,mbd:0.3},
-{nm:'Tsugaru Strait',lat:41.5,lng:140.5,mbd:0.2},
-{nm:'La Pérouse Strait',lat:45.8,lng:142.0,mbd:0.3},
-{nm:'English Channel',lat:50.5,lng:0.0,mbd:3.2},
-{nm:'Skagerrak Strait',lat:58.0,lng:9.0,mbd:2.8},
-{nm:'Øresund Bridge-Strait',lat:55.6,lng:12.7,mbd:1.5},
-{nm:'Florida Straits',lat:24.0,lng:-81.0,mbd:1.1},
-{nm:'Strait of Bonifacio',lat:41.3,lng:9.2,mbd:0.4},
-{nm:'Strait of Messina',lat:38.2,lng:15.6,mbd:0.8},
-{nm:'Strait of Otranto',lat:40.3,lng:19.0,mbd:0.6},
-{nm:'Strait of Tartary',lat:51.0,lng:141.5,mbd:0.2},
-{nm:'Palk Strait',lat:9.5,lng:79.5,mbd:0.3},
-{nm:'Strait of Tiran',lat:28.0,lng:34.5,mbd:0.2},
-{nm:'Strait of Magellan',lat:-53.5,lng:-70.5,mbd:0.1},
-{nm:'Drake Passage',lat:-60.0,lng:-65.0,mbd:0.05}
+{nm:'Gulf of Mexico Deepwater (US)',cn:'墨西哥灣深水區',country:'美國',lat:27.0,lng:-90.0,mbd:1.8},
+{nm:'Strait of Hormuz',cn:'荷莫茲海峽',country:'伊朗/阿曼',lat:26.6,lng:56.2,mbd:20.9,alert:true},
+{nm:'Strait of Malacca',cn:'麻六甲海峽',country:'馬來西亞/印尼/新加坡',lat:2.5,lng:101.5,mbd:22.2},
+{nm:'Suez Canal / SUMED Pipeline',cn:'蘇伊士運河',country:'埃及',lat:30.5,lng:32.3,mbd:4.9},
+{nm:'Bab el-Mandeb Strait',cn:'曼德海峽',country:'葉門/吉布地',lat:12.6,lng:43.3,mbd:4.2},
+{nm:'Cape of Good Hope',cn:'好望角',country:'南非',lat:-34.4,lng:18.5,mbd:9.1},
+{nm:'Turkish Straits (Bosphorus)',cn:'博斯普魯斯海峽',country:'土耳其',lat:41.1,lng:29.1,mbd:3.7},
+{nm:'Strait of Gibraltar',cn:'直布羅陀海峽',country:'英國/西班牙',lat:36.0,lng:-5.6,mbd:3.4},
+{nm:'Danish Straits (Skagerrak/Kattegat)',cn:'丹麥海峽群',country:'丹麥',lat:57.7,lng:10.6,mbd:4.0},
+{nm:'South China Sea SLOCs',cn:'南海航線',country:'多國爭議',lat:12.0,lng:114.0,mbd:15.0},
+{nm:'Panama Canal',cn:'巴拿馬運河',country:'巴拿馬',lat:9.1,lng:-79.7,mbd:0.9},
+{nm:'Mozambique Channel',cn:'莫三比克海峽',country:'莫三比克/馬達加斯加',lat:-16.0,lng:41.0,mbd:2.1},
+{nm:'Lombok Strait',cn:'龍目海峽',country:'印尼',lat:-8.5,lng:115.7,mbd:1.8},
+{nm:'Sunda Strait',cn:'巽他海峽',country:'印尼',lat:-6.1,lng:105.9,mbd:0.5},
+{nm:'Taiwan Strait',cn:'台灣海峽',country:'台灣/中國',lat:24.0,lng:119.0,mbd:5.3},
+{nm:'Korea Strait',cn:'朝鮮海峽',country:'韓國/日本',lat:34.0,lng:129.0,mbd:4.1},
+{nm:'Bass Strait (Australia)',cn:'巴斯海峽',country:'澳洲',lat:-39.5,lng:145.5,mbd:0.6},
+{nm:'Yucatan Channel',cn:'猶加敦海峽',country:'墨西哥/古巴',lat:21.5,lng:-86.5,mbd:0.4},
+{nm:'Windward Passage',cn:'向風海峽',country:'古巴/海地',lat:19.8,lng:-73.5,mbd:0.3},
+{nm:'Mona Passage',cn:'莫納海峽',country:'波多黎各/多明尼加',lat:18.5,lng:-67.8,mbd:0.3},
+{nm:'Tsugaru Strait',cn:'津輕海峽',country:'日本',lat:41.5,lng:140.5,mbd:0.2},
+{nm:'La Pérouse Strait',cn:'宗谷海峽',country:'日本/俄羅斯',lat:45.8,lng:142.0,mbd:0.3},
+{nm:'English Channel',cn:'英吉利海峽',country:'英國/法國',lat:50.5,lng:0.0,mbd:3.2},
+{nm:'Skagerrak Strait',cn:'斯卡格拉克海峽',country:'丹麥/挪威',lat:58.0,lng:9.0,mbd:2.8},
+{nm:'Øresund Bridge-Strait',cn:'厄勒海峽',country:'丹麥/瑞典',lat:55.6,lng:12.7,mbd:1.5},
+{nm:'Florida Straits',cn:'佛羅里達海峽',country:'美國/古巴',lat:24.0,lng:-81.0,mbd:1.1},
+{nm:'Strait of Bonifacio',cn:'博尼法喬海峽',country:'法國/義大利',lat:41.3,lng:9.2,mbd:0.4},
+{nm:'Strait of Messina',cn:'乃西拿海峽',country:'義大利',lat:38.2,lng:15.6,mbd:0.8},
+{nm:'Strait of Otranto',cn:'奧特朗托海峽',country:'義大利/阿爾巴尼亞',lat:40.3,lng:19.0,mbd:0.6},
+{nm:'Strait of Tartary',cn:'韃靼海峽',country:'俄羅斯',lat:51.0,lng:141.5,mbd:0.2},
+{nm:'Palk Strait',cn:'保克海峽',country:'印度/斯里蘭卡',lat:9.5,lng:79.5,mbd:0.3},
+{nm:'Strait of Tiran',cn:'蒂朗海峽',country:'埃及/沙烏地阿拉伯',lat:28.0,lng:34.5,mbd:0.2},
+{nm:'Strait of Magellan',cn:'麥哲倫海峽',country:'智利',lat:-53.5,lng:-70.5,mbd:0.1},
+{nm:'Drake Passage',cn:'德雷克海峽',country:'國際水域',lat:-60.0,lng:-65.0,mbd:0.05}
 ];
 
 const EN_HUB_DATA=[
@@ -2592,7 +2599,7 @@ const EN_SEA_ROUTES=[
   if(!list)return;
   EN_CHOKEPOINTS.forEach(cp=>{
     const d=document.createElement('div');d.className='en-maritime';
-    d.innerHTML=`${cp.alert?'<span class="em-alert">⚠</span>':''}<span class="em-dot" style="background:${cp.alert?'#e44':'#4ad'}"></span><span class="em-nm">${cp.nm}</span><span class="em-vol">${cp.mbd} mb/d</span>`;
+    d.innerHTML=`${cp.alert?'<span class="em-alert">⚠</span>':''}<span class="em-dot" style="background:${cp.alert?'#e44':'#4ad'}"></span><span class="em-nm">${cp.cn||cp.nm}<span style="display:block;font-size:9px;color:#999;margin-top:1px">${cp.nm}${cp.country?' · '+cp.country:''}</span></span><span class="em-vol">${cp.mbd} mb/d</span>`;
     d.onclick=()=>flyToEnHub(cp.lat,cp.lng,cp.nm);
     list.appendChild(d);
   });
@@ -2613,7 +2620,7 @@ function switchMode(mode){
   document.getElementById('energy-ui').style.display=enMode?'block':'none';
   document.getElementById('heatmap-legend').style.display='none';
   if(enMode){clearNetArcs();clearHeatDots();renderEnScene();}
-  else{clearEnGlobe();if(heatmapOn)drawHeatmap();if(networkOn)drawNetwork();}
+  else{clearEnGlobe();clearEnPointer();if(heatmapOn)drawHeatmap();if(networkOn)drawNetwork();}
 }
 window.switchMode=switchMode;
 
@@ -2654,14 +2661,11 @@ function renderEnScene(){
   EN_SEA_ROUTES.forEach(r=>{
     const wp=[r.from,...(r.via||[]),r.to];
     const col=EN_ROUTE_COLORS[r.type]||0xffffff;
+    const knots=wp.map(p=>ll2v(p[0],p[1],R));
+    const curve=new THREE.CatmullRomCurve3(knots,false,'catmullrom',0.5);
+    const totalSteps=Math.max(80,wp.length*30);
     const pts=[];
-    for(let i=0;i<wp.length-1;i++){
-      const a=ll2v(wp[i][0],wp[i][1],R).normalize();
-      const b=ll2v(wp[i+1][0],wp[i+1][1],R).normalize();
-      const seg=slerpArcPts(a,b,0.006,20);
-      if(i>0)seg.shift();
-      pts.push(...seg);
-    }
+    for(let i=0;i<=totalSteps;i++){const t=i/totalSteps;const p=curve.getPoint(t);const elev=0.006*Math.sin(Math.PI*t);p.normalize().multiplyScalar(R*(1+elev));pts.push(p);}
     const lineOp=enRouteMode==='uniform'?0.25:enRouteMode==='flow'?Math.min(0.65,0.08+r.vol*0.05):0.05;
     const mat=new THREE.LineBasicMaterial({color:col,opacity:r.type==='disrupted'?0.4:lineOp,transparent:true});
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);
@@ -2696,11 +2700,47 @@ function animateFlowDots(){
   });
 }
 
+let enPointerObj=null;
+function clearEnPointer(){if(enPointerObj){scene.remove(enPointerObj);enPointerObj=null;}}
+function showEnPointer(lat,lng){
+  clearEnPointer();
+  const grp=new THREE.Group();
+  const pos=ll2v(lat,lng,R);
+  const up=pos.clone().normalize();
+  const coneH=0.12,coneR=0.025;
+  const cGeo=new THREE.ConeGeometry(coneR,coneH,12);
+  const cMat=new THREE.MeshBasicMaterial({color:0xff3333,transparent:true,opacity:0.9});
+  const cone=new THREE.Mesh(cGeo,cMat);
+  cone.position.copy(up.clone().multiplyScalar(R+coneH*0.5+0.04));
+  cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),up.clone().negate());
+  grp.add(cone);
+  const ringGeo=new THREE.RingGeometry(0.018,0.028,24);
+  const ringMat=new THREE.MeshBasicMaterial({color:0xff3333,transparent:true,opacity:0.7,side:THREE.DoubleSide});
+  const ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.position.copy(up.clone().multiplyScalar(R+0.005));
+  ring.lookAt(up.clone().multiplyScalar(R+1));
+  grp.add(ring);
+  grp.userData={cone,ring,up,elapsed:0};
+  scene.add(grp);
+  enPointerObj=grp;
+}
+function animateEnPointer(dt){
+  if(!enPointerObj)return;
+  const d=enPointerObj.userData;d.elapsed+=dt;
+  const bob=Math.sin(d.elapsed*3)*0.015;
+  d.cone.position.copy(d.up.clone().multiplyScalar(R+0.06+0.04+bob));
+  const pulse=0.7+Math.sin(d.elapsed*4)*0.3;
+  d.ring.material.opacity=pulse;
+  const s=1+Math.sin(d.elapsed*4)*0.15;
+  d.ring.scale.set(s,s,1);
+}
+
 function flyToEnHub(lat,lng,nm){
   const target=ll2v(lat,lng,R*3).normalize().multiplyScalar(3.5);
   const src=cam.position.clone();
   let t=0;
   ctrl.autoRotate=false;
+  showEnPointer(lat,lng);
   (function step(){t=Math.min(1,t+0.025);const e=t<.5?2*t*t:-1+(4-2*t)*t;cam.position.lerpVectors(src,target,e);cam.lookAt(0,0,0);if(t<1)requestAnimationFrame(step);})();
   if(nm){
     const hub=EN_HUB_DATA.find(h=>h.nm===nm)||EN_CHOKEPOINTS.find(c=>c.nm===nm);
@@ -2716,7 +2756,8 @@ function showHubDetail(hub){
   const typeColors={prod:isOffshore?'#4ad':'#e44',offshore:'#4ad',lng:'#4d8',export:isTransit?'#f90':'#da4',crisis:'#f4a'};
   const type=hub.type||(hub.mbd!==undefined?'offshore':'prod');
   el.innerHTML=`<div class="en-hub-info">
-    <div class="ehi-name">${hub.nm}</div>
+    <div class="ehi-name">${hub.cn||hub.nm}</div>
+    ${hub.cn?`<div style="font-size:10px;color:#aaa;margin-top:2px">${hub.nm}</div>`:''}
     <div class="ehi-type" style="color:${typeColors[type]||'#4ad'}">${typeLabels[type]||type}</div>
     <div class="ehi-row"><span class="ehi-lbl">Capacity / Info</span><span class="ehi-val">${hub.info||hub.mbd+' mb/d'}</span></div>
     ${hub.country?`<div class="ehi-row"><span class="ehi-lbl">Country</span><span class="ehi-val">${hub.country}</span></div>`:''}
@@ -2731,12 +2772,16 @@ function toggleEnLayer(layer){
   if(el){const tog=el.querySelector('.el-tog');if(tog)tog.style.opacity=EN_LAYERS[layer]?1:0.2;}
   if(enMode)renderEnScene();
 }
+let _enFS=12;
+function enFontSize(d){_enFS=Math.max(9,Math.min(18,_enFS+d));document.getElementById('en-left').style.fontSize=_enFS+'px';}
+(function enClock(){const el=document.getElementById('en-clock');if(!el)return;const pad=n=>String(n).padStart(2,'0');function tick(){const d=new Date();el.textContent=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}tick();setInterval(tick,1000);})();
+
 function enLayerAll(on){
   Object.keys(EN_LAYERS).forEach(k=>{EN_LAYERS[k]=on;});
   document.querySelectorAll('.en-layer').forEach(el=>{el.classList.toggle('active',on);const tog=el.querySelector('.el-tog');if(tog)tog.style.opacity=on?1:0.2;});
   if(enMode)renderEnScene();
 }
-window.toggleEnLayer=toggleEnLayer;window.enLayerAll=enLayerAll;
+window.toggleEnLayer=toggleEnLayer;window.enLayerAll=enLayerAll;window.enFontSize=enFontSize;
 
 
 const EN_THEMES={
@@ -2777,18 +2822,95 @@ function toggleThemeFloat(){
 window.toggleThemeFloat=toggleThemeFloat;
 
 (function oilTicker(){
+  const MAX_PTS=60;
+  const YAHOO={wti:'CL%3DF',brent:'BZ%3DF',ng:'NG%3DF',ttf:'TTF%3DF',rbob:'RB%3DF',ho:'HO%3DF'};
   const items=[
-    {k:'wti',init:71.24,cur:71.24,pre:'$',step:0.12},
-    {k:'brent',init:75.62,cur:75.62,pre:'$',step:0.12},
-    {k:'ng',init:2.87,cur:2.87,pre:'$',step:0.02},
-    {k:'ttf',init:35.40,cur:35.40,pre:'€',step:0.3},
-    {k:'rbob',init:2.18,cur:2.18,pre:'$',step:0.015},
-    {k:'ho',init:2.42,cur:2.42,pre:'$',step:0.015}
+    {k:'wti',init:0,cur:0,pre:'$',step:0.12,hist:[],live:false,err:''},
+    {k:'brent',init:0,cur:0,pre:'$',step:0.12,hist:[],live:false,err:''},
+    {k:'ng',init:0,cur:0,pre:'$',step:0.02,hist:[],live:false,err:''},
+    {k:'ttf',init:0,cur:0,pre:'€',step:0.3,hist:[],live:false,err:''},
+    {k:'rbob',init:0,cur:0,pre:'$',step:0.015,hist:[],live:false,err:''},
+    {k:'ho',init:0,cur:0,pre:'$',step:0.015,hist:[],live:false,err:''}
   ];
+
+  async function fetchOne(sym){
+    const raw='https://query2.finance.yahoo.com/v8/finance/chart/'+sym+'?interval=5m&range=1d&includePrePost=false';
+    const urls=[
+      'https://api.allorigins.win/raw?url='+encodeURIComponent(raw),
+      'https://corsproxy.io/?'+encodeURIComponent(raw)
+    ];
+    let lastErr='';
+    for(const u of urls){
+      try{
+        const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
+        const r=await fetch(u,{signal:ac.signal});clearTimeout(t);
+        if(!r.ok){lastErr='HTTP_'+r.status;continue;}
+        const d=await r.json();
+        if(d.chart&&d.chart.error){lastErr=d.chart.error.code||'API_ERROR';continue;}
+        const res=d.chart.result[0];
+        const closes=res.indicators.quote[0].close.filter(v=>v!=null);
+        if(closes.length<3){lastErr='NO_DATA';continue;}
+        return{ok:true,prices:closes,prev:res.meta.chartPreviousClose||res.meta.previousClose||closes[0]};
+      }catch(e){lastErr=e.name==='AbortError'?'TIMEOUT':(e.message||'NETWORK_ERROR').slice(0,30);continue;}
+    }
+    return{ok:false,err:lastErr||'UNKNOWN'};
+  }
+
+  function showItemError(it){
+    const el=document.getElementById('op-'+it.k);
+    if(el)el.innerHTML='<span style="color:#e44;font-size:10px">ERR:'+it.err+'</span>';
+    const chgEl=document.getElementById('op-'+it.k+'-chg');
+    const pctEl=document.getElementById('op-'+it.k+'-pct');
+    if(chgEl){chgEl.textContent='--';chgEl.className='op-chg';}
+    if(pctEl){pctEl.textContent='';pctEl.className='op-pct';}
+    const cv=document.getElementById('op-spark-'+it.k);
+    if(cv){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#e44';ctx.font='11px monospace';ctx.fillText('API Error: '+it.err,4,24);}
+  }
+
+  async function fetchAll(){
+    const src=document.getElementById('op-src');
+    if(src)src.textContent='🔄 Fetching...';
+    await Promise.allSettled(items.map(async it=>{
+      const d=await fetchOne(YAHOO[it.k]);
+      if(d.ok){it.init=d.prev;it.hist=d.prices.slice(-MAX_PTS);it.cur=it.hist[it.hist.length-1];it.live=true;it.err='';}
+      else{it.live=false;it.err=d.err;showItemError(it);}
+    }));
+    const live=items.filter(it=>it.live),fail=items.filter(it=>!it.live);
+    if(src){
+      if(live.length===6)src.innerHTML='📡 Yahoo Finance (6/6 Live)';
+      else if(live.length>0)src.innerHTML='📡 '+live.length+'/6 Live · <span style="color:#e44">'+fail.map(it=>it.k.toUpperCase()+':'+it.err).join(' ')+'</span>';
+      else src.innerHTML='❌ API Error: <span style="color:#e44">'+fail[0].err+'</span>';
+    }
+    tick();
+  }
+
+  function drawSpark(it){
+    if(!it.live)return;
+    const cv=document.getElementById('op-spark-'+it.k);if(!cv)return;
+    const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,h=it.hist;
+    if(h.length<2)return;
+    const mn=Math.min(...h),mx=Math.max(...h),rng=mx-mn||1;
+    ctx.clearRect(0,0,W,H);
+    const up=h[h.length-1]>=it.init;
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,up?'rgba(68,204,102,0.25)':'rgba(221,68,68,0.25)');
+    grad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.moveTo(0,H);
+    h.forEach((v,i)=>{const x=i/(h.length-1)*W,y=H-4-((v-mn)/rng)*(H-8);ctx.lineTo(x,y);});
+    ctx.lineTo(W,H);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();
+    h.forEach((v,i)=>{const x=i/(h.length-1)*W,y=H-4-((v-mn)/rng)*(H-8);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle=up?'#44cc66':'#dd4444';ctx.lineWidth=1.5;ctx.stroke();
+    const lastY=H-4-((h[h.length-1]-mn)/rng)*(H-8);
+    ctx.beginPath();ctx.arc(W-1,lastY,2.5,0,Math.PI*2);ctx.fillStyle=up?'#44cc66':'#dd4444';ctx.fill();
+  }
+
   function tick(){
     items.forEach(it=>{
+      if(!it.live)return;
       const delta=(Math.random()-0.5)*it.step;
       it.cur=Math.round((it.cur+delta)*100)/100;
+      it.hist.push(it.cur);if(it.hist.length>MAX_PTS)it.hist.shift();
       const el=document.getElementById('op-'+it.k);
       const chgEl=document.getElementById('op-'+it.k+'-chg');
       const pctEl=document.getElementById('op-'+it.k+'-pct');
@@ -2798,11 +2920,15 @@ window.toggleThemeFloat=toggleThemeFloat;
       const pct=chg/it.init*100;
       if(chgEl){chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2);chgEl.className='op-chg '+(chg>=0?'op-up':'op-down');}
       if(pctEl){pctEl.textContent='('+(pct>=0?'+':'')+pct.toFixed(2)+'%)';pctEl.className='op-pct '+(pct>=0?'op-up':'op-down');}
+      drawSpark(it);
     });
     const ts=document.getElementById('op-ts');
     if(ts)ts.textContent='Updated: '+new Date().toISOString().replace('T',' ').slice(0,19)+' UTC';
   }
-  setInterval(tick,3000);tick();
+
+  fetchAll();
+  setInterval(tick,3000);
+  setInterval(fetchAll,60000);
 })();
 
 boot();
