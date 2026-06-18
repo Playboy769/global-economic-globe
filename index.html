@@ -25,7 +25,12 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .ld-spin{width:44px;height:44px;border:2px solid rgba(255,255,255,0.06);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ld-txt{color:#eee;font-size:14px;font-weight:400}
-#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:500px;z-index:20;background:rgba(62,58,52,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+#sidebar{position:fixed;right:16px;top:16px;height:calc(100vh - 32px);width:500px;min-width:320px;max-width:80vw;min-height:300px;max-height:calc(100vh - 32px);z-index:20;background:rgba(62,58,52,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+#sidebar .resize-handle-left{position:absolute;left:-4px;top:0;width:8px;height:100%;cursor:ew-resize;z-index:25}
+#sidebar .resize-handle-left:hover,#sidebar .resize-handle-left.active{background:linear-gradient(90deg,transparent,rgba(100,160,255,0.25),transparent)}
+#sidebar .resize-handle-bottom{position:absolute;bottom:-4px;left:0;width:100%;height:8px;cursor:ns-resize;z-index:25}
+#sidebar .resize-handle-bottom:hover,#sidebar .resize-handle-bottom.active{background:linear-gradient(180deg,transparent,rgba(100,160,255,0.25),transparent)}
+#sidebar .resize-handle-corner{position:absolute;left:-6px;bottom:-6px;width:14px;height:14px;cursor:nesw-resize;z-index:26}
 .drag-handle{height:28px;cursor:grab;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .drag-handle:active{cursor:grabbing}
 .drag-pill{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.12)}
@@ -43,9 +48,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .tab-btn:hover{color:#ddd}
 .tab-btn.active{color:#fff;border-bottom-color:#fff}
 #tab-panels{flex:1;overflow-y:auto;padding:16px 22px}
-#tab-panels::-webkit-scrollbar{width:3px}
-#tab-panels::-webkit-scrollbar-track{background:transparent}
-#tab-panels::-webkit-scrollbar-thumb{background:#111;border-radius:2px}
+#tab-panels::-webkit-scrollbar,#rank-list::-webkit-scrollbar{width:6px}
+#tab-panels::-webkit-scrollbar-track,#rank-list::-webkit-scrollbar-track{background:rgba(255,255,255,0.02);border-radius:3px}
+#tab-panels::-webkit-scrollbar-thumb,#rank-list::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3a6fb5,#1a3a6a);border-radius:3px;border:1px solid rgba(255,255,255,0.05)}
+#tab-panels::-webkit-scrollbar-thumb:hover,#rank-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a88dd,#2a5a9a)}
 .panel{display:none}
 .panel.active{display:block}
 .metric{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #0a0a0a;font-size:13px}
@@ -88,9 +94,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .custom-select.open .cs-display{border-color:rgba(100,160,255,0.4);box-shadow:0 0 0 2px rgba(100,160,255,0.08);border-radius:10px 10px 0 0}
 .cs-dropdown{display:none;position:absolute;top:100%;left:0;right:0;max-height:260px;overflow-y:auto;background:rgba(38,36,32,0.97);border:1px solid rgba(100,160,255,0.2);border-top:none;border-radius:0 0 10px 10px;z-index:50;backdrop-filter:blur(12px)}
 .custom-select.open .cs-dropdown{display:block}
-.cs-dropdown::-webkit-scrollbar{width:4px}
-.cs-dropdown::-webkit-scrollbar-track{background:transparent}
-.cs-dropdown::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:2px}
+.cs-dropdown::-webkit-scrollbar{width:6px}
+.cs-dropdown::-webkit-scrollbar-track{background:rgba(255,255,255,0.02);border-radius:3px}
+.cs-dropdown::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3a6fb5,#1a3a6a);border-radius:3px;border:1px solid rgba(255,255,255,0.05)}
+.cs-dropdown::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a88dd,#2a5a9a)}
 .cs-search{width:100%;padding:8px 12px;background:rgba(255,255,255,0.04);border:none;border-bottom:1px solid rgba(255,255,255,0.06);color:#fff;font-size:12px;outline:none;font-family:inherit}
 .cs-search::placeholder{color:rgba(255,255,255,0.25)}
 .cs-opt{padding:9px 14px;font-size:12.5px;color:rgba(255,255,255,0.7);cursor:pointer;transition:all .1s;display:flex;align-items:center;gap:8px}
@@ -105,11 +112,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .trade-card-gpc{font-size:11.5px;color:#ddd;margin-top:2px;font-weight:400}
 #globe-btns{position:absolute;bottom:14px;left:14px;display:flex;gap:6px;z-index:10}
 #zoom-btns{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:4px;z-index:10}
-.g-btn{width:32px;height:32px;border-radius:50%;border:1px solid #222;background:rgba(0,0,0,0.7);color:#eee;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.g-btn{min-width:32px;height:28px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.88);color:#1a1a2e;font-size:10px;font-family:'Consolas','Courier New',monospace;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 10px;transition:background .15s,color .15s}.g-btn.on{color:#fff;background:rgba(60,120,200,0.85);border-color:rgba(100,160,255,0.4)}
 .g-btn:hover{background:rgba(60,60,60,0.8)}
 .g-btn.on{background:rgba(40,80,140,0.7);border-color:#4a88dd;color:#fff}
 #heatmap-legend{position:absolute;bottom:54px;left:14px;display:flex;align-items:center;gap:6px;font-size:10px;color:#eee;z-index:10;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
-.hm-bar{width:80px;height:8px;border-radius:4px;background:linear-gradient(90deg,#1a2a4a,#2a5a8a,#ddaa22,#dd4444)}
+.hm-bar{width:80px;height:8px;border-radius:4px;background:linear-gradient(90deg,#2266aa,#44bbee,#eebb22,#ee3322)}
 .rs-btn{padding:3px 8px;border:1px solid #222;background:#0a0a0a;color:#eee;font-size:10px;border-radius:4px;cursor:pointer;font-weight:600}
 .rs-btn.active{background:#1a3a5a;color:#4a88dd;border-color:#4a88dd}
 .rank-row{display:flex;align-items:center;padding:8px 6px;border-bottom:1px solid #0a0a0a;cursor:pointer;gap:8px;transition:background .1s}
@@ -138,18 +145,22 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .nd-crow{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#eee;font-weight:400}
 .nd-crow span:last-child{color:#fff;font-weight:600}
 /* ===== ENERGY MODE ===== */
-#mode-toggle{position:fixed;top:16px;left:16px;z-index:30;display:flex;background:rgba(10,14,20,0.92);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;backdrop-filter:blur(12px)}
+#mode-toggle{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:30;display:flex;background:rgba(10,14,20,0.88);border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;backdrop-filter:blur(12px);box-shadow:0 2px 12px rgba(0,0,0,0.4)}
 .mt-btn{padding:8px 16px;font-size:11px;font-weight:700;color:#eee;cursor:pointer;border:none;background:none;text-transform:uppercase;letter-spacing:.08em;transition:all .15s;font-family:inherit}
 .mt-btn.active{color:#4ad;background:rgba(74,170,221,0.1)}
 .mt-btn:hover:not(.active){color:#eee}
 #energy-ui{display:none;position:absolute;inset:0;z-index:15;pointer-events:none}
 #energy-ui>*{pointer-events:auto}
 #en-left{position:absolute;left:0;top:0;bottom:0;width:280px;background:rgba(10,14,20,0.92);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
-#en-left::-webkit-scrollbar{width:3px}
-#en-left::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+#en-left::-webkit-scrollbar{width:6px}
+#en-left::-webkit-scrollbar-track{background:rgba(255,255,255,0.02);border-radius:3px}
+#en-left::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3a6fb5,#1a3a6a);border-radius:3px;border:1px solid rgba(255,255,255,0.05)}
+#en-left::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a88dd,#2a5a9a)}
 #en-right{position:absolute;right:0;top:0;bottom:0;width:340px;background:rgba(10,14,20,0.92);border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;backdrop-filter:blur(12px);z-index:4}
-#en-right::-webkit-scrollbar{width:3px}
-#en-right::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+#en-right::-webkit-scrollbar{width:6px}
+#en-right::-webkit-scrollbar-track{background:rgba(255,255,255,0.02);border-radius:3px}
+#en-right::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3a6fb5,#1a3a6a);border-radius:3px;border:1px solid rgba(255,255,255,0.05)}
+#en-right::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4a88dd,#2a5a9a)}
 .en-sec{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
 .en-sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .en-sec-title{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.12em;font-weight:700}
@@ -160,10 +171,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .en-layer:hover{background:rgba(255,255,255,0.03)}
 .en-layer.active{border-color:rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
 .el-dot{width:10px;height:10px;border-radius:50%;margin-right:10px;flex-shrink:0;border:2px solid}
-.el-name{flex:1;font-size:11.5px;font-weight:600;color:#eee;font-family:'Consolas','Courier New',monospace}
+.el-name{flex:1;font-size:11.5px;font-weight:600;color:#eee;font-family:'Consolas','Courier New',monospace;text-transform:uppercase}
 .el-count{font-size:11px;font-weight:700;margin-right:8px}
 .el-tog{width:8px;height:8px;border-radius:50%}
-.en-route-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:11px;color:#eee}
+.en-route-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:11px;color:#eee;font-family:Consolas,'Noto Sans TC',sans-serif;text-transform:uppercase}
 .er-line{width:24px;height:2px;border-radius:1px;flex-shrink:0}
 .er-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .en-ctrl-label{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
@@ -191,7 +202,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .et-img{width:52px;height:52px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.04);margin:0 auto}
 .et-card.active .et-img{border-color:#4ad;box-shadow:0 0 12px rgba(74,170,221,0.3)}
 .et-label{font-size:7.5px;color:#eee;margin-top:4px;font-weight:600}
-#en-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#eee;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
+#en-hint{position:absolute;bottom:58px;left:50%;transform:translateX(-50%);background:rgba(10,14,20,0.7);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:5px 16px;font-size:10px;color:#eee;font-weight:600;letter-spacing:.15em;text-transform:uppercase;z-index:4;pointer-events:none}
 #oil-panel{padding:16px}
 .op-head{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
 .op-live{display:inline-block;width:6px;height:6px;background:#44dd88;border-radius:50%;animation:opBlink 2s infinite}
@@ -212,12 +223,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 #theme-toggle-name{margin-left:auto;color:#4ad;font-weight:600;font-size:10px}
 #en-theme-float{position:absolute;bottom:60px;right:356px;background:rgba(10,14,20,0.95);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;z-index:25;width:300px}
 .mk-legend{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.04)}
-.mk-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:9px;color:#ccc}
-.mk-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:11px}
-.en-toggle{position:relative;width:36px;height:18px;background:rgba(255,255,255,0.06);border-radius:9px;cursor:pointer;transition:background .2s}
-.en-toggle.on{background:rgba(74,170,221,0.3)}
-.en-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#555;top:2px;left:2px;transition:all .2s}
-.en-toggle.on::after{left:20px;background:#4ad}
+.mk-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:11px;color:#eee;font-family:Consolas,'Noto Sans TC',sans-serif}
+.mk-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:13px}
 .en-hub-info{padding:16px}
 .ehi-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
 .ehi-type{font-size:10px;color:#4ad;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px}
@@ -236,10 +243,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
     </div>
     <div id="tooltip"></div>
     <div id="globe-btns">
-      <button class="g-btn" id="btn-heatmap" onclick="toggleHeatmap()" title="GDP 熱力圖">🌡</button>
-      <button class="g-btn" id="btn-network" onclick="toggleNetwork()" title="貿易網絡">🕸</button>
-      <button class="g-btn" id="btn-ranking" onclick="toggleRanking()" title="排行榜">🏆</button>
-      <button class="g-btn" id="btn-compare" onclick="toggleCompare()" title="國家比較">⚖</button>
+      <button class="g-btn" id="btn-heatmap" onclick="toggleHeatmap()" title="GDP Heatmap">GDP</button>
+      <button class="g-btn" id="btn-network" onclick="toggleNetwork()" title="Trade Network">TRADE</button>
+      <button class="g-btn" id="btn-ranking" onclick="toggleRanking()" title="Rankings">RANK</button>
+      <button class="g-btn" id="btn-compare" onclick="toggleCompare()" title="Compare">VS</button>
     </div>
     <div id="zoom-btns">
       <button class="g-btn" onclick="globeZoom(-1)" title="放大">＋</button>
@@ -249,6 +256,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
     <div id="loading"><div class="ld-spin"></div><div class="ld-txt">載入地球資料中…</div></div>
   </div>
   <div id="sidebar">
+    <div class="resize-handle-left"></div>
+    <div class="resize-handle-bottom"></div>
+    <div class="resize-handle-corner"></div>
     <div class="drag-handle" id="drag-handle"><div class="drag-pill"></div></div>
     <div id="hero">
       <div class="hero-title">全球經濟地球儀</div>
@@ -333,8 +343,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
   </div>
   <!-- Mode Toggle -->
   <div id="mode-toggle">
-    <button class="mt-btn active" onclick="switchMode('econ')">🌍 經濟</button>
-    <button class="mt-btn" onclick="switchMode('energy')">⚡ 能源</button>
+    <button class="mt-btn active" onclick="switchMode('econ')">ECONOMY</button>
+    <button class="mt-btn" onclick="switchMode('energy')">ENERGY</button>
   </div>
   <!-- Energy Mode UI -->
   <div id="energy-ui">
@@ -351,13 +361,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
           <div class="en-layer active" data-layer="disrupted" onclick="toggleEnLayer('disrupted')"><div class="el-dot" style="border-color:#f44;background:transparent"></div><span class="el-name">Disrupted Routes</span><span class="el-count" style="color:#f44">4</span><span class="el-tog" style="background:#f44"></span></div>
         </div>
         <div class="mk-legend">
-          <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px">Marker Types</div>
-          <div class="mk-row"><div class="mk-icon" style="color:#e44">●</div><span>陸上油氣田 Onshore</span></div>
-          <div class="mk-row"><div class="mk-icon" style="color:#4ad">◎</div><span>海上油氣田 Offshore</span></div>
+          <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:6px;font-family:Consolas,monospace">MARKER TYPES</div>
+          <div class="mk-row"><div class="mk-icon" style="color:#e44">●</div><span>陸上油氣田 <span style="text-transform:uppercase">ONSHORE</span></span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#4ad">◎</div><span>海上油氣田 <span style="text-transform:uppercase">OFFSHORE</span></span></div>
           <div class="mk-row"><div class="mk-icon" style="color:#4d8">◆</div><span>LNG 液化天然氣</span></div>
-          <div class="mk-row"><div class="mk-icon" style="color:#da4">■</div><span>出口港 Export Port</span></div>
-          <div class="mk-row"><div class="mk-icon" style="color:#da4">△</div><span>中繼港 Transit Hub</span></div>
-          <div class="mk-row"><div class="mk-icon" style="color:#f4a">⊕</div><span>危機區 Crisis Zone</span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#da4">■</div><span>出口港 <span style="text-transform:uppercase">EXPORT PORT</span></span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#f90">△</div><span>中繼港 <span style="text-transform:uppercase">TRANSIT HUB</span></span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#f4a">⊕</div><span>危機區 <span style="text-transform:uppercase">CRISIS ZONE</span></span></div>
         </div>
       </div>
       <div class="en-sec">
@@ -368,11 +378,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
       </div>
       <div class="en-sec">
         <div class="en-ctrl-label">航線寬度</div>
-        <div class="en-btn-group"><button class="en-btn active" onclick="setRouteWidth('uniform')">Uniform</button><button class="en-btn" onclick="setRouteWidth('flow')">Flow Routes</button><button class="en-btn" onclick="setRouteWidth('vol')">Vol Only</button></div>
-        <div style="margin-top:10px"><div class="en-ctrl-label">Filter</div>
-        <div class="en-btn-group"><button class="en-btn active" onclick="setEnFilter('grid')">⊞</button><button class="en-btn" onclick="setEnFilter('circle')">○</button><button class="en-btn" onclick="setEnFilter('gear')">⚙</button></div></div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center"><div><div class="en-ctrl-label" style="margin:0">Cloud Layer</div><div style="font-size:9px;color:#eee;font-weight:400">Hidden</div></div><div class="en-toggle" id="cloud-toggle" onclick="this.classList.toggle('on')"></div></div>
-        <div style="margin-top:10px"><label style="font-size:10px;color:#eee;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" style="accent-color:#4ad"> <span style="font-family:Consolas,monospace">SINGLE</span></label></div>
+        <div class="en-btn-group" id="route-width-grp"><button class="en-btn active" onclick="setRouteWidth('uniform')">UNIFORM</button><button class="en-btn" onclick="setRouteWidth('flow')">FLOW</button><button class="en-btn" onclick="setRouteWidth('vol')">VOL ONLY</button></div>
       </div>
       <div class="en-sec">
         <div class="en-sec-head"><span class="en-sec-title" style="color:#4ad">● Sea / Maritime (34)</span></div>
@@ -436,13 +442,13 @@ const CD = {
   '276':{nm:'德國',pop:84,gdpC:48756,gdp:4.1,def:104.5,cpi:127.5,ccpi:131.2,cpiYoy:5.9,
     exp:[{nm:'汽車',val:280},{nm:'機械',val:250},{nm:'化學品',val:130},{nm:'醫藥品',val:100},{nm:'電子設備',val:80}],
     imp:[{nm:'機械',val:100},{nm:'電子產品',val:90},{nm:'汽車',val:80},{nm:'石油',val:80},{nm:'天然氣',val:70}],
-    age:[4.8,4.7,5.0,5.1,5.4,5.7,6.4,6.5,6.0,5.5,6.6,7.8,7.2,6.0,5.3,4.5,7.5],
+    age:[4.8,4.7,5.0,5.1,5.4,5.7,6.4,6.5,6.0,5.5,6.6,7.8,7.2,6.0,5.3,5.0,5.0],
     agri:[{nm:'豬肉',val:5.8},{nm:'小麥',val:4.1},{nm:'牛奶',val:3.6},{nm:'啤酒',val:2.4},{nm:'甜菜',val:2.2},{nm:'馬鈴薯',val:1.8}],
     tr:{'156':-18,'840':71,'250':58,'380':29,'616':28}},
   '392':{nm:'日本',pop:124,gdpC:33834,gdp:4.2,def:102.0,cpi:106.4,ccpi:104.0,cpiYoy:3.2,
     exp:[{nm:'汽車',val:140},{nm:'機械',val:80},{nm:'電子零件',val:70},{nm:'化學品',val:40},{nm:'鋼鐵',val:35}],
     imp:[{nm:'石油',val:100},{nm:'液化天然氣',val:50},{nm:'半導體',val:40},{nm:'食品',val:35},{nm:'煤炭',val:30}],
-    age:[3.8,4.1,4.5,4.8,5.0,5.2,5.5,5.8,6.5,7.5,7.2,6.5,6.2,6.5,6.8,5.8,8.3],
+    age:[3.8,4.1,4.5,4.8,5.0,5.2,5.5,5.8,6.5,7.5,7.2,6.5,6.2,6.5,6.8,6.2,5.8],
     agri:[{nm:'水產品',val:4.2},{nm:'蔬菜',val:1.8},{nm:'清酒',val:1.4},{nm:'茶葉',val:0.9},{nm:'牛肉',val:0.7},{nm:'米',val:0.5}],
     tr:{'156':-25,'840':-68,'276':18,'410':15}},
   '356':{nm:'印度',pop:1428,gdpC:2389,gdp:3.4,def:105.5,cpi:179.2,ccpi:172.5,cpiYoy:5.4,
@@ -460,13 +466,13 @@ const CD = {
   '250':{nm:'法國',pop:68,gdpC:43659,gdp:3.0,def:105.2,cpi:120.8,ccpi:122.5,cpiYoy:5.7,
     exp:[{nm:'飛機',val:70},{nm:'醫藥品',val:60},{nm:'汽車',val:50},{nm:'農產品',val:45},{nm:'化妝品',val:40}],
     imp:[{nm:'機械',val:70},{nm:'石油',val:60},{nm:'汽車',val:55},{nm:'電子產品',val:45},{nm:'化學品',val:40}],
-    age:[5.4,5.8,6.1,6.0,5.8,5.9,6.0,6.2,6.5,6.6,6.6,6.4,6.0,5.7,4.8,3.6,6.6],
+    age:[5.4,5.8,6.1,6.0,5.8,5.9,6.0,6.2,6.5,6.6,6.6,6.4,6.0,5.7,4.8,4.0,4.2],
     agri:[{nm:'葡萄酒',val:12.8},{nm:'農產加工品',val:8.5},{nm:'乳製品',val:7.2},{nm:'小麥',val:5.4},{nm:'牛肉',val:3.8},{nm:'糖',val:2.6}],
     tr:{'276':-58,'840':2,'156':36,'826':-8}},
   '380':{nm:'義大利',pop:59,gdpC:35711,gdp:2.1,def:104.1,cpi:121.4,ccpi:122.8,cpiYoy:5.7,
     exp:[{nm:'機械',val:120},{nm:'汽車',val:40},{nm:'醫藥品',val:38},{nm:'時裝',val:35},{nm:'食品',val:32}],
     imp:[{nm:'石油',val:60},{nm:'天然氣',val:55},{nm:'機械',val:50},{nm:'電子產品',val:40},{nm:'汽車',val:35}],
-    age:[3.6,4.2,4.6,4.8,4.9,5.0,5.3,5.7,6.5,7.5,7.8,7.5,7.0,6.2,5.5,4.5,9.4],
+    age:[3.6,4.2,4.6,4.8,4.9,5.0,5.3,5.7,6.5,7.5,7.8,7.5,7.0,6.2,5.5,5.0,5.9],
     agri:[{nm:'葡萄酒',val:7.5},{nm:'乳酪',val:4.5},{nm:'水果',val:3.4},{nm:'橄欖油',val:3.2},{nm:'番茄',val:2.8},{nm:'義大利麵',val:2.1}],
     tr:{'276':-29,'840':44,'156':20}},
   '124':{nm:'加拿大',pop:40,gdpC:53247,gdp:2.1,def:106.0,cpi:157.8,ccpi:162.3,cpiYoy:3.9,
@@ -502,7 +508,7 @@ const CD = {
   '724':{nm:'西班牙',pop:47,gdpC:30284,gdp:1.4,def:104.8,cpi:119.4,ccpi:121.8,cpiYoy:3.5,
     exp:[{nm:'汽車',val:40},{nm:'機械',val:30},{nm:'石油產品',val:25},{nm:'食品',val:22},{nm:'醫藥品',val:18}],
     imp:[{nm:'石油',val:40},{nm:'汽車',val:30},{nm:'天然氣',val:25},{nm:'機械',val:25},{nm:'電子產品',val:18}],
-    age:[3.9,4.6,5.0,4.9,5.0,5.2,5.8,6.8,8.2,8.4,7.8,7.0,6.2,5.5,5.0,4.2,6.5],
+    age:[3.9,4.6,5.0,4.9,5.0,5.2,5.8,6.8,8.2,8.4,7.8,7.0,6.2,5.5,5.0,4.5,4.6],
     agri:[{nm:'豬肉',val:6.8},{nm:'蔬菜',val:5.4},{nm:'葡萄酒',val:4.2},{nm:'橄欖油',val:3.8},{nm:'柑橘',val:2.5},{nm:'番茄',val:2.1}],
     tr:{'276':-28,'250':20,'380':-15}},
   '484':{nm:'墨西哥',pop:127,gdpC:10814,gdp:1.3,def:107.2,cpi:146.9,ccpi:152.4,cpiYoy:5.5,
@@ -526,7 +532,7 @@ const CD = {
   '528':{nm:'荷蘭',pop:17.9,gdpC:57768,gdp:1.0,def:106.2,cpi:140.2,ccpi:143.5,cpiYoy:3.7,
     exp:[{nm:'機械',val:80},{nm:'石油產品',val:70},{nm:'化學品',val:65},{nm:'食品',val:60},{nm:'電子產品',val:50}],
     imp:[{nm:'石油',val:60},{nm:'機械',val:60},{nm:'電子產品',val:55},{nm:'化學品',val:50},{nm:'金屬',val:25}],
-    age:[4.8,5.2,5.5,5.8,6.2,6.5,6.2,5.8,5.5,6.0,7.0,7.5,6.5,5.8,5.2,3.8,6.7],
+    age:[4.8,5.2,5.5,5.8,6.2,6.5,6.2,5.8,5.5,6.0,7.0,7.5,6.5,5.8,5.2,4.2,4.2],
     agri:[{nm:'花卉',val:10.2},{nm:'蔬菜',val:8.5},{nm:'乳製品',val:7.8},{nm:'豬肉',val:4.2},{nm:'種子',val:3.5},{nm:'啤酒',val:2.8}],
     tr:{'276':25,'826':18,'250':32}},
   '792':{nm:'土耳其',pop:85,gdpC:10674,gdp:0.9,def:132.5,cpi:189.5,ccpi:198.4,cpiYoy:65.2,
@@ -538,19 +544,19 @@ const CD = {
   '756':{nm:'瑞士',pop:8.7,gdpC:93259,gdp:0.8,def:103.2,cpi:108.4,ccpi:109.8,cpiYoy:2.2,
     exp:[{nm:'醫藥品',val:120},{nm:'醫療設備',val:30},{nm:'鐘錶珠寶',val:25},{nm:'化學品',val:20},{nm:'機械',val:15}],
     imp:[{nm:'金',val:60},{nm:'機械',val:35},{nm:'電子產品',val:28},{nm:'汽車',val:22},{nm:'醫藥品',val:20}],
-    age:[4.8,5.0,5.2,5.0,5.5,6.2,7.0,7.2,6.8,6.2,6.5,7.0,6.5,5.5,4.8,3.5,7.3],
+    age:[4.8,5.0,5.2,5.0,5.5,6.2,7.0,7.2,6.8,6.2,6.5,7.0,6.5,5.5,4.8,4.0,4.8],
     agri:[{nm:'咖啡加工',val:3.2},{nm:'巧克力',val:1.8},{nm:'乳酪',val:2.4},{nm:'肉類',val:0.8},{nm:'葡萄酒',val:0.6},{nm:'穀物',val:0.5}],
     tr:{'276':45,'840':15,'250':30}},
   '616':{nm:'波蘭',pop:37.7,gdpC:21002,gdp:0.8,def:107.5,cpi:118.5,ccpi:125.4,cpiYoy:11.4,
     exp:[{nm:'機械',val:55},{nm:'汽車',val:30},{nm:'電子產品',val:28},{nm:'食品',val:15},{nm:'家具',val:12}],
     imp:[{nm:'機械',val:40},{nm:'石油',val:25},{nm:'電子產品',val:22},{nm:'汽車',val:18},{nm:'化學品',val:15}],
-    age:[4.8,5.2,5.4,5.0,5.2,6.0,7.2,7.8,7.0,5.8,5.5,6.2,6.8,6.5,5.0,3.5,7.1],
+    age:[4.8,5.2,5.4,5.0,5.2,6.0,7.2,7.8,7.0,5.8,5.5,6.2,6.8,6.5,5.0,4.0,4.6],
     agri:[{nm:'家禽',val:4.5},{nm:'穀物',val:3.8},{nm:'乳製品',val:3.2},{nm:'牛肉',val:2.8},{nm:'蔬菜',val:2.4},{nm:'蘋果',val:1.6}],
     tr:{'276':28,'826':12,'250':8}},
   '056':{nm:'比利時',pop:11.7,gdpC:49893,gdp:0.6,def:108.5,cpi:132.4,ccpi:135.8,cpiYoy:4.0,
     exp:[{nm:'化學品',val:80},{nm:'機械',val:45},{nm:'汽車',val:30},{nm:'醫藥品',val:28},{nm:'食品',val:22}],
     imp:[{nm:'機械',val:40},{nm:'石油',val:35},{nm:'化學品',val:30},{nm:'汽車',val:25},{nm:'電子產品',val:20}],
-    age:[5.2,5.5,5.8,5.5,5.8,6.0,6.2,6.0,5.8,5.8,6.5,7.0,6.5,5.8,5.0,3.8,7.8],
+    age:[5.2,5.5,5.8,5.5,5.8,6.0,6.2,6.0,5.8,5.8,6.5,7.0,6.5,5.8,5.0,4.2,4.4],
     agri:[{nm:'巧克力',val:3.8},{nm:'乳製品',val:3.2},{nm:'豬肉',val:2.8},{nm:'啤酒',val:2.4},{nm:'蔬菜',val:2.1},{nm:'糖',val:1.8}],
     tr:{'276':18,'250':25,'528':15}},
   '032':{nm:'阿根廷',pop:46,gdpC:13720,gdp:0.6,def:355.0,cpi:425.4,ccpi:438.2,cpiYoy:211.4,
@@ -562,19 +568,19 @@ const CD = {
   '752':{nm:'瑞典',pop:10.5,gdpC:55697,gdp:0.6,def:109.8,cpi:128.4,ccpi:132.5,cpiYoy:8.5,
     exp:[{nm:'機械',val:45},{nm:'汽車',val:25},{nm:'醫藥品',val:22},{nm:'電子產品',val:20},{nm:'紙漿',val:15}],
     imp:[{nm:'機械',val:22},{nm:'石油',val:18},{nm:'汽車',val:18},{nm:'電子產品',val:16},{nm:'化學品',val:12}],
-    age:[5.6,5.8,6.0,5.8,6.0,6.5,7.0,6.8,6.2,5.8,6.0,6.2,6.0,5.5,4.8,3.5,6.5],
+    age:[5.6,5.8,6.0,5.8,6.0,6.5,7.0,6.8,6.2,5.8,6.0,6.2,6.0,5.5,4.8,3.8,4.2],
     agri:[{nm:'紙漿/木材',val:8.5},{nm:'乳製品',val:2.2},{nm:'穀物',val:1.8},{nm:'鮭魚',val:1.4},{nm:'豬肉',val:1.2},{nm:'漿果',val:0.8}],
     tr:{'276':10,'826':8,'528':5}},
   '578':{nm:'挪威',pop:5.4,gdpC:108740,gdp:0.6,def:112.5,cpi:124.5,ccpi:128.4,cpiYoy:5.5,
     exp:[{nm:'石油',val:90},{nm:'天然氣',val:50},{nm:'魚類',val:12},{nm:'機械',val:8},{nm:'金屬',val:6}],
     imp:[{nm:'機械',val:20},{nm:'汽車',val:12},{nm:'電子產品',val:10},{nm:'食品',val:8},{nm:'化學品',val:6}],
-    age:[5.2,5.8,6.2,6.0,6.2,6.5,7.0,7.0,6.5,6.0,6.2,6.2,5.8,5.5,4.5,3.5,5.9],
+    age:[5.2,5.8,6.2,6.0,6.2,6.5,7.0,7.0,6.5,6.0,6.2,6.2,5.8,5.5,4.5,3.8,4.0],
     agri:[{nm:'鮭魚',val:12.8},{nm:'鱈魚',val:4.5},{nm:'鯡魚',val:3.2},{nm:'鯖魚',val:2.4},{nm:'蝦',val:1.8},{nm:'乳製品',val:1.2}],
     tr:{'276':20,'826':15,'752':8}},
   '158':{nm:'台灣',pop:23.5,gdpC:32980,gdp:0.76,def:101.2,cpi:107.5,ccpi:106.8,cpiYoy:2.5,
     exp:[{nm:'半導體',val:185},{nm:'電子產品',val:110},{nm:'機械',val:42},{nm:'塑料',val:22},{nm:'光學儀器',val:18}],
     imp:[{nm:'電子零件',val:82},{nm:'石油',val:38},{nm:'機械',val:32},{nm:'化學品',val:22},{nm:'金屬',val:18}],
-    age:[3.5,4.0,4.5,5.0,5.8,6.5,6.8,7.0,7.5,7.8,7.5,7.0,6.5,5.8,5.0,3.8,6.0],
+    age:[3.5,4.0,4.5,5.0,5.8,6.5,6.8,7.0,7.5,7.8,7.5,7.0,6.5,5.8,5.0,4.2,3.6],
     agri:[{nm:'水產品',val:1.4},{nm:'豬肉',val:0.9},{nm:'稻米',val:0.8},{nm:'雞肉',val:0.5},{nm:'蔬菜',val:0.6},{nm:'茶葉',val:0.3}],
     tr:{'840':50,'156':-20,'392':18,'410':15}},
   '784':{nm:'阿聯酋',pop:9.4,gdpC:53708,gdp:0.50,def:102.5,cpi:105.2,ccpi:104.8,cpiYoy:3.1,
@@ -592,7 +598,7 @@ const CD = {
   '040':{nm:'奧地利',pop:9.1,gdpC:56802,gdp:0.52,def:105.8,cpi:128.5,ccpi:130.2,cpiYoy:7.7,
     exp:[{nm:'機械',val:40},{nm:'汽車',val:18},{nm:'醫藥品',val:12},{nm:'電子產品',val:10},{nm:'鋼鐵',val:8}],
     imp:[{nm:'機械',val:35},{nm:'汽車',val:15},{nm:'石油',val:12},{nm:'電子產品',val:10},{nm:'化學品',val:8}],
-    age:[4.8,4.9,5.0,5.2,5.6,6.2,6.8,7.0,6.5,6.0,6.5,7.0,6.8,5.8,5.0,3.8,7.1],
+    age:[4.8,4.9,5.0,5.2,5.6,6.2,6.8,7.0,6.5,6.0,6.5,7.0,6.8,5.8,5.0,4.2,4.7],
     agri:[{nm:'乳製品',val:2.8},{nm:'牛肉',val:1.5},{nm:'葡萄酒',val:1.2},{nm:'穀物',val:1.0},{nm:'豬肉',val:0.8},{nm:'木材',val:0.6}],
     tr:{'276':25,'380':10,'756':8}},
   '372':{nm:'愛爾蘭',pop:5.1,gdpC:106742,gdp:0.55,def:104.2,cpi:125.8,ccpi:128.5,cpiYoy:5.2,
@@ -604,7 +610,7 @@ const CD = {
   '376':{nm:'以色列',pop:9.8,gdpC:54659,gdp:0.52,def:104.5,cpi:118.2,ccpi:116.8,cpiYoy:3.3,
     exp:[{nm:'鑽石加工',val:20},{nm:'電子產品',val:18},{nm:'醫藥品',val:12},{nm:'機械',val:10},{nm:'化學品',val:8}],
     imp:[{nm:'石油',val:15},{nm:'鑽石原石',val:12},{nm:'機械',val:10},{nm:'汽車',val:8},{nm:'電子產品',val:8}],
-    age:[7.5,7.5,7.2,6.8,6.5,6.2,6.0,6.0,5.8,5.5,5.5,5.5,5.2,4.8,3.8,2.8,7.4],
+    age:[7.5,7.5,7.2,6.8,6.5,6.2,6.0,6.0,5.8,5.5,5.5,5.5,5.2,4.8,3.8,3.2,3.9],
     agri:[{nm:'柑橘',val:1.2},{nm:'蔬菜',val:0.8},{nm:'花卉',val:0.6},{nm:'酪梨',val:0.5},{nm:'香草',val:0.4},{nm:'橄欖',val:0.3}],
     tr:{'840':18,'156':8,'826':5}},
   '566':{nm:'奈及利亞',pop:224,gdpC:2184,gdp:0.47,def:118.5,cpi:185.4,ccpi:192.5,cpiYoy:24.1,
@@ -616,7 +622,7 @@ const CD = {
   '208':{nm:'丹麥',pop:5.9,gdpC:67803,gdp:0.40,def:107.2,cpi:125.4,ccpi:128.2,cpiYoy:3.3,
     exp:[{nm:'醫藥品',val:22},{nm:'機械',val:18},{nm:'食品',val:15},{nm:'風力發電設備',val:12},{nm:'電子產品',val:8}],
     imp:[{nm:'機械',val:18},{nm:'汽車',val:12},{nm:'電子產品',val:10},{nm:'化學品',val:8},{nm:'食品',val:6}],
-    age:[5.2,5.5,5.8,5.8,6.2,6.5,6.5,6.2,6.0,6.0,6.5,6.8,6.5,5.5,4.5,3.5,7.0],
+    age:[5.2,5.5,5.8,5.8,6.2,6.5,6.5,6.2,6.0,6.0,6.5,6.8,6.5,5.5,4.5,3.8,4.2],
     agri:[{nm:'豬肉',val:5.5},{nm:'乳製品',val:4.2},{nm:'種子',val:2.0},{nm:'魚',val:1.5},{nm:'穀物',val:1.2},{nm:'毛皮',val:0.8}],
     tr:{'276':10,'752':8,'578':5}},
   '702':{nm:'新加坡',pop:5.9,gdpC:72795,gdp:0.42,def:101.5,cpi:112.5,ccpi:114.8,cpiYoy:4.8,
@@ -664,7 +670,7 @@ const CD = {
   '344':{nm:'香港',pop:7.5,gdpC:50700,gdp:0.38,def:101.0,cpi:108.5,ccpi:107.2,cpiYoy:1.9,
     exp:[{nm:'電子產品',val:85},{nm:'珠寶',val:18},{nm:'服裝',val:12},{nm:'鐘錶',val:8},{nm:'機械',val:6}],
     imp:[{nm:'電子產品',val:95},{nm:'珠寶',val:22},{nm:'食品',val:12},{nm:'機械',val:10},{nm:'服裝',val:8}],
-    age:[3.0,3.5,3.8,4.2,5.5,6.5,7.0,7.5,7.8,8.0,7.5,7.0,6.5,6.2,5.5,4.2,6.3],
+    age:[3.0,3.5,3.8,4.2,5.5,6.5,7.0,7.5,7.8,8.0,7.5,7.0,6.5,6.2,5.5,4.5,4.0],
     agri:[{nm:'蔬菜',val:0.1},{nm:'家禽',val:0.08},{nm:'水產品',val:0.06},{nm:'豬肉',val:0.05},{nm:'花卉',val:0.03},{nm:'水果',val:0.02}],
     tr:{'156':-25,'840':10,'392':5}},
   '170':{nm:'哥倫比亞',pop:52,gdpC:6630,gdp:0.33,def:112.5,cpi:158.2,ccpi:162.5,cpiYoy:11.8,
@@ -676,37 +682,37 @@ const CD = {
   '152':{nm:'智利',pop:19.5,gdpC:17000,gdp:0.34,def:110.5,cpi:135.8,ccpi:138.2,cpiYoy:7.6,
     exp:[{nm:'銅',val:45},{nm:'鋰',val:8},{nm:'水果',val:6},{nm:'鮭魚',val:5},{nm:'葡萄酒',val:2}],
     imp:[{nm:'石油',val:10},{nm:'機械',val:8},{nm:'汽車',val:5},{nm:'電子產品',val:5},{nm:'化學品',val:4}],
-    age:[5.8,6.2,6.5,6.8,7.2,7.5,7.5,7.0,6.5,6.2,5.8,5.5,5.0,4.5,3.5,2.5,6.0],
+    age:[5.8,6.2,6.5,6.8,7.2,7.5,7.5,7.0,6.5,6.2,5.8,5.5,5.0,4.5,3.5,2.8,3.0],
     agri:[{nm:'鮭魚',val:5.8},{nm:'葡萄',val:2.5},{nm:'蘋果',val:1.8},{nm:'葡萄酒',val:2.2},{nm:'藍莓',val:1.5},{nm:'酪梨',val:1.0}],
     tr:{'156':-15,'840':5,'392':3}},
   '203':{nm:'捷克',pop:10.8,gdpC:30500,gdp:0.33,def:108.5,cpi:125.4,ccpi:128.2,cpiYoy:10.7,
     exp:[{nm:'汽車',val:30},{nm:'機械',val:25},{nm:'電子產品',val:15},{nm:'鋼鐵',val:8},{nm:'化學品',val:6}],
     imp:[{nm:'機械',val:22},{nm:'電子產品',val:18},{nm:'石油',val:10},{nm:'汽車',val:8},{nm:'化學品',val:7}],
-    age:[5.0,5.2,5.0,4.5,4.8,5.8,7.2,7.5,6.8,6.0,6.2,7.0,7.2,6.2,5.0,3.5,7.1],
+    age:[5.0,5.2,5.0,4.5,4.8,5.8,7.2,7.5,6.8,6.0,6.2,7.0,7.2,6.2,5.0,4.0,4.6],
     agri:[{nm:'啤酒',val:1.2},{nm:'小麥',val:0.8},{nm:'牛奶',val:0.6},{nm:'油菜',val:0.5},{nm:'啤酒花',val:0.3},{nm:'馬鈴薯',val:0.2}],
     tr:{'276':18,'724':5,'616':8}},
   '246':{nm:'芬蘭',pop:5.6,gdpC:53983,gdp:0.30,def:108.2,cpi:118.5,ccpi:120.4,cpiYoy:4.3,
     exp:[{nm:'紙漿',val:12},{nm:'機械',val:10},{nm:'電子產品',val:8},{nm:'鋼鐵',val:6},{nm:'化學品',val:5}],
     imp:[{nm:'石油',val:10},{nm:'機械',val:8},{nm:'汽車',val:6},{nm:'電子產品',val:5},{nm:'化學品',val:4}],
-    age:[4.8,5.2,5.5,5.6,6.0,6.0,5.8,5.8,6.0,6.2,6.5,7.0,6.8,6.0,5.2,3.8,7.8],
+    age:[4.8,5.2,5.5,5.6,6.0,6.0,5.8,5.8,6.0,6.2,6.5,7.0,6.8,6.0,5.2,4.2,4.4],
     agri:[{nm:'木材',val:8.5},{nm:'乳製品',val:1.2},{nm:'穀物',val:0.8},{nm:'毛皮',val:0.5},{nm:'漿果',val:0.4},{nm:'豬肉',val:0.3}],
     tr:{'276':5,'752':8,'643':-3}},
   '642':{nm:'羅馬尼亞',pop:19,gdpC:16800,gdp:0.32,def:115.5,cpi:142.5,ccpi:148.2,cpiYoy:10.4,
     exp:[{nm:'汽車',val:12},{nm:'機械',val:10},{nm:'電子產品',val:8},{nm:'穀物',val:5},{nm:'傢具',val:4}],
     imp:[{nm:'機械',val:12},{nm:'石油',val:8},{nm:'汽車',val:8},{nm:'電子產品',val:6},{nm:'化學品',val:5}],
-    age:[4.8,5.0,5.2,5.0,5.0,5.5,6.5,7.5,7.8,7.0,6.5,6.2,6.0,5.8,5.2,3.8,7.2],
+    age:[4.8,5.0,5.2,5.0,5.0,5.5,6.5,7.5,7.8,7.0,6.5,6.2,6.0,5.8,5.2,4.2,4.8],
     agri:[{nm:'小麥',val:2.5},{nm:'玉米',val:2.0},{nm:'葵花籽',val:1.5},{nm:'葡萄酒',val:0.8},{nm:'牛肉',val:0.5},{nm:'乳製品',val:0.4}],
     tr:{'276':12,'380':5,'250':3}},
   '620':{nm:'葡萄牙',pop:10.3,gdpC:28165,gdp:0.29,def:106.5,cpi:122.8,ccpi:125.5,cpiYoy:5.3,
     exp:[{nm:'汽車',val:10},{nm:'機械',val:8},{nm:'燃料',val:5},{nm:'服裝',val:4},{nm:'軟木',val:2}],
     imp:[{nm:'石油',val:8},{nm:'機械',val:7},{nm:'汽車',val:5},{nm:'電子產品',val:4},{nm:'化學品',val:3}],
-    age:[4.2,4.5,4.8,5.0,5.2,5.5,6.0,6.8,7.2,7.5,7.2,6.8,6.5,6.0,5.2,4.0,7.6],
+    age:[4.2,4.5,4.8,5.0,5.2,5.5,6.0,6.8,7.2,7.5,7.2,6.8,6.5,6.0,5.2,4.5,5.0],
     agri:[{nm:'葡萄酒',val:2.5},{nm:'橄欖油',val:1.2},{nm:'軟木',val:1.0},{nm:'番茄',val:0.8},{nm:'水果',val:0.6},{nm:'水產品',val:0.5}],
     tr:{'724':8,'276':5,'250':3}},
   '554':{nm:'紐西蘭',pop:5.2,gdpC:48350,gdp:0.25,def:107.2,cpi:128.5,ccpi:132.4,cpiYoy:5.7,
     exp:[{nm:'乳製品',val:15},{nm:'牛肉',val:5},{nm:'木材',val:4},{nm:'水果',val:3},{nm:'葡萄酒',val:2}],
     imp:[{nm:'機械',val:8},{nm:'汽車',val:5},{nm:'石油',val:4},{nm:'電子產品',val:3},{nm:'食品',val:2}],
-    age:[5.8,6.2,6.5,6.2,6.5,7.0,6.8,6.5,6.2,6.0,6.2,6.0,5.8,5.2,4.2,3.0,5.9],
+    age:[5.8,6.2,6.5,6.2,6.5,7.0,6.8,6.5,6.2,6.0,6.2,6.0,5.8,5.2,4.2,3.2,3.6],
     agri:[{nm:'乳製品',val:15.2},{nm:'牛肉',val:4.8},{nm:'羊肉',val:3.5},{nm:'奇異果',val:2.8},{nm:'葡萄酒',val:2.2},{nm:'木材',val:1.8}],
     tr:{'036':5,'156':-8,'840':3}},
   '586':{nm:'巴基斯坦',pop:240,gdpC:1505,gdp:0.34,def:128.5,cpi:225.8,ccpi:232.5,cpiYoy:29.2,
@@ -718,7 +724,7 @@ const CD = {
   '300':{nm:'希臘',pop:10.4,gdpC:23068,gdp:0.24,def:105.8,cpi:118.2,ccpi:120.5,cpiYoy:4.2,
     exp:[{nm:'石油產品',val:12},{nm:'食品',val:5},{nm:'醫藥品',val:4},{nm:'鋁',val:3},{nm:'機械',val:2}],
     imp:[{nm:'石油',val:14},{nm:'機械',val:6},{nm:'汽車',val:4},{nm:'電子產品',val:3},{nm:'化學品',val:3}],
-    age:[4.2,4.5,4.8,5.0,5.5,5.8,6.2,6.8,7.0,7.2,7.0,6.5,6.2,5.8,5.2,4.0,8.3],
+    age:[4.2,4.5,4.8,5.0,5.5,5.8,6.2,6.8,7.0,7.2,7.0,6.5,6.2,5.8,5.2,4.5,5.0],
     agri:[{nm:'橄欖油',val:2.5},{nm:'水果',val:1.2},{nm:'蔬菜',val:0.8},{nm:'乳製品',val:0.6},{nm:'水產品',val:0.5},{nm:'棉花',val:0.4}],
     tr:{'276':-8,'380':5,'792':3}},
 };
@@ -782,7 +788,7 @@ const CD_X={
 };
 Object.entries(CD_X).forEach(([k,v])=>Object.assign(CD[k],v));
 
-const _AY=[7.5,7.8,8.0,8.2,8.0,7.5,7.0,6.2,5.5,5.0,4.5,3.8,3.2,2.5,1.8,1.2,2.3],_AM=[6.8,7.0,7.2,7.5,7.8,7.5,7.2,6.8,6.2,5.8,5.2,4.8,4.2,3.5,2.8,1.8,3.8],_AL=[6.5,6.8,7.0,7.5,7.8,7.5,7.2,6.8,6.5,6.0,5.5,5.0,4.5,3.8,3.0,2.0,3.6],_AE=[4.5,4.8,5.0,5.2,5.5,6.0,6.5,7.0,7.5,7.2,6.8,6.5,6.0,5.5,5.0,4.0,7.0],_AO=[4.2,4.5,4.8,5.0,5.2,5.5,6.0,6.5,7.0,7.5,7.2,6.8,6.5,6.0,5.2,4.0,8.1],_AG=[4.0,4.2,5.0,6.5,8.5,9.5,9.0,8.0,7.5,7.0,6.0,5.0,4.0,3.2,2.5,1.8,3.3],_AT=[5.5,5.8,6.0,6.2,6.5,6.8,7.0,7.2,7.0,6.5,6.0,5.8,5.5,5.0,4.2,3.0,5.0];
+const _AY=[7.5,7.8,8.0,8.2,8.0,7.5,7.0,6.2,5.5,5.0,4.5,3.8,3.2,2.5,1.8,1.2,1.8],_AM=[6.8,7.0,7.2,7.5,7.8,7.5,7.2,6.8,6.2,5.8,5.2,4.8,4.2,3.5,2.8,2.0,2.7],_AL=[6.5,6.8,7.0,7.5,7.8,7.5,7.2,6.8,6.5,6.0,5.5,5.0,4.5,3.8,3.0,2.2,2.4],_AE=[4.5,4.8,5.0,5.2,5.5,6.0,6.5,7.0,7.5,7.2,6.8,6.5,6.0,5.5,5.0,4.5,4.5],_AO=[4.2,4.5,4.8,5.0,5.2,5.5,6.0,6.5,7.0,7.5,7.2,6.8,6.5,6.0,5.5,4.5,5.3],_AG=[4.0,4.2,5.0,6.5,8.5,9.5,9.0,8.0,7.5,7.0,6.0,5.0,4.0,3.2,2.5,1.8,2.3],_AT=[5.5,5.8,6.0,6.2,6.5,6.8,7.0,7.2,7.0,6.5,6.0,5.8,5.5,5.0,4.2,3.2,3.6];
 const CD2={
 '368':{nm:'伊拉克',pop:43,gdpC:6210,gdp:0.267,def:115.2,cpi:148.5,ccpi:152.2,cpiYoy:5.0,exp:[{nm:'石油',val:95},{nm:'天然氣',val:5},{nm:'化學品',val:2},{nm:'食品',val:1},{nm:'鋼鐵',val:0.5}],imp:[{nm:'機械',val:12},{nm:'食品',val:8},{nm:'汽車',val:6},{nm:'鋼鐵',val:4},{nm:'醫藥品',val:3}],age:_AM,agri:[{nm:'椰棗',val:1.5},{nm:'小麥',val:0.8},{nm:'大麥',val:0.5},{nm:'蔬菜',val:0.4},{nm:'水果',val:0.3},{nm:'稻米',val:0.2}],tr:{'156':-18,'356':-15}},
 '604':{nm:'秘魯',pop:34,gdpC:7768,gdp:0.264,def:104.2,cpi:124.5,ccpi:126.1,cpiYoy:3.2,exp:[{nm:'銅',val:15},{nm:'金',val:8},{nm:'鋅',val:4},{nm:'咖啡',val:1.5},{nm:'魚粉',val:1.2}],imp:[{nm:'石油',val:8},{nm:'機械',val:5},{nm:'電子產品',val:4},{nm:'汽車',val:3},{nm:'化學品',val:2.5}],age:_AL,agri:[{nm:'咖啡',val:1.2},{nm:'蘆筍',val:0.8},{nm:'葡萄',val:0.6},{nm:'酪梨',val:0.5},{nm:'可可',val:0.4},{nm:'藍莓',val:0.3}],tr:{'156':-12,'840':3}},
@@ -1024,16 +1030,20 @@ function makeLabel(text,fullName){
   return sp;
 }
 function makeArcLabel(text,color){
-  const c=document.createElement('canvas');c.width=512;c.height=64;
+  const c=document.createElement('canvas');c.width=512;c.height=96;
   const ctx=c.getContext('2d');
-  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=6;
-  ctx.font='bold 28px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
-  ctx.fillStyle=color||'rgba(200,220,255,0.9)';
+  ctx.font="bold 36px 'Noto Sans TC','Segoe UI',sans-serif";
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(text,256,32);
+  const tw=ctx.measureText(text).width;
+  const px=18,bw=tw+px*2,bh=44,bx=(512-bw)/2,by=(96-bh)/2,cr=bh/2;
+  ctx.fillStyle='rgba(0,0,0,0.75)';
+  ctx.beginPath();ctx.moveTo(bx+cr,by);ctx.lineTo(bx+bw-cr,by);ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+cr);ctx.lineTo(bx+bw,by+bh-cr);ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-cr,by+bh);ctx.lineTo(bx+cr,by+bh);ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-cr);ctx.lineTo(bx,by+cr);ctx.quadraticCurveTo(bx,by,bx+cr,by);ctx.closePath();ctx.fill();
+  ctx.shadowColor='rgba(0,0,0,1)';ctx.shadowBlur=8;
+  ctx.fillStyle=color||'#fff';
+  ctx.fillText(text,256,50);
   const tex=new THREE.CanvasTexture(c);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));
-  sp.scale.set(0.5,0.062,1);
+  sp.scale.set(0.55,0.1,1);
   return sp;
 }
 
@@ -1367,7 +1377,7 @@ function renderOverview(code){
     <div class="metric"><span class="m-lbl">CPI 年增率</span><span class="m-val" style="color:${d.cpiYoy>50?'#ee4444':d.cpiYoy>10?'#ee9922':d.cpiYoy<2?'#44cc66':'#fff'}">${d.cpiYoy}%</span></div>
     <div class="metric"><span class="m-lbl">失業率</span><span class="m-val" style="color:${d.unemp>20?'#ee4444':d.unemp>10?'#ee9922':d.unemp<4?'#44cc66':'#fff'}">${d.unemp!==undefined?d.unemp+'%':'—'}</span></div>
     ${d.gdpH?`<div class="sec-title">GDP 趨勢（2014–2023，兆美元）</div><div style="margin:6px -4px 14px">${buildGDPChart(d.gdpH)}</div>`:''}
-    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,180)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#4a88dd','#dd8844','#44aa66'][i]+';display:inline-block"></span><span style="color:#eee">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
+    ${(()=>{const f=CD_FIN[code];if(!f)return'';const sl=['農業','工業','服務業'],sd=Array.isArray(f.sec)?f.sec.map((v,i)=>({nm:sl[i],pct:v})):[];return`<div class="sec-title">GDP 產業結構</div><div style="display:flex;align-items:center;gap:14px;margin:6px 0 14px"><div>${svgPie(sd,180)}</div><div>${sd.map((s,i)=>'<div style="font-size:10px;margin:3px 0;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:'+['#A75F37','#788FA1','#7A958F'][i]+';display:inline-block"></span><span style="color:#eee">'+s.nm+'</span><span style="color:#fff;font-weight:700">'+s.pct+'%</span></div>').join('')}</div></div>`;})()}
     <div class="sec-title">▲ 主要出口商品（十億美元）</div>
     ${d.exp.map(x=>barRow(x,maxE,'ti-exp')).join('')}
     <div class="sec-title">▼ 主要進口商品（十億美元）</div>
@@ -1427,7 +1437,7 @@ function renderPopulation(code){
     <div class="sec-title">年齡分佈</div>
     ${[['0–14 歲（少年）',y,'#4a7a9b'],['15–64 歲（工作人口）',w,'#3a8a4a'],['65 歲以上（老年）',o,'#9b4a5e']].map(([l,v,c])=>`
     <div class="pop-bar-row">
-      <div class="pop-bar-top"><span style="color:#eee;font-weight:400">${l}</span><span style="color:#fff;font-weight:700">${v}%</span></div>
+      <div class="pop-bar-top"><span style="color:#eee;font-weight:400">${l}</span><span style="color:#fff;font-weight:700">${(+v).toFixed(1)}%</span></div>
       <div class="pop-bar-bg"><div class="pop-bar-fill" style="background:${c};opacity:.75;width:${Math.round(v)}%"></div></div>
     </div>`).join('')}
     <div class="sec-title" style="margin-top:16px">關鍵指標</div>
@@ -1454,29 +1464,37 @@ function renderAgriculture(code){
 
 // ===== CHART BUILDERS =====
 function svgPie(data,W=160){
-  const cx=W/2,cy=W/2,r=W/2-8,colors=['#4a88dd','#dd8844','#44aa66'];
+  const cx=W/2,cy=W/2,r=W/2-8,or=r+24,colors=['#A75F37','#788FA1','#7A958F'];
   const fs=Math.max(11,Math.round(W/18));
-  let a=0,svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
+  let a=0,svg=`<svg width="${W+48}" height="${W+48}" xmlns="http://www.w3.org/2000/svg"><g transform="translate(24,24)">`;
   data.forEach((d,i)=>{
     const sweep=d.pct/100*Math.PI*2,x1=cx+r*Math.cos(a),y1=cy+r*Math.sin(a);
     const x2=cx+r*Math.cos(a+sweep),y2=cy+r*Math.sin(a+sweep),lg=sweep>Math.PI?1:0;
     svg+=`<path d="M${cx},${cy}L${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}Z" fill="${colors[i]}" opacity="0.85"/>`;
-    const ma=a+sweep/2,lx=cx+(r*0.6)*Math.cos(ma),ly=cy+(r*0.6)*Math.sin(ma);
-    svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="${fs}" fill="#fff" font-weight="bold" font-family="Consolas,'Noto Sans TC',sans-serif">${d.pct}%</text>`;
+    const ma=a+sweep/2;
+    if(d.pct<10){
+      const ex=cx+r*Math.cos(ma),ey=cy+r*Math.sin(ma),lx=cx+or*Math.cos(ma),ly=cy+or*Math.sin(ma);
+      svg+=`<line x1="${ex}" y1="${ey}" x2="${lx}" y2="${ly}" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>`;
+      svg+=`<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="${fs}" fill="#fff" font-weight="bold" font-family="Consolas,'Noto Sans TC',sans-serif">${d.pct}%</text>`;
+    }else{
+      const lx=cx+(r*0.6)*Math.cos(ma),ly=cy+(r*0.6)*Math.sin(ma);
+      svg+=`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="${fs}" fill="#fff" font-weight="bold" font-family="Consolas,'Noto Sans TC',sans-serif">${d.pct}%</text>`;
+    }
     a+=sweep;
   });
-  svg+=`</svg>`;
+  svg+=`</g></svg>`;
   return svg;
 }
 function svgDonut(data,W=180){
-  const cx=W/2,cy=W/2,r=W/2-16,ir=r*0.55,colors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#44ddaa','#dddd44','#8888dd'];
+  const cx=W/2,cy=W/2,r=W/2-16,ir=r*0.55,colors=['#A75F37','#788FA1','#7A958F','#CA8E82','#806375','#D9B99F','#BAE0DA','#F2D6CE'];
   let a=-Math.PI/2,svg=`<svg width="${W}" height="${W}" xmlns="http://www.w3.org/2000/svg">`;
   data.forEach((d,i)=>{
     const sweep=d.pct/100*Math.PI*2;if(sweep<0.01)return;
     const x1=cx+r*Math.cos(a),y1=cy+r*Math.sin(a),x2=cx+r*Math.cos(a+sweep),y2=cy+r*Math.sin(a+sweep);
     const ix1=cx+ir*Math.cos(a+sweep),iy1=cy+ir*Math.sin(a+sweep),ix2=cx+ir*Math.cos(a),iy2=cy+ir*Math.sin(a);
     const lg=sweep>Math.PI?1:0;
-    svg+=`<path d="M${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}L${ix1},${iy1}A${ir},${ir} 0 ${lg},0 ${ix2},${iy2}Z" fill="${colors[i%8]}" opacity="0.85"><title>${d.nm} ${d.pct}%</title></path>`;
+    const fc=d.nm==='其他'?'#888888':colors[i%8];
+    svg+=`<path d="M${x1},${y1}A${r},${r} 0 ${lg},1 ${x2},${y2}L${ix1},${iy1}A${ir},${ir} 0 ${lg},0 ${ix2},${iy2}Z" fill="${fc}" opacity="0.85"><title>${d.nm} ${d.pct}%</title></path>`;
     a+=sweep;
   });
   svg+=`</svg>`;return svg;
@@ -1785,7 +1803,7 @@ function renderFinance(code){
     <div class="sec-title" style="color:#eee">前十大產業子分類</div>
     <div style="text-align:center;margin:8px 0 14px">
       <div style="display:inline-block">${svgDonut(f.sub,300)}</div>
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:11px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#44ddaa','#dddd44','#8888dd'][i%8]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px">${f.sub.slice(0,5).map((s,i)=>`<div style="font-size:11px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${s.nm==='其他'?'#888888':['#A75F37','#788FA1','#7A958F','#CA8E82','#806375','#D9B99F','#BAE0DA','#F2D6CE'][i%8]};display:inline-block"></span><span style="color:#eee">${s.nm}</span><span style="color:#fff;font-weight:700">${s.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">央行基準利率</div>
     <div class="metric"><span class="m-lbl">當前利率</span><span class="m-val" style="color:${rateColor}">${f.rate.toFixed(2)}%</span></div>
@@ -1887,11 +1905,11 @@ function renderSocial(code){
 // ===== RENDER TRADE DETAIL =====
 function renderTrade(code){
   const f=CD_FIN[code];if(!f){document.getElementById('trade-detail').innerHTML='';return;}
-  const expColors=['#4a88dd','#dd8844','#44aa66','#aa44dd','#dd4466','#999'];
+  const expColors=['#A75F37','#788FA1','#7A958F','#CA8E82','#806375','#D9B99F'];
   let html=`<div class="sec-title" style="color:#eee">出口目的地</div>
     <div style="text-align:center;margin:8px 0 14px">
       <div style="display:inline-block">${svgDonut(f.expD.map(e=>({nm:e.c,pct:e.pct})),300)}</div>
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px">${f.expD.map((e,i)=>`<div style="font-size:11px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${expColors[i%6]};display:inline-block"></span><span style="color:#eee">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px">${f.expD.map((e,i)=>`<div style="font-size:11px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${e.c==='其他'?'#888888':expColors[i%6]};display:inline-block"></span><span style="color:#eee">${e.c}</span><span style="color:#fff;font-weight:700">${e.pct}%</span></div>`).join('')}</div>
     </div>
     <div class="sec-title" style="color:#eee">供應鏈依賴度</div>
     <div style="margin:8px 0 14px">${f.sc.map(s=>`<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#eee">${s.item} <span style="color:#eee">← ${s.from}</span></span><span style="color:${s.pct>70?'#dd4444':s.pct>40?'#ddaa44':'#44aa66'};font-weight:700">${s.pct}%</span></div><div class="agri-bg"><div class="agri-fill" style="width:${s.pct}%;background:linear-gradient(90deg,${s.pct>70?'#8a2a2a,#dd4444':s.pct>40?'#8a6a2a,#ddaa44':'#2a6a3a,#44aa66'})"></div></div></div>`).join('')}</div>
@@ -2010,10 +2028,9 @@ window.toggleCompare=toggleCompare;window.runCompare=runCompare;
 let heatmapOn=false,heatmapMode='gdp',heatDots=[];
 function clearHeatDots(){heatDots.forEach(o=>scene.remove(o));heatDots=[];}
 function valToColor(t){
-  const r=t<0.5?Math.round(26+t*2*180):Math.round(206+((t-0.5)*2)*50);
-  const g=t<0.5?Math.round(42+t*2*148):Math.round(190-((t-0.5)*2)*150);
-  const b=t<0.5?Math.round(74+t*2*64):Math.round(138-((t-0.5)*2)*104);
-  return (r<<16)|(g<<8)|b;
+  if(t<0.33) return new THREE.Color().setHSL(0.58-t*0.6,0.9,0.45+t*0.3).getHex();
+  if(t<0.66) return new THREE.Color().setHSL(0.14,0.95,0.5+((t-0.33)/0.33)*0.15).getHex();
+  return new THREE.Color().setHSL(0.02-((t-0.66)/0.34)*0.02,1.0,0.5+((t-0.66)/0.34)*0.1).getHex();
 }
 function drawHeatmap(){
   clearHeatDots();
@@ -2024,11 +2041,20 @@ function drawHeatmap(){
     const f=feat.features.find(x=>String(x.id)===code);if(!f)return;
     const cen=d3.geoCentroid(f);if(!cen)return;
     const t=(val-mn)/rng;
-    const sz=0.04+t*0.08;
-    const mesh=new THREE.Mesh(new THREE.SphereGeometry(sz,12,12),new THREE.MeshBasicMaterial({color:valToColor(t),transparent:true,opacity:0.85}));
-    const pos=ll2v(cen[1],cen[0],R*1.01);
-    mesh.position.copy(pos);
-    scene.add(mesh);heatDots.push(mesh);
+    const col=valToColor(t);
+    const h=0.02+t*0.22;
+    const pillar=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,h,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.92}));
+    const base=ll2v(cen[1],cen[0],R*1.005);
+    const norm=base.clone().normalize();
+    pillar.position.copy(base.clone().add(norm.clone().multiplyScalar(h/2)));
+    pillar.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),norm);
+    scene.add(pillar);heatDots.push(pillar);
+    const glow=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,h,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.15}));
+    glow.position.copy(pillar.position);glow.quaternion.copy(pillar.quaternion);
+    scene.add(glow);heatDots.push(glow);
+    const tip=new THREE.Mesh(new THREE.SphereGeometry(0.016,8,8),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.7}));
+    tip.position.copy(base.clone().add(norm.clone().multiplyScalar(h)));
+    scene.add(tip);heatDots.push(tip);
   });
 }
 function globeZoom(dir){
@@ -2093,9 +2119,9 @@ function drawNetwork(){
     const pts1=addArc(vA,vB,elev,0x5599dd,op,true);
     const pts2=addArc(vB,vA,elev*0.65,0xdd8844,op*0.85,true);
     if(idx<15&&dA.exp&&dB.exp){
-      const lbl1=makeArcLabel(dA.exp[0].nm,'rgba(140,190,255,0.9)');
+      const lbl1=makeArcLabel(dA.exp[0].nm,'#fff');
       lbl1.position.copy(pts1[Math.floor(pts1.length*0.4)]);scene.add(lbl1);netArcs.push(lbl1);
-      const lbl2=makeArcLabel(dB.exp[0].nm,'rgba(255,170,110,0.9)');
+      const lbl2=makeArcLabel(dB.exp[0].nm,'#fff');
       lbl2.position.copy(pts2[Math.floor(pts2.length*0.4)]);scene.add(lbl2);netArcs.push(lbl2);
     }
   });
@@ -2119,9 +2145,9 @@ function drawCountryArcs(code){
     const elev=0.16+0.22*(vol/maxVol);
     const pts1=addArc(vA,vB,elev,0x5599dd,0.85,true);
     const pts2=addArc(vB,vA,elev*0.6,0xdd8844,0.7,true);
-    const lbl1=makeArcLabel(d.exp[0].nm,'rgba(140,190,255,0.95)');
+    const lbl1=makeArcLabel(d.exp[0].nm,'#fff');
     lbl1.position.copy(pts1[Math.floor(pts1.length*0.38)]);scene.add(lbl1);netArcs.push(lbl1);
-    const lbl2=makeArcLabel(pd.exp[0].nm,'rgba(255,170,110,0.95)');
+    const lbl2=makeArcLabel(pd.exp[0].nm,'#fff');
     lbl2.position.copy(pts2[Math.floor(pts2.length*0.38)]);scene.add(lbl2);netArcs.push(lbl2);
   });
 }
@@ -2193,6 +2219,44 @@ window.toggleNetwork=toggleNetwork;
     sb.style.right='auto';
   });
   document.addEventListener('mouseup',function(){dragging=false;});
+
+  // Resize handles
+  const rLeft=sb.querySelector('.resize-handle-left');
+  const rBottom=sb.querySelector('.resize-handle-bottom');
+  const rCorner=sb.querySelector('.resize-handle-corner');
+  let resizing=null,startX=0,startY=0,startW=0,startH=0,startLeft=0;
+
+  function onResizeStart(e,mode){
+    resizing=mode;startX=e.clientX;startY=e.clientY;
+    startW=sb.offsetWidth;startH=sb.offsetHeight;startLeft=sb.offsetLeft;
+    sb.style.transition='none';e.preventDefault();e.stopPropagation();
+    document.body.style.cursor=mode==='left'?'ew-resize':mode==='bottom'?'ns-resize':'nesw-resize';
+    (mode==='left'?rLeft:mode==='bottom'?rBottom:rCorner).classList.add('active');
+  }
+  rLeft.addEventListener('mousedown',e=>onResizeStart(e,'left'));
+  rBottom.addEventListener('mousedown',e=>onResizeStart(e,'bottom'));
+  rCorner.addEventListener('mousedown',e=>onResizeStart(e,'corner'));
+
+  document.addEventListener('mousemove',function(e){
+    if(!resizing)return;
+    const dx=e.clientX-startX,dy=e.clientY-startY;
+    if(resizing==='left'||resizing==='corner'){
+      const nw=Math.max(320,Math.min(window.innerWidth*0.8,startW-dx));
+      sb.style.width=nw+'px';
+      if(sb.style.right==='auto') sb.style.left=(startLeft+startW-nw)+'px';
+    }
+    if(resizing==='bottom'||resizing==='corner'){
+      const nh=Math.max(300,Math.min(window.innerHeight-32,startH+dy));
+      sb.style.height=nh+'px';
+    }
+  });
+  document.addEventListener('mouseup',function(){
+    if(resizing){
+      document.body.style.cursor='';
+      rLeft.classList.remove('active');rBottom.classList.remove('active');rCorner.classList.remove('active');
+      resizing=null;
+    }
+  });
 })();
 
 // ===== ENERGY MODE =====
@@ -2412,101 +2476,113 @@ const EN_HUB_DATA=[
 {nm:'Yemen LNG (Balhaf)',lat:13.8,lng:48.2,type:'crisis',info:'Facility mothballed since 2015',country:'Yemen'}
 ];
 
+// Reusable maritime corridor waypoints
+const _VH=[[24,59],[20,64]],_VML=[[12,72],[5,80],[2,94]],_VMS=[[4,106],[10,112]];
+const _VSC=[[16,114],[22,118]],_VSJ=[[16,116],[22,122],[28,126],[33,134]],_VSK=[[16,116],[22,122],[28,126]];
+const _VHI=[[24,60],[22,66]],_VRT=[[26,54],[26,57]],_VBA=[[28,50],[26.5,55]],_VQA=[[26,55],[26,57]];
+const _VHS=[[20,60],[14,52],[12.5,44],[20,38],[30,32.5]],_VMG=[[35,25],[36,12],[36,-2],[36,-6]];
+const _VGN=[[43,-9],[48,-5]],_VUA=[[27,-88],[25,-82],[28,-72]],_VAE=[[35,-50],[42,-30],[48,-15]];
+const _VGM=[[-30,32],[-18,52],[-5,62],[5,78],[2,94]],_VGI=[[-30,32],[-18,48],[-5,60],[8,68]];
+const _VNG=[[-5,8],[-15,10],[-28,14],[-34,18.5]],_VAG=[[-15,12],[-25,14],[-34,18.5]];
 const EN_SEA_ROUTES=[
-{from:[26.6,56.2],to:[1.3,103.8],type:'crude',vol:8.5,nm:'Persian Gulf → Singapore'},
-{from:[26.6,56.2],to:[35.6,140.1],type:'crude',vol:4.2,nm:'Persian Gulf → Japan'},
-{from:[26.6,56.2],to:[29.9,122.1],type:'crude',vol:6.8,nm:'Persian Gulf → China'},
-{from:[26.6,56.2],to:[35.5,129.4],type:'crude',vol:3.1,nm:'Persian Gulf → Korea'},
-{from:[26.6,56.2],to:[22.4,70.0],type:'crude',vol:4.5,nm:'Persian Gulf → India'},
-{from:[4.4,7.2],to:[51.9,4.1],type:'crude',vol:1.8,nm:'Nigeria → Rotterdam'},
-{from:[4.4,7.2],to:[29.7,-95.0],type:'crude',vol:0.8,nm:'Nigeria → Houston'},
-{from:[4.4,7.2],to:[29.9,122.1],type:'crude',vol:1.2,nm:'Nigeria → China'},
-{from:[-6.1,12.4],to:[29.9,122.1],type:'crude',vol:1.5,nm:'Angola → China'},
-{from:[-6.1,12.4],to:[22.4,70.0],type:'crude',vol:0.6,nm:'Angola → India'},
-{from:[60.3,29.0],to:[51.9,4.1],type:'crude',vol:1.5,nm:'Primorsk → Rotterdam'},
-{from:[44.7,37.8],to:[36.9,35.9],type:'crude',vol:0.8,nm:'Novorossiysk → Ceyhan'},
-{from:[42.7,133.0],to:[29.9,122.1],type:'crude',vol:1.6,nm:'Kozmino → China'},
-{from:[42.7,133.0],to:[35.5,129.4],type:'crude',vol:0.5,nm:'Kozmino → Korea'},
-{from:[42.7,133.0],to:[22.4,70.0],type:'crude',vol:0.8,nm:'Kozmino → India'},
-{from:[29.7,-95.0],to:[51.9,4.1],type:'crude',vol:1.2,nm:'Houston → Rotterdam'},
-{from:[29.7,-95.0],to:[35.5,129.4],type:'crude',vol:0.6,nm:'Houston → Korea'},
-{from:[29.7,-95.0],to:[22.4,70.0],type:'crude',vol:0.4,nm:'Houston → India'},
-{from:[7.5,-57.5],to:[29.7,-95.0],type:'crude',vol:0.4,nm:'Guyana → Houston'},
-{from:[-25.0,-43.5],to:[29.9,122.1],type:'crude',vol:1.0,nm:'Brazil → China'},
-{from:[35.8,-0.3],to:[51.9,4.1],type:'crude',vol:0.5,nm:'Algeria → Rotterdam'},
-{from:[31.1,29.7],to:[51.9,4.1],type:'crude',vol:0.6,nm:'Sidi Kerir → Rotterdam'},
-{from:[29.7,48.8],to:[22.4,70.0],type:'crude',vol:1.8,nm:'Basra → India'},
-{from:[29.7,48.8],to:[29.9,122.1],type:'crude',vol:2.2,nm:'Basra → China'},
-{from:[29.7,48.8],to:[51.9,4.1],type:'crude',vol:0.4,nm:'Basra → Rotterdam'},
-{from:[44.7,37.8],to:[22.4,70.0],type:'crude',vol:1.5,nm:'Russia Black Sea → India'},
-{from:[62.0,72.0],to:[42.7,133.0],type:'crude',vol:1.8,nm:'W.Siberia → Kozmino (pipeline to port)'},
-{from:[36.9,6.9],to:[51.9,4.1],type:'crude',vol:0.4,nm:'Skikda → Rotterdam'},
-{from:[26.6,50.2],to:[35.6,140.1],type:'crude',vol:1.8,nm:'Ras Tanura → Japan'},
-{from:[26.6,50.2],to:[29.9,122.1],type:'crude',vol:3.5,nm:'Ras Tanura → China'},
-{from:[26.6,50.2],to:[35.5,129.4],type:'crude',vol:2.8,nm:'Ras Tanura → Korea'},
-{from:[46.6,142.9],to:[35.6,140.1],type:'crude',vol:0.4,nm:'Sakhalin → Japan'},
-{from:[25.9,51.5],to:[35.6,140.1],type:'lng',vol:8.2,nm:'Qatar → Japan'},
-{from:[25.9,51.5],to:[35.5,129.4],type:'lng',vol:5.1,nm:'Qatar → Korea'},
-{from:[25.9,51.5],to:[29.9,122.1],type:'lng',vol:4.8,nm:'Qatar → China'},
-{from:[25.9,51.5],to:[22.4,70.0],type:'lng',vol:3.5,nm:'Qatar → India'},
-{from:[25.9,51.5],to:[51.9,4.1],type:'lng',vol:2.2,nm:'Qatar → NW Europe'},
-{from:[25.9,51.5],to:[40.6,-74.0],type:'lng',vol:0.8,nm:'Qatar → US East Coast'},
-{from:[-20.7,116.8],to:[35.6,140.1],type:'lng',vol:5.0,nm:'NWS Australia → Japan'},
-{from:[-20.7,116.8],to:[29.9,122.1],type:'lng',vol:3.2,nm:'NWS Australia → China'},
-{from:[-20.7,116.8],to:[35.5,129.4],type:'lng',vol:2.8,nm:'NWS Australia → Korea'},
-{from:[-23.8,151.3],to:[29.9,122.1],type:'lng',vol:2.1,nm:'Gladstone → China'},
-{from:[29.7,-93.9],to:[51.9,4.1],type:'lng',vol:3.5,nm:'Sabine Pass → Europe'},
-{from:[29.7,-93.9],to:[35.6,140.1],type:'lng',vol:1.8,nm:'Sabine Pass → Japan'},
-{from:[29.7,-93.9],to:[35.5,129.4],type:'lng',vol:1.5,nm:'Sabine Pass → Korea'},
-{from:[29.7,-93.9],to:[22.4,70.0],type:'lng',vol:0.8,nm:'Sabine Pass → India'},
-{from:[27.8,-97.4],to:[51.9,4.1],type:'lng',vol:1.2,nm:'Corpus Christi → Europe'},
-{from:[3.2,113.1],to:[35.6,140.1],type:'lng',vol:4.5,nm:'Bintulu → Japan'},
-{from:[3.2,113.1],to:[35.5,129.4],type:'lng',vol:2.0,nm:'Bintulu → Korea'},
-{from:[3.2,113.1],to:[29.9,122.1],type:'lng',vol:1.8,nm:'Bintulu → China'},
-{from:[4.4,7.2],to:[51.9,4.1],type:'lng',vol:2.5,nm:'Nigeria LNG → Europe'},
-{from:[4.4,7.2],to:[22.4,70.0],type:'lng',vol:0.8,nm:'Nigeria LNG → India'},
-{from:[71.3,72.8],to:[29.9,122.1],type:'lng',vol:2.5,nm:'Yamal → China (NSR)'},
-{from:[71.3,72.8],to:[51.9,4.1],type:'lng',vol:1.8,nm:'Yamal → Europe'},
-{from:[71.3,72.8],to:[35.6,140.1],type:'lng',vol:0.8,nm:'Yamal → Japan'},
-{from:[10.4,-61.0],to:[40.6,-74.0],type:'lng',vol:1.0,nm:'Trinidad → US East'},
-{from:[10.4,-61.0],to:[51.9,4.1],type:'lng',vol:0.6,nm:'Trinidad → Europe'},
-{from:[31.3,30.3],to:[51.9,4.1],type:'lng',vol:0.8,nm:'Egypt LNG → Europe'},
-{from:[22.9,59.5],to:[35.5,129.4],type:'lng',vol:1.2,nm:'Oman LNG → Korea'},
-{from:[62.0,72.0],to:[55.0,37.0],type:'pipe',vol:4.5,nm:'W. Siberia → Moscow trunk'},
-{from:[62.0,72.0],to:[51.9,4.1],type:'pipe',vol:2.8,nm:'W. Siberia → NW Europe (residual)'},
-{from:[62.0,72.0],to:[29.9,122.1],type:'pipe',vol:3.8,nm:'Power of Siberia → China'},
-{from:[46.2,53.3],to:[44.7,37.8],type:'pipe',vol:1.2,nm:'CPC: Tengiz → Novorossiysk'},
-{from:[40.0,49.8],to:[36.9,35.9],type:'pipe',vol:1.0,nm:'BTC: Baku → Ceyhan'},
-{from:[36.5,44.0],to:[36.9,35.9],type:'pipe',vol:0.5,nm:'Kirkuk → Ceyhan'},
-{from:[36.9,6.9],to:[43.3,5.4],type:'pipe',vol:0.6,nm:'TransMed: Algeria → Italy (via Tunisia)'},
+// ── Crude oil sea routes ──
+{from:[26.6,56.2],to:[1.3,103.8],type:'crude',vol:8.5,nm:'Persian Gulf → Singapore',via:[..._VH,..._VML]},
+{from:[26.6,56.2],to:[35.6,140.1],type:'crude',vol:4.2,nm:'Persian Gulf → Japan',via:[..._VH,..._VML,..._VMS,..._VSJ]},
+{from:[26.6,56.2],to:[29.9,122.1],type:'crude',vol:6.8,nm:'Persian Gulf → China',via:[..._VH,..._VML,..._VMS,..._VSC]},
+{from:[26.6,56.2],to:[35.5,129.4],type:'crude',vol:3.1,nm:'Persian Gulf → Korea',via:[..._VH,..._VML,..._VMS,..._VSK]},
+{from:[26.6,56.2],to:[22.4,70.0],type:'crude',vol:4.5,nm:'Persian Gulf → India',via:_VHI},
+{from:[4.4,7.2],to:[51.9,4.1],type:'crude',vol:1.8,nm:'Nigeria → Rotterdam',via:[[5,2],[10,-10],[18,-18],[28,-15],[36,-6],..._VGN]},
+{from:[4.4,7.2],to:[29.7,-95.0],type:'crude',vol:0.8,nm:'Nigeria → Houston',via:[[4,0],[5,-15],[10,-35],[18,-55],[24,-72],[28,-85]]},
+{from:[4.4,7.2],to:[29.9,122.1],type:'crude',vol:1.2,nm:'Nigeria → China',via:[[2,6],..._VNG,..._VGM,..._VMS,..._VSC]},
+{from:[-6.1,12.4],to:[29.9,122.1],type:'crude',vol:1.5,nm:'Angola → China',via:[..._VAG,..._VGM,..._VMS,..._VSC]},
+{from:[-6.1,12.4],to:[22.4,70.0],type:'crude',vol:0.6,nm:'Angola → India',via:[..._VAG,..._VGI]},
+{from:[60.3,29.0],to:[51.9,4.1],type:'crude',vol:1.5,nm:'Primorsk → Rotterdam',via:[[59,24],[57,18],[56,12],[55,8],[54,6]]},
+{from:[44.7,37.8],to:[36.9,35.9],type:'crude',vol:0.8,nm:'Novorossiysk → Ceyhan',via:[[43,34],[41.1,29],[39.5,26],[37,28],[36.5,33]]},
+{from:[42.7,133.0],to:[29.9,122.1],type:'crude',vol:1.6,nm:'Kozmino → China',via:[[40,131],[37,128],[34,125]]},
+{from:[42.7,133.0],to:[35.5,129.4],type:'crude',vol:0.5,nm:'Kozmino → Korea',via:[[40,131]]},
+{from:[42.7,133.0],to:[22.4,70.0],type:'crude',vol:0.8,nm:'Kozmino → India',via:[[40,131],[36,127],[30,124],[22,118],[16,114],[10,110],[4,106],[2,94],[5,80],[12,72],[18,66]]},
+{from:[29.7,-95.0],to:[51.9,4.1],type:'crude',vol:1.2,nm:'Houston → Rotterdam',via:[..._VUA,..._VAE]},
+{from:[29.7,-95.0],to:[35.5,129.4],type:'crude',vol:0.6,nm:'Houston → Korea',via:[[26,-86],[24,-78],[15,-45],[0,-10],[-20,8],[-34,18.5],..._VGM,..._VMS,..._VSK]},
+{from:[29.7,-95.0],to:[22.4,70.0],type:'crude',vol:0.4,nm:'Houston → India',via:[[26,-86],[24,-78],[15,-45],[0,-10],[-20,8],[-34,18.5],..._VGI]},
+{from:[7.5,-57.5],to:[29.7,-95.0],type:'crude',vol:0.4,nm:'Guyana → Houston',via:[[10,-62],[14,-68],[18,-75],[22,-82],[26,-88]]},
+{from:[-25.0,-43.5],to:[29.9,122.1],type:'crude',vol:1.0,nm:'Brazil → China',via:[[-26,-35],[-28,-18],[-30,0],[-34,18.5],..._VGM,..._VMS,..._VSC]},
+{from:[35.8,-0.3],to:[51.9,4.1],type:'crude',vol:0.5,nm:'Algeria → Rotterdam',via:[[36,-3],[36,-6],[40,-9],[45,-6],[48,-3]]},
+{from:[31.1,29.7],to:[51.9,4.1],type:'crude',vol:0.6,nm:'Sidi Kerir → Rotterdam',via:[[33,26],[35,20],[36,10],[36,-2],[36,-6],[42,-9],[48,-4]]},
+{from:[29.7,48.8],to:[22.4,70.0],type:'crude',vol:1.8,nm:'Basra → India',via:[..._VBA,..._VHI]},
+{from:[29.7,48.8],to:[29.9,122.1],type:'crude',vol:2.2,nm:'Basra → China',via:[..._VBA,..._VH,..._VML,..._VMS,..._VSC]},
+{from:[29.7,48.8],to:[51.9,4.1],type:'crude',vol:0.4,nm:'Basra → Rotterdam',via:[..._VBA,..._VH,..._VHS,..._VMG,..._VGN]},
+{from:[44.7,37.8],to:[22.4,70.0],type:'crude',vol:1.5,nm:'Russia Black Sea → India',via:[[42,34],[41.1,29],[38,26],[35,29],[31,32],[28,34],[20,38],[12.5,43.5],[13,52],[18,62]]},
+{from:[62.0,72.0],to:[42.7,133.0],type:'crude',vol:1.8,nm:'W.Siberia → Kozmino (pipeline to port)',via:[[58,85],[54,100],[50,115],[47,125],[44,130]]},
+{from:[36.9,6.9],to:[51.9,4.1],type:'crude',vol:0.4,nm:'Skikda → Rotterdam',via:[[37,4],[37,0],[37,-4],[40,-8],[45,-6],[49,-2]]},
+{from:[26.6,50.2],to:[35.6,140.1],type:'crude',vol:1.8,nm:'Ras Tanura → Japan',via:[..._VRT,..._VH,..._VML,..._VMS,..._VSJ]},
+{from:[26.6,50.2],to:[29.9,122.1],type:'crude',vol:3.5,nm:'Ras Tanura → China',via:[..._VRT,..._VH,..._VML,..._VMS,..._VSC]},
+{from:[26.6,50.2],to:[35.5,129.4],type:'crude',vol:2.8,nm:'Ras Tanura → Korea',via:[..._VRT,..._VH,..._VML,..._VMS,..._VSK]},
+{from:[46.6,142.9],to:[35.6,140.1],type:'crude',vol:0.4,nm:'Sakhalin → Japan',via:[[43,143],[40,141]]},
+// ── LNG sea routes ──
+{from:[25.9,51.5],to:[35.6,140.1],type:'lng',vol:8.2,nm:'Qatar → Japan',via:[..._VQA,..._VH,..._VML,..._VMS,..._VSJ]},
+{from:[25.9,51.5],to:[35.5,129.4],type:'lng',vol:5.1,nm:'Qatar → Korea',via:[..._VQA,..._VH,..._VML,..._VMS,..._VSK]},
+{from:[25.9,51.5],to:[29.9,122.1],type:'lng',vol:4.8,nm:'Qatar → China',via:[..._VQA,..._VH,..._VML,..._VMS,..._VSC]},
+{from:[25.9,51.5],to:[22.4,70.0],type:'lng',vol:3.5,nm:'Qatar → India',via:[..._VQA,..._VHI]},
+{from:[25.9,51.5],to:[51.9,4.1],type:'lng',vol:2.2,nm:'Qatar → NW Europe',via:[..._VQA,..._VH,..._VHS,..._VMG,..._VGN]},
+{from:[25.9,51.5],to:[40.6,-74.0],type:'lng',vol:0.8,nm:'Qatar → US East Coast',via:[..._VQA,..._VH,..._VHS,..._VMG,[36,-6],[38,-15],[35,-35],[35,-55],[38,-68]]},
+{from:[-20.7,116.8],to:[35.6,140.1],type:'lng',vol:5.0,nm:'NWS Australia → Japan',via:[[-15,118],[-8,122],[0,128],[10,132],[20,136],[28,138]]},
+{from:[-20.7,116.8],to:[29.9,122.1],type:'lng',vol:3.2,nm:'NWS Australia → China',via:[[-15,117],[-8,118],[-1,118],[5,115],[12,115],[20,118]]},
+{from:[-20.7,116.8],to:[35.5,129.4],type:'lng',vol:2.8,nm:'NWS Australia → Korea',via:[[-15,118],[-8,120],[0,124],[10,126],[20,128],[28,129]]},
+{from:[-23.8,151.3],to:[29.9,122.1],type:'lng',vol:2.1,nm:'Gladstone → China',via:[[-20,152],[-15,150],[-8,148],[0,140],[10,134],[18,128]]},
+{from:[29.7,-93.9],to:[51.9,4.1],type:'lng',vol:3.5,nm:'Sabine Pass → Europe',via:[..._VUA,..._VAE]},
+{from:[29.7,-93.9],to:[35.6,140.1],type:'lng',vol:1.8,nm:'Sabine Pass → Japan',via:[[27,-88],[22,-82],[12,-80],[9,-79.5],[5,-85],[0,-100],[5,-120],[15,-150],[25,-170],[32,175],[35,160],[35,148]]},
+{from:[29.7,-93.9],to:[35.5,129.4],type:'lng',vol:1.5,nm:'Sabine Pass → Korea',via:[[27,-88],[22,-82],[12,-80],[9,-79.5],[5,-85],[0,-100],[5,-120],[15,-150],[25,-170],[32,175],[35,158],[35,145],[34,136]]},
+{from:[29.7,-93.9],to:[22.4,70.0],type:'lng',vol:0.8,nm:'Sabine Pass → India',via:[[26,-86],[24,-78],[15,-45],[0,-10],[-15,5],[-30,15],[-34,18.5],..._VGI]},
+{from:[27.8,-97.4],to:[51.9,4.1],type:'lng',vol:1.2,nm:'Corpus Christi → Europe',via:[[27,-92],[27,-88],[25,-82],[28,-72],..._VAE]},
+{from:[3.2,113.1],to:[35.6,140.1],type:'lng',vol:4.5,nm:'Bintulu → Japan',via:[[8,114],[15,116],[22,122],[28,126],[33,134]]},
+{from:[3.2,113.1],to:[35.5,129.4],type:'lng',vol:2.0,nm:'Bintulu → Korea',via:[[8,114],[15,116],[22,122],[28,126]]},
+{from:[3.2,113.1],to:[29.9,122.1],type:'lng',vol:1.8,nm:'Bintulu → China',via:[[8,114],[15,114],[22,118]]},
+{from:[4.4,7.2],to:[51.9,4.1],type:'lng',vol:2.5,nm:'Nigeria LNG → Europe',via:[[5,2],[10,-10],[18,-18],[28,-15],[36,-6],..._VGN]},
+{from:[4.4,7.2],to:[22.4,70.0],type:'lng',vol:0.8,nm:'Nigeria LNG → India',via:[[2,6],..._VNG,..._VGI]},
+{from:[71.3,72.8],to:[29.9,122.1],type:'lng',vol:2.5,nm:'Yamal → China (NSR)',via:[[72,90],[73,110],[72,135],[70,155],[64,168],[56,170],[48,163],[42,152],[38,142],[34,134]]},
+{from:[71.3,72.8],to:[51.9,4.1],type:'lng',vol:1.8,nm:'Yamal → Europe',via:[[72,55],[71,40],[70,25],[67,14],[63,5],[58,3]]},
+{from:[71.3,72.8],to:[35.6,140.1],type:'lng',vol:0.8,nm:'Yamal → Japan',via:[[72,90],[73,110],[72,135],[70,155],[64,168],[56,170],[48,163],[42,152],[38,142]]},
+{from:[10.4,-61.0],to:[40.6,-74.0],type:'lng',vol:1.0,nm:'Trinidad → US East',via:[[14,-63],[20,-67],[28,-72],[35,-74]]},
+{from:[10.4,-61.0],to:[51.9,4.1],type:'lng',vol:0.6,nm:'Trinidad → Europe',via:[[14,-58],[20,-50],[30,-40],[38,-25],[45,-15],[50,-5]]},
+{from:[31.3,30.3],to:[51.9,4.1],type:'lng',vol:0.8,nm:'Egypt LNG → Europe',via:[[33,28],[35,20],[36,10],[36,2],[36,-5.5],[42,-9],[48,-4]]},
+{from:[22.9,59.5],to:[35.5,129.4],type:'lng',vol:1.2,nm:'Oman LNG → Korea',via:[[20,63],[12,72],[5,80],[2,94],..._VMS,..._VSK]},
+// ── Pipeline routes ──
+{from:[62.0,72.0],to:[55.0,37.0],type:'pipe',vol:4.5,nm:'W. Siberia → Moscow trunk',via:[[60,58],[58,48]]},
+{from:[62.0,72.0],to:[51.9,4.1],type:'pipe',vol:2.8,nm:'W. Siberia → NW Europe (residual)',via:[[60,58],[57,42],[54,28],[53,15]]},
+{from:[62.0,72.0],to:[29.9,122.1],type:'pipe',vol:3.8,nm:'Power of Siberia → China',via:[[60,82],[56,95],[50,108],[45,118],[38,120],[34,121]]},
+{from:[46.2,53.3],to:[44.7,37.8],type:'pipe',vol:1.2,nm:'CPC: Tengiz → Novorossiysk',via:[[46,48],[45,43]]},
+{from:[40.0,49.8],to:[36.9,35.9],type:'pipe',vol:1.0,nm:'BTC: Baku → Ceyhan',via:[[41,46],[41.5,43],[40,40],[38,37]]},
+{from:[36.5,44.0],to:[36.9,35.9],type:'pipe',vol:0.5,nm:'Kirkuk → Ceyhan',via:[[37,41],[37,38]]},
+{from:[36.9,6.9],to:[43.3,5.4],type:'pipe',vol:0.6,nm:'TransMed: Algeria → Italy (via Tunisia)',via:[[38,7],[40,6]]},
 {from:[35.8,-0.3],to:[36.7,-4.4],type:'pipe',vol:0.3,nm:'Medgaz: Algeria → Spain'},
-{from:[70.7,24.0],to:[51.5,0.0],type:'pipe',vol:1.2,nm:'Langeled: Norway → UK'},
-{from:[60.6,3.7],to:[50.9,1.0],type:'pipe',vol:1.5,nm:'Troll → Dunkerque (Franpipe)'},
-{from:[58.9,2.6],to:[51.9,4.1],type:'pipe',vol:0.6,nm:'Norpipe: Ekofisk → Emden'},
-{from:[36.5,44.0],to:[30.5,47.8],type:'pipe',vol:0.4,nm:'Iraq internal: Kirkuk → Basra'},
-{from:[22.4,70.0],to:[20.3,86.6],type:'pipe',vol:0.3,nm:'India domestic pipeline'},
-{from:[31.9,-102.1],to:[29.7,-95.0],type:'pipe',vol:3.5,nm:'Permian → Houston (multiple)'},
-{from:[31.9,-102.1],to:[27.8,-97.4],type:'pipe',vol:2.0,nm:'Permian → Corpus Christi'},
-{from:[57.0,-111.5],to:[29.7,-95.0],type:'pipe',vol:0.8,nm:'Keystone: Alberta → Gulf Coast'},
-{from:[57.0,-111.5],to:[49.0,-97.0],type:'pipe',vol:0.6,nm:'Enbridge Mainline'},
+{from:[70.7,24.0],to:[51.5,0.0],type:'pipe',vol:1.2,nm:'Langeled: Norway → UK',via:[[67,12],[63,5],[58,2],[55,1]]},
+{from:[60.6,3.7],to:[50.9,1.0],type:'pipe',vol:1.5,nm:'Troll → Dunkerque (Franpipe)',via:[[58,3],[55,2],[53,1.5]]},
+{from:[58.9,2.6],to:[51.9,4.1],type:'pipe',vol:0.6,nm:'Norpipe: Ekofisk → Emden',via:[[56,3],[54,3.5]]},
+{from:[36.5,44.0],to:[30.5,47.8],type:'pipe',vol:0.4,nm:'Iraq internal: Kirkuk → Basra',via:[[34,45],[32,47]]},
+{from:[22.4,70.0],to:[20.3,86.6],type:'pipe',vol:0.3,nm:'India domestic pipeline',via:[[22,74],[21,78],[20.5,82]]},
+{from:[31.9,-102.1],to:[29.7,-95.0],type:'pipe',vol:3.5,nm:'Permian → Houston (multiple)',via:[[31,-99]]},
+{from:[31.9,-102.1],to:[27.8,-97.4],type:'pipe',vol:2.0,nm:'Permian → Corpus Christi',via:[[30,-100]]},
+{from:[57.0,-111.5],to:[29.7,-95.0],type:'pipe',vol:0.8,nm:'Keystone: Alberta → Gulf Coast',via:[[52,-108],[47,-104],[42,-100],[37,-97],[33,-96]]},
+{from:[57.0,-111.5],to:[49.0,-97.0],type:'pipe',vol:0.6,nm:'Enbridge Mainline',via:[[54,-108],[51,-103]]},
 {from:[27.0,52.0],to:[28.0,53.0],type:'pipe',vol:0.3,nm:'South Pars → Assaluyeh'},
 {from:[53.3,6.8],to:[51.9,4.1],type:'pipe',vol:0.1,nm:'Groningen → NL grid (closing)'},
 {from:[41.0,-77.5],to:[40.6,-74.0],type:'pipe',vol:0.5,nm:'Marcellus → NYC'},
 {from:[32.5,-93.5],to:[29.7,-93.9],type:'pipe',vol:0.8,nm:'Haynesville → Sabine Pass LNG'},
-{from:[31.7,6.1],to:[36.9,6.9],type:'pipe',vol:0.4,nm:'Hassi Messaoud → Skikda'},
-{from:[48.1,-103.5],to:[29.7,-95.0],type:'pipe',vol:0.5,nm:'Bakken → Gulf (DAPL)'},
-{from:[40.0,49.8],to:[41.1,29.1],type:'pipe',vol:0.3,nm:'TANAP: Azerbaijan → Turkey'},
-{from:[41.1,29.1],to:[40.6,22.9],type:'pipe',vol:0.3,nm:'TAP: Turkey → Greece → Italy'},
+{from:[31.7,6.1],to:[36.9,6.9],type:'pipe',vol:0.4,nm:'Hassi Messaoud → Skikda',via:[[34,6.5]]},
+{from:[48.1,-103.5],to:[29.7,-95.0],type:'pipe',vol:0.5,nm:'Bakken → Gulf (DAPL)',via:[[44,-100],[39,-97],[35,-96],[32,-95.5]]},
+{from:[40.0,49.8],to:[41.1,29.1],type:'pipe',vol:0.3,nm:'TANAP: Azerbaijan → Turkey',via:[[40,45],[40,40],[41,35]]},
+{from:[41.1,29.1],to:[40.6,22.9],type:'pipe',vol:0.3,nm:'TAP: Turkey → Greece → Italy',via:[[41,27],[40.8,25]]},
 {from:[60.6,3.7],to:[58.0,7.0],type:'pipe',vol:0.8,nm:'Troll → Kollsnes processing'},
-{from:[46.4,52.5],to:[29.9,122.1],type:'pipe',vol:0.2,nm:'Kazakhstan → China (via pipeline)'},
-{from:[40.0,62.0],to:[29.9,122.1],type:'pipe',vol:0.5,nm:'Central Asia–China Gas Pipeline'},
-{from:[71.0,87.0],to:[60.3,29.0],type:'pipe',vol:0.1,nm:'Vostok Oil → NSR terminal (planned)'},
+{from:[46.4,52.5],to:[29.9,122.1],type:'pipe',vol:0.2,nm:'Kazakhstan → China (via pipeline)',via:[[44,58],[42,68],[40,78],[38,88],[36,98],[33,108],[31,116]]},
+{from:[40.0,62.0],to:[29.9,122.1],type:'pipe',vol:0.5,nm:'Central Asia–China Gas Pipeline',via:[[40,68],[40,76],[38,84],[36,95],[34,105],[32,112]]},
+{from:[71.0,87.0],to:[60.3,29.0],type:'pipe',vol:0.1,nm:'Vostok Oil → NSR terminal (planned)',via:[[70,78],[68,62],[65,48],[62,38]]},
 {from:[30.5,47.8],to:[29.7,48.8],type:'pipe',vol:2.5,nm:'Iraq southern oil → Basra terminal'},
 {from:[24.0,49.0],to:[26.6,50.2],type:'pipe',vol:3.0,nm:'Saudi E–W → Ras Tanura'},
-{from:[24.0,49.0],to:[24.1,38.1],type:'pipe',vol:2.0,nm:'Petroline: East → Yanbu'},
-{from:[15.0,42.5],to:[30.5,32.3],type:'disrupted',vol:0.8,nm:'Red Sea → Suez (Houthi disrupted)'},
+{from:[24.0,49.0],to:[24.1,38.1],type:'pipe',vol:2.0,nm:'Petroline: East → Yanbu',via:[[24,45],[24,42]]},
+// ── Disrupted routes ──
+{from:[15.0,42.5],to:[30.5,32.3],type:'disrupted',vol:0.8,nm:'Red Sea → Suez (Houthi disrupted)',via:[[18,40],[22,37],[26,34]]},
 {from:[4.4,7.2],to:[5.5,5.0],type:'disrupted',vol:0.3,nm:'Niger Delta theft corridor'},
-{from:[36.5,44.0],to:[36.9,35.9],type:'disrupted',vol:0.45,nm:'Kirkuk–Ceyhan (PKK attacks)'},
+{from:[36.5,44.0],to:[36.9,35.9],type:'disrupted',vol:0.45,nm:'Kirkuk–Ceyhan (PKK attacks)',via:[[37,41],[37,38]]},
 {from:[13.8,48.2],to:[12.6,43.3],type:'disrupted',vol:0.0,nm:'Yemen LNG (mothballed)'}
 ];
 
@@ -2548,51 +2624,57 @@ function renderEnScene(){
     if(!EN_LAYERS[layer])return;
     const v=ll2v(h.lat,h.lng,R*1.01);
     if(h.type==='crisis'){
-      const ring=new THREE.Mesh(new THREE.RingGeometry(0.02,0.04,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.6,side:THREE.DoubleSide}));
+      const ring=new THREE.Mesh(new THREE.RingGeometry(0.012,0.022,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.7,side:THREE.DoubleSide}));
       ring.position.copy(v);ring.lookAt(0,0,0);scene.add(ring);enGlobeObjs.push(ring);
-      const pulse=new THREE.Mesh(new THREE.RingGeometry(0.03,0.06,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.2,side:THREE.DoubleSide}));
+      const pulse=new THREE.Mesh(new THREE.RingGeometry(0.018,0.028,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
       pulse.position.copy(v);pulse.lookAt(0,0,0);pulse._enPulse=true;pulse._enScale=1;
       scene.add(pulse);enGlobeObjs.push(pulse);
     }else if(h.type==='prod'&&OFFSHORE_NMS.has(h.nm)){
-      const ring=new THREE.Mesh(new THREE.RingGeometry(0.01,0.02,16),new THREE.MeshBasicMaterial({color:0x44aadd,transparent:true,opacity:0.85,side:THREE.DoubleSide}));
-      ring.position.copy(v);ring.lookAt(0,0,0);scene.add(ring);enGlobeObjs.push(ring);
-      const glow=new THREE.Mesh(new THREE.RingGeometry(0.005,0.025,16),new THREE.MeshBasicMaterial({color:0x44aadd,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
-      glow.position.copy(v);glow.lookAt(0,0,0);scene.add(glow);enGlobeObjs.push(glow);
+      const dot=new THREE.Mesh(new THREE.SphereGeometry(0.006,10,10),new THREE.MeshBasicMaterial({color:0x44aadd}));
+      dot.position.copy(v);scene.add(dot);enGlobeObjs.push(dot);
     }else if(h.type==='prod'){
-      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.01,0.024,6),new THREE.MeshBasicMaterial({color:0xee4444}));
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(0.007,0.018,8),new THREE.MeshBasicMaterial({color:0xee4444}));
       cone.position.copy(v);cone.lookAt(new THREE.Vector3(0,0,0));cone.rotateX(Math.PI/2);
       scene.add(cone);enGlobeObjs.push(cone);
     }else if(h.type==='lng'){
-      const dia=new THREE.Mesh(new THREE.OctahedronGeometry(0.013),new THREE.MeshBasicMaterial({color:0x44dd88}));
+      const dia=new THREE.Mesh(new THREE.OctahedronGeometry(0.008,0),new THREE.MeshBasicMaterial({color:0x44dd88}));
       dia.position.copy(v);scene.add(dia);enGlobeObjs.push(dia);
     }else if(h.type==='export'&&TRANSIT_NMS.has(h.nm)){
-      const tri=new THREE.Mesh(new THREE.ConeGeometry(0.012,0.02,3),new THREE.MeshBasicMaterial({color:0xddaa44,transparent:true,opacity:0.8}));
+      const tri=new THREE.Mesh(new THREE.ConeGeometry(0.008,0.015,3),new THREE.MeshBasicMaterial({color:0xff9900,transparent:true,opacity:0.85}));
       tri.position.copy(v);tri.lookAt(new THREE.Vector3(0,0,0));tri.rotateX(-Math.PI/2);
       scene.add(tri);enGlobeObjs.push(tri);
     }else if(h.type==='export'){
-      const box=new THREE.Mesh(new THREE.BoxGeometry(0.016,0.016,0.016),new THREE.MeshBasicMaterial({color:0xddaa44}));
+      const box=new THREE.Mesh(new THREE.BoxGeometry(0.01,0.01,0.01),new THREE.MeshBasicMaterial({color:0xddaa44}));
       box.position.copy(v);scene.add(box);enGlobeObjs.push(box);
     }else{
-      const dot=new THREE.Mesh(new THREE.SphereGeometry(0.012,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));
+      const dot=new THREE.Mesh(new THREE.SphereGeometry(0.006,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));
       dot.position.copy(v);scene.add(dot);enGlobeObjs.push(dot);
     }
   });
   EN_SEA_ROUTES.forEach(r=>{
-    const fromV=ll2v(r.from[0],r.from[1],1).normalize();
-    const toV=ll2v(r.to[0],r.to[1],1).normalize();
+    const wp=[r.from,...(r.via||[]),r.to];
     const col=EN_ROUTE_COLORS[r.type]||0xffffff;
-    const elev=0.06+r.vol*0.015;
-    const pts=slerpArcPts(fromV,toV,Math.min(elev,0.3),80);
-    const mat=new THREE.LineBasicMaterial({color:col,opacity:r.type==='disrupted'?0.35:0.2,transparent:true});
+    const pts=[];
+    for(let i=0;i<wp.length-1;i++){
+      const a=ll2v(wp[i][0],wp[i][1],R).normalize();
+      const b=ll2v(wp[i+1][0],wp[i+1][1],R).normalize();
+      const seg=slerpArcPts(a,b,0.006,20);
+      if(i>0)seg.shift();
+      pts.push(...seg);
+    }
+    const lineOp=enRouteMode==='uniform'?0.25:enRouteMode==='flow'?Math.min(0.65,0.08+r.vol*0.05):0.05;
+    const mat=new THREE.LineBasicMaterial({color:col,opacity:r.type==='disrupted'?0.4:lineOp,transparent:true});
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);
     scene.add(line);enGlobeObjs.push(line);
-    const nDots=Math.max(2,Math.min(5,Math.round(r.vol/2)));
+    const nDots=enRouteMode==='uniform'?3:enRouteMode==='flow'?Math.max(2,Math.min(8,Math.round(r.vol))):Math.max(3,Math.min(10,Math.round(r.vol*1.2)));
+    const dotR=enRouteMode==='vol'?Math.min(0.018,0.006+r.vol*0.001):0.008;
+    const glowR=dotR*1.8;
     for(let i=0;i<nDots;i++){
-      const fd=new THREE.Mesh(new THREE.SphereGeometry(0.008,6,6),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.9}));
-      const glow=new THREE.Mesh(new THREE.SphereGeometry(0.016,6,6),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.2}));
+      const fd=new THREE.Mesh(new THREE.SphereGeometry(dotR,10,10),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.9}));
+      const glow=new THREE.Mesh(new THREE.SphereGeometry(glowR,10,10),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.18}));
       fd.add(glow);
       scene.add(fd);enGlobeObjs.push(fd);
-      enFlowDots.push({mesh:fd,pts,progress:i/nDots,speed:0.002+r.vol*0.0003,disrupted:r.type==='disrupted'});
+      enFlowDots.push({mesh:fd,pts,progress:i/nDots,speed:0.001+r.vol*0.0002,disrupted:r.type==='disrupted'});
     }
   });
 }
@@ -2631,7 +2713,7 @@ function showHubDetail(hub){
   const isOffshore=hub.type==='prod'&&OFFSHORE_NMS.has(hub.nm);
   const isTransit=hub.type==='export'&&TRANSIT_NMS.has(hub.nm);
   const typeLabels={prod:isOffshore?'Offshore Oil/Gas Field':'Onshore Oil/Gas Field',offshore:'Maritime Chokepoint',lng:'LNG Terminal',export:isTransit?'Transit Hub':'Export Port',crisis:'Crisis Overlay'};
-  const typeColors={prod:isOffshore?'#4ad':'#e44',offshore:'#4ad',lng:'#4d8',export:'#da4',crisis:'#f4a'};
+  const typeColors={prod:isOffshore?'#4ad':'#e44',offshore:'#4ad',lng:'#4d8',export:isTransit?'#f90':'#da4',crisis:'#f4a'};
   const type=hub.type||(hub.mbd!==undefined?'offshore':'prod');
   el.innerHTML=`<div class="en-hub-info">
     <div class="ehi-name">${hub.nm}</div>
@@ -2678,17 +2760,15 @@ function setEnTheme(key){
 }
 window.setEnTheme=setEnTheme;
 
+let enRouteMode='uniform';
 function setRouteWidth(mode){
-  document.querySelectorAll('.en-sec .en-btn-group:first-of-type .en-btn').forEach((b,i)=>{
+  enRouteMode=mode;
+  document.querySelectorAll('#route-width-grp .en-btn').forEach((b,i)=>{
     b.classList.toggle('active',['uniform','flow','vol'][i]===mode);
   });
+  if(enMode)renderEnScene();
 }
-function setEnFilter(mode){
-  document.querySelectorAll('.en-sec .en-btn-group:nth-of-type(2) .en-btn').forEach((b,i)=>{
-    b.classList.toggle('active',['grid','circle','gear'][i]===mode);
-  });
-}
-window.setRouteWidth=setRouteWidth;window.setEnFilter=setEnFilter;
+window.setRouteWidth=setRouteWidth;
 
 function toggleThemeFloat(){
   const p=document.getElementById('en-theme-float');
