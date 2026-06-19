@@ -178,9 +178,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .el-name{flex:1;font-size:11.5px;font-weight:600;color:#eee;font-family:'Consolas','Courier New',monospace;text-transform:uppercase}
 .el-count{font-size:11px;font-weight:700;margin-right:8px}
 .el-tog{width:8px;height:8px;border-radius:50%}
-.en-route-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:11px;color:#eee;font-family:Consolas,'Noto Sans TC',sans-serif;text-transform:uppercase}
-.er-line{width:24px;height:2px;border-radius:1px;flex-shrink:0}
-.er-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.en-route-item{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:11px;color:#eee;font-family:Consolas,'Noto Sans TC',sans-serif;text-transform:uppercase;cursor:pointer;border-radius:6px;border:1px solid transparent;transition:all .12s;margin-bottom:2px}
+.en-route-item:hover{background:rgba(255,255,255,0.03)}
+.en-route-item.active{border-color:rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.en-route-item.off{opacity:0.3}
+.en-route-item.off .er-line,.en-route-item.off .er-dot{opacity:0.4}
+.er-line{width:24px;height:2px;border-radius:1px;flex-shrink:0;transition:opacity .15s}
+.er-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:opacity .15s}
 .en-ctrl-label{font-size:9px;color:#ddd;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
 .en-btn-group{display:flex;gap:0}
 .en-btn{padding:6px 12px;font-size:10px;font-weight:600;color:#eee;background:none;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:all .12s;font-family:'Consolas',monospace}
@@ -231,11 +235,25 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 .mk-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:11px;color:#eee;font-family:Consolas,'Noto Sans TC',sans-serif}
 .mk-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:13px}
 .en-hub-info{padding:16px}
+.ehi-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2px}
 .ehi-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.ehi-close{background:none;border:none;color:#888;font-size:18px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0}
+.ehi-close:hover{color:#fff}
 .ehi-type{font-size:10px;color:#4ad;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px}
 .ehi-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:12px}
 .ehi-lbl{color:#eee;font-weight:400}
 .ehi-val{color:#fff;font-weight:700}
+.ehi-routes-head{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:8px 0 6px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#aaa;font-family:Consolas,'Noto Sans TC',sans-serif;text-transform:uppercase;letter-spacing:.08em}
+.ehi-routes-stats{font-size:10px;color:#888;font-weight:400}
+.ehi-routes-list{max-height:340px;overflow-y:auto;margin-top:4px}
+.ehi-routes-list::-webkit-scrollbar{width:3px}
+.ehi-routes-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+.ehi-route{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.02);font-size:11px;color:#ddd;cursor:pointer;transition:background .1s}
+.ehi-route:hover{background:rgba(255,255,255,0.03)}
+.ehi-route-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center}
+.ehi-route-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ehi-route-vol{color:#fff;font-weight:700;font-size:11px;flex-shrink:0;text-align:right;min-width:70px}
+.ehi-route-note{font-size:9px;color:#666;font-style:italic;padding:8px 4px 4px;text-align:center}
 </style>
 </head>
 <body>
@@ -362,9 +380,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
           <div class="en-layer active" data-layer="offshore" onclick="toggleEnLayer('offshore')"><div class="el-dot" style="border-color:#4ad;background:#4ad"></div><span class="el-name">Offshore & Chokepoints</span><span class="el-count" style="color:#4ad">34</span><span class="el-tog" style="background:#4ad"></span></div>
           <div class="en-layer active" data-layer="lng" onclick="toggleEnLayer('lng')"><div class="el-dot" style="border-color:#4d8;background:#4d8"></div><span class="el-name">LNG Terminals</span><span class="el-count" style="color:#4d8">51</span><span class="el-tog" style="background:#4d8"></span></div>
           <div class="en-layer active" data-layer="export" onclick="toggleEnLayer('export')"><div class="el-dot" style="border-color:#da4;background:#da4"></div><span class="el-name">Export Hubs</span><span class="el-count" style="color:#da4">53</span><span class="el-tog" style="background:#da4"></span></div>
-          <div class="en-layer active" data-layer="crisis" onclick="toggleEnLayer('crisis')"><div class="el-dot" style="border-color:#f4a;background:transparent"></div><span class="el-name">Crisis Overlays</span><span class="el-count" style="color:#f4a">38</span><span class="el-tog" style="background:#f4a"></span></div>
+          <div class="en-layer active" data-layer="crisis" onclick="toggleEnLayer('crisis')"><div class="el-dot" style="border-color:#c050e0;background:transparent"></div><span class="el-name">Crisis Overlays</span><span class="el-count" style="color:#c050e0">38</span><span class="el-tog" style="background:#c050e0"></span></div>
           <div class="en-layer active" data-layer="lngRoute" onclick="toggleEnLayer('lngRoute')"><div class="el-dot" style="border-color:#4d8;background:transparent"></div><span class="el-name">LNG Sea Routes</span><span class="el-count" style="color:#4d8">27</span><span class="el-tog" style="background:#4d8"></span></div>
-          <div class="en-layer active" data-layer="disrupted" onclick="toggleEnLayer('disrupted')"><div class="el-dot" style="border-color:#f44;background:transparent"></div><span class="el-name">Disrupted Routes</span><span class="el-count" style="color:#f44">4</span><span class="el-tog" style="background:#f44"></span></div>
+          <div class="en-layer active" data-layer="disrupted" onclick="toggleEnLayer('disrupted')"><div class="el-dot" style="border-color:#dd3355;background:transparent"></div><span class="el-name">Disrupted Routes</span><span class="el-count" style="color:#dd3355">4</span><span class="el-tog" style="background:#dd3355"></span></div>
         </div>
         <div class="mk-legend">
           <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:6px;font-family:Consolas,monospace">MARKER TYPES</div>
@@ -373,22 +391,33 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
           <div class="mk-row"><div class="mk-icon" style="color:#4d8">◆</div><span>LNG 液化天然氣</span></div>
           <div class="mk-row"><div class="mk-icon" style="color:#da4">■</div><span>出口港 <span style="text-transform:uppercase">EXPORT PORT</span></span></div>
           <div class="mk-row"><div class="mk-icon" style="color:#f90">△</div><span>中繼港 <span style="text-transform:uppercase">TRANSIT HUB</span></span></div>
-          <div class="mk-row"><div class="mk-icon" style="color:#f4a">⊕</div><span>危機區 <span style="text-transform:uppercase">CRISIS ZONE</span></span></div>
+          <div class="mk-row"><div class="mk-icon" style="color:#c050e0">⊕</div><span>危機區 <span style="text-transform:uppercase">CRISIS ZONE</span></span></div>
+          <div style="font-size:8px;color:#555;margin-top:8px;line-height:1.4;font-family:Consolas,monospace">Source: EIA, IEA, OPEC, S&amp;P Global Platts, Reuters, GIIGNL</div>
         </div>
       </div>
       <div class="en-sec">
-        <div class="en-route-item"><div class="er-line" style="background:#4488cc"></div><span>Sea Crude</span><span class="er-dot" style="background:#4488cc"></span></div>
-        <div class="en-route-item"><div class="er-line" style="background:#44cc88"></div><span>Sea LNG</span><span class="er-dot" style="background:#44cc88"></span></div>
-        <div class="en-route-item"><div class="er-line" style="background:#cc8844"></div><span>Pipeline</span><span class="er-dot" style="background:#cc8844"></span></div>
-        <div class="en-route-item"><div class="er-line" style="background:#cc4444"></div><span>Disrupted</span><span class="er-dot" style="background:#cc4444"></span></div>
+        <div class="en-route-item active" data-route="crude" onclick="toggleRouteType('crude')"><div class="er-line" style="background:#4488cc"></div><span>Sea Crude</span><span class="er-dot" style="background:#4488cc"></span></div>
+        <div class="en-route-item active" data-route="lng" onclick="toggleRouteType('lng')"><div class="er-line" style="background:#44cc88"></div><span>Sea LNG</span><span class="er-dot" style="background:#44cc88"></span></div>
+        <div class="en-route-item active" data-route="pipe" onclick="toggleRouteType('pipe')"><div class="er-line" style="background:#cc8844"></div><span>Pipeline</span><span class="er-dot" style="background:#cc8844"></span></div>
+        <div class="en-route-item active" data-route="disrupted" onclick="toggleRouteType('disrupted')"><div class="er-line" style="background:#dd3355"></div><span>Disrupted</span><span class="er-dot" style="background:#dd3355"></span></div>
       </div>
       <div class="en-sec">
         <div class="en-ctrl-label">航線寬度</div>
         <div class="en-btn-group" id="route-width-grp"><button class="en-btn active" onclick="setRouteWidth('uniform')">UNIFORM</button><button class="en-btn" onclick="setRouteWidth('flow')">FLOW</button><button class="en-btn" onclick="setRouteWidth('vol')">VOL ONLY</button></div>
       </div>
       <div class="en-sec">
+        <div class="en-ctrl-label">📊 貿易數據來源</div>
+        <div id="trade-data-status" style="font-size:10px;color:#888;padding:4px 0;font-family:Consolas,monospace">Static estimates · 2023</div>
+        <div class="en-btn-group"><button class="en-btn" onclick="fetchTradeData()" style="font-size:10px">🔄 COMTRADE</button><button class="en-btn" onclick="applyRealVolumes()" style="font-size:10px">📈 APPLY</button></div>
+        <div style="font-size:8px;color:#555;margin-top:4px;line-height:1.3;font-family:Consolas,monospace">UN Comtrade (HS 2709/271111)<br>EIA Crude Oil Imports API<br>Global Energy Monitor (static)</div>
+      </div>
+      <div class="en-sec">
         <div class="en-sec-head"><span class="en-sec-title" style="color:#4ad">● Sea / Maritime (34)</span></div>
         <div id="en-maritime-list"></div>
+      </div>
+      <div class="en-sec">
+        <div class="en-sec-head"><span class="en-sec-title" style="color:#c050e0">⊕ Crisis Zones (38)</span></div>
+        <div id="en-crisis-list"></div>
       </div>
     </div>
     <div id="en-right">
@@ -421,7 +450,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
       <div class="rs-row"><span class="rs-lbl">Crude</span><span class="rs-val" style="color:#4488cc">32</span></div>
       <div class="rs-row"><span class="rs-lbl">LNG</span><span class="rs-val" style="color:#44cc88">27</span></div>
       <div class="rs-row"><span class="rs-lbl">Pipe</span><span class="rs-val" style="color:#cc8844">33</span></div>
-      <div class="rs-row"><span class="rs-lbl">Dis.</span><span class="rs-val" style="color:#cc4444">4</span></div>
+      <div class="rs-row"><span class="rs-lbl">Dis.</span><span class="rs-val" style="color:#dd3355">4</span></div>
     </div>
     <div id="en-hint">Drag · Scroll Zoom · Click Hub</div>
   </div>
@@ -2269,8 +2298,21 @@ window.toggleNetwork=toggleNetwork;
 // ===== ENERGY MODE =====
 let enMode=false,enHubs=[],enRoutes=[],enFlowDots=[],enCrisisRings=[];
 const EN_LAYERS={prod:true,offshore:true,lng:true,export:true,crisis:true,lngRoute:true,disrupted:true};
-const EN_COLORS={prod:0xee4444,offshore:0x44aadd,lng:0x44dd88,export:0xddaa44,crisis:0xff44aa};
-const EN_ROUTE_COLORS={crude:0x4488cc,lng:0x44cc88,pipe:0xcc8844,disrupted:0xcc4444};
+const EN_COLORS={prod:0xee4444,offshore:0x44aadd,lng:0x44dd88,export:0xddaa44,crisis:0xc050e0};
+const EN_ROUTE_COLORS={crude:0x4488cc,lng:0x44cc88,pipe:0xcc8844,disrupted:0xdd3355};
+let activeRouteType=null;
+function toggleRouteType(type){
+  if(activeRouteType===type){activeRouteType=null;}
+  else{activeRouteType=type;}
+  document.querySelectorAll('.en-route-item[data-route]').forEach(el=>{
+    const rt=el.dataset.route;
+    if(activeRouteType===null){el.classList.add('active');el.classList.remove('off');}
+    else if(rt===activeRouteType){el.classList.add('active');el.classList.remove('off');}
+    else{el.classList.remove('active');el.classList.add('off');}
+  });
+  if(enMode)renderEnScene();
+}
+window.toggleRouteType=toggleRouteType;
 
 const EN_CHOKEPOINTS=[
 {nm:'Gulf of Mexico Deepwater (US)',cn:'墨西哥灣深水區',country:'美國',lat:27.0,lng:-90.0,mbd:1.8},
@@ -2593,6 +2635,156 @@ const EN_SEA_ROUTES=[
 {from:[13.8,48.2],to:[12.6,43.3],type:'disrupted',vol:0.0,nm:'Yemen LNG (mothballed)'}
 ];
 
+// ── Real trade data from UN Comtrade 2023 + EIA 2023 ──
+const REAL_TRADE={
+  crude:{
+    'RU→CN':2.00,'SA→CN':1.78,'IQ→CN':1.16,'AE→CN':0.88,'BR→CN':0.76,'AO→CN':0.61,'KW→CN':0.50,'NG→CN':0.01,
+    'SA→JP':1.03,'AE→JP':0.98,'KW→JP':0.23,
+    'SA→KR':0.96,'AE→KR':0.30,'KW→KR':0.27,'IQ→KR':0.26,'BR→KR':0.05,'NG→KR':0.01,
+    'UK→NL':0.15,'NG→NL':0.13,'SA→NL':0.09,'AO→NL':0.06,'DZ→NL':0.04,'RU→NL':0.02,
+    'CA→US':3.83,'MX→US':0.73,'SA→US':0.30,'IQ→US':0.21,'CO→US':0.20,'BR→US':0.18,'NG→US':0.15,'GY→US':0.09
+  },
+  lng:{
+    'AU→JP':27.5,'MY→JP':10.3,'RU→JP':6.1,'ID→JP':3.0,'QA→JP':2.9,'NG→JP':0.25,
+    'AU→CN':23.6,'QA→CN':16.6,'RU→CN':8.0,'MY→CN':7.1,'ID→CN':4.0,'NG→CN':1.2,
+    'AU→KR':10.4,'QA→KR':8.6,'MY→KR':6.1,'ID→KR':2.9,'RU→KR':1.7,'NG→KR':0.6,
+    'RU→NL':1.1,'QA→NL':1.1,'DZ→NL':0.18,'NG→NL':0.11,
+    'US→EU':3.5,'US→JP':1.8,'US→KR':1.5,'US→IN':0.8,
+    'TT→US':1.0,'TT→EU':0.6,'EG→EU':0.8,'OM→KR':1.2
+  },
+  sources:['UN Comtrade 2023 Annual','EIA Crude Oil Imports 2023'],
+  updated:'2023',
+  fetched:null
+};
+const _CC={682:'SA',643:'RU',368:'IQ',784:'AE',414:'KW',566:'NG',24:'AO',76:'BR',156:'CN',392:'JP',410:'KR',356:'IN',528:'NL',840:'US',36:'AU',634:'QA',458:'MY',360:'ID',578:'NO',12:'DZ',818:'EG',512:'OM',780:'TT',826:'UK',124:'CA',484:'MX',170:'CO',328:'GY'};
+const _DST_COORD={CN:[29.9,122.1],JP:[35.6,140.1],KR:[35.5,129.4],IN:[22.4,70.0],NL:[51.9,4.1],US:[29.7,-95.0]};
+const _SRC_PORTS={
+  SA:[[26.6,56.2],[26.6,50.2]],RU:[[42.7,133.0],[60.3,29.0],[44.7,37.8],[62.0,72.0],[71.3,72.8]],
+  IQ:[[29.7,48.8],[36.5,44.0]],AE:[[26.6,56.2]],KW:[[26.6,56.2]],NG:[[4.4,7.2]],AO:[[-6.1,12.4]],
+  BR:[[-25.0,-43.5]],AU:[[-20.7,116.8],[-23.8,151.3]],QA:[[25.9,51.5]],MY:[[3.2,113.1]],
+  ID:[[3.2,113.1]],NO:[[70.7,24.0],[60.6,3.7],[58.9,2.6]],DZ:[[36.9,6.9],[35.8,-0.3]],
+  EG:[[31.3,30.3]],OM:[[22.9,59.5]],TT:[[10.4,-61.0]],UK:[[51.9,4.1]],CA:[[57.0,-111.5]],
+  US:[[29.7,-95.0],[29.7,-93.9],[27.8,-97.4]],GY:[[7.5,-57.5]]
+};
+
+function matchRouteToReal(r){
+  const dist=(a,b)=>Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2);
+  const threshold=4.0;
+  let srcCountry=null,dstCountry=null;
+  for(const[cc,ports] of Object.entries(_SRC_PORTS)){
+    for(const p of ports){if(dist(r.from,p)<threshold){srcCountry=cc;break;}}
+    if(srcCountry)break;
+  }
+  for(const[cc,coord] of Object.entries(_DST_COORD)){
+    if(dist(r.to,coord)<threshold){dstCountry=cc;break;}
+  }
+  if(!srcCountry||!dstCountry)return null;
+  const pool=r.type==='lng'?REAL_TRADE.lng:REAL_TRADE.crude;
+  const key=srcCountry+'→'+dstCountry;
+  if(pool[key]!==undefined)return{key,vol:pool[key],src:srcCountry,dst:dstCountry};
+  return null;
+}
+
+function applyRealVolumes(){
+  const used={};
+  EN_SEA_ROUTES.forEach(r=>{
+    if(r.type==='disrupted'||r.type==='pipe')return;
+    const m=matchRouteToReal(r);
+    if(!m)return;
+    if(!used[m.key])used[m.key]={total:0,routes:[]};
+    used[m.key].routes.push(r);
+    used[m.key].total+=r.vol;
+  });
+  for(const[key,info] of Object.entries(used)){
+    const pool=key.includes('→')?
+      (REAL_TRADE.lng[key]!==undefined?REAL_TRADE.lng:REAL_TRADE.crude):REAL_TRADE.crude;
+    const realVol=pool[key];
+    if(realVol===undefined)continue;
+    const ratio=info.total>0?realVol/info.total:1;
+    info.routes.forEach(r=>{
+      r._origVol=r.vol;
+      r.vol=Math.round(r.vol*ratio*10)/10;
+    });
+  }
+  REAL_TRADE.applied=true;
+  if(enMode)renderEnScene();
+}
+
+async function fetchTradeData(){
+  const el=document.getElementById('trade-data-status');
+  if(el)el.innerHTML='<span style="color:#4ad">⏳ Fetching live data...</span>';
+  const proxies=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?'];
+  async function cfetch(url){
+    for(const px of proxies){
+      try{
+        const ac=new AbortController(),t=setTimeout(()=>ac.abort(),6000);
+        const r=await fetch(px+encodeURIComponent(url),{signal:ac.signal});clearTimeout(t);
+        if(r.ok)return await r.json();
+      }catch(e){continue;}
+    }
+    return null;
+  }
+  const KG_TO_MBD=7.33/365/1e9;
+  const KG_TO_MT=1e-9;
+  const pairs=[
+    {rep:156,cmd:'2709',flow:'M',type:'crude',dst:'CN',partners:'682,643,368,784,414,566,24,76'},
+    {rep:392,cmd:'2709',flow:'M',type:'crude',dst:'JP',partners:'682,643,784,414,368,566,24,76'},
+    {rep:410,cmd:'2709',flow:'M',type:'crude',dst:'KR',partners:'682,643,784,414,368,566,24,76'},
+    {rep:528,cmd:'2709',flow:'M',type:'crude',dst:'NL',partners:'682,643,566,24,12,826,578'},
+    {rep:156,cmd:'271111',flow:'M',type:'lng',dst:'CN',partners:'36,634,458,643,360,566,840'},
+    {rep:392,cmd:'271111',flow:'M',type:'lng',dst:'JP',partners:'36,634,458,643,360,566,840'},
+    {rep:410,cmd:'271111',flow:'M',type:'lng',dst:'KR',partners:'36,634,458,643,360,566,840'},
+    {rep:528,cmd:'271111',flow:'M',type:'lng',dst:'NL',partners:'36,634,566,12,643,840'}
+  ];
+  let fetched=0,failed=0;
+  const jobs=pairs.map(async q=>{
+    const url=`https://comtradeapi.un.org/public/v1/preview/C/A/HS?cmdCode=${q.cmd}&flowCode=${q.flow}&period=2023&reporterCode=${q.rep}&partnerCode=${q.partners}`;
+    const d=await cfetch(url);
+    if(d&&d.data&&d.data.length>0){
+      d.data.forEach(rec=>{
+        const src=_CC[rec.partnerCode];
+        if(!src)return;
+        const key=src+'→'+q.dst;
+        const pool=q.type==='lng'?REAL_TRADE.lng:REAL_TRADE.crude;
+        const nw=rec.netWgt||rec.qty||0;
+        pool[key]=q.type==='lng'?Math.round(nw*KG_TO_MT*10)/10:Math.round(nw*KG_TO_MBD*100)/100;
+      });
+      fetched++;
+    }else{failed++;}
+  });
+  jobs.push((async()=>{
+    try{
+      const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
+      const eia=await fetch('https://api.eia.gov/v2/crude-oil-imports/data/?api_key=DEMO_KEY&frequency=annual&data[0]=quantity&start=2023&end=2023&facets[destinationId][]=US&sort[0][column]=quantity&sort[0][direction]=desc&length=50',{signal:ac.signal});
+      clearTimeout(t);
+      if(eia.ok){
+        const ed=await eia.json();
+        const countryMap={Canada:'CA',Mexico:'MX','Saudi Arabia':'SA',Iraq:'IQ',Colombia:'CO',Brazil:'BR',Nigeria:'NG',Guyana:'GY',Venezuela:'VE',Ecuador:'EC',Libya:'LY',Argentina:'AR'};
+        const seen={};
+        (ed.response?.data||[]).forEach(rec=>{
+          const cc=countryMap[rec.originName];
+          if(!cc||seen[cc])return;
+          if(['World','Non-OPEC','OPEC','Other Americas','Other'].some(a=>rec.originName.includes(a)))return;
+          const key=cc+'→US';
+          REAL_TRADE.crude[key]=Math.round(rec.quantity/365/1000*100)/100;
+          seen[cc]=true;
+        });
+        fetched++;
+      }
+    }catch(e){}
+  })());
+  await Promise.allSettled(jobs);
+  REAL_TRADE.fetched=new Date().toISOString().slice(0,16).replace('T',' ');
+  applyRealVolumes();
+  if(el){
+    if(fetched>0)el.innerHTML=`<span style="color:#4d8">✓ ${fetched} sources loaded</span><span style="color:#888"> · ${REAL_TRADE.fetched} UTC</span>`;
+    else el.innerHTML='<span style="color:#e44">✕ Fetch failed ('+failed+' errors)</span>';
+  }
+  return{fetched,failed};
+}
+window.fetchTradeData=fetchTradeData;
+window.applyRealVolumes=applyRealVolumes;
+
 // Populate maritime list
 (function(){
   const list=document.getElementById('en-maritime-list');
@@ -2601,6 +2793,18 @@ const EN_SEA_ROUTES=[
     const d=document.createElement('div');d.className='en-maritime';
     d.innerHTML=`${cp.alert?'<span class="em-alert">⚠</span>':''}<span class="em-dot" style="background:${cp.alert?'#e44':'#4ad'}"></span><span class="em-nm">${cp.cn||cp.nm}<span style="display:block;font-size:9px;color:#999;margin-top:1px">${cp.nm}${cp.country?' · '+cp.country:''}</span></span><span class="em-vol">${cp.mbd} mb/d</span>`;
     d.onclick=()=>flyToEnHub(cp.lat,cp.lng,cp.nm);
+    list.appendChild(d);
+  });
+})();
+
+// Populate crisis zone list
+(function(){
+  const list=document.getElementById('en-crisis-list');
+  if(!list)return;
+  EN_HUB_DATA.filter(h=>h.type==='crisis').forEach(h=>{
+    const d=document.createElement('div');d.className='en-maritime';
+    d.innerHTML=`<span class="em-dot" style="background:#c050e0"></span><span class="em-nm">${h.nm}<span style="display:block;font-size:9px;color:#c050e0;margin-top:1px">${h.info||''}</span><span style="display:block;font-size:8px;color:#777;margin-top:1px">${h.country||''}</span></span>`;
+    d.onclick=()=>flyToEnHub(h.lat,h.lng,h.nm);
     list.appendChild(d);
   });
 })();
@@ -2631,9 +2835,9 @@ function renderEnScene(){
     if(!EN_LAYERS[layer])return;
     const v=ll2v(h.lat,h.lng,R*1.01);
     if(h.type==='crisis'){
-      const ring=new THREE.Mesh(new THREE.RingGeometry(0.012,0.022,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.7,side:THREE.DoubleSide}));
+      const ring=new THREE.Mesh(new THREE.RingGeometry(0.012,0.022,24),new THREE.MeshBasicMaterial({color:0xc050e0,transparent:true,opacity:0.7,side:THREE.DoubleSide}));
       ring.position.copy(v);ring.lookAt(0,0,0);scene.add(ring);enGlobeObjs.push(ring);
-      const pulse=new THREE.Mesh(new THREE.RingGeometry(0.018,0.028,24),new THREE.MeshBasicMaterial({color:0xff44aa,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
+      const pulse=new THREE.Mesh(new THREE.RingGeometry(0.018,0.028,24),new THREE.MeshBasicMaterial({color:0xc050e0,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
       pulse.position.copy(v);pulse.lookAt(0,0,0);pulse._enPulse=true;pulse._enScale=1;
       scene.add(pulse);enGlobeObjs.push(pulse);
     }else if(h.type==='prod'&&OFFSHORE_NMS.has(h.nm)){
@@ -2659,6 +2863,9 @@ function renderEnScene(){
     }
   });
   EN_SEA_ROUTES.forEach(r=>{
+    if(activeRouteType!==null&&r.type!==activeRouteType)return;
+    const dimmed=focusedHubRoutes!==null&&!focusedHubRoutes.has(r);
+    if(dimmed&&activeRouteType!==null)return;
     const wp=[r.from,...(r.via||[]),r.to];
     const col=EN_ROUTE_COLORS[r.type]||0xffffff;
     const knots=wp.map(p=>ll2v(p[0],p[1],R));
@@ -2667,9 +2874,11 @@ function renderEnScene(){
     const pts=[];
     for(let i=0;i<=totalSteps;i++){const t=i/totalSteps;const p=curve.getPoint(t);const elev=0.006*Math.sin(Math.PI*t);p.normalize().multiplyScalar(R*(1+elev));pts.push(p);}
     const lineOp=enRouteMode==='uniform'?0.25:enRouteMode==='flow'?Math.min(0.65,0.08+r.vol*0.05):0.05;
-    const mat=new THREE.LineBasicMaterial({color:col,opacity:r.type==='disrupted'?0.4:lineOp,transparent:true});
+    const baseOp=r.type==='disrupted'?0.4:lineOp;
+    const mat=new THREE.LineBasicMaterial({color:col,opacity:dimmed?baseOp*0.12:baseOp,transparent:true});
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);
     scene.add(line);enGlobeObjs.push(line);
+    if(dimmed)return;
     const nDots=enRouteMode==='uniform'?3:enRouteMode==='flow'?Math.max(2,Math.min(8,Math.round(r.vol))):Math.max(3,Math.min(10,Math.round(r.vol*1.2)));
     const dotR=enRouteMode==='vol'?Math.min(0.018,0.006+r.vol*0.001):0.008;
     const glowR=dotR*1.8;
@@ -2748,6 +2957,18 @@ function flyToEnHub(lat,lng,nm){
   }
 }
 
+let focusedHubRoutes=null;
+function getRoutesForHub(hub){
+  const threshold=3.0;
+  const dist=(a,b)=>Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2);
+  const hc=[hub.lat,hub.lng];
+  return EN_SEA_ROUTES.filter(r=>{
+    if(dist(r.from,hc)<threshold)return true;
+    if(dist(r.to,hc)<threshold)return true;
+    if(r.via)for(const w of r.via){if(dist(w,hc)<threshold)return true;}
+    return false;
+  });
+}
 function showHubDetail(hub){
   const el=document.getElementById('hub-detail');
   const isOffshore=hub.type==='prod'&&OFFSHORE_NMS.has(hub.nm);
@@ -2755,15 +2976,48 @@ function showHubDetail(hub){
   const typeLabels={prod:isOffshore?'Offshore Oil/Gas Field':'Onshore Oil/Gas Field',offshore:'Maritime Chokepoint',lng:'LNG Terminal',export:isTransit?'Transit Hub':'Export Port',crisis:'Crisis Overlay'};
   const typeColors={prod:isOffshore?'#4ad':'#e44',offshore:'#4ad',lng:'#4d8',export:isTransit?'#f90':'#da4',crisis:'#f4a'};
   const type=hub.type||(hub.mbd!==undefined?'offshore':'prod');
+  const routes=getRoutesForHub(hub);
+  focusedHubRoutes=routes.length>0?new Set(routes):null;
+  if(enMode)renderEnScene();
+  const typeIcons={crude:'↗',lng:'◆',pipe:'—',disrupted:'⚡'};
+  const typeClrs={crude:'#4488cc',lng:'#44cc88',pipe:'#cc8844',disrupted:'#dd3355'};
+  const counts={crude:0,lng:0,pipe:0,disrupted:0};
+  routes.forEach(r=>counts[r.type]=(counts[r.type]||0)+1);
+  const statParts=[];
+  if(counts.crude)statParts.push(counts.crude+'C');
+  if(counts.lng)statParts.push(counts.lng+'L');
+  if(counts.pipe)statParts.push(counts.pipe+'P');
+  if(counts.disrupted)statParts.push(counts.disrupted+'D');
+  const sorted=[...routes].sort((a,b)=>b.vol-a.vol);
+  const routeRows=sorted.map(r=>{
+    const volStr=r.type==='lng'?(r.vol.toFixed(1)+' MT/yr'):(r.vol.toFixed(1)+' mb/d');
+    const m=matchRouteToReal(r);
+    const verified=m?'✓':'';
+    const srcTag=m?` title="${r.nm}\nComtrade: ${m.key} = ${m.vol} ${r.type==='lng'?'MT/yr':'mb/d'}"`:`title="${r.nm}"`;
+    return `<div class="ehi-route"${srcTag}><span class="ehi-route-icon" style="color:${typeClrs[r.type]||'#fff'}">${typeIcons[r.type]||'→'}</span><span class="ehi-route-nm">${r.nm}${r.type==='disrupted'?' (DISRUPTED)':''}</span><span class="ehi-route-vol" style="color:${typeClrs[r.type]||'#fff'}">${volStr}</span>${verified?'<span style="color:#4d8;font-size:9px;margin-left:2px">'+verified+'</span>':''}</div>`;
+  }).join('');
+  const latDir=hub.lat>=0?'N':'S',lngDir=hub.lng>=0?'E':'W';
+  const coordStr=Math.abs(hub.lat).toFixed(2)+'°'+latDir+' '+Math.abs(hub.lng).toFixed(2)+'°'+lngDir;
   el.innerHTML=`<div class="en-hub-info">
-    <div class="ehi-name">${hub.cn||hub.nm}</div>
-    ${hub.cn?`<div style="font-size:10px;color:#aaa;margin-top:2px">${hub.nm}</div>`:''}
+    <div class="ehi-header"><div><div class="ehi-name">${type==='offshore'?'⊙ ':''}${hub.cn||hub.nm}${hub.alert?' 🚨':''}</div>${hub.cn?`<div style="font-size:10px;color:#aaa;margin-top:2px">${hub.nm}</div>`:''}</div><button class="ehi-close" onclick="closeHubDetail()">✕</button></div>
     <div class="ehi-type" style="color:${typeColors[type]||'#4ad'}">${typeLabels[type]||type}</div>
     <div class="ehi-row"><span class="ehi-lbl">Capacity / Info</span><span class="ehi-val">${hub.info||hub.mbd+' mb/d'}</span></div>
     ${hub.country?`<div class="ehi-row"><span class="ehi-lbl">Country</span><span class="ehi-val">${hub.country}</span></div>`:''}
-    <div class="ehi-row"><span class="ehi-lbl">Coordinates</span><span class="ehi-val">${hub.lat.toFixed(1)}°, ${hub.lng.toFixed(1)}°</span></div>
+    ${hub.alert?`<div class="ehi-row"><span class="ehi-lbl">Status</span><span class="ehi-val" style="color:#dd3355">ACTIVE CRISIS</span></div>`:''}
+    ${routes.length>0?`
+    <div class="ehi-routes-head"><span>⇌ Routes Through (${routes.length})</span><span class="ehi-routes-stats">${statParts.join('·')}</span></div>
+    <div class="ehi-routes-list">${routeRows}</div>
+    <div class="ehi-route-note">Globe auto-dims unrelated routes when this hub is selected.</div>`:''}
+    <div style="font-size:10px;color:#555;padding-top:8px;text-align:center">📍 ${coordStr} · full stats in panel →</div>
   </div>`;
 }
+function closeHubDetail(){
+  document.getElementById('hub-detail').innerHTML='';
+  clearEnPointer();
+  focusedHubRoutes=null;
+  if(enMode)renderEnScene();
+}
+window.closeHubDetail=closeHubDetail;
 
 function toggleEnLayer(layer){
   EN_LAYERS[layer]=!EN_LAYERS[layer];
