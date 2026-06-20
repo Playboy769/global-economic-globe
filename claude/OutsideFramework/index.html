@@ -18,10 +18,9 @@ body{background:#fff;color:#0a0a0a;font-family:'Playfair Display','Noto Serif TC
 a{text-decoration:none;color:inherit}
 
 /* ── Top Nav ── */
-#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:24px 48px;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .5s cubic-bezier(.4,0,.2,1)}
+#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-end;padding:24px 48px;background:transparent;transition:transform .5s cubic-bezier(.4,0,.2,1)}
 #top-nav.hidden{transform:translateY(-100%)}
-.nav-logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;letter-spacing:-.02em;cursor:pointer;font-family:'Playfair Display',serif}
-.nav-logo-dot{width:8px;height:8px;border-radius:50%;background:#0a0a0a}
+.nav-logo{display:none}
 .nav-links{display:flex;align-items:center;gap:36px}
 .nav-btn{font-size:14px;font-weight:400;color:#999;cursor:pointer;border:none;background:none;letter-spacing:.02em;transition:color .25s ease;font-family:'Cormorant Garant',serif;padding:0}
 .nav-btn.active{color:#0a0a0a}
@@ -34,15 +33,19 @@ a{text-decoration:none;color:inherit}
 /* ── Shared ── */
 .container{max-width:1320px;margin:0 auto;padding:0 48px}
 .sec-num{font-family:'Cormorant Garant',serif;font-size:14px;font-weight:400;color:#bbb;letter-spacing:.04em}
-.sec-heading{font-size:clamp(42px,6vw,72px);font-weight:700;line-height:1.1;letter-spacing:-.02em;color:#0a0a0a;margin-bottom:40px;font-family:'Playfair Display',serif}
+.sec-heading{font-size:clamp(36px,5vw,56px);font-weight:300;line-height:1.1;letter-spacing:.01em;color:#0a0a0a;margin-bottom:40px;font-family:'Playfair Display',serif}
 .divider{width:100%;height:1px;background:#eee;margin:0}
 
+/* ── Ink Canvas ── */
+.ink-wrap{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#ink-canvas{width:100%;height:100%}
+
 /* ── HOME ── */
-#page-home{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative}
-.home-inner{padding:160px 0 120px}
-.home-title{font-size:clamp(56px,9vw,120px);font-weight:800;line-height:1.0;letter-spacing:-.03em;color:#0a0a0a;margin-bottom:56px;font-family:'Orchid','Playfair Display',serif}
-.home-title .outline{-webkit-text-stroke:1.5px #0a0a0a;color:transparent}
-.home-cta{display:inline-flex;align-items:center;gap:12px;padding:16px 36px;background:#fff;color:#0a0a0a;font-size:15px;font-weight:500;letter-spacing:.02em;border-radius:100px;border:1.5px solid #0a0a0a;cursor:pointer;transition:all .3s ease;font-family:'Cormorant Garant',serif}
+#page-home{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.home-inner{padding:160px 0 120px;position:relative;z-index:1}
+.home-title{font-size:clamp(56px,9vw,120px);font-weight:300;line-height:1.0;letter-spacing:.02em;color:#0a0a0a;margin-bottom:56px;font-family:'Orchid','Playfair Display',serif}
+.home-title .outline{-webkit-text-stroke:1px #0a0a0a;color:transparent;font-weight:200}
+.home-cta{display:inline-flex;align-items:center;gap:12px;padding:16px 36px;background:transparent;color:#0a0a0a;font-size:15px;font-weight:400;letter-spacing:.04em;border-radius:100px;border:none;cursor:pointer;transition:all .3s ease;font-family:'Cormorant Garant',serif}
 .home-cta:hover{background:#0a0a0a;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.1);transform:translateY(-2px)}
 .home-cta svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .3s ease}
 .home-cta:hover svg{transform:translateX(4px)}
@@ -64,42 +67,39 @@ a{text-decoration:none;color:inherit}
 .av-item:nth-child(3n){padding-left:40px}
 .av-item:nth-child(3n-1){padding-left:40px}
 .av-num{font-family:'Cormorant Garant',serif;font-size:13px;color:#ccc;margin-bottom:20px;display:block}
-.av-title{font-size:20px;font-weight:700;margin-bottom:12px;letter-spacing:-.01em;font-family:'Playfair Display',serif}
-.av-desc{font-size:14px;color:#888;line-height:1.8;font-weight:400;font-family:'Noto Serif TC',serif}
+.av-title{font-size:20px;font-weight:600;margin-bottom:12px;letter-spacing:-.01em;font-family:'Segoe UI','Noto Sans TC','Helvetica Neue',Arial,sans-serif}
+.av-desc{font-size:14px;color:#888;line-height:1.8;font-weight:400;font-family:'Segoe UI','Noto Sans TC','Helvetica Neue',Arial,sans-serif}
 
 /* ── WORKS ── */
 #page-works{padding:140px 0 100px}
 .works-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:56px}
 .works-count{font-family:'Cormorant Garant',serif;font-size:14px;color:#bbb}
-.works-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.wk-card{cursor:pointer;transition:transform .4s cubic-bezier(.4,0,.2,1)}
-.wk-card:hover{transform:translateY(-6px)}
-.wk-visual{aspect-ratio:4/3;border-radius:12px;overflow:hidden;position:relative;background:#f4f4f4}
+.works-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.wk-card{cursor:pointer;transition:transform .4s cubic-bezier(.4,0,.2,1),box-shadow .4s ease;border-radius:16px;overflow:hidden}
+.wk-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.06)}
+.wk-visual{aspect-ratio:4/3;overflow:hidden;position:relative;background:#fafafa;border:1px solid rgba(0,0,0,0.05);border-radius:16px}
 .wk-visual-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .5s cubic-bezier(.4,0,.2,1)}
-.wk-card:hover .wk-visual-inner{transform:scale(1.03)}
+.wk-card:hover .wk-visual-inner{transform:scale(1.02)}
 .wk-gradient{position:absolute;inset:0}
-.wk-gradient.g1{background:linear-gradient(135deg,#f0f0f0 0%,#e8e8e8 40%,#d8d8d8 100%)}
-.wk-gradient.g2{background:linear-gradient(135deg,#f2f0ed 0%,#e8e4df 40%,#ddd8d2 100%)}
-.wk-gradient.g3{background:linear-gradient(135deg,#eef0f4 0%,#e2e6ee 40%,#d6dce8 100%)}
-.wk-gradient.g4{background:linear-gradient(135deg,#f0ede8 0%,#e6e0d8 40%,#d8d0c6 100%)}
-.wk-gradient.g5{background:linear-gradient(135deg,#edf2ee 0%,#e0e8e2 40%,#d4ddd6 100%)}
-.wk-icon{position:relative;z-index:2;font-size:64px;font-weight:700;color:rgba(0,0,0,0.06);letter-spacing:-.02em;font-family:'Playfair Display',serif;font-style:italic}
-.wk-info{padding:20px 4px 0}
-.wk-name{font-size:17px;font-weight:600;margin-bottom:4px;letter-spacing:-.01em;font-family:'Playfair Display',serif}
-.wk-type{font-family:'Cormorant Garant',serif;font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.04em}
+.wk-gradient.g1,.wk-gradient.g2,.wk-gradient.g3,.wk-gradient.g4,.wk-gradient.g5{background:transparent}
+.wk-icon{position:relative;z-index:2;width:80px;height:80px}
+.wk-icon svg{width:100%;height:100%;filter:none}
+.wk-info{padding:16px 4px 0}
+.wk-name{font-size:16px;font-weight:500;margin-bottom:4px;letter-spacing:.01em;font-family:'Segoe UI','Noto Sans TC','Helvetica Neue',sans-serif}
+.wk-type{font-family:'Segoe UI','Noto Sans TC',sans-serif;font-size:11px;color:#bbb;text-transform:uppercase;letter-spacing:.06em;font-weight:400}
 
 /* ── PHILOSOPHY ── */
-#page-philosophy{padding:140px 0 100px}
-.phil-head{margin-bottom:100px}
-.phil-quote{font-size:clamp(28px,4vw,48px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Noto Serif TC','Playfair Display',serif}
+#page-philosophy{padding:110px 0 60px}
+.phil-head{margin-bottom:48px}
+.phil-quote{font-size:clamp(24px,3.5vw,40px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Noto Serif TC','Playfair Display',serif}
 .phil-quote em{font-style:normal;color:#999}
 .phil-items{display:flex;flex-direction:column}
-.phi-item{display:grid;grid-template-columns:200px 1fr;gap:60px;padding:56px 0;border-top:1px solid #eee;align-items:start}
-.phi-num{font-family:'Playfair Display',serif;font-size:64px;font-weight:300;color:#eee;line-height:1;font-style:italic}
+.phi-item{display:grid;grid-template-columns:80px 1fr;gap:24px;padding:32px 0;border-top:1px solid #eee;align-items:start}
+.phi-num{font-family:'Playfair Display',serif;font-size:48px;font-weight:300;color:#eee;line-height:1;font-style:italic}
 .phi-content{}
-.phi-title{font-size:24px;font-weight:700;margin-bottom:16px;letter-spacing:-.01em;font-family:'Noto Serif TC','Playfair Display',serif}
-.phi-text{font-size:15px;color:#777;line-height:2;font-weight:400;max-width:600px;font-family:'Noto Serif TC',serif}
-.phil-footer{margin-top:120px;padding:48px 0;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Noto Serif TC','Playfair Display',serif}
+.phi-text{font-size:14px;color:#777;line-height:1.9;font-weight:400;max-width:600px;font-family:'Noto Serif TC',serif}
+.phil-footer{margin-top:48px;padding:32px 0;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
 .pf-brand{font-size:16px;font-weight:700;letter-spacing:-.01em;font-family:'Playfair Display',serif}
 .pf-copy{font-family:'Cormorant Garant',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
 
@@ -144,9 +144,7 @@ a{text-decoration:none;color:inherit}
 
 <!-- ── Top Navigation ── -->
 <nav id="top-nav">
-  <div class="nav-logo" onclick="switchPage('home')">
-    <span class="nav-logo-dot"></span> Outside FrameWork
-  </div>
+  <div class="nav-logo" onclick="switchPage('home')">Outside FrameWork</div>
   <div class="nav-links">
     <button class="nav-btn active" data-page="home">Home</button>
     <button class="nav-btn" data-page="about">About</button>
@@ -157,6 +155,7 @@ a{text-decoration:none;color:inherit}
 
 <!-- ── HOME ── -->
 <div class="page active" id="page-home">
+  <div class="ink-wrap"><canvas id="ink-canvas"></canvas></div>
   <div class="container">
     <div class="home-inner">
       <h1 class="home-title reveal">Outside<br><span class="outline">FrameWork</span></h1>
@@ -227,7 +226,14 @@ a{text-decoration:none;color:inherit}
       <div class="wk-card reveal" onclick="openProject('econ')">
         <div class="wk-visual">
           <div class="wk-gradient g1"></div>
-          <div class="wk-visual-inner"><span class="wk-icon">Econ</span></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bbb" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="14" y="52" width="10" height="18" rx="2"/>
+            <rect x="28" y="38" width="10" height="32" rx="2"/>
+            <rect x="42" y="44" width="10" height="26" rx="2"/>
+            <rect x="56" y="24" width="10" height="46" rx="2"/>
+            <path d="M19 49 L33 34 L47 40 L61 20" stroke="#999" stroke-width="1"/>
+            <circle cx="61" cy="20" r="2.5" fill="#999" stroke="none"/>
+          </svg></div></div>
         </div>
         <div class="wk-info">
           <div class="wk-name">Economy</div>
@@ -237,7 +243,11 @@ a{text-decoration:none;color:inherit}
       <div class="wk-card reveal reveal-delay-1" onclick="openProject('energy')">
         <div class="wk-visual">
           <div class="wk-gradient g2"></div>
-          <div class="wk-visual-inner"><span class="wk-icon">Energy</span></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bbb" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M46 8 L34 36 H44 L30 72"/>
+            <circle cx="40" cy="40" r="28" stroke-dasharray="3 5" opacity="0.4"/>
+            <path d="M50 36 L40 56" opacity="0.3"/>
+          </svg></div></div>
         </div>
         <div class="wk-info">
           <div class="wk-name">Energy</div>
@@ -247,7 +257,13 @@ a{text-decoration:none;color:inherit}
       <div class="wk-card reveal reveal-delay-2" onclick="openProject('news')">
         <div class="wk-visual">
           <div class="wk-gradient g3"></div>
-          <div class="wk-visual-inner"><span class="wk-icon">News</span></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bbb" stroke-width="1.2" stroke-linecap="round">
+            <circle cx="30" cy="44" r="10"/>
+            <circle cx="30" cy="44" r="5" stroke-width="1"/>
+            <path d="M38 34 A18 18 0 0 1 38 54" stroke-width="1.5"/>
+            <path d="M44 28 A24 24 0 0 1 44 60" opacity="0.6" stroke-width="1.5"/>
+            <path d="M50 22 A30 30 0 0 1 50 66" opacity="0.3" stroke-width="1.5"/>
+          </svg></div></div>
         </div>
         <div class="wk-info">
           <div class="wk-name">News</div>
@@ -257,7 +273,19 @@ a{text-decoration:none;color:inherit}
       <div class="wk-card reveal" onclick="openProject('strucholes')">
         <div class="wk-visual">
           <div class="wk-gradient g4"></div>
-          <div class="wk-visual-inner"><span class="wk-icon">Struct</span></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bbb" stroke-width="1" stroke-linecap="round">
+            <line x1="26" y1="26" x2="54" y2="36"/>
+            <line x1="26" y1="26" x2="34" y2="56"/>
+            <line x1="54" y1="36" x2="34" y2="56"/>
+            <line x1="54" y1="36" x2="62" y2="60"/>
+            <line x1="34" y1="56" x2="62" y2="60"/>
+            <line x1="26" y1="26" x2="42" y2="16"/>
+            <circle cx="26" cy="26" r="5" stroke-width="1.2"/>
+            <circle cx="54" cy="36" r="6" stroke-width="1.2"/>
+            <circle cx="34" cy="56" r="4.5" stroke-width="1.2"/>
+            <circle cx="62" cy="60" r="3.5" stroke-width="1.2"/>
+            <circle cx="42" cy="16" r="4" stroke-width="1.2"/>
+          </svg></div></div>
         </div>
         <div class="wk-info">
           <div class="wk-name">Structural Holes</div>
@@ -267,7 +295,12 @@ a{text-decoration:none;color:inherit}
       <div class="wk-card reveal reveal-delay-1" onclick="openProject('invest')">
         <div class="wk-visual">
           <div class="wk-gradient g5"></div>
-          <div class="wk-visual-inner"><span class="wk-icon">Invest</span></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#bbb" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="16" y="20" width="48" height="34" rx="3" opacity="0.3"/>
+            <rect x="20" y="28" width="48" height="34" rx="3" opacity="0.5"/>
+            <rect x="24" y="36" width="48" height="34" rx="3"/>
+            <text x="48" y="57" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" font-weight="400" fill="#bbb" stroke="none" letter-spacing="1">M / R / I</text>
+          </svg></div></div>
         </div>
         <div class="wk-info">
           <div class="wk-name">InvestFrame</div>
@@ -416,6 +449,112 @@ function observeReveals() {
   els.forEach(el => obs.observe(el));
 }
 observeReveals();
+
+/* ── Suminagashi Ink Flow ── */
+(function(){
+  const canvas = document.getElementById('ink-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, streams = [], t = 0;
+
+  const P = new Uint8Array(512);
+  (function(){const p=[];for(let i=0;i<256;i++)p[i]=i;
+  for(let i=255;i>0;i--){const j=(i*7+13)&255;const tmp=p[i];p[i]=p[j];p[j]=tmp;}
+  for(let i=0;i<512;i++)P[i]=p[i&255];})();
+
+  function fade(t){return t*t*t*(t*(t*6-15)+10);}
+  function lerp(a,b,t){return a+t*(b-a);}
+  function grad2(h,x,y){const k=h&3;return(k===0?x+y:k===1?-x+y:k===2?x-y:-x-y);}
+  function noise(x,y){
+    const X=Math.floor(x)&255,Y=Math.floor(y)&255;
+    x-=Math.floor(x);y-=Math.floor(y);
+    const u=fade(x),v=fade(y);
+    const a=P[X]+Y,b=P[X+1]+Y;
+    return lerp(lerp(grad2(P[a],x,y),grad2(P[b],x-1,y),u),
+                lerp(grad2(P[a+1],x,y-1),grad2(P[b+1],x-1,y-1),u),v);
+  }
+  function fbm(x,y,oct){let v=0,a=0.5,f=1;for(let i=0;i<oct;i++){v+=a*noise(x*f,y*f);f*=2;a*=0.5;}return v;}
+
+  function resize(){
+    const home=document.getElementById('page-home');
+    W=canvas.width=home.offsetWidth;
+    H=canvas.height=home.offsetHeight;
+  }
+
+  function makeStream(){
+    return{
+      y0: H*(0.04+Math.random()*0.92),
+      thick: 4+Math.random()*28,
+      speed: 0.08+Math.random()*0.25,
+      freq: 0.0015+Math.random()*0.003,
+      amp: 30+Math.random()*80,
+      phase: Math.random()*200,
+      alpha: 0.025+Math.random()*0.045,
+      drift: 0.002+Math.random()*0.004
+    };
+  }
+
+  function init(){
+    resize();
+    streams=[];
+    for(let i=0;i<16;i++) streams.push(makeStream());
+    streams.sort(function(a,b){return a.y0-b.y0;});
+  }
+
+  function getY(s,x,half){
+    const nx=x*s.freq+s.phase+t*s.speed;
+    const ny=s.y0*0.004+t*s.drift;
+    const dy=fbm(nx,ny,5)*s.amp;
+    if(half==='top') return s.y0+dy-s.thick*0.5;
+    const thVar=s.thick*(0.5+0.5*fbm(x*0.006+t+s.phase,s.y0*0.01,3));
+    return s.y0+dy+thVar*0.5;
+  }
+
+  function draw(){
+    t+=0.002;
+    ctx.clearRect(0,0,W,H);
+
+    for(let si=0;si<streams.length;si++){
+      const s=streams[si];
+      const pts=60;
+      const step=(W+80)/(pts-1);
+
+      const top=[],bot=[];
+      for(let i=0;i<pts;i++){
+        const x=-40+i*step;
+        top.push({x:x,y:getY(s,x,'top')});
+        bot.push({x:x,y:getY(s,x,'bot')});
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(top[0].x,top[0].y);
+      for(let i=0;i<pts-1;i++){
+        const mx=(top[i].x+top[i+1].x)*0.5;
+        const my=(top[i].y+top[i+1].y)*0.5;
+        ctx.quadraticCurveTo(top[i].x,top[i].y,mx,my);
+      }
+      ctx.lineTo(top[pts-1].x,top[pts-1].y);
+
+      ctx.lineTo(bot[pts-1].x,bot[pts-1].y);
+      for(let i=pts-1;i>0;i--){
+        const mx=(bot[i].x+bot[i-1].x)*0.5;
+        const my=(bot[i].y+bot[i-1].y)*0.5;
+        ctx.quadraticCurveTo(bot[i].x,bot[i].y,mx,my);
+      }
+      ctx.lineTo(bot[0].x,bot[0].y);
+      ctx.closePath();
+
+      ctx.fillStyle='rgba(0,0,0,'+s.alpha+')';
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  init();
+  draw();
+  window.addEventListener('resize',init);
+})();
 </script>
 </body>
 </html>
