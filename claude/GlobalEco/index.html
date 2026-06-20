@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>全球經濟地球儀</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Cormorant+Garant:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Noto Sans TC','Segoe UI',sans-serif;font-weight:300}
@@ -316,81 +316,84 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
 #invest-ui{display:none;position:absolute;inset:0;z-index:15;pointer-events:none}
 #invest-ui>*{pointer-events:auto}
 #invest-wrap{position:absolute;inset:0;display:flex;gap:0}
-#iv-framework{flex:3;background:rgba(8,10,16,0.96);backdrop-filter:blur(20px);overflow-y:auto;display:flex;flex-direction:column;padding:32px 28px;box-shadow:4px 0 32px rgba(0,0,0,0.3);min-width:0}
-#iv-framework::-webkit-scrollbar{width:3px}
-#iv-framework::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:3px}
-#iv-feed{flex:3;background:rgba(8,10,16,0.94);backdrop-filter:blur(20px);overflow-y:auto;border-left:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.03);min-width:0}
-#iv-feed::-webkit-scrollbar{width:3px}
-#iv-feed::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:3px}
-#iv-editor{flex:2;min-width:280px;background:rgba(8,10,16,0.96);backdrop-filter:blur(20px);overflow-y:auto;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,0.3)}
-#iv-editor::-webkit-scrollbar{width:3px}
-#iv-editor::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:3px}
-.iv-col-head{padding:24px 24px 16px;font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.16em;font-weight:300;font-family:Consolas,monospace}
+#iv-framework{flex:3;background:#fff;overflow-y:auto;display:flex;flex-direction:column;padding:32px 28px;box-shadow:1px 0 0 #eee;min-width:0}
+#iv-framework::-webkit-scrollbar{width:4px}
+#iv-framework::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+#iv-feed{flex:3;background:#fafafa;overflow-y:auto;border-left:1px solid #eee;border-right:1px solid #eee;min-width:0}
+#iv-feed::-webkit-scrollbar{width:4px}
+#iv-feed::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+#iv-editor{flex:2;min-width:280px;background:#fff;overflow-y:auto;display:flex;flex-direction:column;box-shadow:-1px 0 0 #eee}
+#iv-editor::-webkit-scrollbar{width:4px}
+#iv-editor::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+.iv-col-head{padding:24px 24px 16px;font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.16em;font-weight:400;font-family:'Cormorant Garant',serif}
 .iv-nest{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
-.iv-ring{border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:20px;display:flex;flex-direction:column;flex:1;min-height:0;transition:border-color .2s ease;position:relative}
-.iv-ring:hover{border-color:rgba(255,255,255,0.1)}
-.iv-ring-label{font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.14em;font-weight:300;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-.iv-ring-label span{font-family:Consolas,monospace}
-.iv-ring-count{font-size:9px;color:rgba(255,255,255,0.15);font-family:Consolas,monospace}
-.iv-ring.macro{background:rgba(255,255,255,0.015)}
-.iv-ring.risk{background:rgba(255,255,255,0.02);margin-top:8px}
-.iv-ring.industry{background:rgba(255,255,255,0.025);margin-top:8px}
+.iv-ring{border:1px solid #e8e8e8;border-radius:14px;padding:20px;display:flex;flex-direction:column;flex:1;min-height:0;transition:border-color .2s ease;position:relative}
+.iv-ring:hover{border-color:#ccc}
+.iv-ring-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.14em;font-weight:400;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:color .2s ease}
+.iv-ring-label:hover{color:#0a0a0a}
+.iv-ring-label span{font-family:'Cormorant Garant',serif}
+.iv-ring.layer-active{border-color:#0a0a0a}
+.iv-ring.layer-active>.iv-ring-label{color:#0a0a0a;font-weight:600}
+.iv-ring-count{font-size:10px;color:#bbb;font-family:'Cormorant Garant',serif}
+.iv-ring.macro{background:#fafafa}
+.iv-ring.risk{background:#f6f6f6;margin-top:8px}
+.iv-ring.industry{background:#f2f2f2;margin-top:8px}
 .iv-tag-list{display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
-.iv-tag{padding:6px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:8px;font-size:11px;color:rgba(255,255,255,0.6);font-weight:300;cursor:pointer;transition:all .2s ease;display:flex;align-items:center;gap:6px}
-.iv-tag:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.9);border-color:rgba(255,255,255,0.1)}
-.iv-tag.active{background:rgba(255,255,255,0.06);color:#fff;border-color:rgba(255,255,255,0.12)}
-.iv-tag .iv-tag-x{font-size:8px;color:rgba(255,255,255,0.2);cursor:pointer;margin-left:2px}
-.iv-tag .iv-tag-x:hover{color:rgba(255,255,255,0.6)}
+.iv-tag{padding:6px 12px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:11px;color:#555;font-weight:400;cursor:pointer;transition:all .2s ease;display:flex;align-items:center;gap:6px;font-family:'Noto Serif TC','Noto Sans TC',serif}
+.iv-tag:hover{background:#f5f5f5;color:#0a0a0a;border-color:#bbb}
+.iv-tag.active{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
+.iv-tag .iv-tag-x{font-size:8px;color:#aaa;cursor:pointer;margin-left:2px}
+.iv-tag .iv-tag-x:hover{color:#333}
 .iv-feed-head{padding:24px 24px 16px;display:flex;align-items:center;justify-content:space-between}
-.iv-feed-title{font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.16em;font-weight:300;font-family:Consolas,monospace}
-.iv-feed-count{font-size:9px;color:rgba(255,255,255,0.15);font-family:Consolas,monospace}
+.iv-feed-title{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.16em;font-weight:400;font-family:'Cormorant Garant',serif}
+.iv-feed-count{font-size:10px;color:#bbb;font-family:'Cormorant Garant',serif}
 .iv-feed-list{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
-.iv-feed-empty{text-align:center;padding:48px 24px;color:rgba(255,255,255,0.2);font-size:12px;font-weight:300}
-.iv-feed-card{padding:16px 18px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.03);border-radius:12px;cursor:pointer;transition:all .2s ease}
-.iv-feed-card:hover{background:rgba(255,255,255,0.045);border-color:rgba(255,255,255,0.06);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.2)}
-.iv-feed-card.active{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.05)}
-.iv-fc-layer{font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-family:Consolas,monospace}
-.iv-fc-title{font-size:13px;color:rgba(255,255,255,0.85);font-weight:400;margin-bottom:8px;line-height:1.5}
-.iv-fc-preview{font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;font-weight:300;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.iv-fc-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:9px;color:rgba(255,255,255,0.15);font-family:Consolas,monospace}
+.iv-feed-empty{text-align:center;padding:48px 24px;color:#bbb;font-size:13px;font-weight:400;font-family:'Noto Serif TC',serif}
+.iv-feed-card{padding:16px 18px;background:#fff;border:1px solid #e8e8e8;border-radius:12px;cursor:pointer;transition:all .2s ease}
+.iv-feed-card:hover{background:#f8f8f8;border-color:#ccc;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.04)}
+.iv-feed-card.active{border-color:#0a0a0a;background:#fff}
+.iv-fc-layer{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-family:'Cormorant Garant',serif}
+.iv-fc-title{font-size:14px;color:#0a0a0a;font-weight:500;margin-bottom:8px;line-height:1.5;font-family:'Playfair Display','Noto Serif TC',serif}
+.iv-fc-preview{font-size:12px;color:#888;line-height:1.6;font-weight:400;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-family:'Noto Serif TC',serif}
+.iv-fc-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:#bbb;font-family:'Cormorant Garant',serif}
 .iv-ed-head{padding:24px 20px 16px}
-.iv-ed-layer{font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.16em;font-weight:300;font-family:Consolas,monospace;margin-bottom:12px}
+.iv-ed-layer{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.16em;font-weight:400;font-family:'Cormorant Garant',serif;margin-bottom:12px}
 .iv-ed-field{padding:0 20px;margin-bottom:14px}
-.iv-ed-label{font-size:10px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.1em;font-weight:300;margin-bottom:8px;font-family:Consolas,monospace}
-.iv-ed-input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:rgba(255,255,255,0.8);font-size:13px;font-weight:300;outline:none;font-family:'Noto Sans TC','Segoe UI',sans-serif;transition:all .2s ease;box-sizing:border-box}
-.iv-ed-input:focus{border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.05)}
-.iv-ed-input::placeholder{color:rgba(255,255,255,0.15)}
-.iv-ed-textarea{width:100%;min-height:180px;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;color:rgba(255,255,255,0.8);font-size:13px;font-weight:300;outline:none;font-family:'Noto Sans TC','Segoe UI',sans-serif;line-height:1.8;resize:vertical;transition:all .2s ease;box-sizing:border-box}
-.iv-ed-textarea:focus{border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.05)}
-.iv-ed-textarea::placeholder{color:rgba(255,255,255,0.15)}
+.iv-ed-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.1em;font-weight:400;margin-bottom:8px;font-family:'Cormorant Garant',serif}
+.iv-ed-input{width:100%;padding:11px 14px;background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;color:#0a0a0a;font-size:13px;font-weight:400;outline:none;font-family:'Noto Serif TC','Noto Sans TC',serif;transition:all .2s ease;box-sizing:border-box}
+.iv-ed-input:focus{border-color:#0a0a0a;background:#fff}
+.iv-ed-input::placeholder{color:#bbb}
+.iv-ed-textarea{width:100%;min-height:180px;padding:14px 16px;background:#fafafa;border:1px solid #e0e0e0;border-radius:12px;color:#0a0a0a;font-size:13px;font-weight:400;outline:none;font-family:'Noto Serif TC','Noto Sans TC',serif;line-height:1.8;resize:vertical;transition:all .2s ease;box-sizing:border-box}
+.iv-ed-textarea:focus{border-color:#0a0a0a;background:#fff}
+.iv-ed-textarea::placeholder{color:#bbb}
 .iv-ed-actions{padding:12px 20px 24px;display:flex;gap:8px}
-.iv-ed-btn{flex:1;padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:rgba(255,255,255,0.5);font-size:11px;font-weight:400;cursor:pointer;transition:all .2s ease;font-family:Consolas,monospace;letter-spacing:.04em;text-transform:uppercase}
-.iv-ed-btn:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8)}
-.iv-ed-btn.primary{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7)}
-.iv-ed-btn.primary:hover{background:rgba(255,255,255,0.1);color:#fff}
+.iv-ed-btn{flex:1;padding:10px;background:transparent;border:1px solid #ddd;border-radius:10px;color:#888;font-size:11px;font-weight:400;cursor:pointer;transition:all .2s ease;font-family:'Cormorant Garant',serif;letter-spacing:.04em;text-transform:uppercase}
+.iv-ed-btn:hover{background:#f5f5f5;color:#0a0a0a;border-color:#bbb}
+.iv-ed-btn.primary{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
+.iv-ed-btn.primary:hover{background:#333;color:#fff}
 .iv-ed-select{display:none}
 .iv-cs{position:relative}
-.iv-cs-display{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;color:rgba(255,255,255,0.7);font-size:12.5px;font-weight:300;cursor:pointer;transition:all .2s ease;font-family:'Noto Sans TC',sans-serif}
-.iv-cs-display:hover{border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05)}
-.iv-cs.open .iv-cs-display{border-color:rgba(255,255,255,0.15);border-radius:12px 12px 0 0;background:rgba(255,255,255,0.05)}
-.iv-cs-arrow{font-size:7px;color:rgba(255,255,255,0.2);transition:transform .25s ease}
+.iv-cs-display{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fafafa;border:1px solid #e0e0e0;border-radius:12px;color:#0a0a0a;font-size:12.5px;font-weight:400;cursor:pointer;transition:all .2s ease;font-family:'Noto Serif TC',serif}
+.iv-cs-display:hover{border-color:#bbb;background:#f5f5f5}
+.iv-cs.open .iv-cs-display{border-color:#0a0a0a;border-radius:12px 12px 0 0;background:#fff}
+.iv-cs-arrow{font-size:7px;color:#aaa;transition:transform .25s ease}
 .iv-cs.open .iv-cs-arrow{transform:rotate(180deg)}
-.iv-cs-dd{display:none;position:absolute;top:100%;left:0;right:0;background:rgba(14,16,22,0.98);border:1px solid rgba(255,255,255,0.08);border-top:none;border-radius:0 0 12px 12px;z-index:50;backdrop-filter:blur(20px);overflow:hidden}
+.iv-cs-dd{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 12px 12px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
 .iv-cs.open .iv-cs-dd{display:block}
-.iv-cs-opt{padding:11px 16px;font-size:12.5px;color:rgba(255,255,255,0.5);cursor:pointer;transition:all .15s ease;font-family:'Noto Sans TC',sans-serif;font-weight:300}
-.iv-cs-opt:hover{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.9)}
-.iv-cs-opt.active{background:rgba(255,255,255,0.06);color:#fff}
+.iv-cs-opt{padding:11px 16px;font-size:12.5px;color:#888;cursor:pointer;transition:all .15s ease;font-family:'Noto Serif TC',serif;font-weight:400}
+.iv-cs-opt:hover{background:#f5f5f5;color:#0a0a0a}
+.iv-cs-opt.active{background:#f0f0f0;color:#0a0a0a}
 .iv-cs-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:10px}
 .iv-ed-row{display:flex;gap:12px}
 .iv-ed-row .iv-ed-field{flex:1}
-.iv-ed-divider{height:1px;background:rgba(255,255,255,0.03);margin:8px 20px}
+.iv-ed-divider{height:1px;background:#eee;margin:8px 20px}
 .iv-feed-detail{display:none;padding:20px 24px}
-.iv-fd-back{font-size:10px;color:rgba(255,255,255,0.3);cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:6px;transition:color .15s ease;font-family:Consolas,monospace;text-transform:uppercase;letter-spacing:.08em}
-.iv-fd-back:hover{color:rgba(255,255,255,0.6)}
-.iv-fd-layer{font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-family:Consolas,monospace}
-.iv-fd-title{font-size:16px;color:#fff;font-weight:300;margin-bottom:12px;letter-spacing:.02em}
-.iv-fd-body{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.9;font-weight:300;white-space:pre-wrap}
-.iv-fd-meta{margin-top:16px;font-size:9px;color:rgba(255,255,255,0.15);font-family:Consolas,monospace}
+.iv-fd-back{font-size:10px;color:#aaa;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:6px;transition:color .15s ease;font-family:'Cormorant Garant',serif;text-transform:uppercase;letter-spacing:.08em}
+.iv-fd-back:hover{color:#0a0a0a}
+.iv-fd-layer{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-family:'Cormorant Garant',serif}
+.iv-fd-title{font-size:18px;color:#0a0a0a;font-weight:500;margin-bottom:12px;letter-spacing:.02em;font-family:'Playfair Display',serif}
+.iv-fd-body{font-size:13px;color:#555;line-height:1.9;font-weight:400;white-space:pre-wrap;font-family:'Noto Serif TC',serif}
+.iv-fd-meta{margin-top:16px;font-size:10px;color:#bbb;font-family:'Cormorant Garant',serif}
 </style>
 </head>
 <body>
@@ -629,14 +632,14 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
       <div id="iv-framework">
         <div class="iv-col-head">Investment Framework</div>
         <div class="iv-nest">
-          <div class="iv-ring macro">
-            <div class="iv-ring-label"><span>Macro Narrative</span><span class="iv-ring-count" id="iv-cnt-macro">0</span></div>
+          <div class="iv-ring macro" id="iv-ring-macro">
+            <div class="iv-ring-label" onclick="ivSelectLayer('macro')"><span>Macro Narrative</span><span class="iv-ring-count" id="iv-cnt-macro">0</span></div>
             <div class="iv-tag-list" id="iv-tags-macro"></div>
-            <div class="iv-ring risk" style="margin-top:14px">
-              <div class="iv-ring-label"><span>Implied Risk</span><span class="iv-ring-count" id="iv-cnt-risk">0</span></div>
+            <div class="iv-ring risk" id="iv-ring-risk" style="margin-top:14px">
+              <div class="iv-ring-label" onclick="ivSelectLayer('risk')"><span>Implied Risk</span><span class="iv-ring-count" id="iv-cnt-risk">0</span></div>
               <div class="iv-tag-list" id="iv-tags-risk"></div>
-              <div class="iv-ring industry" style="margin-top:14px">
-                <div class="iv-ring-label"><span>Industry Narrative</span><span class="iv-ring-count" id="iv-cnt-industry">0</span></div>
+              <div class="iv-ring industry" id="iv-ring-industry" style="margin-top:14px">
+                <div class="iv-ring-label" onclick="ivSelectLayer('industry')"><span>Industry Narrative</span><span class="iv-ring-count" id="iv-cnt-industry">0</span></div>
                 <div class="iv-tag-list" id="iv-tags-industry"></div>
               </div>
             </div>
@@ -666,13 +669,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:'No
           </select>
           <div class="iv-cs" id="iv-cs-layer">
             <div class="iv-cs-display" onclick="ivToggleLayerDD()">
-              <span><span class="iv-cs-dot" style="background:rgba(255,255,255,0.25)"></span>Macro Narrative</span>
+              <span><span class="iv-cs-dot" style="background:#0a0a0a"></span>Macro Narrative</span>
               <span class="iv-cs-arrow">▼</span>
             </div>
             <div class="iv-cs-dd">
-              <div class="iv-cs-opt active" data-val="macro" onclick="ivPickLayer(this)"><span class="iv-cs-dot" style="background:rgba(255,255,255,0.25)"></span>Macro Narrative</div>
-              <div class="iv-cs-opt" data-val="risk" onclick="ivPickLayer(this)"><span class="iv-cs-dot" style="background:rgba(255,200,100,0.4)"></span>Implied Risk</div>
-              <div class="iv-cs-opt" data-val="industry" onclick="ivPickLayer(this)"><span class="iv-cs-dot" style="background:rgba(100,200,255,0.4)"></span>Industry Narrative</div>
+              <div class="iv-cs-opt active" data-val="macro" onclick="ivPickLayer(this)"><span class="iv-cs-dot" style="background:#0a0a0a"></span>Macro Narrative</div>
+              <div class="iv-cs-opt" data-val="risk" onclick="ivPickLayer(this)"><span class="iv-cs-dot" style="background:#c8964a"></span>Implied Risk</div>
+              <div class="iv-cs-opt" data-val="industry" onclick="ivPickLayer(this)"><span class="iv-cs-dot" style="background:#4a8cc8"></span>Industry Narrative</div>
             </div>
           </div>
         </div>
@@ -3377,7 +3380,7 @@ function clearEnGlobe(){enGlobeObjs.forEach(o=>scene.remove(o));enGlobeObjs=[];}
 let newsMode=false,shMode=false,ivMode=false;
 // Structural Holes app (separate FastAPI service). Dev uses local uvicorn on :8000;
 // in production set window.__SH_URL__ (or replace below) to the deployed Railway URL.
-const SH_URL=(location.hostname==='localhost'&&location.port==='8124')?'http://localhost:8000':(window.__SH_URL__||'https://structural-holes.up.railway.app');
+const SH_URL=(location.hostname==='localhost'&&location.port==='8124')?'http://localhost:8000':(window.__SH_URL__||'https://structural-holes-production.up.railway.app');
 function _panelIn(el){if(!el)return;gsap.killTweensOf(el);el.style.display=el.id==='sidebar'?'flex':'block';gsap.fromTo(el,{autoAlpha:0,x:el.id==='en-left'?-30:30},{autoAlpha:1,x:0,duration:0.35,ease:'power2.out'});}
 function _panelOut(el){if(!el)return;gsap.killTweensOf(el);gsap.to(el,{autoAlpha:0,duration:0.2,ease:'power2.in',onComplete(){el.style.display='none';}});}
 function switchMode(mode){
@@ -3404,7 +3407,7 @@ window.switchMode=switchMode;
 
 // ── InvestFrame Logic ──
 const _ivStore={macro:[],risk:[],industry:[]};
-let _ivActiveTag=null,_ivLayerVal='macro';
+let _ivActiveTag=null,_ivActiveLayer=null,_ivLayerVal='macro';
 function _ivId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function ivToggleLayerDD(){document.getElementById('iv-cs-layer').classList.toggle('open');}
 function ivPickLayer(el){
@@ -3452,8 +3455,23 @@ function ivRenderTags(){
 }
 function ivSelectTag(layer,title){
   _ivActiveTag={layer,title};
+  _ivActiveLayer=null;
   ivRenderTags();
+  ivRenderLayers();
   ivRenderFeed();
+}
+function ivSelectLayer(layer){
+  if(_ivActiveLayer===layer){_ivActiveLayer=null;}else{_ivActiveLayer=layer;}
+  _ivActiveTag=null;
+  ivRenderTags();
+  ivRenderLayers();
+  ivRenderFeed();
+}
+function ivRenderLayers(){
+  ['macro','risk','industry'].forEach(l=>{
+    const ring=document.getElementById('iv-ring-'+l);
+    if(ring)ring.classList.toggle('layer-active',_ivActiveLayer===l);
+  });
 }
 function ivRemoveTag(layer,title){
   _ivStore[layer]=_ivStore[layer].filter(e=>e.title!==title);
@@ -3465,24 +3483,30 @@ function ivRenderFeed(){
   const list=document.getElementById('iv-feed-list');
   const detail=document.getElementById('iv-feed-detail');
   const cntEl=document.getElementById('iv-feed-cnt');
+  const ln={macro:'Macro Narrative',risk:'Implied Risk',industry:'Industry Narrative'};
   detail.style.display='none';
   list.style.display='';
-  if(!_ivActiveTag){
-    const all=[..._ivStore.macro,..._ivStore.risk,..._ivStore.industry].sort((a,b)=>b.ts.localeCompare(a.ts));
-    cntEl.textContent=all.length+' entries';
-    if(all.length===0){list.innerHTML='<div class="iv-feed-empty">Select a tag to view entries</div>';return;}
-    list.innerHTML=all.map(e=>{
-      const ln={macro:'Macro Narrative',risk:'Implied Risk',industry:'Industry Narrative'};
-      const layer=_ivStore.macro.includes(e)?'macro':_ivStore.risk.includes(e)?'risk':'industry';
-      return `<div class="iv-feed-card" onclick="ivShowDetail('${e.id}')"><div class="iv-fc-layer">${ln[layer]}</div><div class="iv-fc-title">${e.title}</div><div class="iv-fc-preview">${e.content}</div><div class="iv-fc-meta"><span>${e.ts}</span><span>${e.author||''}${e.source?' · '+e.source:''}</span></div></div>`;
-    }).join('');
+  if(_ivActiveTag){
+    const entries=_ivStore[_ivActiveTag.layer].filter(e=>e.title===_ivActiveTag.title);
+    cntEl.textContent=entries.length+' entries';
+    if(entries.length===0){list.innerHTML='<div class="iv-feed-empty">No entries yet</div>';return;}
+    list.innerHTML=entries.map(e=>`<div class="iv-feed-card" onclick="ivShowDetail('${e.id}')"><div class="iv-fc-layer">${ln[_ivActiveTag.layer]}</div><div class="iv-fc-title">${e.title}</div><div class="iv-fc-preview">${e.content}</div><div class="iv-fc-meta"><span>${e.ts}</span><span>${e.author||''}${e.source?' · '+e.source:''}</span></div></div>`).join('');
     return;
   }
-  const entries=_ivStore[_ivActiveTag.layer].filter(e=>e.title===_ivActiveTag.title);
-  cntEl.textContent=entries.length+' entries';
-  const ln={macro:'Macro Narrative',risk:'Implied Risk',industry:'Industry Narrative'};
-  if(entries.length===0){list.innerHTML='<div class="iv-feed-empty">No entries yet</div>';return;}
-  list.innerHTML=entries.map(e=>`<div class="iv-feed-card" onclick="ivShowDetail('${e.id}')"><div class="iv-fc-layer">${ln[_ivActiveTag.layer]}</div><div class="iv-fc-title">${e.title}</div><div class="iv-fc-preview">${e.content}</div><div class="iv-fc-meta"><span>${e.ts}</span><span>${e.author||''}${e.source?' · '+e.source:''}</span></div></div>`).join('');
+  if(_ivActiveLayer){
+    const entries=_ivStore[_ivActiveLayer].sort((a,b)=>b.ts.localeCompare(a.ts));
+    cntEl.textContent=entries.length+' entries';
+    if(entries.length===0){list.innerHTML='<div class="iv-feed-empty">No entries in '+ln[_ivActiveLayer]+'</div>';return;}
+    list.innerHTML=entries.map(e=>`<div class="iv-feed-card" onclick="ivShowDetail('${e.id}')"><div class="iv-fc-layer">${ln[_ivActiveLayer]}</div><div class="iv-fc-title">${e.title}</div><div class="iv-fc-preview">${e.content}</div><div class="iv-fc-meta"><span>${e.ts}</span><span>${e.author||''}${e.source?' · '+e.source:''}</span></div></div>`).join('');
+    return;
+  }
+  const all=[..._ivStore.macro,..._ivStore.risk,..._ivStore.industry].sort((a,b)=>b.ts.localeCompare(a.ts));
+  cntEl.textContent=all.length+' entries';
+  if(all.length===0){list.innerHTML='<div class="iv-feed-empty">Select a tag to view entries</div>';return;}
+  list.innerHTML=all.map(e=>{
+    const layer=_ivStore.macro.includes(e)?'macro':_ivStore.risk.includes(e)?'risk':'industry';
+    return `<div class="iv-feed-card" onclick="ivShowDetail('${e.id}')"><div class="iv-fc-layer">${ln[layer]}</div><div class="iv-fc-title">${e.title}</div><div class="iv-fc-preview">${e.content}</div><div class="iv-fc-meta"><span>${e.ts}</span><span>${e.author||''}${e.source?' · '+e.source:''}</span></div></div>`;
+  }).join('');
 }
 function ivShowDetail(id){
   const all=[..._ivStore.macro,..._ivStore.risk,..._ivStore.industry];
@@ -3493,13 +3517,13 @@ function ivShowDetail(id){
   document.getElementById('iv-feed-list').style.display='none';
   const det=document.getElementById('iv-feed-detail');
   det.style.display='block';
-  det.innerHTML=`<div class="iv-fd-back" onclick="ivBackToFeed()">← Back</div><div class="iv-fd-layer">${ln[layer]}</div><div class="iv-fd-title">${e.title}</div>${e.author||e.source?`<div style="font-size:10px;color:rgba(255,255,255,0.2);margin-bottom:14px;font-family:Consolas,monospace">${e.author||''}${e.source?' · '+e.source:''}</div>`:''}<div class="iv-fd-body">${e.content}</div><div class="iv-fd-meta">${e.ts}</div>`;
+  det.innerHTML=`<div class="iv-fd-back" onclick="ivBackToFeed()">← Back</div><div class="iv-fd-layer">${ln[layer]}</div><div class="iv-fd-title">${e.title}</div>${e.author||e.source?`<div style="font-size:10px;color:#bbb;margin-bottom:14px;font-family:'Cormorant Garant',serif">${e.author||''}${e.source?' · '+e.source:''}</div>`:''}<div class="iv-fd-body">${e.content}</div><div class="iv-fd-meta">${e.ts}</div>`;
 }
 function ivBackToFeed(){
   document.getElementById('iv-feed-detail').style.display='none';
   document.getElementById('iv-feed-list').style.display='';
 }
-window.ivSubmitEntry=ivSubmitEntry;window.ivClearEditor=ivClearEditor;window.ivSelectTag=ivSelectTag;window.ivRemoveTag=ivRemoveTag;window.ivShowDetail=ivShowDetail;window.ivBackToFeed=ivBackToFeed;window.ivToggleLayerDD=ivToggleLayerDD;window.ivPickLayer=ivPickLayer;
+window.ivSubmitEntry=ivSubmitEntry;window.ivClearEditor=ivClearEditor;window.ivSelectTag=ivSelectTag;window.ivSelectLayer=ivSelectLayer;window.ivRemoveTag=ivRemoveTag;window.ivShowDetail=ivShowDetail;window.ivBackToFeed=ivBackToFeed;window.ivToggleLayerDD=ivToggleLayerDD;window.ivPickLayer=ivPickLayer;
 
 function renderEnScene(){
   clearEnGlobe();enFlowDots=[];

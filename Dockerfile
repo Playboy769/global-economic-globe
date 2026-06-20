@@ -3,6 +3,7 @@ FROM nginx:1.25-alpine
 ENV PORT=8080
 COPY claude/OutsideFramework/index.html /usr/share/nginx/html/index.html
 COPY claude/GlobalEco/index.html /usr/share/nginx/html/globe/index.html
+COPY claude/InvestFrame/index.html /usr/share/nginx/html/invest/index.html
 # Placed in templates/ so the nginx entrypoint runs envsubst (only ${PORT}) into conf.d/.
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 8080

@@ -24,6 +24,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8125", "--directory", "claude/OutsideFramework"],
       "port": 8125
+    },
+    {
+      "name": "investframe",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8126", "--directory", "claude/InvestFrame"],
+      "port": 8126
     }
   ]
 }

@@ -18,17 +18,22 @@ body{background:#fff;color:#0a0a0a;font-family:'Playfair Display','Noto Serif TC
 a{text-decoration:none;color:inherit}
 
 /* ── Top Nav ── */
-#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-end;padding:24px 48px;background:transparent;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-end;padding:32px 48px;background:transparent;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+body.not-home #top-nav{justify-content:space-between}
 #top-nav.hidden{transform:translateY(-100%)}
-.nav-logo{display:none}
+.nav-logo{font-family:'Cormorant Garant',serif;font-size:15px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#0a0a0a;cursor:pointer;display:none}
+body.not-home .nav-logo{display:block}
+body.not-home .home-name{display:none}
 .nav-links{display:flex;align-items:center;gap:36px}
-.nav-btn{font-size:14px;font-weight:400;color:#999;cursor:pointer;border:none;background:none;letter-spacing:.02em;transition:color .25s ease;font-family:'Cormorant Garant',serif;padding:0}
+.nav-btn{font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.1em;text-transform:uppercase;transition:color .25s ease;font-family:'Cormorant Garant',serif;padding:0}
 .nav-btn.active{color:#0a0a0a}
 .nav-btn:hover:not(.active){color:#555}
 
 /* ── Pages ── */
 .page{display:none;opacity:0;transition:opacity .4s ease}
 .page.active{display:block;opacity:1}
+body.not-home .home-footer{display:none}
+body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 
 /* ── Shared ── */
 .container{max-width:1320px;margin:0 auto;padding:0 48px}
@@ -36,23 +41,22 @@ a{text-decoration:none;color:inherit}
 .sec-heading{font-size:clamp(36px,5vw,56px);font-weight:300;line-height:1.1;letter-spacing:.01em;color:#0a0a0a;margin-bottom:40px;font-family:'Playfair Display',serif}
 .divider{width:100%;height:1px;background:#eee;margin:0}
 
-/* ── Ink Canvas ── */
-.ink-wrap{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-#ink-canvas{width:100%;height:100%}
-
 /* ── HOME ── */
-#page-home{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
-.home-inner{padding:160px 0 120px;position:relative;z-index:1}
-.home-title{font-size:clamp(56px,9vw,120px);font-weight:300;line-height:1.0;letter-spacing:.02em;color:#0a0a0a;margin-bottom:56px;font-family:'Orchid','Playfair Display',serif}
-.home-title .outline{-webkit-text-stroke:1px #0a0a0a;color:transparent;font-weight:200}
-.home-cta{display:inline-flex;align-items:center;gap:12px;padding:16px 36px;background:transparent;color:#0a0a0a;font-size:15px;font-weight:400;letter-spacing:.04em;border-radius:100px;border:none;cursor:pointer;transition:all .3s ease;font-family:'Cormorant Garant',serif}
-.home-cta:hover{background:#0a0a0a;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.1);transform:translateY(-2px)}
-.home-cta svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .3s ease}
-.home-cta:hover svg{transform:translateX(4px)}
-.home-marquee{position:absolute;bottom:0;left:0;right:0;overflow:hidden;border-top:1px solid #eee;border-bottom:1px solid #eee;padding:18px 0;white-space:nowrap}
-.home-marquee-inner{display:flex;animation:marquee 25s linear infinite}
-.home-marquee span{font-size:14px;font-weight:400;color:#ccc;letter-spacing:.06em;text-transform:uppercase;padding:0 40px;flex-shrink:0;font-family:'Cormorant Garant',serif}
-@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+#page-home{min-height:100vh;display:grid;grid-template-rows:1fr auto;position:relative;overflow:hidden}
+.home-name{position:fixed;top:0;left:0;right:0;z-index:101;cursor:pointer;display:flex;align-items:center;padding:32px 48px;height:auto;pointer-events:none}
+.home-name *{pointer-events:auto}
+.home-name-text{font-family:'Cormorant Garant',serif;font-size:22px;font-weight:300;letter-spacing:.22em;text-transform:uppercase;color:#0a0a0a;line-height:1}
+.home-center{display:flex;align-items:center;justify-content:center;flex:1;min-height:100vh}
+.home-center-text{font-family:'Cormorant Garant',serif;font-size:13px;font-weight:400;color:#ccc;letter-spacing:.2em;text-transform:uppercase}
+.home-illustration{width:min(220px,32vw);opacity:0;animation:fadeInIllus 1.2s ease 0.4s forwards}
+@keyframes fadeInIllus{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.home-footer{position:fixed;bottom:0;left:0;right:0;padding:28px 48px;display:flex;align-items:flex-end;justify-content:space-between;z-index:50}
+.home-footer-brand{font-family:'Orchid','Playfair Display',serif;font-size:clamp(28px,5vw,56px);font-weight:400;color:#0a0a0a;letter-spacing:-.01em;line-height:1;cursor:pointer}
+.home-footer-brand .out-outline{color:#0a0a0a}
+.home-cta{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;background:transparent;color:#0a0a0a;font-size:13px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;border-radius:100px;border:1px solid #0a0a0a;cursor:pointer;transition:all .3s ease;font-family:'Cormorant Garant',serif;margin-bottom:4px}
+.home-cta:hover{background:#0a0a0a;color:#fff}
+.home-cta svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .3s ease}
+.home-cta:hover svg{transform:translateX(3px)}
 
 /* ── ABOUT ── */
 #page-about{padding:140px 0 100px}
@@ -143,8 +147,11 @@ a{text-decoration:none;color:inherit}
 <body>
 
 <!-- ── Top Navigation ── -->
+<div class="home-name" onclick="switchPage('home')">
+  <span class="home-name-text">Silas</span>
+</div>
 <nav id="top-nav">
-  <div class="nav-logo" onclick="switchPage('home')">Outside FrameWork</div>
+  <div class="nav-logo" onclick="switchPage('home')">Silas</div>
   <div class="nav-links">
     <button class="nav-btn active" data-page="home">Home</button>
     <button class="nav-btn" data-page="about">About</button>
@@ -155,15 +162,46 @@ a{text-decoration:none;color:inherit}
 
 <!-- ── HOME ── -->
 <div class="page active" id="page-home">
-  <div class="ink-wrap"><canvas id="ink-canvas"></canvas></div>
-  <div class="container">
-    <div class="home-inner">
-      <h1 class="home-title reveal">Outside<br><span class="outline">FrameWork</span></h1>
-      <button class="home-cta reveal reveal-delay-1" onclick="switchPage('works')">
-        View Works
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-    </div>
+  <div class="home-center">
+    <svg class="home-illustration" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+          <polygon points="0,0.5 5,3 0,5.5" fill="#2a2a2a"/>
+        </marker>
+      </defs>
+      <!-- Framework grid -->
+      <rect x="170" y="90" width="220" height="200" stroke="#d0d0d0" stroke-width="1" fill="none"/>
+      <line x1="170" y1="156" x2="390" y2="156" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
+      <line x1="170" y1="224" x2="390" y2="224" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
+      <line x1="243" y1="90" x2="243" y2="290" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
+      <line x1="317" y1="90" x2="317" y2="290" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
+      <!-- Corner ticks -->
+      <line x1="160" y1="90" x2="170" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="170" y1="80" x2="170" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="390" y1="80" x2="390" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="390" y1="90" x2="400" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="160" y1="290" x2="170" y2="290" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="170" y1="290" x2="170" y2="300" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="390" y1="290" x2="400" y2="290" stroke="#b0b0b0" stroke-width="1.2"/>
+      <line x1="390" y1="290" x2="390" y2="300" stroke="#b0b0b0" stroke-width="1.2"/>
+      <!-- 4 curves from interior, solid arrow tips -->
+      <path d="M243,156 C243,110 310,50 490,22"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
+      <path d="M317,156 C370,140 450,152 538,230"  stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
+      <path d="M317,224 C310,270 240,320 30,358"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
+      <path d="M243,224 C195,215 110,185 20,108"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
+      <!-- Interior origin dots -->
+      <circle cx="243" cy="156" r="2.2" fill="#2a2a2a"/>
+      <circle cx="317" cy="156" r="2.2" fill="#2a2a2a"/>
+      <circle cx="317" cy="224" r="2.2" fill="#2a2a2a"/>
+      <circle cx="243" cy="224" r="2.2" fill="#2a2a2a"/>
+    </svg>
+  </div>
+  <div class="home-footer">
+    <div class="home-footer-brand" onclick="switchPage('works')">Outside<br><span class="out-outline">FrameWork</span></div>
+    <button class="home-cta" onclick="switchPage('works')">
+      View Works
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
   </div>
 </div>
 
@@ -360,11 +398,12 @@ a{text-decoration:none;color:inherit}
 // Dev (python server on :8125) loads the globe from its own server on :8124.
 // Everywhere else (Railway, Docker, any real host) the globe is served at /globe by nginx.
 const GLOBE_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8124' : '/globe';
+const INVEST_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8126' : '/invest';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
   const frame = document.getElementById('project-frame');
-  frame.src = GLOBE_BASE + '?mode=' + mode;
+  frame.src = mode === 'invest' ? INVEST_BASE : GLOBE_BASE + '?mode=' + mode;
   overlay.style.display = 'block';
   requestAnimationFrame(() => overlay.classList.add('active'));
   document.getElementById('overlay-close').style.display = 'flex';
@@ -412,6 +451,7 @@ function switchPage(id) {
     }, 300);
   }
 
+  document.body.classList.toggle('not-home', id !== 'home');
   showNav();
   if (id !== 'home') scheduleHide();
   else clearTimeout(hideTimer);
