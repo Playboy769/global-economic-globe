@@ -3375,7 +3375,9 @@ let enGlobeObjs=[];
 function clearEnGlobe(){enGlobeObjs.forEach(o=>scene.remove(o));enGlobeObjs=[];}
 
 let newsMode=false,shMode=false,ivMode=false;
-const SH_URL='http://localhost:8000';
+// Structural Holes app (separate FastAPI service). Dev uses local uvicorn on :8000;
+// in production set window.__SH_URL__ (or replace below) to the deployed Railway URL.
+const SH_URL=(location.hostname==='localhost'&&location.port==='8124')?'http://localhost:8000':(window.__SH_URL__||'https://structural-holes.up.railway.app');
 function _panelIn(el){if(!el)return;gsap.killTweensOf(el);el.style.display=el.id==='sidebar'?'flex':'block';gsap.fromTo(el,{autoAlpha:0,x:el.id==='en-left'?-30:30},{autoAlpha:1,x:0,duration:0.35,ease:'power2.out'});}
 function _panelOut(el){if(!el)return;gsap.killTweensOf(el);gsap.to(el,{autoAlpha:0,duration:0.2,ease:'power2.in',onComplete(){el.style.display='none';}});}
 function switchMode(mode){

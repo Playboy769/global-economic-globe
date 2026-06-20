@@ -357,7 +357,9 @@ a{text-decoration:none;color:inherit}
 </button>
 
 <script>
-const GLOBE_BASE = location.hostname === 'localhost' ? 'http://localhost:8124' : '/globe';
+// Dev (python server on :8125) loads the globe from its own server on :8124.
+// Everywhere else (Railway, Docker, any real host) the globe is served at /globe by nginx.
+const GLOBE_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8124' : '/globe';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
