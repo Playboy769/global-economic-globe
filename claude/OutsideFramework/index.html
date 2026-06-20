@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outside FrameWork</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&family=Noto+Serif+TC:wght@200;300;400;500;600;700;900&family=Cormorant+Garant:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/orchid" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#fff;color:#0a0a0a;font-family:'Playfair Display','Noto Serif TC','Georgia',serif;font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:#0a0a0a;color:#fff}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#fff}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#bbb}
+a{text-decoration:none;color:inherit}
+
+/* ── Top Nav ── */
+#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:24px 48px;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .5s cubic-bezier(.4,0,.2,1)}
+#top-nav.hidden{transform:translateY(-100%)}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;letter-spacing:-.02em;cursor:pointer;font-family:'Playfair Display',serif}
+.nav-logo-dot{width:8px;height:8px;border-radius:50%;background:#0a0a0a}
+.nav-links{display:flex;align-items:center;gap:36px}
+.nav-btn{font-size:14px;font-weight:400;color:#999;cursor:pointer;border:none;background:none;letter-spacing:.02em;transition:color .25s ease;font-family:'Cormorant Garant',serif;padding:0}
+.nav-btn.active{color:#0a0a0a}
+.nav-btn:hover:not(.active){color:#555}
+
+/* ── Pages ── */
+.page{display:none;opacity:0;transition:opacity .4s ease}
+.page.active{display:block;opacity:1}
+
+/* ── Shared ── */
+.container{max-width:1320px;margin:0 auto;padding:0 48px}
+.sec-num{font-family:'Cormorant Garant',serif;font-size:14px;font-weight:400;color:#bbb;letter-spacing:.04em}
+.sec-heading{font-size:clamp(42px,6vw,72px);font-weight:700;line-height:1.1;letter-spacing:-.02em;color:#0a0a0a;margin-bottom:40px;font-family:'Playfair Display',serif}
+.divider{width:100%;height:1px;background:#eee;margin:0}
+
+/* ── HOME ── */
+#page-home{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative}
+.home-inner{padding:160px 0 120px}
+.home-title{font-size:clamp(56px,9vw,120px);font-weight:800;line-height:1.0;letter-spacing:-.03em;color:#0a0a0a;margin-bottom:56px;font-family:'Orchid','Playfair Display',serif}
+.home-title .outline{-webkit-text-stroke:1.5px #0a0a0a;color:transparent}
+.home-cta{display:inline-flex;align-items:center;gap:12px;padding:16px 36px;background:#fff;color:#0a0a0a;font-size:15px;font-weight:500;letter-spacing:.02em;border-radius:100px;border:1.5px solid #0a0a0a;cursor:pointer;transition:all .3s ease;font-family:'Cormorant Garant',serif}
+.home-cta:hover{background:#0a0a0a;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.1);transform:translateY(-2px)}
+.home-cta svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .3s ease}
+.home-cta:hover svg{transform:translateX(4px)}
+.home-marquee{position:absolute;bottom:0;left:0;right:0;overflow:hidden;border-top:1px solid #eee;border-bottom:1px solid #eee;padding:18px 0;white-space:nowrap}
+.home-marquee-inner{display:flex;animation:marquee 25s linear infinite}
+.home-marquee span{font-size:14px;font-weight:400;color:#ccc;letter-spacing:.06em;text-transform:uppercase;padding:0 40px;flex-shrink:0;font-family:'Cormorant Garant',serif}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── ABOUT ── */
+#page-about{padding:140px 0 100px}
+.about-intro{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-bottom:100px;align-items:start}
+.about-label{font-family:'Cormorant Garant',serif;font-size:13px;color:#999;text-transform:uppercase;letter-spacing:.1em;margin-bottom:32px}
+.about-statement{font-size:clamp(28px,3.5vw,44px);font-weight:700;line-height:1.4;letter-spacing:-.01em;font-family:'Noto Serif TC','Playfair Display',serif}
+.about-body{font-size:16px;color:#666;line-height:2;font-weight:400;padding-top:8px;font-family:'Noto Serif TC',serif}
+.about-body p+p{margin-top:20px}
+.about-values{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid #eee;margin-top:80px}
+.av-item{padding:48px 40px 48px 0;border-bottom:1px solid #eee;position:relative}
+.av-item:not(:nth-child(3n)){border-right:1px solid #eee;padding-right:40px}
+.av-item:nth-child(3n){padding-left:40px}
+.av-item:nth-child(3n-1){padding-left:40px}
+.av-num{font-family:'Cormorant Garant',serif;font-size:13px;color:#ccc;margin-bottom:20px;display:block}
+.av-title{font-size:20px;font-weight:700;margin-bottom:12px;letter-spacing:-.01em;font-family:'Playfair Display',serif}
+.av-desc{font-size:14px;color:#888;line-height:1.8;font-weight:400;font-family:'Noto Serif TC',serif}
+
+/* ── WORKS ── */
+#page-works{padding:140px 0 100px}
+.works-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:56px}
+.works-count{font-family:'Cormorant Garant',serif;font-size:14px;color:#bbb}
+.works-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.wk-card{cursor:pointer;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.wk-card:hover{transform:translateY(-6px)}
+.wk-visual{aspect-ratio:4/3;border-radius:12px;overflow:hidden;position:relative;background:#f4f4f4}
+.wk-visual-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.wk-card:hover .wk-visual-inner{transform:scale(1.03)}
+.wk-gradient{position:absolute;inset:0}
+.wk-gradient.g1{background:linear-gradient(135deg,#f0f0f0 0%,#e8e8e8 40%,#d8d8d8 100%)}
+.wk-gradient.g2{background:linear-gradient(135deg,#f2f0ed 0%,#e8e4df 40%,#ddd8d2 100%)}
+.wk-gradient.g3{background:linear-gradient(135deg,#eef0f4 0%,#e2e6ee 40%,#d6dce8 100%)}
+.wk-gradient.g4{background:linear-gradient(135deg,#f0ede8 0%,#e6e0d8 40%,#d8d0c6 100%)}
+.wk-gradient.g5{background:linear-gradient(135deg,#edf2ee 0%,#e0e8e2 40%,#d4ddd6 100%)}
+.wk-icon{position:relative;z-index:2;font-size:64px;font-weight:700;color:rgba(0,0,0,0.06);letter-spacing:-.02em;font-family:'Playfair Display',serif;font-style:italic}
+.wk-info{padding:20px 4px 0}
+.wk-name{font-size:17px;font-weight:600;margin-bottom:4px;letter-spacing:-.01em;font-family:'Playfair Display',serif}
+.wk-type{font-family:'Cormorant Garant',serif;font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── PHILOSOPHY ── */
+#page-philosophy{padding:140px 0 100px}
+.phil-head{margin-bottom:100px}
+.phil-quote{font-size:clamp(28px,4vw,48px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Noto Serif TC','Playfair Display',serif}
+.phil-quote em{font-style:normal;color:#999}
+.phil-items{display:flex;flex-direction:column}
+.phi-item{display:grid;grid-template-columns:200px 1fr;gap:60px;padding:56px 0;border-top:1px solid #eee;align-items:start}
+.phi-num{font-family:'Playfair Display',serif;font-size:64px;font-weight:300;color:#eee;line-height:1;font-style:italic}
+.phi-content{}
+.phi-title{font-size:24px;font-weight:700;margin-bottom:16px;letter-spacing:-.01em;font-family:'Noto Serif TC','Playfair Display',serif}
+.phi-text{font-size:15px;color:#777;line-height:2;font-weight:400;max-width:600px;font-family:'Noto Serif TC',serif}
+.phil-footer{margin-top:120px;padding:48px 0;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.pf-brand{font-size:16px;font-weight:700;letter-spacing:-.01em;font-family:'Playfair Display',serif}
+.pf-copy{font-family:'Cormorant Garant',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
+
+/* ── Project Overlay ── */
+#project-overlay{position:fixed;inset:0;z-index:200;background:#000;display:none;opacity:0;transition:opacity .4s ease}
+#project-overlay.active{display:block;opacity:1}
+#project-overlay iframe{width:100%;height:100%;border:none}
+#overlay-close{position:fixed;top:20px;right:24px;z-index:210;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(8px);cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .25s ease}
+#project-overlay.active~#overlay-close{display:flex}
+#overlay-close:hover{background:rgba(255,255,255,0.25);transform:scale(1.1)}
+#overlay-close svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none}
+
+/* ── Scroll Animations ── */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s cubic-bezier(.4,0,.2,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .container{padding:0 28px}
+  #top-nav{padding:18px 28px}
+  .nav-links{gap:20px}
+  .nav-btn{font-size:13px}
+  .about-intro{grid-template-columns:1fr;gap:40px}
+  .about-values{grid-template-columns:1fr}
+  .av-item,.av-item:not(:nth-child(3n)),.av-item:nth-child(3n),.av-item:nth-child(3n-1){padding:32px 0;border-right:none}
+  .works-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .phi-item{grid-template-columns:80px 1fr;gap:24px}
+  .phi-num{font-size:40px}
+  .phil-footer{flex-direction:column;gap:16px;text-align:center}
+}
+@media(max-width:600px){
+  .works-grid{grid-template-columns:1fr}
+  .phi-item{grid-template-columns:1fr;gap:12px}
+  .nav-links{gap:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top Navigation ── -->
+<nav id="top-nav">
+  <div class="nav-logo" onclick="switchPage('home')">
+    <span class="nav-logo-dot"></span> Outside FrameWork
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn active" data-page="home">Home</button>
+    <button class="nav-btn" data-page="about">About</button>
+    <button class="nav-btn" data-page="works">Works</button>
+    <button class="nav-btn" data-page="philosophy">Philosophy</button>
+  </div>
+</nav>
+
+<!-- ── HOME ── -->
+<div class="page active" id="page-home">
+  <div class="container">
+    <div class="home-inner">
+      <h1 class="home-title reveal">Outside<br><span class="outline">FrameWork</span></h1>
+      <button class="home-cta reveal reveal-delay-1" onclick="switchPage('works')">
+        View Works
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ABOUT ── -->
+<div class="page" id="page-about">
+  <div class="container">
+    <div class="about-intro">
+      <div>
+        <div class="about-label reveal">About</div>
+        <div class="about-statement reveal reveal-delay-1">世界從未缺少答案，<br>只是缺少願意站在框架之外的眼睛。</div>
+      </div>
+      <div class="about-body reveal reveal-delay-2">
+        <p>有些連結，只有站在邊界上的人才看得見。我們相信，最深刻的洞察不在任何單一領域的中心，而在那些被忽略的交界處 — 能源與地緣的碰撞、供應鏈與金融的共振、農業與科技的對話。</p>
+        <p>我們不只是整理數據，而是在數據的沉默中傾聽故事。每一張圖表背後，都是一段等待被理解的關係；每一條看不見的連結，都在訴說：這個世界比你以為的，更加彼此相依。</p>
+      </div>
+    </div>
+    <div class="about-values">
+      <div class="av-item reveal">
+        <span class="av-num">01</span>
+        <div class="av-title">Cross-Domain</div>
+        <div class="av-desc">從能源到金融、從農業到科技，在不同領域的交界處找到被忽略的關鍵訊號。</div>
+      </div>
+      <div class="av-item reveal reveal-delay-1">
+        <span class="av-num">02</span>
+        <div class="av-title">Structured</div>
+        <div class="av-desc">運用 Macro / Risk / Industry 三層敘事框架，讓數據不只是數字，而是完整的故事。</div>
+      </div>
+      <div class="av-item reveal reveal-delay-2">
+        <span class="av-num">03</span>
+        <div class="av-title">Interactive</div>
+        <div class="av-desc">透過 3D 地球、力導向圖、即時數據流，讓複雜系統變得可觸摸、可探索。</div>
+      </div>
+      <div class="av-item reveal">
+        <span class="av-num">04</span>
+        <div class="av-title">Data-Driven</div>
+        <div class="av-desc">整合 Yahoo Finance、UN Comtrade、EIA 等即時數據源，確保分析基於真實世界。</div>
+      </div>
+      <div class="av-item reveal reveal-delay-1">
+        <span class="av-num">05</span>
+        <div class="av-title">Narrative</div>
+        <div class="av-desc">數據本身不會說話。我們將數據轉化為有脈絡的敘事，讓決策者能快速抓住核心。</div>
+      </div>
+      <div class="av-item reveal reveal-delay-2">
+        <span class="av-num">06</span>
+        <div class="av-title">Open Source</div>
+        <div class="av-desc">所有工具與框架皆以開放的精神構建，歡迎協作、歡迎挑戰、歡迎重新定義。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WORKS ── -->
+<div class="page" id="page-works">
+  <div class="container">
+    <div class="works-head">
+      <h2 class="sec-heading reveal">Selected works</h2>
+      <span class="works-count reveal">05 Projects</span>
+    </div>
+    <div class="works-grid">
+      <div class="wk-card reveal" onclick="openProject('econ')">
+        <div class="wk-visual">
+          <div class="wk-gradient g1"></div>
+          <div class="wk-visual-inner"><span class="wk-icon">Econ</span></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">Economy</div>
+          <div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div>
+        </div>
+      </div>
+      <div class="wk-card reveal reveal-delay-1" onclick="openProject('energy')">
+        <div class="wk-visual">
+          <div class="wk-gradient g2"></div>
+          <div class="wk-visual-inner"><span class="wk-icon">Energy</span></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">Energy</div>
+          <div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div>
+        </div>
+      </div>
+      <div class="wk-card reveal reveal-delay-2" onclick="openProject('news')">
+        <div class="wk-visual">
+          <div class="wk-gradient g3"></div>
+          <div class="wk-visual-inner"><span class="wk-icon">News</span></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">News</div>
+          <div class="wk-type">Geopolitics &middot; Global Events</div>
+        </div>
+      </div>
+      <div class="wk-card reveal" onclick="openProject('strucholes')">
+        <div class="wk-visual">
+          <div class="wk-gradient g4"></div>
+          <div class="wk-visual-inner"><span class="wk-icon">Struct</span></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">Structural Holes</div>
+          <div class="wk-type">Network Analysis &middot; Graph Theory</div>
+        </div>
+      </div>
+      <div class="wk-card reveal reveal-delay-1" onclick="openProject('invest')">
+        <div class="wk-visual">
+          <div class="wk-gradient g5"></div>
+          <div class="wk-visual-inner"><span class="wk-icon">Invest</span></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">InvestFrame</div>
+          <div class="wk-type">3-Layer Narrative &middot; Framework</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PHILOSOPHY ── -->
+<div class="page" id="page-philosophy">
+  <div class="container">
+    <div class="phil-head">
+      <div class="about-label reveal">Philosophy</div>
+      <div class="phil-quote reveal reveal-delay-1">框架是為了被理解而存在，<em>也是為了被超越而存在。</em></div>
+    </div>
+    <div class="phil-items">
+      <div class="phi-item reveal">
+        <div class="phi-num">01</div>
+        <div class="phi-content">
+          <div class="phi-title">看見框架</div>
+          <div class="phi-text">所有的知識體系都在框架內運作。第一步不是打破它，而是意識到它的存在 — 看見那些被視為理所當然的邊界與假設。</div>
+        </div>
+      </div>
+      <div class="phi-item reveal">
+        <div class="phi-num">02</div>
+        <div class="phi-content">
+          <div class="phi-title">穿越邊界</div>
+          <div class="phi-text">當你站在兩個框架的交界處，你能同時看見兩側的盲點。跨領域不是混搭，而是在結構洞中找到被忽略的訊號。</div>
+        </div>
+      </div>
+      <div class="phi-item reveal">
+        <div class="phi-num">03</div>
+        <div class="phi-content">
+          <div class="phi-title">重新建構</div>
+          <div class="phi-text">真正的創新不是在舊框架上修補，而是帶著對舊框架的理解，從零建構一個更貼近現實的新結構。</div>
+        </div>
+      </div>
+    </div>
+    <div class="phil-footer">
+      <div class="pf-brand">Outside FrameWork</div>
+      <div class="pf-copy">&copy; 2025 All rights reserved.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Project Overlay ── -->
+<div id="project-overlay">
+  <iframe id="project-frame" src="about:blank" allow="accelerometer; gyroscope"></iframe>
+</div>
+<button id="overlay-close" onclick="closeProject()">
+  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+</button>
+
+<script>
+const GLOBE_BASE = 'http://localhost:8124';
+
+function openProject(mode) {
+  const overlay = document.getElementById('project-overlay');
+  const frame = document.getElementById('project-frame');
+  frame.src = GLOBE_BASE + '?mode=' + mode;
+  overlay.style.display = 'block';
+  requestAnimationFrame(() => overlay.classList.add('active'));
+  document.getElementById('overlay-close').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProject() {
+  const overlay = document.getElementById('project-overlay');
+  const frame = document.getElementById('project-frame');
+  overlay.classList.remove('active');
+  document.getElementById('overlay-close').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(() => { overlay.style.display = 'none'; frame.src = 'about:blank'; }, 400);
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProject(); });
+
+const nav = document.getElementById('top-nav');
+const btns = document.querySelectorAll('.nav-btn');
+let currentPage = 'home';
+let navVisible = true;
+let lastScrollY = 0;
+let hideTimer = null;
+
+function switchPage(id) {
+  if (id === currentPage) return;
+  currentPage = id;
+  btns.forEach(b => b.classList.toggle('active', b.dataset.page === id));
+
+  const outPage = document.querySelector('.page.active');
+  const inPage = document.getElementById('page-' + id);
+
+  if (outPage) {
+    outPage.style.opacity = '0';
+    setTimeout(() => {
+      outPage.classList.remove('active');
+      outPage.style.display = 'none';
+      inPage.style.display = 'block';
+      requestAnimationFrame(() => {
+        inPage.classList.add('active');
+        inPage.style.opacity = '1';
+      });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(observeReveals, 50);
+    }, 300);
+  }
+
+  showNav();
+  if (id !== 'home') scheduleHide();
+  else clearTimeout(hideTimer);
+}
+
+btns.forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
+
+function showNav() { if (!navVisible) { nav.classList.remove('hidden'); navVisible = true; } }
+function hideNav() { if (navVisible && currentPage !== 'home') { nav.classList.add('hidden'); navVisible = false; } }
+function scheduleHide() { clearTimeout(hideTimer); hideTimer = setTimeout(hideNav, 3000); }
+
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      const sy = window.scrollY;
+      if (sy < lastScrollY || sy <= 10) { showNav(); if (currentPage !== 'home') scheduleHide(); }
+      else if (sy > lastScrollY && sy > 80) hideNav();
+      lastScrollY = sy;
+      ticking = false;
+    });
+    ticking = true;
+  }
+});
+
+window.addEventListener('mousemove', e => {
+  if (e.clientY < 80) { showNav(); if (currentPage !== 'home') scheduleHide(); }
+});
+
+function observeReveals() {
+  const els = document.querySelectorAll('.reveal:not(.visible)');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add('visible'); obs.unobserve(en.target); }
+    });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+}
+observeReveals();
+</script>
+</body>
+</html>

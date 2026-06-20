@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chronos",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:\\Users\\ryan9\\OneDrive\\桌面\\Claudecode\\watch-finder\\run.py", "--port", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "article-db-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8123", "--directory", "article_db"],
+      "port": 8123
+    },
+    {
+      "name": "globe",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8124", "--directory", "claude/GlobalEco"],
+      "port": 8124
+    },
+    {
+      "name": "outside-framework",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8125", "--directory", "claude/OutsideFramework"],
+      "port": 8125
+    }
+  ]
+}
