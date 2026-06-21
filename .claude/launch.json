@@ -24,6 +24,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8127", "--directory", "article_db"],
       "port": 8127
+    },
+    {
+      "name": "causalframe",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8128", "--directory", "app/CausalFrame"],
+      "port": 8128
     }
   ]
 }
