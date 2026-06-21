@@ -43,14 +43,11 @@ html,body{height:100%;overflow:hidden;background:#fff;color:#0a0a0a;font-family:
 .iv-tag{padding:6px 12px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:11px;color:#555;font-weight:400;cursor:pointer;transition:all .18s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:6px;font-family:'Ochrid','Noto Serif TC',serif}
 .iv-tag:hover{background:#f5f5f5;color:#0a0a0a;border-color:#bbb}
 .iv-tag.active{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
-.iv-tag .iv-tag-x{font-size:8px;color:#aaa;cursor:pointer;margin-left:2px}
-.iv-tag .iv-tag-x:hover{color:#333}
-.iv-tag.active .iv-tag-x{color:rgba(255,255,255,0.5)}
-.iv-tag.active .iv-tag-x:hover{color:#fff}
-
 .iv-feed-head{padding:32px 24px 20px;display:flex;align-items:center;justify-content:space-between}
 .iv-feed-title{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.16em;font-weight:400;font-family:'Ochrid',serif}
 .iv-feed-count{font-size:10px;color:#bbb;font-family:'Ochrid',serif}
+.iv-feed-del{font-size:9px;color:#ccc;cursor:pointer;font-family:'Ochrid',serif;letter-spacing:.06em;text-transform:uppercase;transition:color .15s ease,border-color .15s ease;padding:3px 8px;border:1px solid #e8e8e8;border-radius:6px;display:none}
+.iv-feed-del:hover{color:#b55;border-color:#daa}
 .iv-feed-list{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
 .iv-feed-empty{text-align:center;padding:48px 24px;color:#bbb;font-size:13px;font-weight:400;font-family:'Ochrid','Noto Serif TC',serif}
 .iv-feed-card{padding:16px 18px;background:#fff;border:1px solid #e8e8e8;border-radius:12px;cursor:pointer;transition:border-color .2s ease,box-shadow .2s ease,transform .2s cubic-bezier(.4,0,.2,1);animation:iv-fade-up .22s cubic-bezier(.4,0,.2,1) both}
@@ -111,14 +108,20 @@ html,body{height:100%;overflow:hidden;background:#fff;color:#0a0a0a;font-family:
 .iv-sev-btn.active{border-color:rgba(0,0,0,0.28);color:#222;box-shadow:0 1px 4px rgba(0,0,0,0.1)}
 
 /* Image upload */
-.iv-img-drop{padding:10px 14px;background:#fafafa;border:1px dashed #e0e0e0;border-radius:10px;cursor:pointer;text-align:center;font-size:11px;color:#ccc;transition:all .18s ease;font-family:'Ochrid',serif;letter-spacing:.04em}
+.iv-img-drop{padding:12px 14px;background:#fafafa;border:1.5px dashed #e0e0e0;border-radius:10px;cursor:pointer;text-align:center;font-size:11px;color:#ccc;transition:all .18s ease;font-family:'Ochrid',serif;letter-spacing:.04em;line-height:1.6}
 .iv-img-drop:hover{border-color:#bbb;color:#888;background:#f5f5f5}
-.iv-img-previews{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.iv-img-thumb{position:relative;width:56px;height:56px;border-radius:8px;overflow:hidden;border:1px solid #eee;flex-shrink:0;transition:opacity .15s ease}
-.iv-img-thumb:hover{opacity:.85}
+.iv-img-drop.drag-over{border-color:#0a0a0a;color:#555;background:#f0f0f0;transform:scale(1.01)}
+.iv-img-add-more{margin-top:6px;padding:5px 10px;font-size:10px;color:#bbb;cursor:pointer;text-align:center;font-family:'Ochrid',serif;letter-spacing:.06em;text-transform:uppercase;transition:color .15s ease}
+.iv-img-add-more:hover{color:#555}
+.iv-img-previews{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px;max-height:200px;overflow-y:auto;padding-right:2px}
+.iv-img-previews::-webkit-scrollbar{width:3px}
+.iv-img-previews::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px}
+.iv-img-thumb{position:relative;aspect-ratio:1/1;border-radius:7px;overflow:hidden;border:1px solid #eee;transition:opacity .15s ease}
+.iv-img-thumb:hover{opacity:.82}
 .iv-img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.iv-img-thumb-x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.45);color:#fff;border-radius:4px;font-size:9px;cursor:pointer;width:15px;height:15px;display:flex;align-items:center;justify-content:center;transition:background .15s ease}
-.iv-img-thumb-x:hover{background:rgba(0,0,0,0.75)}
+.iv-img-thumb-x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.45);color:#fff;border-radius:4px;font-size:9px;cursor:pointer;width:15px;height:15px;display:flex;align-items:center;justify-content:center;transition:background .15s ease;opacity:0}
+.iv-img-thumb:hover .iv-img-thumb-x{opacity:1}
+.iv-img-thumb-x:hover{background:rgba(0,0,0,0.78)}
 
 /* Daily bar */
 .iv-daily-bar{padding:20px 20px 14px;border-bottom:1px solid #eee}
@@ -166,7 +169,10 @@ html,body{height:100%;overflow:hidden;background:#fff;color:#0a0a0a;font-family:
   <div id="iv-feed">
     <div class="iv-feed-head">
       <span class="iv-feed-title">Feed</span>
-      <span class="iv-feed-count" id="iv-feed-cnt">0 entries</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="iv-feed-del" id="iv-feed-del" onclick="ivRemoveActiveTag()">Delete tag</span>
+        <span class="iv-feed-count" id="iv-feed-cnt">0 entries</span>
+      </div>
     </div>
     <div id="iv-feed-list" class="iv-feed-list">
       <div class="iv-feed-empty">Select a tag to view entries</div>
@@ -240,8 +246,11 @@ html,body{height:100%;overflow:hidden;background:#fff;color:#0a0a0a;font-family:
       <div class="iv-ed-field">
         <div class="iv-ed-label">Images</div>
         <input type="file" id="iv-img-input" accept="image/*" multiple style="display:none" onchange="ivHandleImages(this)">
-        <div class="iv-img-drop" onclick="document.getElementById('iv-img-input').click()">+ Add images</div>
+        <div class="iv-img-drop" id="iv-img-drop-zone" onclick="document.getElementById('iv-img-input').click()">
+          + Add images<br><span style="font-size:10px;opacity:.6">or drag &amp; drop here</span>
+        </div>
         <div class="iv-img-previews" id="iv-img-previews"></div>
+        <div class="iv-img-add-more" id="iv-img-add-more" style="display:none" onclick="document.getElementById('iv-img-input').click()">+ Add more</div>
       </div>
       <div class="iv-ed-actions">
         <button class="iv-ed-btn" onclick="ivClearEditor()">Clear</button>
@@ -298,9 +307,8 @@ function ivPickLayer(el){
 document.addEventListener('click',e=>{const cs=document.getElementById('iv-cs-layer');if(cs&&!cs.contains(e.target))cs.classList.remove('open');});
 
 /* ── Image upload ── */
-function ivHandleImages(input){
-  Array.from(input.files).forEach(file=>{
-    if(!file.type.startsWith('image/'))return;
+function ivProcessFiles(files){
+  Array.from(files).filter(f=>f.type.startsWith('image/')).forEach(file=>{
     const reader=new FileReader();
     reader.onload=ev=>{
       const img=new Image();
@@ -316,14 +324,27 @@ function ivHandleImages(input){
     };
     reader.readAsDataURL(file);
   });
-  input.value='';
 }
+function ivHandleImages(input){ivProcessFiles(input.files);input.value='';}
 function ivRenderPendingImages(){
   const c=document.getElementById('iv-img-previews');if(!c)return;
   c.innerHTML=_ivPendingImages.map((b,i)=>`<div class="iv-img-thumb"><img src="${b}"><div class="iv-img-thumb-x" onclick="ivRemovePendingImg(${i})">×</div></div>`).join('');
+  const more=document.getElementById('iv-img-add-more');
+  const drop=document.getElementById('iv-img-drop-zone');
+  if(more)more.style.display=_ivPendingImages.length?'block':'none';
+  if(drop)drop.style.display=_ivPendingImages.length?'none':'block';
 }
 function ivRemovePendingImg(i){_ivPendingImages.splice(i,1);ivRenderPendingImages();}
 function ivOpenImg(src){document.getElementById('iv-lightbox-img').src=src;document.getElementById('iv-lightbox').style.display='flex';}
+(function ivInitImgDrop(){
+  const zone=document.getElementById('iv-img-drop-zone');if(!zone)return;
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.classList.remove('drag-over');
+    ivProcessFiles(e.dataTransfer.files);
+  });
+})();
 
 /* ── Compose submit / clear ── */
 function ivSubmitEntry(){
@@ -357,13 +378,14 @@ function ivRenderTags(){
       const sc=maxSev?SCOLORS[maxSev]:null;
       const style=sc?(active?`background:${sc};border-color:rgba(0,0,0,0.3);color:#222`:`background:${sc};border-color:transparent;color:#4a4a4a`):'';
       const cls=`iv-tag${active&&!sc?' active':''}`;
-      return `<div class="${cls}"${style?` style="${style}"`:''}  onclick="ivSelectTag('${layer}','${t.replace(/'/g,"\\'")}')"><span>${t}</span><span class="iv-tag-x" onclick="event.stopPropagation();ivRemoveTag('${layer}','${t.replace(/'/g,"\\'")}')">x</span></div>`;
+      return `<div class="${cls}"${style?` style="${style}"`:''}  onclick="ivSelectTag('${layer}','${t.replace(/'/g,"\\'")}')"><span>${t}</span></div>`;
     }).join('');
   });
 }
 function ivSelectTag(layer,title){_ivActiveTag={layer,title};_ivActiveLayer=null;ivRenderTags();ivRenderLayers();ivRenderFeed();}
 function ivSelectLayer(layer){if(_ivActiveLayer===layer){_ivActiveLayer=null;}else{_ivActiveLayer=layer;}_ivActiveTag=null;ivRenderTags();ivRenderLayers();ivRenderFeed();}
 function ivRenderLayers(){['macro','risk','industry'].forEach(l=>{const r=document.getElementById('iv-ring-'+l);if(r)r.classList.toggle('layer-active',_ivActiveLayer===l);});}
+function ivRemoveActiveTag(){if(_ivActiveTag)ivRemoveTag(_ivActiveTag.layer,_ivActiveTag.title);}
 function ivRemoveTag(layer,title){
   _ivStore[layer]=_ivStore[layer].filter(e=>e.title!==title);_ivSave();
   if(_ivActiveTag&&_ivActiveTag.layer===layer&&_ivActiveTag.title===title)_ivActiveTag=null;
@@ -380,6 +402,8 @@ function ivRenderFeed(){
   const detail=document.getElementById('iv-feed-detail');
   const cntEl=document.getElementById('iv-feed-cnt');
   detail.style.display='none';list.style.display='';
+  const delBtn=document.getElementById('iv-feed-del');
+  if(delBtn)delBtn.style.display=_ivActiveTag?'inline':'none';
   if(_ivActiveTag){
     const entries=_ivStore[_ivActiveTag.layer].filter(e=>e.title===_ivActiveTag.title);
     cntEl.textContent=entries.length+' entries';
