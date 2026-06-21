@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>文章資料庫</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%232a2520' stroke-width='2.4' stroke-linecap='round'%3E%3Cellipse cx='16' cy='7' rx='10' ry='4'/%3E%3Cpath d='M6 7v18c0 2.2 4.5 4 10 4s10-1.8 10-4V7'/%3E%3Cpath d='M6 13c0 2.2 4.5 4 10 4s10-1.8 10-4'/%3E%3Cpath d='M6 19c0 2.2 4.5 4 10 4s10-1.8 10-4'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%230a0a0a' stroke-width='1' stroke-linecap='round'%3E%3Cellipse cx='16' cy='9' rx='8.5' ry='3'/%3E%3Cpath d='M7.5 9v14.5c0 1.55 3.8 2.8 8.5 2.8s8.5-1.25 8.5-2.8V9'/%3E%3Cpath d='M7.5 15.5c0 1.55 3.8 2.8 8.5 2.8s8.5-1.25 8.5-2.8'/%3E%3Cpath d='M7.5 20.5c0 1.55 3.8 2.8 8.5 2.8s8.5-1.25 8.5-2.8'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;500;700&family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -25,8 +25,9 @@
   --bg-darker: #fff;
   --bg-light: #fafafa;
   --bg-card: #fafafa;
-  --accent: #0a0a0a;
-  --accent-dim: #555;
+  --accent: #c8a96e;
+  --accent-dim: #9a7d4e;
+  --accent-light: rgba(200,169,110,0.10);
   --text-main: #0a0a0a;
   --text-muted: #666;
   --text-faint: #999;
@@ -40,8 +41,8 @@
   --radius: 8px;
   --shadow: 0 2px 16px rgba(0,0,0,0.04);
 }
-::selection { background: #0a0a0a; color: #fff; }
-::-moz-selection { background: #0a0a0a; color: #fff; }
+::selection { background: var(--accent); color: #fff; }
+::-moz-selection { background: var(--accent); color: #fff; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
@@ -198,7 +199,7 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
   outline: 1px dashed #ccc;
   outline-offset: -1px;
 }
-.folder-tab-icon { font-size: 13px; opacity: 0.85; }
+.folder-tab-icon { display: none; }
 .folder-tab-name {
   flex: 1;
   white-space: nowrap;
@@ -253,9 +254,9 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
 .sidebar-actions .btn-new-folder { width: auto; margin-top: 0; padding: 7px 10px; flex-shrink: 0; font-size: 11px; }
 .btn-new {
   width: 100%;
-  background: #0a0a0a;
+  background: var(--accent);
   color: #fff;
-  border: 1px solid #0a0a0a;
+  border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 9px 0;
   font-size: 12px;
@@ -264,7 +265,7 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
   cursor: pointer;
   transition: background 0.25s ease, color 0.25s ease;
 }
-.btn-new:hover { background: #fff; color: #0a0a0a; }
+.btn-new:hover { background: #fff; color: var(--accent); }
 .btn-new:active { transform: scale(0.98); }
 .sidebar-list-header {
   padding: 10px 14px 4px;
@@ -394,7 +395,7 @@ body.dark #main { background: var(--bg-light); }
   position: absolute;
   top: 0; left: 0;
   height: 2px; width: 0%;
-  background: #0a0a0a;
+  background: var(--accent);
   border-radius: 0 2px 2px 0;
   z-index: 10;
   pointer-events: none;
@@ -459,9 +460,9 @@ body.dark #main { background: var(--bg-light); }
   pointer-events: none; }
 .btn-icon .btn-badge { pointer-events: none; }
 .btn-icon.btn-star svg { fill: none; }
-.btn-icon.btn-star.starred svg { fill: #0a0a0a; stroke: #0a0a0a; }
+.btn-icon.btn-star.starred svg { fill: var(--accent); stroke: var(--accent); }
 .btn-icon.btn-love svg { fill: none; }
-.btn-icon.btn-love.loved svg { fill: #0a0a0a; stroke: #0a0a0a; }
+.btn-icon.btn-love.loved svg { fill: var(--accent); stroke: var(--accent); }
 .btn-icon:hover { border-color: var(--accent); color: var(--accent-dim); }
 .btn-icon.btn-delete:hover { border-color: var(--danger); color: var(--danger); }
 .btn-icon .btn-badge {
@@ -553,7 +554,7 @@ body.dark .btn-icon, body.dark .btn-text { background: #1c1c1f; border-color: #3
   margin: 0 auto 22px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-left: 3px solid #ccc;
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius);
   padding: 13px 18px;
   font-size: 14px;
@@ -984,9 +985,9 @@ body.dark .dp-footer-btn:hover { background: #252525; }
   padding-top: 8px;
 }
 .btn-save {
-  background: #0a0a0a;
+  background: var(--accent);
   color: #fff;
-  border: 1px solid #0a0a0a;
+  border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 10px 24px;
   font-size: 13px;
@@ -995,7 +996,7 @@ body.dark .dp-footer-btn:hover { background: #252525; }
   letter-spacing: .04em;
   transition: background 0.25s ease, color 0.25s ease;
 }
-.btn-save:hover { background: #fff; color: #0a0a0a; }
+.btn-save:hover { background: #fff; color: var(--accent); }
 .btn-cancel {
   background: white;
   color: var(--text-muted);
@@ -1017,7 +1018,6 @@ body.dark .dp-footer-btn:hover { background: #252525; }
   margin-left: 6px;
 }
 .folder-tag {
-  background: rgba(0,0,0,0.2);
   color: var(--accent);
   padding: 2px 6px;
   border-radius: 4px;
@@ -1066,7 +1066,7 @@ body.dark .dp-footer-btn:hover { background: #252525; }
   transition: all 0.15s;
 }
 .mode-tab:hover { color: var(--sidebar-text); background: var(--sidebar-hover); }
-.mode-tab.active { background: var(--sidebar-active); color: var(--accent); border-color: var(--accent-dim); }
+.mode-tab.active { background: var(--accent-light); color: var(--accent-dim); border-color: var(--accent); }
 
 body.reports-mode .articles-only { display: none !important; }
 body:not(.reports-mode) .reports-only { display: none !important; }
@@ -1116,7 +1116,7 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
   position: absolute;
   top: 0; left: 0;
   height: 2px; width: 0%;
-  background: #0a0a0a;
+  background: var(--accent);
   border-radius: 0 2px 2px 0;
   z-index: 10;
   pointer-events: none;
@@ -1276,7 +1276,7 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
 
 /* 閱讀內文 — Editorial White 排版 */
 .article-content-display {
-  color: #666;
+  color: #0a0a0a;
   max-width: 900px;
 }
 .article-content-display h1,
@@ -1302,7 +1302,7 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
 .article-content-display li > ul,
 .article-content-display li > ol { margin: 0.3em 0; }
 .article-content-display blockquote {
-  border-left: 2px solid #ddd;
+  border-left: 2px solid var(--accent);
   padding: 8px 16px;
   margin: 1em 0;
   color: #888;
@@ -1379,7 +1379,7 @@ body.dark {
   --border: #2a2a2a; --border-dark: #222;
   --sidebar-text: #e0e0e0; --sidebar-muted: #777;
   --sidebar-hover: #1e1e1e; --sidebar-active: #252525;
-  --accent: #e0e0e0; --accent-dim: #999;
+  --accent: #c8a96e; --accent-dim: #9a7d4e; --accent-light: rgba(200,169,110,0.12);
 }
 body.dark #main { background: #141414 !important; }
 body.dark #content-area {
@@ -1577,7 +1577,7 @@ body.dark .link-card-btn { background: rgba(255,255,255,0.10); color: var(--text
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .link-folder-tab:hover { background: var(--sidebar-hover); }
-.link-folder-tab.active { background: var(--sidebar-active); color: var(--accent); font-weight: 500; }
+.link-folder-tab.active { background: var(--accent-light); color: var(--accent-dim); font-weight: 500; border-color: var(--accent); }
 .link-folder-del-btn {
   background: none; border: none; color: var(--text-faint);
   cursor: pointer; font-size: 12px; padding: 0 4px; opacity: 0;
@@ -2359,8 +2359,8 @@ body.dark .filter-chip.on { color: #16140f; }
   color: var(--text-muted); transition: all 0.12s;
   font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', '微軟正黑體', sans-serif;
 }
-.btn-star.starred { color: #0a0a0a; border-color: #0a0a0a; background: rgba(232,160,32,0.06); }
-.btn-star:hover { border-color: #0a0a0a; color: #0a0a0a; }
+.btn-star.starred { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+.btn-star:hover { border-color: var(--accent); color: var(--accent); }
 .btn-duplicate:hover { border-color: var(--accent); color: var(--accent-dim); }
 .li-star { color: #0a0a0a; }
 .li-love { color: #0a0a0a; }
@@ -2504,9 +2504,9 @@ body.dark .filter-chip.on { color: #16140f; }
 /* ── Keyword tag chip ──────────────────────────────────────── */
 .kw-chip {
   display: inline-block;
-  background: rgba(0,0,0,0.13);
+  background: var(--accent-light);
   color: var(--accent-dim);
-  border: 1px solid rgba(0,0,0,0.25);
+  border: 1px solid var(--accent);
   padding: 2px 9px;
   border-radius: 999px;
   font-size: 12px;
@@ -2514,7 +2514,7 @@ body.dark .filter-chip.on { color: #16140f; }
 }
 .li-kw-chip {
   display: inline-block;
-  background: rgba(0,0,0,0.12);
+  background: var(--accent-light);
   color: var(--accent-dim);
   padding: 1px 6px;
   border-radius: 999px;
@@ -2562,8 +2562,8 @@ input:-webkit-autofill:focus {
       <div class="brand-sub" id="brand-sub">Article Archive</div>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;position:relative">
-      <button class="btn-dark-toggle" onclick="toggleAccentPicker(event)" title="強調色主題">主題</button>
       <button class="btn-dark-toggle" onclick="toggleShortcutHelp()" title="鍵盤快捷鍵（?）">?</button>
+      <button class="btn-dark-toggle" onclick="toggleAccentPicker(event)" title="強調色主題">主題</button>
       <button class="btn-dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" title="深色／淺色模式">深色</button>
       <div id="accent-popover" class="accent-popover">
         <div class="accent-popover-title">強調色</div>
@@ -4670,7 +4670,7 @@ if (darkMode) {
 
 // ── 強調色主題 ────────────────────────────────────────────────
 const ACCENTS = {
-  gold:   { c: '#0a0a0a', d: '#9a7d4e', label: '金' },
+  gold:   { c: '#c8a96e', d: '#9a7d4e', label: '金' },
   blue:   { c: '#5a8dd6', d: '#3f6cb0', label: '藍' },
   teal:   { c: '#3fa39b', d: '#2d7d76', label: '青' },
   green:  { c: '#6aa85a', d: '#4f8442', label: '綠' },
@@ -4683,6 +4683,8 @@ function setAccent(name) {
   accentName = ACCENTS[name] ? name : 'gold';
   document.documentElement.style.setProperty('--accent', a.c);
   document.documentElement.style.setProperty('--accent-dim', a.d);
+  const r = parseInt(a.c.slice(1,3),16), g = parseInt(a.c.slice(3,5),16), b = parseInt(a.c.slice(5,7),16);
+  document.documentElement.style.setProperty('--accent-light', `rgba(${r},${g},${b},0.10)`);
   localStorage.setItem('accent', accentName);
   document.querySelectorAll('.accent-swatch').forEach(el =>
     el.classList.toggle('active', el.dataset.accent === accentName));
