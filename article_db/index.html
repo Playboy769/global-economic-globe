@@ -131,10 +131,17 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
   margin-top: 3px;
 }
 .sidebar-search {
-  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
+  max-height: 0;
+  padding: 0 14px;
+  transition: max-height 0.22s ease, padding 0.22s ease;
+}
+.sidebar-search.open {
+  max-height: 200px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border-dark);
 }
 .search-wrap {
@@ -242,6 +249,8 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
   margin-top: 6px;
 }
 .btn-new-folder:hover { color: var(--text-main); border-color: #ccc; }
+.btn-search-toggle { padding: 7px 9px !important; flex-shrink: 0; }
+.btn-search-toggle.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); border-style: solid; }
 
 .sidebar-actions {
   padding: 10px 14px;
@@ -2596,6 +2605,7 @@ input:-webkit-autofill:focus {
       <button class="btn-new" onclick="showForm()">新增文章</button>
       <button class="btn-new-folder" onclick="addFolder()">新增資料夾</button>
       <button class="btn-new-folder" id="btn-batch" onclick="toggleBatchMode()" title="批次操作">批次</button>
+      <button class="btn-new-folder btn-search-toggle" id="btn-search-articles" onclick="toggleSearchBar('search-input','btn-search-articles')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </div>
     <div id="batch-bar">
       <span id="batch-count" style="font-size:12px;color:var(--text-muted);flex-shrink:0">已選 0 篇</span>
@@ -2644,6 +2654,7 @@ input:-webkit-autofill:focus {
     </div>
     <div class="sidebar-actions">
       <button class="btn-new" onclick="showReportForm()">新增報告</button>
+      <button class="btn-new-folder btn-search-toggle" id="btn-search-reports" onclick="toggleSearchBar('report-search-input','btn-search-reports')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </div>
     <div id="report-sector-tabs" class="folder-tabs"></div>
     <div class="sidebar-list-header" style="display:flex;align-items:center;gap:8px">
@@ -2681,6 +2692,7 @@ input:-webkit-autofill:focus {
     <div class="sidebar-actions" style="display:flex;gap:6px">
       <button class="btn-new" style="flex:1;font-size:11px;padding:7px 4px" onclick="showLinkForm()">新增連結</button>
       <button class="btn-new-folder" style="flex:1;margin-top:0;font-size:11px;padding:7px 4px" onclick="addLinkFolder()">資料夾</button>
+      <button class="btn-new-folder btn-search-toggle" id="btn-search-links" style="margin-top:0" onclick="toggleSearchBar('link-search-input','btn-search-links')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </div>
     <div class="folder-tabs" id="link-folder-tabs"></div>
     <div style="flex:1"></div>
@@ -2696,6 +2708,7 @@ input:-webkit-autofill:focus {
     </div>
     <div class="sidebar-actions">
       <button class="btn-new" onclick="showPdfForm()">＋ 上傳 PDF</button>
+      <button class="btn-new-folder btn-search-toggle" id="btn-search-pdfs" onclick="toggleSearchBar('pdf-search-input','btn-search-pdfs')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </div>
     <div class="sidebar-list-header">
       <span>所有 PDF</span> <span class="count-chip" id="pdf-count-chip">0</span>

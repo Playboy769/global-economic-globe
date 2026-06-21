@@ -4,19 +4,19 @@
     {
       "name": "globe",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8124", "--directory", "claude/GlobalEco"],
+      "runtimeArgs": ["-m", "http.server", "8124", "--directory", "app/GlobalEco"],
       "port": 8124
     },
     {
       "name": "outside-framework",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8125", "--directory", "claude/OutsideFramework"],
+      "runtimeArgs": ["-m", "http.server", "8125", "--directory", "app/OutsideFramework"],
       "port": 8125
     },
     {
       "name": "investframe",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8126", "--directory", "claude/InvestFrame"],
+      "runtimeArgs": ["-m", "http.server", "8126", "--directory", "app/InvestFrame"],
       "port": 8126
     },
     {
