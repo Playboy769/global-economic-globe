@@ -1,18 +1,3 @@
-.git
-.claude
-article_db
-Articles Backup
-EMA Bias Model
-Structural Holes Backup
-RR4
-RR5
-my-slide
-stock_analyzer
-structural_holes
-tech_value_screener
-node_modules
-__pycache__
-*.db
-*.csv
-*.pdf
-*.cls
+*
+!nginx.conf
+!app
