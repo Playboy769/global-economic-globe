@@ -617,6 +617,28 @@ function ivSelectDay(ds){
   ivNoteResize();
 })();
 
+/* idle → auto-return to today's working day */
+(function ivIdleReset(){
+  function todayWorkday(){
+    const d=new Date();const dow=d.getDay();
+    if(dow===6)d.setDate(d.getDate()+2);
+    else if(dow===0)d.setDate(d.getDate()+1);
+    return ivDateStr(d);
+  }
+  let timer=null;
+  function kick(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      const target=todayWorkday();
+      if(_ivSelDay!==target)ivSelectDay(target);
+    },60000);
+  }
+  ['mousemove','mousedown','keydown','touchstart','scroll','wheel'].forEach(ev=>
+    document.addEventListener(ev,kick,{passive:true})
+  );
+  kick();
+})();
+
 ivRenderTags();ivRenderFeed();
 </script>
 </body>
