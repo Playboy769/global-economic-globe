@@ -438,8 +438,8 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 // Dev (python server on :8125) loads the globe from its own server on :8124.
 // Everywhere else (Railway, Docker, any real host) the globe is served at /globe by nginx.
-const GLOBE_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8124' : '/globe';
-const INVEST_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8126' : '/invest';
+const GLOBE_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8124' : 'https://globe-invest-production.up.railway.app/globe';
+const INVEST_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8126' : 'https://globe-invest-production.up.railway.app/invest';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
