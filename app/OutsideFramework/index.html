@@ -260,7 +260,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="container">
     <div class="works-head">
       <h2 class="sec-heading reveal">Selected works</h2>
-      <span class="works-count reveal">06 Projects</span>
+      <span class="works-count reveal">07 Projects</span>
     </div>
     <div class="works-grid">
       <div class="wk-card reveal" onclick="openProject('econ')">
@@ -368,6 +368,23 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div>
         </div>
       </div>
+      <div class="wk-card reveal" onclick="openProject('causal')">
+        <div class="wk-visual">
+          <div class="wk-gradient g7"></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <defs><marker id="cfk-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,2.5 L0,5 Z" fill="#000" stroke="none"/></marker></defs>
+            <rect x="11" y="15" width="23" height="15" rx="3"/>
+            <rect x="47" y="23" width="22" height="15" rx="3" opacity="0.5"/>
+            <rect x="28" y="50" width="23" height="15" rx="3" opacity="0.78"/>
+            <line x1="34" y1="22" x2="45.5" y2="29" marker-end="url(#cfk-arrow)"/>
+            <line x1="23" y1="30" x2="33.5" y2="49" marker-end="url(#cfk-arrow)"/>
+          </svg></div></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">CausalFrame</div>
+          <div class="wk-type">Causal Logic &middot; Diagram</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -440,12 +457,14 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 // Everywhere else (Railway, Docker, any real host) the globe is served at /globe by nginx.
 const GLOBE_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8124' : 'https://globe-invest.up.railway.app/globe';
 const INVEST_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8126' : 'https://globe-invest.up.railway.app/invest';
+const CAUSAL_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8128' : 'https://globe-invest.up.railway.app/causal';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
   const frame = document.getElementById('project-frame');
   if (mode.startsWith('http')) frame.src = mode;
   else if (mode === 'invest') frame.src = INVEST_BASE;
+  else if (mode === 'causal') frame.src = CAUSAL_BASE;
   else frame.src = GLOBE_BASE + '?mode=' + mode;
   overlay.style.display = 'block';
   requestAnimationFrame(() => overlay.classList.add('active'));
