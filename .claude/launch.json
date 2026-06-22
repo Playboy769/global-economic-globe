@@ -30,6 +30,13 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8128", "--directory", "app/CausalFrame"],
       "port": 8128
+    },
+    {
+      "name": "structural-holes",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8129"],
+      "port": 8129,
+      "cwd": "structural_holes"
     }
   ]
 }
