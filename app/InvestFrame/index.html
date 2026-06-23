@@ -837,7 +837,8 @@ function _ivStripScroll(strip,target,dur=280){
 function ivScrollActiveIntoCenter(animate=true){
   const strip=document.getElementById('iv-week-strip');if(!strip)return;
   const active=strip.querySelector('.iv-day-chip.active');if(!active)return;
-  const target=active.offsetLeft-strip.offsetWidth/2+active.offsetWidth/2;
+  const sr=strip.getBoundingClientRect(),ar=active.getBoundingClientRect();
+  const target=strip.scrollLeft+(ar.left-sr.left)-(sr.width/2)+(ar.width/2);
   if(animate)_ivStripScroll(strip,target,280);
   else strip.scrollLeft=target;
 }
