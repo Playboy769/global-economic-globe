@@ -515,8 +515,8 @@ function openProject(mode) {
   if (mode.startsWith('http')) frame.src = mode;
   else if (mode === 'invest') frame.src = INVEST_BASE;
   else if (mode === 'causal') frame.src = CAUSAL_BASE;
-  else if (mode === 'mu-analysis') frame.src = './research/MU_FY26Q3_Analysis.html';
-  else if (mode === 'mu-financials') frame.src = './research/MU_FY26Q3_Financials.html';
+  else if (mode === 'mu-analysis') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html';
+  else if (mode === 'mu-financials') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Financials.html';
   else frame.src = GLOBE_BASE + '?mode=' + mode;
   overlay.style.display = 'block';
   requestAnimationFrame(() => overlay.classList.add('active'));
