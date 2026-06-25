@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micron FY Q3 2026 — Earnings Call Analysis</title>
+<link href="https://fonts.cdnfonts.com/css/orchid" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Orchid', 'Noto Serif TC', 'NSimSun', serif; background: #fff; color: #0a0a0a; font-size: 13px; -webkit-font-smoothing: antialiased; }
+
+  .page-header { padding: 32px 32px 22px; border-bottom: 1px solid #eee; }
+  .page-header h1 { font-size: 18px; font-weight: 500; color: #0a0a0a; letter-spacing: .01em; }
+  .page-header p { font-size: 12px; color: #aaa; margin-top: 6px; letter-spacing: .04em; }
+
+  .container { max-width: 940px; margin: 0 auto; padding: 22px 32px 60px; }
+
+  .tabs { display: flex; border-bottom: 1px solid #eee; margin-bottom: 24px; gap: 0; }
+  .tab { padding: 11px 22px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 400; color: #ccc; transition: all 0.2s; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+  .tab.active { border-bottom-color: #0a0a0a; color: #0a0a0a; }
+  .tab:hover:not(.active) { color: #888; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #0a0a0a; margin-bottom: 10px; }
+  .card p { line-height: 1.7; color: #555; }
+
+  .qa-item { border: 1px solid #f0f0f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .qa-header { padding: 13px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+  .qa-header:hover { background: #f5f5f5; }
+  .qa-analyst { font-weight: 600; font-size: 13px; color: #0a0a0a; }
+  .qa-topic { font-size: 11.5px; color: #aaa; margin-top: 2px; }
+  .qa-arrow { font-size: 9px; color: #ccc; transition: transform 0.2s; }
+  .qa-item.open .qa-arrow { transform: rotate(180deg); }
+  .qa-body { display: none; padding: 16px; border-top: 1px solid #f0f0f0; background: #fff; }
+  .qa-item.open .qa-body { display: block; }
+
+  .q-block { margin-bottom: 12px; }
+  .q-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+  .q-label.q { color: #8a6000; }
+  .q-label.a { color: #2d7a50; }
+  .q-label.flag { color: #c03030; }
+  .q-text { line-height: 1.7; color: #444; }
+  .flag-box { background: #fef7f7; border: 1px solid #f0d8d8; border-radius: 6px; padding: 12px; margin-top: 10px; }
+  .flag-box .q-label { color: #c03030; }
+
+  .sca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .sca-box { border-radius: 8px; padding: 14px; }
+  .sca-box.blue { background: #f4f7ff; border: 1px solid #ccd8f0; }
+  .sca-box.green { background: #f4faf6; border: 1px solid #bcd8ca; }
+  .sca-box.orange { background: #fdf8f2; border: 1px solid #e8d5b0; }
+  .sca-box.red { background: #fef6f6; border: 1px solid #e8cccc; }
+  .sca-box h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+  .sca-box.blue h4 { color: #2a5ab0; }
+  .sca-box.green h4 { color: #2d7a50; }
+  .sca-box.orange h4 { color: #9a5a10; }
+  .sca-box.red h4 { color: #c03030; }
+  .sca-box ul { padding-left: 14px; }
+  .sca-box li { margin-bottom: 5px; line-height: 1.5; color: #555; font-size: 12px; }
+
+  .price-band { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .band-bar { height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; margin: 6px 0; font-size: 12px; font-weight: 500; }
+  .band-ceiling { background: #eef2ff; color: #2a5ab0; border: 1px solid #bcc8e8; }
+  .band-floor { background: #faf8ee; color: #7a6000; border: 1px solid #ddd0a0; }
+  .band-label { font-size: 11px; color: #bbb; margin: 3px 0; }
+
+  .rev-chart { margin-bottom: 16px; }
+  .rev-row { display: flex; align-items: center; margin-bottom: 10px; gap: 10px; }
+  .rev-name { width: 230px; font-size: 12px; font-weight: 500; color: #0a0a0a; flex-shrink: 0; line-height: 1.4; }
+  .rev-bar-wrap { flex: 1; background: #f0f0f0; border-radius: 4px; height: 26px; overflow: hidden; }
+  .rev-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 600; color: #fff; }
+  .rev-val { width: 50px; font-size: 13px; font-weight: 600; text-align: right; color: #0a0a0a; }
+
+  .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tech-card { border-radius: 8px; padding: 14px; border: 1px solid; }
+  .tech-card.dram { background: #f4f7ff; border-color: #bcc8e8; }
+  .tech-card.nand { background: #f7f4ff; border-color: #ccc0e8; }
+  .tech-card.hbm { background: #f4faf6; border-color: #bcd8ca; }
+  .tech-card.pkg { background: #fdf8f2; border-color: #e8d5b0; }
+  .tech-card h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+  .tech-card.dram h4 { color: #2a5ab0; }
+  .tech-card.nand h4 { color: #6030b0; }
+  .tech-card.hbm h4 { color: #2d7a50; }
+  .tech-card.pkg h4 { color: #9a5a10; }
+  .tech-card ul { padding-left: 14px; }
+  .tech-card li { font-size: 12px; margin-bottom: 5px; line-height: 1.5; color: #555; }
+
+  .risk-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+  .risk-badge { font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 10px; flex-shrink: 0; margin-top: 2px; letter-spacing: .04em; text-transform: uppercase; }
+  .risk-badge.high { background: #fff0f0; color: #c03030; border: 1px solid #e8c0c0; }
+  .risk-badge.med { background: #fffae8; color: #8a6000; border: 1px solid #e8d880; }
+  .risk-badge.low { background: #f0faf5; color: #2d7a50; border: 1px solid #b0d8c0; }
+  .risk-text { font-size: 12px; line-height: 1.7; color: #555; }
+  .risk-title { font-weight: 600; margin-bottom: 4px; color: #0a0a0a; font-size: 13px; }
+
+  .divider { border: none; border-top: 1px solid #eee; margin: 18px 0; }
+  .section-title { font-size: 11px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a; text-transform: uppercase; letter-spacing: .07em; }
+
+  .stat-row { display: flex; gap: 12px; margin-bottom: 22px; }
+  .stat-box { flex: 1; background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px; text-align: center; }
+  .stat-val { font-size: 30px; font-weight: 300; color: #0a0a0a; font-style: italic; }
+  .stat-lbl { font-size: 10px; color: #bbb; margin-top: 6px; text-transform: uppercase; letter-spacing: .08em; }
+
+  table { color: #444; width: 100%; border-collapse: collapse; }
+  th { color: #aaa; background: #fafafa; padding: 8px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 400; border-bottom: 1px solid #eee; }
+  td { color: #555; padding: 8px 12px; border-bottom: 1px solid #f8f8f8; font-size: 12.5px; }
+  td strong { color: #0a0a0a; }
+
+  [style*="color:#e8e8e8"] { color: #0a0a0a !important; }
+  [style*="color:#70c896"] { color: #2d7a50 !important; }
+  [style*="color:#d0d0d0"] { color: #555 !important; }
+  [style*="color:#7ab0e8"] { color: #2a5ab0 !important; }
+  [style*="color:#b08ae8"] { color: #6030b0 !important; }
+  [style*="color:#e0a060"] { color: #9a5a10 !important; }
+  [style*="color:#e0903a"] { color: #9a5a10 !important; }
+  [style*="color:#e07090"] { color: #c03030 !important; }
+  [style*="background:#1a1a38"] { background: #f0f0f0 !important; }
+  [style*="background:#2a2a44"] { background: #f0f0f0 !important; }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>Micron Technology — FY Q3 2026 Earnings Call Analysis</h1>
+  <p>Q&amp;A Analysis / SCA Architecture / Technology &amp; Products / Risk Matrix &nbsp;·&nbsp; Earnings Call: June 24, 2026</p>
+</div>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="sw('qa',this)">Q&amp;A Analysis</div>
+    <div class="tab" onclick="sw('sca',this)">SCA Architecture</div>
+    <div class="tab" onclick="sw('tech',this)">Technology &amp; Products</div>
+    <div class="tab" onclick="sw('risk',this)">Risk Matrix</div>
+  </div>
+
+  <!-- Q&A Panel -->
+  <div id="panel-qa" class="panel active">
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-val">5</div><div class="stat-lbl">Analysts</div></div>
+      <div class="stat-box"><div class="stat-val">11</div><div class="stat-lbl">Key Questions</div></div>
+      <div class="stat-box"><div class="stat-val">7</div><div class="stat-lbl">Logic Gaps</div></div>
+    </div>
+
+    <div class="qa-item open">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Timothy Arcuri (UBS)</div><div class="qa-topic">SCA Floor Price Coverage vs. 40% Revenue Target</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">Key Question</div>
+          <div class="q-text">$1,000億 ÷ 5年 = 每年僅$200億，遠低於當前$415億季度營收（年化$1,660億）。若 floor price 保障這麼少，「40% 營收在 SCA 內」的意義為何？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">Management Response</div>
+          <div class="q-text">Sanjay：$1,000億是「floor price 最低值」，非預期值。Floor price 下毛利率仍超過歷史峰值。目前 SCA 覆蓋 DRAM 20%、NAND 30%，約佔營收 25%（40% 是完成所有 SCA 後的目標）。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Logic Gap</div>
+          <div class="q-text">分析師混淆了「現在 16 個 SCA 覆蓋 25%」與「未來完成後 40%」兩個時間點。管理層沒有直接點破，用毛利率優越性轉移焦點，迴避了「保障規模相對整體營收仍小」的核心問題。</div>
+        </div>
+        <div class="q-block" style="margin-top:12px;">
+          <div class="q-label q">Q2: How to Model Quarterly SCA Revenue Penetration?</div>
+          <div class="q-text">Mark：Q3 的 $50億 RPO 對應未來12個月 $18億（汽車小協議）。Q4 將有 14 個協議 RPO ~$1,000億，對應的未來12個月數字在 10-K 揭露。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Logic Gap</div>
+          <div class="q-text">故意不給出 $1,000億 RPO 對應的年度數字。若用汽車協議比例換算（$18億/$50億 = 36%），$1,000億對應約 $360億/年——但管理層不為這個隱含數字背書，卻又提供足夠線索讓市場自己去算。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Joseph Moore (Morgan Stanley)</div><div class="qa-topic">$22B Customer Deposit — Legal Nature</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">Key Question</div>
+          <div class="q-text">客戶押金不是預付款，最終要還給客戶——那「押金」到底有什麼約束力？違約會發生什麼事？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">Management Response</div>
+          <div class="q-text">Mark：押金是「雙方履約承諾的體現」，不限制用途（可用於CapEx），在協議後半段返還。$220億中 $180億為現金，$40億為信用狀。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Critical Logic Gap</div>
+          <div class="q-text">整個問答最關鍵的問題被完全迴避：<br><br>
+          ① 若客戶違約 take-or-pay，押金會被沒收嗎？<br>
+          ② 信用狀是履約保證還是違約賠償？<br>
+          ③ 押金和 RPO 有什麼法律關聯？<br><br>
+          Mark 只說押金是「shared commitment」，這是道德約束而非法律約束。押金若必須返還且無違約罰則，Take-or-pay 的執行力值得懷疑。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">CJ Muse (Cantor Fitzgerald)</div><div class="qa-topic">Deposit Liquidity + HBM Margin Trajectory</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">Q1: Can Deposits Be Used for CapEx?</div>
+          <div class="q-text">Mark 明確回答：押金為「unrestricted」（無限制），可自由使用。但強調未來需要返還，不會改變整體流動性策略。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Note</div>
+          <div class="q-text">$180億現金押金是無利率、無限制的短期融資，Micron 可用於建廠。協議後半段才需還款——等於客戶為 Micron 的資本支出提供了「免息貸款」。</div>
+        </div>
+        <div class="q-block" style="margin-top:12px;">
+          <div class="q-label q">Q2: Can HBM Margins Catch Up to DDR5?</div>
+          <div class="q-text">Sanjay：HBM 是高價產品（per bit 高於非 HBM），提供強 ROI，但不評論具體定價。策略上選擇 HBM 份額接近整體 DRAM 份額。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Logic Gap</div>
+          <div class="q-text">HBM 毛利率未被揭露。若 HBM 毛利率低於 DDR5（因 TSV 封裝成本高），主動控制 HBM 份額也可能是在保護整體毛利率，而非純粹供應分配考量。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Vivek Arya (BofA Securities)</div><div class="qa-topic">SCA Datacenter Customer Mix × 2027–2028 Margin Corridor</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">Q1: How Many of the 4 Large + 3 Mid SCA Are Datacenter? Which Customers Drive the $100B RPO?</div>
+          <div class="q-text">4 個大型客戶與 3 個中型客戶的 SCA，有多少屬於資料中心？$1,000 億 RPO 主要來自大中型客戶還是汽車？能否讓市場拼出資料中心 SCA 的輪廓？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">Management Response (Sanjay)</div>
+          <div class="q-text">大型/中型客戶橫跨資料中心、消費與汽車三個市場。大型合約 ceiling = CQ2 市場價，floor 毛利率遠超歷史峰值——這些條款所隱含的利潤水準本身就是「資料中心客戶支付能力」的間接確認。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Observation</div>
+          <div class="q-text">管理層全程未拆解「幾個大型客戶屬於資料中心」，因 SCA 為保密協議。但從財務條款反推：能接受以 CQ2 歷史高價為 ceiling 並支付 $180億現金押金的，幾乎只可能是超大型雲端廠商（Hyperscaler）。這種「資訊留白」本身就是答案。</div>
+        </div>
+        <div class="q-block" style="margin-top:12px;">
+          <div class="q-label q">Q2: How Should Long-Term Investors Model 2027–2028 Margins? Normalize to Mid-70s%?</div>
+          <div class="q-text">當前 85–86%，歷史峰值 62%，長期投資人應假設毛利率會落在兩者中間（~74%）嗎？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">Management Response (Mark)</div>
+          <div class="q-text">不提供 Q4 以外指引。但給出多個正面框架：① 市場緊俏將延續 2027 年以後；② 記憶體已獲戰略資產定價；③ 2027 年中 ID.1 與台灣新竹開始貢獻大量新產能；④ 新廠 startup costs 初期衝擊毛利率，但 absorption 效應隨後跟上；⑤ FY2027 OpEx 增加約 $10 億（加重下半年，擴大 R&D）。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Logic Gap: 2027H2 Dual Pressure Window</div>
+          <div class="q-text">Mark 在「不給指引」的外衣下實際透露了一個壓力集中點：<br><br>
+          <strong style="color:#e8e8e8;">新廠 startup costs</strong>（ID.1、台灣新竹，2027年中開始）+ <strong style="color:#e8e8e8;">OpEx 跳升 $10億</strong>（加重 2027H2）同時落在 2027H2。<br><br>
+          即使市場供需仍緊俏，2027H2 的毛利率很可能是近年最低的一個季度。這是被問題「套」出的前瞻信息，建模時應對 2027H2 保守處理。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Krish Sankar (TD Cowen)</div><div class="qa-topic">Floor Price Implied Pricing Analysis</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">Key Question</div>
+          <div class="q-text">以前峰值毛利率 ~62% 反推：64GB 伺服器 DRAM floor price ≈ $700（$10–12/GB），ceiling ≈ $1,500（~$25/GB）。這個區間合理嗎？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">Management Response</div>
+          <div class="q-text">Sanjay：不討論具體定價，但重申「floor 毛利率遠超過任何歷史峰值（well beyond）」。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ Analyst Implied Pricing Logic</div>
+          <div class="q-text">Krish 的推算有效，因為管理層用「超過歷史峰值毛利率」作為 floor 的唯一公開參照。若峰值 ~62%，「遠超」可能意味著 68–75%，反推 DRAM floor 約為當前市場價的 40–50%。拒絕確認任何數字是刻意的資訊管理。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCA Panel -->
+  <div id="panel-sca" class="panel">
+    <div class="section-title">SCA Contract Architecture</div>
+    <div class="sca-grid">
+      <div class="sca-box blue">
+        <h4>Contract Scale</h4>
+        <ul>
+          <li>共 16 個協議（已完成）</li>
+          <li>目標：完成後 50%+ 營收</li>
+          <li>現況：~25% 營收（16個SCA）</li>
+          <li>含固定/上限定價：~40% 營收</li>
+          <li>大型客戶 ×4，中型 ×3，汽車 ×9</li>
+          <li>DRAM 含 HBM 供應（視客戶需求納入）</li>
+          <li>次世代產品（LP6 / DDR6 / 新HBM）溢價另行協商</li>
+        </ul>
+      </div>
+      <div class="sca-box green">
+        <h4>Contract Terms</h4>
+        <ul>
+          <li>資料中心/消費：5年（2026–2030）</li>
+          <li>汽車：3年</li>
+          <li>14/16 個協議有 floor price</li>
+          <li>部分固定價格或無價格區間</li>
+        </ul>
+      </div>
+      <div class="sca-box orange">
+        <h4>Financial Commitments</h4>
+        <ul>
+          <li>客戶押金+承諾：$220億</li>
+          <li>現金押金：~$180億（無限制）</li>
+          <li>信用狀：~$40億</li>
+          <li>Q3 已收：$4億+，Q4 預收 ~$100億</li>
+        </ul>
+      </div>
+      <div class="sca-box red">
+        <h4>RPO (Minimum Purchase Obligations)</h4>
+        <ul>
+          <li>Q3 末（汽車）：>$50億</li>
+          <li>Q3 關聯12個月：~$18億</li>
+          <li>14個大SCA總RPO：~$1,000億</li>
+          <li>ASC 606 會計準則揭露</li>
+          <li>為最低值，非預期值</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="price-band">
+      <div class="section-title">Price Band Structure (Large SCA)</div>
+      <div class="band-label">Ceiling = CQ2 2026 Market Price (Current All-Time High)</div>
+      <div class="band-bar band-ceiling"><span>CEILING — CQ2 Market Price (~$25/GB)</span><span>Gross Margin ~84.9%</span></div>
+      <div style="text-align:center; color:#888; padding: 4px 0; font-size:12px;">▼ Market price fluctuates within this range ▼</div>
+      <div class="band-bar band-floor"><span>FLOOR — Est. $10–12/GB</span><span>Gross Margin &gt;62% (far above historic peak)</span></div>
+      <div class="band-label">Floor set so gross margin "far exceeds" any historic peak</div>
+      <hr class="divider">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#2a5ab0; margin-bottom:6px; text-transform:uppercase;">Implications for Micron</div>
+          <ul style="padding-left:16px; font-size:12px; line-height:1.8; color:#555;">
+            <li>Downside protected — gross margin floor prevents collapse</li>
+            <li>Upside capped — Micron cannot benefit if market prices keep rising</li>
+            <li>In essence: traded price upside to customers in exchange for certainty</li>
+          </ul>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#9a5a10; margin-bottom:6px; text-transform:uppercase;">Implications for Customers</div>
+          <ul style="padding-left:16px; font-size:12px; line-height:1.8; color:#555;">
+            <li>Supply security (most valuable during shortage)</li>
+            <li>Price ceiling = controllable AI buildout CapEx</li>
+            <li>Cost: Take-or-pay mandatory purchase obligation</li>
+            <li>Deposit lockup ($18B cash)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Take-or-Pay Enforceability — Core Questions</div>
+      <p>合約名義上是「強制購買，不買也要付費」，但法說會中完全未揭露：<br><br>
+      <strong style="color:#e8e8e8;">① 若客戶不提貨，Micron 的救濟手段為何？</strong>（訴訟？押金沒收？）<br>
+      <strong style="color:#e8e8e8;">② 押金與 take-or-pay 義務的法律關聯為何？</strong><br>
+      <strong style="color:#e8e8e8;">③ 合約有強制仲裁條款嗎？</strong><br><br>
+      管理層用「道德承諾」的語言描述押金，而非法律強制性語言，是本次法說會最需要追問的未解問題。</p>
+    </div>
+  </div>
+
+  <!-- Tech Panel -->
+  <div id="panel-tech" class="panel">
+    <div class="section-title">FQ3 Revenue by Business Unit</div>
+    <div class="rev-chart">
+      <div class="rev-row">
+        <div class="rev-name">Cloud Memory BU<br><span style="color:#999;font-size:11px;font-weight:400;">(CMBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:100%; background:#1565c0;">$138億 &nbsp;+78% QoQ</div></div>
+        <div class="rev-val">33%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">Core Data Center BU<br><span style="color:#999;font-size:11px;font-weight:400;">(CDBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:83%; background:#1976d2;">$115億 &nbsp;+103% QoQ</div></div>
+        <div class="rev-val">28%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">Mobile &amp; Client BU<br><span style="color:#999;font-size:11px;font-weight:400;">(MCBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:83%; background:#7b1fa2;">$115億 &nbsp;+49% QoQ</div></div>
+        <div class="rev-val">28%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">Automotive &amp; Embedded BU<br><span style="color:#999;font-size:11px;font-weight:400;">(AEBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:33%; background:#e65100;">$46億 &nbsp;+71% QoQ</div></div>
+        <div class="rev-val">11%</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">DRAM vs NAND</div>
+    <div class="rev-chart">
+      <div class="rev-row">
+        <div class="rev-name">DRAM 總計</div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:100%; background:#0d47a1;">$313億 &nbsp;+343% YoY</div></div>
+        <div class="rev-val">76%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">NAND 總計</div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:32%; background:#6a1b9a;">$99億 &nbsp;+361% YoY</div></div>
+        <div class="rev-val">24%</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">Technology Nodes &amp; Product Lines</div>
+    <div class="tech-grid">
+      <div class="tech-card dram">
+        <h4>DRAM Process Technology</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">1-gamma (1γ)</strong>：量產中，最高 volume 節點</li>
+          <li><strong style="color:#e8e8e8;">1-delta (1δ)</strong>：開始導入 EUV（ASML 多年協議）</li>
+          <li><strong style="color:#e8e8e8;">下一代節點</strong>：2027H2 量產</li>
+          <li><strong style="color:#e8e8e8;">DDR5</strong>：主流伺服器標準</li>
+          <li><strong style="color:#e8e8e8;">DDR6</strong>：下一代，bit cost 更高</li>
+          <li><strong style="color:#e8e8e8;">LP5/LP6</strong>：行動裝置主力；1-gamma 16Gb LP5X 已在頂尖 OEM 高量量產</li>
+          <li><strong style="color:#e8e8e8;">256GB DDR5 RDIMM</strong>：1-gamma + 3D die stacking；樣品已送出伺服器生態系</li>
+          <li><strong style="color:#e8e8e8;">LP5X SOCAMM2</strong>：多容量高量量產；PC AI edge 主力</li>
+        </ul>
+      </div>
+      <div class="tech-card nand">
+        <h4>NAND Process Technology</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">G9</strong>：量產中，最高 volume 節點</li>
+          <li><strong style="color:#e8e8e8;">下一代</strong>：2027H2 量產</li>
+          <li><strong style="color:#e8e8e8;">資料中心 SSD</strong>：$50億+ 季營收（QoQ 2倍+）</li>
+          <li><strong style="color:#e8e8e8;">AI context storage</strong>：Agentic AI 驅動</li>
+          <li><strong style="color:#e8e8e8;">HDD 替換機會</strong>：SSD 持續擴大市佔</li>
+          <li><strong style="color:#e8e8e8;">245TB QLC SSD</strong>：高容量已開始出貨</li>
+          <li><strong style="color:#e8e8e8;">G9 PCIe Gen6 SSD</strong>：高量量產中（資料中心主力）</li>
+          <li><strong style="color:#e8e8e8;">Gen5 QLC PC SSD</strong>：G9 基礎，已完成主力客戶認證</li>
+          <li><strong style="color:#e8e8e8;">UFS 4.1 汽車 NAND</strong>：G9 基礎，首批量產出貨</li>
+        </ul>
+      </div>
+      <div class="tech-card hbm">
+        <h4>HBM (High Bandwidth Memory)</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">HBM3E 8-High</strong>：成熟量產</li>
+          <li><strong style="color:#e8e8e8;">HBM3E 12-High</strong>：主力出貨</li>
+          <li><strong style="color:#e8e8e8;">HBM4 12-High</strong>：基於 <strong style="color:#70c896;">1-beta</strong> DRAM；已出貨 $10億+；量產爬坡速度為 HBM3E 2倍；成熟良率達成速度亦將顯著快於 HBM3E</li>
+          <li><strong style="color:#e8e8e8;">HBM4E</strong>：基於 1-gamma，2027量產</li>
+          <li><strong style="color:#e8e8e8;">市場份額</strong>：策略上接近整體 DRAM 份額（~24%）</li>
+          <li><strong style="color:#e8e8e8;">目標市場</strong>：GPU / ASIC 訓練與推理</li>
+        </ul>
+      </div>
+      <div class="tech-card pkg">
+        <h4>Advanced Packaging &amp; Fab Footprint</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">台灣新竹</strong>：HBM TSV 封裝中心，2027年中出貨（提前一季）</li>
+          <li><strong style="color:#e8e8e8;">新加坡</strong>：第二 HBM 封裝中心（2027H1）</li>
+          <li><strong style="color:#e8e8e8;">愛達荷 ID.1</strong>：2027年中首批晶圓</li>
+          <li><strong style="color:#e8e8e8;">愛達荷 ID.2</strong>：2028年底</li>
+          <li><strong style="color:#e8e8e8;">紐約</strong>：2026年1月動工</li>
+          <li><strong style="color:#e8e8e8;">維吉尼亞</strong>：1-alpha DDR4 傳統製程（汽車/軍事）</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="card">
+      <div class="card-title">Long-Term Demand Scenarios: Auto × Humanoid Robots × Edge AI</div>
+      <p>
+        <strong style="color:#e8e8e8;">L2+ 自動駕駛</strong>：記憶體含量為一般車輛 5倍以上。L2+ 滲透率 2026年翻倍突破 20%，預計 2030 年超過 40%；1-gamma LPDDR5 已達汽車產品就緒，DDR5 樣品已交 robotaxi 客戶。<br><br>
+        <strong style="color:#e8e8e8;">人形機器人</strong>：搭載記憶體為 L2+ 車輛 10 倍。Sanjay 預言「本十年末開始的多十年記憶體需求週期」，視之為繼 AI 資料中心之後最大的長期結構性需求驅動力。<br><br>
+        <strong style="color:#e8e8e8;">Edge AI / Agentic AI</strong>：OpenClaw、NemoClaw 等 edge AI 平台推動 PC 與手機高端化，per-device 記憶體含量持續提升，即使全球出貨量下降，產業營收仍可成長——這正是 MCBU 毛利率能達到 87% 的結構性支撐。
+      </p>
+    </div>
+  </div>
+
+  <!-- Risk Panel -->
+  <div id="panel-risk" class="panel">
+    <div class="section-title">Risk Matrix: Disclosed vs. Undisclosed</div>
+
+    <div class="risk-item">
+      <div class="risk-badge high">High</div>
+      <div class="risk-text">
+        <div class="risk-title">Take-or-Pay Enforcement Opacity</div>
+        客戶押金必須返還，違約後的法律救濟手段未揭露。若記憶體市場反轉（如2023年），客戶重談判的歷史先例存在，合約的實際約束力存疑。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge high">High</div>
+      <div class="risk-text">
+        <div class="risk-title">Ceiling Price Fixed at Historic High</div>
+        If market prices keep rising, the ~25% of revenue under SCA cannot benefit. Micron traded away future upside for certainty — a tradeoff management never directly acknowledged.
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge high">High</div>
+      <div class="risk-text">
+        <div class="risk-title">Self-Fulfilling Supply Scarcity Narrative</div>
+        Micron is the largest beneficiary and also the largest capacity expander ($27B annual CapEx). The "supply doesn't improve until 2028" thesis carries strong management incentive bias — independent verification needed.
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">Med</div>
+      <div class="risk-text">
+        <div class="risk-title">HBM Share Strategy Opportunity Cost</div>
+        Voluntarily capping HBM share may forfeit the highest-growth segment in AI accelerators. If competitors (SK Hynix) expand HBM share, Micron's long-term position in the AI supply chain erodes.
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">Med</div>
+      <div class="risk-text">
+        <div class="risk-title">Customer Deposit Liquidity Illusion</div>
+        The $18B cash deposit is "unrestricted" but remains a liability (must be returned). Heavy return obligations in the back half of agreements, coinciding with CapEx ramp, could create liquidity pressure.
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">Med</div>
+      <div class="risk-text">
+        <div class="risk-title">Geopolitical Risk Excluded from Guidance</div>
+        Guidance explicitly excludes any trade or geopolitical impact. China is a major memory market — any escalation in export controls (e.g. HBM) would directly hit undisclosed portions of revenue.
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">Med</div>
+      <div class="risk-text">
+        <div class="risk-title">FY2027H2 Dual Pressure: Startup Costs + OpEx Spike</div>
+        Management guided: ① ID.1 (Idaho) + Hsinchu fab ramp mid-2027 with significant startup costs; ② FY27 OpEx up ~$1B weighted to 2H. Both converge in 2027H2. Even if supply/demand stays tight, 2027H2 gross margin may be a cyclical trough. A market misread as trend reversal rather than one-time pressure is a tail risk worth monitoring.
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge low">Low</div>
+      <div class="risk-text">
+        <div class="risk-title">CHIPS Act Capital Return Restriction (until Dec 9, 2026)</div>
+        Micron 的大規模股票回購計畫受 CHIPS Act 限制，需等到 2026 年 12 月 9 日（簽署 CHIPS 定義協議兩周年）後才能擴大。在此之前，超額現金累積速度雖快（FQ3 淨現金 $244億），但回流股東的規模受限。2026/12/9 後管理層明確目標長期回流 100% 超額現金，屆時可能是催化劑。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function sw(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function toggleQA(header) {
+  header.parentElement.classList.toggle('open');
+}
+</script>
+</body>
+</html>
