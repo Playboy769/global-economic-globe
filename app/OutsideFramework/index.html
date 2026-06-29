@@ -456,6 +456,26 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆</div>
         </div>
       </div>
+
+      <div class="wk-card reveal reveal-delay-1" onclick="openProject('high-price')">
+        <div class="wk-visual">
+          <div class="wk-gradient g2"></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="68" x2="12" y2="18" stroke-width="0.8" opacity="0.3"/>
+            <line x1="12" y1="68" x2="68" y2="68" stroke-width="0.8" opacity="0.3"/>
+            <polyline points="14,56 24,44 34,48 44,32 54,20 66,14" stroke-width="1.4" opacity="0.9"/>
+            <circle cx="66" cy="14" r="2.5" fill="#000" stroke="none" opacity="0.8"/>
+            <line x1="14" y1="60" x2="20" y2="60" stroke-width="0.7" opacity="0.3"/>
+            <line x1="14" y1="50" x2="20" y2="50" stroke-width="0.7" opacity="0.3"/>
+            <line x1="14" y1="40" x2="20" y2="40" stroke-width="0.7" opacity="0.3"/>
+            <line x1="14" y1="30" x2="20" y2="30" stroke-width="0.7" opacity="0.3"/>
+          </svg></div></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">Premium Stocks</div>
+          <div class="wk-type">高價股監控 &middot; 5/30日走勢 &middot; Beta &middot; 產業</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -530,6 +550,7 @@ const GLOBE_BASE  = (location.hostname === 'localhost' && location.port === '812
 const INVEST_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8126' : 'https://globe-invest.up.railway.app/invest';
 const CAUSAL_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8128' : 'https://globe-invest.up.railway.app/causal';
 const WARN_BASE   = 'https://globe-invest.up.railway.app/warning';
+const HP_BASE     = 'https://globe-invest.up.railway.app/high-price';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
@@ -538,6 +559,7 @@ function openProject(mode) {
   else if (mode === 'invest') frame.src = INVEST_BASE;
   else if (mode === 'causal') frame.src = CAUSAL_BASE;
   else if (mode === 'warning') frame.src = WARN_BASE;
+  else if (mode === 'high-price') frame.src = HP_BASE;
   else if (mode === 'mu-analysis') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html';
   else if (mode === 'mu-financials') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Financials.html';
   else frame.src = GLOBE_BASE + '?mode=' + mode;
