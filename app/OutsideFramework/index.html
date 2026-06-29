@@ -391,48 +391,25 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <div class="wk-type">Causal Logic &middot; Diagram</div>
         </div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" onclick="openProject('mu-analysis')">
+      <div class="wk-card reveal reveal-delay-1" onclick="openMU()">
         <div class="wk-visual">
           <div class="wk-gradient g8"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="24" y="24" width="32" height="32" rx="2"/>
-            <line x1="13" y1="33" x2="24" y2="33"/>
-            <line x1="13" y1="40" x2="24" y2="40"/>
-            <line x1="13" y1="47" x2="24" y2="47"/>
-            <line x1="56" y1="33" x2="67" y2="33"/>
-            <line x1="56" y1="40" x2="67" y2="40"/>
-            <line x1="56" y1="47" x2="67" y2="47"/>
-            <line x1="33" y1="13" x2="33" y2="24"/>
-            <line x1="40" y1="13" x2="40" y2="24"/>
-            <line x1="47" y1="13" x2="47" y2="24"/>
-            <line x1="33" y1="56" x2="33" y2="67"/>
-            <line x1="40" y1="56" x2="40" y2="67"/>
-            <line x1="47" y1="56" x2="47" y2="67"/>
-            <rect x="31" y="31" width="18" height="18" rx="1" opacity="0.2"/>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="24" y="24" width="32" height="32" rx="2" stroke-width="1.2"/>
+            <line x1="13" y1="33" x2="24" y2="33" stroke-width="1.2"/>
+            <line x1="13" y1="40" x2="24" y2="40" stroke-width="1.2"/>
+            <line x1="13" y1="47" x2="24" y2="47" stroke-width="1.2"/>
+            <line x1="56" y1="33" x2="67" y2="33" stroke-width="1.2"/>
+            <line x1="56" y1="40" x2="67" y2="40" stroke-width="1.2"/>
+            <line x1="56" y1="47" x2="67" y2="47" stroke-width="1.2"/>
+            <rect x="31" y="31" width="18" height="18" rx="1" opacity="0.18"/>
+            <path d="M31 51 L37 44 L43 47 L52 38" stroke-width="1.1" opacity="0.7"/>
+            <circle cx="52" cy="38" r="2.2" fill="#000" stroke="none" opacity="0.7"/>
           </svg></div></div>
         </div>
         <div class="wk-info">
-          <div class="wk-name">MU Q3 分析</div>
-          <div class="wk-type">法說會 &middot; SCA &middot; 風險矩陣</div>
-        </div>
-      </div>
-      <div class="wk-card reveal reveal-delay-2" onclick="openProject('mu-financials')">
-        <div class="wk-visual">
-          <div class="wk-gradient g9"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="12" y="15" width="56" height="9" rx="2" opacity="0.75"/>
-            <line x1="12" y1="33" x2="68" y2="33" opacity="0.3"/>
-            <line x1="12" y1="42" x2="68" y2="42" opacity="0.3"/>
-            <line x1="12" y1="51" x2="68" y2="51" opacity="0.3"/>
-            <line x1="12" y1="60" x2="68" y2="60" stroke-width="1.6"/>
-            <line x1="44" y1="24" x2="44" y2="60" opacity="0.2"/>
-            <path d="M18 57 L30 48 L44 52 L60 39" stroke-width="1.4" opacity="0.65"/>
-            <circle cx="60" cy="39" r="2.8" fill="#000" stroke="none" opacity="0.65"/>
-          </svg></div></div>
-        </div>
-        <div class="wk-info">
-          <div class="wk-name">MU Q3 財務</div>
-          <div class="wk-type">損益表 &middot; 現金流 &middot; 估值</div>
+          <div class="wk-name">MU Q3</div>
+          <div class="wk-type">法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div>
         </div>
       </div>
       <div class="wk-card reveal" onclick="openProject('warning')">
@@ -453,29 +430,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
         </div>
         <div class="wk-info">
           <div class="wk-name">Warning Radar</div>
-          <div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆</div>
+          <div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div>
         </div>
       </div>
 
-      <div class="wk-card reveal reveal-delay-1" onclick="openProject('high-price')">
-        <div class="wk-visual">
-          <div class="wk-gradient g2"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="68" x2="12" y2="18" stroke-width="0.8" opacity="0.3"/>
-            <line x1="12" y1="68" x2="68" y2="68" stroke-width="0.8" opacity="0.3"/>
-            <polyline points="14,56 24,44 34,48 44,32 54,20 66,14" stroke-width="1.4" opacity="0.9"/>
-            <circle cx="66" cy="14" r="2.5" fill="#000" stroke="none" opacity="0.8"/>
-            <line x1="14" y1="60" x2="20" y2="60" stroke-width="0.7" opacity="0.3"/>
-            <line x1="14" y1="50" x2="20" y2="50" stroke-width="0.7" opacity="0.3"/>
-            <line x1="14" y1="40" x2="20" y2="40" stroke-width="0.7" opacity="0.3"/>
-            <line x1="14" y1="30" x2="20" y2="30" stroke-width="0.7" opacity="0.3"/>
-          </svg></div></div>
-        </div>
-        <div class="wk-info">
-          <div class="wk-name">Premium Stocks</div>
-          <div class="wk-type">高價股監控 &middot; 5/30日走勢 &middot; Beta &middot; 產業</div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -524,6 +482,22 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <button id="overlay-close" onclick="closeProject()">
   <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
 </button>
+
+<!-- MU Q3 picker -->
+<div id="mu-picker" onclick="if(event.target===this)closeMUPicker()" style="display:none;opacity:0;transition:opacity .2s;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:4px;padding:36px 40px;min-width:320px;display:flex;flex-direction:column;gap:14px">
+    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">MU Q3 — 選擇頁面</div>
+    <button onclick="pickMU('mu-analysis')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
+      分析報告
+      <div style="font-size:11px;color:#aaa;margin-top:3px;font-weight:400">法說會重點 · SCA · 風險矩陣</div>
+    </button>
+    <button onclick="pickMU('mu-financials')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
+      財務報表
+      <div style="font-size:11px;color:#aaa;margin-top:3px;font-weight:400">損益表 · 現金流 · 估值</div>
+    </button>
+    <button onclick="closeMUPicker()" style="margin-top:4px;padding:8px;border:none;background:none;cursor:pointer;font-size:11px;color:#bbb;letter-spacing:.08em;text-transform:uppercase">取消</button>
+  </div>
+</div>
 
 <script>
 /* ── Home Clock ── */
@@ -578,7 +552,22 @@ function closeProject() {
   setTimeout(() => { overlay.style.display = 'none'; frame.src = 'about:blank'; }, 400);
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProject(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMUPicker(); closeProject(); } });
+
+// MU Q3 two-page picker
+function openMU() {
+  document.getElementById('mu-picker').style.display = 'flex';
+  requestAnimationFrame(() => document.getElementById('mu-picker').style.opacity = '1');
+}
+function closeMUPicker() {
+  const p = document.getElementById('mu-picker');
+  p.style.opacity = '0';
+  setTimeout(() => p.style.display = 'none', 200);
+}
+function pickMU(mode) {
+  closeMUPicker();
+  setTimeout(() => openProject(mode), 210);
+}
 
 const nav = document.getElementById('top-nav');
 const btns = document.querySelectorAll('.nav-btn');
