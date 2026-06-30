@@ -82,8 +82,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .works-count{font-family:'Orchid','Noto Serif TC',serif;font-size:14px;color:#bbb}
 .works-grid{display:flex;flex-direction:column;counter-reset:wk-idx}
 .wk-card{cursor:pointer;display:flex;align-items:center;gap:20px;padding:22px 0;border-bottom:1px solid #f0f0f0;border-radius:0;overflow:visible;position:relative;transition:transform .3s cubic-bezier(.4,0,.2,1)}
-.wk-card:first-child{border-top:1px solid #f0f0f0}
 .wk-card:hover{transform:translateX(5px);box-shadow:none}
+.wk-group-hd{display:flex;align-items:center;gap:9px;padding:28px 0 2px;border-top:1px solid #f0f0f0}
+.wk-group-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.wk-group-tag{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:#c0c0c0;font-family:'Calibri',sans-serif}
 .wk-card::before{counter-increment:wk-idx;content:'0' counter(wk-idx);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#ddd;letter-spacing:.06em;flex-shrink:0;width:22px;text-align:right}
 .wk-card::after{content:'→';font-size:13px;color:#ccc;flex-shrink:0;transition:transform .3s ease,color .2s}
 .wk-card:hover::after{transform:translateX(4px);color:#aaa}
@@ -269,169 +271,104 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <span class="works-count reveal">9 Projects</span>
     </div>
     <div class="works-grid">
-      <div class="wk-card reveal" onclick="openProject('econ')">
-        <div class="wk-visual">
-          <div class="wk-gradient g1"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="14" y="52" width="10" height="18" rx="2"/>
-            <rect x="28" y="38" width="10" height="32" rx="2"/>
-            <rect x="42" y="44" width="10" height="26" rx="2"/>
-            <rect x="56" y="24" width="10" height="46" rx="2"/>
-            <path d="M19 49 L33 34 L47 40 L61 20" stroke="#999" stroke-width="1"/>
-            <circle cx="61" cy="20" r="2.5" fill="#999" stroke="none"/>
-          </svg></div></div>
+
+      <!-- ── Finance & Markets ── -->
+      <div class="wk-group">
+        <div class="wk-group-hd">
+          <span class="wk-group-dot" style="background:#c49030"></span>
+          <span class="wk-group-tag">Finance &amp; Markets</span>
         </div>
-        <div class="wk-info">
-          <div class="wk-name">Economy</div>
-          <div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div>
+        <div class="wk-card reveal" onclick="openProject('econ')">
+          <div class="wk-visual"><div class="wk-gradient g1"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="14" y="52" width="10" height="18" rx="2"/><rect x="28" y="38" width="10" height="32" rx="2"/><rect x="42" y="44" width="10" height="26" rx="2"/><rect x="56" y="24" width="10" height="46" rx="2"/>
+            <path d="M19 49 L33 34 L47 40 L61 20" stroke="#999" stroke-width="1"/><circle cx="61" cy="20" r="2.5" fill="#999" stroke="none"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
         </div>
-      </div>
-      <div class="wk-card reveal reveal-delay-1" onclick="openProject('energy')">
-        <div class="wk-visual">
-          <div class="wk-gradient g2"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M46 8 L34 36 H44 L30 72"/>
-            <circle cx="40" cy="40" r="28" stroke-dasharray="3 5" opacity="0.4"/>
-            <path d="M50 36 L40 56" opacity="0.3"/>
-          </svg></div></div>
+        <div class="wk-card reveal reveal-delay-1" onclick="openProject('energy')">
+          <div class="wk-visual"><div class="wk-gradient g2"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M46 8 L34 36 H44 L30 72"/><circle cx="40" cy="40" r="28" stroke-dasharray="3 5" opacity="0.4"/><path d="M50 36 L40 56" opacity="0.3"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">Energy</div><div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div></div>
         </div>
-        <div class="wk-info">
-          <div class="wk-name">Energy</div>
-          <div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div>
-        </div>
-      </div>
-      <div class="wk-card reveal" onclick="openProject('https://structural-holes-production.up.railway.app/')">
-        <div class="wk-visual">
-          <div class="wk-gradient g4"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round">
-            <line x1="26" y1="26" x2="54" y2="36"/>
-            <line x1="26" y1="26" x2="34" y2="56"/>
-            <line x1="54" y1="36" x2="34" y2="56"/>
-            <line x1="54" y1="36" x2="62" y2="60"/>
-            <line x1="34" y1="56" x2="62" y2="60"/>
-            <line x1="26" y1="26" x2="42" y2="16"/>
-            <circle cx="26" cy="26" r="5" stroke-width="1.2"/>
-            <circle cx="54" cy="36" r="6" stroke-width="1.2"/>
-            <circle cx="34" cy="56" r="4.5" stroke-width="1.2"/>
-            <circle cx="62" cy="60" r="3.5" stroke-width="1.2"/>
-            <circle cx="42" cy="16" r="4" stroke-width="1.2"/>
-          </svg></div></div>
-        </div>
-        <div class="wk-info">
-          <div class="wk-name">Structural Holes</div>
-          <div class="wk-type">Network Analysis &middot; Graph Theory</div>
-        </div>
-      </div>
-      <div class="wk-card reveal reveal-delay-1" onclick="openProject('invest')">
-        <div class="wk-visual">
-          <div class="wk-gradient g5"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="16" y="20" width="48" height="34" rx="3" opacity="0.3"/>
-            <rect x="20" y="28" width="48" height="34" rx="3" opacity="0.5"/>
-            <rect x="24" y="36" width="48" height="34" rx="3"/>
+        <div class="wk-card reveal reveal-delay-2" onclick="openProject('invest')">
+          <div class="wk-visual"><div class="wk-gradient g5"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="16" y="20" width="48" height="34" rx="3" opacity="0.3"/><rect x="20" y="28" width="48" height="34" rx="3" opacity="0.5"/><rect x="24" y="36" width="48" height="34" rx="3"/>
             <text x="48" y="57" text-anchor="middle" font-family="'Orchid',serif" font-size="10" font-weight="400" fill="#bbb" stroke="none" letter-spacing="1">M / R / I</text>
-          </svg></div></div>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
         </div>
-        <div class="wk-info">
-          <div class="wk-name">InvestFrame</div>
-          <div class="wk-type">3-Layer Narrative &middot; Framework</div>
+        <div class="wk-card reveal" onclick="openMU()">
+          <div class="wk-visual"><div class="wk-gradient g8"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="24" y="24" width="32" height="32" rx="2" stroke-width="1.2"/><line x1="13" y1="33" x2="24" y2="33" stroke-width="1.2"/><line x1="13" y1="40" x2="24" y2="40" stroke-width="1.2"/><line x1="13" y1="47" x2="24" y2="47" stroke-width="1.2"/>
+            <line x1="56" y1="33" x2="67" y2="33" stroke-width="1.2"/><line x1="56" y1="40" x2="67" y2="40" stroke-width="1.2"/><line x1="56" y1="47" x2="67" y2="47" stroke-width="1.2"/>
+            <rect x="31" y="31" width="18" height="18" rx="1" opacity="0.18"/><path d="M31 51 L37 44 L43 47 L52 38" stroke-width="1.1" opacity="0.7"/><circle cx="52" cy="38" r="2.2" fill="#000" stroke="none" opacity="0.7"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">MU Q3</div><div class="wk-type">法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div></div>
         </div>
-      </div>
-      <div class="wk-card reveal reveal-delay-2" onclick="openProject('https://articlebase.up.railway.app/')">
-        <div class="wk-visual">
-          <div class="wk-gradient g6"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="18" y="14" width="30" height="40" rx="2"/>
-            <line x1="24" y1="22" x2="42" y2="22" opacity="0.5"/>
-            <line x1="24" y1="28" x2="42" y2="28" opacity="0.5"/>
-            <line x1="24" y1="34" x2="36" y2="34" opacity="0.5"/>
-            <rect x="32" y="30" width="30" height="40" rx="2" opacity="0.6"/>
-            <line x1="38" y1="38" x2="56" y2="38" opacity="0.4"/>
-            <line x1="38" y1="44" x2="56" y2="44" opacity="0.4"/>
-            <line x1="38" y1="50" x2="50" y2="50" opacity="0.4"/>
-            <circle cx="55" cy="62" r="8" stroke-width="1.5"/>
-            <path d="M60 67 L65 72" stroke-width="1.5"/>
-          </svg></div></div>
-        </div>
-        <div class="wk-info">
-          <div class="wk-name">Article Database</div>
-          <div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div>
-        </div>
-      </div>
-      <div class="wk-card reveal" onclick="openProject('causal')">
-        <div class="wk-visual">
-          <div class="wk-gradient g7"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-            <defs><marker id="cfk-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,2.5 L0,5 Z" fill="#000" stroke="none"/></marker></defs>
-            <rect x="11" y="15" width="23" height="15" rx="3"/>
-            <rect x="47" y="23" width="22" height="15" rx="3" opacity="0.5"/>
-            <rect x="28" y="50" width="23" height="15" rx="3" opacity="0.78"/>
-            <line x1="34" y1="22" x2="45.5" y2="29" marker-end="url(#cfk-arrow)"/>
-            <line x1="23" y1="30" x2="33.5" y2="49" marker-end="url(#cfk-arrow)"/>
-          </svg></div></div>
-        </div>
-        <div class="wk-info">
-          <div class="wk-name">CausalFrame</div>
-          <div class="wk-type">Causal Logic &middot; Diagram</div>
-        </div>
-      </div>
-      <div class="wk-card reveal reveal-delay-1" onclick="openMU()">
-        <div class="wk-visual">
-          <div class="wk-gradient g8"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="24" y="24" width="32" height="32" rx="2" stroke-width="1.2"/>
-            <line x1="13" y1="33" x2="24" y2="33" stroke-width="1.2"/>
-            <line x1="13" y1="40" x2="24" y2="40" stroke-width="1.2"/>
-            <line x1="13" y1="47" x2="24" y2="47" stroke-width="1.2"/>
-            <line x1="56" y1="33" x2="67" y2="33" stroke-width="1.2"/>
-            <line x1="56" y1="40" x2="67" y2="40" stroke-width="1.2"/>
-            <line x1="56" y1="47" x2="67" y2="47" stroke-width="1.2"/>
-            <rect x="31" y="31" width="18" height="18" rx="1" opacity="0.18"/>
-            <path d="M31 51 L37 44 L43 47 L52 38" stroke-width="1.1" opacity="0.7"/>
-            <circle cx="52" cy="38" r="2.2" fill="#000" stroke="none" opacity="0.7"/>
-          </svg></div></div>
-        </div>
-        <div class="wk-info">
-          <div class="wk-name">MU Q3</div>
-          <div class="wk-type">法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div>
-        </div>
-      </div>
-      <div class="wk-card reveal" onclick="openProject('warning')">
-        <div class="wk-visual">
-          <div class="wk-gradient g10"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="40" cy="40" r="24" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.35"/>
-            <circle cx="40" cy="40" r="14" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.55"/>
-            <line x1="40" y1="16" x2="40" y2="26" stroke-width="1" opacity="0.5"/>
-            <line x1="64" y1="40" x2="54" y2="40" stroke-width="1" opacity="0.5"/>
-            <line x1="40" y1="64" x2="40" y2="54" stroke-width="1" opacity="0.5"/>
-            <line x1="16" y1="40" x2="26" y2="40" stroke-width="1" opacity="0.5"/>
-            <path d="M40 40 L58 22" stroke-width="1.1" opacity="0.7"/>
-            <circle cx="58" cy="22" r="3" stroke-width="1.3" fill="none"/>
-            <circle cx="40" cy="40" r="2.2" fill="#000" stroke="none" opacity="0.75"/>
+        <div class="wk-card reveal reveal-delay-1" onclick="openProject('warning')">
+          <div class="wk-visual"><div class="wk-gradient g10"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="40" cy="40" r="24" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.35"/><circle cx="40" cy="40" r="14" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.55"/>
+            <line x1="40" y1="16" x2="40" y2="26" stroke-width="1" opacity="0.5"/><line x1="64" y1="40" x2="54" y2="40" stroke-width="1" opacity="0.5"/><line x1="40" y1="64" x2="40" y2="54" stroke-width="1" opacity="0.5"/><line x1="16" y1="40" x2="26" y2="40" stroke-width="1" opacity="0.5"/>
+            <path d="M40 40 L58 22" stroke-width="1.1" opacity="0.7"/><circle cx="58" cy="22" r="3" stroke-width="1.3" fill="none"/><circle cx="40" cy="40" r="2.2" fill="#000" stroke="none" opacity="0.75"/>
             <path d="M14 62 L22 56 L30 60 L40 51 L50 57 L60 48 L66 52" stroke-width="1.1" opacity="0.45"/>
-          </svg></div></div>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
         </div>
-        <div class="wk-info">
-          <div class="wk-name">TWII INFOR</div>
-          <div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div>
+        <div class="wk-card reveal reveal-delay-2" onclick="openProject('options')">
+          <div class="wk-visual"><div class="wk-gradient g11"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="56" x2="68" y2="56" stroke-width="0.8" opacity="0.4"/><line x1="12" y1="14" x2="12" y2="66" stroke-width="0.8" opacity="0.4"/>
+            <polyline points="12,56 28,56 40,28 52,56 68,56" stroke-width="1.4" stroke="#000" opacity="0.85"/><polyline points="12,56 30,56 44,38 68,22" stroke-width="1.1" stroke="#000" opacity="0.4"/>
+            <circle cx="40" cy="28" r="3" fill="#000" stroke="none" opacity="0.7"/><text x="36" y="12" font-family="serif" font-size="9" fill="#000" stroke="none" opacity="0.55" letter-spacing="1">Δ Γ Θ V</text>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
         </div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" onclick="openProject('options')">
-        <div class="wk-visual">
-          <div class="wk-gradient g11"></div>
-          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="56" x2="68" y2="56" stroke-width="0.8" opacity="0.4"/>
-            <line x1="12" y1="14" x2="12" y2="66" stroke-width="0.8" opacity="0.4"/>
-            <polyline points="12,56 28,56 40,28 52,56 68,56" stroke-width="1.4" stroke="#000" opacity="0.85"/>
-            <polyline points="12,56 30,56 44,38 68,22" stroke-width="1.1" stroke="#000" opacity="0.4"/>
-            <circle cx="40" cy="28" r="3" fill="#000" stroke="none" opacity="0.7"/>
-            <text x="36" y="12" font-family="serif" font-size="9" fill="#000" stroke="none" opacity="0.55" letter-spacing="1">Δ Γ Θ V</text>
-          </svg></div></div>
+
+      <!-- ── Network Analysis ── -->
+      <div class="wk-group">
+        <div class="wk-group-hd">
+          <span class="wk-group-dot" style="background:#5080a8"></span>
+          <span class="wk-group-tag">Network Analysis</span>
         </div>
-        <div class="wk-info">
-          <div class="wk-name">Options Guide</div>
-          <div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div>
+        <div class="wk-card reveal" onclick="openProject('https://structural-holes-production.up.railway.app/')">
+          <div class="wk-visual"><div class="wk-gradient g4"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round">
+            <line x1="26" y1="26" x2="54" y2="36"/><line x1="26" y1="26" x2="34" y2="56"/><line x1="54" y1="36" x2="34" y2="56"/><line x1="54" y1="36" x2="62" y2="60"/><line x1="34" y1="56" x2="62" y2="60"/><line x1="26" y1="26" x2="42" y2="16"/>
+            <circle cx="26" cy="26" r="5" stroke-width="1.2"/><circle cx="54" cy="36" r="6" stroke-width="1.2"/><circle cx="34" cy="56" r="4.5" stroke-width="1.2"/><circle cx="62" cy="60" r="3.5" stroke-width="1.2"/><circle cx="42" cy="16" r="4" stroke-width="1.2"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">Structural Holes</div><div class="wk-type">Network Analysis &middot; Graph Theory</div></div>
+        </div>
+      </div>
+
+      <!-- ── Causal Logic ── -->
+      <div class="wk-group">
+        <div class="wk-group-hd">
+          <span class="wk-group-dot" style="background:#9060c0"></span>
+          <span class="wk-group-tag">Causal Logic</span>
+        </div>
+        <div class="wk-card reveal" onclick="openProject('causal')">
+          <div class="wk-visual"><div class="wk-gradient g7"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <defs><marker id="cfk-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,2.5 L0,5 Z" fill="#000" stroke="none"/></marker></defs>
+            <rect x="11" y="15" width="23" height="15" rx="3"/><rect x="47" y="23" width="22" height="15" rx="3" opacity="0.5"/><rect x="28" y="50" width="23" height="15" rx="3" opacity="0.78"/>
+            <line x1="34" y1="22" x2="45.5" y2="29" marker-end="url(#cfk-arrow)"/><line x1="23" y1="30" x2="33.5" y2="49" marker-end="url(#cfk-arrow)"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">CausalFrame</div><div class="wk-type">Causal Logic &middot; Diagram</div></div>
+        </div>
+      </div>
+
+      <!-- ── Knowledge ── -->
+      <div class="wk-group">
+        <div class="wk-group-hd">
+          <span class="wk-group-dot" style="background:#508060"></span>
+          <span class="wk-group-tag">Knowledge</span>
+        </div>
+        <div class="wk-card reveal" onclick="openProject('https://articlebase.up.railway.app/')">
+          <div class="wk-visual"><div class="wk-gradient g6"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="18" y="14" width="30" height="40" rx="2"/><line x1="24" y1="22" x2="42" y2="22" opacity="0.5"/><line x1="24" y1="28" x2="42" y2="28" opacity="0.5"/><line x1="24" y1="34" x2="36" y2="34" opacity="0.5"/>
+            <rect x="32" y="30" width="30" height="40" rx="2" opacity="0.6"/><line x1="38" y1="38" x2="56" y2="38" opacity="0.4"/><line x1="38" y1="44" x2="56" y2="44" opacity="0.4"/><line x1="38" y1="50" x2="50" y2="50" opacity="0.4"/>
+            <circle cx="55" cy="62" r="8" stroke-width="1.5"/><path d="M60 67 L65 72" stroke-width="1.5"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">Article Database</div><div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div></div>
         </div>
       </div>
 
