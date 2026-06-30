@@ -433,6 +433,24 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div>
         </div>
       </div>
+      <div class="wk-card reveal reveal-delay-1" onclick="openProject('globe')">
+        <div class="wk-visual">
+          <div class="wk-gradient g9"></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="40" cy="40" r="23" stroke-width="1.2"/>
+            <ellipse cx="40" cy="40" rx="23" ry="8" stroke-width="0.9" opacity="0.6"/>
+            <ellipse cx="40" cy="40" rx="11" ry="23" stroke-width="0.8" opacity="0.5"/>
+            <line x1="17" y1="40" x2="63" y2="40" stroke-width="0.7" opacity="0.4"/>
+            <line x1="40" y1="17" x2="40" y2="63" stroke-width="0.7" opacity="0.4"/>
+            <ellipse cx="40" cy="28" rx="17" ry="4.5" stroke-width="0.7" opacity="0.35"/>
+            <ellipse cx="40" cy="52" rx="17" ry="4.5" stroke-width="0.7" opacity="0.35"/>
+          </svg></div></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">Globe Invest</div>
+          <div class="wk-type">3D Globe &middot; Economy &middot; Energy &middot; News</div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -534,6 +552,7 @@ function openProject(mode) {
   else if (mode === 'causal') frame.src = CAUSAL_BASE;
   else if (mode === 'warning') frame.src = WARN_BASE;
   else if (mode === 'high-price') frame.src = HP_BASE;
+  else if (mode === 'globe') frame.src = GLOBE_BASE;
   else if (mode === 'mu-analysis') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html';
   else if (mode === 'mu-financials') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Financials.html';
   else frame.src = GLOBE_BASE + '?mode=' + mode;
