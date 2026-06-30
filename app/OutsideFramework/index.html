@@ -266,7 +266,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="container">
     <div class="works-head">
       <h2 class="sec-heading reveal">Selected works</h2>
-      <span class="works-count reveal">10 Projects</span>
+      <span class="works-count reveal">11 Projects</span>
     </div>
     <div class="works-grid">
       <div class="wk-card reveal" onclick="openProject('econ')">
@@ -451,6 +451,23 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <div class="wk-type">3D Globe &middot; Economy &middot; Energy &middot; News</div>
         </div>
       </div>
+      <div class="wk-card reveal reveal-delay-2" onclick="openProject('options')">
+        <div class="wk-visual">
+          <div class="wk-gradient g11"></div>
+          <div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="56" x2="68" y2="56" stroke-width="0.8" opacity="0.4"/>
+            <line x1="12" y1="14" x2="12" y2="66" stroke-width="0.8" opacity="0.4"/>
+            <polyline points="12,56 28,56 40,28 52,56 68,56" stroke-width="1.4" stroke="#000" opacity="0.85"/>
+            <polyline points="12,56 30,56 44,38 68,22" stroke-width="1.1" stroke="#000" opacity="0.4"/>
+            <circle cx="40" cy="28" r="3" fill="#000" stroke="none" opacity="0.7"/>
+            <text x="36" y="12" font-family="serif" font-size="9" fill="#000" stroke="none" opacity="0.55" letter-spacing="1">Δ Γ Θ V</text>
+          </svg></div></div>
+        </div>
+        <div class="wk-info">
+          <div class="wk-name">Options Guide</div>
+          <div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -541,8 +558,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 const GLOBE_BASE  = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8124' : 'https://globe-invest.up.railway.app/globe';
 const INVEST_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8126' : 'https://globe-invest.up.railway.app/invest';
 const CAUSAL_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8128' : 'https://globe-invest.up.railway.app/causal';
-const WARN_BASE   = 'https://globe-invest.up.railway.app/warning';
-const HP_BASE     = 'https://globe-invest.up.railway.app/high-price';
+const WARN_BASE    = 'https://globe-invest.up.railway.app/warning';
+const HP_BASE      = 'https://globe-invest.up.railway.app/high-price';
+const OPTIONS_BASE = 'https://globe-invest.up.railway.app/options';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
@@ -553,6 +571,7 @@ function openProject(mode) {
   else if (mode === 'warning') frame.src = WARN_BASE;
   else if (mode === 'high-price') frame.src = HP_BASE;
   else if (mode === 'globe') frame.src = GLOBE_BASE;
+  else if (mode === 'options') frame.src = OPTIONS_BASE;
   else if (mode === 'mu-analysis') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html';
   else if (mode === 'mu-financials') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Financials.html';
   else frame.src = GLOBE_BASE + '?mode=' + mode;
