@@ -272,7 +272,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="container">
     <div class="works-head">
       <h2 class="sec-heading reveal">Selected works</h2>
-      <span class="works-count reveal">9 Projects</span>
+      <span class="works-count reveal">10 Projects</span>
     </div>
     <div class="works-grid">
 
@@ -326,6 +326,14 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
             <circle cx="40" cy="28" r="3" fill="#000" stroke="none" opacity="0.7"/><text x="36" y="12" font-family="serif" font-size="9" fill="#000" stroke="none" opacity="0.55" letter-spacing="1">Δ Γ Θ V</text>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
+        </div>
+        <div class="wk-card reveal" onclick="openProject('brownian')">
+          <div class="wk-visual"><div class="wk-gradient g12"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 46 C18 20, 26 62, 34 34 C40 12, 48 52, 56 28 C62 12, 66 24, 70 18" opacity="0.85"/>
+            <line x1="10" y1="46" x2="70" y2="46" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.3"/>
+            <circle cx="70" cy="18" r="2.6" fill="#000" stroke="none"/>
+          </svg></div></div></div>
+          <div class="wk-info"><div class="wk-name">Brownian Motion</div><div class="wk-type">Random Walk &middot; Monte Carlo &middot; Simulation</div></div>
         </div>
       </div>
 
@@ -468,6 +476,7 @@ const CAUSAL_BASE = (location.hostname === 'localhost' && location.port === '812
 const WARN_BASE    = 'https://globe-invest.up.railway.app/warning';
 const HP_BASE      = 'https://globe-invest.up.railway.app/high-price';
 const OPTIONS_BASE = 'https://globe-invest.up.railway.app/options';
+const BROWNIAN_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8132' : 'https://globe-invest.up.railway.app/brownian';
 
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
@@ -479,6 +488,7 @@ function openProject(mode) {
   else if (mode === 'high-price') frame.src = HP_BASE;
   else if (mode === 'globe') frame.src = GLOBE_BASE;
   else if (mode === 'options') frame.src = OPTIONS_BASE;
+  else if (mode === 'brownian') frame.src = BROWNIAN_BASE;
   else if (mode === 'mu-analysis') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html';
   else if (mode === 'mu-financials') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Financials.html';
   else frame.src = GLOBE_BASE + '?mode=' + mode;
