@@ -2383,21 +2383,24 @@ body.dark .fud-inner { background: #1a1a1a; }
 .sort-select:hover { color: var(--sidebar-text); }
 
 /* ── 進階篩選列 ──────────────────────────────────────────────── */
-.filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
-  padding: 0 14px 8px; }
-.filter-chip { font-size: 10.5px; padding: 2px 9px; border-radius: 11px; cursor: pointer;
+.filter-bar { display: flex; flex-direction: column; gap: 7px;
+  padding: 2px 14px 12px; }
+.filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.filter-row-chips { row-gap: 6px; }
+.filter-row-date { gap: 6px; }
+.filter-chip { font-size: 10.5px; padding: 3px 10px; border-radius: 11px; cursor: pointer;
   background: transparent; border: 1px solid var(--border-dark); color: var(--sidebar-muted);
   font-family: inherit; line-height: 1.6; transition: all 0.12s; }
 .filter-chip:hover { border-color: var(--accent-dim); color: var(--sidebar-text); }
 .filter-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .filter-date { font-size: 10px; color: var(--sidebar-muted); background: transparent;
-  border: 1px solid var(--border-dark); border-radius: 6px; padding: 1px 4px;
-  font-family: inherit; outline: none; max-width: 116px; }
+  border: 1px solid var(--border-dark); border-radius: 6px; padding: 2px 5px;
+  font-family: inherit; outline: none; width: 122px; flex: 1; min-width: 0; }
 .filter-date:focus { border-color: var(--accent-dim); }
-.filter-date-sep { font-size: 10px; color: var(--text-faint); }
+.filter-date-sep { font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
 .filter-clear { font-size: 10.5px; padding: 2px 8px; border-radius: 11px; cursor: pointer;
   background: transparent; border: none; color: var(--text-faint); font-family: inherit;
-  margin-left: auto; display: none; }
+  margin-left: auto; display: none; flex-shrink: 0; }
 .filter-clear:hover { color: var(--danger); }
 .filter-clear.show { display: inline-block; }
 body.dark .filter-chip.on { color: #16140f; }
@@ -2667,14 +2670,18 @@ input:-webkit-autofill:focus {
       <span class="count-chip" id="count-chip">0</span>
     </div>
     <div class="filter-bar" id="article-filter-bar">
-      <button class="filter-chip" data-f="star" onclick="toggleFilter('star')">收藏</button>
-      <button class="filter-chip" data-f="loved" onclick="toggleFilter('loved')">喜歡</button>
-      <button class="filter-chip" data-f="notes" onclick="toggleFilter('notes')">有筆記</button>
-      <button class="filter-chip" data-f="cld" onclick="toggleFilter('cld')">因果圖</button>
-      <input type="date" class="filter-date" id="filter-from" onchange="renderList()" title="起始日期（含）">
-      <span class="filter-date-sep">–</span>
-      <input type="date" class="filter-date" id="filter-to" onchange="renderList()" title="結束日期（含）">
-      <button class="filter-clear" id="filter-clear" onclick="clearFilters()" title="清除所有篩選">清除</button>
+      <div class="filter-row filter-row-chips">
+        <button class="filter-chip" data-f="star" onclick="toggleFilter('star')">收藏</button>
+        <button class="filter-chip" data-f="loved" onclick="toggleFilter('loved')">喜歡</button>
+        <button class="filter-chip" data-f="notes" onclick="toggleFilter('notes')">有筆記</button>
+        <button class="filter-chip" data-f="cld" onclick="toggleFilter('cld')">因果圖</button>
+      </div>
+      <div class="filter-row filter-row-date">
+        <input type="date" class="filter-date" id="filter-from" onchange="renderList()" title="起始日期（含）">
+        <span class="filter-date-sep">–</span>
+        <input type="date" class="filter-date" id="filter-to" onchange="renderList()" title="結束日期（含）">
+        <button class="filter-clear" id="filter-clear" onclick="clearFilters()" title="清除所有篩選">清除</button>
+      </div>
     </div>
     <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
       <div id="article-list" style="flex:1;overflow-y:auto;padding:0 8px 8px;"></div>
@@ -2710,14 +2717,18 @@ input:-webkit-autofill:focus {
       <button class="wl-open-btn" onclick="openWatchlist()" title="觀察清單與評等追蹤">觀察清單<span class="wl-open-count" id="wl-open-count"></span></button>
     </div>
     <div class="filter-bar" id="report-filter-bar">
-      <button class="filter-chip" data-rf="star" onclick="toggleReportFilter('star')">收藏</button>
-      <button class="filter-chip" data-rf="loved" onclick="toggleReportFilter('loved')">喜歡</button>
-      <button class="filter-chip" data-rf="notes" onclick="toggleReportFilter('notes')">有筆記</button>
-      <button class="filter-chip" data-rf="cld" onclick="toggleReportFilter('cld')">因果圖</button>
-      <input type="date" class="filter-date" id="report-filter-from" onchange="renderReportList()" title="起始日期（含）">
-      <span class="filter-date-sep">–</span>
-      <input type="date" class="filter-date" id="report-filter-to" onchange="renderReportList()" title="結束日期（含）">
-      <button class="filter-clear" id="report-filter-clear" onclick="clearReportFilters()" title="清除所有篩選">清除</button>
+      <div class="filter-row filter-row-chips">
+        <button class="filter-chip" data-rf="star" onclick="toggleReportFilter('star')">收藏</button>
+        <button class="filter-chip" data-rf="loved" onclick="toggleReportFilter('loved')">喜歡</button>
+        <button class="filter-chip" data-rf="notes" onclick="toggleReportFilter('notes')">有筆記</button>
+        <button class="filter-chip" data-rf="cld" onclick="toggleReportFilter('cld')">因果圖</button>
+      </div>
+      <div class="filter-row filter-row-date">
+        <input type="date" class="filter-date" id="report-filter-from" onchange="renderReportList()" title="起始日期（含）">
+        <span class="filter-date-sep">–</span>
+        <input type="date" class="filter-date" id="report-filter-to" onchange="renderReportList()" title="結束日期（含）">
+        <button class="filter-clear" id="report-filter-clear" onclick="clearReportFilters()" title="清除所有篩選">清除</button>
+      </div>
     </div>
     <div id="report-list" style="flex:1;overflow-y:auto;padding:0 8px 16px;"></div>
   </div>
