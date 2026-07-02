@@ -106,10 +106,11 @@ RSS feeds via `rss2json.com` converter (fallback: `allorigins`, `corsproxy`):
 ## Energy Mode
 
 ### Oil Price Widget
-- Yahoo Finance API via CORS proxies
-- Symbols: CL=F (WTI), BZ=F (Brent), NG=F (Henry Hub), TTF=F, RB=F (RBOB), HO=F
+- Fetched server-side by `globe-invest/server.js` (`/api/oil-prices`, 5-min cache) — frontend has no direct Yahoo/CORS-proxy calls
+- Symbols: CL=F (WTI), BZ=F (Brent), NG=F (Henry Hub), TTF=F (EU Gas), RB=F (RBOB), HO=F (Heating Oil)
 - Timestamps: **local time** (user is in UTC+8 Taiwan)
-- Market closed detection: `regularMarketTime` age + `currentTradingPeriod` — show "Market Closed" and freeze at closing price, no Brownian motion simulation
+- Market closed detection: server computes `closed` per symbol from `regularMarketTime` age + `currentTradingPeriod` (see `computeMarketClosed` in `server.js`); frontend shows a "Market Closed" badge and stops implying a live tick — no Brownian motion simulation
+- Local static preview (`python http.server` on port 8124) has no backend, so `/api/oil-prices` 404s — this is expected outside the `globe-invest` deployment; verify UI changes by mocking `window.fetch` via `preview_eval`
 
 ### Energy Routes
 - CatmullRom curves for smooth arcs
