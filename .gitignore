@@ -1,0 +1,13 @@
+# Local-machine Claude Code settings — not meant to be shared/committed
+.claude/settings.local.json
+
+# Python build artifacts
+__pycache__/
+*.pyc
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Nested git repos (globe-invest/, my-slide/, structural_holes/) manage their own
+# .gitignore — do not duplicate their rules here.

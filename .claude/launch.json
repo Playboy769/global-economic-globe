@@ -38,5 +38,23 @@
       "port": 8129,
       "cwd": "structural_holes"
     }
+    ,{
+      "name": "warning-radar",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8130", "--directory", "projects/market-warning-radar"],
+      "port": 8130
+    },
+    {
+      "name": "food-calorie-lookup",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8131", "--directory", "projects/food-calorie-lookup"],
+      "port": 8131
+    },
+    {
+      "name": "brownian-motion-simulator",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8132", "--directory", "projects/brownian-motion-simulator"],
+      "port": 8132
+    }
   ]
 }
