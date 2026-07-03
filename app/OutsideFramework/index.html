@@ -47,20 +47,18 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #page-home{min-height:100vh;display:grid;grid-template-rows:1fr auto;position:relative;overflow:hidden}
 .home-center{display:flex;align-items:center;justify-content:flex-start;gap:min(64px,6vw);flex:1;min-height:100vh;padding-left:48px;padding-right:min(760px,58vw)}
 .home-center-text{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:400;color:#ccc;letter-spacing:.2em;text-transform:uppercase}
-.home-diagram-stack{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
-.home-illustration{width:min(220px,32vw);opacity:0;animation:fadeInIllus 1.2s ease 0.4s forwards}
-.home-tag{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;font-weight:400;color:var(--c-accent);letter-spacing:.14em;text-transform:uppercase}
-.home-clock{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:#bbb;letter-spacing:.06em;line-height:1.6;font-variant-numeric:tabular-nums;white-space:pre;text-align:left}
-@keyframes fadeInIllus{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.home-photo-strip{position:absolute;top:50%;right:0;width:min(760px,58vw);height:min(620px,78vh);overflow:hidden;opacity:0;animation:fadeInStrip 1.2s ease .6s forwards}
-@keyframes fadeInStrip{from{opacity:0;transform:translateY(-50%) translateY(12px)}to{opacity:1;transform:translateY(-50%) translateY(0)}}
-.home-photo-strip-track{position:absolute;top:0;left:0;display:flex;align-items:flex-start;height:100%;animation:stripFlow 96s linear infinite;will-change:transform}
+.home-diagram-stack{display:flex;flex-direction:column;align-items:flex-start;gap:28px}
+.home-meta{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.home-clock{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:var(--c-accent);letter-spacing:.06em;line-height:1.6;font-variant-numeric:tabular-nums;white-space:pre;text-align:left}
+.home-photo-strip{position:absolute;top:50%;right:min(32px,3vw);width:min(1040px,74vw);height:min(620px,78vh);overflow:hidden;opacity:0;-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 26%);mask-image:linear-gradient(to right,transparent 0%,#000 26%);animation:fadeInStrip 1.6s cubic-bezier(.16,1,.3,1) .6s forwards}
+@keyframes fadeInStrip{from{opacity:0;transform:translateY(-50%) translateY(8px) scale(.98)}to{opacity:1;transform:translateY(-50%) translateY(0) scale(1)}}
+.home-photo-strip-track{position:absolute;top:0;left:0;display:flex;align-items:center;height:100%;animation:stripFlow 96s linear 1.8s infinite backwards;will-change:transform}
 .hps-tile{position:relative;flex:0 0 120px;height:66%;margin-right:6px;overflow:hidden}
 .hps-tile img{width:100%;height:100%;object-fit:cover;display:block}
-.hps-tile.off-a{margin-top:0}
-.hps-tile.off-b{margin-top:90px}
-.hps-tile.off-c{margin-top:150px}
-.hps-tile.off-d{margin-top:50px}
+.hps-tile.off-a{transform:translateY(-70px)}
+.hps-tile.off-b{transform:translateY(20px)}
+.hps-tile.off-c{transform:translateY(70px)}
+.hps-tile.off-d{transform:translateY(-20px)}
 @keyframes stripFlow{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 @media(max-width:900px){.home-photo-strip{display:none}.home-center{padding-right:0}}
 .home-footer{position:fixed;bottom:0;left:0;right:0;padding:28px 48px;display:flex;align-items:flex-end;justify-content:space-between;z-index:50}
@@ -186,43 +184,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <div class="page active" id="page-home">
   <div class="home-center">
     <div class="home-diagram-stack">
-      <div class="home-tag">@TPE</div>
-      <div class="home-clock" id="home-clock"></div>
-      <svg class="home-illustration" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
-          <polygon points="0,0.5 5,3 0,5.5" fill="#2a2a2a"/>
-        </marker>
-        <marker id="arr-accent" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
-          <polygon points="0,0.5 5,3 0,5.5" fill="#d1591f"/>
-        </marker>
-      </defs>
-      <!-- Framework grid -->
-      <rect x="170" y="90" width="220" height="200" stroke="#d0d0d0" stroke-width="1" fill="none"/>
-      <line x1="170" y1="156" x2="390" y2="156" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
-      <line x1="170" y1="224" x2="390" y2="224" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
-      <line x1="243" y1="90" x2="243" y2="290" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
-      <line x1="317" y1="90" x2="317" y2="290" stroke="#d8d8d8" stroke-width="0.6" stroke-dasharray="4 6"/>
-      <!-- Corner ticks -->
-      <line x1="160" y1="90" x2="170" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="170" y1="80" x2="170" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="390" y1="80" x2="390" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="390" y1="90" x2="400" y2="90" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="160" y1="290" x2="170" y2="290" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="170" y1="290" x2="170" y2="300" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="390" y1="290" x2="400" y2="290" stroke="#b0b0b0" stroke-width="1.2"/>
-      <line x1="390" y1="290" x2="390" y2="300" stroke="#b0b0b0" stroke-width="1.2"/>
-      <!-- 4 curves from interior, solid arrow tips -->
-      <path d="M243,156 C243,110 310,50 490,22"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
-      <path d="M317,156 C400,152 480,150 555,148"  stroke="#d1591f" stroke-width="1.1" fill="none" marker-end="url(#arr-accent)"/>
-      <path d="M317,224 C310,270 240,320 30,358"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
-      <path d="M243,224 C195,215 110,185 20,108"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
-      <!-- Interior origin dots -->
-      <circle cx="243" cy="156" r="2.2" fill="#2a2a2a"/>
-      <circle cx="317" cy="156" r="2.2" fill="#d1591f"/>
-      <circle cx="317" cy="224" r="2.2" fill="#2a2a2a"/>
-      <circle cx="243" cy="224" r="2.2" fill="#2a2a2a"/>
-    </svg>
+      <div class="home-meta">
+        <div class="home-clock" id="home-clock"></div>
+      </div>
     </div>
     <div class="home-photo-strip">
       <div class="home-photo-strip-track">
@@ -510,11 +474,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     const D=String(n.getDate()).padStart(2,'0');
     const h=String(n.getHours()).padStart(2,'0');
     const m=String(n.getMinutes()).padStart(2,'0');
-    const s=String(n.getSeconds()).padStart(2,'0');
-    const t=Math.floor(n.getMilliseconds()/100);
-    el.textContent=Y+'.'+M+'.'+D+'\n'+h+':'+m+':'+s+'.'+t;
+    el.textContent=Y+'.'+M+'.'+D+'\n'+h+':'+m;
   }
-  tick();setInterval(tick,100);
+  tick();setInterval(tick,1000);
 })();
 
 // Dev (python server on :8125) loads the globe from its own server on :8124.
