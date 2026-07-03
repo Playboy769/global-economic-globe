@@ -8,26 +8,27 @@
 <link href="https://fonts.cdnfonts.com/css/orchid" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+:root{--c-canvas:#fff;--c-ink:#0a0a0a;--c-accent:#d1591f;--c-accent-deep:#a94515;--c-accent-soft:rgba(209,89,31,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{background:#fff;color:#0a0a0a;font-family:'Orchid','Noto Serif TC','NSimSun',serif;font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-::selection{background:#0a0a0a;color:#fff}
+body{background:var(--c-canvas);color:var(--c-ink);font-family:'Orchid','Noto Serif TC','NSimSun',serif;font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--c-accent);color:#fff}
 ::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:#fff}
+::-webkit-scrollbar-track{background:var(--c-canvas)}
 ::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:#bbb}
+::-webkit-scrollbar-thumb:hover{background:var(--c-accent)}
 a{text-decoration:none;color:inherit}
 
 /* ── Top Nav ── */
-#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-end;padding:32px 48px;background:transparent;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-start;padding:32px 48px;background:transparent;transition:transform .5s cubic-bezier(.4,0,.2,1)}
 body.not-home #top-nav{justify-content:space-between}
 #top-nav.hidden{transform:translateY(-100%)}
 .nav-logo{font-family:'Orchid','Noto Serif TC',serif;font-size:15px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#0a0a0a;cursor:pointer;display:none}
 body.not-home .nav-logo{display:block}
-body.not-home .home-name{display:none}
 .nav-links{display:flex;align-items:center;gap:36px}
-.nav-btn{font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.1em;text-transform:uppercase;transition:color .25s ease;font-family:'Orchid','Noto Serif TC',serif;padding:0}
-.nav-btn.active{color:#0a0a0a}
+.nav-btn{position:relative;font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.1em;text-transform:uppercase;transition:color .25s ease;font-family:'Orchid','Noto Serif TC',serif;padding:0 0 10px}
+.nav-btn.active{color:var(--c-ink)}
+.nav-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c-accent);border-radius:2px}
 .nav-btn:hover:not(.active){color:#555}
 
 /* ── Pages ── */
@@ -44,19 +45,29 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 /* ── HOME ── */
 #page-home{min-height:100vh;display:grid;grid-template-rows:1fr auto;position:relative;overflow:hidden}
-.home-name{position:fixed;top:0;left:0;right:0;z-index:101;cursor:pointer;display:flex;align-items:center;padding:32px 48px;height:auto;pointer-events:none}
-.home-name *{pointer-events:auto}
-.home-name-text{font-family:'Orchid','Noto Serif TC',serif;font-size:22px;font-weight:300;letter-spacing:.22em;text-transform:uppercase;color:#0a0a0a;line-height:1}
-.home-center{display:flex;align-items:center;justify-content:center;flex:1;min-height:100vh}
+.home-center{display:flex;align-items:center;justify-content:flex-start;gap:min(64px,6vw);flex:1;min-height:100vh;padding-left:48px;padding-right:min(760px,58vw)}
 .home-center-text{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:400;color:#ccc;letter-spacing:.2em;text-transform:uppercase}
+.home-diagram-stack{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 .home-illustration{width:min(220px,32vw);opacity:0;animation:fadeInIllus 1.2s ease 0.4s forwards}
-.home-clock{position:absolute;left:48px;top:50%;transform:translateY(-50%);z-index:1;font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:#bbb;letter-spacing:.06em;line-height:1.8;font-variant-numeric:tabular-nums;white-space:pre}
+.home-tag{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;font-weight:400;color:var(--c-accent);letter-spacing:.14em;text-transform:uppercase}
+.home-clock{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:#bbb;letter-spacing:.06em;line-height:1.6;font-variant-numeric:tabular-nums;white-space:pre;text-align:left}
 @keyframes fadeInIllus{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.home-photo-strip{position:absolute;top:50%;right:0;width:min(760px,58vw);height:min(620px,78vh);overflow:hidden;opacity:0;animation:fadeInStrip 1.2s ease .6s forwards}
+@keyframes fadeInStrip{from{opacity:0;transform:translateY(-50%) translateY(12px)}to{opacity:1;transform:translateY(-50%) translateY(0)}}
+.home-photo-strip-track{position:absolute;top:0;left:0;display:flex;align-items:flex-start;height:100%;animation:stripFlow 96s linear infinite;will-change:transform}
+.hps-tile{position:relative;flex:0 0 120px;height:66%;margin-right:6px;overflow:hidden}
+.hps-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.hps-tile.off-a{margin-top:0}
+.hps-tile.off-b{margin-top:90px}
+.hps-tile.off-c{margin-top:150px}
+.hps-tile.off-d{margin-top:50px}
+@keyframes stripFlow{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@media(max-width:900px){.home-photo-strip{display:none}.home-center{padding-right:0}}
 .home-footer{position:fixed;bottom:0;left:0;right:0;padding:28px 48px;display:flex;align-items:flex-end;justify-content:space-between;z-index:50}
-.home-footer-brand{font-family:'Orchid','Noto Serif TC',serif;font-size:clamp(28px,5vw,56px);font-weight:400;color:#0a0a0a;letter-spacing:-.01em;line-height:1;cursor:pointer}
-.home-footer-brand .out-outline{color:#0a0a0a}
-.home-cta{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;background:transparent;color:#0a0a0a;font-size:13px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;border-radius:100px;border:1px solid #0a0a0a;cursor:pointer;transition:all .3s ease;font-family:'Orchid','Noto Serif TC',serif;margin-bottom:4px}
-.home-cta:hover{background:#0a0a0a;color:#fff}
+.home-footer-brand{font-family:'Orchid','Noto Serif TC',serif;font-size:clamp(20px,3vw,32px);font-weight:400;color:#0a0a0a;letter-spacing:-.01em;line-height:1;cursor:pointer}
+.home-footer-brand .out-outline{color:var(--c-accent)}
+.home-cta{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;background:var(--c-accent);color:#fff;font-size:13px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;border-radius:100px;border:1px solid var(--c-accent);cursor:pointer;transition:all .3s ease;font-family:'Orchid','Noto Serif TC',serif;margin-bottom:4px;box-shadow:0 6px 20px -8px rgba(209,89,31,.55)}
+.home-cta:hover{background:var(--c-accent-deep);border-color:var(--c-accent-deep);box-shadow:0 8px 24px -6px rgba(209,89,31,.6)}
 .home-cta svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .3s ease}
 .home-cta:hover svg{transform:translateX(3px)}
 
@@ -72,7 +83,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .av-item:not(:nth-child(3n)){border-right:1px solid #eee;padding-right:40px}
 .av-item:nth-child(3n){padding-left:40px}
 .av-item:nth-child(3n-1){padding-left:40px}
-.av-num{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;color:#ccc;margin-bottom:20px;display:block}
+.av-num{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;color:var(--c-accent);opacity:.55;margin-bottom:20px;display:block}
 .av-title{font-size:20px;font-weight:600;margin-bottom:12px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
 .av-desc{font-size:14px;color:#888;line-height:1.8;font-weight:400;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
 
@@ -86,13 +97,14 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wk-group-hd{display:flex;align-items:center;gap:9px;padding:28px 0 2px;border-top:1px solid #f0f0f0}
 .wk-group-dot{display:none}
 .wk-group-tag{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#aaa;font-family:'Calibri',sans-serif;font-weight:600}
-.wk-group:nth-child(1) .wk-visual{background:rgba(196,144,48,0.07);border-color:rgba(196,144,48,0.18)}
+.wk-group:nth-child(1) .wk-visual{background:var(--c-accent-soft);border-color:rgba(209,89,31,0.22)}
 .wk-group:nth-child(2) .wk-visual{background:rgba(80,128,168,0.07);border-color:rgba(80,128,168,0.18)}
 .wk-group:nth-child(3) .wk-visual{background:rgba(144,96,192,0.07);border-color:rgba(144,96,192,0.18)}
 .wk-group:nth-child(4) .wk-visual{background:rgba(80,128,96,0.07);border-color:rgba(80,128,96,0.18)}
-.wk-card::before{counter-increment:wk-idx;content:'0' counter(wk-idx);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#ddd;letter-spacing:.06em;flex-shrink:0;width:22px;text-align:right}
+.wk-card::before{counter-increment:wk-idx;content:'0' counter(wk-idx);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#ddd;letter-spacing:.06em;flex-shrink:0;width:22px;text-align:right;transition:color .2s}
+.wk-card:hover::before{color:var(--c-accent)}
 .wk-card::after{content:'→';font-size:13px;color:#ccc;flex-shrink:0;transition:transform .3s ease,color .2s}
-.wk-card:hover::after{transform:translateX(4px);color:#aaa}
+.wk-card:hover::after{transform:translateX(4px);color:var(--c-accent)}
 .wk-visual{width:52px;height:52px;aspect-ratio:1;overflow:hidden;position:relative;background:#fafafa;border:1px solid rgba(0,0,0,0.05);border-radius:10px;flex-shrink:0}
 .wk-visual-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .4s cubic-bezier(.4,0,.2,1)}
 .wk-card:hover .wk-visual-inner{transform:scale(1.08)}
@@ -111,7 +123,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .phil-quote em{font-style:normal;color:#999}
 .phil-items{display:flex;flex-direction:column}
 .phi-item{display:grid;grid-template-columns:80px 1fr;gap:24px;padding:32px 0;border-top:1px solid #eee;align-items:start}
-.phi-num{font-family:'Orchid','Noto Serif TC',serif;font-size:48px;font-weight:300;color:#eee;line-height:1;font-style:italic}
+.phi-num{font-family:'Orchid','Noto Serif TC',serif;font-size:48px;font-weight:300;color:var(--c-accent);opacity:.22;line-height:1;font-style:italic}
 .phi-content{}
 .phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
 .phi-text{font-size:14px;color:#777;line-height:1.9;font-weight:400;max-width:600px;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
@@ -160,9 +172,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <body>
 
 <!-- ── Top Navigation ── -->
-<div class="home-name" onclick="switchPage('home')">
-  <span class="home-name-text">Silas</span>
-</div>
 <nav id="top-nav">
   <div class="nav-logo" onclick="switchPage('home')">Silas</div>
   <div class="nav-links">
@@ -175,12 +184,17 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 <!-- ── HOME ── -->
 <div class="page active" id="page-home">
-  <div class="home-clock" id="home-clock"></div>
   <div class="home-center">
-    <svg class="home-illustration" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
+    <div class="home-diagram-stack">
+      <div class="home-tag">@TPE</div>
+      <div class="home-clock" id="home-clock"></div>
+      <svg class="home-illustration" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
           <polygon points="0,0.5 5,3 0,5.5" fill="#2a2a2a"/>
+        </marker>
+        <marker id="arr-accent" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+          <polygon points="0,0.5 5,3 0,5.5" fill="#d1591f"/>
         </marker>
       </defs>
       <!-- Framework grid -->
@@ -200,22 +214,57 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <line x1="390" y1="290" x2="390" y2="300" stroke="#b0b0b0" stroke-width="1.2"/>
       <!-- 4 curves from interior, solid arrow tips -->
       <path d="M243,156 C243,110 310,50 490,22"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
-      <path d="M317,156 C370,140 450,152 538,230"  stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
+      <path d="M317,156 C400,152 480,150 555,148"  stroke="#d1591f" stroke-width="1.1" fill="none" marker-end="url(#arr-accent)"/>
       <path d="M317,224 C310,270 240,320 30,358"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
       <path d="M243,224 C195,215 110,185 20,108"    stroke="#2a2a2a" stroke-width="1.1" fill="none" marker-end="url(#arr)"/>
       <!-- Interior origin dots -->
       <circle cx="243" cy="156" r="2.2" fill="#2a2a2a"/>
-      <circle cx="317" cy="156" r="2.2" fill="#2a2a2a"/>
+      <circle cx="317" cy="156" r="2.2" fill="#d1591f"/>
       <circle cx="317" cy="224" r="2.2" fill="#2a2a2a"/>
       <circle cx="243" cy="224" r="2.2" fill="#2a2a2a"/>
     </svg>
+    </div>
+    <div class="home-photo-strip">
+      <div class="home-photo-strip-track">
+        <div class="hps-tile off-a"><img src="assets/photos/photo-1.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-2.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-3.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-4.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-5.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-6.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-7.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-8.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-9.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-10.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-11.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-12.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-13.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-14.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-15.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-16.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-17.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-1.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-2.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-3.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-4.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-5.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-6.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-7.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-8.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-9.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-10.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-11.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-12.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-13.jpg" alt=""></div>
+        <div class="hps-tile off-b"><img src="assets/photos/photo-14.jpg" alt=""></div>
+        <div class="hps-tile off-c"><img src="assets/photos/photo-15.jpg" alt=""></div>
+        <div class="hps-tile off-d"><img src="assets/photos/photo-16.jpg" alt=""></div>
+        <div class="hps-tile off-a"><img src="assets/photos/photo-17.jpg" alt=""></div>
+      </div>
+    </div>
   </div>
   <div class="home-footer">
-    <div class="home-footer-brand" onclick="switchPage('works')">Outside<br><span class="out-outline">FrameWork</span></div>
-    <button class="home-cta" onclick="switchPage('works')">
-      View Works
-      <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </button>
+    <div class="home-footer-brand" onclick="switchPage('works')">Outside <span class="out-outline">Frame</span>Work</div>
   </div>
 </div>
 
@@ -279,7 +328,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <!-- ── Finance & Markets ── -->
       <div class="wk-group">
         <div class="wk-group-hd">
-          <span class="wk-group-dot" style="background:#c49030"></span>
+          <span class="wk-group-dot" style="background:#d1591f"></span>
           <span class="wk-group-tag">Finance &amp; Markets</span>
         </div>
         <div class="wk-card reveal" onclick="openProject('econ')">
@@ -437,11 +486,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <div id="mu-picker" onclick="if(event.target===this)closeMUPicker()" style="display:none;opacity:0;transition:opacity .2s;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:4px;padding:36px 40px;min-width:320px;display:flex;flex-direction:column;gap:14px">
     <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">MU Q3 — 選擇頁面</div>
-    <button onclick="pickMU('mu-analysis')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
+    <button onclick="pickMU('mu-analysis')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='rgba(209,89,31,.06)'" onmouseout="this.style.background='#fff'">
       分析報告
       <div style="font-size:11px;color:#aaa;margin-top:3px;font-weight:400">法說會重點 · SCA · 風險矩陣</div>
     </button>
-    <button onclick="pickMU('mu-financials')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
+    <button onclick="pickMU('mu-financials')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='rgba(209,89,31,.06)'" onmouseout="this.style.background='#fff'">
       財務報表
       <div style="font-size:11px;color:#aaa;margin-top:3px;font-weight:400">損益表 · 現金流 · 估值</div>
     </button>
