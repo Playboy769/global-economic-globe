@@ -8,13 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@400;500;700&family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-</script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
   onload="window._katexReady=true; document.dispatchEvent(new Event('katex-ready'))"></script>
@@ -154,9 +147,7 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
   gap: 7px;
 }
 .search-icon { color: var(--sidebar-muted); flex-shrink: 0; display: block; }
-#search-input,
-#report-search-input,
-#link-search-input {
+#search-input {
   background: transparent !important;
   -webkit-appearance: none;
   appearance: none;
@@ -168,9 +159,7 @@ body.v-resizing * { cursor: ns-resize !important; user-select: none !important; 
   width: 100%;
   padding: 8px 0;
 }
-#search-input::placeholder,
-#report-search-input::placeholder,
-#link-search-input::placeholder { color: var(--sidebar-muted); }
+#search-input::placeholder { color: var(--sidebar-muted); }
 
 .folder-tabs {
   border-bottom: 1px solid var(--border-dark);
@@ -522,7 +511,7 @@ body.dark .btn-icon, body.dark .btn-text { background: #1c1c1f; border-color: #3
 .meta-value { font-size: 14px; color: var(--text-main); font-weight: 500; }
 .article-title-display {
   font-family: 'Playfair Display', 'Noto Serif TC', 'Georgia', serif;
-  font-size: clamp(28px, 3.5vw, 38px);
+  font-size: clamp(28px, calc(var(--content-fs, 15px) * 2.2), 38px);
   font-weight: 700;
   color: var(--text-main);
   line-height: 1.3;
@@ -552,8 +541,7 @@ body.dark .btn-icon, body.dark .btn-text { background: #1c1c1f; border-color: #3
   max-width: 680px;
 }
 /* 閱讀欄置中：只有文章內文水平置中，標題/meta/圖庫維持靠左 */
-.article-content-display,
-.report-content-display {
+.article-content-display {
   margin-left: auto;
   margin-right: auto;
 }
@@ -1055,190 +1043,6 @@ body.dark .dp-footer-btn:hover { background: #252525; }
 }
 #toast.show { opacity: 1; }
 
-/* ── Mode Switcher ──────────────────────────────────────── */
-.mode-switcher {
-  display: flex;
-  padding: 10px 12px;
-  gap: 6px;
-  border-bottom: 1px solid var(--border-dark);
-}
-.mode-tab {
-  flex: 1;
-  background: transparent;
-  color: var(--sidebar-muted);
-  border: 1px solid var(--border-dark);
-  border-radius: 6px;
-  padding: 7px 4px;
-  font-size: 11px;
-  font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', '微軟正黑體', 'Microsoft JhengHei', sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.mode-tab:hover { color: var(--sidebar-text); background: var(--sidebar-hover); }
-.mode-tab.active { background: var(--accent-light); color: var(--accent-dim); border-color: var(--accent); }
-
-body.reports-mode .articles-only { display: none !important; }
-body:not(.reports-mode) .reports-only { display: none !important; }
-body.links-mode .articles-only { display: none !important; }
-body.links-mode .reports-only  { display: none !important; }
-body:not(.links-mode) .links-only { display: none !important; }
-body.pdfs-mode .articles-only,
-body.pdfs-mode .reports-only,
-body.pdfs-mode .links-only { display: none !important; }
-body:not(.pdfs-mode) .pdfs-only { display: none !important; }
-
-/* ── Rating Badge ──────────────────────────────────────── */
-.rating-badge { display:inline-block; padding:3px 10px; border-radius:4px; font-size:12px; font-weight:600; letter-spacing:.04em; }
-.r-strong-buy  { background:#0a0a0a; color:#fff; }
-.r-buy         { background:#333; color:#fff; }
-.r-neutral     { background:#f0f0f0; color:#888; }
-.r-sell        { background:#eee; color:#666; }
-.r-strong-sell { background:#ddd; color:#555; }
-
-/* ── Report Sidebar List ───────────────────────────────── */
-.report-list-item {
-  padding: 10px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.12s;
-  margin-bottom: 1px;
-  border: 1px solid transparent;
-}
-.report-list-item:hover { background: var(--sidebar-hover); }
-.report-list-item.active { background: var(--sidebar-active); border-color: var(--border-dark); }
-.rli-company { font-size:13px; color:var(--sidebar-text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.report-list-item.active .rli-company { color: var(--accent); }
-.rli-meta { font-size:10px; color:var(--sidebar-muted); margin-top:3px; display:flex; gap:8px; align-items:center; }
-.rli-watch { font-size:9px; color:var(--accent); border:1px solid var(--accent-dim); border-radius:3px; padding:0 4px; font-weight:600; letter-spacing:.03em; vertical-align:middle; }
-.sector-tag { background:rgba(100,160,200,0.2); color:#6ab0d4; padding:2px 6px; border-radius:4px; font-size:10px; }
-
-/* ── Report View ───────────────────────────────────────── */
-#report-view {
-  display: none;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  padding: 14px 48px 0;
-  position: relative;
-}
-#report-progress-bar {
-  position: absolute;
-  top: 0; left: 0;
-  height: 2px; width: 0%;
-  background: var(--accent);
-  border-radius: 0 2px 2px 0;
-  z-index: 10;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.25s ease, width 0.3s ease;
-  will-change: width;
-}
-#report-progress-bar.visible { opacity: 1; }
-#report-progress-bar.complete { height: 2px; }
-.report-ticker { font-size:14px; color:var(--text-muted); margin-bottom:20px; flex-shrink:0; }
-.report-meta-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.report-content-display {
-  font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', '微軟正黑體', 'Microsoft JhengHei', sans-serif;
-  font-size: 15px;
-  color: #555;
-  line-height: 1.9;
-  max-width: 680px;
-}
-/* Markdown 渲染樣式 */
-.report-content-display h1,
-.report-content-display h2,
-.report-content-display h3,
-.report-content-display h4 {
-  font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', '微軟正黑體', sans-serif;
-  color: var(--text-main);
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-}
-.report-content-display h1 { font-size: calc(var(--content-fs, 15px) * 1.867); margin: 0 0 18px; }
-.report-content-display h2 { font-size: calc(var(--content-fs, 15px) * 1.467); margin: 2em 0 14px; }
-.report-content-display h3 { font-size: calc(var(--content-fs, 15px) * 1.133); margin: 1.6em 0 10px; }
-.report-content-display h4 { font-size: calc(var(--content-fs, 15px) * 1.0); margin: 1.4em 0 8px; color: var(--text-muted); }
-.report-content-display p  { margin: 0 0 1em; }
-.report-content-display strong { color: var(--text-main); font-weight: 700; }
-.report-content-display em     { color: var(--text-muted); font-style: italic; }
-.report-content-display ul,
-.report-content-display ol  { padding-left: 1.6em; margin: 0.5em 0 1em; }
-.report-content-display li  { margin-bottom: 0.45em; line-height: 1.85; }
-.report-content-display li > ul,
-.report-content-display li > ol { margin: 0.3em 0; }
-.report-content-display blockquote {
-  border-left: 3px solid #ddd;
-  padding: 8px 16px;
-  margin: 1em 0;
-  color: var(--text-muted);
-  background: #fafafa;
-  border-radius: 0 4px 4px 0;
-}
-.report-content-display code {
-  background: #f5f5f5;
-  color: #555;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 13px;
-  font-family: 'Consolas', 'Monaco', monospace;
-}
-.report-content-display pre {
-  background: #fafafa;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 14px 16px;
-  overflow-x: auto;
-  margin: 1em 0;
-}
-.report-content-display pre code {
-  background: none;
-  padding: 0;
-  color: #555;
-  line-height: 1.6;
-}
-.report-content-display table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-  font-size: 14px;
-}
-.report-content-display th {
-  background: #f5f5f5;
-  color: var(--text-main);
-  padding: 8px 12px;
-  text-align: left;
-  font-weight: 600;
-  border-bottom: 2px solid #ddd;
-}
-.report-content-display td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-}
-.report-content-display tr:hover td { background: rgba(0,0,0,0.02); }
-.report-content-display hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 1.8em 0;
-}
-.report-content-display a {
-  color: var(--accent-dim);
-  text-decoration: underline;
-}
-#report-view-image { max-width:680px; width:100%; border-radius:8px; margin-bottom:24px; display:none; border:1px solid var(--border); }
-
-/* ── Report Form ───────────────────────────────────────── */
-#report-form { display:none; flex:1; overflow-y:auto; padding:40px 48px; }
-#report-form::-webkit-scrollbar { width:5px; }
-#report-form::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 .form-field select {
   font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', '微軟正黑體', 'Microsoft JhengHei', sans-serif;
   font-size: 14px;
@@ -1274,14 +1078,12 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
 .btn-delete:hover { border-color: var(--danger); color: var(--danger); }
 
 /* Meta 欄位 */
-.article-meta-bar, .report-meta-grid { border-bottom-color: var(--border); }
+.article-meta-bar { border-bottom-color: var(--border); }
 .meta-label { color: var(--text-faint); }
 .meta-value { color: var(--text-main); }
 
-/* 文章 / 報告標題 */
+/* 文章標題 */
 .article-title-display { color: var(--text-main); }
-.report-company-name   { color: var(--text-main); }
-.report-ticker         { color: var(--text-muted); }
 
 /* 閱讀內文 — Editorial White 排版 */
 .article-content-display {
@@ -1292,7 +1094,7 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
 .article-content-display h2,
 .article-content-display h3,
 .article-content-display h4 {
-  font-family: 'Playfair Display', 'Noto Serif TC', 'Georgia', serif;
+  font-family: 'Noto Sans TC', 'Segoe UI', 'PingFang TC', sans-serif;
   color: #0a0a0a;
   font-weight: 700;
   line-height: 1.35;
@@ -1346,18 +1148,8 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
   border-radius: 8px; margin: 1.2em auto;
   box-shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
-.report-content-display {
-  color: #666;
-  max-width: 900px;
-}
-.report-content-display img {
-  max-width: 100%; height: auto; display: block;
-  border-radius: 8px; margin: 1.2em auto;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-}
-
 /* 圖片加寬 */
-#view-image, #report-view-image {
+#view-image {
   max-width: 900px;
   border-color: var(--border);
 }
@@ -1365,7 +1157,6 @@ body:not(.pdfs-mode) .pdfs-only { display: none !important; }
 /* 捲軸 */
 .article-scroll-body::-webkit-scrollbar-thumb { background: var(--border); }
 #article-form::-webkit-scrollbar-thumb  { background: var(--border); }
-#report-form::-webkit-scrollbar-thumb   { background: var(--border); }
 
 /* 表單標題 / 標籤 */
 .form-title { color: var(--text-main); }
@@ -1411,195 +1202,20 @@ body.dark .tag-manager-input { border-color: var(--border); }
 body.dark input:-webkit-autofill, body.dark input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 30px #161616 inset !important;
 }
-/* 文章 / 報告內文 dark mode 字色 */
-body.dark .article-content-display,
-body.dark .report-content-display { color: var(--text-main); }
-body.dark .article-content-display code,
-body.dark .report-content-display code { background: #2a2a2e; color: #ccc; }
-body.dark .article-content-display pre,
-body.dark .report-content-display pre { background: #1e1e22; border-color: #2e2e32; }
-body.dark .article-content-display pre code,
-body.dark .report-content-display pre code { color: #d0d0d6; background: none; }
-body.dark .article-content-display th,
-body.dark .report-content-display th { background: #2a2a2e; color: var(--text-main); border-bottom-color: #4a4a52; }
-body.dark .article-content-display td,
-body.dark .report-content-display td { border-bottom-color: #2e2e32; }
-body.dark .article-content-display tr:hover td,
-body.dark .report-content-display tr:hover td { background: rgba(255,255,255,0.04); }
-body.dark .article-content-display blockquote,
-body.dark .report-content-display blockquote {
+/* 文章內文 dark mode 字色 */
+body.dark .article-content-display { color: var(--text-main); }
+body.dark .article-content-display code { background: #2a2a2e; color: #ccc; }
+body.dark .article-content-display pre { background: #1e1e22; border-color: #2e2e32; }
+body.dark .article-content-display pre code { color: #d0d0d6; background: none; }
+body.dark .article-content-display th { background: #2a2a2e; color: var(--text-main); border-bottom-color: #4a4a52; }
+body.dark .article-content-display td { border-bottom-color: #2e2e32; }
+body.dark .article-content-display tr:hover td { background: rgba(255,255,255,0.04); }
+body.dark .article-content-display blockquote {
   background: #232327;
   border-left-color: #4a4a52;
   color: var(--text-muted);
 }
-body.dark .article-content-display hr,
-body.dark .report-content-display hr { border-top-color: #2e2e32; }
-
-/* ── Links view ──────────────────────────────────────────────── */
-#links-welcome {
-  display: none; flex: 1; flex-direction: column;
-  align-items: center; justify-content: center; gap: 8px;
-  overflow: hidden;
-}
-#links-view {
-  display: none; flex: 1; flex-direction: column;
-  overflow-y: auto; padding: 32px 40px 40px;
-}
-#links-folder-header {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-shrink: 0;
-}
-#links-folder-title { font-size: 15px; font-weight: 600; color: var(--text-main); }
-#link-form {
-  display: none; flex-direction: column; flex: 1;
-  overflow-y: auto; padding: 40px 48px 0;
-}
-
-/* ── PDF Library ───────────────────────────────────────── */
-#pdf-welcome {
-  display: none;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px;
-}
-#pdf-view {
-  display: none;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  padding: 14px 48px 0;
-  position: relative;
-}
-#pdf-form {
-  display: none; flex-direction: column; flex: 1;
-  overflow-y: auto; padding: 40px 48px 0;
-}
-.pdf-scroll-body { padding: 0 6px 14px 0; }
-.pdf-pages-container {
-  display: flex; flex-direction: column; align-items: center; gap: 16px;
-  padding: 6px 0 20px;
-}
-.pdf-page-wrap {
-  position: relative;
-  background: white;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.pdf-page-wrap canvas { display: block; }
-.pdf-text-layer {
-  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
-  overflow: hidden; line-height: 1; opacity: 0.25;
-  pointer-events: auto;
-}
-.pdf-text-layer > span {
-  color: transparent; position: absolute; white-space: pre;
-  transform-origin: 0 0; cursor: text;
-}
-.pdf-text-layer ::selection { background: rgba(0,0,0,0.4); }
-.pdf-hl-layer {
-  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
-  pointer-events: none;
-}
-.pdf-hl-rect {
-  position: absolute; border-radius: 2px;
-  pointer-events: auto; cursor: pointer;
-  mix-blend-mode: multiply;
-}
-.pdf-hl-rect.yellow { background: rgba(255,214,0,0.40); }
-.pdf-hl-rect.green  { background: rgba(52,199,89,0.34); }
-.pdf-hl-rect.pink   { background: rgba(255,65,130,0.28); }
-.pdf-hl-rect.blue   { background: rgba(50,150,255,0.32); }
-.pdf-page-num {
-  position: absolute; bottom: 6px; right: 8px;
-  font-size: 10px; color: #999;
-  background: rgba(255,255,255,0.6); padding: 1px 6px; border-radius: 3px;
-  pointer-events: none;
-}
-.pdf-list-item {
-  padding: 10px 12px; border-radius: 6px; cursor: pointer;
-  margin-bottom: 4px; transition: background 0.12s;
-}
-.pdf-list-item:hover { background: var(--sidebar-hover); }
-.pdf-list-item.active { background: var(--sidebar-active); }
-.pdf-list-item .pli-title { font-size: 13px; color: var(--text-main); font-weight: 500;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pdf-list-item .pli-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px;
-  display: flex; gap: 8px; }
-.pdf-list-item .pli-star { color: var(--accent); }
-#pdf-progress-bar {
-  position: absolute; top: 0; left: 0;
-  height: 2px; width: 0%;
-  background: var(--accent); transition: width 0.15s;
-  z-index: 10; pointer-events: none;
-}
-#links-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-  gap: 12px;
-}
-.link-card {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 16px 8px 12px; border-radius: 12px; cursor: pointer;
-  position: relative; text-align: center; user-select: none;
-  transition: background 0.15s, box-shadow 0.15s;
-  border: 1px solid transparent;
-}
-.link-card:hover {
-  background: var(--sidebar-hover); border-color: var(--border);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-}
-.link-card-icon {
-  width: 56px; height: 56px; border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  background: #f5f3ef; font-size: 28px; margin-bottom: 10px;
-  overflow: hidden; box-shadow: 0 1px 5px rgba(0,0,0,0.10);
-  flex-shrink: 0; transition: transform 0.12s;
-}
-.link-card:hover .link-card-icon { transform: scale(1.06); }
-body.dark .link-card-icon { background: #222; }
-.link-card-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
-.link-card-title {
-  font-size: 12px; font-weight: 500; color: var(--text-main);
-  line-height: 1.35; word-break: break-all; max-width: 100%;
-}
-.link-card-domain { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-.link-card-actions {
-  position: absolute; top: 4px; right: 4px; display: none; gap: 2px;
-}
-.link-card:hover .link-card-actions { display: flex; }
-.link-card-btn {
-  background: rgba(0,0,0,0.07); border: none; border-radius: 4px;
-  padding: 2px 5px; font-size: 11px; cursor: pointer; color: var(--text-muted);
-  transition: background 0.1s, color 0.1s; line-height: 1.4;
-}
-.link-card-btn:hover { background: rgba(0,0,0,0.15); color: var(--text-main); }
-body.dark .link-card-btn { background: rgba(255,255,255,0.10); color: var(--text-muted); }
-.link-card-btn.del:hover { background: rgba(220,50,50,0.14); color: #e05050; }
-.link-folder-tab {
-  display: block; width: 100%; text-align: left;
-  padding: 5px 10px; border-radius: 6px; font-size: 12px;
-  background: none; border: none; cursor: pointer;
-  color: var(--sidebar-text); transition: background 0.12s;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.link-folder-tab:hover { background: var(--sidebar-hover); }
-.link-folder-tab.active { background: var(--accent-light); color: var(--accent-dim); font-weight: 500; border-color: var(--accent); }
-.link-folder-del-btn {
-  background: none; border: none; color: var(--text-faint);
-  cursor: pointer; font-size: 12px; padding: 0 4px; opacity: 0;
-  transition: opacity 0.1s, color 0.1s; flex-shrink: 0;
-}
-.link-folder-row:hover .link-folder-del-btn { opacity: 1; }
-.link-folder-del-btn:hover { color: var(--danger); }
-.link-folder-row { display: flex; align-items: center; }
-.link-folder-row .link-folder-tab { flex: 1; }
-.links-empty {
-  grid-column: 1/-1; text-align: center;
-  color: var(--text-faint); font-size: 13px; padding: 48px 0;
-}
+body.dark .article-content-display hr { border-top-color: #2e2e32; }
 
 /* ── Highlighter toolbar ─────────────────────────────────────── */
 #hl-toolbar {
@@ -2015,8 +1631,7 @@ body.reading-fullscreen #main { margin-left: 0 !important; }
 
 /* ── Font size CSS var ───────────────────────────────────────── */
 :root { --content-fs: 15px; }
-.article-content-display,
-.report-content-display { font-size: var(--content-fs); }
+.article-content-display { font-size: var(--content-fs); }
 
 /* ── Batch bar ───────────────────────────────────────────────── */
 #batch-bar { display: none; gap: 6px; padding: 6px 12px;
@@ -2176,59 +1791,6 @@ body.dark .ps-drop { background: #1a1a1a; }
 .ask-send:disabled { opacity: .5; cursor: default; }
 body.dark .ask-send { color: #16140f; }
 
-/* ── 觀察清單＋評等追蹤 ───────────────────────────────── */
-.btn-icon.btn-watch.watching { color: var(--accent); border-color: var(--accent); }
-.btn-icon.btn-watch.watching svg circle { fill: var(--accent); }
-.wl-open-btn { margin-left: auto; flex-shrink: 0; background: none;
-  border: 1px solid var(--border-dark); color: var(--sidebar-muted);
-  border-radius: 5px; padding: 3px 9px; font-size: 10px; letter-spacing: .05em;
-  cursor: pointer; transition: all .12s; text-transform: none; font-family: inherit; }
-.wl-open-btn:hover { color: var(--accent); border-color: var(--accent); }
-.wl-open-count { color: var(--accent); font-weight: 700; margin-left: 4px; }
-.wl-open-count:empty { display: none; }
-#watchlist-panel { position: fixed; inset: 0; z-index: 9100; background: rgba(0,0,0,.45);
-  display: none; align-items: center; justify-content: center; padding: 20px; }
-#watchlist-panel.open { display: flex; }
-.wl-card { background: var(--bg-darker); border: 1px solid var(--border-dark);
-  border-radius: 14px; box-shadow: var(--shadow); width: 660px; max-width: 96vw;
-  max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
-.wl-head { display: flex; align-items: flex-start; gap: 10px; padding: 16px 18px 12px;
-  border-bottom: 1px solid var(--border); }
-.wl-title { font-family: 'Playfair Display', 'Noto Serif TC', 'Georgia', serif; font-size: 18px; color: var(--accent); }
-.wl-sub { font-size: 11.5px; color: var(--text-faint); margin-top: 2px; }
-.wl-body { flex: 1; overflow-y: auto; padding: 14px 18px 18px; }
-.wl-empty { color: var(--text-faint); font-size: 12.5px; text-align: center; line-height: 1.9; padding: 30px 10px; }
-.wl-group { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
-  margin-bottom: 12px; background: var(--bg-light); }
-.wl-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.wl-group-name { font-size: 14px; font-weight: 700; color: var(--text-main); }
-.wl-group-ticker { font-size: 11px; color: var(--text-faint); font-weight: 600; }
-.wl-group-sector { font-size: 10px; background: rgba(100,160,200,0.2); color: #6ab0d4;
-  padding: 2px 7px; border-radius: 4px; }
-.wl-remove { margin-left: auto; flex-shrink: 0; background: none; border: 1px solid var(--border-dark);
-  color: var(--text-faint); border-radius: 5px; padding: 3px 9px; font-size: 11px; cursor: pointer; }
-.wl-remove:hover { color: var(--danger); border-color: var(--danger); }
-.wl-latest { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px; }
-.wl-latest .wl-target { font-weight: 700; color: var(--text-main); }
-.wl-timeline { border-top: 1px dashed var(--border-dark); padding-top: 8px; }
-.wl-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0;
-  font-size: 11.5px; border-bottom: 1px solid var(--border); }
-.wl-row:last-child { border-bottom: none; }
-.wl-row-date { flex-shrink: 0; width: 78px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
-.wl-row-main { flex: 1; min-width: 0; }
-.wl-row-line1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-.wl-row-analyst { color: var(--text-faint); font-size: 10.5px; }
-.wl-row-target { color: var(--text-muted); }
-.wl-row-chg { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
-.wl-chg { font-size: 10px; padding: 1px 7px; border-radius: 4px; font-weight: 600;
-  border: 1px solid transparent; }
-.wl-chg-up   { background: rgba(39,174,96,.13);  color: #2e9e58; border-color: rgba(39,174,96,.3); }
-.wl-chg-down { background: rgba(192,57,43,.12);   color: #c0492f; border-color: rgba(192,57,43,.3); }
-.wl-chg-flat { background: var(--bg-darker); color: var(--text-faint); border-color: var(--border-dark); }
-body.dark .wl-chg-up   { color: #5fcf8a; }
-body.dark .wl-chg-down { color: #e8786a; }
-.wl-noreport { font-size: 11.5px; color: var(--text-faint); font-style: italic; }
 .cld-inner { background: var(--bg-darker); border-radius: 16px;
   width: 900px; max-width: 94vw; height: 640px; max-height: 90vh;
   display: flex; flex-direction: column; overflow: hidden; position: relative;
@@ -2273,6 +1835,42 @@ body.dark .cld-edge { stroke: #6b7178; }
 .cld-spinner { width: 26px; height: 26px; border: 3px solid var(--border);
   border-top-color: var(--accent); border-radius: 50%; animation: cld-spin .8s linear infinite; }
 @keyframes cld-spin { to { transform: rotate(360deg); } }
+
+/* ── Wikilink（[[標題]]）連結樣式 ─────────────────────────────── */
+.wikilink { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); cursor: pointer; }
+.wikilink:hover { opacity: .75; }
+.wikilink-ghost { color: var(--text-faint); border-bottom: 1px dashed var(--text-faint); cursor: help; }
+.backlinks-box { margin: 32px 0 8px; padding-top: 18px; border-top: 1px solid var(--border-dark); }
+.backlinks-title { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .05em;
+  text-transform: uppercase; margin-bottom: 10px; }
+.backlinks-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.backlink-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-light);
+  border: 1px solid var(--border-dark); border-radius: 7px; padding: 5px 10px; font-size: 12px; }
+.backlink-chip:hover { border-color: var(--accent); }
+
+/* ── Wikilink 自動完成下拉 ────────────────────────────────────── */
+#wikilink-ac { position: fixed; z-index: 900; background: var(--bg-darker); border: 1px solid var(--border-dark);
+  border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.22); overflow-y: auto; max-height: 220px; display: none; }
+body.dark #wikilink-ac { background: #1a1a1a; border-color: #2a2a2a; }
+.wa-item { padding: 7px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-main);
+  display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wa-item:hover, .wa-item.sel { background: var(--bg-light); }
+.wa-type { flex-shrink: 0; }
+.field-hint { font-size: 10.5px; color: var(--text-faint); margin-left: 4px; }
+
+/* ── 連結圖（全庫 Obsidian 風格 graph view） ──────────────────── */
+#graph-panel { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 720;
+  display: none; align-items: center; justify-content: center; }
+#graph-panel.open { display: flex; }
+#graph-search { flex: 0 0 200px; background: var(--bg-light); border: 1px solid var(--border-dark);
+  border-radius: 7px; padding: 5px 10px; font-size: 12px; color: var(--text-main); outline: none; }
+.gv-edge { stroke: var(--border-dark); stroke-width: 1; opacity: .65; transition: opacity .15s; }
+.gv-edge.dim { opacity: .08; }
+.gv-node circle { cursor: pointer; transition: opacity .15s; }
+.gv-node:hover circle { stroke: var(--accent) !important; stroke-width: 2.5; }
+.gv-node.dim { opacity: .15; }
+.gv-label { font-size: 10px; fill: var(--text-muted); pointer-events: none;
+  font-family: 'Segoe UI','Noto Sans TC','PingFang TC','微軟正黑體',sans-serif; }
 
 /* ── Notes search panel ──────────────────────────────────────── */
 #notes-search-panel { position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
@@ -2616,6 +2214,7 @@ input:-webkit-autofill:focus {
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;position:relative">
       <button class="btn-dark-toggle" onclick="toggleShortcutHelp()" title="鍵盤快捷鍵（?）">?</button>
+      <button class="btn-dark-toggle" onclick="openGraphView()" title="連結圖（用 [[標題]] 建立的全庫連結網絡）">連結圖</button>
       <button class="btn-dark-toggle" onclick="toggleAccentPicker(event)" title="強調色主題">主題</button>
       <button class="btn-dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" title="深色／淺色模式">深色</button>
       <div id="accent-popover" class="accent-popover">
@@ -2623,13 +2222,6 @@ input:-webkit-autofill:focus {
         <div class="accent-swatches" id="accent-swatches"></div>
       </div>
     </div>
-  </div>
-
-  <div class="mode-switcher">
-    <button class="mode-tab active" id="tab-articles" onclick="switchMode('articles')">文章庫</button>
-    <button class="mode-tab" id="tab-reports" onclick="switchMode('reports')">報告</button>
-    <button class="mode-tab" id="tab-links" onclick="switchMode('links')">連結庫</button>
-    <button class="mode-tab" id="tab-pdfs" onclick="switchMode('pdfs')">PDF</button>
   </div>
 
   <!-- ── 文章庫區塊 ── -->
@@ -2692,82 +2284,6 @@ input:-webkit-autofill:focus {
     </div>
   </div>
 
-  <!-- ── 公司報告區塊 ── -->
-  <div class="reports-only" style="display:contents">
-    <div class="sidebar-search">
-      <div class="search-wrap">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="report-search-input" type="text" placeholder="搜尋公司、產業…" oninput="renderReportList()">
-      </div>
-    </div>
-    <div class="sidebar-actions">
-      <button class="btn-new" onclick="showReportForm()">新增報告</button>
-      <button class="btn-new-folder btn-search-toggle" id="btn-search-reports" onclick="toggleSearchBar('report-search-input','btn-search-reports')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-    </div>
-    <div id="report-sector-tabs" class="folder-tabs"></div>
-    <div class="sidebar-list-header" style="display:flex;align-items:center;gap:8px">
-      <span id="report-list-header-label" style="flex:1">所有報告</span>
-      <select class="sort-select" id="report-sort-select" onchange="renderReportList()">
-        <option value="newest">最新</option>
-        <option value="oldest">最舊</option>
-        <option value="company">公司 A-Z</option>
-        <option value="rating">評等高→低</option>
-      </select>
-      <span class="count-chip" id="report-count-chip">0</span>
-      <button class="wl-open-btn" onclick="openWatchlist()" title="觀察清單與評等追蹤">觀察清單<span class="wl-open-count" id="wl-open-count"></span></button>
-    </div>
-    <div class="filter-bar" id="report-filter-bar">
-      <div class="filter-row filter-row-chips">
-        <button class="filter-chip" data-rf="star" onclick="toggleReportFilter('star')">收藏</button>
-        <button class="filter-chip" data-rf="loved" onclick="toggleReportFilter('loved')">喜歡</button>
-        <button class="filter-chip" data-rf="notes" onclick="toggleReportFilter('notes')">有筆記</button>
-        <button class="filter-chip" data-rf="cld" onclick="toggleReportFilter('cld')">因果圖</button>
-      </div>
-      <div class="filter-row filter-row-date">
-        <input type="date" class="filter-date" id="report-filter-from" onchange="renderReportList()" title="起始日期（含）">
-        <span class="filter-date-sep">–</span>
-        <input type="date" class="filter-date" id="report-filter-to" onchange="renderReportList()" title="結束日期（含）">
-        <button class="filter-clear" id="report-filter-clear" onclick="clearReportFilters()" title="清除所有篩選">清除</button>
-      </div>
-    </div>
-    <div id="report-list" style="flex:1;overflow-y:auto;padding:0 8px 16px;"></div>
-  </div>
-
-  <!-- ── 連結庫側欄 ── -->
-  <div class="links-only" style="display:contents">
-    <div class="sidebar-search">
-      <div class="search-wrap">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="link-search-input" type="text" placeholder="搜尋連結、網域…" oninput="renderLinks()">
-      </div>
-    </div>
-    <div class="sidebar-actions" style="display:flex;gap:6px">
-      <button class="btn-new" style="flex:1;font-size:11px;padding:7px 4px" onclick="showLinkForm()">新增連結</button>
-      <button class="btn-new-folder" style="flex:1;margin-top:0;font-size:11px;padding:7px 4px" onclick="addLinkFolder()">資料夾</button>
-      <button class="btn-new-folder btn-search-toggle" id="btn-search-links" style="margin-top:0" onclick="toggleSearchBar('link-search-input','btn-search-links')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-    </div>
-    <div class="folder-tabs" id="link-folder-tabs"></div>
-    <div style="flex:1"></div>
-  </div>
-
-  <!-- ── PDF 庫側欄 ── -->
-  <div class="pdfs-only" style="display:contents">
-    <div class="sidebar-search">
-      <div class="search-wrap">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="pdf-search-input" type="text" placeholder="搜尋 PDF 標題、作者…" oninput="renderPdfList()">
-      </div>
-    </div>
-    <div class="sidebar-actions">
-      <button class="btn-new" onclick="showPdfForm()">＋ 上傳 PDF</button>
-      <button class="btn-new-folder btn-search-toggle" id="btn-search-pdfs" onclick="toggleSearchBar('pdf-search-input','btn-search-pdfs')" title="搜尋 (/)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-    </div>
-    <div class="sidebar-list-header">
-      <span>所有 PDF</span> <span class="count-chip" id="pdf-count-chip">0</span>
-    </div>
-    <div id="pdf-list" style="flex:1;overflow-y:auto;padding:0 8px 16px;"></div>
-  </div>
-
   <div class="sidebar-footer">
     <div class="articles-only sidebar-bottom-btns">
       <button class="btn-footer-sm" onclick="openNotesSearch()" title="搜尋所有筆記">筆記搜尋</button>
@@ -2779,8 +2295,6 @@ input:-webkit-autofill:focus {
       <button class="btn-footer-sm" onclick="exportCSV()" title="匯出 CSV">匯出 CSV</button>
       <button class="btn-footer-sm" style="color:var(--accent-dim);border-color:var(--accent-dim)" onclick="openTagManager()" title="管理標籤">標籤</button>
     </div>
-    <button class="btn-export reports-only" onclick="exportReportsCSV()">匯出報告 CSV</button>
-    <button class="btn-export links-only" onclick="exportLinksJSON()">備份連結</button>
   </div>
 </div>
 
@@ -2829,6 +2343,7 @@ input:-webkit-autofill:focus {
         <div id="view-summary" class="article-summary-box" style="display:none"></div>
         <div id="view-image-gallery" class="image-gallery"></div>
         <div class="article-content-display" id="view-content"></div>
+        <div id="view-backlinks" class="backlinks-box" style="display:none"></div>
       </div>
     </div>
 
@@ -2905,6 +2420,7 @@ input:-webkit-autofill:focus {
       <div class="form-field" id="content-field">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <label class="form-label" style="margin-bottom:0">文章內容</label>
+          <span class="field-hint">輸入 [[ 可連結其他文章／報告</span>
           <button type="button" class="preview-toggle" id="preview-toggle" onclick="togglePreview()">預覽</button>
         </div>
         <div id="content-wrap">
@@ -2915,246 +2431,6 @@ input:-webkit-autofill:focus {
       <div class="form-actions">
         <button class="btn-save" onclick="saveArticle()">儲存</button>
         <button class="btn-cancel" onclick="cancelForm()">取消</button>
-      </div>
-    </div>
-
-    <!-- ── 公司報告：閱讀 ── -->
-    <div id="report-view">
-      <div id="report-progress-bar"></div>
-      <div class="article-toolbar icon-toolbar">
-        <button class="btn-icon btn-edit" onclick="showReportForm(currentReportId)" title="編輯"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
-        <button class="btn-icon btn-delete" onclick="deleteReport(currentReportId)" title="刪除"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
-        <button class="btn-icon btn-star" id="btn-rstar" onclick="toggleReportStar(currentReportId)" title="收藏"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
-        <button class="btn-icon btn-love" id="btn-rlove" onclick="toggleReportLove(currentReportId)" title="喜歡"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        <button class="btn-icon btn-watch" id="btn-rwatch" onclick="toggleWatch(currentReportId)" title="加入觀察清單（追蹤此公司評等）"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="btn-icon btn-duplicate" onclick="duplicateReport(currentReportId)" title="複製"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="btn-icon btn-edit" id="btn-rhighlight" onclick="toggleHighlighter()" title="螢光筆"><svg viewBox="0 0 24 24"><path d="M6 17l3-3 7-7 3 3-7 7-3 3z"/><path d="M14 7l3 3"/><line x1="3" y1="21" x2="21" y2="21"/></svg></button>
-        <button class="btn-icon btn-edit" id="btn-rnotes" onclick="toggleNotes()" title="筆記"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg><span id="rnotes-badge" class="btn-badge"></span></button>
-        <button class="btn-icon btn-edit" id="btn-rcld" onclick="openReportCLD()" title="因果循環圖（AI 分析報告）"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><line x1="8" y1="7.5" x2="11" y2="15.7"/><line x1="16" y1="7.5" x2="13" y2="15.7"/><line x1="8.4" y1="6" x2="15.6" y2="6"/></svg></button>
-        <button class="btn-icon btn-edit" id="btn-rsummary" onclick="generateReportSummary()" title="AI 摘要（自動生成報告摘要）"><svg viewBox="0 0 24 24"><path d="M4 5h16"/><path d="M4 10h16"/><path d="M4 15h10"/><path d="M17.6 14.4l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg></button>
-        <button class="btn-icon btn-edit" id="btn-rask" onclick="openReportAsk()" title="AI 問答（針對本報告提問）"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/><path d="M9.5 9.2a2.5 2.5 0 0 1 4.6 1.3c0 1.7-2.4 2-2.4 2"/><line x1="11.7" y1="16.2" x2="11.71" y2="16.2"/></svg></button>
-        <div style="display:flex;gap:2px;margin-left:4px;flex-shrink:0">
-          <button class="btn-edit btn-text" onclick="changeFontSize(-1)" title="縮小字體">A−</button>
-          <button class="btn-edit btn-text" onclick="changeFontSize(1)"  title="放大字體">A+</button>
-        </div>
-        <button class="btn-icon btn-edit" onclick="toggleFullscreen()" title="全螢幕閱讀（ESC 退出）" style="margin-left:auto"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-        <button class="btn-icon btn-edit" onclick="printReport()" title="列印 / 匯出 PDF"><svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
-      </div>
-      <div class="article-title-display" id="rv-company"></div>
-      <div class="report-ticker" id="rv-ticker"></div>
-      <div class="article-byline">
-        <span id="rv-sector" class="byline-item"></span>
-        <span id="rv-rating" class="byline-item"></span>
-        <span id="rv-target" class="byline-item"></span>
-        <span id="rv-date" class="byline-item"></span>
-        <span id="rv-analyst" class="byline-item"></span>
-        <span id="rv-source" class="byline-item byline-source"></span>
-        <span id="r-word-count-bar" class="byline-item byline-reading"></span>
-      </div>
-      <div class="article-scroll-body">
-        <div id="rv-summary" class="article-summary-box" style="display:none"></div>
-        <div id="report-view-image-gallery" class="image-gallery"></div>
-        <div class="report-content-display" id="rv-content"></div>
-      </div>
-    </div>
-
-    <!-- ── 公司報告：表單 ── -->
-    <div id="report-form">
-      <div class="form-title" id="report-form-heading">新增公司報告</div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label class="form-label">公司名稱 *</label>
-          <input id="rf-company" type="text" placeholder="請輸入公司名稱">
-        </div>
-        <div class="form-field">
-          <label class="form-label">股票代碼</label>
-          <input id="rf-ticker" type="text" placeholder="例如：2330、AAPL">
-        </div>
-        <div class="form-field">
-          <label class="form-label">產業類別</label>
-          <input id="rf-sector" type="text" placeholder="例如：半導體、金融…" list="sector-datalist">
-          <datalist id="sector-datalist">
-            <option value="半導體"><option value="金融"><option value="科技">
-            <option value="消費"><option value="醫療生技"><option value="能源">
-            <option value="工業"><option value="通訊"><option value="原物料">
-          </datalist>
-        </div>
-        <div class="form-field">
-          <label class="form-label">評級</label>
-          <select id="rf-rating">
-            <option value="">— 選擇評級 —</option>
-            <option value="強力買入">強力買入</option>
-            <option value="買入">買入</option>
-            <option value="中立">中立</option>
-            <option value="賣出">賣出</option>
-            <option value="強力賣出">強力賣出</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label class="form-label">目標價</label>
-          <input id="rf-target" type="text" placeholder="例如：NT$1,200 / $185">
-        </div>
-        <div class="form-field">
-          <label class="form-label">報告日期</label>
-          <div class="date-picker-wrap">
-            <button type="button" class="date-picker-display" id="rf-date-btn" onclick="dpToggle('rf-date')">
-              <span class="dp-text">選擇日期</span>
-              <span class="dp-cal-icon">📅</span>
-            </button>
-            <input type="hidden" id="rf-date">
-            <div class="date-picker-popup" id="rf-date-popup" style="display:none"></div>
-          </div>
-        </div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">分析師 / 機構</label>
-        <input id="rf-analyst" type="text" placeholder="例如：Morgan Stanley、元大投顧…">
-      </div>
-      <div class="form-field">
-        <label class="form-label">報告來源</label>
-        <input id="rf-source" type="text" placeholder="例如：Bloomberg、公開說明書、網址…">
-      </div>
-      <div class="form-field">
-        <label class="form-label">附帶圖片</label>
-        <div class="image-upload-wrapper">
-          <input id="rf-image" type="file" accept="image/*" multiple>
-          <label for="rf-image" class="file-pick-btn">選擇圖片</label>
-          <span class="upload-hint">可複選 · 自動壓縮至 1280px / JPEG</span>
-          <button id="btn-remove-report-img" class="btn-remove-img" onclick="clearReportImages(event)">全部移除</button>
-        </div>
-        <div id="report-form-image-previews" class="image-thumb-grid"></div>
-      </div>
-      <div class="form-field">
-        <label class="form-label">報告內容</label>
-        <textarea id="rf-content" placeholder="在此輸入報告摘要、重點論點、風險提示…" style="min-height:280px;resize:vertical;"></textarea>
-      </div>
-      <div class="form-actions">
-        <button class="btn-save" onclick="saveReport()">儲存</button>
-        <button class="btn-cancel" onclick="cancelReportForm()">取消</button>
-      </div>
-    </div>
-
-    <!-- ── 連結庫：歡迎 ── -->
-    <div id="links-welcome">
-      <div class="welcome-icon">🔗</div>
-      <div class="welcome-title">連結資料庫</div>
-      <div class="welcome-sub">儲存常用網站，一鍵快速開啟</div>
-      <button class="btn-new" style="margin-top:20px;padding:10px 24px;font-size:13px" onclick="showLinkForm()">新增第一個連結</button>
-    </div>
-
-    <!-- ── 連結庫：卡片格 ── -->
-    <div id="links-view">
-      <div id="links-folder-header">
-        <span id="links-folder-title">所有連結</span>
-        <span class="count-chip" id="links-count-chip">0</span>
-      </div>
-      <div id="links-grid"></div>
-    </div>
-
-    <!-- ── 連結庫：新增/編輯表單 ── -->
-    <div id="link-form">
-      <div class="form-title" id="link-form-heading">新增連結</div>
-      <div class="form-grid">
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">網址 *</label>
-          <input id="lf-url" type="url" placeholder="https://" oninput="linkUrlChange(this.value)">
-        </div>
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">名稱 *</label>
-          <input id="lf-title" type="text" placeholder="連結名稱">
-        </div>
-        <div class="form-field">
-          <label class="form-label">資料夾</label>
-          <input id="lf-folder" type="text" placeholder="未分類" list="link-folder-datalist">
-          <datalist id="link-folder-datalist"></datalist>
-        </div>
-        <div class="form-field">
-          <label class="form-label">圖示 Emoji（可選）</label>
-          <input id="lf-icon" type="text" placeholder="留空自動抓 favicon" maxlength="2" style="font-size:18px;text-align:center">
-        </div>
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">備註</label>
-          <input id="lf-desc" type="text" placeholder="可選描述">
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn-save" onclick="saveLinkForm()">儲存</button>
-        <button class="btn-cancel" onclick="cancelLinkForm()">取消</button>
-        <button class="btn-delete" id="lf-delete-btn" style="display:none;margin-left:auto" onclick="deleteLink(editingLinkId)">刪除</button>
-      </div>
-    </div>
-
-    <!-- ── PDF 庫：歡迎畫面 ── -->
-    <div id="pdf-welcome">
-      <div class="welcome-icon">📄</div>
-      <div class="welcome-title">PDF 資料庫</div>
-      <div class="welcome-sub">按「＋ 上傳 PDF」開始</div>
-    </div>
-
-    <!-- ── PDF 庫：閱讀 ── -->
-    <div id="pdf-view">
-      <div id="pdf-progress-bar"></div>
-      <div class="article-toolbar icon-toolbar">
-        <button class="btn-icon btn-delete" onclick="deletePdf(currentPdfId)" title="刪除"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
-        <button class="btn-icon btn-star" id="btn-pstar" onclick="togglePdfStar(currentPdfId)" title="收藏"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
-        <button class="btn-icon btn-edit" id="btn-phighlight" onclick="toggleHighlighter()" title="螢光筆"><svg viewBox="0 0 24 24"><path d="M6 17l3-3 7-7 3 3-7 7-3 3z"/><path d="M14 7l3 3"/><line x1="3" y1="21" x2="21" y2="21"/></svg></button>
-        <button class="btn-icon btn-edit" id="btn-pnotes" onclick="toggleNotes()" title="筆記"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg><span id="pnotes-badge" class="btn-badge"></span></button>
-        <div style="display:flex;gap:2px;margin-left:4px;flex-shrink:0">
-          <button class="btn-text" onclick="changePdfZoom(-0.1)" title="縮小">−</button>
-          <button class="btn-text" id="pdf-zoom-label" onclick="resetPdfZoom()" title="重設縮放" style="min-width:46px">100%</button>
-          <button class="btn-text" onclick="changePdfZoom(0.1)" title="放大">＋</button>
-        </div>
-        <button class="btn-icon btn-edit" onclick="toggleFullscreen()" title="全螢幕" style="margin-left:auto"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-        <button class="btn-icon btn-edit" onclick="downloadPdf()" title="下載 PDF"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-      </div>
-      <div class="article-title-display" id="pv-title"></div>
-      <div class="article-byline">
-        <span id="pv-author" class="byline-item"></span>
-        <span id="pv-date" class="byline-item"></span>
-        <span id="pv-source" class="byline-item byline-source"></span>
-        <span id="pv-pages" class="byline-item"></span>
-      </div>
-      <div class="article-scroll-body pdf-scroll-body">
-        <div id="pdf-pages-container" class="pdf-pages-container"></div>
-      </div>
-    </div>
-
-    <!-- ── PDF 庫：上傳表單 ── -->
-    <div id="pdf-form">
-      <div class="form-title" id="pdf-form-heading">上傳 PDF</div>
-      <div class="form-grid">
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">PDF 檔 *</label>
-          <input id="pf-file" type="file" accept="application/pdf">
-          <span id="pf-file-info" style="font-size:11px;color:var(--text-faint);margin-top:4px"></span>
-        </div>
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">標題 *</label>
-          <input id="pf-title" type="text" placeholder="（檔名會自動填入）">
-        </div>
-        <div class="form-field">
-          <label class="form-label">作者</label>
-          <input id="pf-author" type="text" placeholder="作者">
-        </div>
-        <div class="form-field">
-          <label class="form-label">日期</label>
-          <div class="date-picker-wrap">
-            <button type="button" class="date-picker-display" id="pf-date-btn" onclick="dpToggle('pf-date')">
-              <span class="dp-text">選擇日期</span>
-              <span class="dp-cal-icon">📅</span>
-            </button>
-            <input type="hidden" id="pf-date">
-            <div class="date-picker-popup" id="pf-date-popup" style="display:none"></div>
-          </div>
-        </div>
-        <div class="form-field" style="grid-column:1/-1">
-          <label class="form-label">來源（可選）</label>
-          <input id="pf-source" type="text" placeholder="網址、書名…">
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn-save" id="pf-save-btn" onclick="savePdf()">上傳並儲存</button>
-        <button class="btn-cancel" onclick="cancelPdfForm()">取消</button>
       </div>
     </div>
 
@@ -3272,21 +2548,6 @@ function _apiToArticle(r) {
   };
 }
 
-function _apiToReport(r) {
-  return {
-    id: r.id, company: r.company, ticker: r.ticker || '',
-    sector: r.sector || '', rating: r.rating || '', target: r.target || '',
-    date: r.date || '', analyst: r.analyst || '', source: r.source || '',
-    content: r.content || '', images: _parseImages(r.images), image: '',
-    notes: r.notes || '[]',
-    highlights: r.highlights || '[]',
-    starred: r.starred || 0,
-    loved: r.loved || 0,
-    summary: r.summary || '',
-    cld: r.cld || '',
-  };
-}
-
 let articles = [];
 let folders  = [];
 let currentId = null;
@@ -3296,9 +2557,6 @@ let uploadedImages = [];  // base64[] for current article form
 let _batchMode = false, _batchSel = new Set();
 let _fontSize = parseInt(localStorage.getItem('article_fs') || '15');
 document.documentElement.style.setProperty('--content-fs', _fontSize + 'px');
-// PDF globals (declared early to avoid TDZ)
-let pdfs = [];
-let currentPdfId = null;
 
 // ── Image helpers ─────────────────────────────────────────────
 // 把每張圖片用 Canvas 縮到 maxW 寬度並輸出為 JPEG/PNG dataURL
@@ -3841,8 +3099,9 @@ function viewArticle(id) {
     : '';
 
   renderSummary(a.summary || '');
-  document.getElementById('view-content').innerHTML = mdLatex(a.content || '');
+  document.getElementById('view-content').innerHTML = mdLatex(linkifyWikilinks(a.content || ''));
   applyLatex(document.getElementById('view-content'));
+  renderBacklinks('view-backlinks', 'article', a.id);
   applyStoredHighlights({type:'article', id: a.id});
   applyAnchorNotes(id);
   // Close notes panel when switching articles, update badge
@@ -4145,422 +3404,6 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-// ── 公司深度報告 ──────────────────────────────────────────────
-let reports = [];
-let currentReportId = null;
-let editingReportId = null;
-let currentSector = '';
-let uploadedReportImages = [];   // base64[] for current report form
-
-function renderReportFormPreviews() {
-  const c = document.getElementById('report-form-image-previews');
-  if (!c) return;
-  c.innerHTML = uploadedReportImages.map((src, i) => `
-    <div class="thumb-card">
-      <img src="${src}" alt="圖片 ${i+1}" onclick="openLightbox(uploadedReportImages, ${i})">
-      <span class="idx">${i+1}</span>
-      <button type="button" class="x" onclick="removeReportImageAt(${i})" title="移除這張">×</button>
-    </div>
-  `).join('');
-  document.getElementById('btn-remove-report-img').style.display = uploadedReportImages.length ? 'inline-block' : 'none';
-}
-
-function removeReportImageAt(i) {
-  uploadedReportImages.splice(i, 1);
-  renderReportFormPreviews();
-}
-
-function clearReportImages(e) {
-  if (e) e.preventDefault();
-  uploadedReportImages = [];
-  document.getElementById('rf-image').value = '';
-  renderReportFormPreviews();
-}
-
-function renderReportSectors() {
-  const container = document.getElementById('report-sector-tabs');
-  if (!container) return;
-
-  const sectors = [...new Set(reports.map(r => r.sector).filter(Boolean))].sort();
-
-  let html = `
-    <div class="folder-tab ${currentSector === '' ? 'active' : ''}" data-sector="">
-      <span class="folder-tab-name">所有產業</span>
-      <span class="folder-tab-count">${reports.length}</span>
-    </div>`;
-
-  sectors.forEach(s => {
-    const count = reports.filter(r => r.sector === s).length;
-    html += `
-    <div class="folder-tab ${currentSector === s ? 'active' : ''}" data-sector="${esc(s)}">
-      <span class="folder-tab-name">${esc(s)}</span>
-      <span class="folder-tab-count">${count}</span>
-    </div>`;
-  });
-
-  container.innerHTML = html;
-  container.querySelectorAll('.folder-tab').forEach(tab => {
-    tab.addEventListener('click', () => selectSector(tab.dataset.sector));
-  });
-}
-
-function selectSector(name) {
-  currentSector = name;
-  document.getElementById('report-list-header-label').textContent = name || '所有產業';
-  renderReportList();
-}
-
-
-function switchMode(mode) {
-  const isReports = mode === 'reports';
-  const isLinks   = mode === 'links';
-  const isPdfs    = mode === 'pdfs';
-  document.body.classList.toggle('reports-mode', isReports);
-  document.body.classList.toggle('links-mode',   isLinks);
-  document.body.classList.toggle('pdfs-mode',    isPdfs);
-
-  ['tab-articles','tab-reports','tab-links','tab-pdfs'].forEach(id => {
-    document.getElementById(id)?.classList.remove('active');
-  });
-  document.getElementById('tab-' + mode)?.classList.add('active');
-
-  const brandMap = {
-    articles: ['文章資料庫', 'Article Archive'],
-    reports:  ['公司深度報告', 'Company Research'],
-    links:    ['連結資料庫', 'Link Database'],
-    pdfs:     ['PDF 資料庫',  'PDF Library'],
-  };
-  const [bt, bs] = brandMap[mode] || brandMap.articles;
-  document.getElementById('brand-title').textContent = bt;
-  document.getElementById('brand-sub').textContent   = bs;
-
-  ['article-view','article-form','report-view','report-form',
-   'links-view','link-form','links-welcome',
-   'pdf-view','pdf-form','pdf-welcome','welcome-screen'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.style.display = 'none';
-  });
-
-  // 切換分頁時收起目錄
-  document.getElementById('toc-panel')?.classList.remove('visible');
-
-  if (isLinks) {
-    loadLinks().then(() => {
-      renderLinkFolders();
-      renderLinks();
-      if (links.length) document.getElementById('links-view').style.display = 'flex';
-      else              document.getElementById('links-welcome').style.display = 'flex';
-    });
-    currentLinkFolder = 'all';
-    const titleEl = document.getElementById('links-folder-title');
-    if (titleEl) titleEl.textContent = '所有連結';
-  } else if (isReports) {
-    currentId = null;
-    renderReportList();
-    if (reports.length) viewReport(reports[reports.length - 1].id);
-    else document.getElementById('welcome-screen').style.display = 'flex';
-  } else if (isPdfs) {
-    currentId = null; currentReportId = null;
-    loadPdfs().then(() => {
-      renderPdfList();
-      if (pdfs.length) viewPdf(pdfs[0].id);
-      else             document.getElementById('pdf-welcome').style.display = 'flex';
-    });
-  } else {
-    currentReportId = null;
-    renderList();
-    if (articles.length) viewArticle(articles[articles.length - 1].id);
-    else document.getElementById('welcome-screen').style.display = 'flex';
-  }
-}
-
-function ratingClass(r) {
-  return {'強力買入':'r-strong-buy','買入':'r-buy','中立':'r-neutral','賣出':'r-sell','強力賣出':'r-strong-sell'}[r] || 'r-neutral';
-}
-
-// ── 報告進階篩選 ──────────────────────────────────────────────
-let _rFilters = { star: false, loved: false, notes: false, cld: false };
-function toggleReportFilter(key) {
-  _rFilters[key] = !_rFilters[key];
-  const btn = document.querySelector(`.filter-chip[data-rf="${key}"]`);
-  if (btn) btn.classList.toggle('on', _rFilters[key]);
-  _refreshReportFilterClear();
-  renderReportList();
-}
-function clearReportFilters() {
-  _rFilters = { star: false, loved: false, notes: false, cld: false };
-  document.querySelectorAll('#report-filter-bar .filter-chip').forEach(b => b.classList.remove('on'));
-  const f = document.getElementById('report-filter-from'), t = document.getElementById('report-filter-to');
-  if (f) f.value = ''; if (t) t.value = '';
-  _refreshReportFilterClear();
-  renderReportList();
-}
-function _refreshReportFilterClear() {
-  const from = document.getElementById('report-filter-from')?.value || '';
-  const to   = document.getElementById('report-filter-to')?.value || '';
-  const any  = _rFilters.star || _rFilters.loved || _rFilters.notes || _rFilters.cld || from || to;
-  document.getElementById('report-filter-clear')?.classList.toggle('show', !!any);
-}
-
-function renderReportList() {
-  renderReportSectors();
-
-  const q    = (document.getElementById('report-search-input').value || '').toLowerCase();
-  const list = document.getElementById('report-list');
-  const chip = document.getElementById('report-count-chip');
-
-  const dFrom = document.getElementById('report-filter-from')?.value || '';
-  const dTo   = document.getElementById('report-filter-to')?.value || '';
-  _refreshReportFilterClear();
-
-  const filtered = reports.filter(r => {
-    const matchSearch = !q ||
-      r.company.toLowerCase().includes(q) ||
-      (r.ticker||'').toLowerCase().includes(q) ||
-      (r.sector||'').toLowerCase().includes(q) ||
-      (r.analyst||'').toLowerCase().includes(q) ||
-      (r.content||'').toLowerCase().includes(q);
-    const matchSector = !currentSector || r.sector === currentSector;
-    if (_rFilters.star && !r.starred) return false;
-    if (_rFilters.loved && !r.loved) return false;
-    if (_rFilters.notes && !(_jsonHasItems(r.notes) || _jsonHasItems(r.highlights))) return false;
-    if (_rFilters.cld && !_hasCld(r)) return false;
-    if (dFrom && (!r.date || r.date < dFrom)) return false;
-    if (dTo   && (!r.date || r.date > dTo))   return false;
-    return matchSearch && matchSector;
-  });
-
-  const sortMode = document.getElementById('report-sort-select')?.value || 'newest';
-  let toRender = filtered.slice();
-  if      (sortMode === 'oldest')  toRender.reverse();
-  else if (sortMode === 'company') toRender.sort((a,b) => (a.company||'').localeCompare(b.company||'', 'zh'));
-  else if (sortMode === 'rating')  toRender.sort((a,b) => _ratingRank(b.rating) - _ratingRank(a.rating));
-  // 'newest' = 陣列原順序（API created_at DESC，新→舊）
-
-  _refreshWatchOpenCount();
-  chip.textContent = filtered.length;
-  if (!filtered.length) {
-    const hasCriteria = q || currentSector || dFrom || dTo || _rFilters.star || _rFilters.loved || _rFilters.notes || _rFilters.cld;
-    list.innerHTML = `<div class="empty-list">${hasCriteria ? '沒有符合的報告' : '尚無報告<br>按上方按鈕新增'}</div>`;
-    return;
-  }
-
-  const wlSet = new Set(getWatchlist());
-  list.innerHTML = toRender.map(r => `
-    <div class="report-list-item ${r.id === currentReportId ? 'active' : ''}" onclick="viewReport(${r.id})">
-      <div class="rli-company">${r.loved ? '<span class="li-love">♥</span> ' : ''}${esc(r.company)}${r.ticker ? ` <span style="font-size:10px;color:var(--sidebar-muted)">${esc(r.ticker)}</span>` : ''}${wlSet.has(_reportKey(r)) ? ` <span class="rli-watch" title="在觀察清單中">觀察中</span>` : ''}</div>
-      <div class="rli-meta">
-        ${r.sector ? `<span class="sector-tag">${esc(r.sector)}</span>` : ''}
-        ${r.rating ? `<span class="rating-badge ${ratingClass(r.rating)}" style="font-size:9px;padding:1px 5px">${esc(r.rating)}</span>` : ''}
-        <span>${r.date || ''}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-function viewReport(id) {
-  const r = reports.find(x => x.id === id);
-  if (!r) return;
-  currentReportId = id;
-  // 同步雲端 highlights/notes
-  _syncHlNotesOnOpen({type:'report', id: r.id}, r);
-  document.getElementById('welcome-screen').style.display = 'none';
-  document.getElementById('report-form').style.display    = 'none';
-
-  const view = document.getElementById('report-view');
-  view.style.display = 'flex';
-  view.classList.remove('animate-in');
-  void view.offsetWidth;
-  view.classList.add('animate-in');
-
-  document.getElementById('rv-company').textContent = r.company;
-  document.getElementById('rv-ticker').textContent  = r.ticker || '';
-  document.getElementById('rv-sector').textContent  = r.sector || '';
-  document.getElementById('rv-target').textContent  = r.target ? `目標 ${r.target}` : '';
-  document.getElementById('rv-date').textContent    = r.date    || '';
-  document.getElementById('rv-analyst').textContent = r.analyst || '';
-
-  // 收藏按鈕狀態
-  const sbtn = document.getElementById('btn-rstar');
-  if (sbtn) sbtn.classList.toggle('starred', !!r.starred);
-  const lbtn = document.getElementById('btn-rlove');
-  if (lbtn) lbtn.classList.toggle('loved', !!r.loved);
-  _refreshWatchBtn();
-
-  // 字數 / 閱讀時間
-  const chars = (r.content || '').replace(/\s/g, '').length;
-  const rwc = document.getElementById('r-word-count-bar');
-  if (rwc) rwc.textContent = chars > 0 ? `${chars.toLocaleString()} 字 · 約 ${Math.ceil(chars / 300)} 分鐘` : '';
-
-  const ratingEl = document.getElementById('rv-rating');
-  ratingEl.innerHTML = r.rating
-    ? `<span class="rating-badge ${ratingClass(r.rating)}">${esc(r.rating)}</span>`
-    : '';
-
-  const srcEl = document.getElementById('rv-source');
-  const src = r.source || '';
-  if (src.startsWith('http')) {
-    srcEl.innerHTML = `<a href="${esc(src)}" target="_blank">${esc(src.length>40?src.slice(0,40)+'…':src)}</a>`;
-  } else {
-    srcEl.textContent = src;
-  }
-
-  renderSummary(r.summary || '', 'rv-summary');
-  document.getElementById('rv-content').innerHTML = mdLatex(r.content || '');
-  applyLatex(document.getElementById('rv-content'));
-  renderViewGallery('report-view-image-gallery', getImages(r));
-
-  // 重置進度條 + 標題收合狀態
-  window.resetReportProgress?.();
-  const scrollBody = document.querySelector('#report-view .article-scroll-body');
-  if (scrollBody) scrollBody.scrollTop = 0;
-
-  // 關閉筆記面板（避免帶上一篇狀態），同時刷新筆記
-  document.getElementById('notes-panel')?.classList.remove('open');
-  renderNotes();
-
-  // 套用已存的螢光筆 + TOC
-  applyStoredHighlights({type:'report', id: r.id});
-  buildTOC('rv-content');
-
-  renderReportList();
-}
-
-function showReportForm(id) {
-  editingReportId = id || null;
-  currentReportId = null;
-  document.getElementById('welcome-screen').style.display = 'none';
-  document.getElementById('report-view').style.display    = 'none';
-
-  const form = document.getElementById('report-form');
-  form.style.display = 'block';
-  form.classList.remove('animate-in');
-  void form.offsetWidth;
-  form.classList.add('animate-in');
-
-  document.getElementById('rf-image').value = '';
-
-  if (id) {
-    const r = reports.find(x => x.id === id);
-    document.getElementById('report-form-heading').textContent = '編輯公司報告';
-    document.getElementById('rf-company').value = r.company;
-    document.getElementById('rf-ticker').value  = r.ticker  || '';
-    document.getElementById('rf-sector').value  = r.sector  || '';
-    document.getElementById('rf-rating').value  = r.rating  || '';
-    document.getElementById('rf-target').value  = r.target  || '';
-    dpSetValue('rf-date', r.date || '');
-    document.getElementById('rf-analyst').value = r.analyst || '';
-    document.getElementById('rf-source').value  = r.source  || '';
-    document.getElementById('rf-content').value = r.content || '';
-    uploadedReportImages = getImages(r).slice();
-  } else {
-    document.getElementById('report-form-heading').textContent = '新增公司報告';
-    ['rf-company','rf-ticker','rf-sector','rf-target','rf-analyst','rf-source','rf-content'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('rf-rating').value = '';
-    dpSetValue('rf-date', today());
-    uploadedReportImages = [];
-  }
-  renderReportFormPreviews();
-  document.getElementById('rf-company').focus();
-  renderReportList();
-}
-
-async function saveReport() {
-  const company = document.getElementById('rf-company').value.trim();
-  if (!company) { document.getElementById('rf-company').focus(); toast('請輸入公司名稱'); return; }
-
-  const data = {
-    company,
-    ticker:  document.getElementById('rf-ticker').value.trim(),
-    sector:  document.getElementById('rf-sector').value.trim(),
-    rating:  document.getElementById('rf-rating').value,
-    target:  document.getElementById('rf-target').value.trim(),
-    date:    document.getElementById('rf-date').value,
-    analyst: document.getElementById('rf-analyst').value.trim(),
-    source:  document.getElementById('rf-source').value.trim(),
-    content: document.getElementById('rf-content').value.trim(),
-    images:  uploadedReportImages.slice(), image: ''
-  };
-
-  const apiBody = {
-    company: data.company, ticker: data.ticker || null,
-    sector: data.sector || null, rating: data.rating || null,
-    target: data.target || null, date: data.date || null,
-    analyst: data.analyst || null, source: data.source || null,
-    content: data.content || '', images: JSON.stringify(data.images || [])
-  };
-
-  if (editingReportId) {
-    await _apiPatch(`/reports/${editingReportId}`, apiBody);
-    const idx = reports.findIndex(x => x.id === editingReportId);
-    if (idx >= 0) reports[idx] = { ...reports[idx], ...data };
-    toast('報告已更新'); viewReport(editingReportId);
-  } else {
-    const res = await _apiPost('/reports', apiBody);
-    const newRep = { id: res.id, ...data };
-    reports.unshift(newRep);
-    toast('報告已新增'); viewReport(res.id);
-  }
-  editingReportId = null;
-  renderReportList();
-}
-
-function cancelReportForm() {
-  editingReportId = null;
-  if (currentReportId) { viewReport(currentReportId); return; }
-  document.getElementById('report-form').style.display = 'none';
-  if (reports.length) viewReport(reports[reports.length - 1].id);
-  else document.getElementById('welcome-screen').style.display = 'flex';
-  renderReportList();
-}
-
-async function deleteReport(id) {
-  if (!confirm('確定要刪除這份報告嗎？')) return;
-  await _apiDelete(`/reports/${id}`);
-  reports = reports.filter(x => x.id !== id);
-  currentReportId = null;
-  document.getElementById('report-view').style.display = 'none';
-  if (reports.length) viewReport(reports[0].id);
-  else document.getElementById('welcome-screen').style.display = 'flex';
-  renderReportList();
-  toast('已刪除報告');
-}
-
-// 舊版 API 名稱保留呼叫橋接（避免任何遺漏的 onclick 失效）
-function removeReportImage(e) { clearReportImages(e); }
-function removeImage(e)       { clearImages(e); }
-
-function exportReportsCSV() {
-  if (!reports.length) { toast('尚無報告可匯出'); return; }
-  const rows = [['編號','公司名稱','股票代碼','產業類別','評級','目標價','報告日期','分析師','來源','報告內容']];
-  reports.forEach((r, i) => {
-    rows.push([i+1, r.company, r.ticker||'', r.sector||'', r.rating||'', r.target||'', r.date||'', r.analyst||'', r.source||'', (r.content||'').replace(/\n/g,' ')]);
-  });
-  const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = '公司深度報告.csv'; a.click();
-  URL.revokeObjectURL(url);
-  toast('匯出完成');
-}
-
-// ── 公司報告圖片上傳（多張、自動壓縮） ─────────────────────────
-document.getElementById('rf-image').addEventListener('change', async function(e) {
-  const files = e.target.files;
-  if (!files || !files.length) return;
-  toast(`處理 ${files.length} 張圖片中…`);
-  try {
-    const compressed = await compressFiles(files);
-    uploadedReportImages.push(...compressed);
-    toast(`已加入 ${compressed.length} 張`);
-  } catch (err) {
-    toast('部分圖片處理失敗');
-    console.error(err);
-  }
-  e.target.value = '';
-  renderReportFormPreviews();
-});
-
 // ── Lightbox ────────────────────────────────────────────────
 let _lbImages = [];
 let _lbIndex = 0;
@@ -4634,28 +3477,21 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft')   { lbNav(-1); return; }
     if (e.key === 'ArrowRight')  { lbNav( 1); return; }
   }
-  const isReports = document.body.classList.contains('reports-mode');
   if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
     e.preventDefault();
-    isReports ? showReportForm() : showForm();
+    showForm();
   }
   if (e.key === 'Escape') {
     if (document.getElementById('article-form').style.display !== 'none') cancelForm();
-    if (document.getElementById('report-form').style.display  !== 'none') cancelReportForm();
     _closeAllSearchBars();
   }
   if (e.key === '/' && !e.target.matches('input,textarea,[contenteditable]')) {
     e.preventDefault();
-    const mode = document.body.classList.contains('reports-mode') ? ['report-search-input','btn-search-reports']
-               : document.body.classList.contains('links-mode')   ? ['link-search-input','btn-search-links']
-               : document.body.classList.contains('pdfs-mode')    ? ['pdf-search-input','btn-search-pdfs']
-               : ['search-input','btn-search-articles'];
-    toggleSearchBar(...mode);
+    toggleSearchBar('search-input', 'btn-search-articles');
   }
   if ((e.metaKey || e.ctrlKey) && e.key === 's') {
     e.preventDefault();
     if (document.getElementById('article-form').style.display !== 'none') saveArticle();
-    if (document.getElementById('report-form').style.display  !== 'none') saveReport();
   }
 });
 
@@ -4945,7 +3781,7 @@ function togglePreview() {
     const pane = document.createElement('div');
     pane.className = 'preview-pane article-content-display';
     pane.id = 'preview-pane';
-    pane.innerHTML = mdLatex(ta.value || '');
+    pane.innerHTML = mdLatex(linkifyWikilinks(ta.value || ''));
     applyLatex(pane);
     wrap.appendChild(pane);
     ta.addEventListener('input', updatePreview);
@@ -4960,7 +3796,7 @@ function togglePreview() {
 function updatePreview() {
   const pane = document.getElementById('preview-pane');
   if (pane) {
-    pane.innerHTML = mdLatex(document.getElementById('f-content').value || '');
+    pane.innerHTML = mdLatex(linkifyWikilinks(document.getElementById('f-content').value || ''));
     applyLatex(pane);
   }
 }
@@ -5008,10 +3844,9 @@ async function initData() {
   const sub = document.querySelector('.welcome-sub');
   if (sub) sub.textContent = '載入資料中…';
   try {
-    const [arts, cats, reps] = await Promise.all([
+    const [arts, cats] = await Promise.all([
       fetch(`${API_BASE}/articles?limit=500`).then(r => r.json()),
       fetch(`${API_BASE}/categories`).then(r => r.json()),
-      fetch(`${API_BASE}/reports?limit=500`).then(r => r.json())
     ]);
 
     folderCatMap = {};
@@ -5025,10 +3860,8 @@ async function initData() {
     })(cats);
 
     articles = arts.map(_apiToArticle);
-    reports  = reps.map(_apiToReport);
 
     renderList();
-    renderReportList();
     renderRecent();
 
     if (articles.length) viewArticle(articles[0].id);
@@ -5096,7 +3929,6 @@ function _attachReadProgress(scrollSel, barId, titleId) {
   };
 }
 window.resetReadProgress   = _attachReadProgress('#article-view .article-scroll-body', 'read-progress-bar',   'view-title');
-window.resetReportProgress = _attachReadProgress('#report-view .article-scroll-body',  'report-progress-bar', 'rv-company');
 
 // ── 列印 / 匯出 PDF ───────────────────────────────────────────
 function printArticle() {
@@ -5160,693 +3992,6 @@ ${imgsHtml}
 <script>window.onload = function(){ window.print(); }<\/script>
 </body></html>`);
   win.document.close();
-}
-
-// ── 報告：列印、複製、收藏 ─────────────────────────────────────
-function printReport() {
-  const r = reports.find(x => x.id === currentReportId);
-  if (!r) return;
-  const imgs = getImages(r);
-  const imgsHtml = imgs.map(src =>
-    `<img src="${src}" style="max-width:100%;border-radius:6px;margin:12px 0;display:block;">`
-  ).join('');
-  const contentHtml = document.getElementById('rv-content').innerHTML;
-  const metaParts = [
-    r.ticker  ? `代號：${r.ticker}`   : '',
-    r.sector  ? `產業：${r.sector}`   : '',
-    r.rating  ? `評級：${r.rating}`   : '',
-    r.target  ? `目標價：${r.target}` : '',
-    r.date    ? `日期：${r.date}`     : '',
-    r.analyst ? `分析師：${r.analyst}`: '',
-    r.source  ? `來源：${r.source}`   : '',
-  ].filter(Boolean);
-
-  const win = window.open('', '_blank', 'width=820,height=700');
-  win.document.write(`<!DOCTYPE html>
-<html lang="zh-TW"><head>
-<meta charset="UTF-8">
-<title>${esc(r.company)}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', '微軟正黑體', 'Microsoft JhengHei', sans-serif;
-    max-width: 680px; margin: 48px auto; padding: 0 24px;
-    color: #222; line-height: 1.9; font-size: 15px;
-  }
-  h1 { font-size: 28px; line-height: 1.3; margin-bottom: 16px; font-family: Georgia, serif; }
-  .meta {
-    font-size: 12px; color: #888; border-bottom: 1px solid #e0dbd4;
-    padding-bottom: 14px; margin-bottom: 24px;
-    display: flex; flex-wrap: wrap; gap: 10px 20px;
-  }
-  img { max-width: 100%; border-radius: 6px; margin: 12px 0; display: block; }
-  h2,h3,h4 { margin: 1.4em 0 0.5em; font-family: Georgia, serif; }
-  p  { margin-bottom: 0.9em; }
-  ul,ol { padding-left: 1.6em; margin-bottom: 0.9em; }
-  blockquote { border-left: 3px solid #0a0a0a; padding: 8px 16px; margin: 1em 0; color: #777; background: #faf7f2; border-radius: 0 4px 4px 0; }
-  code { background: #f5f0e8; color: #9a5c2a; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
-  pre  { background: #f8f5f0; border: 1px solid #e2d9cc; border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 1em 0; }
-  pre code { background: none; color: #5a4a38; }
-  table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
-  th { background: #f5f0e8; padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #0a0a0a; }
-  td { padding: 8px 12px; border-bottom: 1px solid #e2d9cc; }
-  @media print { body { margin: 0; padding: 20px; max-width: 100%; } @page { margin: 1.5cm; } }
-</style>
-</head><body>
-<h1>${esc(r.company)}</h1>
-${metaParts.length ? `<div class="meta">${metaParts.map(p => `<span>${esc(p)}</span>`).join('')}</div>` : ''}
-${imgsHtml}
-<div>${contentHtml}</div>
-<script>window.onload = function(){ window.print(); }<\/script>
-</body></html>`);
-  win.document.close();
-}
-
-async function toggleReportStar(id) {
-  const r = reports.find(x => x.id === id);
-  if (!r) return;
-  const newVal = r.starred ? 0 : 1;
-  try { await _apiPatch(`/reports/${id}`, { starred: newVal }); } catch(e) {}
-  r.starred = newVal;
-  const btn = document.getElementById('btn-rstar');
-  if (btn) btn.classList.toggle('starred', !!newVal);
-  renderReportList();
-}
-
-async function toggleReportLove(id) {
-  const r = reports.find(x => x.id === id);
-  if (!r) return;
-  const newVal = r.loved ? 0 : 1;
-  try { await _apiPatch(`/reports/${id}`, { loved: newVal }); } catch(e) {}
-  r.loved = newVal;
-  const btn = document.getElementById('btn-rlove');
-  if (btn) btn.classList.toggle('loved', !!newVal);
-  renderReportList();
-}
-
-async function duplicateReport(id) {
-  const r = reports.find(x => x.id === id);
-  if (!r) return;
-  const res = await _apiPost('/reports', {
-    company: `${r.company}（複製）`,
-    ticker: r.ticker || null, sector: r.sector || null,
-    rating: r.rating || null, target: r.target || null,
-    date: r.date || null, analyst: r.analyst || null,
-    source: r.source || null,
-    content: r.content || '',
-    images: JSON.stringify(r.images || []),
-  });
-  const newRep = _apiToReport(res);
-  reports.unshift(newRep);
-  toast('報告已複製');
-  viewReport(res.id);
-  renderReportList();
-}
-
-// ── Link Database ────────────────────────────────────────────
-let links = [];
-let currentLinkFolder = 'all';
-let editingLinkId = null;
-
-async function loadLinks() {
-  try {
-    const data = await fetch(`${API_BASE}/links?limit=500`).then(r => r.json());
-    links = data.map(l => ({
-      id: l.id, title: l.title, url: l.url,
-      desc: l.desc || '', folder: l.folder || '',
-      icon: l.icon || '', createdAt: l.created_at
-    }));
-    // One-time migration: if API is empty but localStorage has data, upload it
-    const local = JSON.parse(localStorage.getItem('links_db') || '[]');
-    if (!links.length && local.length) {
-      toast('正在將連結資料同步至雲端…');
-      for (const lk of local.slice().reverse()) {
-        try {
-          await _apiPost('/links', { title: lk.title, url: lk.url, desc: lk.desc||'', folder: lk.folder||'', icon: lk.icon||'' });
-        } catch(e) {}
-      }
-      localStorage.removeItem('links_db');
-      const data2 = await fetch(`${API_BASE}/links?limit=500`).then(r => r.json());
-      links = data2.map(l => ({ id: l.id, title: l.title, url: l.url, desc: l.desc||'', folder: l.folder||'', icon: l.icon||'', createdAt: l.created_at }));
-      toast('✓ 連結資料已同步至雲端');
-    }
-  } catch(e) {
-    // fallback to localStorage if API unavailable
-    links = JSON.parse(localStorage.getItem('links_db') || '[]');
-  }
-}
-function getLinkFolders() {
-  return sortFoldersMixed([...new Set(links.map(l => l.folder).filter(Boolean))]);
-}
-
-function renderLinkFolders() {
-  const folders = getLinkFolders();
-  const container = document.getElementById('link-folder-tabs');
-  if (!container) return;
-  const allCount = links.length;
-
-  let html = `<div class="folder-tab ${currentLinkFolder === 'all' ? 'active' : ''}" onclick="filterLinkFolder('all')">
-    <span class="folder-tab-icon">🔗</span>
-    <span class="folder-tab-name">所有連結</span>
-    <span class="folder-tab-count">${allCount}</span>
-  </div>`;
-
-  folders.forEach(f => {
-    const count = links.filter(l => l.folder === f).length;
-    const active = currentLinkFolder === f;
-    html += `<div class="folder-tab ${active ? 'active' : ''}" onclick="filterLinkFolder('${escAttr(f)}')">
-      <span class="folder-tab-icon">📁</span>
-      <span class="folder-tab-name">${esc(f)}</span>
-      <span class="folder-tab-count">${count}</span>
-      <button class="folder-tab-delete" onclick="event.stopPropagation();deleteLinkFolder('${escAttr(f)}')" title="刪除資料夾">✕</button>
-    </div>`;
-  });
-
-  container.innerHTML = html;
-  const dl = document.getElementById('link-folder-datalist');
-  if (dl) dl.innerHTML = folders.map(f => `<option value="${esc(f)}">`).join('');
-}
-
-function filterLinkFolder(folder) {
-  currentLinkFolder = folder;
-  renderLinkFolders();
-  renderLinks();
-  const titleEl = document.getElementById('links-folder-title');
-  if (titleEl) titleEl.textContent = folder === 'all' ? '所有連結' : folder;
-}
-
-function renderLinks() {
-  const q = (document.getElementById('link-search-input')?.value || '').toLowerCase();
-  const list = links.filter(l =>
-    (currentLinkFolder === 'all' || l.folder === currentLinkFolder) &&
-    (!q || l.title.toLowerCase().includes(q) || l.url.toLowerCase().includes(q) || (l.desc||'').toLowerCase().includes(q))
-  ).sort((a,b) => b.createdAt - a.createdAt);
-
-  const chip = document.getElementById('links-count-chip');
-  if (chip) chip.textContent = list.length;
-
-  const grid = document.getElementById('links-grid');
-  if (!grid) return;
-  if (!list.length) {
-    grid.innerHTML = `<div class="links-empty">${q ? '找不到符合的連結' : '此資料夾尚無連結<br><button class="btn-new" style="margin-top:10px" onclick="showLinkForm()">新增連結</button>'}</div>`;
-    return;
-  }
-  grid.innerHTML = list.map(l => linkCardHtml(l)).join('');
-}
-
-function escAttr(s) { return (s||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
-
-function linkCardHtml(l) {
-  const domain = (() => { try { return new URL(l.url).hostname; } catch { return ''; } })();
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
-  const iconHtml = l.icon
-    ? `<span style="line-height:1">${esc(l.icon)}</span>`
-    : `<img src="${faviconUrl}" alt="" loading="lazy"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-       <span style="display:none;font-size:26px">🔗</span>`;
-  const safeUrl = escAttr(l.url);
-  return `<div class="link-card" title="${escAttr(l.title)}${l.desc?'\n'+escAttr(l.desc):''}">
-    <div class="link-card-actions">
-      <button class="link-card-btn" onclick="event.stopPropagation();showLinkForm(${l.id})" title="編輯">✎</button>
-      <button class="link-card-btn del" onclick="event.stopPropagation();deleteLink(${l.id})" title="刪除">✕</button>
-    </div>
-    <div class="link-card-icon" onclick="openLink('${safeUrl}')">${iconHtml}</div>
-    <div class="link-card-title" onclick="openLink('${safeUrl}')">${esc(l.title)}</div>
-    <div class="link-card-domain">${esc(domain.replace('www.',''))}</div>
-  </div>`;
-}
-
-function openLink(url) {
-  try { window.open(url, '_blank', 'noopener,noreferrer'); } catch(e) {}
-}
-
-function showLinkForm(id) {
-  ['article-view','article-form','report-view','report-form','links-view','links-welcome']
-    .forEach(x => { const el=document.getElementById(x); if(el) el.style.display='none'; });
-  const form = document.getElementById('link-form');
-  form.style.display = 'flex';
-  editingLinkId = id || null;
-  document.getElementById('link-form-heading').textContent = id ? '編輯連結' : '新增連結';
-  document.getElementById('lf-delete-btn').style.display = id ? '' : 'none';
-  if (id) {
-    const l = links.find(x => x.id === id);
-    if (!l) return;
-    document.getElementById('lf-url').value   = l.url;
-    document.getElementById('lf-title').value = l.title;
-    document.getElementById('lf-folder').value = l.folder || '';
-    document.getElementById('lf-icon').value   = l.icon || '';
-    document.getElementById('lf-desc').value   = l.desc || '';
-  } else {
-    ['lf-url','lf-title','lf-folder','lf-icon','lf-desc'].forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('lf-folder').value = currentLinkFolder === 'all' ? '' : currentLinkFolder;
-  }
-  // populate datalist
-  const dl = document.getElementById('link-folder-datalist');
-  if (dl) dl.innerHTML = getLinkFolders().map(f=>`<option value="${esc(f)}">`).join('');
-  setTimeout(() => document.getElementById('lf-url')?.focus(), 80);
-}
-
-function cancelLinkForm() {
-  document.getElementById('link-form').style.display = 'none';
-  const hasLinks = links.filter(l => currentLinkFolder==='all' || l.folder===currentLinkFolder).length > 0;
-  if (hasLinks || links.length) {
-    document.getElementById('links-view').style.display = 'flex';
-  } else {
-    document.getElementById('links-welcome').style.display = 'flex';
-  }
-}
-
-async function saveLinkForm() {
-  const url   = document.getElementById('lf-url').value.trim();
-  const title = document.getElementById('lf-title').value.trim();
-  if (!url)   { toast('請輸入網址'); document.getElementById('lf-url').focus(); return; }
-  if (!title) { toast('請輸入名稱'); document.getElementById('lf-title').focus(); return; }
-  let finalUrl = url;
-  if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
-  const folder = document.getElementById('lf-folder').value.trim();
-  const icon   = document.getElementById('lf-icon').value.trim();
-  const desc   = document.getElementById('lf-desc').value.trim();
-  const body = { title, url: finalUrl, desc, folder, icon };
-  try {
-    if (editingLinkId) {
-      const res = await _apiPatch(`/links/${editingLinkId}`, body);
-      const idx = links.findIndex(l => l.id === editingLinkId);
-      if (idx !== -1) links[idx] = { id: res.id, title: res.title, url: res.url, desc: res.desc||'', folder: res.folder||'', icon: res.icon||'', createdAt: res.created_at };
-    } else {
-      const res = await _apiPost('/links', body);
-      links.unshift({ id: res.id, title: res.title, url: res.url, desc: res.desc||'', folder: res.folder||'', icon: res.icon||'', createdAt: res.created_at });
-    }
-  } catch(e) { toast('儲存失敗，請稍後再試'); return; }
-  renderLinkFolders();
-  renderLinks();
-  document.getElementById('link-form').style.display = 'none';
-  document.getElementById('links-view').style.display = 'flex';
-  toast(editingLinkId ? '✓ 已更新連結' : '✓ 連結已新增');
-  editingLinkId = null;
-}
-
-async function deleteLink(id) {
-  if (!confirm('確定刪除此連結？')) return;
-  try { await _apiDelete(`/links/${id}`); } catch(e) { toast('刪除失敗，請稍後再試'); return; }
-  links = links.filter(l => l.id !== id);
-  document.getElementById('link-form').style.display = 'none';
-  editingLinkId = null;
-  renderLinkFolders();
-  renderLinks();
-  if (!links.length) {
-    document.getElementById('links-view').style.display = 'none';
-    document.getElementById('links-welcome').style.display = 'flex';
-  } else {
-    document.getElementById('links-view').style.display = 'flex';
-  }
-  toast('連結已刪除');
-}
-
-function addLinkFolder() {
-  const name = prompt('輸入資料夾名稱：');
-  if (!name?.trim()) return;
-  // Just show it — folders are derived from links
-  currentLinkFolder = name.trim();
-  renderLinkFolders();
-  filterLinkFolder(name.trim());
-  showLinkForm(); // open form with folder pre-filled
-}
-
-async function deleteLinkFolder(folder) {
-  const count = links.filter(l => l.folder === folder).length;
-  const msg = count ? `「${folder}」資料夾有 ${count} 個連結，刪除後連結移至未分類。確定？` : `刪除資料夾「${folder}」？`;
-  if (!confirm(msg)) return;
-  // Update all links in this folder to empty folder via API
-  const affected = links.filter(l => l.folder === folder);
-  try {
-    await Promise.all(affected.map(l => _apiPatch(`/links/${l.id}`, { folder: '' })));
-  } catch(e) { toast('操作失敗，請稍後再試'); return; }
-  links.forEach(l => { if (l.folder === folder) l.folder = ''; });
-  if (currentLinkFolder === folder) currentLinkFolder = 'all';
-  renderLinkFolders();
-  renderLinks();
-  toast(`資料夾「${folder}」已刪除`);
-}
-
-function linkUrlChange(url) {
-  const titleEl = document.getElementById('lf-title');
-  if (titleEl && !titleEl.value && url) {
-    try {
-      const host = new URL(url.startsWith('http') ? url : 'https://'+url).hostname.replace(/^www\./, '');
-      const parts = host.split('.');
-      const name = parts[0];
-      titleEl.value = name.charAt(0).toUpperCase() + name.slice(1);
-    } catch {}
-  }
-}
-
-function exportLinksJSON() {
-  const data = JSON.stringify(links, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `links_backup_${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-}
-
-// ════════════ PDF Library ═══════════════════════════════════════
-let _pdfDoc = null;           // pdfjsLib document instance
-let _pdfZoom = 1.0;
-let _pdfDataCache = {};       // id → base64 (avoid refetch within session)
-let _pdfPagesRendered = [];   // page wrapper elements
-
-async function loadPdfs() {
-  try {
-    const data = await fetch(`${API_BASE}/pdfs?limit=500`).then(r => r.json());
-    pdfs = (data || []).map(p => ({
-      id: p.id, title: p.title || '未命名',
-      author: p.author || '', date: p.date || '', source: p.source || '',
-      highlights: p.highlights || '[]',
-      notes: p.notes || '[]',
-      starred: p.starred || 0,
-      created_at: p.created_at, updated_at: p.updated_at,
-    }));
-  } catch(e) {
-    console.warn('[pdf] load failed', e);
-    pdfs = [];
-  }
-}
-
-function renderPdfList() {
-  const list = document.getElementById('pdf-list');
-  const chip = document.getElementById('pdf-count-chip');
-  if (!list) return;
-  const q = (document.getElementById('pdf-search-input')?.value || '').trim().toLowerCase();
-  const filtered = pdfs.filter(p =>
-    !q || p.title.toLowerCase().includes(q) || (p.author||'').toLowerCase().includes(q)
-  );
-  if (chip) chip.textContent = filtered.length;
-  if (!filtered.length) {
-    list.innerHTML = `<div class="empty-list">${q ? '沒有符合的 PDF' : '尚無 PDF<br>上傳第一份 PDF 開始'}</div>`;
-    return;
-  }
-  list.innerHTML = filtered.map(p => `
-    <div class="pdf-list-item ${p.id === currentPdfId ? 'active' : ''}" onclick="viewPdf(${p.id})">
-      <div class="pli-title">${p.starred ? '<span class="pli-star">★</span> ' : ''}${esc(p.title)}</div>
-      <div class="pli-meta">
-        ${p.author ? `<span>${esc(p.author)}</span>` : ''}
-        ${p.date ? `<span>${esc(p.date)}</span>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-function showPdfForm() {
-  document.getElementById('pdf-welcome').style.display = 'none';
-  document.getElementById('pdf-view').style.display    = 'none';
-  document.getElementById('pdf-form').style.display    = 'flex';
-  document.getElementById('pf-file').value = '';
-  document.getElementById('pf-title').value = '';
-  document.getElementById('pf-author').value = '';
-  document.getElementById('pf-source').value = '';
-  document.getElementById('pf-file-info').textContent = '';
-  dpSetValue('pf-date', today());
-
-  const fileInput = document.getElementById('pf-file');
-  fileInput.onchange = e => {
-    const f = e.target.files[0];
-    if (!f) return;
-    document.getElementById('pf-file-info').textContent =
-      `${f.name} · ${(f.size / 1048576).toFixed(2)} MB`;
-    const titleEl = document.getElementById('pf-title');
-    if (!titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
-  };
-}
-
-function cancelPdfForm() {
-  document.getElementById('pdf-form').style.display = 'none';
-  if (pdfs.length) viewPdf(currentPdfId || pdfs[0].id);
-  else document.getElementById('pdf-welcome').style.display = 'flex';
-}
-
-async function savePdf() {
-  const fileEl = document.getElementById('pf-file');
-  const file = fileEl.files[0];
-  if (!file) { toast('請選擇 PDF 檔'); return; }
-  const MAX = 8 * 1048576;  // 8 MB raw
-  if (file.size > MAX) { toast(`檔案太大（上限 8 MB），目前 ${(file.size/1048576).toFixed(1)} MB`); return; }
-  const title = document.getElementById('pf-title').value.trim() || file.name;
-  const saveBtn = document.getElementById('pf-save-btn');
-  saveBtn.textContent = '上傳中…'; saveBtn.disabled = true;
-  try {
-    const b64 = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result.split(',')[1] || '');
-      r.onerror = () => rej(new Error('讀取失敗'));
-      r.readAsDataURL(file);
-    });
-    const body = {
-      title,
-      author: document.getElementById('pf-author').value.trim() || null,
-      date:   document.getElementById('pf-date').value || null,
-      source: document.getElementById('pf-source').value.trim() || null,
-      data: b64,
-    };
-    const res = await _apiPost('/pdfs', body);
-    pdfs.unshift({
-      id: res.id, title: res.title, author: res.author || '', date: res.date || '',
-      source: res.source || '', highlights: res.highlights || '[]', notes: res.notes || '[]',
-      starred: res.starred || 0, created_at: res.created_at, updated_at: res.updated_at,
-    });
-    _pdfDataCache[res.id] = b64;
-    renderPdfList();
-    document.getElementById('pdf-form').style.display = 'none';
-    viewPdf(res.id);
-    toast('✓ PDF 已上傳');
-  } catch(e) {
-    toast('上傳失敗：' + (e.message||e));
-    console.error(e);
-  } finally {
-    saveBtn.textContent = '上傳並儲存'; saveBtn.disabled = false;
-  }
-}
-
-async function deletePdf(id) {
-  const p = pdfs.find(x => x.id === id);
-  if (!p) return;
-  if (!confirm(`確定刪除「${p.title}」？`)) return;
-  try { await _apiDelete(`/pdfs/${id}`); } catch(e) { toast('刪除失敗'); return; }
-  pdfs = pdfs.filter(x => x.id !== id);
-  delete _pdfDataCache[id];
-  if (currentPdfId === id) currentPdfId = null;
-  renderPdfList();
-  if (pdfs.length) viewPdf(pdfs[0].id);
-  else {
-    document.getElementById('pdf-view').style.display = 'none';
-    document.getElementById('pdf-welcome').style.display = 'flex';
-  }
-  toast('已刪除');
-}
-
-async function togglePdfStar(id) {
-  const p = pdfs.find(x => x.id === id);
-  if (!p) return;
-  const newVal = p.starred ? 0 : 1;
-  try { await _apiPatch(`/pdfs/${id}`, { starred: newVal }); } catch(e) {}
-  p.starred = newVal;
-  const btn = document.getElementById('btn-pstar');
-  if (btn) btn.classList.toggle('starred', !!newVal);
-  renderPdfList();
-}
-
-async function viewPdf(id) {
-  const p = pdfs.find(x => x.id === id);
-  if (!p) return;
-  currentPdfId = id;
-  // 同步螢光筆/筆記
-  _syncHlNotesOnOpen({type:'pdf', id: p.id}, p);
-
-  document.getElementById('pdf-welcome').style.display = 'none';
-  document.getElementById('pdf-form').style.display    = 'none';
-  const view = document.getElementById('pdf-view');
-  view.style.display = 'flex';
-
-  document.getElementById('pv-title').textContent = p.title;
-  document.getElementById('pv-author').textContent = p.author || '';
-  document.getElementById('pv-date').textContent   = p.date   || '';
-  const srcEl = document.getElementById('pv-source');
-  const src = p.source || '';
-  srcEl.innerHTML = src.startsWith('http')
-    ? `<a href="${esc(src)}" target="_blank">${esc(src.length>40?src.slice(0,40)+'…':src)}</a>`
-    : esc(src);
-
-  const sbtn = document.getElementById('btn-pstar');
-  if (sbtn) sbtn.classList.toggle('starred', !!p.starred);
-
-  document.getElementById('pv-pages').textContent = '載入中…';
-  document.getElementById('pdf-pages-container').innerHTML = '';
-  document.getElementById('notes-panel')?.classList.remove('open');
-  renderNotes();
-  renderPdfList();
-
-  // 取得 base64
-  let b64 = _pdfDataCache[id];
-  if (!b64) {
-    try {
-      const r = await fetch(`${API_BASE}/pdfs/${id}/data`).then(r => r.json());
-      b64 = r.data;
-      _pdfDataCache[id] = b64;
-    } catch(e) {
-      toast('讀取 PDF 失敗'); return;
-    }
-  }
-  // 解 base64 → Uint8Array
-  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-
-  if (typeof pdfjsLib === 'undefined') { toast('PDF.js 尚未載入'); return; }
-  try {
-    _pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
-  } catch(e) { toast('PDF 解析失敗：' + (e.message||e)); return; }
-
-  document.getElementById('pv-pages').textContent = `${_pdfDoc.numPages} 頁`;
-  await renderAllPdfPages();
-  // 套上既有螢光筆
-  applyStoredPdfHighlights();
-}
-
-async function renderAllPdfPages() {
-  const container = document.getElementById('pdf-pages-container');
-  container.innerHTML = '';
-  _pdfPagesRendered = [];
-  if (!_pdfDoc) return;
-  for (let i = 1; i <= _pdfDoc.numPages; i++) {
-    const page = await _pdfDoc.getPage(i);
-    const viewport = page.getViewport({ scale: _pdfZoom * (window.devicePixelRatio || 1) });
-    const displayViewport = page.getViewport({ scale: _pdfZoom });
-    const wrap = document.createElement('div');
-    wrap.className = 'pdf-page-wrap';
-    wrap.dataset.page = i;
-    wrap.style.width = displayViewport.width + 'px';
-    wrap.style.height = displayViewport.height + 'px';
-
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    canvas.style.width = displayViewport.width + 'px';
-    canvas.style.height = displayViewport.height + 'px';
-    wrap.appendChild(canvas);
-    // text layer for selection
-    const textLayer = document.createElement('div');
-    textLayer.className = 'pdf-text-layer';
-    textLayer.style.width = displayViewport.width + 'px';
-    textLayer.style.height = displayViewport.height + 'px';
-    wrap.appendChild(textLayer);
-    // highlight overlay
-    const hlLayer = document.createElement('div');
-    hlLayer.className = 'pdf-hl-layer';
-    wrap.appendChild(hlLayer);
-    // page number badge
-    const num = document.createElement('div');
-    num.className = 'pdf-page-num';
-    num.textContent = `${i} / ${_pdfDoc.numPages}`;
-    wrap.appendChild(num);
-
-    container.appendChild(wrap);
-    _pdfPagesRendered.push(wrap);
-
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    const textContent = await page.getTextContent();
-    pdfjsLib.renderTextLayer({
-      textContentSource: textContent,
-      container: textLayer,
-      viewport: displayViewport,
-      textDivs: [],
-    });
-  }
-}
-
-function changePdfZoom(delta) {
-  _pdfZoom = Math.max(0.5, Math.min(2.5, _pdfZoom + delta));
-  document.getElementById('pdf-zoom-label').textContent = Math.round(_pdfZoom*100) + '%';
-  if (_pdfDoc) { renderAllPdfPages().then(applyStoredPdfHighlights); }
-}
-function resetPdfZoom() {
-  _pdfZoom = 1.0;
-  document.getElementById('pdf-zoom-label').textContent = '100%';
-  if (_pdfDoc) { renderAllPdfPages().then(applyStoredPdfHighlights); }
-}
-
-function downloadPdf() {
-  const p = pdfs.find(x => x.id === currentPdfId);
-  if (!p) return;
-  const b64 = _pdfDataCache[currentPdfId];
-  if (!b64) { toast('PDF 尚未載入完畢'); return; }
-  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  const blob = new Blob([bytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement('a'), {
-    href: url, download: (p.title || 'document').replace(/\.pdf$/i,'') + '.pdf'
-  });
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-}
-
-// ── PDF 螢光筆：選取文字 → 記下 page + 相對矩形 → 疊回 ─────────
-function _activePdfPageWrap(node) {
-  while (node && node !== document.body) {
-    if (node.classList && node.classList.contains('pdf-page-wrap')) return node;
-    node = node.parentNode;
-  }
-  return null;
-}
-
-function applyPdfHighlight(color) {
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed) return;
-  const range = sel.getRangeAt(0);
-  const wrap = _activePdfPageWrap(range.commonAncestorContainer);
-  if (!wrap) return;
-  const pageNum = +wrap.dataset.page;
-  const wrapRect = wrap.getBoundingClientRect();
-  const rects = [...range.getClientRects()].map(r => ({
-    x: (r.left - wrapRect.left) / wrapRect.width,
-    y: (r.top  - wrapRect.top)  / wrapRect.height,
-    w: r.width / wrapRect.width,
-    h: r.height / wrapRect.height,
-  })).filter(r => r.w > 0.002 && r.h > 0.002);
-  if (!rects.length) return;
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-  const hl = { id, page: pageNum, color, text: sel.toString().trim(), rects };
-  const all = getHls({type:'pdf', id: currentPdfId});
-  all.push(hl);
-  saveHls({type:'pdf', id: currentPdfId}, all);
-  drawPdfHighlight(hl);
-  sel.removeAllRanges();
-  document.getElementById('hl-toolbar').style.display = 'none';
-}
-
-function drawPdfHighlight(hl) {
-  const wrap = _pdfPagesRendered.find(w => +w.dataset.page === hl.page);
-  if (!wrap) return;
-  const layer = wrap.querySelector('.pdf-hl-layer');
-  if (!layer) return;
-  hl.rects.forEach(r => {
-    const div = document.createElement('div');
-    div.className = 'pdf-hl-rect ' + (hl.color || 'yellow');
-    div.dataset.hlId = hl.id;
-    div.style.left = (r.x * 100) + '%';
-    div.style.top  = (r.y * 100) + '%';
-    div.style.width  = (r.w * 100) + '%';
-    div.style.height = (r.h * 100) + '%';
-    div.title = '點擊移除螢光筆';
-    div.onclick = () => {
-      if (!confirm('移除這個螢光筆？')) return;
-      const filtered = getHls({type:'pdf', id: currentPdfId}).filter(h => h.id !== hl.id);
-      saveHls({type:'pdf', id: currentPdfId}, filtered);
-      layer.querySelectorAll(`[data-hl-id="${hl.id}"]`).forEach(el => el.remove());
-    };
-    layer.appendChild(div);
-  });
-}
-
-function applyStoredPdfHighlights() {
-  const all = getHls({type:'pdf', id: currentPdfId});
-  all.forEach(drawPdfHighlight);
 }
 
 // ── Anchor Notes ─────────────────────────────────────────────
@@ -6020,44 +4165,26 @@ document.addEventListener('keydown', function(e) {
 // ── Highlighter ──────────────────────────────────────────────
 let hlEnabled = false;
 
-// ── 文件抽象：支援 article / report / pdf 共用螢光筆/筆記 ──────
+// ── 文件抽象：article 專用螢光筆/筆記 ──────
 function _toDoc(idOrDoc) {
   if (idOrDoc && typeof idOrDoc === 'object' && idOrDoc.type) return idOrDoc;
   return { type: 'article', id: idOrDoc };
 }
 function _docKey(doc, kind) {
   const prefix = kind === 'hl' ? 'hl_' : 'notes_';
-  if (doc.type === 'report') return `${prefix}r_${doc.id}`;
-  if (doc.type === 'pdf')    return `${prefix}p_${doc.id}`;
   return `${prefix}${doc.id}`;
 }
 function _docEndpoint(doc) {
-  if (doc.type === 'report') return `/reports/${doc.id}`;
-  if (doc.type === 'pdf')    return `/pdfs/${doc.id}`;
   return `/articles/${doc.id}`;
 }
 function _docArr(doc) {
-  if (doc.type === 'report') return reports;
-  if (doc.type === 'pdf')    return pdfs;
   return articles;
 }
 function _docContentEl(doc) {
-  if (doc.type === 'report') return document.getElementById('rv-content');
-  if (doc.type === 'pdf')    return document.getElementById('pdf-pages-container');
   return document.getElementById('view-content');
 }
 function getCurrentDoc() {
-  const pv = document.getElementById('pdf-view');
-  const rv = document.getElementById('report-view');
   const av = document.getElementById('article-view');
-  if (pv && pv.style.display !== 'none' && currentPdfId) {
-    const p = pdfs.find(x => x.id === currentPdfId);
-    if (p) return { type: 'pdf', id: currentPdfId, obj: p };
-  }
-  if (rv && rv.style.display !== 'none' && currentReportId) {
-    const r = reports.find(x => x.id === currentReportId);
-    if (r) return { type: 'report', id: currentReportId, obj: r };
-  }
   if (av && av.style.display !== 'none' && currentId) {
     const a = articles.find(x => x.id === currentId);
     if (a) return { type: 'article', id: currentId, obj: a };
@@ -6080,8 +4207,7 @@ function saveHls(idOrDoc, arr) {
 
 function toggleHighlighter() {
   hlEnabled = !hlEnabled;
-  // 同步兩個工具列上的螢光筆按鈕狀態
-  ['btn-highlight', 'btn-rhighlight', 'btn-phighlight'].forEach(id => {
+  ['btn-highlight'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.classList.toggle('btn-hl-active', hlEnabled);
   });
@@ -6097,15 +4223,11 @@ function hlHideToolbar() {
 // 找出目前 selection 落在哪個 content 元素內
 function _findActiveHlContainer(range) {
   const a = document.getElementById('view-content');
-  const r = document.getElementById('rv-content');
-  const p = document.getElementById('pdf-pages-container');
   if (a && a.contains(range.commonAncestorContainer)) return a;
-  if (r && r.contains(range.commonAncestorContainer)) return r;
-  if (p && p.contains(range.commonAncestorContainer)) return p;
   return null;
 }
 
-// Show toolbar on text selection inside view-content or rv-content
+// Show toolbar on text selection inside view-content
 document.addEventListener('mouseup', function(e) {
   if (e.target.closest('#hl-toolbar')) return;
   const toolbar = document.getElementById('hl-toolbar');
@@ -6133,11 +4255,6 @@ function hlApply(color) {
   if (!sel.toString().trim()) return;
   const doc = getCurrentDoc();
   if (!doc) return;
-  // PDF 有獨立的座標式螢光筆
-  if (doc.type === 'pdf') {
-    applyPdfHighlight(color);
-    return;
-  }
   const content = _docContentEl(doc);
   if (!content) return;
   try {
@@ -6165,12 +4282,9 @@ document.addEventListener('click', function(e) {
   const mark = e.target.closest('mark.hl');
   if (!mark) return;
   const hlId = mark.dataset.hlId;
-  // 判斷該 mark 屬於哪個 content 元素
   const av = document.getElementById('view-content');
-  const rv = document.getElementById('rv-content');
   let doc = null;
   if (av && av.contains(mark)) doc = { type: 'article', id: currentId };
-  else if (rv && rv.contains(mark)) doc = { type: 'report', id: currentReportId };
   if (!doc || !doc.id) return;
   mark.replaceWith(document.createTextNode(mark.textContent));
   saveHls(doc, getHls(doc).filter(h => h.id !== hlId));
@@ -6792,8 +4906,8 @@ document.addEventListener('keydown', e => {
 // ── 5. Export notes + highlights ──────────────────────────────
 function exportNotes() {
   const doc = getCurrentDoc();
-  if (!doc) { toast('請先開啟一篇文章或報告'); return; }
-  const title = doc.type === 'report' ? (doc.obj.company || '報告') : (doc.obj.title || '文章');
+  if (!doc) { toast('請先開啟一篇文章'); return; }
+  const title = doc.obj.title || '文章';
   const hls   = getHls(doc);
   const notes = getNotes(doc);
   if (!hls.length && !notes.length) { toast('此文件尚無筆記或標記'); return; }
@@ -6851,13 +4965,12 @@ function searchAllNotes(q) {
       if (ql) items = items.filter(it =>
         it.text.toLowerCase().includes(ql) || it.anchorText.toLowerCase().includes(ql));
       if (!items.length) return;
-      const title = type === 'report' ? (obj.company || obj.title || '報告') : (obj.title || '文章');
+      const title = obj.title || '文章';
       groups.push({ type, obj, title, items });
       totalItems += items.length;
     });
   }
   collect(articles, 'article');
-  collect(reports, 'report');
 
   if (cnt) cnt.textContent = groups.length ? `${groups.length} 篇・${totalItems} 則` : '';
 
@@ -6867,10 +4980,8 @@ function searchAllNotes(q) {
   }
 
   res.innerHTML = groups.map(g => {
-    const badge = g.type === 'report' ? '報告' : '文章';
-    const open = g.type === 'report'
-      ? `closeNotesSearch();viewReport(${g.obj.id});setTimeout(()=>{if(!document.getElementById('notes-panel').classList.contains('open'))toggleNotes();},300)`
-      : `closeNotesSearch();viewArticle(${g.obj.id});setTimeout(()=>{if(!document.getElementById('notes-panel').classList.contains('open'))toggleNotes();},300)`;
+    const badge = '文章';
+    const open = `closeNotesSearch();viewArticle(${g.obj.id});setTimeout(()=>{if(!document.getElementById('notes-panel').classList.contains('open'))toggleNotes();},300)`;
     const rows = g.items.map(it => {
       const kindLabel = it.kind === 'hl' ? '劃線' : '筆記';
       const kindClass = it.kind === 'hl' ? 'nspi-hl' : 'nspi-note';
@@ -7064,29 +5175,12 @@ async function _loadStatsOverview() {
       ${lines.map(l => `<div class="sc-sub">${l}</div>`).join('')}
     </div>`;
 
-  const sectors  = (s.sectors || []).filter(x => x.count > 0).slice(0, 8);
-  const sectorMax = sectors.length ? sectors[0].count : 0;
-  const rTotal   = s.reports?.total || 0;
-
   box.innerHTML = `
     <div class="sc-section-lbl">資料庫總覽</div>
-    <div class="sc-grid4" style="margin-bottom:${sectors.length ? 24 : 4}px">
+    <div class="sc-grid4" style="margin-bottom:4px">
       ${dbCard(s.articles.total, '文章', [`本月 +${s.articles.this_month}`, `收藏 ${s.articles.starred}・因果圖 ${s.articles.with_cld}`])}
-      ${dbCard(s.reports.total,  '研究報告', [`本月 +${s.reports.this_month}`, `收藏 ${s.reports.starred}`])}
-      ${dbCard(s.pdfs.total,     'PDF', ['已入庫'])}
-      ${dbCard(s.links.total,    '連結', ['收藏中'])}
-    </div>
-    ${sectors.length ? `
-    <div class="sc-section-lbl">報告產業分布</div>
-    <div>${sectors.map(x => `
-      <div class="sc-bar-row">
-        <div class="sc-bar-label" title="${esc(x.sector)}">${esc(x.sector)}</div>
-        <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${sectorMax ? Math.round(x.count/sectorMax*100) : 0}%"></div></div>
-        <div class="sc-bar-count">${x.count}</div>
-        <div class="sc-bar-pct">${fmtPct(x.count, rTotal)}</div>
-      </div>`).join('')}
-    </div>
-    <hr class="sc-divider">` : ''}`;
+      ${dbCard(s.tags.total,     '標籤', ['已建立'])}
+    </div>`;
 }
 function closeStats() {
   document.getElementById('stats-panel').classList.remove('open');
@@ -7125,46 +5219,22 @@ async function generateSummary() {
     btn?.classList.remove('active');
   }
 }
-async function generateReportSummary() {
-  if (!currentReportId) { toast('請先開啟一份報告'); return; }
-  const r = reports.find(x => x.id === currentReportId);
-  if (r && r.summary && r.summary.trim()
-      && !confirm('此報告已有摘要，要重新生成並覆蓋嗎？')) return;
-  const btn = document.getElementById('btn-rsummary');
-  btn?.classList.add('active');
-  toast('AI 生成摘要中…');
-  try {
-    const res = await _apiPost(`/reports/${currentReportId}/generate-summary`, {});
-    if (res.detail) { toast('摘要生成失敗：' + res.detail); return; }
-    const summary = (res.summary || '').trim();
-    if (r) r.summary = summary;
-    renderSummary(summary, 'rv-summary');
-    toast('✓ 摘要已生成');
-  } catch (e) {
-    toast('摘要生成失敗：' + (e.message || e));
-  } finally {
-    btn?.classList.remove('active');
-  }
-}
-
-// ── AI 問答（文章／報告共用）─────────────────────────────────
-let _askCtx = null;   // {type:'article'|'report', id, title}
+// ── AI 問答 ─────────────────────────────────────────────────
+let _askCtx = null;   // {type:'article', id, title}
 function _openAskFor(type) {
-  const isReport = type === 'report';
-  const id = isReport ? currentReportId : currentId;
-  if (!id) { toast(isReport ? '請先開啟一份報告' : '請先開啟一篇文章'); return; }
-  const obj = (isReport ? reports : articles).find(x => x.id === id);
-  const title = obj ? (isReport ? (obj.company || '') : (obj.title || '')) : '';
-  _askCtx = { type: isReport ? 'report' : 'article', id, title };
+  const id = currentId;
+  if (!id) { toast('請先開啟一篇文章'); return; }
+  const obj = articles.find(x => x.id === id);
+  const title = obj ? (obj.title || '') : '';
+  _askCtx = { type: 'article', id, title };
   document.getElementById('ask-context').textContent = title ? ('關於：' + title) : '';
   document.getElementById('ask-q').value = '';
   const ans = document.getElementById('ask-answer');
-  ans.innerHTML = `<div class="ask-empty">輸入問題，AI 會「只依本${isReport ? '報告' : '文'}內容」作答。</div>`;
+  ans.innerHTML = `<div class="ask-empty">輸入問題，AI 會「只依本文內容」作答。</div>`;
   document.getElementById('ask-panel').classList.add('open');
   setTimeout(() => document.getElementById('ask-q').focus(), 50);
 }
 function openAsk() { _openAskFor('article'); }
-function openReportAsk() { _openAskFor('report'); }
 function closeAsk() {
   document.getElementById('ask-panel').classList.remove('open');
 }
@@ -7192,8 +5262,7 @@ async function submitAsk() {
   qEl.value = ''; _askAutoGrow(qEl);
   sendBtn.disabled = true;
   try {
-    const base = _askCtx.type === 'report' ? 'reports' : 'articles';
-    const res = await _apiPost(`/${base}/${_askCtx.id}/ask`, { question: q });
+    const res = await _apiPost(`/articles/${_askCtx.id}/ask`, { question: q });
     const aEl = block.querySelector('.ask-qa-a');
     aEl.classList.remove('ask-loading');
     if (res.detail) { aEl.classList.add('ask-err'); aEl.textContent = '問答失敗：' + res.detail; }
@@ -7208,172 +5277,21 @@ async function submitAsk() {
   }
 }
 
-// ── 觀察清單＋評等追蹤 ─────────────────────────────────────────
-const _RATING_RANK = { '強力買入':5, '買入':4, '中立':3, '賣出':2, '強力賣出':1 };
-function _ratingRank(r) { return _RATING_RANK[r] || 0; }
-function _reportKey(r) {
-  if (!r) return '';
-  return (r.ticker || '').trim().toUpperCase() || (r.company || '').trim();
-}
-function getWatchlist() {
-  try { const a = JSON.parse(localStorage.getItem('watchlist') || '[]'); return Array.isArray(a) ? a : []; }
-  catch (e) { return []; }
-}
-function _saveWatchlist(arr) {
-  localStorage.setItem('watchlist', JSON.stringify(arr));
-  _refreshWatchOpenCount();
-}
-function isWatched(r) {
-  const k = _reportKey(r);
-  return !!k && getWatchlist().includes(k);
-}
-function toggleWatch(id) {
-  const r = reports.find(x => x.id === id);
-  if (!r) { toast('請先開啟一份報告'); return; }
-  const k = _reportKey(r);
-  if (!k) { toast('此報告缺少公司／代碼，無法加入'); return; }
-  const wl = getWatchlist();
-  const idx = wl.indexOf(k);
-  if (idx >= 0) { wl.splice(idx, 1); toast('已移出觀察清單'); }
-  else { wl.push(k); toast('已加入觀察清單'); }
-  _saveWatchlist(wl);
-  _refreshWatchBtn();
-  if (document.getElementById('watchlist-panel')?.classList.contains('open')) renderWatchlist();
-}
-function removeWatch(key) {
-  _saveWatchlist(getWatchlist().filter(k => k !== key));
-  _refreshWatchBtn();
-  renderWatchlist();
-}
-function _refreshWatchBtn() {
-  const btn = document.getElementById('btn-rwatch');
-  if (!btn) return;
-  const on = isWatched(reports.find(x => x.id === currentReportId));
-  btn.classList.toggle('watching', on);
-  btn.title = on ? '已在觀察清單（點擊移除）' : '加入觀察清單（追蹤此公司評等）';
-}
-function _refreshWatchOpenCount() {
-  const el = document.getElementById('wl-open-count');
-  if (el) el.textContent = getWatchlist().length || '';
-}
-function _parseTarget(t) {
-  if (t == null) return null;
-  const m = String(t).replace(/,/g, '').match(/-?\d+(\.\d+)?/);
-  return m ? parseFloat(m[0]) : null;
-}
-function _fmtNum(n) {
-  const s = Math.abs(n);
-  return Number.isInteger(s) ? String(s) : s.toFixed(2).replace(/\.?0+$/, '');
-}
-function _wlChangeChips(cur, prev) {
-  if (!prev) return '';
-  const chips = [];
-  const cr = _ratingRank(cur.rating), pr = _ratingRank(prev.rating);
-  if (cur.rating && prev.rating && cur.rating !== prev.rating) {
-    const cls = cr > pr ? 'wl-chg-up' : (cr < pr ? 'wl-chg-down' : 'wl-chg-flat');
-    const word = cr > pr ? '升評' : (cr < pr ? '降評' : '調整');
-    chips.push(`<span class="wl-chg ${cls}">${word}：${esc(prev.rating)}→${esc(cur.rating)}</span>`);
-  }
-  const ct = _parseTarget(cur.target), pt = _parseTarget(prev.target);
-  if (ct != null && pt != null && ct !== pt) {
-    const diff = ct - pt;
-    const cls = diff > 0 ? 'wl-chg-up' : 'wl-chg-down';
-    const sign = diff > 0 ? '+' : '−';
-    let label = `目標 ${sign}${_fmtNum(diff)}`;
-    if (pt !== 0) label += `（${sign}${Math.abs(diff / pt * 100).toFixed(1)}%）`;
-    chips.push(`<span class="wl-chg ${cls}">${label}</span>`);
-  }
-  return chips.length ? `<div class="wl-row-chg">${chips.join('')}</div>` : '';
-}
-function openWatchlist() {
-  renderWatchlist();
-  document.getElementById('watchlist-panel').classList.add('open');
-}
-function closeWatchlist() {
-  document.getElementById('watchlist-panel')?.classList.remove('open');
-}
-function renderWatchlist() {
-  const body = document.getElementById('wl-body');
-  const sub = document.getElementById('wl-sub');
-  const wl = getWatchlist();
-  if (!wl.length) {
-    sub.textContent = '';
-    body.innerHTML = '<div class="wl-empty">觀察清單是空的。<br>開啟任一份報告，點工具列的「眼睛」圖示即可加入追蹤，<br>之後便能在此比較同一家公司歷次的評等與目標價變化。</div>';
-    return;
-  }
-  const byKey = {};
-  reports.forEach(r => { const k = _reportKey(r); if (k) (byKey[k] = byKey[k] || []).push(r); });
-  let totalReports = 0;
-  const html = wl.map(key => {
-    const list = (byKey[key] || []).slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    totalReports += list.length;
-    const latest = list[list.length - 1];
-    const name = latest ? latest.company : key;
-    const ticker = latest ? latest.ticker : '';
-    const sector = latest ? latest.sector : '';
-    const head = `<div class="wl-group-head">
-        <span class="wl-group-name">${esc(name || key)}</span>
-        ${ticker ? `<span class="wl-group-ticker">${esc(ticker)}</span>` : ''}
-        ${sector ? `<span class="wl-group-sector">${esc(sector)}</span>` : ''}
-        <button class="wl-remove" data-key="${escAttr(key)}" onclick="removeWatch(this.dataset.key)" title="從觀察清單移除">移除</button>
-      </div>`;
-    if (!list.length) {
-      return `<div class="wl-group">${head}<div class="wl-noreport">尚無報告資料（已加入追蹤；新增此公司報告後將顯示變化）</div></div>`;
-    }
-    const latestRating = latest.rating
-      ? `<span class="rating-badge ${ratingClass(latest.rating)}" style="font-size:10px;padding:2px 8px">${esc(latest.rating)}</span>`
-      : '<span style="color:var(--text-faint)">未評等</span>';
-    const latestTarget = latest.target ? `<span class="wl-target">目標 ${esc(latest.target)}</span>` : '';
-    const summary = `<div class="wl-latest">最新：${latestRating}${latestTarget}<span>${esc(latest.date || '')}</span>${latest.analyst ? `<span class="wl-row-analyst">${esc(latest.analyst)}</span>` : ''}<span style="color:var(--text-faint)">· 共 ${list.length} 份</span></div>`;
-    const desc = list.slice().reverse();
-    const rows = desc.map((r, i) => {
-      const prev = desc[i + 1];
-      const ratingBadge = r.rating ? `<span class="rating-badge ${ratingClass(r.rating)}" style="font-size:9px;padding:1px 6px">${esc(r.rating)}</span>` : '<span style="color:var(--text-faint);font-size:10.5px">未評等</span>';
-      const target = r.target ? `<span class="wl-row-target">目標 ${esc(r.target)}</span>` : '';
-      const analyst = r.analyst ? `<span class="wl-row-analyst">${esc(r.analyst)}</span>` : '';
-      return `<div class="wl-row">
-          <div class="wl-row-date">${esc(r.date || '—')}</div>
-          <div class="wl-row-main">
-            <div class="wl-row-line1">${ratingBadge}${target}${analyst}</div>
-            ${_wlChangeChips(r, prev)}
-          </div>
-        </div>`;
-    }).join('');
-    return `<div class="wl-group">${head}${summary}<div class="wl-timeline">${rows}</div></div>`;
-  }).join('');
-  sub.textContent = `${wl.length} 家公司 · ${totalReports} 份報告`;
-  body.innerHTML = html;
-}
-
 // ── 鍵盤快捷鍵 ────────────────────────────────────────────────
 function toggleShortcutHelp() {
   document.getElementById('shortcut-help')?.classList.toggle('open');
 }
 function _anyOverlayOpen() {
-  const open = ['fetch-url-dialog','stats-panel','notes-search-panel','cld-panel','ask-panel','watchlist-panel']
+  const open = ['fetch-url-dialog','stats-panel','notes-search-panel','cld-panel','ask-panel','graph-panel']
     .some(id => document.getElementById(id)?.classList.contains('open'));
   const lb = document.getElementById('lightbox')?.classList.contains('show');
   return open || lb;
 }
-function _curMode() {
-  const b = document.body.classList;
-  if (b.contains('reports-mode')) return 'reports';
-  if (b.contains('links-mode'))   return 'links';
-  if (b.contains('pdfs-mode'))    return 'pdfs';
-  return 'articles';
-}
 function _navList(dir) {
   if (typeof _batchMode !== 'undefined' && _batchMode) return;
-  const map = {
-    articles: ['article-list', '.list-item'],
-    reports:  ['report-list',  '.report-list-item'],
-    pdfs:     ['pdf-list',     '.pdf-list-item'],
-  };
-  const info = map[_curMode()];
-  if (!info) return;                       // 連結庫不適用上下篇
-  const box = document.getElementById(info[0]);
+  const box = document.getElementById('article-list');
   if (!box) return;
-  const items = [...box.querySelectorAll(info[1])];
+  const items = [...box.querySelectorAll('.list-item')];
   if (!items.length) return;
   let idx = items.findIndex(el => el.classList.contains('active'));
   if (idx === -1) idx = (dir > 0 ? -1 : 0);
@@ -7391,33 +5309,18 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === '?' && !typing) { e.preventDefault(); toggleShortcutHelp(); return; }
   if (e.key === '/' && !typing) {
-    const ids = ['search-input','report-search-input','link-search-input','pdf-search-input'];
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el && el.offsetParent !== null) { e.preventDefault(); el.focus(); el.select?.(); return; }
-    }
+    const el = document.getElementById('search-input');
+    if (el && el.offsetParent !== null) { e.preventDefault(); el.focus(); el.select?.(); }
     return;
   }
   if (typing || _anyOverlayOpen()) return;
 
-  const mode = _curMode();
   switch (e.key) {
     case 'j': e.preventDefault(); _navList(1);  break;
     case 'k': e.preventDefault(); _navList(-1); break;
-    case 's':
-      if (mode === 'reports') { if (currentReportId) toggleReportStar(currentReportId); }
-      else if (mode === 'articles' && currentId) toggleStar(currentId);
-      break;
-    case 'e':
-      if (mode === 'reports') { if (currentReportId) showReportForm(currentReportId); }
-      else if (mode === 'articles' && currentId) showForm(currentId);
-      break;
-    case 'n':
-      if (mode === 'reports') showReportForm();
-      else if (mode === 'links') showLinkForm();
-      else if (mode === 'pdfs') showPdfForm();
-      else showForm();
-      break;
+    case 's': if (currentId) toggleStar(currentId); break;
+    case 'e': if (currentId) showForm(currentId); break;
+    case 'n': showForm(); break;
   }
 });
 
@@ -7451,24 +5354,23 @@ async function doFetchUrl() {
   finally { btn.textContent = '抓取'; btn.disabled = false; }
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { hideFetchUrlDialog(); closeStats(); closeCLD(); closeAsk(); closeWatchlist(); }
+  if (e.key === 'Escape') { hideFetchUrlDialog(); closeStats(); closeCLD(); closeAsk(); closeGraphView(); }
 });
 
 // ── 因果循環圖 (CLD) ──────────────────────────────────────────
 let _cldData = null;          // 目前的 {nodes, edges, loops}
 let _cldMode = 'view';        // 'view' | 'connect' | 'delete'
 let _cldConnectFrom = null;   // 連線模式下已選的來源節點 id
-let _cldDoc = null;           // {type:'article'|'report', id}
+let _cldDoc = null;           // {type:'article', id}
 
-function _cldNoun() { return (_cldDoc && _cldDoc.type === 'report') ? '報告' : '文章'; }
+function _cldNoun() { return '文章'; }
 
 function _openCLDFor(type) {
-  const isReport = type === 'report';
-  const id = isReport ? currentReportId : currentId;
-  if (!id) { toast(isReport ? '請先開啟一份報告' : '請先開啟一篇文章'); return; }
-  const obj = (isReport ? reports : articles).find(x => x.id === id);
+  const id = currentId;
+  if (!id) { toast('請先開啟一篇文章'); return; }
+  const obj = articles.find(x => x.id === id);
   if (!obj) return;
-  _cldDoc = { type: isReport ? 'report' : 'article', id };
+  _cldDoc = { type: 'article', id };
   document.getElementById('cld-panel').classList.add('open');
   _cldMode = 'view'; _cldConnectFrom = null;
   let cld = null;
@@ -7482,7 +5384,6 @@ function _openCLDFor(type) {
   }
 }
 function openCLD() { _openCLDFor('article'); }
-function openReportCLD() { _openCLDFor('report'); }
 function closeCLD() {
   document.getElementById('cld-panel').classList.remove('open');
 }
@@ -7512,8 +5413,7 @@ async function generateCLD() {
   if (!_cldDoc) return;
   showCLDLoading();
   try {
-    const base = _cldDoc.type === 'report' ? 'reports' : 'articles';
-    const res = await fetch(`${API_BASE}/${base}/${_cldDoc.id}/generate-cld`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/articles/${_cldDoc.id}/generate-cld`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
       const msg = data && data.detail ? data.detail : ('HTTP ' + res.status);
@@ -7523,8 +5423,7 @@ async function generateCLD() {
          <button class="cld-btn" onclick="showCLDEmpty()">返回</button></div>`;
       return;
     }
-    const coll = _cldDoc.type === 'report' ? reports : articles;
-    const a = coll.find(x => x.id === _cldDoc.id);
+    const a = articles.find(x => x.id === _cldDoc.id);
     if (a) a.cld = JSON.stringify(data);
     _cldData = data;
     _cldMode = 'view'; _cldConnectFrom = null;
@@ -7542,11 +5441,9 @@ async function generateCLD() {
 async function cldSaveData() {
   if (!_cldDoc || !_cldData) return;
   const json = JSON.stringify(_cldData);
-  const base = _cldDoc.type === 'report' ? 'reports' : 'articles';
-  const coll = _cldDoc.type === 'report' ? reports : articles;
-  const a = coll.find(x => x.id === _cldDoc.id);
+  const a = articles.find(x => x.id === _cldDoc.id);
   if (a) a.cld = json;
-  try { await _apiPatch(`/${base}/${_cldDoc.id}`, { cld: json }); }
+  try { await _apiPatch(`/articles/${_cldDoc.id}`, { cld: json }); }
   catch(e) { console.warn('[cld] save failed', e); }
 }
 
@@ -7919,6 +5816,439 @@ function _learnGameDone(mode) {
   if (sc) sc.insertAdjacentHTML('beforeend',
     `<div class="learn-done">✓ 全部完成！<br><button class="cld-btn primary" style="margin-top:10px" onclick="${mode === 'match' ? 'renderLearnMatch()' : 'renderLearnPuzzle()'}">再玩一次</button></div>`);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Wikilink（[[標題]]）連結功能 + 全庫連結圖（Obsidian 風格）
+   ══════════════════════════════════════════════════════════════ */
+
+const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+
+// 標題（正規化為小寫）→ {type, id, title}
+function _wikiIndex() {
+  const idx = new Map();
+  articles.forEach(a => {
+    const k = (a.title || '').trim().toLowerCase();
+    if (k && !idx.has(k)) idx.set(k, { type: 'article', id: a.id, title: a.title });
+  });
+  return idx;
+}
+
+function extractWikilinks(text) {
+  const out = [];
+  if (!text) return out;
+  WIKILINK_RE.lastIndex = 0;
+  let m;
+  while ((m = WIKILINK_RE.exec(text))) {
+    out.push({ target: m[1].trim(), alias: (m[2] || '').trim() });
+  }
+  return out;
+}
+
+// 把 raw markdown 內的 [[標題]] / [[標題|別名]] 換成可點擊連結（解析失敗則顯示為未建立）
+function linkifyWikilinks(raw) {
+  if (!raw) return raw;
+  const idx = _wikiIndex();
+  return raw.replace(WIKILINK_RE, (m, target, alias) => {
+    const title = target.trim();
+    const label = esc((alias || title).trim());
+    const hit = idx.get(title.toLowerCase());
+    if (hit) {
+      return `<a href="javascript:void(0)" class="wikilink" onclick="openWikilink('${hit.type}',${hit.id})">${label}</a>`;
+    }
+    return `<span class="wikilink wikilink-ghost" title="尚未建立：${esc(title)}">${label}</span>`;
+  });
+}
+
+// 跳到某篇文章
+function openWikilink(type, id) {
+  viewArticle(id);
+}
+
+// 反向連結：誰用 [[...]] 連到這篇
+function computeBacklinks(type, id) {
+  const idx = _wikiIndex();
+  const results = [];
+  const scan = (srcType, list) => {
+    list.forEach(doc => {
+      extractWikilinks(doc.content).forEach(({ target }) => {
+        const hit = idx.get(target.toLowerCase());
+        if (hit && hit.type === type && hit.id === id) {
+          results.push({ type: srcType, id: doc.id, title: doc.title });
+        }
+      });
+    });
+  };
+  scan('article', articles);
+  const seen = new Set();
+  return results.filter(r => {
+    const k = r.type + r.id;
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+}
+
+function renderBacklinks(containerId, type, id) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const bl = computeBacklinks(type, id);
+  if (!bl.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = '';
+  el.innerHTML = `<div class="backlinks-title">反向連結 · ${bl.length}</div>
+    <div class="backlinks-list">${bl.map(b =>
+      `<span class="backlink-chip" onclick="openWikilink('${b.type}',${b.id})">📄 ${esc(b.title)}</span>`
+    ).join('')}</div>`;
+}
+
+/* ── Wikilink 自動完成（在內容欄位輸入 [[ 觸發） ─────────────── */
+let _waTa = null, _waItems = [], _waSel = -1, _waFrom = -1;
+
+function _waCandidates(q) {
+  q = q.toLowerCase();
+  const items = [];
+  articles.forEach(a => { if (a.title && a.title.toLowerCase().includes(q)) items.push({ type: 'article', title: a.title }); });
+  return items.slice(0, 8);
+}
+
+function _waBox() {
+  let box = document.getElementById('wikilink-ac');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'wikilink-ac';
+    document.body.appendChild(box);
+  }
+  return box;
+}
+
+function _waClose() {
+  const box = document.getElementById('wikilink-ac');
+  if (box) box.style.display = 'none';
+  _waTa = null; _waItems = []; _waSel = -1; _waFrom = -1;
+}
+
+function _waRender() {
+  const box = _waBox();
+  if (!_waTa || !_waItems.length) { _waClose(); return; }
+  box.innerHTML = _waItems.map((it, i) =>
+    `<div class="wa-item${i === _waSel ? ' sel' : ''}" onmousedown="event.preventDefault();_waPick(${i})">
+      <span class="wa-type">📄</span>${esc(it.title)}
+    </div>`
+  ).join('');
+  const rect = _waTa.getBoundingClientRect();
+  box.style.left = rect.left + 'px';
+  box.style.top = (rect.bottom + 4) + 'px';
+  box.style.width = Math.max(200, Math.min(320, rect.width)) + 'px';
+  box.style.display = 'block';
+}
+
+function _waPick(i) {
+  const it = _waItems[i];
+  if (!it || !_waTa) return;
+  const ta = _waTa;
+  const val = ta.value;
+  const caret = ta.selectionStart;
+  const before = val.slice(0, _waFrom);
+  const after = val.slice(caret);
+  const insertText = `${it.title}]]`;
+  ta.value = before + insertText + after;
+  const newPos = (before + insertText).length;
+  ta.focus();
+  ta.setSelectionRange(newPos, newPos);
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+  _waClose();
+}
+
+function _waHandleInput(e) {
+  const ta = e.target;
+  const caret = ta.selectionStart;
+  const before = ta.value.slice(0, caret);
+  const m = before.match(/\[\[([^\[\]]*)$/);
+  if (!m) { _waClose(); return; }
+  _waTa = ta;
+  _waFrom = caret - m[1].length;
+  _waItems = _waCandidates(m[1]);
+  _waSel = _waItems.length ? 0 : -1;
+  _waRender();
+}
+
+function _waHandleKeydown(e) {
+  if (!_waTa || !_waItems.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); _waSel = (_waSel + 1) % _waItems.length; _waRender(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); _waSel = (_waSel - 1 + _waItems.length) % _waItems.length; _waRender(); }
+  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); _waPick(_waSel); }
+  else if (e.key === 'Escape') { _waClose(); }
+}
+
+(function() {
+  const ta = document.getElementById('f-content');
+  if (!ta) return;
+  ta.addEventListener('input', _waHandleInput);
+  ta.addEventListener('keydown', _waHandleKeydown);
+  ta.addEventListener('blur', () => setTimeout(_waClose, 150));
+})();
+
+/* ── 全庫連結圖（force-directed graph，仿 Obsidian graph view） ── */
+const GV_W = 1060, GV_H = 640;
+let _gvNodes = [], _gvEdges = [], _gvPos = {};
+let _gvTransform = { x: 0, y: 0, k: 1 };
+let _gvDragId = null, _gvPanning = false, _gvPanStart = null, _gvMoved = false;
+
+function buildGraphData() {
+  const idx = _wikiIndex();
+  const nodes = new Map();
+  const edges = [];
+  const addNode = (id, data) => { if (!nodes.has(id)) nodes.set(id, { id, degree: 0, ...data }); return nodes.get(id); };
+
+  articles.forEach(a => addNode('a' + a.id, { type: 'article', title: a.title }));
+
+  const seenEdge = new Set();
+  const addEdge = (s, t) => {
+    if (s === t) return;
+    const key = s < t ? s + '|' + t : t + '|' + s;
+    if (seenEdge.has(key)) return;
+    seenEdge.add(key);
+    edges.push({ source: s, target: t });
+    nodes.get(s).degree++; nodes.get(t).degree++;
+  };
+
+  const processDoc = (id, content) => {
+    extractWikilinks(content).forEach(({ target }) => {
+      const hit = idx.get(target.toLowerCase());
+      if (hit) {
+        addEdge(id, 'a' + hit.id);
+      } else {
+        const ghostId = 'ghost:' + target.toLowerCase();
+        addNode(ghostId, { type: 'ghost', title: target });
+        addEdge(id, ghostId);
+      }
+    });
+  };
+  articles.forEach(a => processDoc('a' + a.id, a.content));
+
+  return { nodes: [...nodes.values()], edges };
+}
+
+// Fruchterman-Reingold 力導向佈局
+function forceLayout(nodes, edges, W, H, iterations) {
+  const area = W * H;
+  const k = Math.sqrt(area / Math.max(1, nodes.length)) * 0.9;
+  const pos = {};
+  nodes.forEach((n, i) => {
+    const ang = (2 * Math.PI * i) / nodes.length;
+    pos[n.id] = { x: W / 2 + Math.cos(ang) * Math.min(W, H) / 3, y: H / 2 + Math.sin(ang) * Math.min(W, H) / 3 };
+  });
+  let temp = W / 10;
+  for (let iter = 0; iter < iterations; iter++) {
+    const disp = {};
+    nodes.forEach(n => disp[n.id] = { x: 0, y: 0 });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = pos[a.id].x - pos[b.id].x, dy = pos[a.id].y - pos[b.id].y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+        const force = (k * k) / dist;
+        const ux = dx / dist, uy = dy / dist;
+        disp[a.id].x += ux * force; disp[a.id].y += uy * force;
+        disp[b.id].x -= ux * force; disp[b.id].y -= uy * force;
+      }
+    }
+    edges.forEach(e => {
+      const a = pos[e.source], b = pos[e.target];
+      if (!a || !b) return;
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const force = (dist * dist) / k;
+      const ux = dx / dist, uy = dy / dist;
+      disp[e.source].x -= ux * force; disp[e.source].y -= uy * force;
+      disp[e.target].x += ux * force; disp[e.target].y += uy * force;
+    });
+    nodes.forEach(n => {
+      const d = disp[n.id];
+      const dist = Math.sqrt(d.x * d.x + d.y * d.y) || 0.01;
+      const lim = Math.min(dist, temp);
+      pos[n.id].x = Math.min(W - 40, Math.max(40, pos[n.id].x + (d.x / dist) * lim));
+      pos[n.id].y = Math.min(H - 40, Math.max(40, pos[n.id].y + (d.y / dist) * lim));
+    });
+    temp *= 0.97;
+  }
+  return pos;
+}
+
+function _gvDegColor(n) {
+  if (n.type === 'ghost') return '#9aa0a8';
+  return '#4f7cff';
+}
+
+function openGraphView() {
+  document.getElementById('graph-panel').classList.add('open');
+  const search = document.getElementById('graph-search');
+  if (search) search.value = '';
+  const data = buildGraphData();
+  _gvNodes = data.nodes; _gvEdges = data.edges;
+  _gvTransform = { x: 0, y: 0, k: 1 };
+  if (!_gvNodes.length) {
+    document.getElementById('graph-body').innerHTML =
+      `<div class="cld-empty"><div class="cld-big">🕸️</div>
+       <div>還沒有任何連結<br>在文章或報告內文用 <code>[[標題]]</code> 建立連結，就會顯示在這裡</div></div>`;
+    return;
+  }
+  const iterations = Math.max(60, Math.min(320, Math.round(24000 / _gvNodes.length)));
+  _gvPos = forceLayout(_gvNodes, _gvEdges, GV_W, GV_H, iterations);
+  renderGraphSVG();
+}
+
+function closeGraphView() {
+  document.getElementById('graph-panel').classList.remove('open');
+}
+
+function renderGraphSVG() {
+  const body = document.getElementById('graph-body');
+  let svg = `<svg id="graph-svg" width="100%" height="100%" viewBox="0 0 ${GV_W} ${GV_H}" style="cursor:grab">`;
+  svg += `<g id="graph-viewport" transform="translate(${_gvTransform.x},${_gvTransform.y}) scale(${_gvTransform.k})">`;
+  svg += `<g id="graph-edges">`;
+  _gvEdges.forEach((e, i) => {
+    const a = _gvPos[e.source], b = _gvPos[e.target];
+    if (!a || !b) return;
+    svg += `<line class="gv-edge" data-i="${i}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`;
+  });
+  svg += `</g><g id="graph-nodes">`;
+  _gvNodes.forEach(n => {
+    const p = _gvPos[n.id];
+    if (!p) return;
+    const r = Math.min(20, 6 + Math.sqrt(n.degree || 0) * 3.2);
+    const ghost = n.type === 'ghost';
+    svg += `<g class="gv-node" data-id="${escSvg(n.id)}" transform="translate(${p.x},${p.y})">
+      <circle r="${r}" fill="${_gvDegColor(n)}" ${ghost ? 'stroke-dasharray="2,2" fill-opacity="0.35"' : ''} stroke="#fff" stroke-width="1.2"/>
+      <text y="${r + 13}" text-anchor="middle" class="gv-label">${escSvg((n.title || '').slice(0, 18))}</text>
+    </g>`;
+  });
+  svg += `</g></g></svg>`;
+  body.innerHTML = svg;
+  _gvBindEvents();
+}
+
+function _gvLocalPoint(evt) {
+  const svg = document.getElementById('graph-svg');
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return { x: (p.x - _gvTransform.x) / _gvTransform.k, y: (p.y - _gvTransform.y) / _gvTransform.k };
+}
+
+function _gvApplyTransform() {
+  const vp = document.getElementById('graph-viewport');
+  if (vp) vp.setAttribute('transform', `translate(${_gvTransform.x},${_gvTransform.y}) scale(${_gvTransform.k})`);
+}
+
+function _gvUpdatePositions() {
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  svg.querySelectorAll('.gv-edge').forEach(line => {
+    const e = _gvEdges[+line.dataset.i];
+    const a = _gvPos[e.source], b = _gvPos[e.target];
+    if (!a || !b) return;
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+  });
+  svg.querySelectorAll('.gv-node').forEach(g => {
+    const p = _gvPos[g.dataset.id];
+    if (p) g.setAttribute('transform', `translate(${p.x},${p.y})`);
+  });
+}
+
+function _gvHighlight(id) {
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  if (!id) {
+    svg.querySelectorAll('.gv-node,.gv-edge').forEach(el => el.classList.remove('dim'));
+    return;
+  }
+  const neighbors = new Set([id]);
+  _gvEdges.forEach(e => {
+    if (e.source === id) neighbors.add(e.target);
+    if (e.target === id) neighbors.add(e.source);
+  });
+  svg.querySelectorAll('.gv-node').forEach(g => g.classList.toggle('dim', !neighbors.has(g.dataset.id)));
+  svg.querySelectorAll('.gv-edge').forEach((line, i) => {
+    const e = _gvEdges[i];
+    line.classList.toggle('dim', !(e.source === id || e.target === id));
+  });
+}
+
+function _gvNodeClick(id) {
+  const n = _gvNodes.find(x => x.id === id);
+  if (!n) return;
+  if (n.type === 'ghost') { toast(`「${n.title}」尚未建立筆記`); return; }
+  const realId = parseInt(id.slice(1), 10);
+  closeGraphView();
+  openWikilink(n.type, realId);
+}
+
+function _gvBindEvents() {
+  const svg = document.getElementById('graph-svg');
+  svg.querySelectorAll('.gv-node').forEach(g => {
+    g.addEventListener('mousedown', e => { e.stopPropagation(); _gvDragId = g.dataset.id; _gvMoved = false; });
+    g.addEventListener('mouseenter', () => _gvHighlight(g.dataset.id));
+    g.addEventListener('mouseleave', () => _gvHighlight(null));
+  });
+  svg.addEventListener('mousedown', e => {
+    if (_gvDragId) return;
+    _gvPanning = true;
+    _gvPanStart = { x: e.clientX, y: e.clientY, tx: _gvTransform.x, ty: _gvTransform.y };
+    svg.style.cursor = 'grabbing';
+  });
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    const local = _gvLocalPoint(e);
+    const newK = Math.min(3, Math.max(0.25, _gvTransform.k * factor));
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const rootP = pt.matrixTransform(svg.getScreenCTM().inverse());
+    _gvTransform.x = rootP.x - local.x * newK;
+    _gvTransform.y = rootP.y - local.y * newK;
+    _gvTransform.k = newK;
+    _gvApplyTransform();
+  }, { passive: false });
+}
+
+document.addEventListener('mousemove', e => {
+  if (!document.getElementById('graph-panel')?.classList.contains('open')) return;
+  if (_gvDragId) {
+    _gvMoved = true;
+    const p = _gvLocalPoint(e);
+    if (_gvPos[_gvDragId]) { _gvPos[_gvDragId].x = p.x; _gvPos[_gvDragId].y = p.y; _gvUpdatePositions(); }
+  } else if (_gvPanning) {
+    _gvTransform.x = _gvPanStart.tx + (e.clientX - _gvPanStart.x);
+    _gvTransform.y = _gvPanStart.ty + (e.clientY - _gvPanStart.y);
+    _gvApplyTransform();
+  }
+});
+document.addEventListener('mouseup', () => {
+  if (_gvDragId && !_gvMoved) _gvNodeClick(_gvDragId);
+  const svg = document.getElementById('graph-svg');
+  if (svg) svg.style.cursor = 'grab';
+  _gvDragId = null; _gvPanning = false;
+});
+
+function graphFilter(q) {
+  q = (q || '').trim().toLowerCase();
+  const svg = document.getElementById('graph-svg');
+  if (!svg) return;
+  if (!q) {
+    svg.querySelectorAll('.gv-node,.gv-edge').forEach(el => el.classList.remove('dim'));
+    return;
+  }
+  svg.querySelectorAll('.gv-node').forEach(g => {
+    const n = _gvNodes.find(x => x.id === g.dataset.id);
+    g.classList.toggle('dim', !(n && (n.title || '').toLowerCase().includes(q)));
+  });
+  svg.querySelectorAll('.gv-edge').forEach(line => line.classList.add('dim'));
+}
+
+function graphResetView() {
+  _gvTransform = { x: 0, y: 0, k: 1 };
+  _gvApplyTransform();
+}
 </script>
 <!-- Notes floating window -->
 <div id="notes-panel">
@@ -8042,19 +6372,6 @@ function _learnGameDone(mode) {
 </div>
 
 <!-- 觀察清單＋評等追蹤 -->
-<div id="watchlist-panel" onclick="if(event.target===this)closeWatchlist()">
-  <div class="wl-card">
-    <div class="wl-head">
-      <div style="min-width:0">
-        <div class="wl-title">觀察清單</div>
-        <div class="wl-sub" id="wl-sub"></div>
-      </div>
-      <button class="ask-close" onclick="closeWatchlist()" title="關閉">×</button>
-    </div>
-    <div class="wl-body" id="wl-body"></div>
-  </div>
-</div>
-
 <!-- Fetch URL dialog -->
 <div id="fetch-url-dialog">
   <div class="fud-inner">
@@ -8109,6 +6426,25 @@ function _learnGameDone(mode) {
       <button class="cld-close" onclick="closeLearn()">×</button>
     </div>
     <div class="cld-body" id="learn-body"></div>
+  </div>
+</div>
+
+<!-- 連結圖（全庫 [[wikilink]] 網絡） -->
+<div id="graph-panel">
+  <div class="cld-inner" style="width:1120px;height:760px;">
+    <div class="cld-head">
+      <h2>🕸️ 連結圖</h2>
+      <input id="graph-search" type="text" placeholder="搜尋節點…" oninput="graphFilter(this.value)">
+      <span class="cld-spacer"></span>
+      <button class="cld-btn" onclick="graphResetView()">重置視角</button>
+      <button class="cld-close" onclick="closeGraphView()">×</button>
+    </div>
+    <div class="cld-body" id="graph-body"></div>
+    <div class="cld-legend">
+      <span><b style="color:#4f7cff">●</b> 文章</span>
+      <span><b style="color:#9aa0a8">◌</b> 尚未建立的連結目標</span>
+      <span style="margin-left:auto">拖曳節點・滾輪縮放・拖曳空白處平移・點擊開啟</span>
+    </div>
   </div>
 </div>
 

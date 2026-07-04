@@ -1,5 +1,3 @@
-# deploy marker: PDF files on volume filesystem — 2026-05-22
-import base64
 import html as html_mod
 import json as json_lib
 import os
@@ -14,17 +12,6 @@ from typing import Optional
 import httpx
 import trafilatura
 from markdownify import markdownify as _md
-
-from config import SQLITE_DB_PATH
-
-# PDF binary 存到與 SQLite 同層的 pdfs/ 資料夾（在 Railway Volume 上）
-_DB_DIR = Path(SQLITE_DB_PATH).resolve().parent
-PDF_DIR = _DB_DIR / "pdfs"
-PDF_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def _pdf_path(pid: int) -> Path:
-    return PDF_DIR / f"{pid}.pdf"
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
@@ -47,62 +34,13 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE articles ADD COLUMN highlights TEXT DEFAULT '[]'",
             "ALTER TABLE articles ADD COLUMN notes TEXT DEFAULT '[]'",
             "ALTER TABLE articles ADD COLUMN cld TEXT DEFAULT ''",
-            "ALTER TABLE reports ADD COLUMN starred INTEGER DEFAULT 0",
-            "ALTER TABLE reports ADD COLUMN highlights TEXT DEFAULT '[]'",
-            "ALTER TABLE reports ADD COLUMN notes TEXT DEFAULT '[]'",
-            "ALTER TABLE reports ADD COLUMN summary TEXT",
-            "ALTER TABLE reports ADD COLUMN cld TEXT DEFAULT ''",
             "ALTER TABLE articles ADD COLUMN loved INTEGER DEFAULT 0",
-            "ALTER TABLE reports ADD COLUMN loved INTEGER DEFAULT 0",
             "ALTER TABLE articles ADD COLUMN learn TEXT DEFAULT ''",
-            # PDF library
-            """CREATE TABLE IF NOT EXISTS pdfs (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                title       TEXT NOT NULL,
-                author      TEXT,
-                date        TEXT,
-                source      TEXT,
-                data        TEXT NOT NULL,
-                highlights  TEXT DEFAULT '[]',
-                notes       TEXT DEFAULT '[]',
-                starred     INTEGER DEFAULT 0,
-                category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-                created_at  TEXT DEFAULT (datetime('now')),
-                updated_at  TEXT DEFAULT (datetime('now'))
-            )""",
-            "CREATE INDEX IF NOT EXISTS pdfs_created_idx ON pdfs(created_at)",
-            "CREATE INDEX IF NOT EXISTS pdfs_category_idx ON pdfs(category_id)",
-            # links table (for databases created before links feature)
-            """CREATE TABLE IF NOT EXISTS links (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                title      TEXT NOT NULL,
-                url        TEXT NOT NULL,
-                desc       TEXT,
-                folder     TEXT DEFAULT '',
-                icon       TEXT,
-                created_at TEXT DEFAULT (datetime('now'))
-            )""",
-            "CREATE INDEX IF NOT EXISTS links_folder_idx  ON links(folder)",
-            "CREATE INDEX IF NOT EXISTS links_created_idx ON links(created_at)",
         ]:
             try:
                 conn.execute(stmt)
             except Exception:
                 pass
-        # 一次性遷移：把舊版存在 pdfs.data 欄位的 base64 搬到 Volume 上的檔案
-        try:
-            rows = conn.execute(
-                "SELECT id, data FROM pdfs WHERE data IS NOT NULL AND data != ''"
-            ).fetchall()
-            for r in rows:
-                try:
-                    raw = base64.b64decode(r["data"])
-                    _pdf_path(r["id"]).write_bytes(raw)
-                    conn.execute("UPDATE pdfs SET data = '' WHERE id = ?", (r["id"],))
-                except Exception:
-                    pass
-        except Exception:
-            pass
         # 一次性修復：合併重複的分類（同名同層）。SQLite 的 UNIQUE(name, parent_id)
         # 對 parent_id 為 NULL 的頂層資料夾無效，過去可能產生重複，於此合併。
         try:
@@ -116,7 +54,6 @@ async def lifespan(app: FastAPI):
                 if key in seen:
                     keeper, dup = seen[key], cat["id"]
                     conn.execute("UPDATE articles SET category_id = ? WHERE category_id = ?", (keeper, dup))
-                    conn.execute("UPDATE pdfs SET category_id = ? WHERE category_id = ?", (keeper, dup))
                     conn.execute("DELETE FROM categories WHERE id = ?", (dup,))
                 else:
                     seen[key] = cat["id"]
@@ -185,81 +122,6 @@ class TagIn(BaseModel):
 class CategoryIn(BaseModel):
     name: str
     parent_id: Optional[int] = None
-
-
-class ReportIn(BaseModel):
-    company: str
-    ticker: Optional[str] = None
-    sector: Optional[str] = None
-    rating: Optional[str] = None
-    target: Optional[str] = None
-    date: Optional[str] = None
-    analyst: Optional[str] = None
-    source: Optional[str] = None
-    content: str = ""
-    images: str = "[]"
-    starred: int = 0
-    highlights: str = "[]"
-    notes: str = "[]"
-
-
-class ReportUpdate(BaseModel):
-    company: Optional[str] = None
-    ticker: Optional[str] = None
-    sector: Optional[str] = None
-    rating: Optional[str] = None
-    target: Optional[str] = None
-    date: Optional[str] = None
-    analyst: Optional[str] = None
-    source: Optional[str] = None
-    content: Optional[str] = None
-    images: Optional[str] = None
-    starred: Optional[int] = None
-    loved: Optional[int] = None
-    highlights: Optional[str] = None
-    notes: Optional[str] = None
-    summary: Optional[str] = None
-    cld: Optional[str] = None
-
-
-class LinkIn(BaseModel):
-    title: str
-    url: str
-    desc: Optional[str] = None
-    folder: str = ""
-    icon: Optional[str] = None
-
-
-class LinkUpdate(BaseModel):
-    title: Optional[str] = None
-    url: Optional[str] = None
-    desc: Optional[str] = None
-    folder: Optional[str] = None
-    icon: Optional[str] = None
-
-
-class PDFIn(BaseModel):
-    title: str
-    author: Optional[str] = None
-    date: Optional[str] = None
-    source: Optional[str] = None
-    data: str = ""             # base64 of PDF bytes
-    highlights: str = "[]"
-    notes: str = "[]"
-    starred: int = 0
-    category_id: Optional[int] = None
-
-
-class PDFUpdate(BaseModel):
-    title: Optional[str] = None
-    author: Optional[str] = None
-    date: Optional[str] = None
-    source: Optional[str] = None
-    highlights: Optional[str] = None
-    notes: Optional[str] = None
-    starred: Optional[int] = None
-    category_id: Optional[int] = None
-    # data is not patchable — re-upload via a new POST
 
 
 # ---------- helpers ----------
@@ -770,268 +632,6 @@ def search(q: str, limit: int = Query(20, le=100)):
         return _attach_tags(conn, rows)
 
 
-# ---------- reports CRUD ----------
-@app.post("/reports")
-def create_report(r: ReportIn):
-    with conn_ctx() as conn:
-        cur = conn.execute(
-            """INSERT INTO reports
-               (company, ticker, sector, rating, target, date, analyst, source, content, images,
-                starred, highlights, notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (r.company, r.ticker, r.sector, r.rating, r.target,
-             r.date, r.analyst, r.source, r.content, r.images,
-             r.starred, r.highlights, r.notes),
-        )
-        return conn.execute(
-            "SELECT * FROM reports WHERE id = ?", (cur.lastrowid,)
-        ).fetchone()
-
-
-@app.get("/reports")
-def list_reports(
-    sector: Optional[str] = None,
-    limit: int = Query(200, le=500),
-    offset: int = 0,
-):
-    where, params = [], []
-    if sector:
-        where.append("sector = ?"); params.append(sector)
-    sql = "SELECT * FROM reports"
-    if where:
-        sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
-    params += [limit, offset]
-    with conn_ctx() as conn:
-        return conn.execute(sql, params).fetchall()
-
-
-@app.get("/reports/{rid}")
-def get_report(rid: int):
-    with conn_ctx() as conn:
-        row = conn.execute("SELECT * FROM reports WHERE id = ?", (rid,)).fetchone()
-    if not row:
-        raise HTTPException(404, "not found")
-    return row
-
-
-@app.patch("/reports/{rid}")
-def update_report(rid: int, u: ReportUpdate):
-    with conn_ctx() as conn:
-        if not conn.execute("SELECT id FROM reports WHERE id = ?", (rid,)).fetchone():
-            raise HTTPException(404, "not found")
-        fields, values = [], []
-        for k in ("company", "ticker", "sector", "rating", "target",
-                  "date", "analyst", "source", "content", "images",
-                  "starred", "loved", "highlights", "notes", "summary", "cld"):
-            v = getattr(u, k)
-            if v is not None:
-                fields.append(f"{k} = ?")
-                values.append(v)
-        if fields:
-            values.append(rid)
-            conn.execute(f"UPDATE reports SET {', '.join(fields)} WHERE id = ?", values)
-        return conn.execute("SELECT * FROM reports WHERE id = ?", (rid,)).fetchone()
-
-
-@app.delete("/reports/{rid}")
-def delete_report(rid: int):
-    with conn_ctx() as conn:
-        conn.execute("DELETE FROM reports WHERE id = ?", (rid,))
-    return {"ok": True}
-
-
-# ---------- 報告 AI：摘要 / 問答 / 因果圖 ----------
-@app.post("/reports/{rid}/generate-summary")
-def generate_report_summary(rid: int):
-    with conn_ctx() as conn:
-        row = conn.execute(
-            "SELECT company, content FROM reports WHERE id = ?", (rid,)
-        ).fetchone()
-        if not row:
-            raise HTTPException(404, "not found")
-        title = row["company"] or ""
-        content = (row["content"] or "")[:12000]
-        if len(content.strip()) < 30:
-            raise HTTPException(400, "報告內容太短，無法生成摘要")
-        prompt = _SUMMARY_PROMPT % {"title": title, "content": content}
-        summary = (_call_gemini(prompt, json_mode=False) or "").strip()
-        if not summary:
-            raise HTTPException(502, "Gemini 未回傳摘要內容")
-        conn.execute("UPDATE reports SET summary = ? WHERE id = ?", (summary, rid))
-        return {"summary": summary}
-
-
-@app.post("/reports/{rid}/ask")
-def ask_report(rid: int, body: AskIn):
-    question = (body.question or "").strip()
-    if not question:
-        raise HTTPException(400, "請輸入問題")
-    if len(question) > 500:
-        raise HTTPException(400, "問題過長，請精簡至 500 字內")
-    with conn_ctx() as conn:
-        row = conn.execute(
-            "SELECT company, content FROM reports WHERE id = ?", (rid,)
-        ).fetchone()
-        if not row:
-            raise HTTPException(404, "not found")
-        title = row["company"] or ""
-        content = (row["content"] or "")[:12000]
-        if len(content.strip()) < 20:
-            raise HTTPException(400, "報告內容太短，無法問答")
-        prompt = _ASK_PROMPT % {
-            "title": title, "content": content, "question": question
-        }
-        answer = (_call_gemini(prompt, json_mode=False) or "").strip()
-        if not answer:
-            raise HTTPException(502, "Gemini 未回傳答案")
-        return {"answer": answer}
-
-
-@app.post("/reports/{rid}/generate-cld")
-def generate_report_cld(rid: int):
-    with conn_ctx() as conn:
-        row = conn.execute(
-            "SELECT company, content FROM reports WHERE id = ?", (rid,)
-        ).fetchone()
-        if not row:
-            raise HTTPException(404, "not found")
-        title = row["company"] or ""
-        content = (row["content"] or "")[:12000]
-        if len(content.strip()) < 30:
-            raise HTTPException(400, "報告內容太短，無法生成因果圖")
-        prompt = _CLD_PROMPT % {"title": title, "content": content}
-        cld = _call_gemini(prompt)
-        if not isinstance(cld, dict) or "nodes" not in cld or "edges" not in cld:
-            raise HTTPException(502, "Gemini 回傳的因果圖結構不完整")
-        cld.setdefault("loops", [])
-        cld_json = json_lib.dumps(cld, ensure_ascii=False)
-        conn.execute("UPDATE reports SET cld = ? WHERE id = ?", (cld_json, rid))
-        return cld
-
-
-# ---------- PDFs CRUD ----------
-# PDF 二進位內容存到 Volume 上的 pdfs/{id}.pdf；DB 的 data 欄位保留為空字串
-@app.post("/pdfs")
-def create_pdf(p: PDFIn):
-    if not p.data:
-        raise HTTPException(400, "缺少 PDF 內容")
-    try:
-        raw = base64.b64decode(p.data)
-    except Exception:
-        raise HTTPException(400, "PDF base64 格式錯誤")
-
-    with conn_ctx() as conn:
-        cur = conn.execute(
-            """INSERT INTO pdfs
-               (title, author, date, source, data, highlights, notes, starred, category_id)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (p.title, p.author, p.date, p.source, "",
-             p.highlights, p.notes, p.starred, p.category_id),
-        )
-        pid = cur.lastrowid
-
-    # 寫到 Volume 上的檔案
-    try:
-        _pdf_path(pid).write_bytes(raw)
-    except Exception as e:
-        # 寫檔失敗 → 回滾資料庫紀錄，避免 orphan row
-        with conn_ctx() as conn:
-            conn.execute("DELETE FROM pdfs WHERE id = ?", (pid,))
-        raise HTTPException(500, f"無法寫入 PDF 檔案：{e}")
-
-    with conn_ctx() as conn:
-        row = conn.execute(
-            """SELECT id, title, author, date, source, highlights, notes, starred,
-                      category_id, created_at, updated_at FROM pdfs WHERE id = ?""",
-            (pid,),
-        ).fetchone()
-    return row
-
-
-@app.get("/pdfs")
-def list_pdfs(limit: int = Query(200, le=500), offset: int = 0):
-    with conn_ctx() as conn:
-        rows = conn.execute(
-            """SELECT p.id, p.title, p.author, p.date, p.source,
-                      p.highlights, p.notes, p.starred, p.category_id,
-                      c.name AS category_name, p.created_at, p.updated_at
-               FROM pdfs p LEFT JOIN categories c ON c.id = p.category_id
-               ORDER BY p.created_at DESC LIMIT ? OFFSET ?""",
-            (limit, offset),
-        ).fetchall()
-    return rows
-
-
-@app.get("/pdfs/{pid}/data")
-def get_pdf_data(pid: int):
-    # 優先讀檔案（新版儲存方式）
-    fp = _pdf_path(pid)
-    if fp.exists():
-        try:
-            b64 = base64.b64encode(fp.read_bytes()).decode("ascii")
-            return {"data": b64}
-        except Exception as e:
-            raise HTTPException(500, f"讀取 PDF 失敗：{e}")
-    # 後援：舊資料還在 DB 的 data 欄位
-    with conn_ctx() as conn:
-        row = conn.execute("SELECT data FROM pdfs WHERE id = ?", (pid,)).fetchone()
-    if not row:
-        raise HTTPException(404, "not found")
-    return {"data": row["data"] or ""}
-
-
-@app.get("/pdfs/{pid}")
-def get_pdf(pid: int):
-    with conn_ctx() as conn:
-        row = conn.execute(
-            """SELECT p.id, p.title, p.author, p.date, p.source,
-                      p.highlights, p.notes, p.starred, p.category_id,
-                      c.name AS category_name, p.created_at, p.updated_at
-               FROM pdfs p LEFT JOIN categories c ON c.id = p.category_id
-               WHERE p.id = ?""",
-            (pid,),
-        ).fetchone()
-    if not row:
-        raise HTTPException(404, "not found")
-    return row
-
-
-@app.patch("/pdfs/{pid}")
-def update_pdf(pid: int, u: PDFUpdate):
-    with conn_ctx() as conn:
-        if not conn.execute("SELECT id FROM pdfs WHERE id = ?", (pid,)).fetchone():
-            raise HTTPException(404, "not found")
-        fields, values = [], []
-        for k in ("title", "author", "date", "source",
-                  "highlights", "notes", "starred", "category_id"):
-            v = getattr(u, k)
-            if v is not None:
-                fields.append(f"{k} = ?")
-                values.append(v)
-        if fields:
-            values.append(pid)
-            conn.execute(f"UPDATE pdfs SET {', '.join(fields)} WHERE id = ?", values)
-        return conn.execute(
-            """SELECT id, title, author, date, source, highlights, notes, starred,
-                      category_id, created_at, updated_at FROM pdfs WHERE id = ?""",
-            (pid,),
-        ).fetchone()
-
-
-@app.delete("/pdfs/{pid}")
-def delete_pdf(pid: int):
-    fp = _pdf_path(pid)
-    try:
-        if fp.exists():
-            fp.unlink()
-    except Exception:
-        pass
-    with conn_ctx() as conn:
-        conn.execute("DELETE FROM pdfs WHERE id = ?", (pid,))
-    return {"ok": True}
-
-
 # ---------- tags ----------
 @app.get("/tags")
 def list_tags():
@@ -1088,15 +688,6 @@ def stats():
                     "SELECT COUNT(*) FROM articles WHERE cld IS NOT NULL AND cld != ''"
                 ),
             },
-            "reports": {
-                "total": scalar("SELECT COUNT(*) FROM reports"),
-                "this_month": scalar(
-                    f"SELECT COUNT(*) FROM reports WHERE created_at >= {month_start}"
-                ),
-                "starred": scalar("SELECT COUNT(*) FROM reports WHERE starred = 1"),
-            },
-            "links": {"total": scalar("SELECT COUNT(*) FROM links")},
-            "pdfs": {"total": scalar("SELECT COUNT(*) FROM pdfs")},
             "tags": {"total": scalar("SELECT COUNT(*) FROM tags")},
         }
         # 各分類文章數
@@ -1106,70 +697,12 @@ def stats():
                LEFT JOIN articles a ON a.category_id = c.id
                GROUP BY c.id ORDER BY count DESC, c.name"""
         ).fetchall()
-        # 報告依產業分佈
-        result["sectors"] = conn.execute(
-            """SELECT COALESCE(NULLIF(sector,''),'未分類') AS sector, COUNT(*) AS count
-               FROM reports GROUP BY sector ORDER BY count DESC"""
-        ).fetchall()
         # 最近更新的文章
         result["recent_articles"] = conn.execute(
             """SELECT id, title, author, updated_at FROM articles
                ORDER BY updated_at DESC LIMIT 8"""
         ).fetchall()
         return result
-
-
-# ---------- links CRUD ----------
-@app.post("/links")
-def create_link(lk: LinkIn):
-    with conn_ctx() as conn:
-        cur = conn.execute(
-            "INSERT INTO links (title, url, desc, folder, icon) VALUES (?, ?, ?, ?, ?)",
-            (lk.title, lk.url, lk.desc, lk.folder, lk.icon),
-        )
-        return conn.execute("SELECT * FROM links WHERE id = ?", (cur.lastrowid,)).fetchone()
-
-
-@app.get("/links")
-def list_links(
-    folder: Optional[str] = None,
-    limit: int = Query(500, le=1000),
-    offset: int = 0,
-):
-    where, params = [], []
-    if folder is not None:
-        where.append("folder = ?"); params.append(folder)
-    sql = "SELECT * FROM links"
-    if where:
-        sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
-    params += [limit, offset]
-    with conn_ctx() as conn:
-        return conn.execute(sql, params).fetchall()
-
-
-@app.patch("/links/{lid}")
-def update_link(lid: int, lk: LinkUpdate):
-    with conn_ctx() as conn:
-        if not conn.execute("SELECT id FROM links WHERE id = ?", (lid,)).fetchone():
-            raise HTTPException(404, "not found")
-        fields, values = [], []
-        for k in ("title", "url", "desc", "folder", "icon"):
-            v = getattr(lk, k)
-            if v is not None:
-                fields.append(f"{k} = ?")
-                values.append(v)
-        if fields:
-            values.append(lid)
-            conn.execute(f"UPDATE links SET {', '.join(fields)} WHERE id = ?", values)
-        return conn.execute("SELECT * FROM links WHERE id = ?", (lid,)).fetchone()
-
-
-@app.delete("/links/{lid}")
-def delete_link_api(lid: int):
-    with conn_ctx() as conn:
-        conn.execute("DELETE FROM links WHERE id = ?", (lid,))
-    return {"ok": True}
 
 
 # ---------- URL fetch (proxy) ----------
