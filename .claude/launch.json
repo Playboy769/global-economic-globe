@@ -22,8 +22,9 @@
     {
       "name": "article-db",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8127", "--directory", "article_db"],
-      "port": 8127
+      "runtimeArgs": ["-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", "8127"],
+      "port": 8127,
+      "cwd": "article_db"
     },
     {
       "name": "causalframe",
