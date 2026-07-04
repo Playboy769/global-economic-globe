@@ -1799,6 +1799,7 @@ body.dark .cld-inner { background: #1a1a1a; }
 .cld-head { display: flex; align-items: center; gap: 10px;
   padding: 14px 18px; border-bottom: 1px solid var(--border-dark); flex-shrink: 0; }
 .cld-head h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-main); }
+#graph-panel .cld-head h2 { font-weight: 400; }
 .cld-head .cld-spacer { flex: 1; }
 .cld-btn { background: var(--bg-light); border: 1px solid var(--border-dark);
   border-radius: 7px; padding: 6px 12px; font-size: 12px; cursor: pointer;
@@ -1936,6 +1937,15 @@ body.dark .fud-inner { background: #1a1a1a; }
   line-height: 1; font-family: inherit;
 }
 .btn-dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.btn-dark-toggle.icon-only {
+  width: 30px; height: 30px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-dark-toggle.icon-only svg {
+  width: 16px; height: 16px; stroke: currentColor; fill: none;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  pointer-events: none;
+}
 /* 強調色主題選擇器 */
 .accent-popover { position: absolute; top: calc(100% + 8px); right: 0; z-index: 950;
   display: none; background: var(--bg-darker); border: 1px solid var(--border-dark);
@@ -2213,10 +2223,10 @@ input:-webkit-autofill:focus {
       <div class="brand-sub" id="brand-sub">Article Archive</div>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;position:relative">
-      <button class="btn-dark-toggle" onclick="toggleShortcutHelp()" title="鍵盤快捷鍵（?）">?</button>
-      <button class="btn-dark-toggle" onclick="openGraphView()" title="連結圖（用 [[標題]] 建立的全庫連結網絡）">連結圖</button>
-      <button class="btn-dark-toggle" onclick="toggleAccentPicker(event)" title="強調色主題">主題</button>
-      <button class="btn-dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" title="深色／淺色模式">深色</button>
+      <button class="btn-dark-toggle icon-only" onclick="toggleShortcutHelp()" title="鍵盤快捷鍵（?）"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+      <button class="btn-dark-toggle icon-only" onclick="openGraphView()" title="連結圖（用 [[標題]] 建立的全庫連結網絡）"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+      <button class="btn-dark-toggle icon-only" onclick="toggleAccentPicker(event)" title="強調色主題"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></button>
+      <button class="btn-dark-toggle icon-only" id="dark-toggle" onclick="toggleDarkMode()" title="深色／淺色模式"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
       <div id="accent-popover" class="accent-popover">
         <div class="accent-popover-title">強調色</div>
         <div class="accent-swatches" id="accent-swatches"></div>
@@ -2292,7 +2302,7 @@ input:-webkit-autofill:focus {
     <div class="articles-only footer-btn-grid">
       <button class="btn-footer-sm" onclick="exportJSON()" title="備份 JSON">備份 JSON</button>
       <button class="btn-footer-sm" onclick="importJSON()" title="還原 JSON">還原 JSON</button>
-      <button class="btn-footer-sm" onclick="exportCSV()" title="匯出 CSV">匯出 CSV</button>
+      <button class="btn-footer-sm" onclick="exportToObsidian()" title="匯出至 Obsidian">匯出 Obsidian</button>
       <button class="btn-footer-sm" style="color:var(--accent-dim);border-color:var(--accent-dim)" onclick="openTagManager()" title="管理標籤">標籤</button>
     </div>
   </div>
@@ -2304,7 +2314,6 @@ input:-webkit-autofill:focus {
   <div id="content-area">
 
     <div id="welcome-screen">
-      <div class="welcome-icon">📚</div>
       <div class="welcome-title">文章資料庫</div>
       <div class="welcome-sub">點擊左側文章閱讀，或按「＋ 新增文章」開始記錄</div>
     </div>
@@ -2475,6 +2484,7 @@ input:-webkit-autofill:focus {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 // ── Markdown + LaTeX 共存：先把數學區段隔離成占位符，跑完 marked 再還原 ──
 // 避免 Markdown 把 $x_i$ 裡的 _i_ 解析成 <em>i</em>，把 LaTeX 切壞
@@ -2545,6 +2555,7 @@ function _apiToArticle(r) {
     learn: r.learn || '',
     notes: r.notes || '[]',
     highlights: r.highlights || '[]',
+    created_at: r.created_at || '',
   };
 }
 
@@ -3374,21 +3385,6 @@ async function deleteArticle(id) {
   toast('已刪除文章');
 }
 
-function exportCSV() {
-  if (!articles.length) { toast('尚無文章可匯出'); return; }
-  const rows = [['編號', '資料夾', '文章名稱', '作者', '日期', '來源', '文章內容']];
-  articles.forEach((a, i) => {
-    rows.push([i+1, a.folder||'', a.title, a.author||'', a.date||'', a.source||'', (a.content||'').replace(/\n/g, ' ')]);
-  });
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = '文章資料庫.csv'; a.click();
-  URL.revokeObjectURL(url);
-  toast('匯出完成');
-}
-
 function esc(s) {
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -3590,17 +3586,25 @@ document.addEventListener('keydown', e => {
 })();
 
 // ── Dark mode ─────────────────────────────────────────────────
+const _SUN_ICON  = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+const _MOON_ICON = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 let darkMode = localStorage.getItem('darkMode') === '1';
+function _updateDarkToggleIcon() {
+  const btn = document.getElementById('dark-toggle');
+  if (!btn) return;
+  btn.innerHTML = darkMode ? _SUN_ICON : _MOON_ICON;
+  btn.title = darkMode ? '深色／淺色模式（目前：深色，點擊切換為淺色）' : '深色／淺色模式（目前：淺色，點擊切換為深色）';
+}
 function toggleDarkMode() {
   darkMode = !darkMode;
   document.body.classList.toggle('dark', darkMode);
-  document.getElementById('dark-toggle').textContent = darkMode ? '淺色' : '深色';
+  _updateDarkToggleIcon();
   localStorage.setItem('darkMode', darkMode ? '1' : '0');
 }
 if (darkMode) {
   document.body.classList.add('dark');
-  document.getElementById('dark-toggle').textContent = '淺色';
 }
+_updateDarkToggleIcon();
 
 // ── 強調色主題 ────────────────────────────────────────────────
 const ACCENTS = {
@@ -3839,6 +3843,61 @@ document.getElementById('json-import-input').addEventListener('change', async fu
   } catch(err) { toast('匯入失敗：' + err.message); }
   e.target.value = '';
 });
+
+// ── 匯出至 Obsidian（每篇文章一個 .md，資料夾對應 Vault 子資料夾） ──
+// [[標題]] 語法與 Obsidian 的 wikilink 完全相容，不需要轉換內文。
+function _obsSanitize(name) {
+  return String(name || '未命名')
+    .replace(/[\\/:*?"<>|#^[\]]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120) || '未命名';
+}
+function _obsYamlStr(s) {
+  return `"${String(s || '').replace(/"/g, '\\"').replace(/\n/g, ' ')}"`;
+}
+function _obsFrontmatter(a) {
+  const lines = ['---'];
+  lines.push(`title: ${_obsYamlStr(a.title)}`);
+  if (a.author) lines.push(`author: ${_obsYamlStr(a.author)}`);
+  if (a.date)   lines.push(`date: ${a.date}`);
+  if (a.source) lines.push(`source: ${_obsYamlStr(a.source)}`);
+  if (a.tags && a.tags.length) lines.push(`tags: [${a.tags.map(t => _obsYamlStr(t)).join(', ')}]`);
+  lines.push('---\n');
+  return lines.join('\n');
+}
+async function exportToObsidian() {
+  if (!articles.length) { toast('尚無文章可匯出'); return; }
+  if (typeof JSZip === 'undefined') { toast('打包工具載入失敗，請檢查網路連線'); return; }
+  toast('正在打包 Obsidian Vault…');
+  try {
+    const zip = new JSZip();
+    const usedPaths = new Set();
+    articles.forEach(a => {
+      const folder = _obsSanitize(a.folder || '未分類');
+      let base = _obsSanitize(a.title);
+      let filename = `${folder}/${base}.md`;
+      let n = 2;
+      while (usedPaths.has(filename)) { filename = `${folder}/${base} (${n}).md`; n++; }
+      usedPaths.add(filename);
+
+      let body = _obsFrontmatter(a) + '\n' + (a.content || '').trim() + '\n';
+      const imgs = getImages(a);
+      if (imgs.length) {
+        body += '\n## 附圖\n\n' + imgs.map(src => `![](${src})`).join('\n\n') + '\n';
+      }
+      zip.file(filename, body);
+    });
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `obsidian_vault_${new Date().toISOString().slice(0,10)}.zip`; a.click();
+    URL.revokeObjectURL(url);
+    toast(`✓ 已匯出 ${articles.length} 篇文章，解壓縮後把資料夾丟進你的 Obsidian Vault 即可`);
+  } catch (e) {
+    toast('匯出失敗：' + (e.message || e));
+  }
+}
 
 async function initData() {
   const sub = document.querySelector('.welcome-sub');
@@ -5076,17 +5135,14 @@ async function batchAddTag() {
 async function openStats() {
   const total = articles.length;
 
-  // Content metrics
-  const wordCounts = articles.map(a => {
-    const txt = (a.content || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-    return txt ? txt.split(' ').length : 0;
-  });
+  // Content metrics（以字元數計算，中文內容沒有空白分詞，用 split(' ') 算「字數」會嚴重低估）
+  const wordCounts = articles.map(a => (a.content || '').replace(/<[^>]*>/g, '').replace(/\s/g, '').length);
   const totalWords = wordCounts.reduce((s, n) => s + n, 0);
   const avgWords   = total ? Math.round(totalWords / total) : 0;
   const maxWords   = wordCounts.length ? Math.max(...wordCounts) : 0;
   const longestIdx = wordCounts.indexOf(maxWords);
   const longestTitle = longestIdx >= 0 ? (articles[longestIdx]?.title || '') : '';
-  const avgReadMin = Math.max(1, Math.round(avgWords / 250));
+  const avgReadMin = Math.max(1, Math.round(avgWords / 300));
 
   // Quality metrics
   const starredCount  = articles.filter(a => a.starred).length;
@@ -5099,6 +5155,49 @@ async function openStats() {
   articles.forEach(a => { const f = a.folder || '未分類'; folderMap[f] = (folderMap[f] || 0) + 1; });
   const topFolders = Object.entries(folderMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const maxFolderN = topFolders.length ? topFolders[0][1] : 0;
+
+  // Time trend：近 12 個月新增文章數（依建立時間）
+  const now = new Date();
+  const monthBuckets = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthBuckets.push({ key: `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`, count: 0 });
+  }
+  const monthIndex = new Map(monthBuckets.map((b, i) => [b.key, i]));
+  articles.forEach(a => {
+    const raw = a.created_at || a.date || '';
+    const m = raw.match(/^(\d{4})-(\d{2})/);
+    if (!m) return;
+    const idx = monthIndex.get(`${m[1]}/${m[2]}`);
+    if (idx !== undefined) monthBuckets[idx].count++;
+  });
+  const maxMonthN = Math.max(1, ...monthBuckets.map(b => b.count));
+  const hasTrend = monthBuckets.some(b => b.count > 0);
+
+  // Tag distribution
+  const tagMap = {};
+  articles.forEach(a => (a.tags || []).forEach(t => { tagMap[t] = (tagMap[t] || 0) + 1; }));
+  const topTags = Object.entries(tagMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxTagN = topTags.length ? topTags[0][1] : 0;
+
+  // Author distribution
+  const authorMap = {};
+  articles.forEach(a => { const au = (a.author || '').trim() || '未知作者'; authorMap[au] = (authorMap[au] || 0) + 1; });
+  const topAuthors = Object.entries(authorMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxAuthorN = topAuthors.length ? topAuthors[0][1] : 0;
+
+  // Source distribution（網址取網域，純文字保留原樣）
+  const _srcLabel = src => {
+    if (!src) return '未標示來源';
+    if (/^https?:\/\//i.test(src)) {
+      try { return new URL(src).hostname.replace(/^www\./, ''); } catch (e) { return src.slice(0, 30); }
+    }
+    return src.slice(0, 30);
+  };
+  const sourceMap = {};
+  articles.forEach(a => { const s = _srcLabel((a.source || '').trim()); sourceMap[s] = (sourceMap[s] || 0) + 1; });
+  const topSources = Object.entries(sourceMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxSourceN = topSources.length ? topSources[0][1] : 0;
 
   // Helpers
   const fmtN = n => n >= 10000 ? Math.round(n / 1000) + 'K' : n >= 1000 ? (n / 1000).toFixed(1) + 'K' : String(n);
@@ -5136,7 +5235,7 @@ async function openStats() {
     <div class="sc-grid4" style="margin-bottom:24px">
       ${metaCard(fmtN(totalWords), '總字數', '去除空白後')}
       ${metaCard(fmtN(avgWords), '平均字數', '字 / 篇')}
-      ${metaCard(avgReadMin + ' 分', '平均閱讀', '250 字 / 分')}
+      ${metaCard(avgReadMin + ' 分', '平均閱讀', '300 字 / 分')}
       ${metaCard(fmtN(maxWords), '最長文章', esc(longestTitle.slice(0, 18) + (longestTitle.length > 18 ? '…' : '')))}
     </div>
 
@@ -5148,9 +5247,34 @@ async function openStats() {
       ${qualCard(cldCount,     '因果圖', total)}
     </div>
 
+    ${hasTrend ? `
+    <hr class="sc-divider">
+    <div class="sc-section-lbl">時間趨勢（近 12 個月新增）</div>
+    <div>${monthBuckets.map(b => barRow(b.key, b.count, maxMonthN, total)).join('')}</div>
+    ` : ''}
+
     ${topFolders.length ? `
+    <hr class="sc-divider">
     <div class="sc-section-lbl">資料夾分布</div>
     <div>${topFolders.map(([f, c]) => barRow(f, c, maxFolderN, total)).join('')}</div>
+    ` : ''}
+
+    ${topTags.length ? `
+    <hr class="sc-divider">
+    <div class="sc-section-lbl">標籤分布</div>
+    <div>${topTags.map(([t, c]) => barRow(t, c, maxTagN, total)).join('')}</div>
+    ` : ''}
+
+    ${topAuthors.length ? `
+    <hr class="sc-divider">
+    <div class="sc-section-lbl">作者分布</div>
+    <div>${topAuthors.map(([au, c]) => barRow(au, c, maxAuthorN, total)).join('')}</div>
+    ` : ''}
+
+    ${topSources.length ? `
+    <hr class="sc-divider">
+    <div class="sc-section-lbl">來源網站分布</div>
+    <div>${topSources.map(([s, c]) => barRow(s, c, maxSourceN, total)).join('')}</div>
     ` : ''}`;
 
   document.getElementById('stats-panel').classList.add('open');
@@ -6088,7 +6212,7 @@ function openGraphView() {
   if (!_gvNodes.length) {
     document.getElementById('graph-body').innerHTML =
       `<div class="cld-empty"><div class="cld-big">🕸️</div>
-       <div>還沒有任何連結<br>在文章或報告內文用 <code>[[標題]]</code> 建立連結，就會顯示在這裡</div></div>`;
+       <div>還沒有任何連結<br>在文章內文用 <code>[[標題]]</code> 建立連結，就會顯示在這裡</div></div>`;
     return;
   }
   const iterations = Math.max(60, Math.min(320, Math.round(24000 / _gvNodes.length)));
@@ -6433,7 +6557,7 @@ function graphResetView() {
 <div id="graph-panel">
   <div class="cld-inner" style="width:1120px;height:760px;">
     <div class="cld-head">
-      <h2>🕸️ 連結圖</h2>
+      <h2>連結圖</h2>
       <input id="graph-search" type="text" placeholder="搜尋節點…" oninput="graphFilter(this.value)">
       <span class="cld-spacer"></span>
       <button class="cld-btn" onclick="graphResetView()">重置視角</button>
