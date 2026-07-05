@@ -471,8 +471,12 @@ body.dark #main { background: var(--bg-light); }
 }
 .btn-icon .btn-badge:empty { display: none; }
 /* 蓋掉後面 .btn-edit/.btn-delete 通用規則（含 dark mode !important）重新加回的白底/邊框 */
-.btn-icon.btn-edit, .btn-icon.btn-delete { background: none; border-color: transparent; }
-body.dark .btn-icon.btn-edit, body.dark .btn-icon.btn-delete { background: none !important; }
+.btn-icon.btn-edit, .btn-icon.btn-delete, .btn-icon.btn-star, .btn-icon.btn-duplicate {
+  background: none; border-color: transparent;
+}
+body.dark .btn-icon.btn-edit, body.dark .btn-icon.btn-delete,
+body.dark .btn-icon.btn-star, body.dark .btn-icon.btn-duplicate { background: none !important; }
+.btn-icon.btn-star.starred { border-color: var(--accent); background: var(--accent-light); }
 .btn-text {
   padding: 4px 8px; font-weight: 600;
   background: white; border: 1px solid var(--border); border-radius: 6px;
