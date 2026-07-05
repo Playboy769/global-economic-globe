@@ -450,7 +450,7 @@ body.dark #main { background: var(--bg-light); }
   width: 32px; height: 30px; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   position: relative;
-  background: white; border: 1px solid var(--border); border-radius: 6px;
+  background: none; border: 1px solid transparent; border-radius: 6px;
   color: var(--text-muted); cursor: pointer; transition: all 0.12s;
 }
 .btn-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none;
@@ -476,7 +476,7 @@ body.dark #main { background: var(--bg-light); }
   font-size: 12px; cursor: pointer; color: var(--text-muted); transition: all 0.12s;
 }
 .btn-text:hover { border-color: var(--accent); color: var(--accent-dim); }
-body.dark .btn-icon, body.dark .btn-text { background: #1c1c1f; border-color: #36363a; }
+body.dark .btn-text { background: #1c1c1f; border-color: #36363a; }
 /* ── 標題下方一行式 Byline ─────────────────────────────── */
 .article-byline {
   display: flex; flex-wrap: wrap; align-items: center;
@@ -1931,7 +1931,7 @@ body.dark .fud-inner { background: #1a1a1a; }
 
 /* ── Dark toggle btn ────────────────────────────────────────── */
 .btn-dark-toggle {
-  background: none; border: 1px solid var(--border-dark); font-size: 11px;
+  background: none; border: 1px solid transparent; font-size: 11px;
   cursor: pointer; padding: 4px 10px; border-radius: 6px;
   color: var(--text-muted); transition: border-color 0.15s, color 0.15s;
   line-height: 1; font-family: inherit;
@@ -3888,11 +3888,19 @@ async function exportToObsidian() {
       }
       zip.file(filename, body);
     });
-    const blob = await zip.generateAsync({ type: 'blob' });
+    const blob = await zip.generateAsync({
+      type: 'blob', mimeType: 'application/zip',
+      compression: 'DEFLATE', compressionOptions: { level: 6 },
+    });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `obsidian_vault_${new Date().toISOString().slice(0,10)}.zip`; a.click();
-    URL.revokeObjectURL(url);
+    const el = document.createElement('a');
+    el.href = url; el.download = `obsidian_vault_${new Date().toISOString().slice(0,10)}.zip`;
+    document.body.appendChild(el);
+    el.click();
+    el.remove();
+    // 延遲釋放 blob URL：太早 revoke 在部分系統（尤其雲端同步資料夾如 OneDrive）
+    // 可能讓瀏覽器還沒寫完檔案就被切斷，導致下載出來的 zip 損毀無法開啟。
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
     toast(`✓ 已匯出 ${articles.length} 篇文章，解壓縮後把資料夾丟進你的 Obsidian Vault 即可`);
   } catch (e) {
     toast('匯出失敗：' + (e.message || e));
