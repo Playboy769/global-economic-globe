@@ -75,7 +75,12 @@ _HERE = Path(__file__).parent
 
 @app.get("/")
 def frontend():
-    return FileResponse(_HERE / "index.html")
+    # 強制每次都跟伺服器重新驗證，避免瀏覽器（尤其是跨來源 iframe 嵌入時，
+    # 例如 OutsideFramework 的 Works 頁）快取住舊版 index.html 導致更新看不到。
+    return FileResponse(
+        _HERE / "index.html",
+        headers={"Cache-Control": "no-cache, must-revalidate"},
+    )
 
 
 # ---------- models ----------
