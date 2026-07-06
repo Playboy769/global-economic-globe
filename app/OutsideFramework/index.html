@@ -129,6 +129,42 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .pf-brand{font-size:16px;font-weight:700;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC',serif}
 .pf-copy{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
 
+/* ── Work Preview ── */
+#wk-preview{position:fixed;inset:0;z-index:150;background:rgba(250,250,248,0.96);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .35s ease}
+#wk-preview.open{pointer-events:auto}
+#wk-preview svg.wkp-line{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transition:opacity .5s ease}
+#wk-preview.ghost svg.wkp-line{opacity:.18}
+#wk-preview .wkp-frame{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;opacity:0;transform:translateY(10px);outline:1px solid transparent;transition:opacity .35s ease,transform .35s ease,outline-color .4s ease}
+#wk-preview.ghost .wkp-frame{outline-color:var(--c-accent,#b08050)}
+#wk-preview .wkp-frame.show{opacity:1;transform:translateY(0)}
+#wk-preview .wkp-icon{width:120px;height:120px;stroke:var(--c-accent,#b08050)}
+#wk-preview .wkp-icon svg{width:100%;height:100%}
+#wk-preview .wkp-name{font-family:'Orchid','Noto Serif TC',serif;font-size:34px;font-weight:500;letter-spacing:.01em;color:#0a0a0a}
+#wk-preview .wkp-type{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.1em}
+#wk-preview .wkp-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#999;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+#wk-preview .wkp-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#999;transition:color .2s ease}
+#wk-preview .wkp-close:hover{color:var(--c-accent,#b08050)}
+#wk-preview .wkp-close svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.4;fill:none}
+#wk-preview .wkp-idx{position:absolute;top:14px;left:18px;font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#ccc;letter-spacing:.06em}
+#wk-preview .wkp-pen{fill:var(--c-accent,#b08050);opacity:0}
+#wk-preview .wkp-echo{fill:none;stroke:var(--c-accent,#b08050);stroke-width:1}
+#wk-preview .wkp-extra{fill:none;stroke:var(--c-accent,#b08050);stroke-width:1.2}
+#wk-preview .wkp-node{fill:var(--c-accent,#b08050);opacity:0;transform-origin:center}
+#wk-preview .wkp-corner{position:absolute;width:6px;height:6px;border:1px solid var(--c-accent,#b08050);opacity:0;transition:opacity .15s ease}
+#wk-preview .wkp-corner.show{opacity:.7}
+#wk-preview .wkp-corner.tl{border-width:1px 0 0 1px}
+#wk-preview .wkp-corner.tr{border-width:1px 1px 0 0}
+#wk-preview .wkp-corner.bl{border-width:0 0 1px 1px}
+#wk-preview .wkp-corner.br{border-width:0 1px 1px 0}
+#wk-preview .wkp-icon svg [data-wkp-draw]{transition:none}
+@media(max-width:640px){
+  #wk-preview .wkp-icon{width:80px;height:80px}
+  #wk-preview .wkp-name{font-size:26px}
+}
+@media(prefers-reduced-motion:reduce){
+  #wk-preview,#wk-preview .wkp-frame{transition:opacity .2s ease}
+}
+
 /* ── Project Overlay ── */
 #project-overlay{position:fixed;inset:0;z-index:200;background:#000;display:none;opacity:0;transition:opacity .4s ease}
 #project-overlay.active{display:block;opacity:1}
@@ -313,27 +349,27 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <span class="wk-group-dot" style="background:#d1591f"></span>
           <span class="wk-group-tag">Finance &amp; Markets</span>
         </div>
-        <div class="wk-card reveal" onclick="openProject('econ')">
+        <div class="wk-card reveal" onclick="previewWork(this,'econ')">
           <div class="wk-visual"><div class="wk-gradient g1"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="14" y="52" width="10" height="18" rx="2"/><rect x="28" y="38" width="10" height="32" rx="2"/><rect x="42" y="44" width="10" height="26" rx="2"/><rect x="56" y="24" width="10" height="46" rx="2"/>
             <path d="M19 49 L33 34 L47 40 L61 20" stroke="#999" stroke-width="1"/><circle cx="61" cy="20" r="2.5" fill="#999" stroke="none"/>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-1" onclick="openProject('energy')">
+        <div class="wk-card reveal reveal-delay-1" onclick="previewWork(this,'energy')">
           <div class="wk-visual"><div class="wk-gradient g2"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M46 8 L34 36 H44 L30 72"/><circle cx="40" cy="40" r="28" stroke-dasharray="3 5" opacity="0.4"/><path d="M50 36 L40 56" opacity="0.3"/>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Energy</div><div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-2" onclick="openProject('invest')">
+        <div class="wk-card reveal reveal-delay-2" onclick="previewWork(this,'invest')">
           <div class="wk-visual"><div class="wk-gradient g5"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="16" y="20" width="48" height="34" rx="3" opacity="0.3"/><rect x="20" y="28" width="48" height="34" rx="3" opacity="0.5"/><rect x="24" y="36" width="48" height="34" rx="3"/>
             <text x="48" y="57" text-anchor="middle" font-family="'Orchid',serif" font-size="10" font-weight="400" fill="#bbb" stroke="none" letter-spacing="1">M / R / I</text>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
         </div>
-        <div class="wk-card reveal" onclick="openMU()">
+        <div class="wk-card reveal" onclick="previewWork(this,'mu')">
           <div class="wk-visual"><div class="wk-gradient g8"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
             <rect x="24" y="24" width="32" height="32" rx="2" stroke-width="1.2"/><line x1="13" y1="33" x2="24" y2="33" stroke-width="1.2"/><line x1="13" y1="40" x2="24" y2="40" stroke-width="1.2"/><line x1="13" y1="47" x2="24" y2="47" stroke-width="1.2"/>
             <line x1="56" y1="33" x2="67" y2="33" stroke-width="1.2"/><line x1="56" y1="40" x2="67" y2="40" stroke-width="1.2"/><line x1="56" y1="47" x2="67" y2="47" stroke-width="1.2"/>
@@ -341,7 +377,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">MU Q3</div><div class="wk-type">法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-1" onclick="openProject('warning')">
+        <div class="wk-card reveal reveal-delay-1" onclick="previewWork(this,'warning')">
           <div class="wk-visual"><div class="wk-gradient g10"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="40" cy="40" r="24" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.35"/><circle cx="40" cy="40" r="14" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.55"/>
             <line x1="40" y1="16" x2="40" y2="26" stroke-width="1" opacity="0.5"/><line x1="64" y1="40" x2="54" y2="40" stroke-width="1" opacity="0.5"/><line x1="40" y1="64" x2="40" y2="54" stroke-width="1" opacity="0.5"/><line x1="16" y1="40" x2="26" y2="40" stroke-width="1" opacity="0.5"/>
@@ -350,7 +386,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-2" onclick="openProject('options')">
+        <div class="wk-card reveal reveal-delay-2" onclick="previewWork(this,'options')">
           <div class="wk-visual"><div class="wk-gradient g11"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="56" x2="68" y2="56" stroke-width="0.8" opacity="0.4"/><line x1="12" y1="14" x2="12" y2="66" stroke-width="0.8" opacity="0.4"/>
             <polyline points="12,56 28,56 40,28 52,56 68,56" stroke-width="1.4" stroke="#000" opacity="0.85"/><polyline points="12,56 30,56 44,38 68,22" stroke-width="1.1" stroke="#000" opacity="0.4"/>
@@ -358,7 +394,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
         </div>
-        <div class="wk-card reveal" onclick="openProject('brownian')">
+        <div class="wk-card reveal" onclick="previewWork(this,'brownian')">
           <div class="wk-visual"><div class="wk-gradient g12"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 46 C18 20, 26 62, 34 34 C40 12, 48 52, 56 28 C62 12, 66 24, 70 18" opacity="0.85"/>
             <line x1="10" y1="46" x2="70" y2="46" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.3"/>
@@ -374,7 +410,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <span class="wk-group-dot" style="background:#5080a8"></span>
           <span class="wk-group-tag">Network Analysis</span>
         </div>
-        <div class="wk-card reveal" onclick="openProject('https://structural-holes-production.up.railway.app/')">
+        <div class="wk-card reveal" onclick="previewWork(this,'https://structural-holes-production.up.railway.app/')">
           <div class="wk-visual"><div class="wk-gradient g4"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round">
             <line x1="26" y1="26" x2="54" y2="36"/><line x1="26" y1="26" x2="34" y2="56"/><line x1="54" y1="36" x2="34" y2="56"/><line x1="54" y1="36" x2="62" y2="60"/><line x1="34" y1="56" x2="62" y2="60"/><line x1="26" y1="26" x2="42" y2="16"/>
             <circle cx="26" cy="26" r="5" stroke-width="1.2"/><circle cx="54" cy="36" r="6" stroke-width="1.2"/><circle cx="34" cy="56" r="4.5" stroke-width="1.2"/><circle cx="62" cy="60" r="3.5" stroke-width="1.2"/><circle cx="42" cy="16" r="4" stroke-width="1.2"/>
@@ -389,7 +425,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <span class="wk-group-dot" style="background:#9060c0"></span>
           <span class="wk-group-tag">Causal Logic</span>
         </div>
-        <div class="wk-card reveal" onclick="openProject('causal')">
+        <div class="wk-card reveal" onclick="previewWork(this,'causal')">
           <div class="wk-visual"><div class="wk-gradient g7"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <defs><marker id="cfk-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,2.5 L0,5 Z" fill="#000" stroke="none"/></marker></defs>
             <rect x="11" y="15" width="23" height="15" rx="3"/><rect x="47" y="23" width="22" height="15" rx="3" opacity="0.5"/><rect x="28" y="50" width="23" height="15" rx="3" opacity="0.78"/>
@@ -405,7 +441,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <span class="wk-group-dot" style="background:#508060"></span>
           <span class="wk-group-tag">Knowledge</span>
         </div>
-        <div class="wk-card reveal" onclick="openProject('https://articlebase.up.railway.app/')">
+        <div class="wk-card reveal" onclick="previewWork(this,'https://articlebase.up.railway.app/')">
           <div class="wk-visual"><div class="wk-gradient g6"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="18" y="14" width="30" height="40" rx="2"/><line x1="24" y1="22" x2="42" y2="22" opacity="0.5"/><line x1="24" y1="28" x2="42" y2="28" opacity="0.5"/><line x1="24" y1="34" x2="36" y2="34" opacity="0.5"/>
             <rect x="32" y="30" width="30" height="40" rx="2" opacity="0.6"/><line x1="38" y1="38" x2="56" y2="38" opacity="0.4"/><line x1="38" y1="44" x2="56" y2="44" opacity="0.4"/><line x1="38" y1="50" x2="50" y2="50" opacity="0.4"/>
@@ -455,6 +491,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     </div>
   </div>
 </div>
+
+<!-- ── Work Preview ── -->
+<div id="wk-preview" aria-hidden="true"></div>
 
 <!-- ── Project Overlay ── -->
 <div id="project-overlay">
@@ -507,6 +546,514 @@ const HP_BASE      = 'https://globe-invest.up.railway.app/high-price';
 const OPTIONS_BASE = 'https://globe-invest.up.railway.app/options';
 const BROWNIAN_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8132' : 'https://globe-invest.up.railway.app/brownian';
 
+/* ── Work Card → Fullscreen Preview ── */
+const wkPreviewState = { open: false, animating: false, mode: null, cardEl: null };
+
+function ensureWkPreviewDom() {
+  let root = document.getElementById('wk-preview');
+  if (root.dataset.built) return root;
+  root.dataset.built = '1';
+  root.innerHTML =
+    '<svg class="wkp-line" xmlns="http://www.w3.org/2000/svg">' +
+      '<path class="wkp-path" fill="none" stroke="var(--c-accent,#b08050)" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<g class="wkp-extras"></g>' +
+      '<circle class="wkp-pen" r="2.5"/>' +
+    '</svg>' +
+    '<div class="wkp-frame">' +
+      '<div class="wkp-idx"></div>' +
+      '<div class="wkp-icon"></div>' +
+      '<div class="wkp-name"></div>' +
+      '<div class="wkp-type"></div>' +
+    '</div>' +
+    '<div class="wkp-corner tl"></div><div class="wkp-corner tr"></div><div class="wkp-corner bl"></div><div class="wkp-corner br"></div>' +
+    '<div class="wkp-hint">點擊進入 &middot; ESC 返回</div>' +
+    '<div class="wkp-close" aria-label="close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>';
+  return root;
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/* Deterministic pseudo-random from a string seed (for brownian mode) */
+function seededRandom(seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) { h = (h * 31 + seed.charCodeAt(i)) >>> 0; }
+  return function() {
+    h = (h * 1664525 + 1013904223) >>> 0;
+    return h / 4294967296;
+  };
+}
+
+/* ── Per-work approach-path generators ──
+   Each receives (sx, sy, fx, fy) — start point and frame top-left corner target —
+   and returns { d, extras } where extras is an array of
+   { tag, attrs, delay, dur, from, to } describing additional SVG elements
+   that reveal on their own timing (echo lines, nodes, ticks, arrowhead). */
+const wkLineGenerators = {
+  // 1. Economy — rising staircase toward the frame
+  econ(sx, sy, fx, fy) {
+    const steps = 5;
+    const dx = (fx - sx) / steps, dy = (fy - sy) / steps;
+    let d = `M ${sx} ${sy} `;
+    let x = sx, y = sy;
+    for (let i = 0; i < steps; i++) {
+      x += dx;
+      d += `L ${x} ${y} `;
+      y += dy;
+      d += `L ${x} ${y} `;
+    }
+    return { d, extras: [] };
+  },
+  // 2. Energy — lightning zigzag
+  energy(sx, sy, fx, fy) {
+    const segs = 6;
+    const dx = (fx - sx) / segs, dy = (fy - sy) / segs;
+    let d = `M ${sx} ${sy} `;
+    for (let i = 1; i <= segs; i++) {
+      const x = sx + dx * i;
+      const y = sy + dy * i;
+      if (i === segs) {
+        d += `L ${fx} ${fy} `;
+      } else {
+        const amp = (i % 2 === 0 ? 1 : -1) * (14 - i);
+        d += `L ${x} ${y + amp} `;
+      }
+    }
+    return { d, extras: [] };
+  },
+  // 3. InvestFrame — main S-curve + two thin echo lines
+  invest(sx, sy, fx, fy) {
+    const midX = (sx + fx) / 2, midY = sy + (fy - sy) * 0.35;
+    const c1x = sx + (midX - sx) * 0.5, c1y = sy;
+    const c2x = midX - (midX - fx) * 0.3, c2y = midY;
+    const c3x = fx - (fx - midX) * 0.2, c3y = fy + (midY - fy) * 0.4;
+    const c4x = fx, c4y = fy + (fy - midY) * -0.2;
+    const d = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${midX} ${midY} C ${c3x} ${c3y}, ${c4x} ${c4y}, ${fx} ${fy} `;
+    function offset(o) {
+      return `M ${sx} ${sy + o} C ${c1x} ${c1y + o}, ${c2x} ${c2y + o}, ${midX} ${midY + o} C ${c3x} ${c3y + o}, ${c4x} ${c4y + o}, ${fx} ${fy + o} `;
+    }
+    return {
+      d,
+      extras: [
+        { tag: 'path', attrs: { d: offset(6), class: 'wkp-echo', 'stroke-dasharray': '', opacity: '0.35' }, delay: 80, dur: 700 },
+        { tag: 'path', attrs: { d: offset(-6), class: 'wkp-echo', 'stroke-dasharray': '', opacity: '0.2' }, delay: 160, dur: 700 }
+      ]
+    };
+  },
+  // 4. MU Q3 — circuit trace with chamfered bends
+  mu(sx, sy, fx, fy) {
+    const dx = fx - sx, dy = fy - sy;
+    const c = 10; // chamfer size
+    const x1 = sx + dx * 0.35, y1 = sy;
+    const x2 = x1, y2 = sy + dy * 0.5;
+    const x3 = sx + dx * 0.7, y3 = y2;
+    const x4 = x3, y4 = fy;
+    let d = `M ${sx} ${sy} `;
+    d += `L ${x1 - c} ${y1} Q ${x1} ${y1} ${x1} ${y1 + Math.sign(y2 - y1) * c} `;
+    d += `L ${x2} ${y2 - Math.sign(y2 - y1) * c} Q ${x2} ${y2} ${x2 + Math.sign(x3 - x2) * c} ${y2} `;
+    d += `L ${x3 - Math.sign(x3 - x2) * c} ${y3} Q ${x3} ${y3} ${x3} ${y3 + Math.sign(y4 - y3) * c} `;
+    d += `L ${x4} ${y4 - Math.sign(y4 - y3) * c} Q ${x4} ${y4} ${x4 + Math.sign(fx - x4) * c} ${y4} `;
+    d += `L ${fx} ${fy} `;
+    return { d, extras: [] };
+  },
+  // 5. TWII INFOR — seismograph wave, amplitude decaying toward the frame
+  warning(sx, sy, fx, fy) {
+    const periods = 3;
+    const steps = 48;
+    const dx = (fx - sx) / steps, dy = (fy - sy) / steps;
+    let d = `M ${sx} ${sy} `;
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const amp = 16 * (1 - t);
+      const wave = Math.sin(t * Math.PI * 2 * periods) * amp;
+      const baseX = sx + dx * i, baseY = sy + dy * i;
+      const nx = -dy, ny = dx;
+      const len = Math.hypot(nx, ny) || 1;
+      d += `L ${baseX + (nx / len) * wave} ${baseY + (ny / len) * wave} `;
+    }
+    return { d, extras: [] };
+  },
+  // 6. Options — branches into two diverging curves that reconverge
+  options(sx, sy, fx, fy) {
+    const midX = (sx + fx) / 2;
+    const d = `M ${sx} ${sy} L ${midX} ${sy + (fy - sy) * 0.3} L ${fx} ${fy} `;
+    const branchUp = `M ${midX} ${sy + (fy - sy) * 0.3} Q ${midX + (fx - midX) * 0.4} ${sy + (fy - sy) * 0.1}, ${fx} ${fy} `;
+    const branchDown = `M ${midX} ${sy + (fy - sy) * 0.3} Q ${midX + (fx - midX) * 0.4} ${fy + (sy - fy) * -0.1 + (fy - sy) * 0.6}, ${fx} ${fy} `;
+    return {
+      d,
+      extras: [
+        { tag: 'path', attrs: { d: branchUp, class: 'wkp-extra', opacity: '0.55' }, delay: 120, dur: 650 },
+        { tag: 'path', attrs: { d: branchDown, class: 'wkp-extra', opacity: '0.55' }, delay: 200, dur: 650 }
+      ]
+    };
+  },
+  // 7. Brownian — deterministic random walk with perpendicular jitter
+  brownian(sx, sy, fx, fy) {
+    const rand = seededRandom('brownian');
+    const steps = 22;
+    const dx = (fx - sx) / steps, dy = (fy - sy) / steps;
+    const nx = -dy, ny = dx;
+    const len = Math.hypot(nx, ny) || 1;
+    let d = `M ${sx} ${sy} `;
+    let x = sx, y = sy;
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const jitter = (rand() - 0.5) * 18 * (1 - t * 0.6);
+      x = sx + dx * i + (nx / len) * jitter;
+      y = sy + dy * i + (ny / len) * jitter;
+      if (i === steps) { x = fx; y = fy; }
+      d += `L ${x} ${y} `;
+    }
+    return { d, extras: [] };
+  },
+  // 8. Structural Holes — network hops through waypoints with popping nodes
+  structuralHoles(sx, sy, fx, fy) {
+    const p1x = sx + (fx - sx) * 0.28, p1y = sy + (fy - sy) * 0.18;
+    const p2x = sx + (fx - sx) * 0.55, p2y = sy + (fy - sy) * 0.62;
+    const p3x = sx + (fx - sx) * 0.8, p3y = sy + (fy - sy) * 0.35;
+    const d = `M ${sx} ${sy} L ${p1x} ${p1y} L ${p2x} ${p2y} L ${p3x} ${p3y} L ${fx} ${fy} `;
+    return {
+      d,
+      extras: [
+        { tag: 'circle', attrs: { cx: p1x, cy: p1y, r: 3, class: 'wkp-node' }, delay: 230, dur: 200, popAt: 0.25 },
+        { tag: 'circle', attrs: { cx: p2x, cy: p2y, r: 3, class: 'wkp-node' }, delay: 460, dur: 200, popAt: 0.5 },
+        { tag: 'circle', attrs: { cx: p3x, cy: p3y, r: 3, class: 'wkp-node' }, delay: 690, dur: 200, popAt: 0.75 }
+      ]
+    };
+  },
+  // 9. CausalFrame — confident single bezier with arrowhead at the end
+  causal(sx, sy, fx, fy) {
+    const c1x = sx + (fx - sx) * 0.55, c1y = sy;
+    const c2x = fx, c2y = sy + (fy - sy) * 0.2;
+    const d = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${fx} ${fy} `;
+    // arrowhead just before the end, oriented along approach direction
+    const angle = Math.atan2(fy - c2y, fx - c2x);
+    const ah = 8;
+    const a1x = fx - Math.cos(angle - 0.5) * ah, a1y = fy - Math.sin(angle - 0.5) * ah;
+    const a2x = fx - Math.cos(angle + 0.5) * ah, a2y = fy - Math.sin(angle + 0.5) * ah;
+    return {
+      d,
+      extras: [
+        { tag: 'path', attrs: { d: `M ${a1x} ${a1y} L ${fx} ${fy} `, class: 'wkp-extra' }, delay: 900, dur: 100 },
+        { tag: 'path', attrs: { d: `M ${a2x} ${a2y} L ${fx} ${fy} `, class: 'wkp-extra' }, delay: 950, dur: 100 }
+      ]
+    };
+  },
+  // 10. Article Database — typewriter baseline with tick marks
+  articleDb(sx, sy, fx, fy) {
+    const baseY = sy;
+    const d = `M ${sx} ${sy} L ${fx} ${baseY} L ${fx} ${fy} `;
+    const ticks = [];
+    const n = 6;
+    for (let i = 1; i < n; i++) {
+      const tx = sx + (fx - sx) * (i / n);
+      ticks.push({ tag: 'path', attrs: { d: `M ${tx} ${baseY - 3} L ${tx} ${baseY + 3} `, class: 'wkp-extra' }, delay: 80 * i, dur: 80 });
+    }
+    return { d, extras: ticks };
+  }
+};
+
+function pickLineGenerator(mode) {
+  if (mode.startsWith('https://structural-holes')) return wkLineGenerators.structuralHoles;
+  if (mode.startsWith('https://articlebase')) return wkLineGenerators.articleDb;
+  return wkLineGenerators[mode] || wkLineGenerators.invest;
+}
+
+function buildWkPreviewPath(cardEl, mode) {
+  const cardRect = cardEl.getBoundingClientRect();
+  const startX = cardRect.right;
+  const startY = cardRect.top + cardRect.height / 2;
+
+  const fw = Math.min(window.innerWidth * 0.72, 900);
+  const fh = Math.min(window.innerHeight * 0.62, 560);
+  const fx = (window.innerWidth - fw) / 2;
+  const fy = (window.innerHeight - fh) / 2;
+  const r = 4;
+
+  const gen = pickLineGenerator(mode || 'invest');
+  const { d: approachD, extras } = gen(startX, startY, fx + r, fy);
+
+  let d = approachD;
+  // Perimeter, clockwise, starting/ending at top-left (after the rounded corner)
+  d += `L ${fx + fw - r} ${fy} `;
+  d += `Q ${fx + fw} ${fy}, ${fx + fw} ${fy + r} `;
+  d += `L ${fx + fw} ${fy + fh - r} `;
+  d += `Q ${fx + fw} ${fy + fh}, ${fx + fw - r} ${fy + fh} `;
+  d += `L ${fx + r} ${fy + fh} `;
+  d += `Q ${fx} ${fy + fh}, ${fx} ${fy + fh - r} `;
+  d += `L ${fx} ${fy + r} `;
+  d += `Q ${fx} ${fy}, ${fx + r} ${fy} `;
+
+  return { d, fx, fy, fw, fh, extras };
+}
+
+let wkPenRaf = null;
+
+function stopWkPen(root) {
+  if (wkPenRaf) { cancelAnimationFrame(wkPenRaf); wkPenRaf = null; }
+  const pen = root && root.querySelector('.wkp-pen');
+  if (pen) pen.style.opacity = '0';
+}
+
+function runWkPen(root, path, duration) {
+  const pen = root.querySelector('.wkp-pen');
+  if (!pen) return;
+  const len = path.getTotalLength();
+  const start = performance.now();
+  pen.style.opacity = '1';
+  function ease(t) {
+    // approximate cubic-bezier(.5,0,.15,1)
+    return t < 1 ? 1 - Math.pow(1 - t, 3) : 1;
+  }
+  function tick(now) {
+    const elapsed = now - start;
+    const t = Math.min(1, elapsed / duration);
+    const p = path.getPointAtLength(ease(t) * len);
+    pen.setAttribute('cx', p.x);
+    pen.setAttribute('cy', p.y);
+    if (t < 1) {
+      wkPenRaf = requestAnimationFrame(tick);
+    } else {
+      pen.style.transition = 'opacity .25s ease';
+      pen.style.opacity = '0';
+      wkPenRaf = null;
+    }
+  }
+  wkPenRaf = requestAnimationFrame(tick);
+}
+
+function renderWkExtras(root, extras, reduced) {
+  const g = root.querySelector('.wkp-extras');
+  g.innerHTML = '';
+  const els = [];
+  (extras || []).forEach(ex => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', ex.tag);
+    Object.keys(ex.attrs).forEach(k => { if (ex.attrs[k] !== '') el.setAttribute(k, ex.attrs[k]); });
+    g.appendChild(el);
+    els.push({ el, ex });
+  });
+
+  if (reduced) {
+    els.forEach(({ el }) => { el.style.opacity = el.getAttribute('opacity') || '1'; });
+    return;
+  }
+
+  els.forEach(({ el, ex }) => {
+    if (ex.tag === 'path') {
+      const targetOpacity = ex.attrs.opacity || '1';
+      const len = el.getTotalLength();
+      el.style.strokeDasharray = len;
+      el.style.strokeDashoffset = len;
+      el.style.opacity = targetOpacity;
+      el.style.transition = 'none';
+      setTimeout(() => {
+        el.style.transition = `stroke-dashoffset ${ex.dur || 600}ms cubic-bezier(.5,0,.15,1)`;
+        el.style.strokeDashoffset = '0';
+      }, ex.delay || 0);
+    } else if (ex.tag === 'circle') {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.2)';
+      el.style.transition = 'none';
+      setTimeout(() => {
+        el.style.transition = 'opacity .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1)';
+        el.style.opacity = '1';
+        el.style.transform = 'scale(1)';
+      }, ex.delay || 0);
+    }
+  });
+}
+
+function drawWkIcon(root) {
+  const iconBox = root.querySelector('.wkp-icon');
+  const svg = iconBox.querySelector('svg');
+  if (!svg) return;
+  const shapes = svg.querySelectorAll('path, rect, circle, line, polyline');
+  shapes.forEach((sh, i) => {
+    let len = 60;
+    try {
+      if (sh.tagName === 'path' && sh.getTotalLength) len = sh.getTotalLength();
+      else if (sh.tagName === 'circle') len = 2 * Math.PI * (parseFloat(sh.getAttribute('r')) || 10);
+      else if (sh.tagName === 'rect') len = 2 * ((parseFloat(sh.getAttribute('width')) || 10) + (parseFloat(sh.getAttribute('height')) || 10));
+      else if (sh.tagName === 'line') {
+        const dx = (parseFloat(sh.getAttribute('x2')) || 0) - (parseFloat(sh.getAttribute('x1')) || 0);
+        const dy = (parseFloat(sh.getAttribute('y2')) || 0) - (parseFloat(sh.getAttribute('y1')) || 0);
+        len = Math.hypot(dx, dy);
+      } else if (sh.tagName === 'polyline' && sh.getTotalLength) len = sh.getTotalLength();
+    } catch (e) {}
+    sh.style.strokeDasharray = len;
+    sh.style.strokeDashoffset = len;
+    sh.style.transition = 'none';
+    setTimeout(() => {
+      sh.style.transition = `stroke-dashoffset 350ms ease`;
+      sh.style.strokeDashoffset = '0';
+    }, 600 + i * 60);
+  });
+}
+
+function previewWork(cardEl, mode) {
+  if (wkPreviewState.open || wkPreviewState.animating) return;
+  wkPreviewState.animating = true;
+  wkPreviewState.mode = mode;
+  wkPreviewState.cardEl = cardEl;
+
+  const root = ensureWkPreviewDom();
+  const path = root.querySelector('.wkp-path');
+  const frame = root.querySelector('.wkp-frame');
+  const iconBox = root.querySelector('.wkp-icon');
+  const nameBox = root.querySelector('.wkp-name');
+  const typeBox = root.querySelector('.wkp-type');
+  const idxBox = root.querySelector('.wkp-idx');
+
+  const srcIcon = cardEl.querySelector('.wk-icon svg');
+  const srcName = cardEl.querySelector('.wk-name');
+  const srcType = cardEl.querySelector('.wk-type');
+  iconBox.innerHTML = srcIcon ? srcIcon.outerHTML : '';
+  nameBox.textContent = srcName ? srcName.textContent : '';
+  typeBox.textContent = srcType ? srcType.textContent : '';
+
+  const allCards = Array.from(document.querySelectorAll('.wk-card'));
+  const idx = allCards.indexOf(cardEl) + 1;
+  idxBox.textContent = idx > 0 ? String(idx).padStart(2, '0') : '';
+
+  const { fx, fy, fw, fh, extras } = buildWkPreviewPath(cardEl, mode);
+  frame.style.left = fx + 'px';
+  frame.style.top = fy + 'px';
+  frame.style.width = fw + 'px';
+  frame.style.height = fh + 'px';
+  frame.classList.remove('show');
+  root.querySelectorAll('.wkp-corner').forEach(c => c.classList.remove('show'));
+  const r = 4;
+  const cTL = root.querySelector('.wkp-corner.tl'), cTR = root.querySelector('.wkp-corner.tr');
+  const cBL = root.querySelector('.wkp-corner.bl'), cBR = root.querySelector('.wkp-corner.br');
+  if (cTL) { cTL.style.left = (fx - 4) + 'px'; cTL.style.top = (fy - 4) + 'px'; }
+  if (cTR) { cTR.style.left = (fx + fw - 2) + 'px'; cTR.style.top = (fy - 4) + 'px'; }
+  if (cBL) { cBL.style.left = (fx - 4) + 'px'; cBL.style.top = (fy + fh - 2) + 'px'; }
+  if (cBR) { cBR.style.left = (fx + fw - 2) + 'px'; cBR.style.top = (fy + fh - 2) + 'px'; }
+
+  root.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  const reduced = prefersReducedMotion();
+  const g = root.querySelector('.wkp-extras');
+  g.innerHTML = '';
+
+  if (reduced) {
+    path.style.display = 'none';
+    requestAnimationFrame(() => {
+      root.classList.add('open');
+      root.style.opacity = '1';
+      setTimeout(() => {
+        frame.classList.add('show');
+        root.querySelectorAll('.wkp-corner').forEach(c => c.classList.add('show'));
+        root.classList.add('ghost');
+        drawWkIcon(root);
+      }, 60);
+      setTimeout(() => { wkPreviewState.open = true; wkPreviewState.animating = false; }, 200);
+    });
+    return;
+  }
+
+  path.style.display = '';
+  const d = buildWkPreviewPath(cardEl, mode).d;
+  path.setAttribute('d', d);
+  const len = path.getTotalLength();
+  path.style.transition = 'none';
+  path.style.strokeDasharray = len;
+  path.style.strokeDashoffset = len;
+  // force reflow
+  path.getBoundingClientRect();
+
+  const DURATION = 1000;
+
+  requestAnimationFrame(() => {
+    root.classList.add('open');
+    root.style.transition = 'opacity .3s ease';
+    root.style.opacity = '1';
+    path.style.transition = `stroke-dashoffset ${DURATION}ms cubic-bezier(.5,0,.15,1)`;
+    path.style.strokeDashoffset = '0';
+    renderWkExtras(root, extras, false);
+    runWkPen(root, path, DURATION);
+    setTimeout(() => {
+      frame.classList.add('show');
+      drawWkIcon(root);
+    }, 650);
+    setTimeout(() => {
+      root.querySelectorAll('.wkp-corner').forEach(c => c.classList.add('show'));
+      root.classList.add('ghost');
+    }, DURATION + 20);
+    setTimeout(() => {
+      root.style.transition = 'opacity .35s ease';
+      wkPreviewState.open = true;
+      wkPreviewState.animating = false;
+    }, DURATION);
+  });
+}
+
+function closeWkPreview(thenEnter) {
+  if (!wkPreviewState.open && !wkPreviewState.animating) return;
+  const root = document.getElementById('wk-preview');
+  if (!root) return;
+  const path = root.querySelector('.wkp-path');
+  const frame = root.querySelector('.wkp-frame');
+  const mode = wkPreviewState.mode;
+  wkPreviewState.animating = true;
+  wkPreviewState.open = false;
+
+  stopWkPen(root);
+  frame.classList.remove('show');
+  root.querySelectorAll('.wkp-corner').forEach(c => c.classList.remove('show'));
+  root.classList.remove('open');
+  root.classList.remove('ghost');
+  root.style.transition = 'opacity .35s ease';
+  root.style.opacity = '0';
+
+  if (path && path.style.display !== 'none' && !prefersReducedMotion()) {
+    const len = path.getTotalLength() || 0;
+    path.style.transition = 'stroke-dashoffset .35s ease';
+    path.style.strokeDashoffset = len;
+  }
+
+  setTimeout(() => {
+    root.style.display = 'none';
+    document.body.style.overflow = '';
+    root.querySelector('.wkp-extras').innerHTML = '';
+    wkPreviewState.animating = false;
+    wkPreviewState.mode = null;
+    wkPreviewState.cardEl = null;
+    if (thenEnter) {
+      if (mode === 'mu') openMU();
+      else openProject(mode);
+    }
+  }, 350);
+}
+
+function enterWkPreview() {
+  if (!wkPreviewState.open) return;
+  closeWkPreview(true);
+}
+
+(function initWkPreviewEvents() {
+  document.addEventListener('click', e => {
+    // Ignore the very click that opened the preview (it bubbles here after
+    // the card's inline onclick runs previewWork synchronously) and ignore
+    // any click on a card while a preview is opening/open.
+    if (e.target.closest('.wk-card')) return;
+    if (!wkPreviewState.open) return;
+    const root = document.getElementById('wk-preview');
+    if (!root) return;
+    const closeBtn = e.target.closest('.wkp-close');
+    if (closeBtn) { closeWkPreview(false); return; }
+    const frame = e.target.closest('.wkp-frame');
+    if (frame) { enterWkPreview(); return; }
+    if (e.target === root) { closeWkPreview(false); return; }
+  });
+  document.addEventListener('keydown', e => {
+    if (!wkPreviewState.open && !wkPreviewState.animating) return;
+    if (e.key === 'Enter') { enterWkPreview(); }
+  });
+})();
+
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
   const frame = document.getElementById('project-frame');
@@ -536,7 +1083,12 @@ function closeProject() {
   setTimeout(() => { overlay.style.display = 'none'; frame.src = 'about:blank'; }, 400);
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMUPicker(); closeProject(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (wkPreviewState.open || wkPreviewState.animating) { closeWkPreview(false); return; }
+    closeMUPicker(); closeProject();
+  }
+});
 
 // MU Q3 two-page picker
 function openMU() {
