@@ -6,7 +6,7 @@ but has an active deployment behind it.
 
 ## Deployment topology (this is the part that bites)
 
-There are **three separate Railway deployments** sourced from **two separate git repos**, plus
+There are **four separate Railway deployments** sourced from **three separate git repos**, plus
 this main repo itself:
 
 | Deployment | Repo | Source path | Live URL |
@@ -14,8 +14,29 @@ this main repo itself:
 | OutsideFramework (portfolio homepage) | this repo (`origin` = `global-economic-globe.git`) | `app/OutsideFramework/index.html` → `Dockerfile` → nginx | — |
 | globe / invest / causal / brownian | **`globe-invest/` — its own repo** (`globe-invest.git`) | `globe-invest/app/{globe,invest,causal,brownian}/index.html` + `globe-invest/server.js` | `globe-invest.up.railway.app` |
 | structural-holes | **`structural_holes/` — its own repo** | — | `structural-holes-production.up.railway.app` |
-| article-db | this repo, `article_db/` (already tracked) | — | `articlebase.up.railway.app` |
+| article-db | **separate repo `article-db-api.git`** (this repo has it as remote `article-db`) | `index.html` at that repo's root — mirrors this repo's `article_db/index.html` | `articlebase.up.railway.app` |
 | my-slide | **`my-slide/` — its own repo** (Netlify) | — | — |
+
+### article-db is ALSO a two-repo split — same trap as globe-invest
+`article_db/index.html` in this repo is the **dev-source copy only**. Railway's
+`articlebase.up.railway.app` actually builds from a wholly separate GitHub repo,
+`Playboy769/article-db-api.git`, which this repo already has registered as git remote
+`article-db` (check with `git remote -v`). That repo has its own independent history — it is
+**not** a fork or mirror set up via CI, just two copies kept in sync by hand, with no sync
+script (unlike `scripts/sync-globe-invest.ps1`).
+
+Discovered 2026-07-07: a bugfix was committed and pushed to `origin` (this repo) and looked done,
+but `articlebase.up.railway.app` never updated because Railway deploys from `article-db-api`, not
+from this repo. Confirmed by diffing `article_db/index.html` against
+`git show article-db/main:index.html` — they were byte-identical (mod line endings) except for
+the missing fix, meaning the two copies really had been hand-synced up to that point.
+
+**Whenever you edit `article_db/index.html`: after committing here, also push the same content to
+the `article-db` remote's `main` branch** (e.g. via a throwaway `git worktree add --detach <tmp>
+article-db/main`, copy the file over preserving its CRLF line endings, commit, `git push
+article-db <sha>:main`, then remove the worktree) — otherwise the live site silently stays on the
+old version indefinitely. Consider writing a proper sync script for this like the globe-invest one
+if this file gets touched often.
 
 **`app/GlobalEco`, `app/InvestFrame`, `app/CausalFrame` are dev-source copies only — the
 Dockerfile above does NOT deploy them.** The versions that actually go live are the mirrored
@@ -50,7 +71,9 @@ both repos.
 - `app/` — dev-source for the four "outside framework" apps (see table above)
 - `globe-invest/`, `my-slide/`, `structural_holes/` — **separate git repos**, nested here for
   convenience. Never `git add` their contents into this repo; they manage their own history.
-- `article_db/` — tracked in this repo, deployed standalone to `articlebase.up.railway.app`
+- `article_db/` — tracked in this repo as dev-source, but deployed from the separate
+  `article-db-api` repo (remote `article-db`) to `articlebase.up.railway.app` — see deployment
+  topology section above, must be pushed to both
 - `projects/` — standalone tools/apps not part of the outside-framework family (stock analyzer,
   tech value screener, food calorie lookup, market warning radar, options guide, brownian motion
   simulator — the last one is also deployed via `globe-invest/app/brownian`, see above)
