@@ -4,14 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Outside FrameWork</title>
+<meta name="description" content="Outside FrameWork — Silas 的作品集：全球經濟 3D 地球、能源航線、投資敘事框架、因果圖、網絡分析等互動數據作品。">
+<meta property="og:title" content="Outside FrameWork">
+<meta property="og:description" content="Outside FrameWork — Silas 的作品集：全球經濟 3D 地球、能源航線、投資敘事框架、因果圖、網絡分析等互動數據作品。">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='60 40 480 320'%3E%3Cdefs%3E%3Cmarker id='a' markerWidth='6' markerHeight='6' refX='5' refY='3' orient='auto' markerUnits='strokeWidth'%3E%3Cpolygon points='0,0.5 5,3 0,5.5' fill='%232a2a2a'/%3E%3C/marker%3E%3C/defs%3E%3Crect x='170' y='90' width='220' height='200' stroke='%23d0d0d0' fill='none'/%3E%3Cline x1='170' y1='156' x2='390' y2='156' stroke='%23d8d8d8' stroke-width='.6' stroke-dasharray='4 6'/%3E%3Cline x1='170' y1='224' x2='390' y2='224' stroke='%23d8d8d8' stroke-width='.6' stroke-dasharray='4 6'/%3E%3Cline x1='243' y1='90' x2='243' y2='290' stroke='%23d8d8d8' stroke-width='.6' stroke-dasharray='4 6'/%3E%3Cline x1='317' y1='90' x2='317' y2='290' stroke='%23d8d8d8' stroke-width='.6' stroke-dasharray='4 6'/%3E%3Cpath d='M243,156 C243,110 310,50 490,22' stroke='%232a2a2a' stroke-width='1.5' fill='none' marker-end='url(%23a)'/%3E%3Cpath d='M317,156 C370,140 450,152 538,230' stroke='%232a2a2a' stroke-width='1.5' fill='none' marker-end='url(%23a)'/%3E%3Cpath d='M317,224 C310,270 240,320 30,358' stroke='%232a2a2a' stroke-width='1.5' fill='none' marker-end='url(%23a)'/%3E%3Cpath d='M243,224 C195,215 110,185 20,108' stroke='%232a2a2a' stroke-width='1.5' fill='none' marker-end='url(%23a)'/%3E%3Ccircle cx='243' cy='156' r='3' fill='%232a2a2a'/%3E%3Ccircle cx='317' cy='156' r='3' fill='%232a2a2a'/%3E%3Ccircle cx='317' cy='224' r='3' fill='%232a2a2a'/%3E%3Ccircle cx='243' cy='224' r='3' fill='%232a2a2a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.cdnfonts.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.cdnfonts.com/css/orchid" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--c-canvas:#fff;--c-ink:#0a0a0a;--c-accent:#d1591f;--c-accent-deep:#a94515;--c-accent-soft:rgba(209,89,31,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{background:var(--c-canvas);color:var(--c-ink);font-family:'Orchid','Noto Serif TC','NSimSun',serif;font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{background:var(--c-canvas);color:var(--c-ink);font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 ::selection{background:var(--c-accent);color:#fff}
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:var(--c-canvas)}
@@ -73,8 +82,8 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #page-about{padding:140px 0 100px}
 .about-intro{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-bottom:100px;align-items:start}
 .about-label{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;color:#999;text-transform:uppercase;letter-spacing:.1em;margin-bottom:32px}
-.about-statement{font-size:clamp(28px,3.5vw,44px);font-weight:700;line-height:1.4;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
-.about-body{font-size:16px;color:#666;line-height:2;font-weight:400;padding-top:8px;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
+.about-statement{font-size:clamp(28px,3.5vw,44px);font-weight:700;line-height:1.4;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.about-body{font-size:16px;color:#666;line-height:2;font-weight:400;padding-top:8px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 .about-body p+p{margin-top:20px}
 .about-values{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid #eee;margin-top:80px}
 .av-item{padding:48px 40px 48px 0;border-bottom:1px solid #eee;position:relative}
@@ -82,8 +91,8 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .av-item:nth-child(3n){padding-left:40px}
 .av-item:nth-child(3n-1){padding-left:40px}
 .av-num{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;color:var(--c-accent);opacity:.55;margin-bottom:20px;display:block}
-.av-title{font-size:20px;font-weight:600;margin-bottom:12px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
-.av-desc{font-size:14px;color:#888;line-height:1.8;font-weight:400;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
+.av-title{font-size:20px;font-weight:600;margin-bottom:12px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.av-desc{font-size:14px;color:#888;line-height:1.8;font-weight:400;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 
 /* ── WORKS ── */
 #page-works{padding:140px 0 100px}
@@ -92,39 +101,37 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .works-grid{display:flex;flex-direction:column;counter-reset:wk-idx}
 .wk-card{cursor:pointer;display:flex;align-items:center;gap:20px;padding:22px 0;border-bottom:1px solid #f0f0f0;border-radius:0;overflow:visible;position:relative;transition:transform .3s cubic-bezier(.4,0,.2,1)}
 .wk-card:hover{transform:translateX(5px);box-shadow:none}
+.wk-card:focus-visible{outline:1px solid var(--c-accent);outline-offset:4px}
 .wk-group-hd{display:flex;align-items:center;gap:9px;padding:28px 0 2px;border-top:1px solid #f0f0f0}
-.wk-group-dot{display:none}
 .wk-group-tag{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#aaa;font-family:'Calibri',sans-serif;font-weight:600}
 .wk-group:nth-child(1) .wk-visual{background:var(--c-accent-soft);border-color:rgba(209,89,31,0.22)}
 .wk-group:nth-child(2) .wk-visual{background:rgba(80,128,168,0.07);border-color:rgba(80,128,168,0.18)}
 .wk-group:nth-child(3) .wk-visual{background:rgba(144,96,192,0.07);border-color:rgba(144,96,192,0.18)}
 .wk-group:nth-child(4) .wk-visual{background:rgba(80,128,96,0.07);border-color:rgba(80,128,96,0.18)}
-.wk-card::before{counter-increment:wk-idx;content:'0' counter(wk-idx);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#ddd;letter-spacing:.06em;flex-shrink:0;width:22px;text-align:right;transition:color .2s}
+.wk-card::before{counter-increment:wk-idx;content:counter(wk-idx, decimal-leading-zero);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#bbb;letter-spacing:.06em;flex-shrink:0;width:22px;text-align:right;transition:color .2s}
 .wk-card:hover::before{color:var(--c-accent)}
 .wk-card::after{content:'→';font-size:13px;color:#ccc;flex-shrink:0;transition:transform .3s ease,color .2s}
 .wk-card:hover::after{transform:translateX(4px);color:var(--c-accent)}
 .wk-visual{width:52px;height:52px;aspect-ratio:1;overflow:hidden;position:relative;background:#fafafa;border:1px solid rgba(0,0,0,0.05);border-radius:10px;flex-shrink:0}
 .wk-visual-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .4s cubic-bezier(.4,0,.2,1)}
 .wk-card:hover .wk-visual-inner{transform:scale(1.08)}
-.wk-gradient{position:absolute;inset:0}
-.wk-gradient.g1,.wk-gradient.g2,.wk-gradient.g3,.wk-gradient.g4,.wk-gradient.g5{background:transparent}
 .wk-icon{position:relative;z-index:2;width:32px;height:32px}
 .wk-icon svg{width:100%;height:100%}
 .wk-info{flex:1;display:flex;align-items:center;gap:24px;padding:0}
-.wk-name{font-size:16px;font-weight:500;margin-bottom:0;letter-spacing:.01em;font-family:'Orchid','Noto Serif TC','NSimSun',serif;flex:0 0 180px;white-space:nowrap}
-.wk-type{font-family:'Orchid','Noto Serif TC','NSimSun',serif;font-size:11px;color:#bbb;text-transform:uppercase;letter-spacing:.06em;font-weight:400;flex:1}
+.wk-name{font-size:16px;font-weight:500;margin-bottom:0;letter-spacing:.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;flex:0 0 180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-type{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;font-weight:400;flex:1}
 
 /* ── PHILOSOPHY ── */
 #page-philosophy{padding:110px 0 60px}
 .phil-head{margin-bottom:48px}
-.phil-quote{font-size:clamp(24px,3.5vw,40px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
+.phil-quote{font-size:clamp(24px,3.5vw,40px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 .phil-quote em{font-style:normal;color:#999}
 .phil-items{display:flex;flex-direction:column}
 .phi-item{display:grid;grid-template-columns:80px 1fr;gap:24px;padding:32px 0;border-top:1px solid #eee;align-items:start}
 .phi-num{font-family:'Orchid','Noto Serif TC',serif;font-size:48px;font-weight:300;color:var(--c-accent);opacity:.22;line-height:1;font-style:italic}
 .phi-content{}
-.phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
-.phi-text{font-size:14px;color:#777;line-height:1.9;font-weight:400;max-width:600px;font-family:'Orchid','Noto Serif TC','NSimSun',serif}
+.phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.phi-text{font-size:14px;color:#777;line-height:1.9;font-weight:400;max-width:600px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 .phil-footer{margin-top:48px;padding:32px 0;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
 .pf-brand{font-size:16px;font-weight:700;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC',serif}
 .pf-copy{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
@@ -141,8 +148,8 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #wk-preview .wkp-icon svg{width:100%;height:100%}
 #wk-preview .wkp-name{font-family:'Orchid','Noto Serif TC',serif;font-size:34px;font-weight:500;letter-spacing:.01em;color:#0a0a0a}
 #wk-preview .wkp-type{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.1em}
-#wk-preview .wkp-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#999;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
-#wk-preview .wkp-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#999;transition:color .2s ease}
+#wk-preview .wkp-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#777;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
+#wk-preview .wkp-close{position:absolute;top:14px;right:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#999;background:none;border:none;padding:0;transition:color .2s ease}
 #wk-preview .wkp-close:hover{color:var(--c-accent,#b08050)}
 #wk-preview .wkp-close svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.4;fill:none}
 #wk-preview .wkp-idx{position:absolute;top:14px;left:18px;font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#ccc;letter-spacing:.06em}
@@ -169,10 +176,24 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #project-overlay{position:fixed;inset:0;z-index:200;background:#000;display:none;opacity:0;transition:opacity .4s ease}
 #project-overlay.active{display:block;opacity:1}
 #project-overlay iframe{width:100%;height:100%;border:none}
+#overlay-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .3s ease}
+#overlay-loading.show{opacity:1}
+#overlay-loading .ol-line{width:64px;height:1px;background:var(--c-accent,#d1591f);animation:olPulse 1.4s ease-in-out infinite}
+#overlay-loading .ol-text{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#eee;letter-spacing:.2em;text-transform:uppercase}
+@keyframes olPulse{0%,100%{opacity:.25;transform:scaleX(.4)}50%{opacity:1;transform:scaleX(1)}}
 #overlay-close{position:fixed;top:20px;right:24px;z-index:210;width:44px;height:44px;border-radius:50%;background:rgba(10,10,10,0.65);border:1px solid rgba(0,0,0,0.12);backdrop-filter:blur(8px);cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .25s ease}
 #project-overlay.active~#overlay-close{display:flex}
 #overlay-close:hover{background:rgba(10,10,10,0.85);transform:scale(1.1)}
 #overlay-close svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none}
+
+/* ── MU Q3 Picker ── */
+#mu-picker{display:none;opacity:0;transition:opacity .2s;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:center;justify-content:center}
+.mu-box{background:#fff;border-radius:4px;padding:36px 40px;min-width:320px;display:flex;flex-direction:column;gap:14px}
+.mu-title{font-family:'Noto Sans TC',sans-serif;font-size:13px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.mu-opt{text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s}
+.mu-opt:hover{background:rgba(209,89,31,.06)}
+.mu-opt-sub{font-size:11px;color:#aaa;margin-top:3px;font-weight:400}
+.mu-cancel{margin-top:4px;padding:8px;border:none;background:none;cursor:pointer;font-size:11px;color:#bbb;letter-spacing:.08em;text-transform:uppercase}
 
 /* ── Scroll Animations ── */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.4,0,.2,1)}
@@ -225,64 +246,38 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
     </div>
     <div class="home-photo-strip">
-      <div class="home-photo-strip-track">
-        <div class="hps-tile off-a"><img src="assets/photos/photo-1.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-2.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-3.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-4.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-5.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-6.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-7.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-8.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-9.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-10.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-11.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-12.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-13.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-14.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-15.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-16.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-17.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-18.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-19.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-20.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-21.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-22.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-23.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-24.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-25.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-26.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-1.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-2.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-3.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-4.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-5.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-6.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-7.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-8.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-9.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-10.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-11.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-12.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-13.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-14.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-15.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-16.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-17.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-18.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-19.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-20.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-21.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-22.jpg" alt=""></div>
-        <div class="hps-tile off-c"><img src="assets/photos/photo-23.jpg" alt=""></div>
-        <div class="hps-tile off-d"><img src="assets/photos/photo-24.jpg" alt=""></div>
-        <div class="hps-tile off-a"><img src="assets/photos/photo-25.jpg" alt=""></div>
-        <div class="hps-tile off-b"><img src="assets/photos/photo-26.jpg" alt=""></div>
+      <div class="home-photo-strip-track" id="hps-track">
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-1.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-2.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-c"><img data-src="assets/photos/photo-3.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-d"><img data-src="assets/photos/photo-4.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-5.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-6.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-c"><img data-src="assets/photos/photo-7.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-d"><img data-src="assets/photos/photo-8.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-9.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-10.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-c"><img data-src="assets/photos/photo-11.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-d"><img data-src="assets/photos/photo-12.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-13.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-14.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-c"><img data-src="assets/photos/photo-15.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-d"><img data-src="assets/photos/photo-16.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-17.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-18.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-c"><img data-src="assets/photos/photo-19.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-d"><img data-src="assets/photos/photo-20.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-21.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-22.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-c"><img data-src="assets/photos/photo-23.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-d"><img data-src="assets/photos/photo-24.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-a"><img data-src="assets/photos/photo-25.jpg" alt="" loading="lazy" decoding="async"></div>
+        <div class="hps-tile off-b"><img data-src="assets/photos/photo-26.jpg" alt="" loading="lazy" decoding="async"></div>
       </div>
     </div>
   </div>
   <div class="home-footer">
-    <div class="home-footer-brand" onclick="switchPage('works')">Outside <span class="out-outline">Frame</span>Work</div>
+    <h1 class="home-footer-brand" onclick="switchPage('works')">Outside <span class="out-outline">Frame</span>Work</h1>
   </div>
 </div>
 
@@ -339,46 +334,45 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="container">
     <div class="works-head">
       <h2 class="sec-heading reveal">Selected works</h2>
-      <span class="works-count reveal">10 Projects</span>
+      <span class="works-count reveal" id="works-count"></span>
     </div>
     <div class="works-grid">
 
       <!-- ── Finance & Markets ── -->
       <div class="wk-group">
         <div class="wk-group-hd">
-          <span class="wk-group-dot" style="background:#d1591f"></span>
           <span class="wk-group-tag">Finance &amp; Markets</span>
         </div>
-        <div class="wk-card reveal" onclick="previewWork(this,'econ')">
-          <div class="wk-visual"><div class="wk-gradient g1"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal" tabindex="0" role="button" aria-label="Economy — 開啟預覽" onclick="previewWork(this,'econ')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="14" y="52" width="10" height="18" rx="2"/><rect x="28" y="38" width="10" height="32" rx="2"/><rect x="42" y="44" width="10" height="26" rx="2"/><rect x="56" y="24" width="10" height="46" rx="2"/>
             <path d="M19 49 L33 34 L47 40 L61 20" stroke="#999" stroke-width="1"/><circle cx="61" cy="20" r="2.5" fill="#999" stroke="none"/>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-1" onclick="previewWork(this,'energy')">
-          <div class="wk-visual"><div class="wk-gradient g2"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal reveal-delay-1" tabindex="0" role="button" aria-label="Energy — 開啟預覽" onclick="previewWork(this,'energy')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M46 8 L34 36 H44 L30 72"/><circle cx="40" cy="40" r="28" stroke-dasharray="3 5" opacity="0.4"/><path d="M50 36 L40 56" opacity="0.3"/>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Energy</div><div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-2" onclick="previewWork(this,'invest')">
-          <div class="wk-visual"><div class="wk-gradient g5"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal reveal-delay-2" tabindex="0" role="button" aria-label="InvestFrame — 開啟預覽" onclick="previewWork(this,'invest')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="16" y="20" width="48" height="34" rx="3" opacity="0.3"/><rect x="20" y="28" width="48" height="34" rx="3" opacity="0.5"/><rect x="24" y="36" width="48" height="34" rx="3"/>
             <text x="48" y="57" text-anchor="middle" font-family="'Orchid',serif" font-size="10" font-weight="400" fill="#bbb" stroke="none" letter-spacing="1">M / R / I</text>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
         </div>
-        <div class="wk-card reveal" onclick="previewWork(this,'mu')">
-          <div class="wk-visual"><div class="wk-gradient g8"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal" tabindex="0" role="button" aria-label="MU Q3 — 開啟預覽" onclick="previewWork(this,'mu')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
             <rect x="24" y="24" width="32" height="32" rx="2" stroke-width="1.2"/><line x1="13" y1="33" x2="24" y2="33" stroke-width="1.2"/><line x1="13" y1="40" x2="24" y2="40" stroke-width="1.2"/><line x1="13" y1="47" x2="24" y2="47" stroke-width="1.2"/>
             <line x1="56" y1="33" x2="67" y2="33" stroke-width="1.2"/><line x1="56" y1="40" x2="67" y2="40" stroke-width="1.2"/><line x1="56" y1="47" x2="67" y2="47" stroke-width="1.2"/>
             <rect x="31" y="31" width="18" height="18" rx="1" opacity="0.18"/><path d="M31 51 L37 44 L43 47 L52 38" stroke-width="1.1" opacity="0.7"/><circle cx="52" cy="38" r="2.2" fill="#000" stroke="none" opacity="0.7"/>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">MU Q3</div><div class="wk-type">法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-1" onclick="previewWork(this,'warning')">
-          <div class="wk-visual"><div class="wk-gradient g10"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal reveal-delay-1" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="previewWork(this,'warning')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="40" cy="40" r="24" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.35"/><circle cx="40" cy="40" r="14" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.55"/>
             <line x1="40" y1="16" x2="40" y2="26" stroke-width="1" opacity="0.5"/><line x1="64" y1="40" x2="54" y2="40" stroke-width="1" opacity="0.5"/><line x1="40" y1="64" x2="40" y2="54" stroke-width="1" opacity="0.5"/><line x1="16" y1="40" x2="26" y2="40" stroke-width="1" opacity="0.5"/>
             <path d="M40 40 L58 22" stroke-width="1.1" opacity="0.7"/><circle cx="58" cy="22" r="3" stroke-width="1.3" fill="none"/><circle cx="40" cy="40" r="2.2" fill="#000" stroke="none" opacity="0.75"/>
@@ -386,16 +380,16 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
         </div>
-        <div class="wk-card reveal reveal-delay-2" onclick="previewWork(this,'options')">
-          <div class="wk-visual"><div class="wk-gradient g11"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal reveal-delay-2" tabindex="0" role="button" aria-label="Options Guide — 開啟預覽" onclick="previewWork(this,'options')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="56" x2="68" y2="56" stroke-width="0.8" opacity="0.4"/><line x1="12" y1="14" x2="12" y2="66" stroke-width="0.8" opacity="0.4"/>
             <polyline points="12,56 28,56 40,28 52,56 68,56" stroke-width="1.4" stroke="#000" opacity="0.85"/><polyline points="12,56 30,56 44,38 68,22" stroke-width="1.1" stroke="#000" opacity="0.4"/>
             <circle cx="40" cy="28" r="3" fill="#000" stroke="none" opacity="0.7"/><text x="36" y="12" font-family="serif" font-size="9" fill="#000" stroke="none" opacity="0.55" letter-spacing="1">Δ Γ Θ V</text>
           </svg></div></div></div>
           <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
         </div>
-        <div class="wk-card reveal" onclick="previewWork(this,'brownian')">
-          <div class="wk-visual"><div class="wk-gradient g12"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal" tabindex="0" role="button" aria-label="Brownian Motion — 開啟預覽" onclick="previewWork(this,'brownian')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 46 C18 20, 26 62, 34 34 C40 12, 48 52, 56 28 C62 12, 66 24, 70 18" opacity="0.85"/>
             <line x1="10" y1="46" x2="70" y2="46" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.3"/>
             <circle cx="70" cy="18" r="2.6" fill="#000" stroke="none"/>
@@ -407,11 +401,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <!-- ── Network Analysis ── -->
       <div class="wk-group">
         <div class="wk-group-hd">
-          <span class="wk-group-dot" style="background:#5080a8"></span>
           <span class="wk-group-tag">Network Analysis</span>
         </div>
-        <div class="wk-card reveal" onclick="previewWork(this,'https://structural-holes-production.up.railway.app/')">
-          <div class="wk-visual"><div class="wk-gradient g4"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round">
+        <div class="wk-card reveal" tabindex="0" role="button" aria-label="Structural Holes — 開啟預覽" onclick="previewWork(this,'https://structural-holes-production.up.railway.app/')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round">
             <line x1="26" y1="26" x2="54" y2="36"/><line x1="26" y1="26" x2="34" y2="56"/><line x1="54" y1="36" x2="34" y2="56"/><line x1="54" y1="36" x2="62" y2="60"/><line x1="34" y1="56" x2="62" y2="60"/><line x1="26" y1="26" x2="42" y2="16"/>
             <circle cx="26" cy="26" r="5" stroke-width="1.2"/><circle cx="54" cy="36" r="6" stroke-width="1.2"/><circle cx="34" cy="56" r="4.5" stroke-width="1.2"/><circle cx="62" cy="60" r="3.5" stroke-width="1.2"/><circle cx="42" cy="16" r="4" stroke-width="1.2"/>
           </svg></div></div></div>
@@ -422,11 +415,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <!-- ── Causal Logic ── -->
       <div class="wk-group">
         <div class="wk-group-hd">
-          <span class="wk-group-dot" style="background:#9060c0"></span>
           <span class="wk-group-tag">Causal Logic</span>
         </div>
-        <div class="wk-card reveal" onclick="previewWork(this,'causal')">
-          <div class="wk-visual"><div class="wk-gradient g7"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal" tabindex="0" role="button" aria-label="CausalFrame — 開啟預覽" onclick="previewWork(this,'causal')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <defs><marker id="cfk-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,2.5 L0,5 Z" fill="#000" stroke="none"/></marker></defs>
             <rect x="11" y="15" width="23" height="15" rx="3"/><rect x="47" y="23" width="22" height="15" rx="3" opacity="0.5"/><rect x="28" y="50" width="23" height="15" rx="3" opacity="0.78"/>
             <line x1="34" y1="22" x2="45.5" y2="29" marker-end="url(#cfk-arrow)"/><line x1="23" y1="30" x2="33.5" y2="49" marker-end="url(#cfk-arrow)"/>
@@ -438,11 +430,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <!-- ── Knowledge ── -->
       <div class="wk-group">
         <div class="wk-group-hd">
-          <span class="wk-group-dot" style="background:#508060"></span>
           <span class="wk-group-tag">Knowledge</span>
         </div>
-        <div class="wk-card reveal" onclick="previewWork(this,'https://articlebase.up.railway.app/')">
-          <div class="wk-visual"><div class="wk-gradient g6"></div><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="wk-card reveal" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="previewWork(this,'https://articlebase.up.railway.app/')">
+          <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="18" y="14" width="30" height="40" rx="2"/><line x1="24" y1="22" x2="42" y2="22" opacity="0.5"/><line x1="24" y1="28" x2="42" y2="28" opacity="0.5"/><line x1="24" y1="34" x2="36" y2="34" opacity="0.5"/>
             <rect x="32" y="30" width="30" height="40" rx="2" opacity="0.6"/><line x1="38" y1="38" x2="56" y2="38" opacity="0.4"/><line x1="38" y1="44" x2="56" y2="44" opacity="0.4"/><line x1="38" y1="50" x2="50" y2="50" opacity="0.4"/>
             <circle cx="55" cy="62" r="8" stroke-width="1.5"/><path d="M60 67 L65 72" stroke-width="1.5"/>
@@ -497,25 +488,26 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 <!-- ── Project Overlay ── -->
 <div id="project-overlay">
-  <iframe id="project-frame" src="about:blank" allow="accelerometer; gyroscope"></iframe>
+  <iframe id="project-frame" src="about:blank" title="作品內容" allow="accelerometer; gyroscope"></iframe>
+  <div id="overlay-loading"><div class="ol-line"></div><div class="ol-text">載入中</div></div>
 </div>
-<button id="overlay-close" onclick="closeProject()">
+<button id="overlay-close" aria-label="關閉作品" onclick="closeProject()">
   <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
 </button>
 
 <!-- MU Q3 picker -->
-<div id="mu-picker" onclick="if(event.target===this)closeMUPicker()" style="display:none;opacity:0;transition:opacity .2s;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:4px;padding:36px 40px;min-width:320px;display:flex;flex-direction:column;gap:14px">
-    <div style="font-family:'Noto Sans TC',sans-serif;font-size:13px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">MU Q3 — 選擇頁面</div>
-    <button onclick="pickMU('mu-analysis')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='rgba(209,89,31,.06)'" onmouseout="this.style.background='#fff'">
+<div id="mu-picker" onclick="if(event.target===this)closeMUPicker()">
+  <div class="mu-box">
+    <div class="mu-title">MU Q3 — 選擇頁面</div>
+    <button class="mu-opt" onclick="pickMU('mu-analysis')">
       分析報告
-      <div style="font-size:11px;color:#aaa;margin-top:3px;font-weight:400">法說會重點 · SCA · 風險矩陣</div>
+      <div class="mu-opt-sub">法說會重點 · SCA · 風險矩陣</div>
     </button>
-    <button onclick="pickMU('mu-financials')" style="text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s" onmouseover="this.style.background='rgba(209,89,31,.06)'" onmouseout="this.style.background='#fff'">
+    <button class="mu-opt" onclick="pickMU('mu-financials')">
       財務報表
-      <div style="font-size:11px;color:#aaa;margin-top:3px;font-weight:400">損益表 · 現金流 · 估值</div>
+      <div class="mu-opt-sub">損益表 · 現金流 · 估值</div>
     </button>
-    <button onclick="closeMUPicker()" style="margin-top:4px;padding:8px;border:none;background:none;cursor:pointer;font-size:11px;color:#bbb;letter-spacing:.08em;text-transform:uppercase">取消</button>
+    <button class="mu-cancel" onclick="closeMUPicker()">取消</button>
   </div>
 </div>
 
@@ -533,7 +525,21 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     const m=String(n.getMinutes()).padStart(2,'0');
     el.textContent=Y+'.'+M+'.'+D+'\n'+h+':'+m;
   }
-  tick();setInterval(tick,1000);
+  tick();setInterval(tick,15000);
+})();
+
+/* ── Photo Strip: skip entirely on mobile, populate + duplicate only on wide viewports ── */
+(function(){
+  const track = document.getElementById('hps-track');
+  if (!track) return;
+  if (!window.matchMedia || !window.matchMedia('(max-width:900px)').matches) {
+    const tiles = Array.from(track.children);
+    tiles.forEach(tile => {
+      const img = tile.querySelector('img[data-src]');
+      if (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
+    });
+    tiles.forEach(tile => track.appendChild(tile.cloneNode(true)));
+  }
 })();
 
 // Dev (python server on :8125) loads the globe from its own server on :8124.
@@ -567,7 +573,7 @@ function ensureWkPreviewDom() {
     '</div>' +
     '<div class="wkp-corner tl"></div><div class="wkp-corner tr"></div><div class="wkp-corner bl"></div><div class="wkp-corner br"></div>' +
     '<div class="wkp-hint">點擊進入 &middot; ESC 返回</div>' +
-    '<div class="wkp-close" aria-label="close"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>';
+    '<button type="button" class="wkp-close" aria-label="關閉預覽"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
   return root;
 }
 
@@ -796,16 +802,51 @@ function stopWkPen(root) {
   if (pen) pen.style.opacity = '0';
 }
 
+/* Evaluates the CSS cubic-bezier(x1,y1,x2,y2) easing function at time t (0..1).
+   P0=(0,0), P1=(x1,y1), P2=(x2,y2), P3=(1,1). Solves for the bezier parameter
+   `u` such that bezierX(u) === t (Newton-Raphson, falling back to bisection),
+   then returns bezierY(u) — matching how browsers evaluate transition-timing-function. */
+function makeCubicBezierEase(x1, y1, x2, y2) {
+  function bezier(u, a, b) {
+    const v = 1 - u;
+    return 3 * v * v * u * a + 3 * v * u * u * b + u * u * u;
+  }
+  function bezierDeriv(u, a, b) {
+    const v = 1 - u;
+    return 3 * v * v * a + 6 * v * u * (b - a) + 3 * u * u * (1 - b);
+  }
+  return function ease(t) {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    let u = t;
+    for (let i = 0; i < 8; i++) {
+      const x = bezier(u, x1, x2) - t;
+      const dx = bezierDeriv(u, x1, x2);
+      if (Math.abs(dx) < 1e-6) break;
+      const next = u - x / dx;
+      if (!isFinite(next)) break;
+      u = Math.min(1, Math.max(0, next));
+      if (Math.abs(x) < 1e-6) break;
+    }
+    // Bisection fallback/refinement to guarantee convergence.
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 20 && Math.abs(bezier(u, x1, x2) - t) > 1e-5; i++) {
+      if (bezier(u, x1, x2) < t) lo = u; else hi = u;
+      u = (lo + hi) / 2;
+    }
+    return bezier(u, y1, y2);
+  };
+}
+
+const wkPenEase = makeCubicBezierEase(.5, 0, .15, 1);
+
 function runWkPen(root, path, duration) {
   const pen = root.querySelector('.wkp-pen');
   if (!pen) return;
   const len = path.getTotalLength();
   const start = performance.now();
   pen.style.opacity = '1';
-  function ease(t) {
-    // approximate cubic-bezier(.5,0,.15,1)
-    return t < 1 ? 1 - Math.pow(1 - t, 3) : 1;
-  }
+  const ease = wkPenEase;
   function tick(now) {
     const elapsed = now - start;
     const t = Math.min(1, elapsed / duration);
@@ -912,11 +953,16 @@ function previewWork(cardEl, mode) {
   nameBox.textContent = srcName ? srcName.textContent : '';
   typeBox.textContent = srcType ? srcType.textContent : '';
 
+  root.setAttribute('aria-hidden', 'false');
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-label', srcName ? srcName.textContent : '');
+
   const allCards = Array.from(document.querySelectorAll('.wk-card'));
   const idx = allCards.indexOf(cardEl) + 1;
   idxBox.textContent = idx > 0 ? String(idx).padStart(2, '0') : '';
 
-  const { fx, fy, fw, fh, extras } = buildWkPreviewPath(cardEl, mode);
+  const { d: wkpPathD, fx, fy, fw, fh, extras } = buildWkPreviewPath(cardEl, mode);
   frame.style.left = fx + 'px';
   frame.style.top = fy + 'px';
   frame.style.width = fw + 'px';
@@ -943,6 +989,8 @@ function previewWork(cardEl, mode) {
     requestAnimationFrame(() => {
       root.classList.add('open');
       root.style.opacity = '1';
+      const closeBtnR = root.querySelector('.wkp-close');
+      if (closeBtnR) closeBtnR.focus();
       setTimeout(() => {
         frame.classList.add('show');
         root.querySelectorAll('.wkp-corner').forEach(c => c.classList.add('show'));
@@ -955,8 +1003,7 @@ function previewWork(cardEl, mode) {
   }
 
   path.style.display = '';
-  const d = buildWkPreviewPath(cardEl, mode).d;
-  path.setAttribute('d', d);
+  path.setAttribute('d', wkpPathD);
   const len = path.getTotalLength();
   path.style.transition = 'none';
   path.style.strokeDasharray = len;
@@ -977,6 +1024,8 @@ function previewWork(cardEl, mode) {
     setTimeout(() => {
       frame.classList.add('show');
       drawWkIcon(root);
+      const closeBtnN = root.querySelector('.wkp-close');
+      if (closeBtnN) closeBtnN.focus();
     }, 650);
     setTimeout(() => {
       root.querySelectorAll('.wkp-corner').forEach(c => c.classList.add('show'));
@@ -997,8 +1046,14 @@ function closeWkPreview(thenEnter) {
   const path = root.querySelector('.wkp-path');
   const frame = root.querySelector('.wkp-frame');
   const mode = wkPreviewState.mode;
+  const originCard = wkPreviewState.cardEl;
   wkPreviewState.animating = true;
   wkPreviewState.open = false;
+
+  root.setAttribute('aria-hidden', 'true');
+  root.removeAttribute('role');
+  root.removeAttribute('aria-modal');
+  root.removeAttribute('aria-label');
 
   stopWkPen(root);
   frame.classList.remove('show');
@@ -1024,6 +1079,8 @@ function closeWkPreview(thenEnter) {
     if (thenEnter) {
       if (mode === 'mu') openMU();
       else openProject(mode);
+    } else if (originCard && document.body.contains(originCard)) {
+      originCard.focus();
     }
   }, 350);
 }
@@ -1032,6 +1089,46 @@ function enterWkPreview() {
   if (!wkPreviewState.open) return;
   closeWkPreview(true);
 }
+
+let wkResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (!wkPreviewState.open && !wkPreviewState.animating) return;
+  clearTimeout(wkResizeTimer);
+  wkResizeTimer = setTimeout(() => {
+    if (!wkPreviewState.open && !wkPreviewState.animating) return;
+    if (wkPreviewState.animating) { closeWkPreview(false); return; }
+
+    const root = document.getElementById('wk-preview');
+    if (!root || !wkPreviewState.cardEl) return;
+    const path = root.querySelector('.wkp-path');
+    const frame = root.querySelector('.wkp-frame');
+
+    const { d: wkpPathD, fx, fy, fw, fh, extras } = buildWkPreviewPath(wkPreviewState.cardEl, wkPreviewState.mode);
+
+    frame.style.left = fx + 'px';
+    frame.style.top = fy + 'px';
+    frame.style.width = fw + 'px';
+    frame.style.height = fh + 'px';
+
+    const r = 4;
+    const cTL = root.querySelector('.wkp-corner.tl'), cTR = root.querySelector('.wkp-corner.tr');
+    const cBL = root.querySelector('.wkp-corner.bl'), cBR = root.querySelector('.wkp-corner.br');
+    if (cTL) { cTL.style.left = (fx - 4) + 'px'; cTL.style.top = (fy - 4) + 'px'; }
+    if (cTR) { cTR.style.left = (fx + fw - 2) + 'px'; cTR.style.top = (fy - 4) + 'px'; }
+    if (cBL) { cBL.style.left = (fx - 4) + 'px'; cBL.style.top = (fy + fh - 2) + 'px'; }
+    if (cBR) { cBR.style.left = (fx + fw - 2) + 'px'; cBR.style.top = (fy + fh - 2) + 'px'; }
+
+    if (path) {
+      stopWkPen(root);
+      path.style.transition = 'none';
+      path.setAttribute('d', wkpPathD);
+      path.style.strokeDasharray = '';
+      path.style.strokeDashoffset = '0';
+      path.style.display = prefersReducedMotion() ? 'none' : '';
+    }
+    renderWkExtras(root, extras, true);
+  }, 150);
+});
 
 (function initWkPreviewEvents() {
   document.addEventListener('click', e => {
@@ -1054,9 +1151,34 @@ function enterWkPreview() {
   });
 })();
 
+/* Keyboard activation for .wk-card (Enter/Space triggers the same click handler) */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+  const card = e.target.closest && e.target.closest('.wk-card');
+  if (!card) return;
+  if (e.key === ' ' || e.key === 'Spacebar') e.preventDefault();
+  card.click();
+});
+
+let overlayLoadingActive = false;
+(function initOverlayLoadListener(){
+  const frame = document.getElementById('project-frame');
+  if (!frame) return;
+  frame.addEventListener('load', () => {
+    if (!overlayLoadingActive) return;
+    if (frame.src === 'about:blank') return;
+    overlayLoadingActive = false;
+    const loadingEl = document.getElementById('overlay-loading');
+    if (loadingEl) loadingEl.classList.remove('show');
+  });
+})();
+
 function openProject(mode) {
   const overlay = document.getElementById('project-overlay');
   const frame = document.getElementById('project-frame');
+  const loadingEl = document.getElementById('overlay-loading');
+  overlayLoadingActive = true;
+  if (loadingEl) loadingEl.classList.add('show');
   if (mode.startsWith('http')) frame.src = mode;
   else if (mode === 'invest') frame.src = INVEST_BASE;
   else if (mode === 'causal') frame.src = CAUSAL_BASE;
@@ -1077,16 +1199,20 @@ function openProject(mode) {
 function closeProject() {
   const overlay = document.getElementById('project-overlay');
   const frame = document.getElementById('project-frame');
+  const loadingEl = document.getElementById('overlay-loading');
   overlay.classList.remove('active');
   document.getElementById('overlay-close').style.display = 'none';
   document.body.style.overflow = '';
+  overlayLoadingActive = false;
+  if (loadingEl) loadingEl.classList.remove('show');
   setTimeout(() => { overlay.style.display = 'none'; frame.src = 'about:blank'; }, 400);
 }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (wkPreviewState.open || wkPreviewState.animating) { closeWkPreview(false); return; }
-    closeMUPicker(); closeProject();
+    if (document.getElementById('mu-picker').style.display === 'flex') { closeMUPicker(); return; }
+    if (document.getElementById('project-overlay').classList.contains('active')) { closeProject(); return; }
   }
 });
 
@@ -1112,7 +1238,9 @@ let navVisible = true;
 let lastScrollY = 0;
 let hideTimer = null;
 
-function switchPage(id) {
+const VALID_PAGES = ['home', 'about', 'works', 'philosophy'];
+
+function switchPage(id, fromPopstate) {
   if (id === currentPage) return;
   currentPage = id;
   btns.forEach(b => b.classList.toggle('active', b.dataset.page === id));
@@ -1139,9 +1267,27 @@ function switchPage(id) {
   showNav();
   if (id !== 'home') scheduleHide();
   else clearTimeout(hideTimer);
+
+  if (!fromPopstate) {
+    if (id === 'home') history.pushState(null, '', location.pathname + location.search);
+    else history.pushState(null, '', '#' + id);
+  }
 }
 
 btns.forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
+
+window.addEventListener('popstate', () => {
+  const hash = location.hash.replace('#', '');
+  const id = VALID_PAGES.includes(hash) ? hash : 'home';
+  switchPage(id, true);
+});
+
+(function initHashRoute(){
+  const hash = location.hash.replace('#', '');
+  if (VALID_PAGES.includes(hash) && hash !== 'home') {
+    switchPage(hash, true);
+  }
+})();
 
 function showNav() { if (!navVisible) { nav.classList.remove('hidden'); navVisible = true; } }
 function hideNav() { if (navVisible && currentPage !== 'home') { nav.classList.add('hidden'); navVisible = false; } }
@@ -1170,6 +1316,9 @@ const PAGE_ORDER=['home','about','works','philosophy'];
 let navLocked=false;
 function navByDir(dir){
   if(navLocked)return;
+  if(wkPreviewState.open||wkPreviewState.animating)return;
+  if(document.getElementById('project-overlay').classList.contains('active'))return;
+  if(document.getElementById('mu-picker').style.display==='flex')return;
   const i=PAGE_ORDER.indexOf(currentPage);
   const next=i+dir;
   if(next>=0&&next<PAGE_ORDER.length){
@@ -1201,111 +1350,11 @@ function observeReveals() {
 }
 observeReveals();
 
-/* ── Suminagashi Ink Flow ── */
 (function(){
-  const canvas = document.getElementById('ink-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let W, H, streams = [], t = 0;
-
-  const P = new Uint8Array(512);
-  (function(){const p=[];for(let i=0;i<256;i++)p[i]=i;
-  for(let i=255;i>0;i--){const j=(i*7+13)&255;const tmp=p[i];p[i]=p[j];p[j]=tmp;}
-  for(let i=0;i<512;i++)P[i]=p[i&255];})();
-
-  function fade(t){return t*t*t*(t*(t*6-15)+10);}
-  function lerp(a,b,t){return a+t*(b-a);}
-  function grad2(h,x,y){const k=h&3;return(k===0?x+y:k===1?-x+y:k===2?x-y:-x-y);}
-  function noise(x,y){
-    const X=Math.floor(x)&255,Y=Math.floor(y)&255;
-    x-=Math.floor(x);y-=Math.floor(y);
-    const u=fade(x),v=fade(y);
-    const a=P[X]+Y,b=P[X+1]+Y;
-    return lerp(lerp(grad2(P[a],x,y),grad2(P[b],x-1,y),u),
-                lerp(grad2(P[a+1],x,y-1),grad2(P[b+1],x-1,y-1),u),v);
-  }
-  function fbm(x,y,oct){let v=0,a=0.5,f=1;for(let i=0;i<oct;i++){v+=a*noise(x*f,y*f);f*=2;a*=0.5;}return v;}
-
-  function resize(){
-    const home=document.getElementById('page-home');
-    W=canvas.width=home.offsetWidth;
-    H=canvas.height=home.offsetHeight;
-  }
-
-  function makeStream(){
-    return{
-      y0: H*(0.04+Math.random()*0.92),
-      thick: 4+Math.random()*28,
-      speed: 0.08+Math.random()*0.25,
-      freq: 0.0015+Math.random()*0.003,
-      amp: 30+Math.random()*80,
-      phase: Math.random()*200,
-      alpha: 0.025+Math.random()*0.045,
-      drift: 0.002+Math.random()*0.004
-    };
-  }
-
-  function init(){
-    resize();
-    streams=[];
-    for(let i=0;i<16;i++) streams.push(makeStream());
-    streams.sort(function(a,b){return a.y0-b.y0;});
-  }
-
-  function getY(s,x,half){
-    const nx=x*s.freq+s.phase+t*s.speed;
-    const ny=s.y0*0.004+t*s.drift;
-    const dy=fbm(nx,ny,5)*s.amp;
-    if(half==='top') return s.y0+dy-s.thick*0.5;
-    const thVar=s.thick*(0.5+0.5*fbm(x*0.006+t+s.phase,s.y0*0.01,3));
-    return s.y0+dy+thVar*0.5;
-  }
-
-  function draw(){
-    t+=0.002;
-    ctx.clearRect(0,0,W,H);
-
-    for(let si=0;si<streams.length;si++){
-      const s=streams[si];
-      const pts=60;
-      const step=(W+80)/(pts-1);
-
-      const top=[],bot=[];
-      for(let i=0;i<pts;i++){
-        const x=-40+i*step;
-        top.push({x:x,y:getY(s,x,'top')});
-        bot.push({x:x,y:getY(s,x,'bot')});
-      }
-
-      ctx.beginPath();
-      ctx.moveTo(top[0].x,top[0].y);
-      for(let i=0;i<pts-1;i++){
-        const mx=(top[i].x+top[i+1].x)*0.5;
-        const my=(top[i].y+top[i+1].y)*0.5;
-        ctx.quadraticCurveTo(top[i].x,top[i].y,mx,my);
-      }
-      ctx.lineTo(top[pts-1].x,top[pts-1].y);
-
-      ctx.lineTo(bot[pts-1].x,bot[pts-1].y);
-      for(let i=pts-1;i>0;i--){
-        const mx=(bot[i].x+bot[i-1].x)*0.5;
-        const my=(bot[i].y+bot[i-1].y)*0.5;
-        ctx.quadraticCurveTo(bot[i].x,bot[i].y,mx,my);
-      }
-      ctx.lineTo(bot[0].x,bot[0].y);
-      ctx.closePath();
-
-      ctx.fillStyle='rgba(0,0,0,'+s.alpha+')';
-      ctx.fill();
-    }
-
-    requestAnimationFrame(draw);
-  }
-
-  init();
-  draw();
-  window.addEventListener('resize',init);
+  const wc = document.getElementById('works-count');
+  if (wc) wc.textContent = document.querySelectorAll('.wk-card').length + ' Projects';
 })();
+
 </script>
 </body>
 </html>
