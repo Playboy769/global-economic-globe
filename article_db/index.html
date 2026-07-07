@@ -6168,12 +6168,12 @@ let _gvTransform = { x: 0, y: 0, k: 1 };
 let _gvDragId = null, _gvPanning = false, _gvPanStart = null, _gvMoved = false;
 
 function buildGraphData() {
+  // Only articles that participate in a [[wikilink]] (either end) become nodes —
+  // an article with just a title is not part of the link network.
   const idx = _wikiIndex();
   const nodes = new Map();
   const edges = [];
   const addNode = (id, data) => { if (!nodes.has(id)) nodes.set(id, { id, degree: 0, ...data }); return nodes.get(id); };
-
-  articles.forEach(a => addNode('a' + a.id, { type: 'article', title: a.title }));
 
   const seenEdge = new Set();
   const addEdge = (s, t) => {
@@ -6185,10 +6185,13 @@ function buildGraphData() {
     nodes.get(s).degree++; nodes.get(t).degree++;
   };
 
-  const processDoc = (id, content) => {
-    extractWikilinks(content).forEach(({ target }) => {
+  const processDoc = (a) => {
+    const id = 'a' + a.id;
+    extractWikilinks(a.content).forEach(({ target }) => {
       const hit = idx.get(target.toLowerCase());
-      if (hit) {
+      addNode(id, { type: 'article', title: a.title });
+      if (hit && hit.id != null) {
+        addNode('a' + hit.id, { type: 'article', title: hit.title });
         addEdge(id, 'a' + hit.id);
       } else {
         const ghostId = 'ghost:' + target.toLowerCase();
@@ -6197,7 +6200,7 @@ function buildGraphData() {
       }
     });
   };
-  articles.forEach(a => processDoc('a' + a.id, a.content));
+  articles.forEach(a => { if (a.id != null && a.content) processDoc(a); });
 
   return { nodes: [...nodes.values()], edges };
 }
