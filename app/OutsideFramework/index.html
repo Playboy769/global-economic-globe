@@ -137,17 +137,24 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 /* ── PHILOSOPHY ── */
 #page-philosophy{padding:110px 0 60px}
-.phil-head{margin-bottom:48px}
-.phil-quote{font-size:clamp(24px,3.5vw,40px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.phil-head{margin-bottom:48px;position:relative}
+.phil-motif{position:absolute;top:-40px;right:-10px;width:min(360px,32vw);opacity:0;pointer-events:none;z-index:-1;transform:scaleX(-1);animation:aboutMotifIn 1.4s ease .3s forwards}
+.phil-quote-mark{position:absolute;top:-46px;left:-4px;font-size:120px;font-family:'Orchid','Noto Serif TC',serif;color:var(--c-accent);opacity:.14;line-height:1;pointer-events:none;user-select:none;z-index:-1}
+.phil-quote{font-size:clamp(24px,3.5vw,40px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;position:relative}
 .phil-quote em{font-style:normal;color:#999}
 .phil-items{display:flex;flex-direction:column}
-.phi-item{display:grid;grid-template-columns:80px 1fr;gap:24px;padding:32px 0;border-top:1px solid #eee;align-items:start}
-.phi-num{font-family:'Orchid','Noto Serif TC',serif;font-size:48px;font-weight:300;color:var(--c-accent);opacity:.22;line-height:1;font-style:italic}
+.phi-item{display:grid;grid-template-columns:80px 1fr;gap:24px;padding:32px 0;border-top:1px solid #eee;align-items:start;position:relative}
+.phi-item::before{content:'';position:absolute;top:-1px;left:0;width:0;height:2px;background:var(--c-accent);transition:width .5s cubic-bezier(.16,1,.3,1)}
+.phi-item:hover::before{width:64px}
+.phi-num{font-family:'Orchid','Noto Serif TC',serif;font-size:48px;font-weight:300;color:var(--c-accent);opacity:.22;line-height:1;font-style:italic;transition:opacity .3s ease,transform .3s ease;display:inline-block}
+.phi-item:hover .phi-num{opacity:.5;transform:translateX(4px)}
 .phi-content{}
-.phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;transition:color .3s ease}
+.phi-item:hover .phi-title{color:var(--c-accent-deep)}
 .phi-text{font-size:14px;color:#777;line-height:1.9;font-weight:400;max-width:600px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 .phil-footer{margin-top:48px;padding:32px 0;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
 .pf-brand{font-size:16px;font-weight:700;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC',serif}
+.pf-brand .out-outline{color:var(--c-accent)}
 .pf-copy{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
 
 /* ── Work Preview ── */
@@ -230,6 +237,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   .wk-name{flex:0 0 150px}
   .phi-item{grid-template-columns:80px 1fr;gap:24px}
   .phi-num{font-size:40px}
+  .phil-motif,.phil-quote-mark{display:none}
   .phil-footer{flex-direction:column;gap:16px;text-align:center}
 }
 @media(max-width:600px){
@@ -481,8 +489,22 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <div class="page" id="page-philosophy">
   <div class="container">
     <div class="phil-head">
+      <svg class="phil-motif" viewBox="60 40 480 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><marker id="pm-a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0,0.5 5,3 0,5.5" fill="#0a0a0a"/></marker></defs>
+        <rect x="170" y="90" width="220" height="200" stroke="#0a0a0a" fill="none"/>
+        <line x1="170" y1="156" x2="390" y2="156" stroke="#0a0a0a" stroke-width=".6" stroke-dasharray="4 6"/>
+        <line x1="170" y1="224" x2="390" y2="224" stroke="#0a0a0a" stroke-width=".6" stroke-dasharray="4 6"/>
+        <line x1="243" y1="90" x2="243" y2="290" stroke="#0a0a0a" stroke-width=".6" stroke-dasharray="4 6"/>
+        <line x1="317" y1="90" x2="317" y2="290" stroke="#0a0a0a" stroke-width=".6" stroke-dasharray="4 6"/>
+        <path d="M243,156 C243,110 310,50 490,22" stroke="#0a0a0a" stroke-width="1.5" fill="none" marker-end="url(#pm-a)"/>
+        <path d="M317,156 C370,140 450,152 538,230" stroke="#0a0a0a" stroke-width="1.5" fill="none" marker-end="url(#pm-a)"/>
+        <path d="M317,224 C310,270 240,320 30,358" stroke="#0a0a0a" stroke-width="1.5" fill="none" marker-end="url(#pm-a)"/>
+        <path d="M243,224 C195,215 110,185 20,108" stroke="#0a0a0a" stroke-width="1.5" fill="none" marker-end="url(#pm-a)"/>
+        <circle cx="243" cy="156" r="3" fill="#0a0a0a"/><circle cx="317" cy="156" r="3" fill="#0a0a0a"/>
+        <circle cx="317" cy="224" r="3" fill="#0a0a0a"/><circle cx="243" cy="224" r="3" fill="#0a0a0a"/>
+      </svg>
       <div class="about-label reveal">Philosophy</div>
-      <div class="phil-quote reveal reveal-delay-1">有些人的成長，不是被風推著走的。<em>是在某個深夜，被擊碎之後，一片一片把自己撿回來的。</em></div>
+      <div class="phil-quote reveal reveal-delay-1"><span class="phil-quote-mark" aria-hidden="true">「</span>有些人的成長，不是被風推著走的。<em>是在某個深夜，被擊碎之後，一片一片把自己撿回來的。</em></div>
     </div>
     <div class="phil-items">
       <div class="phi-item reveal">
@@ -508,7 +530,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
     </div>
     <div class="phil-footer">
-      <div class="pf-brand">Outside FrameWork</div>
+      <div class="pf-brand">Outside <span class="out-outline">Frame</span>Work</div>
       <div class="pf-copy">&copy; 2025 All rights reserved.</div>
     </div>
   </div>
