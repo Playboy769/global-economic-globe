@@ -3196,6 +3196,17 @@ function toggleLeverage(){
   _leverageActive=true; if(btn)btn.classList.add('active'); renderLeverage();
 }
 
+// SVG <text> collapses embedded newlines onto a single baseline, so a
+// multi-line node label gets exported as overlapping/run-together text.
+// Split on line breaks and emit one <text> per line, vertically stacked
+// around the requested anchor point.
+function svgMultilineText(x,y,text,{anchor='middle',dominantBaseline='middle',fontSize=14,fill='#0a0a0a',family='serif'}={}){
+  const lines=(text||'').replace(/\r\n?/g,'\n').split('\n');
+  const lh=fontSize*1.25;
+  const startY=dominantBaseline==='middle'?y-((lines.length-1)*lh)/2:y;
+  return lines.map((line,i)=>`<text x="${x}" y="${startY+i*lh}" text-anchor="${anchor}" dominant-baseline="${dominantBaseline}" font-size="${fontSize}" fill="${fill}" font-family="${family}">${esc(line)}</text>`).join('');
+}
+
 function exportSVG() {
   measureAll();
   if(!G.nodes.length)return;
@@ -3218,7 +3229,7 @@ function exportSVG() {
   G.nodes.filter(n=>n.isBox).forEach(n=>{
     const w=n._w||200,h=n._h||120;
     out+=`<rect x="${n.x}" y="${n.y}" width="${w}" height="${h}" rx="16" fill="rgba(240,245,255,0.6)" stroke="#aabbd0" stroke-width="2" stroke-dasharray="8 4"/>`;
-    out+=`<text x="${n.x+12}" y="${n.y+22}" font-size="13" fill="#7a9cbf" font-family="serif">${esc(n.text)}</text>`;
+    out+=svgMultilineText(n.x+12,n.y+22,n.text,{anchor:'start',dominantBaseline:'auto',fontSize:13,fill:'#7a9cbf'});
   });
   // Edges
   G.edges.forEach(e=>{
@@ -3230,18 +3241,27 @@ function exportSVG() {
     const dash=ls==='dash'?' stroke-dasharray="8 5"':ls==='dot'?' stroke-dasharray="1.5 4" stroke-linecap="round"':'';
     const d=edgePath(p1,p2);
     out+=`<path fill="none" stroke="${stroke}" stroke-width="1.6"${dash} d="${d}" marker-end="url(#${ah})"/>`;
-    if(e.label){const m=bezPointAt(p1,p2,e.labelT!=null?e.labelT:0.5);out+=`<text x="${m.x}" y="${m.y}" text-anchor="middle" font-size="11" fill="#555" font-family="serif">${esc(e.label)}</text>`;}
+    if(e.label){const m=bezPointAt(p1,p2,e.labelT!=null?e.labelT:0.5);out+=svgMultilineText(m.x,m.y,e.label,{dominantBaseline:'auto',fontSize:11,fill:'#555'});}
   });
   // Regular nodes
   visible.filter(n=>!n.isBox).forEach(n=>{
     const w=n._w||80,h=n._h||40;
     if(n.isText){
-      out+=`<text x="${n.x+w/2}" y="${n.y+h/2}" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="#0a0a0a" font-family="serif">${esc(n.text)}</text>`;
+      out+=svgMultilineText(n.x+w/2,n.y+h/2,n.text,{});
+    } else if(n.isImage){
+      // n.src may be a path relative to this app's origin (server-hosted
+      // upload) or a data: URI (inline fallback). Resolve relative paths to
+      // absolute so the reference still works once the SVG is downloaded
+      // and opened outside this page — otherwise it shows as a broken image.
+      let href=n.src||'';
+      if(href&&!/^data:/i.test(href)){ try{href=new URL(href,location.href).href;}catch(_){} }
+      out+=`<rect x="${n.x}" y="${n.y}" width="${w}" height="${h}" rx="9" fill="#f2f2f2" stroke="#d6d6d6" stroke-width="1"/>`;
+      if(href)out+=`<image x="${n.x}" y="${n.y}" width="${w}" height="${h}" href="${esc(href)}" preserveAspectRatio="xMidYMid meet"/>`;
     } else {
       const fill=n.color?(nodeColors[n.color]||nodeColorFillLight(resolveColorHex(n.color))):'#fff';
       const stroke=n.color?(nodeBorders[n.color]||resolveColorHex(n.color)):'#d6d6d6';
       out+=`<rect x="${n.x}" y="${n.y}" width="${w}" height="${h}" rx="11" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`;
-      out+=`<text x="${n.x+w/2}" y="${n.y+h/2}" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="#0a0a0a" font-family="serif">${esc(n.text)}</text>`;
+      out+=svgMultilineText(n.x+w/2,n.y+h/2,n.text,{});
     }
   });
   out+='</svg>';
