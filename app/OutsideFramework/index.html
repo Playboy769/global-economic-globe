@@ -122,19 +122,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wk-card.wk-hidden{display:none}
 .wk-card:hover{transform:translateY(-4px);border-color:#ddd;box-shadow:0 20px 40px -22px rgba(0,0,0,.16)}
 .wk-card:focus-visible{outline:1px solid var(--c-accent);outline-offset:4px}
-.wk-card[data-cat="finance"] .wk-visual{background:var(--c-accent-soft);border-color:rgba(209,89,31,0.22)}
-.wk-card[data-cat="network"] .wk-visual{background:rgba(80,128,168,0.07);border-color:rgba(80,128,168,0.18)}
-.wk-card[data-cat="causal"] .wk-visual{background:rgba(144,96,192,0.07);border-color:rgba(144,96,192,0.18)}
-.wk-card[data-cat="knowledge"] .wk-visual{background:rgba(80,128,96,0.07);border-color:rgba(80,128,96,0.18)}
 .wk-card::before{counter-increment:wk-idx;content:counter(wk-idx, decimal-leading-zero);font-family:'Orchid','Noto Serif TC',serif;font-size:10px;color:#ccc;letter-spacing:.06em;transition:color .2s}
 .wk-card:hover::before{color:var(--c-accent)}
 .wk-card::after{content:'→';position:absolute;top:26px;right:24px;font-size:13px;color:#ccc;opacity:0;transform:translateX(-4px);transition:opacity .25s ease,transform .25s ease,color .2s ease}
 .wk-card:hover::after{opacity:1;transform:translateX(0);color:var(--c-accent)}
-.wk-visual{width:56px;height:56px;aspect-ratio:1;overflow:hidden;position:relative;background:#fafafa;border:1px solid rgba(0,0,0,0.05);border-radius:10px;flex-shrink:0}
-.wk-visual-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:transform .4s cubic-bezier(.4,0,.2,1)}
-.wk-card:hover .wk-visual-inner{transform:scale(1.08)}
-.wk-icon{position:relative;z-index:2;width:34px;height:34px}
-.wk-icon svg{width:100%;height:100%}
 .wk-info{display:flex;flex-direction:column;gap:5px;padding:0}
 .wk-name{font-size:16px;font-weight:500;margin-bottom:0;letter-spacing:.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 .wk-type{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;font-weight:400}
@@ -168,8 +159,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #wk-preview .wkp-frame{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;cursor:pointer;opacity:0;transform:translateY(10px);outline:1px solid transparent;transition:opacity .35s ease,transform .35s ease,outline-color .4s ease}
 #wk-preview.ghost .wkp-frame{outline-color:var(--c-accent,#b08050)}
 #wk-preview .wkp-frame.show{opacity:1;transform:translateY(0)}
-#wk-preview .wkp-icon{width:120px;height:120px;stroke:var(--c-accent,#b08050)}
-#wk-preview .wkp-icon svg{width:100%;height:100%}
 #wk-preview .wkp-name{font-family:'Orchid','Noto Serif TC',serif;font-size:34px;font-weight:500;letter-spacing:.01em;color:#0a0a0a}
 #wk-preview .wkp-type{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:.1em}
 #wk-preview .wkp-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#777;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
@@ -187,9 +176,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #wk-preview .wkp-corner.tr{border-width:1px 1px 0 0}
 #wk-preview .wkp-corner.bl{border-width:0 0 1px 1px}
 #wk-preview .wkp-corner.br{border-width:0 1px 1px 0}
-#wk-preview .wkp-icon svg [data-wkp-draw]{transition:none}
 @media(max-width:640px){
-  #wk-preview .wkp-icon{width:80px;height:80px}
   #wk-preview .wkp-name{font-size:26px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -391,103 +378,42 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <div class="works-grid">
 
       <div class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Economy — 開啟預覽" onclick="previewWork(this,'econ')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="14" y="52" width="10" height="18" rx="2"/><rect x="28" y="38" width="10" height="32" rx="2"/><rect x="42" y="44" width="10" height="26" rx="2"/><rect x="56" y="24" width="10" height="46" rx="2"/>
-          <path d="M19 49 L33 34 L47 40 L61 20" stroke="#999" stroke-width="1"/><circle cx="61" cy="20" r="2.5" fill="#999" stroke="none"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="Energy — 開啟預覽" onclick="previewWork(this,'energy')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M46 8 L34 36 H44 L30 72"/><circle cx="40" cy="40" r="28" stroke-dasharray="3 5" opacity="0.4"/><path d="M50 36 L40 56" opacity="0.3"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">Energy</div><div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="InvestFrame — 開啟預覽" onclick="previewWork(this,'invest')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="16" y="20" width="48" height="34" rx="3" opacity="0.3"/><rect x="20" y="28" width="48" height="34" rx="3" opacity="0.5"/><rect x="24" y="36" width="48" height="34" rx="3"/>
-          <text x="48" y="57" text-anchor="middle" font-family="'Orchid',serif" font-size="10" font-weight="400" fill="#bbb" stroke="none" letter-spacing="1">M / R / I</text>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
       </div>
       <div class="wk-card reveal" data-cat="earnings" tabindex="0" role="button" aria-label="MU Q3 — 開啟預覽" onclick="previewWork(this,'mu')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="24" y="24" width="32" height="32" rx="2" stroke-width="1.2"/><line x1="13" y1="33" x2="24" y2="33" stroke-width="1.2"/><line x1="13" y1="40" x2="24" y2="40" stroke-width="1.2"/><line x1="13" y1="47" x2="24" y2="47" stroke-width="1.2"/>
-          <line x1="56" y1="33" x2="67" y2="33" stroke-width="1.2"/><line x1="56" y1="40" x2="67" y2="40" stroke-width="1.2"/><line x1="56" y1="47" x2="67" y2="47" stroke-width="1.2"/>
-          <rect x="31" y="31" width="18" height="18" rx="1" opacity="0.18"/><path d="M31 51 L37 44 L43 47 L52 38" stroke-width="1.1" opacity="0.7"/><circle cx="52" cy="38" r="2.2" fill="#000" stroke="none" opacity="0.7"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">MU Q3</div><div class="wk-type">法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="PANW Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/PANW_FY26Q3_Analysis.html')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M40 12 L64 22 V40 C64 56 54 66 40 70 C26 66 16 56 16 40 V22 Z" stroke-width="1.2"/>
-          <path d="M29 40 L37 48 L52 31" stroke-width="1.3" opacity="0.8"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">PANW Q3</div><div class="wk-type">法說會 &middot; Q&amp;A &middot; M&amp;A整合 &middot; 風險矩陣</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="SUMCO 1Q — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SUMCO_FY26Q1_Analysis.html')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="40" cy="38" r="26" stroke-width="1.2"/><line x1="24" y1="58" x2="56" y2="58" stroke-width="1.2"/>
-          <circle cx="40" cy="38" r="14" stroke-width="0.7" opacity="0.3"/>
-          <path d="M26 46 L36 40 L46 48 L60 30" stroke-width="1.3" opacity="0.75"/><circle cx="60" cy="30" r="2.4" fill="#000" stroke="none" opacity="0.75"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">SUMCO 1Q</div><div class="wk-type">財報簡報 &middot; 損益摘要 &middot; 現金流 &middot; 風險矩陣</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="DELL Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DELL_FY27Q1_Analysis.html')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="26" y="10" width="28" height="60" rx="2" stroke-width="1.2"/>
-          <line x1="26" y1="24" x2="54" y2="24" stroke-width="1"/><line x1="26" y1="38" x2="54" y2="38" stroke-width="1"/><line x1="26" y1="52" x2="54" y2="52" stroke-width="1"/>
-          <circle cx="32" cy="17" r="1.5" fill="#000" stroke="none" opacity="0.6"/><circle cx="32" cy="31" r="1.5" fill="#000" stroke="none" opacity="0.6"/><circle cx="32" cy="45" r="1.5" fill="#000" stroke="none" opacity="0.6"/><circle cx="32" cy="59" r="1.5" fill="#000" stroke="none" opacity="0.6"/>
-          <path d="M58 50 L64 40 L70 46 L76 28" stroke-width="1.3" opacity="0.75"/><circle cx="76" cy="28" r="2.4" fill="#000" stroke="none" opacity="0.75"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">DELL Q1</div><div class="wk-type">法說會 &middot; Q&amp;A &middot; AI Backlog &middot; 風險矩陣</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="previewWork(this,'warning')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="40" cy="40" r="24" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.35"/><circle cx="40" cy="40" r="14" stroke-width="0.7" stroke-dasharray="3 5" opacity="0.55"/>
-          <line x1="40" y1="16" x2="40" y2="26" stroke-width="1" opacity="0.5"/><line x1="64" y1="40" x2="54" y2="40" stroke-width="1" opacity="0.5"/><line x1="40" y1="64" x2="40" y2="54" stroke-width="1" opacity="0.5"/><line x1="16" y1="40" x2="26" y2="40" stroke-width="1" opacity="0.5"/>
-          <path d="M40 40 L58 22" stroke-width="1.1" opacity="0.7"/><circle cx="58" cy="22" r="3" stroke-width="1.3" fill="none"/><circle cx="40" cy="40" r="2.2" fill="#000" stroke="none" opacity="0.75"/>
-          <path d="M14 62 L22 56 L30 60 L40 51 L50 57 L60 48 L66 52" stroke-width="1.1" opacity="0.45"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="Options Guide — 開啟預覽" onclick="previewWork(this,'options')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="56" x2="68" y2="56" stroke-width="0.8" opacity="0.4"/><line x1="12" y1="14" x2="12" y2="66" stroke-width="0.8" opacity="0.4"/>
-          <polyline points="12,56 28,56 40,28 52,56 68,56" stroke-width="1.4" stroke="#000" opacity="0.85"/><polyline points="12,56 30,56 44,38 68,22" stroke-width="1.1" stroke="#000" opacity="0.4"/>
-          <circle cx="40" cy="28" r="3" fill="#000" stroke="none" opacity="0.7"/><text x="36" y="12" font-family="serif" font-size="9" fill="#000" stroke="none" opacity="0.55" letter-spacing="1">Δ Γ Θ V</text>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
       </div>
       <div class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Brownian Motion — 開啟預覽" onclick="previewWork(this,'brownian')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10 46 C18 20, 26 62, 34 34 C40 12, 48 52, 56 28 C62 12, 66 24, 70 18" opacity="0.85"/>
-          <line x1="10" y1="46" x2="70" y2="46" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.3"/>
-          <circle cx="70" cy="18" r="2.6" fill="#000" stroke="none"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">Brownian Motion</div><div class="wk-type">Random Walk &middot; Monte Carlo &middot; Simulation</div></div>
       </div>
       <div class="wk-card reveal" data-cat="network" tabindex="0" role="button" aria-label="Structural Holes — 開啟預覽" onclick="previewWork(this,'https://structural-holes-production.up.railway.app/')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1" stroke-linecap="round">
-          <line x1="26" y1="26" x2="54" y2="36"/><line x1="26" y1="26" x2="34" y2="56"/><line x1="54" y1="36" x2="34" y2="56"/><line x1="54" y1="36" x2="62" y2="60"/><line x1="34" y1="56" x2="62" y2="60"/><line x1="26" y1="26" x2="42" y2="16"/>
-          <circle cx="26" cy="26" r="5" stroke-width="1.2"/><circle cx="54" cy="36" r="6" stroke-width="1.2"/><circle cx="34" cy="56" r="4.5" stroke-width="1.2"/><circle cx="62" cy="60" r="3.5" stroke-width="1.2"/><circle cx="42" cy="16" r="4" stroke-width="1.2"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">Structural Holes</div><div class="wk-type">Network Analysis &middot; Graph Theory</div></div>
       </div>
       <div class="wk-card reveal" data-cat="causal" tabindex="0" role="button" aria-label="CausalFrame — 開啟預覽" onclick="previewWork(this,'causal')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <defs><marker id="cfk-arrow" markerWidth="7" markerHeight="7" refX="5.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,2.5 L0,5 Z" fill="#000" stroke="none"/></marker></defs>
-          <rect x="11" y="15" width="23" height="15" rx="3"/><rect x="47" y="23" width="22" height="15" rx="3" opacity="0.5"/><rect x="28" y="50" width="23" height="15" rx="3" opacity="0.78"/>
-          <line x1="34" y1="22" x2="45.5" y2="29" marker-end="url(#cfk-arrow)"/><line x1="23" y1="30" x2="33.5" y2="49" marker-end="url(#cfk-arrow)"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">CausalFrame</div><div class="wk-type">Causal Logic &middot; Diagram</div></div>
       </div>
       <div class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="previewWork(this,'https://articlebase.up.railway.app/')">
-        <div class="wk-visual"><div class="wk-visual-inner"><div class="wk-icon"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="18" y="14" width="30" height="40" rx="2"/><line x1="24" y1="22" x2="42" y2="22" opacity="0.5"/><line x1="24" y1="28" x2="42" y2="28" opacity="0.5"/><line x1="24" y1="34" x2="36" y2="34" opacity="0.5"/>
-          <rect x="32" y="30" width="30" height="40" rx="2" opacity="0.6"/><line x1="38" y1="38" x2="56" y2="38" opacity="0.4"/><line x1="38" y1="44" x2="56" y2="44" opacity="0.4"/><line x1="38" y1="50" x2="50" y2="50" opacity="0.4"/>
-          <circle cx="55" cy="62" r="8" stroke-width="1.5"/><path d="M60 67 L65 72" stroke-width="1.5"/>
-        </svg></div></div></div>
         <div class="wk-info"><div class="wk-name">Article Database</div><div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div></div>
       </div>
 
@@ -616,12 +542,11 @@ function ensureWkPreviewDom() {
     '</svg>' +
     '<div class="wkp-frame">' +
       '<div class="wkp-idx"></div>' +
-      '<div class="wkp-icon"></div>' +
       '<div class="wkp-name"></div>' +
       '<div class="wkp-type"></div>' +
     '</div>' +
     '<div class="wkp-corner tl"></div><div class="wkp-corner tr"></div><div class="wkp-corner bl"></div><div class="wkp-corner br"></div>' +
-    '<div class="wkp-hint">點擊進入 &middot; ESC 返回</div>' +
+    '<div class="wkp-hint">自動進入 &middot; ESC 取消</div>' +
     '<button type="button" class="wkp-close" aria-label="關閉預覽"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
   return root;
 }
@@ -954,33 +879,6 @@ function renderWkExtras(root, extras, reduced) {
   });
 }
 
-function drawWkIcon(root) {
-  const iconBox = root.querySelector('.wkp-icon');
-  const svg = iconBox.querySelector('svg');
-  if (!svg) return;
-  const shapes = svg.querySelectorAll('path, rect, circle, line, polyline');
-  shapes.forEach((sh, i) => {
-    let len = 60;
-    try {
-      if (sh.tagName === 'path' && sh.getTotalLength) len = sh.getTotalLength();
-      else if (sh.tagName === 'circle') len = 2 * Math.PI * (parseFloat(sh.getAttribute('r')) || 10);
-      else if (sh.tagName === 'rect') len = 2 * ((parseFloat(sh.getAttribute('width')) || 10) + (parseFloat(sh.getAttribute('height')) || 10));
-      else if (sh.tagName === 'line') {
-        const dx = (parseFloat(sh.getAttribute('x2')) || 0) - (parseFloat(sh.getAttribute('x1')) || 0);
-        const dy = (parseFloat(sh.getAttribute('y2')) || 0) - (parseFloat(sh.getAttribute('y1')) || 0);
-        len = Math.hypot(dx, dy);
-      } else if (sh.tagName === 'polyline' && sh.getTotalLength) len = sh.getTotalLength();
-    } catch (e) {}
-    sh.style.strokeDasharray = len;
-    sh.style.strokeDashoffset = len;
-    sh.style.transition = 'none';
-    setTimeout(() => {
-      sh.style.transition = `stroke-dashoffset 350ms ease`;
-      sh.style.strokeDashoffset = '0';
-    }, 600 + i * 60);
-  });
-}
-
 function previewWork(cardEl, mode) {
   if (wkPreviewState.open || wkPreviewState.animating) return;
   wkPreviewState.animating = true;
@@ -1004,20 +902,22 @@ function previewWork(cardEl, mode) {
     if (frameEl) frameEl.classList.add('show');
     root.querySelectorAll('.wkp-corner').forEach(c => c.classList.add('show'));
     root.classList.add('ghost');
+    setTimeout(() => {
+      if (wkPreviewState.mode !== mode || wkPreviewState.cardEl !== cardEl) return;
+      if (!wkPreviewState.open) return;
+      enterWkPreview();
+    }, 900);
   }, 3000);
 
   const root = ensureWkPreviewDom();
   const path = root.querySelector('.wkp-path');
   const frame = root.querySelector('.wkp-frame');
-  const iconBox = root.querySelector('.wkp-icon');
   const nameBox = root.querySelector('.wkp-name');
   const typeBox = root.querySelector('.wkp-type');
   const idxBox = root.querySelector('.wkp-idx');
 
-  const srcIcon = cardEl.querySelector('.wk-icon svg');
   const srcName = cardEl.querySelector('.wk-name');
   const srcType = cardEl.querySelector('.wk-type');
-  iconBox.innerHTML = srcIcon ? srcIcon.outerHTML : '';
   nameBox.textContent = srcName ? srcName.textContent : '';
   typeBox.textContent = srcType ? srcType.textContent : '';
 
@@ -1063,9 +963,13 @@ function previewWork(cardEl, mode) {
         frame.classList.add('show');
         root.querySelectorAll('.wkp-corner').forEach(c => c.classList.add('show'));
         root.classList.add('ghost');
-        drawWkIcon(root);
       }, 60);
       setTimeout(() => { wkPreviewState.open = true; wkPreviewState.animating = false; }, 200);
+      setTimeout(() => {
+        if (wkPreviewState.mode !== mode || wkPreviewState.cardEl !== cardEl) return;
+        if (!wkPreviewState.open) return;
+        enterWkPreview();
+      }, 800);
     });
     return;
   }
@@ -1091,7 +995,6 @@ function previewWork(cardEl, mode) {
     runWkPen(root, path, DURATION);
     setTimeout(() => {
       frame.classList.add('show');
-      drawWkIcon(root);
       const closeBtnN = root.querySelector('.wkp-close');
       if (closeBtnN) closeBtnN.focus();
     }, 650);
@@ -1104,6 +1007,11 @@ function previewWork(cardEl, mode) {
       wkPreviewState.open = true;
       wkPreviewState.animating = false;
     }, DURATION);
+    setTimeout(() => {
+      if (wkPreviewState.mode !== mode || wkPreviewState.cardEl !== cardEl) return;
+      if (!wkPreviewState.open) return;
+      enterWkPreview();
+    }, DURATION + 900);
   });
 }
 
