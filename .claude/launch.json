@@ -56,6 +56,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8132", "--directory", "projects/brownian-motion-simulator"],
       "port": 8132
+    },
+    {
+      "name": "panw-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8133", "--directory", "research/panw-analysis-2026q3/PANW_FY26Q3_Analysis"],
+      "port": 8133
+    },
+    {
+      "name": "sumco-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8134", "--directory", "research/sumco-analysis-2026q1/SUMCO_FY26Q1_Analysis"],
+      "port": 8134
     }
   ]
 }
