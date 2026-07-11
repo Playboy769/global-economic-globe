@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micron FY Q3 2026 — Q&A / SCA / 技術產品線 / 風險矩陣</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #e8e8e8; font-size: 13px; }
+
+  .page-header { padding: 20px 24px 0; }
+  .page-header h1 { font-size: 18px; font-weight: 700; color: #e8e8e8; }
+  .page-header p { font-size: 12px; color: #888; margin-top: 4px; }
+
+  .container { max-width: 920px; margin: 0 auto; padding: 16px 24px 40px; }
+
+  .tabs { display: flex; border-bottom: 2px solid #333; margin-bottom: 20px; gap: 0; }
+  .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 500; color: #999; transition: all 0.2s; font-size: 13px; }
+  .tab.active { border-bottom-color: #4da6ff; color: #4da6ff; }
+  .tab:hover:not(.active) { color: #e8e8e8; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: #252540; border: 1px solid #333; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .card-title { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #4da6ff; margin-bottom: 8px; }
+  .card p { line-height: 1.6; color: #d0d0d0; }
+
+  .qa-item { border: 1px solid #333; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .qa-header { padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #252540; }
+  .qa-header:hover { background: #2e2e50; }
+  .qa-analyst { font-weight: 600; font-size: 12px; color: #e8e8e8; }
+  .qa-topic { font-size: 12px; color: #aaa; }
+  .qa-arrow { font-size: 10px; color: #888; transition: transform 0.2s; }
+  .qa-item.open .qa-arrow { transform: rotate(180deg); }
+  .qa-body { display: none; padding: 14px; border-top: 1px solid #333; background: #1e1e38; }
+  .qa-item.open .qa-body { display: block; }
+
+  .q-block { margin-bottom: 10px; }
+  .q-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .q-label.q { color: #f0a050; }
+  .q-label.a { color: #50c878; }
+  .q-label.flag { color: #ff6b6b; }
+  .q-text { line-height: 1.6; color: #d0d0d0; }
+  .flag-box { background: #3a1a1a; border: 1px solid #6b3333; border-radius: 6px; padding: 10px; margin-top: 8px; }
+  .flag-box .q-label { color: #ff8080; }
+
+  .orig-box { background: #1c2036; border-left: 3px solid #5a6b8c; border-radius: 6px; padding: 10px 12px; margin-top: 12px; }
+  .orig-box .orig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #8a94ab; margin-bottom: 6px; }
+  .orig-box .orig-text { font-size: 12px; line-height: 1.7; color: #aab2c4; font-style: italic; }
+  .orig-box .orig-text b { font-style: normal; color: #d0d6e2; }
+
+  .sca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .sca-box { border-radius: 8px; padding: 12px; }
+  .sca-box.blue { background: #1a2a4a; border: 1px solid #4a7ab5; }
+  .sca-box.green { background: #1a3a2a; border: 1px solid #4a9a6a; }
+  .sca-box.orange { background: #3a2a1a; border: 1px solid #c07030; }
+  .sca-box.red { background: #3a1a2a; border: 1px solid #b05070; }
+  .sca-box h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .sca-box.blue h4 { color: #7ab0e8; }
+  .sca-box.green h4 { color: #70c896; }
+  .sca-box.orange h4 { color: #e0903a; }
+  .sca-box.red h4 { color: #e07090; }
+  .sca-box ul { padding-left: 14px; }
+  .sca-box li { margin-bottom: 4px; line-height: 1.5; color: #d0d0d0; }
+
+  .price-band { background: #252540; border: 1px solid #333; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .band-bar { height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; margin: 6px 0; font-size: 12px; font-weight: 600; }
+  .band-ceiling { background: #1a3060; color: #90c0ff; border: 1px solid #4a70b0; }
+  .band-floor { background: #3a3000; color: #e0c050; border: 1px solid #806020; }
+  .band-label { font-size: 11px; color: #999; margin: 2px 0; }
+
+  .rev-chart { margin-bottom: 16px; }
+  .rev-row { display: flex; align-items: center; margin-bottom: 10px; gap: 10px; }
+  .rev-name { width: 230px; font-size: 12px; font-weight: 600; color: #e8e8e8; flex-shrink: 0; line-height: 1.4; }
+  .rev-bar-wrap { flex: 1; background: #2a2a44; border-radius: 4px; height: 26px; overflow: hidden; }
+  .rev-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 700; color: #fff; }
+  .rev-val { width: 50px; font-size: 13px; font-weight: 700; text-align: right; color: #e8e8e8; }
+
+  .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tech-card { border-radius: 8px; padding: 12px; border: 1px solid; }
+  .tech-card.dram { background: #1a2a4a; border-color: #4a7ab5; }
+  .tech-card.nand { background: #2a1a4a; border-color: #7a4ab5; }
+  .tech-card.hbm { background: #1a3a2a; border-color: #4a9a6a; }
+  .tech-card.pkg { background: #3a2a1a; border-color: #b07030; }
+  .tech-card h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .tech-card.dram h4 { color: #7ab0e8; }
+  .tech-card.nand h4 { color: #b08ae8; }
+  .tech-card.hbm h4 { color: #70c896; }
+  .tech-card.pkg h4 { color: #e0a060; }
+  .tech-card ul { padding-left: 14px; }
+  .tech-card li { font-size: 12px; margin-bottom: 4px; line-height: 1.5; color: #d0d0d0; }
+
+  .risk-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+  .risk-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; margin-top: 2px; }
+  .risk-badge.high { background: #5a1a1a; color: #ff8080; border: 1px solid #8a3030; }
+  .risk-badge.med { background: #4a3a00; color: #e0c050; border: 1px solid #806020; }
+  .risk-badge.low { background: #1a3a2a; color: #70c896; border: 1px solid #3a7a5a; }
+  .risk-text { font-size: 12px; line-height: 1.6; color: #d0d0d0; }
+  .risk-title { font-weight: 700; margin-bottom: 3px; color: #e8e8e8; }
+
+  .divider { border: none; border-top: 1px solid #333; margin: 14px 0; }
+  .section-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: #e8e8e8; }
+
+  .stat-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .stat-box { flex: 1; background: #252540; border: 1px solid #333; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 700; color: #4da6ff; }
+  .stat-lbl { font-size: 11px; color: #999; margin-top: 3px; }
+
+  table { color: #d0d0d0; width: 100%; border-collapse: collapse; }
+  th { color: #999; background: #1e1e38; padding: 8px 12px; text-align: left; }
+  td { color: #d0d0d0; padding: 8px 12px; border-bottom: 1px solid #2a2a44; }
+  td strong { color: #e8e8e8; }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>Micron Technology — FY Q3 2026 法說會分析</h1>
+  <p>Q&A 問答分析 / SCA 合約架構 / 技術與產品線 / 風險矩陣 &nbsp;·&nbsp; 法說會日期：2026年6月24日</p>
+</div>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="sw('qa',this)">Q&A 問答分析</div>
+    <div class="tab" onclick="sw('sca',this)">SCA 合約架構</div>
+    <div class="tab" onclick="sw('tech',this)">技術與產品線</div>
+    <div class="tab" onclick="sw('risk',this)">風險矩陣</div>
+  </div>
+
+  <!-- Q&A Panel -->
+  <div id="panel-qa" class="panel active">
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-val">5</div><div class="stat-lbl">分析師提問</div></div>
+      <div class="stat-box"><div class="stat-val">11</div><div class="stat-lbl">核心問題</div></div>
+      <div class="stat-box"><div class="stat-val">7</div><div class="stat-lbl">邏輯缺口</div></div>
+    </div>
+
+    <div class="qa-item open">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Timothy Arcuri（UBS）</div><div class="qa-topic">SCA 下限保障金額 vs. 40% 營收覆蓋</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">$1,000億 ÷ 5年 = 每年僅$200億，遠低於當前$415億季度營收（年化$1,660億）。若 floor price 保障這麼少，「40% 營收在 SCA 內」的意義為何？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Sanjay：$1,000億是「floor price 最低值」，非預期值。Floor price 下毛利率仍超過歷史峰值。目前 SCA 覆蓋 DRAM 20%、NAND 30%，約佔營收 25%（40% 是完成所有 SCA 後的目標）。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口</div>
+          <div class="q-text">分析師混淆了「現在 16 個 SCA 覆蓋 25%」與「未來完成後 40%」兩個時間點。管理層沒有直接點破，用毛利率優越性轉移焦點，迴避了「保障規模相對整體營收仍小」的核心問題。</div>
+        </div>
+        <div class="q-block" style="margin-top:12px;">
+          <div class="q-label q">第二問：如何建模 SCA 收入逐季滲透？</div>
+          <div class="q-text">Mark：Q3 的 $50億 RPO 對應未來12個月 $18億（汽車小協議）。Q4 將有 14 個協議 RPO ~$1,000億，對應的未來12個月數字在 10-K 揭露。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口</div>
+          <div class="q-text">故意不給出 $1,000億 RPO 對應的年度數字。若用汽車協議比例換算（$18億/$50億 = 36%），$1,000億對應約 $360億/年——但管理層不為這個隱含數字背書，卻又提供足夠線索讓市場自己去算。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Timothy Arcuri (UBS):</b> "Hi. Sanjay, I think we are all trying to figure out how much is locked in in kind of a floor price scenario over the next five years. There were two things you said. You said that 14 of the 16 SCAs have $100 billion in cumulative revenue. That sort of says like $20 billion a year at a floor price, which is way below the run rate that you just guided. That says that not that much would be covered at a floor price. You also said that 40% of revenue will be moving inside of these SCAs. Can you maybe double-click on all that and sort of help us in a floor price scenario? Can you help us think about how much of revenue per year would be guaranteed?"<br><br><b>Sanjay Mehrotra (Chairman, President, and CEO):</b> "As we indicated that under these SCAs that have been completed so far, at the floor price, the revenue is projected to be $100 billion. Again, as Mark noted in his remarks, we expect revenue to be much higher than that. Note that at the floor price, that our profitability levels at the gross margins, at the floor prices are higher than peak margins at any time in the past. Overall, about 20% of DRAM and about 30% of our NAND volume is covered in these SCAs so far. That comes close to about 25% of our revenue that you can project over the term of these agreements. Again, RPO at the floor price is to be reported as an accounting measure, but we fully expect that the revenue will be much higher than that."<br><br><b>Timothy Arcuri (UBS):</b> "Got it. With respect to just how these layer in, Mark, how much of the August quarter revenue, for example, will be flowing under an SCA? I'm just trying to figure out how to layer that into the model. When you get to a full run rate where by next fiscal Q4, will you be at sort of a full run rate of what's being covered under these SCAs? Can you help us sort of feather that in?"<br><br><b>Mark Murphy (CFO):</b> "Yeah, Tim. You'll see a disclosure in the Q, which will disclose the next 12 months revenue associated with each set of agreements that have an RPO. For example, for those that closed within Q3, you'll see an RPO of over $5 billion, and you'll see a next 12 months associated with that of about $1.8 billion. That is because those are some of the smaller agreements that Sanjay mentioned, automotive agreements. In the fourth quarter, as Sanjay mentioned, you will see an RPO reported on 14 of the 16 agreements. That is going to be about $100 billion. There will be an associated next 12 months associated with those that will be disclosed in the Form 10-K. You will be able to see roughly how these are feathering in. Keep in mind, this RPO number, it is a minimally contractually enforceable amount for the intersection of volume and price. You're looking, Tim, at a minimum number. That's important to keep in mind. We were clear that it doesn't reflect what we think will happen. Also each quarter, this RPO number will change. It will change based on contracts that are added in. It may change on additional volume commitments with the determined price. It will change based on shipments and how that RPO declines after that performance obligation is met. You'll be getting a lot of additional reporting. This is all under ASC 606. I know it's not a heavy standard typically in some of our reporting, but this feature of RPO, you will see. I also want to emphasize, as Sanjay mentioned, that even at the floor price, eventually we anticipate about 40% of our revenue being under this sort of RPO-related commitments. Even on the floor price, we expect the margins to be significantly above prior peak margins."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Joseph Moore（Morgan Stanley）</div><div class="qa-topic">$220億客戶押金的法律性質</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">客戶押金不是預付款，最終要還給客戶——那「押金」到底有什麼約束力？違約會發生什麼事？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Mark：押金是「雙方履約承諾的體現」，不限制用途（可用於CapEx），在協議後半段返還。$220億中 $180億為現金，$40億為信用狀。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 最大邏輯缺口</div>
+          <div class="q-text">整個問答最關鍵的問題被完全迴避：<br><br>
+          ① 若客戶違約 take-or-pay，押金會被沒收嗎？<br>
+          ② 信用狀是履約保證還是違約賠償？<br>
+          ③ 押金和 RPO 有什麼法律關聯？<br><br>
+          Mark 只說押金是「shared commitment」，這是道德約束而非法律約束。押金若必須返還且無違約罰則，Take-or-pay 的執行力值得懷疑。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Joseph Moore (Morgan Stanley):</b> "I also wanted to ask about the LTAs. Can you talk about the role of the cash deposit? Should we think of that as being sort of an escrow collateral account, where if people cancel, you would have access to cash? If it's not revenue, what is the point of the deposit, and what is the relationship of those deposits with the RPO, if there is one?"<br><br><b>Mark Murphy (CFO):</b> "Yeah. Joe, on the deposits. We mentioned that we have $22 billion of deposits and financial commitments associated with the agreement signed to date as of this call. $18 billion, approximately, of that is cash deposits. We will receive those deposits. We received about $400+ million in the third quarter. We will receive about another $10 billion in the fourth quarter. These will be seen, cash deposits, they will be seen in financing cash flows. They will not affect free cash flow. They are held by us during the performance commitments of the agreements, and as those agreements are satisfied, those deposits will be returned over time, but heavily weighted to the back half of the agreements. The difference between the $22 billion and the $18 billion, so roughly the $4 billion of others, is letters of credit."<br><br><b>Joseph Moore (Morgan Stanley):</b> "Okay. What is the role? What happens to that cash? It seems like they're putting a deposit, and then they get the deposit back. What is the reason for them to commit that cash? Is that something where there's a take or pay that cash is related to? It's not a prepayment. Can you help us understand that?"<br><br><b>Mark Murphy (CFO):</b> "Yeah. Thanks, Joe. It's not a prepayment. It's a separate commitment by the customers and a reflection of the fact that we have a binding agreement, and these are take or pay agreements. We hold the cash, and it's a reflection of our shared commitment to perform under these agreements. This is good for Micron, of course, these agreements, in that We get visibility on our demand. It's committed volume that we can be confident about making our investments, large capital investments, closer technology relationship. It's good for the customers because they have supply assurance, they have leading technology. In our view, it's a win-win. We are very happy with the nature of the agreements and the impact they have on the business and indication of a transformed business model at Micron."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">CJ Muse（Cantor Fitzgerald）</div><div class="qa-topic">押金可用性 + HBM 毛利軌跡</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題一：押金算不算CapEx可用現金？</div>
+          <div class="q-text">Mark 明確回答：押金為「unrestricted」（無限制），可自由使用。但強調未來需要返還，不會改變整體流動性策略。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 注意</div>
+          <div class="q-text">$180億現金押金是無利率、無限制的短期融資，Micron 可用於建廠。協議後半段才需還款——等於客戶為 Micron 的資本支出提供了「免息貸款」。</div>
+        </div>
+        <div class="q-block" style="margin-top:12px;">
+          <div class="q-label q">問題二：HBM 毛利能追上 DDR5 嗎？</div>
+          <div class="q-text">Sanjay：HBM 是高價產品（per bit 高於非 HBM），提供強 ROI，但不評論具體定價。策略上選擇 HBM 份額接近整體 DRAM 份額。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口</div>
+          <div class="q-text">HBM 毛利率未被揭露。若 HBM 毛利率低於 DDR5（因 TSV 封裝成本高），主動控制 HBM 份額也可能是在保護整體毛利率，而非純粹供應分配考量。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>CJ Muse (Cantor Fitzgerald):</b> "Good afternoon. Thank you for taking the question. To just follow up on Joe's question, Mark, when you think about these cash deposits, do you view that as fungible cash and use for CapEx? I guess as part of that, when you contemplate capital returns, particularly after December 14th, kind of CHIPS Act end date, will you include that cash that you received in your gross cash thoughts and your thoughts around capital returns? Is that something, given that you will have to return it eventually, that would cause you to think steady state, you'll need to hold more gross cash all else equal?"<br><br><b>Mark Murphy (CFO):</b> "CJ, it's unrestricted."<br><br><b>CJ Muse (Cantor Fitzgerald):</b> "Does it change your thoughts around gross cash that you feel comfortable holding on your books?"<br><br><b>Mark Murphy (CFO):</b> "Not in the near term. I think we, of course, are going to have what we view as adequate liquidity to support the operation of the business. That would include, over time, returning the deposits as customers and Micron perform on the contracts. That, of course, is important. Then we would hold liquidity to satisfy what investments we believe are important for the business. We've got large projects underway to provide supply and also, R&D programs. Again, I'll emphasize that the customers, as I mentioned earlier, they will get this return deposit back in the latter half of the agreement."<br><br><b>CJ Muse (Cantor Fitzgerald):</b> "Perfect. Maybe as a follow-up on HBM revenues, could you share how you're thinking about both your market share and perhaps total revenues into calendar 2026? Is there an expectation into calendar 2027 that you can bridge margins there closer to what you're getting on D5? Or is that a place that will be permanently below that D5 level? Thanks so much."<br><br><b>Sanjay Mehrotra (Chairman, President, and CEO):</b> "With respect to HBM, first of all, very pleased with our HBM4 product and Micron's shipments already of HBM4 of over $1 billion. HBM market share, we strategically are choosing it to be close to our DRAM share. This is important because of the trade ratio of HBM. It consumes, as you know, a significant amount of wafers and puts pressure on non-HBM supply in the industry. Targeting our HBM share close to our DRAM share strategically enables us to supply our diversified end markets, customers across all end markets, data center, consumer, automotive, industrial, the markets that need non-HBM supply. Regarding your question on pricing for next year, we are really not commenting on pricing. Certainly, HBM is a product where Micron has a strong leadership position. We have demonstrated tremendous success now with HBM3E 8-High, HBM3E 12-High, and now with HBM4 and a strong roadmap ahead of strong confidence in our ability to execute to that. It is a higher price product compared to non-HBM on a per bit basis, and it is a product that is critically important for the entire AI ecosystem from data center to edge. Strategically, it is a very important product for us, and it is a product that does provide strong ROI as well."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Vivek Arya（BofA Securities）</div><div class="qa-topic">SCA 資料中心客戶結構 × 2027–2028 毛利率走廊</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題一：4 大 + 3 中型 SCA 有多少是資料中心？$1,000億 RPO 對應哪些客戶？</div>
+          <div class="q-text">4 個大型客戶與 3 個中型客戶的 SCA，有多少屬於資料中心？$1,000 億 RPO 主要來自大中型客戶還是汽車？能否讓市場拼出資料中心 SCA 的輪廓？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應（Sanjay）</div>
+          <div class="q-text">大型/中型客戶橫跨資料中心、消費與汽車三個市場。大型合約 ceiling = CQ2 市場價，floor 毛利率遠超歷史峰值——這些條款所隱含的利潤水準本身就是「資料中心客戶支付能力」的間接確認。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 觀察</div>
+          <div class="q-text">管理層全程未拆解「幾個大型客戶屬於資料中心」，因 SCA 為保密協議。但從財務條款反推：能接受以 CQ2 歷史高價為 ceiling 並支付 $180億現金押金的，幾乎只可能是超大型雲端廠商（Hyperscaler）。這種「資訊留白」本身就是答案。</div>
+        </div>
+        <div class="q-block" style="margin-top:12px;">
+          <div class="q-label q">問題二：長期投資人如何建模 2027–2028 毛利率？是否正常化至 mid-70s%？</div>
+          <div class="q-text">當前 85–86%，歷史峰值 62%，長期投資人應假設毛利率會落在兩者中間（~74%）嗎？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應（Mark）</div>
+          <div class="q-text">不提供 Q4 以外指引。但給出多個正面框架：① 市場緊俏將延續 2027 年以後；② 記憶體已獲戰略資產定價；③ 2027 年中 ID.1 與台灣新竹開始貢獻大量新產能；④ 新廠 startup costs 初期衝擊毛利率，但 absorption 效應隨後跟上；⑤ FY2027 OpEx 增加約 $10 億（加重下半年，擴大 R&D）。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口：2027H2 雙重壓力視窗</div>
+          <div class="q-text">Mark 在「不給指引」的外衣下實際透露了一個壓力集中點：<br><br>
+          <strong style="color:#e8e8e8;">新廠 startup costs</strong>（ID.1、台灣新竹，2027年中開始）+ <strong style="color:#e8e8e8;">OpEx 跳升 $10億</strong>（加重 2027H2）同時落在 2027H2。<br><br>
+          即使市場供需仍緊俏，2027H2 的毛利率很可能是近年最低的一個季度。這是被問題「套」出的前瞻信息，建模時應對 2027H2 保守處理。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Vivek Arya (BofA Securities):</b> "Thanks for taking my question. For the first one, Sanjay, you mentioned, I think, four large and three medium-sized customer agreements, I'm curious how many of them are related to the data center. Should we expect more data center related announcements? The $100 billion, does that align with the large and medium size, or does it align with the smaller size customers? I guess I'm just still trying to figure out what is a typical SCA with the data center customer like. Have you given enough breadcrumbs for us to figure out what a data center SCA looks like over the next few years?"<br><br><b>Sanjay Mehrotra (Chairman, President, and CEO):</b> "Our large customers include data center and the large and medium customers that you mentioned, of course, including our smaller customers, they do go across data center, consumer, and automotive markets. We have provided you color on the large agreements have, of course, generally have a ceiling price and have a price band which has a floor as well as a ceiling, and the ceiling is established at the CQ2 price levels. Of course, you know that CQ2 price levels are reflected in our FQ3 results as well as FQ4 guidance, and they provide for unprecedented levels of profitability. Those price bands also provide for floor prices, where the gross margins are well above the peaks at any past cycle in company's history. The large agreements that we mentioned, these are multi-year agreements, and they provide us tremendous visibility to demand customer commitments, and they, of course, come with the financial commitments, including cash deposits, that Mark elaborated on earlier."<br><br><b>Vivek Arya (BofA Securities):</b> "Thanks. From there, a follow-up. Mark, on gross margins, 86%, does it hang out here for a while? Is there a ceiling? As these SCAs start to kick in, should we assume some kind of normalization to between the mid-80s, where you are now, versus, I think the prior peak was in the low 60s. As your long-term investors build their models for 2027, 2028, et cetera, should they be assuming a normalized gross margin range somewhere in the mid-70s, right? The range between where you are today versus the prior peaks. If you could just hold our hands on how to think about gross margins beyond this 86% in the near term, then longer term, what is the right way to think about how these gross margins unfold? Thank you."<br><br><b>Mark Murphy (CFO):</b> "Yeah. Vivek, we're not providing guidance beyond the fourth quarter. We are at margin levels that, as we've talked about before, incremental price yields less in gross margin expansion. Having said that, we do see, as we mentioned, we updated our view on market conditions that we expect the market to remain tight beyond 2027. We also are at a point where memory is very much appreciated for the strategic asset that it is, the value that it brings to improving AI intelligence and more and higher performance memory is needed. Our continued deployment of bits to data center and edge device, higher performance applications, is going to be helpful as price moderates and price growth moderates, and we move to optimize the placement of our bits with customers, including those that we have done these SCAs with. Also, as we've talked about, we will get additional volume starting mid-year, materially, beginning mid-year 2027, that will grow into 2028. We will have some startup costs there, but we will get absorption as those ramps occur. Over time, we'll get that operating leverage. I think we feel great about the trajectory of the business, Micron's technology position, world-class product portfolio. You can see we're operating very well and all those are supportive of continuing to deliver a strong financial performance."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Krish Sankar（TD Cowen）</div><div class="qa-topic">Floor price 的具體定價推算</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">以前峰值毛利率 ~62% 反推：64GB 伺服器 DRAM floor price ≈ $700（$10–12/GB），ceiling ≈ $1,500（~$25/GB）。這個區間合理嗎？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Sanjay：不討論具體定價，但重申「floor 毛利率遠超過任何歷史峰值（well beyond）」。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 分析師推算邏輯</div>
+          <div class="q-text">Krish 的推算有效，因為管理層用「超過歷史峰值毛利率」作為 floor 的唯一公開參照。若峰值 ~62%，「遠超」可能意味著 68–75%，反推 DRAM floor 約為當前市場價的 40–50%。拒絕確認任何數字是刻意的資訊管理。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Krish Sankar (TD Cowen):</b> "Yeah, hi. Thanks for taking my question. I have two of them, Sanjay or Mark. Congrats on the great results. On the floor pricing for the LTAs, you said about the prior peak. Your prior peak gross margin was somewhere in the low 60, 62% range. If I try to plug in what a 64 GB server DRAM is, I can get, like, a $700 price for it compared to $1,500 today, which kind of puts you at, like, $10-$12 a gigabyte as the floor and a mid-$20 a gigabyte for the current price. Is that the range we should think about for these LTAs, i.e., low teens to mid-$20 a gigabyte is the range of LTAs for the pricing?"<br><br><b>Sanjay Mehrotra (Chairman, President, and CEO):</b> "Krish, we are not going to get into specific pricing discussions, but I just want to note again that I said that the gross margins at the floor will be well beyond the peak that we experienced, the highs that we experienced in the past cycle. Well beyond those. We are not going to obviously get into the specifics related to the pricing. Bottom line is, these SCAs really help provide visibility, strength, and durability of demand for us, and they absolutely, fundamentally, accelerate our financial performance and the business transformation here."<br><br><b>Krish Sankar (TD Cowen):</b> "Got it. Very helpful, Sanjay. Just a quick follow-up. You mentioned how DRAM bits should grow low to mid-20s, NAND probably in the 20% range this year, clearly we are undersupplied on both. Is there a way to quantify what happens in 2027? Is there a way to say, is the undersupply going to be double what it is this year in 2027? Or how to think about the supply-demand imbalance in 2027?"<br><br><b>Sanjay Mehrotra (Chairman, President, and CEO):</b> "We see 2027 overall tight. We have said we see tightness continuing beyond 2027. Working hard to bring up supply. We have shared with you that it takes a long time to bring up the additional capacity that is needed to support the customer demands, the additional wafer capacity, and of course, technology transitions and the less bit gain that they give per node, as well as the HBM trade ratio, put tremendous pressure on the overall supply growth as well. Supply, even in 2028, when supply begins to improve gradually, we see that the demands will continue to be on a robust trajectory as well, because these AI trends are very long-term trends. AI is still in very early innings. The whole token economics needs more memory. AI system performance is really very much limited by memory capacity and memory performance, memory bandwidth. The demand for memory is as the compute demand grows and our customers look at a tremendous transformation opportunity that is ahead of them and continue to make investments like they have never made before to build this infrastructure, the demand trajectory is extremely strong. Memory is at the center of it and is a strategic asset, and access to memory supply is obviously a critical priority, as you can see in the multi-year agreements that our customers have concluded with us. Those agreements reflect the confidence in the growth of the demand. We are working hard to bring up supply. We see tightness persisting beyond 2027."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCA Panel -->
+  <div id="panel-sca" class="panel">
+    <div class="section-title">SCA 合約完整架構</div>
+    <div class="sca-grid">
+      <div class="sca-box blue">
+        <h4>合約規模</h4>
+        <ul>
+          <li>共 16 個協議（已完成）</li>
+          <li>目標：完成後 50%+ 營收</li>
+          <li>現況：~25% 營收（16個SCA）</li>
+          <li>含固定/上限定價：~40% 營收</li>
+          <li>大型客戶 ×4，中型 ×3，汽車 ×9</li>
+          <li>DRAM 含 HBM 供應（視客戶需求納入）</li>
+          <li>次世代產品（LP6 / DDR6 / 新HBM）溢價另行協商</li>
+        </ul>
+      </div>
+      <div class="sca-box green">
+        <h4>合約期限</h4>
+        <ul>
+          <li>資料中心/消費：5年（2026–2030）</li>
+          <li>汽車：3年</li>
+          <li>14/16 個協議有 floor price</li>
+          <li>部分固定價格或無價格區間</li>
+        </ul>
+      </div>
+      <div class="sca-box orange">
+        <h4>財務承諾</h4>
+        <ul>
+          <li>客戶押金+承諾：$220億</li>
+          <li>現金押金：~$180億（無限制）</li>
+          <li>信用狀：~$40億</li>
+          <li>Q3 已收：$4億+，Q4 預收 ~$100億</li>
+        </ul>
+      </div>
+      <div class="sca-box red">
+        <h4>RPO（最低履約義務）</h4>
+        <ul>
+          <li>Q3 末（汽車）：>$50億</li>
+          <li>Q3 關聯12個月：~$18億</li>
+          <li>14個大SCA總RPO：~$1,000億</li>
+          <li>ASC 606 會計準則揭露</li>
+          <li>為最低值，非預期值</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="price-band">
+      <div class="section-title">價格區間結構（大型 SCA）</div>
+      <div class="band-label">Ceiling（上限）= CQ2 2026 市場價（當前歷史高點）</div>
+      <div class="band-bar band-ceiling"><span>CEILING — CQ2 市場價（~$25/GB）</span><span>毛利率 ~84.9%</span></div>
+      <div style="text-align:center; color:#888; padding: 4px 0; font-size:12px;">▼ 市場價格在此區間波動 ▼</div>
+      <div class="band-bar band-floor"><span>FLOOR — 推估 $10–12/GB</span><span>毛利率 &gt;62%（遠超歷史峰值）</span></div>
+      <div class="band-label">Floor 設定使毛利率「遠超」歷史任何峰值</div>
+      <hr class="divider">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#7ab0e8; margin-bottom:6px; text-transform:uppercase;">對 Micron 的意義</div>
+          <ul style="padding-left:16px; font-size:12px; line-height:1.8; color:#d0d0d0;">
+            <li>下行有保護，毛利率不會崩潰</li>
+            <li>上行被截斷，市場繼續漲 Micron 無法受益</li>
+            <li>實質上：把漲價空間換給客戶，換取確定性</li>
+          </ul>
+        </div>
+        <div>
+          <div style="font-size:11px; font-weight:700; color:#e0a060; margin-bottom:6px; text-transform:uppercase;">對客戶的意義</div>
+          <ul style="padding-left:16px; font-size:12px; line-height:1.8; color:#d0d0d0;">
+            <li>供應保障（短缺時期最珍貴）</li>
+            <li>價格上限 = AI 建設CapEx可控</li>
+            <li>代價：Take-or-pay 強制購買義務</li>
+            <li>押金鎖定（$180億現金）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Take-or-Pay 執行力的核心疑問</div>
+      <p>合約名義上是「強制購買，不買也要付費」，但法說會中完全未揭露：<br><br>
+      <strong style="color:#e8e8e8;">① 若客戶不提貨，Micron 的救濟手段為何？</strong>（訴訟？押金沒收？）<br>
+      <strong style="color:#e8e8e8;">② 押金與 take-or-pay 義務的法律關聯為何？</strong><br>
+      <strong style="color:#e8e8e8;">③ 合約有強制仲裁條款嗎？</strong><br><br>
+      管理層用「道德承諾」的語言描述押金，而非法律強制性語言，是本次法說會最需要追問的未解問題。</p>
+    </div>
+  </div>
+
+  <!-- Tech Panel -->
+  <div id="panel-tech" class="panel">
+    <div class="section-title">FQ3 各業務部門營收</div>
+    <div class="rev-chart">
+      <div class="rev-row">
+        <div class="rev-name">Cloud Memory BU<br><span style="color:#999;font-size:11px;font-weight:400;">(CMBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:100%; background:#1565c0;">$138億 &nbsp;+78% QoQ</div></div>
+        <div class="rev-val">33%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">Core Data Center BU<br><span style="color:#999;font-size:11px;font-weight:400;">(CDBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:83%; background:#1976d2;">$115億 &nbsp;+103% QoQ</div></div>
+        <div class="rev-val">28%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">Mobile &amp; Client BU<br><span style="color:#999;font-size:11px;font-weight:400;">(MCBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:83%; background:#7b1fa2;">$115億 &nbsp;+49% QoQ</div></div>
+        <div class="rev-val">28%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">Automotive &amp; Embedded BU<br><span style="color:#999;font-size:11px;font-weight:400;">(AEBU)</span></div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:33%; background:#e65100;">$46億 &nbsp;+71% QoQ</div></div>
+        <div class="rev-val">11%</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">DRAM vs NAND</div>
+    <div class="rev-chart">
+      <div class="rev-row">
+        <div class="rev-name">DRAM 總計</div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:100%; background:#0d47a1;">$313億 &nbsp;+343% YoY</div></div>
+        <div class="rev-val">76%</div>
+      </div>
+      <div class="rev-row">
+        <div class="rev-name">NAND 總計</div>
+        <div class="rev-bar-wrap"><div class="rev-bar" style="width:32%; background:#6a1b9a;">$99億 &nbsp;+361% YoY</div></div>
+        <div class="rev-val">24%</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-title">技術節點與產品線</div>
+    <div class="tech-grid">
+      <div class="tech-card dram">
+        <h4>DRAM 製程技術</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">1-gamma (1γ)</strong>：量產中，最高 volume 節點</li>
+          <li><strong style="color:#e8e8e8;">1-delta (1δ)</strong>：開始導入 EUV（ASML 多年協議）</li>
+          <li><strong style="color:#e8e8e8;">下一代節點</strong>：2027H2 量產</li>
+          <li><strong style="color:#e8e8e8;">DDR5</strong>：主流伺服器標準</li>
+          <li><strong style="color:#e8e8e8;">DDR6</strong>：下一代，bit cost 更高</li>
+          <li><strong style="color:#e8e8e8;">LP5/LP6</strong>：行動裝置主力；1-gamma 16Gb LP5X 已在頂尖 OEM 高量量產</li>
+          <li><strong style="color:#e8e8e8;">256GB DDR5 RDIMM</strong>：1-gamma + 3D die stacking；樣品已送出伺服器生態系</li>
+          <li><strong style="color:#e8e8e8;">LP5X SOCAMM2</strong>：多容量高量量產；PC AI edge 主力</li>
+        </ul>
+      </div>
+      <div class="tech-card nand">
+        <h4>NAND 製程技術</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">G9</strong>：量產中，最高 volume 節點</li>
+          <li><strong style="color:#e8e8e8;">下一代</strong>：2027H2 量產</li>
+          <li><strong style="color:#e8e8e8;">資料中心 SSD</strong>：$50億+ 季營收（QoQ 2倍+）</li>
+          <li><strong style="color:#e8e8e8;">AI context storage</strong>：Agentic AI 驅動</li>
+          <li><strong style="color:#e8e8e8;">HDD 替換機會</strong>：SSD 持續擴大市佔</li>
+          <li><strong style="color:#e8e8e8;">245TB QLC SSD</strong>：高容量已開始出貨</li>
+          <li><strong style="color:#e8e8e8;">G9 PCIe Gen6 SSD</strong>：高量量產中（資料中心主力）</li>
+          <li><strong style="color:#e8e8e8;">Gen5 QLC PC SSD</strong>：G9 基礎，已完成主力客戶認證</li>
+          <li><strong style="color:#e8e8e8;">UFS 4.1 汽車 NAND</strong>：G9 基礎，首批量產出貨</li>
+        </ul>
+      </div>
+      <div class="tech-card hbm">
+        <h4>HBM（高頻寬記憶體）</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">HBM3E 8-High</strong>：成熟量產</li>
+          <li><strong style="color:#e8e8e8;">HBM3E 12-High</strong>：主力出貨</li>
+          <li><strong style="color:#e8e8e8;">HBM4 12-High</strong>：基於 <strong style="color:#70c896;">1-beta</strong> DRAM；已出貨 $10億+；量產爬坡速度為 HBM3E 2倍；成熟良率達成速度亦將顯著快於 HBM3E</li>
+          <li><strong style="color:#e8e8e8;">HBM4E</strong>：基於 1-gamma，2027量產</li>
+          <li><strong style="color:#e8e8e8;">市場份額</strong>：策略上接近整體 DRAM 份額（~24%）</li>
+          <li><strong style="color:#e8e8e8;">目標市場</strong>：GPU / ASIC 訓練與推理</li>
+        </ul>
+      </div>
+      <div class="tech-card pkg">
+        <h4>先進封裝 &amp; 製造佈局</h4>
+        <ul>
+          <li><strong style="color:#e8e8e8;">台灣新竹</strong>：HBM TSV 封裝中心，2027年中出貨（提前一季）</li>
+          <li><strong style="color:#e8e8e8;">新加坡</strong>：第二 HBM 封裝中心（2027H1）</li>
+          <li><strong style="color:#e8e8e8;">愛達荷 ID.1</strong>：2027年中首批晶圓</li>
+          <li><strong style="color:#e8e8e8;">愛達荷 ID.2</strong>：2028年底</li>
+          <li><strong style="color:#e8e8e8;">紐約</strong>：2026年1月動工</li>
+          <li><strong style="color:#e8e8e8;">維吉尼亞</strong>：1-alpha DDR4 傳統製程（汽車/軍事）</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="card">
+      <div class="card-title">長期需求場景：汽車 × 人形機器人 × Edge AI</div>
+      <p>
+        <strong style="color:#e8e8e8;">L2+ 自動駕駛</strong>：記憶體含量為一般車輛 5倍以上。L2+ 滲透率 2026年翻倍突破 20%，預計 2030 年超過 40%；1-gamma LPDDR5 已達汽車產品就緒，DDR5 樣品已交 robotaxi 客戶。<br><br>
+        <strong style="color:#e8e8e8;">人形機器人</strong>：搭載記憶體為 L2+ 車輛 10 倍。Sanjay 預言「本十年末開始的多十年記憶體需求週期」，視之為繼 AI 資料中心之後最大的長期結構性需求驅動力。<br><br>
+        <strong style="color:#e8e8e8;">Edge AI / Agentic AI</strong>：OpenClaw、NemoClaw 等 edge AI 平台推動 PC 與手機高端化，per-device 記憶體含量持續提升，即使全球出貨量下降，產業營收仍可成長——這正是 MCBU 毛利率能達到 87% 的結構性支撐。
+      </p>
+    </div>
+  </div>
+
+  <!-- Risk Panel -->
+  <div id="panel-risk" class="panel">
+    <div class="section-title">風險矩陣：法說會中已揭露 vs. 未揭露</div>
+
+    <div class="risk-item">
+      <div class="risk-badge high">高</div>
+      <div class="risk-text">
+        <div class="risk-title">Take-or-Pay 執行機制不透明</div>
+        客戶押金必須返還，違約後的法律救濟手段未揭露。若記憶體市場反轉（如2023年），客戶重談判的歷史先例存在，合約的實際約束力存疑。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge high">高</div>
+      <div class="risk-text">
+        <div class="risk-title">Ceiling 價格鎖定在歷史高點</div>
+        若市場繼續上漲，SCA 覆蓋的 ~25% 營收無法受益。Micron 把未來漲價空間讓渡給客戶換取確定性，這個取捨從未被管理層直接承認。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge high">高</div>
+      <div class="risk-text">
+        <div class="risk-title">自我實現的供應緊缺敘事</div>
+        Micron 是最大受益者，同時也是最大擴產者（$270億年度CapEx）。「2028供應才改善」的論述有強烈管理層利益動機，需要獨立驗證。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">中</div>
+      <div class="risk-text">
+        <div class="risk-title">HBM 份額策略的機會成本</div>
+        主動限制 HBM 份額可能喪失 AI 加速器市場最高成長機會。競爭對手（SK Hynix）若擴大 HBM 份額，長期將衝擊 Micron 在 AI 供應鏈的地位。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">中</div>
+      <div class="risk-text">
+        <div class="risk-title">客戶押金的流動性幻覺</div>
+        $180億現金押金雖「無限制」，但這是負債（需返還）。協議後半段大量返還時若同時面臨CapEx需求，可能造成流動性壓力。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">中</div>
+      <div class="risk-text">
+        <div class="risk-title">貿易/地緣政治風險排除在指引之外</div>
+        指引明確不包含任何貿易或地緣政治影響。中國是記憶體主要市場，若出現出口管制升級（如 HBM），直接衝擊未計入指引的部分。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge med">中</div>
+      <div class="risk-text">
+        <div class="risk-title">FY2027H2 雙重壓力：Startup costs + OpEx 跳升同期落地</div>
+        Mark 法說會明確預告：① ID.1（愛達荷）與台灣新竹 2027年中開始重大產能釋放，伴隨 startup costs；② FY27 OpEx 增加約 $10億（加重下半年）。兩者同期集中在 2027H2。即使供需維持緊俏，2027H2 毛利率仍可能是近年的波段低點。若市場誤讀為趨勢反轉而非一次性壓力，股價超跌風險值得追蹤。
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-badge low">低</div>
+      <div class="risk-text">
+        <div class="risk-title">CHIPS Act 資本回報限制（至 2026/12/9）</div>
+        Micron 的大規模股票回購計畫受 CHIPS Act 限制，需等到 2026 年 12 月 9 日（簽署 CHIPS 定義協議兩周年）後才能擴大。在此之前，超額現金累積速度雖快（FQ3 淨現金 $244億），但回流股東的規模受限。2026/12/9 後管理層明確目標長期回流 100% 超額現金，屆時可能是催化劑。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function sw(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function toggleQA(header) {
+  header.parentElement.classList.toggle('open');
+}
+</script>
+</body>
+</html>
