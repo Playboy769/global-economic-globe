@@ -68,6 +68,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8134", "--directory", "research/sumco-analysis-2026q1/SUMCO_FY26Q1_Analysis"],
       "port": 8134
+    },
+    {
+      "name": "dell-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8135", "--directory", "research/dell-analysis-2027q1/DELL_FY27Q1_Analysis"],
+      "port": 8135
     }
   ]
 }
