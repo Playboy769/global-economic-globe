@@ -35,7 +35,7 @@ body.not-home #top-nav{justify-content:space-between}
 .nav-logo{font-family:'Orchid','Noto Serif TC',serif;font-size:15px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#0a0a0a;cursor:pointer;display:none}
 body.not-home .nav-logo{display:block}
 .nav-links{display:flex;align-items:center;gap:36px}
-.nav-btn{position:relative;font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.1em;text-transform:uppercase;transition:color .25s ease;font-family:'Orchid','Noto Serif TC',serif;padding:0 0 10px}
+.nav-btn{position:relative;font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.03em;transition:color .25s ease;font-family:'Orchid','Noto Serif TC',serif;padding:0 0 10px}
 .nav-btn.active{color:var(--c-ink)}
 .nav-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c-accent);border-radius:2px}
 .nav-btn:hover:not(.active){color:#555}
@@ -160,6 +160,26 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .pf-brand .out-outline{color:var(--c-accent)}
 .pf-copy{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
 
+/* ── QUOTES ── */
+#page-quotes{padding:0;min-height:100vh;position:relative;overflow:hidden;background:var(--c-canvas)}
+.quotes-hero{position:relative;width:100%;min-height:100vh;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding-bottom:min(110px,11vh)}
+.quotes-canvas-wrap{position:absolute;inset:0;z-index:0}
+.quotes-canvas-wrap canvas{display:block;width:100%!important;height:100%!important}
+.quotes-fade{position:absolute;inset:0;z-index:1;background:linear-gradient(to top,var(--c-canvas) 0%,rgba(255,255,255,.88) 24%,rgba(255,255,255,.4) 46%,transparent 70%);pointer-events:none}
+.quotes-overlay{position:relative;z-index:2;max-width:760px;padding:0 48px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+.quotes-label{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;color:#999;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:14px}
+.quotes-label::before,.quotes-label::after{content:'';width:32px;height:1px;background:var(--c-accent)}
+.quotes-mark{font-family:'Orchid','Noto Serif TC',serif;font-size:80px;color:var(--c-accent);opacity:.28;line-height:1;height:.55em}
+.quotes-text{font-size:clamp(22px,3.2vw,38px);font-weight:600;line-height:1.55;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;color:var(--c-ink);transition:opacity .5s ease,transform .5s ease}
+.quotes-text.qt-en{font-size:13px;font-weight:400;color:#999;margin-top:2px;letter-spacing:.01em;font-family:'Calibri',sans-serif}
+.quotes-author{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;color:var(--c-accent-deep);letter-spacing:.08em;text-transform:uppercase;transition:opacity .5s ease}
+.quotes-fading{opacity:0!important;transform:translateY(8px)}
+.quotes-track{position:relative;width:200px;height:2px;background:#e8e8e8;border-radius:2px;margin-top:20px;cursor:pointer}
+.quotes-train{position:absolute;top:0;left:0;height:100%;background:var(--c-accent);border-radius:2px;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+.quotes-counter{font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#bbb;letter-spacing:.14em;margin-top:10px;font-variant-numeric:tabular-nums}
+.quotes-counter b{color:var(--c-accent);font-weight:500}
+@media(max-width:600px){.quotes-mark{font-size:56px}.quotes-overlay{padding:0 28px}}
+
 /* ── Work Preview ── */
 #wk-preview{position:fixed;inset:0;z-index:150;background:rgba(250,250,248,0.96);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .35s ease}
 #wk-preview.open{pointer-events:auto}
@@ -258,6 +278,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <button class="nav-btn" data-page="about">About</button>
     <button class="nav-btn" data-page="works">Works</button>
     <button class="nav-btn" data-page="philosophy">Philosophy</button>
+    <button class="nav-btn" data-page="quotes">Quotes</button>
   </div>
 </nav>
 
@@ -502,6 +523,23 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="pf-copy">&copy; 2025 All rights reserved.</div>
     </div>
   </div>
+</div>
+
+<!-- ── QUOTES ── -->
+<div class="page" id="page-quotes">
+  <section class="quotes-hero">
+    <div class="quotes-canvas-wrap" id="quotes-canvas-wrap" aria-hidden="true"></div>
+    <div class="quotes-fade"></div>
+    <div class="quotes-overlay">
+      <div class="quotes-label">Quotes</div>
+      <div class="quotes-mark" aria-hidden="true">&ldquo;</div>
+      <blockquote class="quotes-text" id="quotes-text-zh"></blockquote>
+      <div class="quotes-text qt-en" id="quotes-text-en"></div>
+      <div class="quotes-author" id="quotes-author"></div>
+      <div class="quotes-track" id="quotes-track" role="slider" aria-label="語錄進度" tabindex="0"><div class="quotes-train" id="quotes-train"></div></div>
+      <div class="quotes-counter" id="quotes-counter"></div>
+    </div>
+  </section>
 </div>
 
 <!-- ── Work Preview ── -->
@@ -1260,7 +1298,7 @@ let navVisible = true;
 let lastScrollY = 0;
 let hideTimer = null;
 
-const VALID_PAGES = ['home', 'about', 'works', 'philosophy'];
+const VALID_PAGES = ['home', 'about', 'works', 'philosophy', 'quotes'];
 
 function switchPage(id, fromPopstate) {
   if (id === currentPage) return;
@@ -1286,6 +1324,10 @@ function switchPage(id, fromPopstate) {
   }
 
   document.body.classList.toggle('not-home', id !== 'home');
+  if (typeof window.__quotesPageActivated === 'function') {
+    if (id === 'quotes') setTimeout(() => window.__quotesPageActivated(true), 320);
+    else window.__quotesPageActivated(false);
+  }
   showNav();
   if (id !== 'home') scheduleHide();
   else clearTimeout(hideTimer);
@@ -1334,7 +1376,7 @@ window.addEventListener('mousemove', e => {
 });
 
 /* ── Swipe / Wheel Navigation ── */
-const PAGE_ORDER=['home','about','works','philosophy'];
+const PAGE_ORDER=['home','about','works','philosophy','quotes'];
 let navLocked=false;
 function navByDir(dir){
   if(navLocked)return;
@@ -1389,6 +1431,250 @@ function filterCat(cat, pillEl) {
   if (earncal) earncal.classList.toggle('show', cat === 'earnings');
   updateWorksCount();
 }
+
+/* ── QUOTES: rotating quote text + lazy-loaded Three.js wireframe backdrop ── */
+(function(){
+  const QUOTES = [
+    { zh:'股市是把錢從沒耐性的人手中，轉移到有耐性的人手中的裝置。', en:'The stock market is a device for transferring money from the impatient to the patient.', author:'Warren Buffett' },
+    { zh:'市場保持非理性的時間，可以比你維持不破產的時間更長。', en:'Markets can remain irrational longer than you can remain solvent.', author:'John Maynard Keynes' },
+    { zh:'投資中最危險的四個字，是「這次不一樣」。', en:'The four most dangerous words in investing are: this time it’s different.', author:'Sir John Templeton' },
+    { zh:'價格是你付出的，價值是你得到的。', en:'Price is what you pay. Value is what you get.', author:'Warren Buffett' },
+    { zh:'風險，來自於你不知道自己在做什麼。', en:'Risk comes from not knowing what you are doing.', author:'Warren Buffett' },
+    { zh:'移山的人，從搬走小石頭開始。', en:'The man who moves a mountain begins by carrying away small stones.', author:'Confucius' },
+    { zh:'未經審視的人生，不值得活。', en:'The unexamined life is not worth living.', author:'Socrates' },
+    { zh:'我們反覆做的事，造就了我們。卓越不是一種行為，而是一種習慣。', en:'We are what we repeatedly do. Excellence, then, is not an act, but a habit.', author:'Will Durant, on Aristotle' },
+    { zh:'別人貪婪時我恐懼，別人恐懼時我貪婪。', en:'Be fearful when others are greedy, and greedy when others are fearful.', author:'Warren Buffett' },
+    { zh:'投資最重要的不是你懂多少，而是誠實面對你不懂的部分。', en:'Knowing what you don’t know is more useful than being brilliant.', author:'Charlie Munger' },
+    { zh:'複利是世界第八大奇蹟。懂的人賺它，不懂的人付它。', en:'Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn’t, pays it.', author:'Albert Einstein (attributed)' },
+    { zh:'華爾街靠不斷交易賺錢，你該靠不動如山賺錢。', en:'Wall Street makes its money on activity. You make your money on inactivity.', author:'Warren Buffett' },
+    { zh:'大錢不在買賣之間，而在等待之中。', en:'The big money is not in the buying and the selling, but in the waiting.', author:'Charlie Munger' },
+    { zh:'你不必比別人聰明，只要比別人更有紀律。', en:'You don’t have to be smarter than the rest. You have to be more disciplined than the rest.', author:'Warren Buffett' },
+    { zh:'最重要的事，是記住沒有任何事會永遠有效。樹不會長到天上去。', en:'Most things prove to be cyclical... trees don’t grow to the sky.', author:'Howard Marks' },
+    { zh:'你無法預測，但你可以準備。', en:'You can’t predict. You can prepare.', author:'Howard Marks' },
+    { zh:'行情總在絕望中誕生，在半信半疑中成長，在憧憬中成熟，在希望中毀滅。', en:'Bull markets are born on pessimism, grow on skepticism, mature on optimism, and die on euphoria.', author:'Sir John Templeton' },
+    { zh:'知人者智，自知者明。', en:'Knowing others is intelligence; knowing yourself is true wisdom.', author:'老子 Lao Tzu' },
+    { zh:'我唯一知道的，就是我一無所知。', en:'The only true wisdom is in knowing you know nothing.', author:'Socrates' },
+    { zh:'困擾人的不是事情本身，而是他們對事情的看法。', en:'Men are disturbed not by things, but by the views they take of them.', author:'Epictetus' }
+  ];
+
+  const elZh = document.getElementById('quotes-text-zh');
+  const elEn = document.getElementById('quotes-text-en');
+  const elAuthor = document.getElementById('quotes-author');
+  const track = document.getElementById('quotes-track');
+  const train = document.getElementById('quotes-train');
+  const counter = document.getElementById('quotes-counter');
+  if (!elZh || !track) return;
+
+  let idx = 0, rotateTimer = null;
+  const N = QUOTES.length;
+
+  // The "train": a short segment sized to 1/N of the track that slides
+  // rightward one slot per quote, returning to the start after the last one.
+  train.style.width = (100 / N) + '%';
+
+  track.addEventListener('click', e => {
+    const r = track.getBoundingClientRect();
+    const i = Math.min(N - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * N)));
+    showQuote(i, true);
+  });
+  track.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') showQuote((idx + 1) % N, true);
+    else if (e.key === 'ArrowLeft') showQuote((idx - 1 + N) % N, true);
+  });
+
+  function showQuote(i, manual) {
+    idx = i;
+    [elZh, elEn, elAuthor].forEach(el => el.classList.add('quotes-fading'));
+    setTimeout(() => {
+      elZh.textContent = QUOTES[idx].zh;
+      elEn.textContent = QUOTES[idx].en;
+      elAuthor.textContent = '— ' + QUOTES[idx].author;
+      [elZh, elEn, elAuthor].forEach(el => el.classList.remove('quotes-fading'));
+    }, 260);
+    train.style.transform = 'translateX(' + (idx * 100) + '%)';
+    counter.innerHTML = '<b>' + String(idx + 1).padStart(2, '0') + '</b> / ' + String(N).padStart(2, '0');
+    track.setAttribute('aria-valuenow', idx + 1);
+    if (manual) {
+      clearInterval(rotateTimer);
+      rotateTimer = setInterval(() => showQuote((idx + 1) % N), 7000);
+    }
+  }
+  showQuote(0);
+  rotateTimer = setInterval(() => showQuote((idx + 1) % N), 7000);
+
+  // Three.js "anomalous matter" backdrop — dense icosahedron wireframe displaced by
+  // simplex noise (organic breathing), fresnel edge emphasis, mouse-follow light.
+  // Recolored for the site's white canvas: ink+accent lines that darken at the
+  // silhouette instead of the original glow-on-black. Lazy-loaded from CDN on first
+  // visit to the Quotes tab; paused via cancelAnimationFrame when not visible.
+  let scene, camera, renderer, mesh, material, frameId, running = false, initialized = false;
+
+  const VERT = `
+    uniform float time;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+    vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+    float snoise(vec3 v){
+      const vec2 C=vec2(1.0/6.0,1.0/3.0);
+      const vec4 D=vec4(0.0,0.5,1.0,2.0);
+      vec3 i=floor(v+dot(v,C.yyy));
+      vec3 x0=v-i+dot(i,C.xxx);
+      vec3 g=step(x0.yzx,x0.xyz);
+      vec3 l=1.0-g;
+      vec3 i1=min(g.xyz,l.zxy);
+      vec3 i2=max(g.xyz,l.zxy);
+      vec3 x1=x0-i1+C.xxx;
+      vec3 x2=x0-i2+C.yyy;
+      vec3 x3=x0-D.yyy;
+      i=mod289(i);
+      vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+      float n_=0.142857142857;
+      vec3 ns=n_*D.wyz-D.xzx;
+      vec4 j=p-49.0*floor(p*ns.z*ns.z);
+      vec4 x_=floor(j*ns.z);
+      vec4 y_=floor(j-7.0*x_);
+      vec4 x=x_*ns.x+ns.yyyy;
+      vec4 y=y_*ns.x+ns.yyyy;
+      vec4 h=1.0-abs(x)-abs(y);
+      vec4 b0=vec4(x.xy,y.xy);
+      vec4 b1=vec4(x.zw,y.zw);
+      vec4 s0=floor(b0)*2.0+1.0;
+      vec4 s1=floor(b1)*2.0+1.0;
+      vec4 sh=-step(h,vec4(0.0));
+      vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;
+      vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+      vec3 p0=vec3(a0.xy,h.x);
+      vec3 p1=vec3(a0.zw,h.y);
+      vec3 p2=vec3(a1.xy,h.z);
+      vec3 p3=vec3(a1.zw,h.w);
+      vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+      p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+      vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+      m=m*m;
+      return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+    }
+    void main(){
+      vNormal=normal;
+      vPosition=position;
+      float displacement=snoise(position*2.0+time*0.5)*0.2;
+      vec3 newPosition=position+normal*displacement;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(newPosition,1.0);
+    }`;
+
+  const FRAG = `
+    uniform vec3 colorA;
+    uniform vec3 colorB;
+    uniform vec3 pointLightPos;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    void main(){
+      vec3 normal=normalize(vNormal);
+      vec3 lightDir=normalize(pointLightPos-vPosition);
+      float diffuse=max(dot(normal,lightDir),0.0);
+      float fresnel=1.0-abs(dot(normal,vec3(0.0,0.0,1.0)));
+      fresnel=pow(fresnel,2.0);
+      // White-canvas inversion of the original glow: silhouette edges get denser,
+      // mouse-lit areas warm toward the accent, face-on lines stay faint.
+      vec3 col=mix(colorB,colorA,clamp(diffuse*0.85,0.0,1.0));
+      float alpha=0.10+fresnel*0.75+diffuse*0.12;
+      gl_FragColor=vec4(col,clamp(alpha,0.0,1.0));
+    }`;
+
+  function loadThree(cb) {
+    if (window.THREE) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js';
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+
+  function initScene() {
+    const wrap = document.getElementById('quotes-canvas-wrap');
+    if (!wrap || !wrap.clientWidth) return false;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
+    camera.position.z = 4.2;
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    wrap.appendChild(renderer.domElement);
+
+    material = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+        pointLightPos: { value: new THREE.Vector3(0, 0, 5) },
+        colorA: { value: new THREE.Color(0xd1591f) },
+        colorB: { value: new THREE.Color(0x8a8a8a) }
+      },
+      vertexShader: VERT,
+      fragmentShader: FRAG,
+      wireframe: true,
+      transparent: true
+    });
+    mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.35, 48), material);
+    scene.add(mesh);
+
+    window.addEventListener('resize', () => {
+      if (!wrap.clientWidth || !camera) return;
+      camera.aspect = wrap.clientWidth / wrap.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    });
+
+    // Mouse-follow light: unproject the cursor onto the z=0 plane (original demo logic).
+    window.addEventListener('mousemove', e => {
+      if (!running || !camera) return;
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = -(e.clientY / window.innerHeight) * 2 + 1;
+      const vec = new THREE.Vector3(x, y, 0.5).unproject(camera);
+      const dir = vec.sub(camera.position).normalize();
+      const dist = -camera.position.z / dir.z;
+      const pos = camera.position.clone().add(dir.multiplyScalar(dist));
+      pos.z = 5;
+      material.uniforms.pointLightPos.value.copy(pos);
+    });
+    return true;
+  }
+
+  function animate(t) {
+    if (!running) return;
+    material.uniforms.time.value = (t || 0) * 0.0003;
+    mesh.rotation.y += 0.0005;
+    mesh.rotation.x += 0.0002;
+    renderer.render(scene, camera);
+    frameId = requestAnimationFrame(animate);
+  }
+
+  function startScene() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    loadThree(function tryInit() {
+      if (currentPage !== 'quotes') return;
+      if (!initialized) initialized = initScene();
+      if (initialized) {
+        if (!running) { running = true; animate(); }
+      } else {
+        // Container still display:none (page fade-in pending) — retry until it has size.
+        setTimeout(tryInit, 200);
+      }
+    });
+  }
+  function stopScene() {
+    running = false;
+    if (frameId) cancelAnimationFrame(frameId);
+  }
+
+  window.__quotesPageActivated = function(active) {
+    if (active) startScene(); else stopScene();
+  };
+  // Landing directly on #quotes: switchPage ran before this IIFE defined the hook above.
+  if (typeof currentPage !== 'undefined' && currentPage === 'quotes') startScene();
+})();
 
 </script>
 </body>
