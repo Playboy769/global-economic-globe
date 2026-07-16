@@ -80,72 +80,104 @@
 
     <div class="card">
       <div class="card-title">上游關係人採購 → TSMC → 下游客戶集中度 / 關係人銷售</div>
-      <div id="sankeyEmbed_tsmSupplyChain01" style="width:100%;height:520px;background:#f2e9da;border:1px solid #ddd;border-radius:6px;"></div>
+      <div id="sankeyEmbed_tsmSupplyChain01" style="width:100%;height:520px;background:#fff;border:1px solid #eee;border-radius:6px;position:relative;"></div>
 <script>
 (function(){
   var DATA = {"nodes":[{"id":"VIS","label":"VIS 世界先進（2026/5/15出售8.1%後估計持股~19-20%）","color":"#b5651d"},{"id":"SSMC","label":"SSMC (TSMC持股38.8%)","color":"#b5651d"},{"id":"Xintec","label":"精材科技 Xintec (TSMC持股41.0%)","color":"#b5651d"},{"id":"TSMC","label":"TSMC","color":"#0f4c81"},{"id":"CustomerA","label":"Customer A（占2025淨營收19%）","color":"#2f7d4f"},{"id":"CustomerB","label":"Customer B（占2025淨營收17%）","color":"#2f7d4f"},{"id":"OtherCustomers","label":"其他客戶合計（個別均<10%，推算值）","color":"#7fb896"},{"id":"GUC","label":"創意電子 GUC (TSMC持股34.8%)","color":"#2f7d4f"}],"links":[{"source":"VIS","target":"TSMC","value":878},{"source":"SSMC","target":"TSMC","value":4113},{"source":"Xintec","target":"TSMC","value":5448},{"source":"TSMC","target":"CustomerA","value":726974.3},{"source":"TSMC","target":"CustomerB","value":645178.7},{"source":"TSMC","target":"OtherCustomers","value":2436901},{"source":"TSMC","target":"GUC","value":31094}]};
-  var MAX_NODE_PX = 260, HUB_RATIO = 0.06;
-  function labelOf(d){ return d.text || d.key || ""; }
-  function computeFlowMeta(data){
-    var out={}, inc={};
-    data.links.forEach(function(l){ out[l.source]=(out[l.source]||0)+l.value; inc[l.target]=(inc[l.target]||0)+l.value; });
-    var flows={};
-    data.nodes.forEach(function(n){ flows[n.id]=Math.max(out[n.id]||0, inc[n.id]||0); });
-    var maxFlow=0; Object.keys(flows).forEach(function(k){ if(flows[k]>maxFlow) maxFlow=flows[k]; });
-    var scale = maxFlow>0 ? MAX_NODE_PX/maxFlow : 1;
-    return { flows: flows, maxFlow: maxFlow, scale: scale };
-  }
   function render(){
-    var $ = go.GraphObject.make;
-    var diagram = $(go.Diagram, "sankeyEmbed_tsmSupplyChain01", {
-      initialAutoScale: go.Diagram.Uniform,
-      isReadOnly: true,
-      "animationManager.isEnabled": false,
-      layout: $(go.LayeredDigraphLayout, { setsPortSpots: true, direction: 0, layerSpacing: 50, columnSpacing: 10 })
-    });
-    function makeTooltip(){
-      return $(go.Adornment, "Auto", $(go.Shape,{fill:"#222",stroke:null}), $(go.TextBlock,{margin:6,stroke:"white",font:"10pt sans-serif"}, new go.Binding("text","",labelOf)));
+    var container = document.getElementById("sankeyEmbed_tsmSupplyChain01");
+    if (!container) return;
+    var svg = d3.select(container).append("svg").attr("width","100%").attr("height","100%").style("display","block");
+    var gMain = svg.append("g");
+    var tooltip = document.createElement("div");
+    tooltip.style.cssText = "position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:4px;padding:6px 10px;font:12px 'Noto Serif TC',serif;color:#0a0a0a;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:10;white-space:pre-line;";
+    container.appendChild(tooltip);
+    function showTooltip(event, text){
+      var rect = container.getBoundingClientRect();
+      tooltip.textContent = text;
+      tooltip.style.display = "block";
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top + 12) + 'px';
     }
-    diagram.nodeTemplateMap.add("hub", $(go.Node, "Auto",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, { stroke: null, minSize: new go.Size(26,0) }, new go.Binding("fill","color"), new go.Binding("height","pixelSize")),
-      $(go.TextBlock, { margin:4, font:"bold 10pt sans-serif", stroke:"white", textAlign:"center", maxSize:new go.Size(140,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplateMap.add("leaf", $(go.Node, "Horizontal",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, "Rectangle", { width:12, height:12, stroke:null }, new go.Binding("fill","color")),
-      $(go.TextBlock, { margin:new go.Margin(0,0,0,4), font:"9pt sans-serif", stroke:"#333", maxSize:new go.Size(220,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplate = diagram.nodeTemplateMap.get("leaf");
-    diagram.linkTemplate = $(go.Link,
-      { routing: go.Link.Normal, curve: go.Link.Bezier, fromEndSegmentLength:50, toEndSegmentLength:50, fromSpot: go.Spot.Right, toSpot: go.Spot.Left },
-      $(go.Shape, { strokeWidth:1, opacity:0.55, stroke:"black" },
-        new go.Binding("strokeWidth","pixelWidth"),
-        new go.Binding("stroke","fromNode", function(node){ return node && node.data ? node.data.color : "black"; }).ofObject())
-    );
-    var meta = computeFlowMeta(DATA);
-    var nodeDataArray = DATA.nodes.map(function(n){
-      var flow = meta.flows[n.id] || 0;
-      return { key:n.id, text:n.label, color:n.color, pixelSize: Math.max(flow*meta.scale,4), category: flow >= meta.maxFlow*HUB_RATIO ? "hub" : "leaf" };
-    });
-    var linkDataArray = DATA.links.map(function(l){ return { from:l.source, to:l.target, pixelWidth: Math.max(l.value*meta.scale,1) }; });
-    diagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-    diagram.layoutDiagram(true);
-    diagram.zoomToFit();
+    function hideTooltip(){ tooltip.style.display = "none"; }
+    function draw(){
+      var rect = container.getBoundingClientRect();
+      var w = rect.width, h = rect.height;
+      if (w < 50 || h < 50) return;
+      svg.attr("viewBox", [0,0,w,h]);
+      gMain.selectAll("*").remove();
+      if (!DATA.nodes.length) return;
+      try {
+        var nodesCopy = DATA.nodes.map(function(n){ return {id:n.id,label:n.label,color:n.color}; });
+        var linksCopy = DATA.links.map(function(l){ return {source:l.source,target:l.target,value:l.value}; });
+        var sankeyGen = d3.sankey().nodeId(function(d){return d.id;}).nodeWidth(14).nodePadding(12).nodeAlign(d3.sankeyJustify).extent([[10,10],[w-10,h-10]]);
+        var graph = sankeyGen({nodes:nodesCopy, links:linksCopy});
+        var linkSel = gMain.append("g").attr("fill","none").selectAll("path").data(graph.links).enter().append("path")
+          .attr("d", d3.sankeyLinkHorizontal())
+          .attr("stroke", function(d){ return d.source.color; })
+          .attr("stroke-width", function(d){ return Math.max(1, d.width); })
+          .attr("stroke-opacity", 0.38);
+        var nodeSel = gMain.append("g").selectAll("g").data(graph.nodes).enter().append("g");
+        nodeSel.append("rect")
+          .attr("x", function(d){ return d.x0; })
+          .attr("y", function(d){ return d.y0; })
+          .attr("width", function(d){ return d.x1-d.x0; })
+          .attr("height", function(d){ return Math.max(1, d.y1-d.y0); })
+          .attr("fill", function(d){ return d.color; })
+          .attr("rx", 1);
+        nodeSel.append("text")
+          .attr("x", function(d){ return d.x0 < w/2 ? d.x1+6 : d.x0-6; })
+          .attr("y", function(d){ return (d.y0+d.y1)/2; })
+          .attr("text-anchor", function(d){ return d.x0 < w/2 ? "start" : "end"; })
+          .attr("dominant-baseline", "middle")
+          .style("font", "500 10.5px 'Noto Serif TC', serif")
+          .attr("fill", "#333")
+          .text(function(d){ return d.label; });
+        var connectedMap = {};
+        graph.links.forEach(function(l){
+          (connectedMap[l.source.id] = connectedMap[l.source.id] || {})[l.target.id] = true;
+          (connectedMap[l.target.id] = connectedMap[l.target.id] || {})[l.source.id] = true;
+        });
+        nodeSel.on("mousemove", function(event, d){
+          showTooltip(event, d.label + "\n流量 " + d.value.toLocaleString());
+          var connected = connectedMap[d.id] || {};
+          linkSel.attr("stroke-opacity", function(l){ return (l.source.id===d.id || l.target.id===d.id) ? 0.65 : 0.08; });
+          nodeSel.select("rect").attr("opacity", function(n){ return (n.id===d.id || connected[n.id]) ? 1 : 0.35; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+          nodeSel.select("rect").attr("opacity", 1);
+        });
+        linkSel.on("mousemove", function(event, d){
+          showTooltip(event, d.source.label + " → " + d.target.label + "\n" + d.value.toLocaleString());
+          linkSel.attr("stroke-opacity", function(l){ return l===d ? 0.7 : 0.08; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+        });
+      } catch (err) { /* layout error: leave blank rather than crash the host page */ }
+    }
+    draw();
     if (window.ResizeObserver) {
-      new ResizeObserver(function(){ diagram.layoutDiagram(true); diagram.zoomToFit(); }).observe(diagram.div);
+      var t;
+      new ResizeObserver(function(){ clearTimeout(t); t = setTimeout(draw, 150); }).observe(container);
     }
   }
-  if (window.go) { render(); return; }
-  if (!window.__sankeyGojsLoad) {
-    window.__sankeyGojsLoad = new Promise(function(resolve){
-      var s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/gojs/release/go.js";
-      s.onload = resolve;
-      document.head.appendChild(s);
+  if (window.d3 && d3.sankey) { render(); return; }
+  if (!window.__sankeyD3Load) {
+    window.__sankeyD3Load = new Promise(function(resolve){
+      var s1 = document.createElement("script");
+      s1.src = "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js";
+      s1.onload = function(){
+        var s2 = document.createElement("script");
+        s2.src = "https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js";
+        s2.onload = resolve;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
     });
   }
-  window.__sankeyGojsLoad.then(render);
+  window.__sankeyD3Load.then(render);
 })();
 </script>
       <div class="source-note">
@@ -174,72 +206,104 @@
 
     <div class="card">
       <div class="card-title">地區別 → TSMC 2Q26淨營收 → 技術平台別</div>
-      <div id="sankeyEmbed_tsmRevenue01" style="width:100%;height:520px;background:#f2e9da;border:1px solid #ddd;border-radius:6px;"></div>
+      <div id="sankeyEmbed_tsmRevenue01" style="width:100%;height:520px;background:#fff;border:1px solid #eee;border-radius:6px;position:relative;"></div>
 <script>
 (function(){
   var DATA = {"nodes":[{"id":"NorthAmerica","label":"North America（78%）","color":"#1b6fa8"},{"id":"AsiaPacific","label":"Asia Pacific（8%）","color":"#1b6fa8"},{"id":"China","label":"China（6%）","color":"#1b6fa8"},{"id":"Japan","label":"Japan（4%）","color":"#1b6fa8"},{"id":"EMEA","label":"EMEA（4%）","color":"#1b6fa8"},{"id":"TSMCRev","label":"TSMC 2Q26淨營收 NT$1,270,381M","color":"#0f4c81"},{"id":"HPC","label":"High Performance Computing（66%，QoQ+20%）","color":"#7a4fa3"},{"id":"Smartphone","label":"Smartphone（22%，QoQ-4%）","color":"#7a4fa3"},{"id":"IoT","label":"Internet of Things（5%，QoQ+4%）","color":"#7a4fa3"},{"id":"Automotive","label":"Automotive（4%，QoQ+15%）","color":"#7a4fa3"},{"id":"DCE","label":"Digital Consumer Electronics（1%，QoQ+5%）","color":"#7a4fa3"},{"id":"Others","label":"Others（2%，QoQ+5%）","color":"#7a4fa3"}],"links":[{"source":"NorthAmerica","target":"TSMCRev","value":990897},{"source":"AsiaPacific","target":"TSMCRev","value":101630},{"source":"China","target":"TSMCRev","value":76223},{"source":"Japan","target":"TSMCRev","value":50815},{"source":"EMEA","target":"TSMCRev","value":50815},{"source":"TSMCRev","target":"HPC","value":838451},{"source":"TSMCRev","target":"Smartphone","value":279484},{"source":"TSMCRev","target":"IoT","value":63519},{"source":"TSMCRev","target":"Automotive","value":50815},{"source":"TSMCRev","target":"DCE","value":12704},{"source":"TSMCRev","target":"Others","value":25408}]};
-  var MAX_NODE_PX = 260, HUB_RATIO = 0.06;
-  function labelOf(d){ return d.text || d.key || ""; }
-  function computeFlowMeta(data){
-    var out={}, inc={};
-    data.links.forEach(function(l){ out[l.source]=(out[l.source]||0)+l.value; inc[l.target]=(inc[l.target]||0)+l.value; });
-    var flows={};
-    data.nodes.forEach(function(n){ flows[n.id]=Math.max(out[n.id]||0, inc[n.id]||0); });
-    var maxFlow=0; Object.keys(flows).forEach(function(k){ if(flows[k]>maxFlow) maxFlow=flows[k]; });
-    var scale = maxFlow>0 ? MAX_NODE_PX/maxFlow : 1;
-    return { flows: flows, maxFlow: maxFlow, scale: scale };
-  }
   function render(){
-    var $ = go.GraphObject.make;
-    var diagram = $(go.Diagram, "sankeyEmbed_tsmRevenue01", {
-      initialAutoScale: go.Diagram.Uniform,
-      isReadOnly: true,
-      "animationManager.isEnabled": false,
-      layout: $(go.LayeredDigraphLayout, { setsPortSpots: true, direction: 0, layerSpacing: 50, columnSpacing: 10 })
-    });
-    function makeTooltip(){
-      return $(go.Adornment, "Auto", $(go.Shape,{fill:"#222",stroke:null}), $(go.TextBlock,{margin:6,stroke:"white",font:"10pt sans-serif"}, new go.Binding("text","",labelOf)));
+    var container = document.getElementById("sankeyEmbed_tsmRevenue01");
+    if (!container) return;
+    var svg = d3.select(container).append("svg").attr("width","100%").attr("height","100%").style("display","block");
+    var gMain = svg.append("g");
+    var tooltip = document.createElement("div");
+    tooltip.style.cssText = "position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:4px;padding:6px 10px;font:12px 'Noto Serif TC',serif;color:#0a0a0a;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:10;white-space:pre-line;";
+    container.appendChild(tooltip);
+    function showTooltip(event, text){
+      var rect = container.getBoundingClientRect();
+      tooltip.textContent = text;
+      tooltip.style.display = "block";
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top + 12) + 'px';
     }
-    diagram.nodeTemplateMap.add("hub", $(go.Node, "Auto",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, { stroke: null, minSize: new go.Size(26,0) }, new go.Binding("fill","color"), new go.Binding("height","pixelSize")),
-      $(go.TextBlock, { margin:4, font:"bold 10pt sans-serif", stroke:"white", textAlign:"center", maxSize:new go.Size(140,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplateMap.add("leaf", $(go.Node, "Horizontal",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, "Rectangle", { width:12, height:12, stroke:null }, new go.Binding("fill","color")),
-      $(go.TextBlock, { margin:new go.Margin(0,0,0,4), font:"9pt sans-serif", stroke:"#333", maxSize:new go.Size(220,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplate = diagram.nodeTemplateMap.get("leaf");
-    diagram.linkTemplate = $(go.Link,
-      { routing: go.Link.Normal, curve: go.Link.Bezier, fromEndSegmentLength:50, toEndSegmentLength:50, fromSpot: go.Spot.Right, toSpot: go.Spot.Left },
-      $(go.Shape, { strokeWidth:1, opacity:0.55, stroke:"black" },
-        new go.Binding("strokeWidth","pixelWidth"),
-        new go.Binding("stroke","fromNode", function(node){ return node && node.data ? node.data.color : "black"; }).ofObject())
-    );
-    var meta = computeFlowMeta(DATA);
-    var nodeDataArray = DATA.nodes.map(function(n){
-      var flow = meta.flows[n.id] || 0;
-      return { key:n.id, text:n.label, color:n.color, pixelSize: Math.max(flow*meta.scale,4), category: flow >= meta.maxFlow*HUB_RATIO ? "hub" : "leaf" };
-    });
-    var linkDataArray = DATA.links.map(function(l){ return { from:l.source, to:l.target, pixelWidth: Math.max(l.value*meta.scale,1) }; });
-    diagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-    diagram.layoutDiagram(true);
-    diagram.zoomToFit();
+    function hideTooltip(){ tooltip.style.display = "none"; }
+    function draw(){
+      var rect = container.getBoundingClientRect();
+      var w = rect.width, h = rect.height;
+      if (w < 50 || h < 50) return;
+      svg.attr("viewBox", [0,0,w,h]);
+      gMain.selectAll("*").remove();
+      if (!DATA.nodes.length) return;
+      try {
+        var nodesCopy = DATA.nodes.map(function(n){ return {id:n.id,label:n.label,color:n.color}; });
+        var linksCopy = DATA.links.map(function(l){ return {source:l.source,target:l.target,value:l.value}; });
+        var sankeyGen = d3.sankey().nodeId(function(d){return d.id;}).nodeWidth(14).nodePadding(12).nodeAlign(d3.sankeyJustify).extent([[10,10],[w-10,h-10]]);
+        var graph = sankeyGen({nodes:nodesCopy, links:linksCopy});
+        var linkSel = gMain.append("g").attr("fill","none").selectAll("path").data(graph.links).enter().append("path")
+          .attr("d", d3.sankeyLinkHorizontal())
+          .attr("stroke", function(d){ return d.source.color; })
+          .attr("stroke-width", function(d){ return Math.max(1, d.width); })
+          .attr("stroke-opacity", 0.38);
+        var nodeSel = gMain.append("g").selectAll("g").data(graph.nodes).enter().append("g");
+        nodeSel.append("rect")
+          .attr("x", function(d){ return d.x0; })
+          .attr("y", function(d){ return d.y0; })
+          .attr("width", function(d){ return d.x1-d.x0; })
+          .attr("height", function(d){ return Math.max(1, d.y1-d.y0); })
+          .attr("fill", function(d){ return d.color; })
+          .attr("rx", 1);
+        nodeSel.append("text")
+          .attr("x", function(d){ return d.x0 < w/2 ? d.x1+6 : d.x0-6; })
+          .attr("y", function(d){ return (d.y0+d.y1)/2; })
+          .attr("text-anchor", function(d){ return d.x0 < w/2 ? "start" : "end"; })
+          .attr("dominant-baseline", "middle")
+          .style("font", "500 10.5px 'Noto Serif TC', serif")
+          .attr("fill", "#333")
+          .text(function(d){ return d.label; });
+        var connectedMap = {};
+        graph.links.forEach(function(l){
+          (connectedMap[l.source.id] = connectedMap[l.source.id] || {})[l.target.id] = true;
+          (connectedMap[l.target.id] = connectedMap[l.target.id] || {})[l.source.id] = true;
+        });
+        nodeSel.on("mousemove", function(event, d){
+          showTooltip(event, d.label + "\n流量 " + d.value.toLocaleString());
+          var connected = connectedMap[d.id] || {};
+          linkSel.attr("stroke-opacity", function(l){ return (l.source.id===d.id || l.target.id===d.id) ? 0.65 : 0.08; });
+          nodeSel.select("rect").attr("opacity", function(n){ return (n.id===d.id || connected[n.id]) ? 1 : 0.35; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+          nodeSel.select("rect").attr("opacity", 1);
+        });
+        linkSel.on("mousemove", function(event, d){
+          showTooltip(event, d.source.label + " → " + d.target.label + "\n" + d.value.toLocaleString());
+          linkSel.attr("stroke-opacity", function(l){ return l===d ? 0.7 : 0.08; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+        });
+      } catch (err) { /* layout error: leave blank rather than crash the host page */ }
+    }
+    draw();
     if (window.ResizeObserver) {
-      new ResizeObserver(function(){ diagram.layoutDiagram(true); diagram.zoomToFit(); }).observe(diagram.div);
+      var t;
+      new ResizeObserver(function(){ clearTimeout(t); t = setTimeout(draw, 150); }).observe(container);
     }
   }
-  if (window.go) { render(); return; }
-  if (!window.__sankeyGojsLoad) {
-    window.__sankeyGojsLoad = new Promise(function(resolve){
-      var s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/gojs/release/go.js";
-      s.onload = resolve;
-      document.head.appendChild(s);
+  if (window.d3 && d3.sankey) { render(); return; }
+  if (!window.__sankeyD3Load) {
+    window.__sankeyD3Load = new Promise(function(resolve){
+      var s1 = document.createElement("script");
+      s1.src = "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js";
+      s1.onload = function(){
+        var s2 = document.createElement("script");
+        s2.src = "https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js";
+        s2.onload = resolve;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
     });
   }
-  window.__sankeyGojsLoad.then(render);
+  window.__sankeyD3Load.then(render);
 })();
 </script>
       <div class="source-note">
@@ -259,72 +323,104 @@
     <div class="sankey-grid">
       <div class="card">
         <div class="card-title">誰持有 TSMC</div>
-        <div id="sankeyEmbed_tsmOwnersIn01" style="width:100%;height:460px;background:#f2e9da;border:1px solid #ddd;border-radius:6px;"></div>
+        <div id="sankeyEmbed_tsmOwnersIn01" style="width:100%;height:460px;background:#fff;border:1px solid #eee;border-radius:6px;position:relative;"></div>
 <script>
 (function(){
   var DATA = {"nodes":[{"id":"NDF","label":"國發基金 National Development Fund（6.38%）","color":"#a5762f"},{"id":"ADS","label":"ADS存託憑證持有人（透過Citibank名義持有，20.49%）","color":"#a5762f"},{"id":"Directors","label":"董事及高階經理人合計（0.23%）","color":"#a5762f"},{"id":"Others","label":"其他分散股東（個別均<5%，推算值，72.90%）","color":"#c9a876"},{"id":"TSMCShares","label":"TSMC 已發行普通股 25,932,524,521股","color":"#0f4c81"}],"links":[{"source":"NDF","target":"TSMCShares","value":1653709980},{"source":"ADS","target":"TSMCShares","value":5313450863},{"source":"Directors","target":"TSMCShares","value":60237681},{"source":"Others","target":"TSMCShares","value":18905125997}]};
-  var MAX_NODE_PX = 260, HUB_RATIO = 0.06;
-  function labelOf(d){ return d.text || d.key || ""; }
-  function computeFlowMeta(data){
-    var out={}, inc={};
-    data.links.forEach(function(l){ out[l.source]=(out[l.source]||0)+l.value; inc[l.target]=(inc[l.target]||0)+l.value; });
-    var flows={};
-    data.nodes.forEach(function(n){ flows[n.id]=Math.max(out[n.id]||0, inc[n.id]||0); });
-    var maxFlow=0; Object.keys(flows).forEach(function(k){ if(flows[k]>maxFlow) maxFlow=flows[k]; });
-    var scale = maxFlow>0 ? MAX_NODE_PX/maxFlow : 1;
-    return { flows: flows, maxFlow: maxFlow, scale: scale };
-  }
   function render(){
-    var $ = go.GraphObject.make;
-    var diagram = $(go.Diagram, "sankeyEmbed_tsmOwnersIn01", {
-      initialAutoScale: go.Diagram.Uniform,
-      isReadOnly: true,
-      "animationManager.isEnabled": false,
-      layout: $(go.LayeredDigraphLayout, { setsPortSpots: true, direction: 0, layerSpacing: 50, columnSpacing: 10 })
-    });
-    function makeTooltip(){
-      return $(go.Adornment, "Auto", $(go.Shape,{fill:"#222",stroke:null}), $(go.TextBlock,{margin:6,stroke:"white",font:"10pt sans-serif"}, new go.Binding("text","",labelOf)));
+    var container = document.getElementById("sankeyEmbed_tsmOwnersIn01");
+    if (!container) return;
+    var svg = d3.select(container).append("svg").attr("width","100%").attr("height","100%").style("display","block");
+    var gMain = svg.append("g");
+    var tooltip = document.createElement("div");
+    tooltip.style.cssText = "position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:4px;padding:6px 10px;font:12px 'Noto Serif TC',serif;color:#0a0a0a;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:10;white-space:pre-line;";
+    container.appendChild(tooltip);
+    function showTooltip(event, text){
+      var rect = container.getBoundingClientRect();
+      tooltip.textContent = text;
+      tooltip.style.display = "block";
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top + 12) + 'px';
     }
-    diagram.nodeTemplateMap.add("hub", $(go.Node, "Auto",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, { stroke: null, minSize: new go.Size(26,0) }, new go.Binding("fill","color"), new go.Binding("height","pixelSize")),
-      $(go.TextBlock, { margin:4, font:"bold 10pt sans-serif", stroke:"white", textAlign:"center", maxSize:new go.Size(140,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplateMap.add("leaf", $(go.Node, "Horizontal",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, "Rectangle", { width:12, height:12, stroke:null }, new go.Binding("fill","color")),
-      $(go.TextBlock, { margin:new go.Margin(0,0,0,4), font:"9pt sans-serif", stroke:"#333", maxSize:new go.Size(220,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplate = diagram.nodeTemplateMap.get("leaf");
-    diagram.linkTemplate = $(go.Link,
-      { routing: go.Link.Normal, curve: go.Link.Bezier, fromEndSegmentLength:50, toEndSegmentLength:50, fromSpot: go.Spot.Right, toSpot: go.Spot.Left },
-      $(go.Shape, { strokeWidth:1, opacity:0.55, stroke:"black" },
-        new go.Binding("strokeWidth","pixelWidth"),
-        new go.Binding("stroke","fromNode", function(node){ return node && node.data ? node.data.color : "black"; }).ofObject())
-    );
-    var meta = computeFlowMeta(DATA);
-    var nodeDataArray = DATA.nodes.map(function(n){
-      var flow = meta.flows[n.id] || 0;
-      return { key:n.id, text:n.label, color:n.color, pixelSize: Math.max(flow*meta.scale,4), category: flow >= meta.maxFlow*HUB_RATIO ? "hub" : "leaf" };
-    });
-    var linkDataArray = DATA.links.map(function(l){ return { from:l.source, to:l.target, pixelWidth: Math.max(l.value*meta.scale,1) }; });
-    diagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-    diagram.layoutDiagram(true);
-    diagram.zoomToFit();
+    function hideTooltip(){ tooltip.style.display = "none"; }
+    function draw(){
+      var rect = container.getBoundingClientRect();
+      var w = rect.width, h = rect.height;
+      if (w < 50 || h < 50) return;
+      svg.attr("viewBox", [0,0,w,h]);
+      gMain.selectAll("*").remove();
+      if (!DATA.nodes.length) return;
+      try {
+        var nodesCopy = DATA.nodes.map(function(n){ return {id:n.id,label:n.label,color:n.color}; });
+        var linksCopy = DATA.links.map(function(l){ return {source:l.source,target:l.target,value:l.value}; });
+        var sankeyGen = d3.sankey().nodeId(function(d){return d.id;}).nodeWidth(14).nodePadding(12).nodeAlign(d3.sankeyJustify).extent([[10,10],[w-10,h-10]]);
+        var graph = sankeyGen({nodes:nodesCopy, links:linksCopy});
+        var linkSel = gMain.append("g").attr("fill","none").selectAll("path").data(graph.links).enter().append("path")
+          .attr("d", d3.sankeyLinkHorizontal())
+          .attr("stroke", function(d){ return d.source.color; })
+          .attr("stroke-width", function(d){ return Math.max(1, d.width); })
+          .attr("stroke-opacity", 0.38);
+        var nodeSel = gMain.append("g").selectAll("g").data(graph.nodes).enter().append("g");
+        nodeSel.append("rect")
+          .attr("x", function(d){ return d.x0; })
+          .attr("y", function(d){ return d.y0; })
+          .attr("width", function(d){ return d.x1-d.x0; })
+          .attr("height", function(d){ return Math.max(1, d.y1-d.y0); })
+          .attr("fill", function(d){ return d.color; })
+          .attr("rx", 1);
+        nodeSel.append("text")
+          .attr("x", function(d){ return d.x0 < w/2 ? d.x1+6 : d.x0-6; })
+          .attr("y", function(d){ return (d.y0+d.y1)/2; })
+          .attr("text-anchor", function(d){ return d.x0 < w/2 ? "start" : "end"; })
+          .attr("dominant-baseline", "middle")
+          .style("font", "500 10.5px 'Noto Serif TC', serif")
+          .attr("fill", "#333")
+          .text(function(d){ return d.label; });
+        var connectedMap = {};
+        graph.links.forEach(function(l){
+          (connectedMap[l.source.id] = connectedMap[l.source.id] || {})[l.target.id] = true;
+          (connectedMap[l.target.id] = connectedMap[l.target.id] || {})[l.source.id] = true;
+        });
+        nodeSel.on("mousemove", function(event, d){
+          showTooltip(event, d.label + "\n流量 " + d.value.toLocaleString());
+          var connected = connectedMap[d.id] || {};
+          linkSel.attr("stroke-opacity", function(l){ return (l.source.id===d.id || l.target.id===d.id) ? 0.65 : 0.08; });
+          nodeSel.select("rect").attr("opacity", function(n){ return (n.id===d.id || connected[n.id]) ? 1 : 0.35; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+          nodeSel.select("rect").attr("opacity", 1);
+        });
+        linkSel.on("mousemove", function(event, d){
+          showTooltip(event, d.source.label + " → " + d.target.label + "\n" + d.value.toLocaleString());
+          linkSel.attr("stroke-opacity", function(l){ return l===d ? 0.7 : 0.08; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+        });
+      } catch (err) { /* layout error: leave blank rather than crash the host page */ }
+    }
+    draw();
     if (window.ResizeObserver) {
-      new ResizeObserver(function(){ diagram.layoutDiagram(true); diagram.zoomToFit(); }).observe(diagram.div);
+      var t;
+      new ResizeObserver(function(){ clearTimeout(t); t = setTimeout(draw, 150); }).observe(container);
     }
   }
-  if (window.go) { render(); return; }
-  if (!window.__sankeyGojsLoad) {
-    window.__sankeyGojsLoad = new Promise(function(resolve){
-      var s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/gojs/release/go.js";
-      s.onload = resolve;
-      document.head.appendChild(s);
+  if (window.d3 && d3.sankey) { render(); return; }
+  if (!window.__sankeyD3Load) {
+    window.__sankeyD3Load = new Promise(function(resolve){
+      var s1 = document.createElement("script");
+      s1.src = "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js";
+      s1.onload = function(){
+        var s2 = document.createElement("script");
+        s2.src = "https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js";
+        s2.onload = resolve;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
     });
   }
-  window.__sankeyGojsLoad.then(render);
+  window.__sankeyD3Load.then(render);
 })();
 </script>
         <div class="source-note"><b>線寬單位：</b>普通股股數。<b>出處：</b>Item 7 Major Shareholders，資料基準日 2026-02-28。「其他分散股東」為已發行總股數扣除前三者後的推算值。</div>
@@ -332,72 +428,104 @@
 
       <div class="card">
         <div class="card-title">TSMC 對外主要權益投資</div>
-        <div id="sankeyEmbed_tsmOwnersOut01" style="width:100%;height:460px;background:#f2e9da;border:1px solid #ddd;border-radius:6px;"></div>
+        <div id="sankeyEmbed_tsmOwnersOut01" style="width:100%;height:460px;background:#fff;border:1px solid #eee;border-radius:6px;position:relative;"></div>
 <script>
 (function(){
   var DATA = {"nodes":[{"id":"TSMC2","label":"TSMC","color":"#0f4c81"},{"id":"VIS2","label":"VIS（2025/12/31帳面價值NT$18,068.7M，2026/5/15已出售8.1%，帳面價值待更新）","color":"#2f7d4f"},{"id":"SSMC2","label":"SSMC（持股39%，帳面價值NT$12,419.2M）","color":"#2f7d4f"},{"id":"Xintec2","label":"Xintec（持股41%，帳面價值NT$4,470.4M）","color":"#2f7d4f"},{"id":"GUC2","label":"GUC（持股35%，帳面價值NT$2,893.6M）","color":"#2f7d4f"}],"links":[{"source":"TSMC2","target":"VIS2","value":18068.7},{"source":"TSMC2","target":"SSMC2","value":12419.2},{"source":"TSMC2","target":"Xintec2","value":4470.4},{"source":"TSMC2","target":"GUC2","value":2893.6}]};
-  var MAX_NODE_PX = 260, HUB_RATIO = 0.06;
-  function labelOf(d){ return d.text || d.key || ""; }
-  function computeFlowMeta(data){
-    var out={}, inc={};
-    data.links.forEach(function(l){ out[l.source]=(out[l.source]||0)+l.value; inc[l.target]=(inc[l.target]||0)+l.value; });
-    var flows={};
-    data.nodes.forEach(function(n){ flows[n.id]=Math.max(out[n.id]||0, inc[n.id]||0); });
-    var maxFlow=0; Object.keys(flows).forEach(function(k){ if(flows[k]>maxFlow) maxFlow=flows[k]; });
-    var scale = maxFlow>0 ? MAX_NODE_PX/maxFlow : 1;
-    return { flows: flows, maxFlow: maxFlow, scale: scale };
-  }
   function render(){
-    var $ = go.GraphObject.make;
-    var diagram = $(go.Diagram, "sankeyEmbed_tsmOwnersOut01", {
-      initialAutoScale: go.Diagram.Uniform,
-      isReadOnly: true,
-      "animationManager.isEnabled": false,
-      layout: $(go.LayeredDigraphLayout, { setsPortSpots: true, direction: 0, layerSpacing: 50, columnSpacing: 10 })
-    });
-    function makeTooltip(){
-      return $(go.Adornment, "Auto", $(go.Shape,{fill:"#222",stroke:null}), $(go.TextBlock,{margin:6,stroke:"white",font:"10pt sans-serif"}, new go.Binding("text","",labelOf)));
+    var container = document.getElementById("sankeyEmbed_tsmOwnersOut01");
+    if (!container) return;
+    var svg = d3.select(container).append("svg").attr("width","100%").attr("height","100%").style("display","block");
+    var gMain = svg.append("g");
+    var tooltip = document.createElement("div");
+    tooltip.style.cssText = "position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:4px;padding:6px 10px;font:12px 'Noto Serif TC',serif;color:#0a0a0a;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:10;white-space:pre-line;";
+    container.appendChild(tooltip);
+    function showTooltip(event, text){
+      var rect = container.getBoundingClientRect();
+      tooltip.textContent = text;
+      tooltip.style.display = "block";
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top + 12) + 'px';
     }
-    diagram.nodeTemplateMap.add("hub", $(go.Node, "Auto",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, { stroke: null, minSize: new go.Size(26,0) }, new go.Binding("fill","color"), new go.Binding("height","pixelSize")),
-      $(go.TextBlock, { margin:4, font:"bold 10pt sans-serif", stroke:"white", textAlign:"center", maxSize:new go.Size(140,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplateMap.add("leaf", $(go.Node, "Horizontal",
-      { locationSpot: go.Spot.Center, toolTip: makeTooltip() },
-      $(go.Shape, "Rectangle", { width:12, height:12, stroke:null }, new go.Binding("fill","color")),
-      $(go.TextBlock, { margin:new go.Margin(0,0,0,4), font:"9pt sans-serif", stroke:"#333", maxSize:new go.Size(220,NaN), overflow: go.TextBlock.OverflowEllipsis }, new go.Binding("text","",labelOf))
-    ));
-    diagram.nodeTemplate = diagram.nodeTemplateMap.get("leaf");
-    diagram.linkTemplate = $(go.Link,
-      { routing: go.Link.Normal, curve: go.Link.Bezier, fromEndSegmentLength:50, toEndSegmentLength:50, fromSpot: go.Spot.Right, toSpot: go.Spot.Left },
-      $(go.Shape, { strokeWidth:1, opacity:0.55, stroke:"black" },
-        new go.Binding("strokeWidth","pixelWidth"),
-        new go.Binding("stroke","fromNode", function(node){ return node && node.data ? node.data.color : "black"; }).ofObject())
-    );
-    var meta = computeFlowMeta(DATA);
-    var nodeDataArray = DATA.nodes.map(function(n){
-      var flow = meta.flows[n.id] || 0;
-      return { key:n.id, text:n.label, color:n.color, pixelSize: Math.max(flow*meta.scale,4), category: flow >= meta.maxFlow*HUB_RATIO ? "hub" : "leaf" };
-    });
-    var linkDataArray = DATA.links.map(function(l){ return { from:l.source, to:l.target, pixelWidth: Math.max(l.value*meta.scale,1) }; });
-    diagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-    diagram.layoutDiagram(true);
-    diagram.zoomToFit();
+    function hideTooltip(){ tooltip.style.display = "none"; }
+    function draw(){
+      var rect = container.getBoundingClientRect();
+      var w = rect.width, h = rect.height;
+      if (w < 50 || h < 50) return;
+      svg.attr("viewBox", [0,0,w,h]);
+      gMain.selectAll("*").remove();
+      if (!DATA.nodes.length) return;
+      try {
+        var nodesCopy = DATA.nodes.map(function(n){ return {id:n.id,label:n.label,color:n.color}; });
+        var linksCopy = DATA.links.map(function(l){ return {source:l.source,target:l.target,value:l.value}; });
+        var sankeyGen = d3.sankey().nodeId(function(d){return d.id;}).nodeWidth(14).nodePadding(12).nodeAlign(d3.sankeyJustify).extent([[10,10],[w-10,h-10]]);
+        var graph = sankeyGen({nodes:nodesCopy, links:linksCopy});
+        var linkSel = gMain.append("g").attr("fill","none").selectAll("path").data(graph.links).enter().append("path")
+          .attr("d", d3.sankeyLinkHorizontal())
+          .attr("stroke", function(d){ return d.source.color; })
+          .attr("stroke-width", function(d){ return Math.max(1, d.width); })
+          .attr("stroke-opacity", 0.38);
+        var nodeSel = gMain.append("g").selectAll("g").data(graph.nodes).enter().append("g");
+        nodeSel.append("rect")
+          .attr("x", function(d){ return d.x0; })
+          .attr("y", function(d){ return d.y0; })
+          .attr("width", function(d){ return d.x1-d.x0; })
+          .attr("height", function(d){ return Math.max(1, d.y1-d.y0); })
+          .attr("fill", function(d){ return d.color; })
+          .attr("rx", 1);
+        nodeSel.append("text")
+          .attr("x", function(d){ return d.x0 < w/2 ? d.x1+6 : d.x0-6; })
+          .attr("y", function(d){ return (d.y0+d.y1)/2; })
+          .attr("text-anchor", function(d){ return d.x0 < w/2 ? "start" : "end"; })
+          .attr("dominant-baseline", "middle")
+          .style("font", "500 10.5px 'Noto Serif TC', serif")
+          .attr("fill", "#333")
+          .text(function(d){ return d.label; });
+        var connectedMap = {};
+        graph.links.forEach(function(l){
+          (connectedMap[l.source.id] = connectedMap[l.source.id] || {})[l.target.id] = true;
+          (connectedMap[l.target.id] = connectedMap[l.target.id] || {})[l.source.id] = true;
+        });
+        nodeSel.on("mousemove", function(event, d){
+          showTooltip(event, d.label + "\n流量 " + d.value.toLocaleString());
+          var connected = connectedMap[d.id] || {};
+          linkSel.attr("stroke-opacity", function(l){ return (l.source.id===d.id || l.target.id===d.id) ? 0.65 : 0.08; });
+          nodeSel.select("rect").attr("opacity", function(n){ return (n.id===d.id || connected[n.id]) ? 1 : 0.35; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+          nodeSel.select("rect").attr("opacity", 1);
+        });
+        linkSel.on("mousemove", function(event, d){
+          showTooltip(event, d.source.label + " → " + d.target.label + "\n" + d.value.toLocaleString());
+          linkSel.attr("stroke-opacity", function(l){ return l===d ? 0.7 : 0.08; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+        });
+      } catch (err) { /* layout error: leave blank rather than crash the host page */ }
+    }
+    draw();
     if (window.ResizeObserver) {
-      new ResizeObserver(function(){ diagram.layoutDiagram(true); diagram.zoomToFit(); }).observe(diagram.div);
+      var t;
+      new ResizeObserver(function(){ clearTimeout(t); t = setTimeout(draw, 150); }).observe(container);
     }
   }
-  if (window.go) { render(); return; }
-  if (!window.__sankeyGojsLoad) {
-    window.__sankeyGojsLoad = new Promise(function(resolve){
-      var s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/gojs/release/go.js";
-      s.onload = resolve;
-      document.head.appendChild(s);
+  if (window.d3 && d3.sankey) { render(); return; }
+  if (!window.__sankeyD3Load) {
+    window.__sankeyD3Load = new Promise(function(resolve){
+      var s1 = document.createElement("script");
+      s1.src = "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js";
+      s1.onload = function(){
+        var s2 = document.createElement("script");
+        s2.src = "https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js";
+        s2.onload = resolve;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
     });
   }
-  window.__sankeyGojsLoad.then(render);
+  window.__sankeyD3Load.then(render);
 })();
 </script>
         <div class="source-note"><b>線寬單位：</b>NT$百萬元（權益法投資帳面價值，2025-12-31）。<b>出處：</b>Item 18 附註 Investments Accounted for Using Equity Method；持股%另取 Item 7（2026-02-28）較新基準值。</div>
