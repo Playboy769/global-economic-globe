@@ -1,0 +1,4 @@
+# 只給 build_keyword_graph.py 這支離線腳本用，不是 article_db 服務本身的依賴
+# （app.py 的正式部署 requirements.txt 不需要 jieba，因為連結圖資料是離線算好後
+# 直接寫進 index.html 的靜態 JSON，執行期不再斷詞）
+jieba==0.42.1
