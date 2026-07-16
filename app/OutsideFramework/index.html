@@ -407,7 +407,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
       <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div>
     </div>
-    <!-- Next-earnings-date strip for the 9 Earnings Call cards below. Shown only when the
+    <!-- Next-earnings-date strip for the company-specific Earnings Call cards below (Sankey Diagram
+         Tool card is a supporting tool, not a company report, and intentionally has no date entry).
+         Shown only when the
          "Earnings Call" filter is active (see works-earncal.show toggle in filterCat()).
          Maintenance: when adding a new earnings-call card, add its next report date here too
          (sorted ascending) and add a matching .wk-next-earn line inside that card's .wk-info. -->
@@ -423,6 +425,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wec-item"><span class="wec-name">Dell Technologies</span><span class="wec-date">2026/09/03</span></div>
       <div class="wec-item"><span class="wec-name">Micron Technology</span><span class="wec-date">2026/09/29</span></div>
       <div class="wec-item"><span class="wec-name">ASML Holding</span><span class="wec-date">2026/10/14（預估）</span></div>
+      <div class="wec-item"><span class="wec-name">Taiwan Semiconductor (TSMC)</span><span class="wec-date">2026/10/15（預估）</span></div>
     </div>
     <div class="works-grid">
 
@@ -464,6 +467,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
       <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="ASML Holding FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ASML_FY26Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">ASML Holding</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; 逐字稿解析 &middot; 產能擴張路線圖 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/14（預估）</div></div>
+      </div>
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Taiwan Semiconductor Manufacturing FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TSM_FY2026Q2_Analysis.html')">
+        <div class="wk-info"><div class="wk-name">Taiwan Semiconductor (TSMC)</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; Arizona追加投資 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/15（預估）</div></div>
+      </div>
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Sankey Diagram Tool — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/sankey')">
+        <div class="wk-info"><div class="wk-name">Sankey Diagram Tool</div><div class="wk-type">供應鏈 &middot; 營收分部 &middot; 股權結構 &middot; GoJS 關係圖編輯器（TSMC關係圖即由此工具產生）</div></div>
       </div>
       <div class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="previewWork(this,'warning')">
         <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
