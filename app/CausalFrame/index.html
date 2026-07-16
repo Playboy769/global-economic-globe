@@ -405,6 +405,14 @@ body.dark .cf-node:hover{border-color:#555}
 body.dark .cf-node.sel{border-color:#ccc;box-shadow:0 5px 20px rgba(0,0,0,0.5)}
 body.dark .cf-node.multi-sel{border-color:#4a88dd}
 body.dark .cf-node.traced-node{border-color:#4a88dd;box-shadow:0 0 0 2px rgba(74,136,221,0.3)}
+/* text-node's own light-mode rules (background:transparent, near-black
+   selected/editing borders) win on specificity over the generic
+   body.dark .cf-node rules above, so dark mode needs its own overrides
+   here rather than relying on the cascade to fall through. */
+body.dark .cf-node.text-node{background:transparent;border-color:transparent}
+body.dark .cf-node.text-node:hover{border-color:#555;background:rgba(255,255,255,0.06)}
+body.dark .cf-node.text-node.sel{border-color:#ccc;background:rgba(255,255,255,0.1);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+body.dark .cf-node.text-node.editing{border-color:#ccc;background:#1e1e1e;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 body.dark .cf-node[data-color="1"]{background:#2c2814;border-color:#8a6a10}
 body.dark .cf-node[data-color="2"]{background:#18281a;border-color:#307040}
 body.dark .cf-node[data-color="3"]{background:#2c1818;border-color:#803030}
