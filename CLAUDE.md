@@ -12,6 +12,116 @@ per-call max is 4, so this means using the full 4 slots) and wait for answers be
 work. This applies even when the request looks unambiguous. This overrides the general
 "Auto Mode" bias toward proceeding without confirmation for this repo specifically.
 
+## 功能位置對照表（改東西前先查這張表）
+
+**觸發規則**：使用者只要說「要修改 / 改一下 / 調整 XX 功能」（或同義），**第一步先在本節
+表格用功能名稱定位**，讀出：① dev repo、② folder、③ 要編輯的 file、④ 檔內錨點（id/行）、
+⑤ route/URL、⑥ **有沒有部署鏡像要一起改**。不要每次重新 grep 找位置——先查表，查不到或
+表可能過期才 grep 驗證，並順手更新本表。改完若該列標了鏡像，依對應 sync 規則同步（見
+下方 Deployment topology 與 sync scripts）。所有路徑相對本 repo 根
+`C:\Users\ryan9\OneDrive\桌面\Claudecode`。
+
+> 「現況一致 ✅ / 已分歧 ⛔」是**製表當下（2026-07-18）**的快照，會過期；同步前仍以實際
+> diff 為準，不要只信這欄。
+
+### 1. OutsideFramework 作品集首頁
+- 本 repo (`global-economic-globe.git`) · `app/OutsideFramework/index.html`（+`assets/`）· 本地 `outside-framework` :8125
+- **部署**：Dockerfile 直接 COPY 這份 → nginx。**無鏡像、無需同步**。
+
+| 小功能 | 檔內錨點 | 對外連結目的地 |
+|---|---|---|
+| 導覽列 Home/About/Works/Philosophy/Quotes | 行 278–284 | 同頁錨點 |
+| About（Structured/Interactive/Narrative/Open Source）| 行 351–388 | — |
+| Works 分類標題 Earnings/Network/Causal/Knowledge | 行 408–411 | — |
+| Works 卡片 · 14 篇 earnings 報告 | 行 421–506 | `…/research/<TICKER>_…Analysis.html` |
+| Works 卡片 · Sankey / Options / Brownian | 行 510 / 517 / 520 | `…/sankey`、`…/options`、`…/brownian` |
+| Works 卡片 · Structural Holes | 行 522 | `structural-holes-production.up.railway.app/` |
+| Works 卡片 · Article Database | 行 528 | `articlebase.up.railway.app/` |
+| Works 卡片 · Globe/Invest/Causal/Warning/High-price | 行 651–657 | `…/globe` … `/high-price` |
+
+### 2. GlobalEco（globe 3D 地球）
+- Dev：本 repo · `app/GlobalEco/index.html` · 本地 `globe` :8124
+- **鏡像**：`globe-invest.git` · `globe-invest/app/globe/index.html` → `/globe` · **sync：`scripts/sync-globe-invest.ps1`**
+
+| 小功能 | 錨點 id |
+|---|---|
+| 地球畫布 / 搜尋 | `globe-canvas`、`search-box`/`search-input`/`search-results`（行 413–416）|
+| 視覺模式鈕 熱力/網路/排名/比較 | `btn-heatmap`/`btn-network`/`btn-ranking`/`btn-compare`（行 420–423）|
+| 熱力圖圖例/模式 | `heatmap-legend`、`hm-mode`（行 429）|
+| 國家資訊側欄 | `sidebar`/`country-info`/`country-header`（行 432–450）|
+| 6 資料 tab 概覽/人口/農業/貿易/金融/社會 | `tab-nav` + `panel-overview…social`（行 453–464）|
+| 雙邊貿易比較 | `panel-trade` > `trade-detail`（行 ~468）|
+| 相關後端 | `globe-invest/server.js`：`/api/oil-prices`、`/api/stock-history` |
+
+### 3. InvestFrame（invest 投資框架）
+- Dev：本 repo · `app/InvestFrame/index.html` · 本地 `investframe` :8126
+- **鏡像**：`globe-invest/app/invest/index.html` → `/invest` · **sync：`scripts/sync-globe-invest.ps1`**
+
+| 小功能 | 錨點 id |
+|---|---|
+| 四環框架 總經/風險/產業/持倉 | `iv-ring-macro`/`-risk`/`-industry`/`-portfolio`（行 510–532）|
+| 資訊 feed（搜尋/刪除/清單/詳情）| `iv-feed`/`iv-search`/`iv-feed-list`/`iv-feed-detail`（行 537–562）|
+| 觀察清單 watchlist | `iv-wl`/`iv-wl-list`（行 574–580）|
+| 每日筆記/週條/立場 | `iv-daily-note`/`iv-week-strip`/`iv-stance-wrap`（行 585–589）|
+| 相關後端 | `globe-invest/server.js`：`/api/invest-data`、`/api/invest-groups`、`/api/og-fetch`、`/api/upload-asset`、`/api/asset/*` |
+
+### 4. CausalFrame（causal 因果圖）
+- Dev：本 repo · `app/CausalFrame/index.html` · 本地 `causalframe` :8128
+- **鏡像**：`globe-invest/app/causal/index.html` → `/causal` · **sync：`scripts/sync-globe-invest.ps1`**
+
+| 小功能 | 錨點 id |
+|---|---|
+| 工具列 復原/重做/圖層 | `cf-undo`/`cf-redo`/`cf-layer-up`/`cf-layer-down`（行 819–834）|
+| 迴圈/槓桿/迷你圖/搜尋/暗色 | `cf-loops`/`cf-leverage`/`cf-minimap-btn`/`cf-search-btn`/`cf-dark-btn`（行 845–874）|
+| 新增節點 文字/圖/PDF/嵌入/表格/畫布/圖引用/分隔線 | `cf-add-text…-divider`（行 900–937）|
+| 檔案 feed（資料夾/檔案/範本）| `cf-feed`/`cf-new-folder`/`cf-new-file`/`cf-tpl-btn`（行 951–960）|
+| 畫布層 | `cf-canvas`/`cf-edges`/`cf-world`/`cf-nodes`/`cf-labels`（行 963–968）|
+| 相關後端 | `globe-invest/server.js`：`/api/causal-files` |
+
+### 5. globe-invest 專屬頁（**只在 globe-invest repo，本 repo 無 dev-source — 直接改該 repo**）
+folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app` :8136。
+
+| 頁面 | folder → route | 內部小功能 | 後端 API（`globe-invest/server.js`）|
+|---|---|---|---|
+| 高價股追蹤 | `high-price/` → `/high-price` | 清單 / 即時報價 / 指標 | `/api/high-price/list`、`/realtime`、`/metrics` |
+| 警示雷達 | `warning/` → `/warning` | TWSE/TPEX 公告·處置·三大法人·除息 | `/api/warning/{twse,tpex}-*`（12 端點）、`/company-info`、`/price-change` |
+
+### 6. 鏡像對（**手動同步，不在 sync script — 改完要自己 copy 過去並推兩個 repo**）
+| 功能 | Dev（本 repo） | 部署（globe-invest） | route |
+|---|---|---|---|
+| Brownian | `projects/brownian-motion-simulator/index.html`（本地 :8132）| `globe-invest/app/brownian/index.html` | `/brownian` |
+| Options Guide | `projects/options_guide.html` | `globe-invest/app/options/index.html` | `/options` |
+| Sankey 工具 | `projects/sankey-diagram-demo/index.html`（本地 `sankey-diagram-demo` :8137）| `globe-invest/app/sankey/index.html` | `/sankey` |
+| Research 報告 | `research/<ticker>-…/*.html` | `globe-invest/app/research/*.html` | `/research/<FILE>.html` |
+| Warning 舊 dev | `projects/market-warning-radar/`（本地 :8130）| `globe-invest/app/warning/` | `/warning` |
+
+> ⚠️ `warning` 與 `research` 兩側已**實質分歧**（非落後幾個 commit），`sankey`/`options`/
+> `brownian` 製表當下一致但同樣不在 sync script。同步前務必先 diff，勿盲 copy 覆蓋。
+
+### 7. 獨立部署（各自 repo，本 repo 只是巢狀）
+| 功能 | repo | folder | 部署檔 | URL | 本地 |
+|---|---|---|---|---|---|
+| article-db | 本 repo dev + `article-db-api.git`（remote `article-db`）| `article_db/` | `index.html`(前端) + `app.py`(FastAPI) | `articlebase.up.railway.app` | `article-db` :8127 |
+| structural-holes | `structural-holes.git` | `structural_holes/` | `app.py`(uvicorn) + `graph.py` | `structural-holes-production.up.railway.app` | `structural-holes` :8129 |
+| my-slide | `my-slide.git` | `my-slide/` | — | Netlify | — |
+
+> **article-db 改法**：編 `article_db/index.html` → 本 repo commit → 跑
+> `scripts/sync-article-db.ps1` 推到 `article-db` remote，否則線上不更新（見下方專節）。
+
+### 8. 非部署工具／資料（本 repo，標準）
+| 功能 | folder | 本地 port |
+|---|---|---|
+| 股票分析器 | `projects/stock-analyzer/` | — |
+| 科技估值篩選 | `projects/tech-value-screener/` | — |
+| 食物熱量查詢 | `projects/food-calorie-lookup/` | `food-calorie-lookup` :8131 |
+| Earnings 分析（範本源 MU）| `research/mu-analysis-2026q3/`；各 ticker 一資料夾 | panw :8133 / sumco :8134 / dell :8135 / tsmc :8138 / ms :8139 / lrcx :8140 |
+| SEC 抓取工具（VBA）| `SEC-Filing-Fetcher/`（`.bas`+`.xlsm`）| — |
+| 產業結構圖 | `industry frame/`（PNG+SVG）| — |
+| 圖庫素材（未被引用）| `ofwphoto/`（.jpg）| — |
+| 交易/VBA 專案 | `RR4/`、`RR5/`、`EMA Bias Model/` | — |
+| FinceptTerminal（空巢狀 repo，疑廢棄）| `FinceptTerminal/` | — |
+| 舊版留存 | `archive/` | — |
+
 ## Deployment topology (this is the part that bites)
 
 There are **four separate Railway deployments** sourced from **three separate git repos**, plus
