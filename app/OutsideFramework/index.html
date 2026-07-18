@@ -514,6 +514,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Amazon.com FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/AMZN_FY2026Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Amazon.com</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Trainium資本支出與Leo/Globalstar併購 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/31（預估）</div></div>
       </div>
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Alphabet Inc. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GOOG_FY26Q1_Analysis.html')">
+        <div class="wk-info"><div class="wk-name">Alphabet Inc.</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Cloud Backlog翻倍與TPU硬體外售 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/22</div></div>
+      </div>
 
       <div class="wk-group-title">其他 &middot; Other</div>
       <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Sankey Diagram Tool — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/sankey')">
@@ -1490,6 +1493,7 @@ function filterCat(cat, pillEl) {
 /* ── Works: Earnings Calendar timeline — single source of truth for the strip above.
    Sorted ascending by date. Add new cards here (keep in sync with that card's .wk-next-earn). ── */
 var EARN_DATES = [
+  { name:'Alphabet Inc.', date:'2026-07-22' },
   { name:'Corning Incorporated', date:'2026-07-28', predicted:true },
   { name:'Lam Research', date:'2026-07-29', predicted:true },
   { name:'Cloudflare', date:'2026-07-30' },
