@@ -92,6 +92,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8138", "--directory", "research/tsmc-analysis-2025"],
       "port": 8138
+    },
+    {
+      "name": "ms-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8139", "--directory", "research/ms-analysis-2026q2"],
+      "port": 8139
+    },
+    {
+      "name": "lrcx-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8140", "--directory", "research/lrcx-analysis-fy2026q3"],
+      "port": 8140
     }
   ]
 }
