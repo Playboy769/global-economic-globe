@@ -295,3 +295,23 @@ block pushes.
 深色（`#111`–`#333`）文字。顏色只准用在：徽章（badge）、邊框、左側色條、小面積
 強調元素。**禁止在飽和彩色底（橘/綠/紫/藍等）上放深色或低對比文字**——這曾造成
 整批報告文字難以閱讀。既有深色主題報告遇到修改時應順手轉為白底。
+
+### 分析完成後強制同步與上架（缺一不可）
+
+每次完成一份 earnings call 分析（Analysis.html + Financials.html 兩檔皆已產出）後，**收尾必做**
+下面三件事，做完框架本身的內容不算完工：
+
+1. **鏡像**：把兩份 HTML 複製到 `globe-invest/app/research/`，檔名與資料夾內原檔名一致、直接攤平
+   （不建 `<ticker>` 子資料夾），與現有十幾篇報告的擺法一致。這一步就是「Research 報告」鏡像對
+   （見上方「鏡像對」表）唯一的同步方式，沒有 sync script。
+2. **上架 OutsideFramework Works**：在 `app/OutsideFramework/index.html` 的 Works → Earnings Call
+   底下，找到產業/類別最貼近的既有 `<div class="wk-group-title">` 分組（找不到就新建一組），
+   仿照鄰近卡片格式新增一張 `.wk-card`，連結指向
+   `https://globe-invest.up.railway.app/research/<TICKER>_..._Analysis.html`；同時把該公司的
+   下次財報日期加進 `EARN_DATES` 陣列（依日期遞增排序插入正確位置），並在新卡片的 `.wk-info`
+   內加對應的 `.wk-next-earn` 行（見該區塊上方的 Maintenance 註解）。
+3. **兩邊都要 commit + push**：本 repo（origin）內，research 原始檔案（含新增的
+   `.claude/launch.json` 本地預覽 port，若有）與 OutsideFramework 上架異動依 Commit hygiene
+   規則切成獨立 commit；`globe-invest/app/research/` 的鏡像檔案則在 `globe-invest` 自己的 repo
+   另開一個 commit。兩個 repo 都要 push——只 commit 不 push、或只做了鏡像沒上架、或上架了但
+   忘記 push globe-invest，都算這篇報告還沒真正上線。
