@@ -104,6 +104,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8140", "--directory", "research/lrcx-analysis-fy2026q3"],
       "port": 8140
+    },
+    {
+      "name": "orcl-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8141", "--directory", "research/orcl-analysis-fy2026q4"],
+      "port": 8141
     }
   ]
 }
