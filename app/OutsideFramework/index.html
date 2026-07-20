@@ -244,15 +244,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #overlay-close{font-size:10px;font-weight:400;color:var(--c-accent,#d1591f);letter-spacing:.14em;text-transform:uppercase;font-family:'Orchid','Noto Serif TC',serif;border:none;background:none;cursor:pointer;padding:6px 0;display:none;transition:color .2s ease}
 #overlay-close:hover{color:var(--c-accent-deep,#a94515)}
 
-/* ── MU Q3 Picker ── */
-#mu-picker{display:none;opacity:0;transition:opacity .2s;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:center;justify-content:center}
-.mu-box{background:#fff;border-radius:4px;padding:36px 40px;min-width:320px;display:flex;flex-direction:column;gap:14px}
-.mu-title{font-family:'Noto Sans TC',sans-serif;font-size:13px;color:#888;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
-.mu-opt{text-align:left;padding:16px 20px;border:1px solid #eee;border-radius:3px;background:#fff;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#0a0a0a;transition:background .12s}
-.mu-opt:hover{background:rgba(209,89,31,.06)}
-.mu-opt-sub{font-size:11px;color:#aaa;margin-top:3px;font-weight:400}
-.mu-cancel{margin-top:4px;padding:8px;border:none;background:none;cursor:pointer;font-size:11px;color:#bbb;letter-spacing:.08em;text-transform:uppercase}
-
 /* ── Scroll Animations ── */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.4,0,.2,1)}
 .reveal.visible{opacity:1;transform:translateY(0)}
@@ -488,7 +479,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
 
       <div class="wk-group-title">Memory</div>
-      <div class="wk-card reveal" data-cat="earnings" tabindex="0" role="button" aria-label="Micron Technology FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'mu')">
+      <div class="wk-card reveal" data-cat="earnings" tabindex="0" role="button" aria-label="Micron Technology FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Micron Technology</div><div class="wk-type">FY2026 Q3（2026年3–5月）&middot; 法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div><div class="wk-next-earn">下次財報：2026/09/29</div></div>
       </div>
 
@@ -648,22 +639,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   </div>
   <iframe id="project-frame" src="about:blank" title="作品內容" allow="accelerometer; gyroscope"></iframe>
   <div id="overlay-loading"><div class="ol-line"></div><div class="ol-text">載入中</div></div>
-</div>
-
-<!-- MU Q3 picker -->
-<div id="mu-picker" onclick="if(event.target===this)closeMUPicker()">
-  <div class="mu-box">
-    <div class="mu-title">MU Q3 — 選擇頁面</div>
-    <button class="mu-opt" onclick="pickMU('mu-analysis')">
-      分析報告
-      <div class="mu-opt-sub">法說會重點 · SCA · 風險矩陣</div>
-    </button>
-    <button class="mu-opt" onclick="pickMU('mu-financials')">
-      財務報表
-      <div class="mu-opt-sub">損益表 · 現金流 · 估值</div>
-    </button>
-    <button class="mu-cancel" onclick="closeMUPicker()">取消</button>
-  </div>
 </div>
 
 <script>
@@ -1233,8 +1208,7 @@ function closeWkPreview(thenEnter) {
     wkPreviewState.mode = null;
     wkPreviewState.cardEl = null;
     if (thenEnter) {
-      if (mode === 'mu') openMU();
-      else openProject(mode);
+      openProject(mode);
     } else if (originCard && document.body.contains(originCard)) {
       originCard.focus();
     }
@@ -1343,8 +1317,6 @@ function openProject(mode) {
   else if (mode === 'globe') frame.src = GLOBE_BASE;
   else if (mode === 'options') frame.src = OPTIONS_BASE;
   else if (mode === 'brownian') frame.src = BROWNIAN_BASE;
-  else if (mode === 'mu-analysis') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html';
-  else if (mode === 'mu-financials') frame.src = 'https://globe-invest.up.railway.app/research/MU_FY26Q3_Financials.html';
   else frame.src = GLOBE_BASE + '?mode=' + mode;
   overlay.style.display = 'flex';
   requestAnimationFrame(() => overlay.classList.add('active'));
@@ -1367,25 +1339,9 @@ function closeProject() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (wkPreviewState.open || wkPreviewState.animating) { closeWkPreview(false); return; }
-    if (document.getElementById('mu-picker').style.display === 'flex') { closeMUPicker(); return; }
     if (document.getElementById('project-overlay').classList.contains('active')) { closeProject(); return; }
   }
 });
-
-// MU Q3 two-page picker
-function openMU() {
-  document.getElementById('mu-picker').style.display = 'flex';
-  requestAnimationFrame(() => document.getElementById('mu-picker').style.opacity = '1');
-}
-function closeMUPicker() {
-  const p = document.getElementById('mu-picker');
-  p.style.opacity = '0';
-  setTimeout(() => p.style.display = 'none', 200);
-}
-function pickMU(mode) {
-  closeMUPicker();
-  setTimeout(() => openProject(mode), 210);
-}
 
 const nav = document.getElementById('top-nav');
 const btns = document.querySelectorAll('.nav-btn');
@@ -1478,7 +1434,6 @@ function navByDir(dir){
   if(navLocked)return;
   if(wkPreviewState.open||wkPreviewState.animating)return;
   if(document.getElementById('project-overlay').classList.contains('active'))return;
-  if(document.getElementById('mu-picker').style.display==='flex')return;
   const i=PAGE_ORDER.indexOf(currentPage);
   const next=i+dir;
   if(next>=0&&next<PAGE_ORDER.length){
