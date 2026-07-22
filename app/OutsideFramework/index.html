@@ -131,33 +131,53 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wk-type{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;font-weight:400}
 .wk-next-earn{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:var(--c-accent);font-weight:600;letter-spacing:.02em}
 
-/* ── Works: Earnings Calendar timeline (shown only under the "Earnings Call" filter) ──
-   Rendered by renderEarnTimeline() from the EARN_DATES array (see script near filterCat()):
-   groups same-day entries, buckets by month, and collapses anything past a 60-day window. */
-.works-earncal{display:none;margin-bottom:32px;padding:22px 24px;border:1px solid #eee;border-radius:16px;background:#fafaf8}
-.works-earncal.show{display:block}
-.works-earncal-title{font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
-.wec-timeline{position:relative}
-.wec-timeline::before{content:'';position:absolute;top:8px;bottom:8px;left:73px;width:1px;background:#eee}
-.wec-row{display:grid;grid-template-columns:56px 18px 1fr;column-gap:8px;align-items:center;padding:6px 0}
-.wec-timeline>.wec-row:first-child{padding-top:0}
-.wec-date{text-align:right;font-size:11px;color:#999;font-family:'Calibri',sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.3}
-.wec-dot{justify-self:center;width:6px;height:6px;border-radius:50%;background:#bbb}
-.wec-name{font-size:13px;color:#333;font-weight:500;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;line-height:1.3}
-.wec-row.next .wec-dot{background:var(--c-accent);width:8px;height:8px}
-.wec-row.next .wec-date,.wec-row.next .wec-name{color:var(--c-accent-deep);font-weight:600}
-.wec-month-row{padding-top:16px;padding-bottom:2px}
-.wec-timeline>.wec-month-row:first-child{padding-top:0}
-.wec-month-label{font-size:10.5px;color:var(--c-accent);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
-.wec-hidden-group{display:none}
-.wec-hidden-group.open{display:block}
-.wec-more{margin-top:14px;background:none;border:1px solid #eee;border-radius:100px;padding:7px 16px;font-size:11px;color:#999;letter-spacing:.05em;cursor:pointer;font-family:'Orchid','Noto Serif TC',serif;transition:all .2s ease}
-.wec-more:hover{border-color:var(--c-accent);color:var(--c-accent-deep)}
+/* ── Works: Earnings Call sticky sidebar timeline (shown only under the "Earnings Call" filter) ──
+   The rail is rendered from EARN_DATES by renderWecRail(); the grouped list is built by moving the
+   existing .wk-card elements (grouped by the .wk-group-title text preceding them in the DOM) into
+   .grp-body containers — see buildEarningsRows()/enterEarningsView()/exitEarningsView() near
+   filterCat() below. .wk-group-title itself stays permanently hidden — it's only read for its text,
+   grouping is now visually carried by .grp-label. */
+.wec-view{display:none}
+.wec-view.show{display:grid;grid-template-columns:140px 1fr;gap:26px;align-items:start;margin-bottom:8px}
+.wec-rail{position:sticky;top:110px}
+.wec-rail-title{font-family:'Orchid','Noto Serif TC',serif;font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.wec-rail-month{font-family:'Calibri',sans-serif;font-size:9.5px;letter-spacing:.12em;color:#ccc;padding:10px 0 3px}
+.wec-rail-month:first-of-type{padding-top:0}
+.wec-rail-item{position:relative;padding:6px 0 6px 12px;cursor:pointer;border-radius:6px;transition:background .12s ease}
+.wec-rail-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:#ccc;transition:background .15s ease}
+.wec-rail-item:hover::before{background:var(--c-accent)}
+.wec-rail-item .d{font-family:'Calibri',sans-serif;font-size:9.5px;color:#bbb;font-variant-numeric:tabular-nums}
+.wec-rail-item .n{font-size:11px;color:#333;line-height:1.3;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;transition:color .15s ease}
+.wec-rail-item:hover .n{color:var(--c-accent-deep)}
 
-/* ── Works: Earnings Call permanent sub-groups (shown only under the "Earnings Call" filter) ── */
-.wk-group-title{grid-column:1/-1;display:none;font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.12em;padding-top:20px;margin-top:4px;border-top:1px solid #eee}
-.wk-group-title.first{border-top:none;padding-top:0;margin-top:0}
-.wk-group-title.show{display:block}
+.wec-groups .grp{margin-bottom:22px}
+.wec-groups .grp:last-child{margin-bottom:0}
+.wec-groups .grp-label{font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px 4px}
+.wec-groups .grp-body{background:#fff;border:1px solid #eee;border-radius:14px;overflow:hidden}
+
+/* .wk-card, restyled as an inset-divider list row once relocated inside .grp-body */
+.grp-body .wk-card{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border:none;border-radius:0}
+.grp-body .wk-card:hover{background:var(--c-accent-soft);border-color:transparent;box-shadow:none;transform:none}
+.grp-body .wk-card:hover::before{background:var(--c-accent-soft)}
+.grp-body .wk-card:focus-visible{outline-offset:-2px}
+.grp-body .wk-card.wec-hi{background:var(--c-accent-soft)}
+.grp-body .wk-card::before{content:'';position:absolute;left:16px;right:0;bottom:0;height:1px;background:#eee;counter-increment:none}
+.grp-body .wk-card:last-child::before{display:none}
+.grp-body .wk-card::after{content:'›';position:static;opacity:.5;transform:none;top:auto;right:auto;font-size:15px}
+.grp-body .wk-card:hover::after{opacity:1;transform:none}
+.grp-body .wk-info{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1fr auto;column-gap:14px;row-gap:2px;align-items:center}
+.grp-body .wk-name{grid-column:1;grid-row:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grp-body .wk-type{grid-column:1;grid-row:2}
+.grp-body .wk-next-earn{grid-column:2;grid-row:1/3;white-space:nowrap;text-align:right}
+
+.wk-group-title{display:none}
+
+@media(max-width:640px){
+  .wec-view.show{grid-template-columns:1fr}
+  .wec-rail{position:static;display:flex;overflow-x:auto;gap:2px;padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid #eee}
+  .wec-rail-title,.wec-rail-month{display:none}
+  .wec-rail-item{flex:0 0 auto;padding:6px 12px}
+}
 
 /* ── PHILOSOPHY ── */
 #page-philosophy{padding:110px 0 60px}
@@ -414,19 +434,18 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
       <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div>
     </div>
-    <!-- Next-earnings-date timeline for the company-specific Earnings Call cards below (Sankey Diagram
+    <!-- Sticky sidebar timeline for the company-specific Earnings Call cards below (Sankey Diagram
          Tool card is a supporting tool, not a company report, and intentionally has no date entry).
-         Shown only when the
-         "Earnings Call" filter is active (see works-earncal.show toggle in filterCat()).
-         Rendered by renderEarnTimeline() from the EARN_DATES array (see script near filterCat()) —
-         same-day entries auto-merge into one row, rows auto-group by month, and anything more than
-         60 days out auto-collapses behind the "顯示更多" button.
+         Shown only when the "Earnings Call" filter is active — see enterEarningsView()/
+         exitEarningsView() near filterCat() in the script below. The rail (left) is rendered from
+         EARN_DATES by renderWecRail(); the grouped list (right) is built by relocating the existing
+         .wk-card elements into per-industry .grp-body containers. On narrow viewports the rail
+         collapses into a horizontal scroll strip above the list (see the max-width:640px rule).
          Maintenance: when adding a new earnings-call card, add its next report date to EARN_DATES too
          (sorted ascending) and add a matching .wk-next-earn line inside that card's .wk-info. -->
-    <div class="works-earncal" id="works-earncal">
-      <div class="works-earncal-title">Next Earnings Date</div>
-      <div class="wec-timeline" id="wec-timeline"></div>
-      <button class="wec-more" id="wec-more" onclick="toggleEarnMore()" style="display:none"></button>
+    <div class="wec-view" id="wec-view">
+      <div class="wec-rail" id="wec-rail"></div>
+      <div class="wec-groups" id="wec-groups"></div>
     </div>
     <div class="works-grid">
 
@@ -1484,9 +1503,11 @@ function filterCat(cat, pillEl) {
   document.querySelectorAll('.wk-card').forEach(card => {
     card.classList.toggle('wk-hidden', cat !== 'all' && card.dataset.cat !== cat);
   });
-  var earncal = document.getElementById('works-earncal');
-  if (earncal) earncal.classList.toggle('show', cat === 'earnings');
-  document.querySelectorAll('.wk-group-title').forEach(t => t.classList.toggle('show', cat === 'earnings'));
+  if (cat === 'earnings') {
+    enterEarningsView();
+  } else if (earningsViewActive) {
+    exitEarningsView();
+  }
   updateWorksCount();
 }
 
@@ -1523,13 +1544,10 @@ var EARN_DATES = [
   { name:'Morgan Stanley', date:'2026-10-16', predicted:true }
 ];
 
-function renderEarnTimeline() {
-  var el = document.getElementById('wec-timeline');
-  var moreBtn = document.getElementById('wec-more');
+function renderWecRail() {
+  var el = document.getElementById('wec-rail');
   if (!el) return;
   var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  var today = new Date(); today.setHours(0, 0, 0, 0);
-  var cutoff = new Date(today.getTime() + 60 * 86400000);
 
   // merge same-day entries (EARN_DATES is already sorted ascending)
   var groups = [];
@@ -1539,45 +1557,93 @@ function renderEarnTimeline() {
     else groups.push({ date: item.date, predicted: item.predicted, names: [item.name] });
   });
 
-  var html = '', hiddenHtml = '', lastMonth = '', hiddenCount = 0, nextAssigned = false;
+  var html = '<div class="wec-rail-title">下次財報</div>', lastMonth = '';
   groups.forEach(function (g) {
     var d = new Date(g.date + 'T00:00:00');
-    var isHidden = d > cutoff;
     var monthKey = d.getFullYear() + '-' + d.getMonth();
-    var row = '';
     if (monthKey !== lastMonth) {
-      row += '<div class="wec-row wec-month-row"><div class="wec-date"></div><div></div><div class="wec-name wec-month-label">' + MONTHS[d.getMonth()] + '</div></div>';
+      html += '<div class="wec-rail-month">' + MONTHS[d.getMonth()] + '</div>';
       lastMonth = monthKey;
     }
     var mm = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
-    var dateLabel = mm + '/' + dd + (g.predicted ? ' (est.)' : '');
-    var isNext = !isHidden && !nextAssigned;
-    if (isNext) nextAssigned = true;
-    row += '<div class="wec-row' + (isNext ? ' next' : '') + '"><div class="wec-date">' + dateLabel + '</div><div class="wec-dot"></div><div class="wec-name">' + g.names.join(' + ') + '</div></div>';
-
-    if (isHidden) { hiddenHtml += row; hiddenCount += g.names.length; }
-    else html += row;
+    html += '<div class="wec-rail-item" tabindex="0" role="button" onclick="flashRow(\'' + g.names[0].replace(/'/g, "\\'") + '\')">' +
+      '<div class="d">' + mm + '/' + dd + (g.predicted ? ' est.' : '') + '</div><div class="n">' + g.names.join(' + ') + '</div></div>';
   });
-
-  el.innerHTML = html + (hiddenHtml ? '<div class="wec-hidden-group" id="wec-hidden-group">' + hiddenHtml + '</div>' : '');
-  if (moreBtn) {
-    if (hiddenHtml) {
-      moreBtn.style.display = '';
-      moreBtn.dataset.count = hiddenCount;
-      moreBtn.textContent = 'Show ' + hiddenCount + ' more ▾';
-    } else {
-      moreBtn.style.display = 'none';
-    }
-  }
+  el.innerHTML = html;
 }
-renderEarnTimeline();
 
-function toggleEarnMore() {
-  var g = document.getElementById('wec-hidden-group');
-  var btn = document.getElementById('wec-more');
-  if (!g || !btn) return;
-  var open = g.classList.toggle('open');
-  btn.textContent = open ? 'Show less ▴' : 'Show ' + btn.dataset.count + ' more ▾';
+/* ── Works: Earnings Call sticky sidebar — relocates the existing .wk-card elements into
+   per-industry .grp-body containers (grouped by the .wk-group-title text preceding them in the
+   DOM) so the sidebar can sit alongside them. Reversed on exit so the flat 4-column grid used by
+   every other filter is untouched. ── */
+var earningsViewActive = false;
+var EARNINGS_ROWS = null;
+
+function slugifyName(n) { return n.replace(/[^a-zA-Z0-9]/g, ''); }
+
+function buildEarningsRows() {
+  if (EARNINGS_ROWS) return EARNINGS_ROWS;
+  var grid = document.querySelector('.works-grid');
+  var rows = [];
+  var currentGroup = '';
+  Array.prototype.forEach.call(grid.children, function (el) {
+    if (el.classList.contains('wk-group-title')) {
+      currentGroup = el.textContent.trim();
+    } else if (el.classList.contains('wk-card') && el.dataset.cat === 'earnings') {
+      rows.push({ node: el, prevSibling: el.previousElementSibling, group: currentGroup });
+    }
+  });
+  EARNINGS_ROWS = rows;
+  return rows;
+}
+
+function enterEarningsView() {
+  if (earningsViewActive) return;
+  var rows = buildEarningsRows();
+  var groupsEl = document.getElementById('wec-groups');
+  groupsEl.innerHTML = '';
+  var groupBodies = {};
+  rows.forEach(function (r) {
+    if (!groupBodies[r.group]) {
+      var grp = document.createElement('div');
+      grp.className = 'grp';
+      grp.innerHTML = '<div class="grp-label">' + r.group + '</div><div class="grp-body"></div>';
+      groupsEl.appendChild(grp);
+      groupBodies[r.group] = grp.querySelector('.grp-body');
+    }
+    var nameEl = r.node.querySelector('.wk-name');
+    if (nameEl) r.node.id = 'row-' + slugifyName(nameEl.textContent.trim());
+    groupBodies[r.group].appendChild(r.node);
+  });
+  document.querySelector('.works-grid').style.display = 'none';
+  document.getElementById('wec-view').classList.add('show');
+  renderWecRail();
+  earningsViewActive = true;
+}
+
+function exitEarningsView() {
+  if (!earningsViewActive) return;
+  var grid = document.querySelector('.works-grid');
+  buildEarningsRows().forEach(function (r) {
+    if (r.prevSibling && r.prevSibling.parentElement === grid) {
+      r.prevSibling.insertAdjacentElement('afterend', r.node);
+    } else {
+      grid.insertBefore(r.node, grid.firstChild);
+    }
+  });
+  document.getElementById('wec-groups').innerHTML = '';
+  document.getElementById('wec-view').classList.remove('show');
+  grid.style.display = '';
+  earningsViewActive = false;
+}
+
+function flashRow(name) {
+  document.querySelectorAll('.wk-card.wec-hi').forEach(function (el) { el.classList.remove('wec-hi'); });
+  var el = document.getElementById('row-' + slugifyName(name));
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('wec-hi');
+  setTimeout(function () { el.classList.remove('wec-hi'); }, 1600);
 }
 
 /* ── QUOTES: rotating quote text + lazy-loaded Three.js wireframe backdrop ── */
