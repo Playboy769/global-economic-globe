@@ -143,19 +143,24 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wec-rail-title{font-family:'Orchid','Noto Serif TC',serif;font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
 .wec-rail-month{font-family:'Calibri',sans-serif;font-size:9.5px;letter-spacing:.12em;color:#ccc;padding:10px 0 3px}
 .wec-rail-month:first-of-type{padding-top:0}
-.wec-rail-item{position:relative;padding:6px 0 6px 12px;cursor:pointer;border-radius:6px;transition:background .12s ease}
-.wec-rail-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:#ccc;transition:background .15s ease}
-.wec-rail-item:hover::before{background:var(--c-accent)}
-.wec-rail-item .d{font-family:'Calibri',sans-serif;font-size:9.5px;color:#bbb;font-variant-numeric:tabular-nums}
-.wec-rail-item .n{font-size:11px;color:#333;line-height:1.3;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;transition:color .15s ease}
-.wec-rail-item:hover .n{color:var(--c-accent-deep)}
+.wec-rail-group{position:relative;padding:6px 0 6px 12px;border-radius:6px}
+.wec-rail-group::before{content:'';position:absolute;left:0;top:11px;width:4px;height:4px;border-radius:50%;background:#ccc}
+.wec-rail-group.wec-next::before{background:var(--c-accent)}
+.wec-rail-group .d{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:9.5px;color:#bbb;font-variant-numeric:tabular-nums;margin-bottom:1px}
+.wec-rail-item{font-size:11px;color:#333;line-height:1.5;font-family:'Calibri','Noto Sans TC',sans-serif;cursor:pointer;transition:color .15s ease}
+.wec-rail-item:hover{color:var(--c-accent-deep)}
 
 .wec-groups .grp{margin-bottom:22px}
 .wec-groups .grp:last-child{margin-bottom:0}
 .wec-groups .grp-label{font-family:'Orchid','Noto Serif TC',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px 4px}
 .wec-groups .grp-body{background:#fff;border:1px solid #eee;border-radius:14px;overflow:hidden}
 
-/* .wk-card, restyled as an inset-divider list row once relocated inside .grp-body */
+/* .wk-card, restyled as an inset-divider list row once relocated inside .grp-body.
+   .wk-type is rewritten once (in buildEarningsRows) from one long middot-joined string
+   into a short period label + a handful of "tag-chip" spans — the boilerplate segments every
+   card repeats ("法說會"/"Q&A"/"風險矩陣") are dropped, keeping only what's actually distinct
+   per report. Cards never return to the plain-text flat grid (earnings cards are only ever
+   shown inside this sidebar view now that the "All" filter is gone), so the rewrite is permanent. */
 .grp-body .wk-card{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border:none;border-radius:0}
 .grp-body .wk-card:hover{background:var(--c-accent-soft);border-color:transparent;box-shadow:none;transform:none}
 .grp-body .wk-card:hover::before{background:var(--c-accent-soft)}
@@ -165,18 +170,22 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .grp-body .wk-card:last-child::before{display:none}
 .grp-body .wk-card::after{content:'›';position:static;opacity:.5;transform:none;top:auto;right:auto;font-size:15px}
 .grp-body .wk-card:hover::after{opacity:1;transform:none}
-.grp-body .wk-info{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1fr auto;column-gap:14px;row-gap:2px;align-items:center}
+.grp-body .wk-info{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1fr auto;column-gap:14px;row-gap:3px;align-items:center}
 .grp-body .wk-name{grid-column:1;grid-row:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.grp-body .wk-type{grid-column:1;grid-row:2}
-.grp-body .wk-next-earn{grid-column:2;grid-row:1/3;white-space:nowrap;text-align:right}
+.grp-body .wk-type{grid-column:1;grid-row:2;display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-family:'Calibri','Noto Sans TC',sans-serif;text-transform:none}
+.grp-body .wk-type .tag-period{font-size:10.5px;color:#aaa;white-space:nowrap}
+.grp-body .wk-type .tag-chip{font-size:10px;color:#888;background:#f4f2ec;padding:2px 7px;border-radius:6px;letter-spacing:.01em;white-space:nowrap}
+.grp-body .wk-next-earn{grid-column:2;grid-row:1/3;white-space:nowrap;text-align:right;color:#aaa;font-weight:400}
+.grp-body .wk-card.wec-next .wk-next-earn{color:var(--c-accent-deep);font-weight:700}
 
 .wk-group-title{display:none}
 
 @media(max-width:640px){
   .wec-view.show{grid-template-columns:1fr}
-  .wec-rail{position:static;display:flex;overflow-x:auto;gap:2px;padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid #eee}
+  .wec-rail{position:static;display:flex;overflow-x:auto;gap:4px;padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid #eee}
   .wec-rail-title,.wec-rail-month{display:none}
-  .wec-rail-item{flex:0 0 auto;padding:6px 12px}
+  .wec-rail-group{flex:0 0 auto;padding:6px 14px}
+  .wec-rail-group::before{display:none}
 }
 
 /* ── PHILOSOPHY ── */
@@ -1543,10 +1552,19 @@ var EARN_DATES = [
   { name:'Morgan Stanley', date:'2026-10-16', predicted:true }
 ];
 
+function getNextEarnDate() {
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  for (var i = 0; i < EARN_DATES.length; i++) {
+    if (new Date(EARN_DATES[i].date + 'T00:00:00') >= today) return EARN_DATES[i].date;
+  }
+  return EARN_DATES.length ? EARN_DATES[EARN_DATES.length - 1].date : null;
+}
+
 function renderWecRail() {
   var el = document.getElementById('wec-rail');
   if (!el) return;
   var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  var nextDate = getNextEarnDate();
 
   // merge same-day entries (EARN_DATES is already sorted ascending)
   var groups = [];
@@ -1565,8 +1583,10 @@ function renderWecRail() {
       lastMonth = monthKey;
     }
     var mm = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
-    html += '<div class="wec-rail-item" tabindex="0" role="button" onclick="flashRow(\'' + g.names[0].replace(/'/g, "\\'") + '\')">' +
-      '<div class="d">' + mm + '/' + dd + (g.predicted ? ' est.' : '') + '</div><div class="n">' + g.names.join(' + ') + '</div></div>';
+    html += '<div class="wec-rail-group' + (g.date === nextDate ? ' wec-next' : '') + '"><div class="d">' + mm + '/' + dd + (g.predicted ? ' est.' : '') + '</div>' +
+      g.names.map(function (name) {
+        return '<div class="wec-rail-item" tabindex="0" role="button" onclick="flashRow(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</div>';
+      }).join('') + '</div>';
   });
   el.innerHTML = html;
 }
@@ -1579,6 +1599,27 @@ var earningsViewActive = false;
 var EARNINGS_ROWS = null;
 
 function slugifyName(n) { return n.replace(/[^a-zA-Z0-9]/g, ''); }
+
+/* Every earnings card's .wk-type is one middot-joined string, e.g.
+   "FY2026 Q1（2026年1–3月） · 法說會 · Q&A · 認股權證 · 風險矩陣" — the first segment is always
+   the fiscal period and the last is always the boilerplate "風險矩陣" closer; "法說會"/"Q&A" are
+   near-universal too. Keeping all of that as one long serif line is what reads as cluttered, so
+   this rewrites it once into a muted period label plus small chips for whatever's actually
+   distinct about that report. Cards never go back to plain-text (see note above buildEarningsRows),
+   so the rewrite doesn't need to be reversible. */
+var TAG_STOPLIST = ['法說會', 'Q&A'];
+function simplifyTypeLine(typeEl) {
+  if (!typeEl || typeEl.dataset.simplified) return;
+  var parts = typeEl.textContent.split('·').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (parts.length < 2) return;
+  var period = parts[0];
+  var dropLast = parts[parts.length - 1] === '風險矩陣';
+  var tags = parts.slice(1, dropLast ? -1 : parts.length).filter(function (p) { return TAG_STOPLIST.indexOf(p) === -1; });
+  var html = '<span class="tag-period">' + period + '</span>';
+  tags.forEach(function (tag) { html += '<span class="tag-chip">' + tag + '</span>'; });
+  typeEl.innerHTML = html;
+  typeEl.dataset.simplified = '1';
+}
 
 function buildEarningsRows() {
   if (EARNINGS_ROWS) return EARNINGS_ROWS;
@@ -1599,6 +1640,9 @@ function buildEarningsRows() {
 function enterEarningsView() {
   if (earningsViewActive) return;
   var rows = buildEarningsRows();
+  var nextDate = getNextEarnDate();
+  var nextNames = {};
+  EARN_DATES.forEach(function (e) { if (e.date === nextDate) nextNames[e.name] = true; });
   var groupsEl = document.getElementById('wec-groups');
   groupsEl.innerHTML = '';
   var groupBodies = {};
@@ -1611,7 +1655,10 @@ function enterEarningsView() {
       groupBodies[r.group] = grp.querySelector('.grp-body');
     }
     var nameEl = r.node.querySelector('.wk-name');
-    if (nameEl) r.node.id = 'row-' + slugifyName(nameEl.textContent.trim());
+    var name = nameEl ? nameEl.textContent.trim() : '';
+    if (name) r.node.id = 'row-' + slugifyName(name);
+    r.node.classList.toggle('wec-next', !!nextNames[name]);
+    simplifyTypeLine(r.node.querySelector('.wk-type'));
     groupBodies[r.group].appendChild(r.node);
   });
   document.querySelector('.works-grid').style.display = 'none';
