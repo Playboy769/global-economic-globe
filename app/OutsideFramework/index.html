@@ -427,8 +427,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <span class="works-count reveal reveal-delay-2" id="works-count"></span>
     </div>
     <div class="works-filter" id="works-filter">
-      <div class="wf-pill active" data-cat="all" onclick="filterCat('all',this)">All</div>
-      <div class="wf-pill" data-cat="finance" onclick="filterCat('finance',this)">Finance &amp; Markets</div>
+      <div class="wf-pill active" data-cat="finance" onclick="filterCat('finance',this)">Finance &amp; Markets</div>
       <div class="wf-pill" data-cat="earnings" onclick="filterCat('earnings',this)">Earnings Call</div>
       <div class="wf-pill" data-cat="network" onclick="filterCat('network',this)">Network Analysis</div>
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
@@ -1496,12 +1495,11 @@ function updateWorksCount() {
   const n = document.querySelectorAll('.wk-card:not(.wk-hidden)').length;
   wc.innerHTML = '<b class="wc-num">' + n + '</b> Projects';
 }
-updateWorksCount();
 
 function filterCat(cat, pillEl) {
   document.querySelectorAll('.wf-pill').forEach(p => p.classList.toggle('active', p === pillEl));
   document.querySelectorAll('.wk-card').forEach(card => {
-    card.classList.toggle('wk-hidden', cat !== 'all' && card.dataset.cat !== cat);
+    card.classList.toggle('wk-hidden', card.dataset.cat !== cat);
   });
   if (cat === 'earnings') {
     enterEarningsView();
@@ -1510,6 +1508,7 @@ function filterCat(cat, pillEl) {
   }
   updateWorksCount();
 }
+filterCat('finance', document.querySelector('.wf-pill[data-cat="finance"]'));
 
 /* ── Works: Earnings Calendar timeline — single source of truth for the strip above.
    Sorted ascending by date. Add new cards here (keep in sync with that card's .wk-next-earn). ── */
