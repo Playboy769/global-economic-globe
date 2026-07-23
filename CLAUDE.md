@@ -73,10 +73,11 @@ work. This applies even when the request looks unambiguous. This overrides the g
 |---|---|
 | 工具列 復原/重做/圖層 | `cf-undo`/`cf-redo`/`cf-layer-up`/`cf-layer-down`（行 819–834）|
 | 迴圈/槓桿/迷你圖/搜尋/暗色 | `cf-loops`/`cf-leverage`/`cf-minimap-btn`/`cf-search-btn`/`cf-dark-btn`（行 845–874）|
-| 新增節點 文字/圖/PDF/嵌入/表格/畫布/圖引用/分隔線 | `cf-add-text…-divider`（行 900–937）|
+| 新增節點 文字/圖/PDF/嵌入/表格/畫布/圖引用/分隔線/**earnings 報告連結** | `cf-add-text…-divider`、`cf-add-earnings`（行 900–981）|
+| 插入 earnings call 報告節點（連到 `/research/<TICKER>_..._Analysis.html`）| 按鈕 `cf-add-earnings`（行 980）· 選取器 `showEarningsInsertPicker`/`addEarningsRefNode` · 節點型別 `isEarningsRef` |
 | 檔案 feed（資料夾/檔案/範本）| `cf-feed`/`cf-new-folder`/`cf-new-file`/`cf-tpl-btn`（行 951–960）|
 | 畫布層 | `cf-canvas`/`cf-edges`/`cf-world`/`cf-nodes`/`cf-labels`（行 963–968）|
-| 相關後端 | `globe-invest/server.js`：`/api/causal-files` |
+| 相關後端 | `globe-invest/server.js`：`/api/causal-files`、`/api/research-reports`（掃描部署鏡像 `globe-invest/app/research/` 列出可插入的 earnings 報告）|
 
 ### 5. globe-invest 專屬頁（**只在 globe-invest repo，本 repo 無 dev-source — 直接改該 repo**）
 folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app` :8136。
