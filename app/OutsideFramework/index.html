@@ -1529,13 +1529,15 @@ function filterCat(cat, pillEl) {
 filterCat('finance', document.querySelector('.wf-pill[data-cat="finance"]'));
 
 /* ── Works: Earnings Calendar timeline — single source of truth for the strip above.
-   Sorted ascending by date. Add new cards here (keep in sync with that card's .wk-next-earn). ── */
+   Sorted ascending by date. Add new cards here (keep in sync with that card's .wk-next-earn).
+   Optional `session` field: 'BMO' (before market open) or 'AMC' (after market close), rendered
+   by renderWecRail() next to the date. Omit when the session isn't confirmed. ── */
 var EARN_DATES = [
   { name:'ServiceNow, Inc.', date:'2026-07-22' },
   { name:'STMicroelectronics N.V.', date:'2026-07-23', predicted:true },
-  { name:'Corning Incorporated', date:'2026-07-28', predicted:true },
-  { name:'Lam Research', date:'2026-07-29', predicted:true },
-  { name:'Microsoft Corporation', date:'2026-07-29' },
+  { name:'Corning Incorporated', date:'2026-07-28', session:'BMO' },
+  { name:'Lam Research', date:'2026-07-29', session:'AMC' },
+  { name:'Microsoft Corporation', date:'2026-07-29', session:'AMC' },
   { name:'Cloudflare', date:'2026-07-30' },
   { name:'Arm Holdings plc', date:'2026-07-30', predicted:true },
   { name:'Amazon.com', date:'2026-07-31', predicted:true },
@@ -1577,12 +1579,18 @@ function renderWecRail() {
   var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   var nextDate = getNextEarnDate();
 
-  // merge same-day entries (EARN_DATES is already sorted ascending)
+  // merge same-day entries (EARN_DATES is already sorted ascending); session shown on the date
+  // badge only when every entry that day shares the same session, else omitted (mixed day).
+  var SESSION_LABEL = { BMO: '盤前', AMC: '盤後' };
   var groups = [];
   EARN_DATES.forEach(function (item) {
     var last = groups[groups.length - 1];
-    if (last && last.date === item.date) last.names.push(item.name);
-    else groups.push({ date: item.date, predicted: item.predicted, names: [item.name] });
+    if (last && last.date === item.date) {
+      last.names.push(item.name);
+      if (last.session !== item.session) last.session = null;
+    } else {
+      groups.push({ date: item.date, predicted: item.predicted, session: item.session, names: [item.name] });
+    }
   });
 
   var html = '<div class="wec-rail-title">下次財報</div>', lastMonth = '';
@@ -1594,7 +1602,8 @@ function renderWecRail() {
       lastMonth = monthKey;
     }
     var mm = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
-    html += '<div class="wec-rail-group' + (g.date === nextDate ? ' wec-next' : '') + '"><div class="d">' + mm + '/' + dd + (g.predicted ? ' est.' : '') + '</div>' +
+    var sessionLabel = g.session && SESSION_LABEL[g.session] ? ' ' + SESSION_LABEL[g.session] : '';
+    html += '<div class="wec-rail-group' + (g.date === nextDate ? ' wec-next' : '') + '"><div class="d">' + mm + '/' + dd + (g.predicted ? ' est.' : '') + sessionLabel + '</div>' +
       g.names.map(function (name) {
         return '<div class="wec-rail-item" tabindex="0" role="button" onclick="flashRow(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</div>';
       }).join('') + '</div>';
