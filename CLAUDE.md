@@ -236,12 +236,36 @@ block pushes.
   查詢時帶 User-Agent。查到的檔案摘要存入同資料夾（如 `<TICKER> 10-K Supply Chain Notes.md`）。
   - Form 4 → 法說會前後的內部人買賣納入**風險矩陣/訊號解讀**（管理層信心交叉訊號）。
   - 10-K/20-F/10-Q → 供「供應鏈」tab 與財報數字覆核。
-- **輸出兩個互補的單檔 HTML**（tab 導覽、深/淺色主題沿用既有 CSS 元件庫：
-  `.tabs`/`sw()`、`.card`、`.stat-box`、`.risk-item`/`.risk-badge`、`.qa-item`/`toggleQA()`）：
-  - `<TICKER>_FYxxQn_Analysis/<TICKER>_FYxxQn_Analysis.html` — 質化敘事層
-  - `<TICKER>_FYxxQn_Financials/<TICKER>_FYxxQn_Financials.html` — 量化財報層
+- **輸出一份合併的單檔 HTML**（tab 導覽、沿用既有 CSS 元件庫：
+  `.tabs`/`sw()`、`.card`、`.stat-box`、`.risk-item`/`.risk-badge`、`.qa-item`/`toggleQA()`、
+  `.kpi-row`/`.kpi`、`tr.section-head`、`.bu-card`、`.cf-row`、`.bar-row`）：
+  - `<TICKER>_FYxxQn_Analysis/<TICKER>_FYxxQn_Analysis.html` —
+    **質化 5 tabs ＋ 量化 5 tabs 共 10 個 tab，全部放在同一個檔案裡**
 
-### Analysis.html（質化層，5 tabs）
+> **合併是強制步驟，不是選項。** 質化層與量化層可以分開起草（分開寫比較好控制品質），
+> 但**交付前必須合併成上面那一個 `_Analysis.html`**，且合併後**不得留下獨立的
+> `_Financials.html`**——研究資料夾與 `globe-invest/app/research/` 兩邊都只能有一個檔案。
+> 理由有三：① `globe-invest/app/research/` 十幾篇既有報告全部是單檔 10 tabs，兩檔版本會
+> 破壞一致性；② OutsideFramework 的 Works 卡片**一張只指向一個 URL**，拆兩檔會有一半內容
+> 沒有入口、永遠不會被點到；③ 本框架的核心要求「雙層互證」（見下方分析手法）在讀者需要
+> 切換檔案時形同虛設。
+>
+> **合併作業清單**（漏掉任一項就會壞版面或壞分頁）：
+> 1. 把量化層 `<style>` 裡多出來的元件（`.kpi-row`/`.kpi*`、`tr.section-head`、`.bu-*`、
+>    `.cf-*`、`.bar-*`）併進質化層的 `<style>`。
+> 2. 5 個量化 tab 按鈕接在 `sw('risk',...)` 那顆之後，順序：損益表 → 業務部門 → 資產負債表
+>    → 現金流量 → 估值觀察。
+> 3. 5 個 `<div id="panel-...">` 貼在 `.footer` 之前，並把原本量化首頁的 `class="panel active"`
+>    改回 `class="panel"`（`active` 全檔只能有一個，否則兩個 panel 會同時顯示）。
+> 4. **class 名稱衝突自檢**：合併後全檔搜尋 `class="... panel"`，確認沒有任何非分頁元素
+>    誤用 `panel` 這個 class——曾發生 `.tech-card.panel`（panel-level 封裝卡片）被
+>    `.panel{display:none}` 吃掉、並被 `sw()` 當成分頁的狀況，已改名為 `.tech-card.pnl`。
+> 5. 更新 `<title>`、`.page-header` 的 h1／p（p 要列出全部 10 個 tab），並**刪除兩檔時代的
+>    互相指路文字**（「請見同系列 XXX_Financials」「詳見同系列 Analysis 報告的…」之類）。
+> 6. 合併後在本地 launch.json port 逐一點過 10 個 tab，確認每次只有一個 panel 顯示、
+>    Sankey 在切到「供應鏈」分頁後有畫出來、console 無錯誤、無橫向溢出。
+
+### 質化層（tabs 1–5）
 
 1. **Q&A 問答分析** — 開頭 3 個 stat-box（分析師提問數／核心問題數／邏輯缺口數）；
    每位分析師一張可折疊卡片：問題核心 → 管理層回應 → ⚑ 邏輯缺口/注意/觀察；
@@ -276,7 +300,7 @@ block pushes.
    （從分散答覆拼湊出的時間點/條款重疊，非管理層直接承認）；納入 Form 4 內部人
    交易訊號（若有）。
 
-### Financials.html（量化層，5 tabs）
+### 量化層（tabs 6–10，同檔）
 
 損益表（KPI 四宮格 → 逐行 QoQ/YoY → GAAP/非GAAP 差異 → YTD → 財測 vs 實際 → 下年度展望）｜
 業務部門（BU 卡片＋三季利潤率趨勢；**量價拆分**：出貨量 QoQ 與 ASP QoQ 分離）｜
@@ -285,8 +309,10 @@ block pushes.
 
 ### 分析手法要求
 
-- **雙檔互證**：Analysis 的每個關鍵敘事判斷，須在 Financials 找到對應科目變動印證
-  （例：SCA 押金 → 其他非流動負債暴增）。
+- **雙層互證**：質化 tabs 的每個關鍵敘事判斷，須在量化 tabs 找到對應科目變動印證
+  （例：SCA 押金 → 其他非流動負債暴增；「匯率貢獻 +0.6pp」→ 毛利率 QoQ 恰為 +0.6pp，
+  即剝離匯率後為持平）。**「估值觀察」tab 收尾放一張互證對照表**，左欄列管理層說法、
+  右欄列對應的財報科目驗證，把散在十個 tab 的對照關係收在同一張表裡。
 - **留白反推**：把管理層「沒說的」當訊號（不拆客戶身份 → 反推客戶集中）；能反推的數字要反推。
 - **每表必註記**：任何數字表格旁配一條 ⚑ 人工解讀，不讓表格自己說話。
 - **Fallback 模式**（無逐字稿，如 SUMCO）：省略 Q&A tab、風險矩陣標題註明資料限制，
@@ -304,10 +330,12 @@ block pushes.
 
 ### 分析完成後強制同步與上架（缺一不可）
 
-每次完成一份 earnings call 分析（Analysis.html + Financials.html 兩檔皆已產出）後，**收尾必做**
-下面三件事，做完框架本身的內容不算完工：
+每次完成一份 earnings call 分析後，**收尾必做**下面四件事，做完框架本身的內容不算完工：
 
-1. **鏡像**：把兩份 HTML 複製到 `globe-invest/app/research/`，檔名與資料夾內原檔名一致、直接攤平
+0. **合併**：確認質化 5 tabs 與量化 5 tabs 已合併成單一 `<TICKER>_FYxxQn_Analysis.html`
+   （依上方「合併作業清單」六項逐項核對），且研究資料夾內**沒有殘留 `_Financials` 資料夾或檔案**。
+   合併沒做完就往下走，後面的鏡像與上架都會是錯的。
+1. **鏡像**：把那一份 HTML 複製到 `globe-invest/app/research/`，檔名與資料夾內原檔名一致、直接攤平
    （不建 `<ticker>` 子資料夾），與現有十幾篇報告的擺法一致。這一步就是「Research 報告」鏡像對
    （見上方「鏡像對」表）唯一的同步方式，沒有 sync script。
 2. **上架 OutsideFramework Works**：在 `app/OutsideFramework/index.html` 的 Works → Earnings Call
