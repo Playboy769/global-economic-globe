@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMM — FY2026 Q2 — 法說會＋財報完整分析</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif; background: #fff; color: #1a1a2e; font-size: 13px; }
+
+  .page-header { padding: 20px 24px 0; }
+  .page-header h1 { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+  .page-header p { font-size: 12px; color: #666; margin-top: 4px; line-height: 1.6; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 16px 24px 40px; }
+
+  .tabs { display: flex; border-bottom: 2px solid #e2e4ea; margin-bottom: 20px; gap: 0; flex-wrap: wrap; }
+  .tab { padding: 10px 14px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 500; color: #888; transition: all 0.2s; font-size: 13px; }
+  .tab.active { border-bottom-color: #2563eb; color: #2563eb; }
+  .tab:hover:not(.active) { color: #1a1a2e; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
+  .card-title { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; margin-bottom: 8px; }
+  .card p { line-height: 1.7; color: #333; }
+  .card p + p { margin-top: 8px; }
+
+  .qa-item { border: 1px solid #e2e4ea; border-radius: 8px; margin-bottom: 10px; overflow: hidden; background: #fff; }
+  .qa-header { padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #fafbfd; gap: 10px; }
+  .qa-header:hover { background: #eff2f8; }
+  .qa-analyst { font-weight: 600; font-size: 12px; color: #1a1a2e; }
+  .qa-topic { font-size: 12px; color: #666; margin-top: 2px; }
+  .qa-arrow { font-size: 10px; color: #999; transition: transform 0.2s; flex-shrink: 0; }
+  .qa-item.open .qa-arrow { transform: rotate(180deg); }
+  .qa-body { display: none; padding: 14px; border-top: 1px solid #e2e4ea; background: #fff; }
+  .qa-item.open .qa-body { display: block; }
+
+  .q-block { margin-bottom: 10px; }
+  .q-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .q-label.q { color: #b45309; }
+  .q-label.a { color: #15803d; }
+  .q-label.flag { color: #dc2626; }
+  .q-text { line-height: 1.7; color: #333; }
+  .flag-box { background: #fff; border: 1px solid #f0aab8; border-left: 4px solid #dc2626; border-radius: 6px; padding: 10px; margin-top: 8px; }
+  .flag-box .q-label { color: #dc2626; }
+  .flag-box.obs { border-color: #a9c9f5; border-left-color: #1d4ed8; }
+  .flag-box.obs .q-label { color: #1d4ed8; }
+
+  .orig-box { background: #f8f9fb; border-left: 3px solid #94a3b8; border-radius: 6px; padding: 10px 12px; margin-top: 8px; }
+  .orig-box .orig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px; }
+  .orig-box .orig-text { font-size: 12px; line-height: 1.8; color: #475569; font-style: italic; }
+  .orig-box .orig-text b { font-style: normal; color: #334155; }
+
+  .quad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .quad-box { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; border-left: 4px solid; }
+  .quad-box.blue { border-left-color: #2563eb; }
+  .quad-box.green { border-left-color: #15803d; }
+  .quad-box.orange { border-left-color: #c2600a; }
+  .quad-box.red { border-left-color: #b91c4a; }
+  .quad-box h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .quad-box.blue h4 { color: #1d4ed8; }
+  .quad-box.green h4 { color: #15803d; }
+  .quad-box.orange h4 { color: #c2600a; }
+  .quad-box.red h4 { color: #b91c4a; }
+  .quad-box ul { padding-left: 15px; }
+  .quad-box li { margin-bottom: 5px; line-height: 1.6; color: #333; }
+
+  .diligence-box { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .diligence-box h4 { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+  .diligence-box ol { padding-left: 18px; }
+  .diligence-box li { margin-bottom: 8px; line-height: 1.7; color: #333; }
+
+  .band-card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .band-track { position: relative; height: 40px; background: #f0f1f5; border-radius: 6px; margin: 30px 0 12px; }
+  .band-fill { position: absolute; top: 0; bottom: 0; background: #dbe8fd; border-radius: 6px; }
+  .band-marker { position: absolute; top: -26px; transform: translateX(-50%); text-align: center; font-size: 11px; color: #444; white-space: nowrap; }
+  .band-marker .dot { width: 10px; height: 10px; border-radius: 50%; margin: 2px auto 0; }
+  .band-marker.floor .dot { background: #94a3b8; }
+  .band-marker.target .dot { background: #2563eb; }
+  .band-marker.actual .dot { background: #15803d; }
+  .band-legend { display: flex; gap: 16px; font-size: 11px; color: #666; margin-top: 4px; flex-wrap: wrap; }
+  .band-legend span { display: flex; align-items: center; gap: 4px; }
+  .band-legend .sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  .stance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .stance-col { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; }
+  .stance-col h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; color: #1a1a2e; }
+  .stance-col .pro { color: #15803d; font-weight: 600; font-size: 11px; margin-top: 6px; }
+  .stance-col .con { color: #b91c1c; font-weight: 600; font-size: 11px; margin-top: 6px; }
+  .stance-col ul { padding-left: 15px; margin-bottom: 4px; }
+  .stance-col li { font-size: 12px; margin-bottom: 4px; line-height: 1.6; color: #333; }
+
+  .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .tech-card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; border-top: 3px solid #2563eb; }
+  .tech-card.g { border-top-color: #15803d; }
+  .tech-card.o { border-top-color: #c2600a; }
+  .tech-card.r { border-top-color: #b91c4a; }
+  .tech-card h4 { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .tech-card .meta { font-size: 11px; color: #666; margin-bottom: 6px; }
+  .tech-card p { font-size: 12px; line-height: 1.6; color: #333; }
+
+  .flow-box { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .flow-chain { font-size: 12px; line-height: 2.4; color: #333; }
+  .flow-chain .node { display: inline-block; background: #f5f6fa; border: 1px solid #dde1ea; border-radius: 14px; padding: 3px 10px; margin: 2px; font-weight: 600; color: #1a1a2e; }
+  .flow-chain .arrow { color: #94a3b8; margin: 0 2px; }
+
+  .risk-item { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+  .risk-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; margin-top: 2px; border: 1px solid; }
+  .risk-badge.high { background: #fff; color: #b91c1c; border-color: #f0aaaa; }
+  .risk-badge.med { background: #fff; color: #92400e; border-color: #f0d090; }
+  .risk-badge.low { background: #fff; color: #15803d; border-color: #a3dab1; }
+  .risk-text { font-size: 12px; line-height: 1.7; color: #333; }
+  .risk-title { font-weight: 700; margin-bottom: 3px; color: #1a1a2e; }
+  .risk-source { font-size: 11px; color: #888; margin-top: 4px; }
+
+  .divider { border: none; border-top: 1px solid #e2e4ea; margin: 16px 0; }
+  .section-title { font-size: 13px; font-weight: 700; margin: 4px 0 10px; color: #1a1a2e; }
+
+  .stat-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .stat-box { flex: 1; min-width: 140px; background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 700; color: #2563eb; }
+  .stat-lbl { font-size: 11px; color: #666; margin-top: 3px; }
+
+  .foot-note { font-size: 11px; color: #999; text-align: center; margin-top: 24px; padding-top: 12px; border-top: 1px solid #eee; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; text-align: center; }
+  .kpi-val { font-size: 20px; font-weight: 700; color: #2563eb; }
+  .kpi-lbl { font-size: 11px; color: #666; margin-top: 3px; }
+  .kpi-sub { font-size: 11px; color: #15803d; margin-top: 2px; }
+  .kpi-sub.neg { color: #b91c1c; }
+
+  .tbl-wrap { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .tbl-title { padding: 10px 14px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; background: #f5f6fa; border-bottom: 1px solid #e2e4ea; }
+  .tbl-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 520px; }
+  th { padding: 8px 12px; text-align: right; color: #666; font-weight: 600; background: #f5f6fa; border-bottom: 1px solid #e2e4ea; white-space: nowrap; }
+  th:first-child { text-align: left; }
+  td { padding: 8px 12px; text-align: right; border-bottom: 1px solid #eee; color: #333; }
+  td:first-child { text-align: left; color: #1a1a2e; }
+  td strong { color: #1a1a2e; }
+  tr:last-child td { border-bottom: none; }
+  tr.subtotal td { color: #666; font-style: italic; }
+  tr.total td { font-weight: 700; color: #1a1a2e; background: #f5f6fa; border-top: 1px solid #ccc; }
+  tr.section-head td { background: #f5f6fa; color: #2563eb; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; }
+  .pos { color: #15803d; }
+  .neg { color: #b91c1c; }
+  .neu { color: #92400e; }
+  table.wide { min-width: 640px; }
+  table td.wrap { white-space: normal; line-height: 1.6; }
+
+  .bu-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .bu-card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; border-top: 3px solid; }
+  .bu-card.b { border-top-color: #2563eb; }
+  .bu-card.g { border-top-color: #15803d; }
+  .bu-card.o { border-top-color: #c2600a; }
+  .bu-name { font-weight: 700; font-size: 12px; color: #1a1a2e; margin-bottom: 2px; }
+  .bu-abbr { font-size: 11px; color: #666; margin-bottom: 10px; }
+  .bu-stat { display: flex; justify-content: space-between; margin-bottom: 6px; gap: 6px; }
+  .bu-stat-lbl { font-size: 12px; color: #666; }
+  .bu-stat-val { font-size: 12px; font-weight: 600; color: #1a1a2e; }
+  .margin-bar-wrap { background: #eef0f5; border-radius: 4px; height: 6px; margin-top: 4px; overflow: hidden; }
+  .margin-bar { height: 100%; border-radius: 4px; }
+  .bu-delta { font-size: 11px; color: #15803d; margin-left: 6px; }
+  .bu-delta.neg { color: #b91c1c; }
+
+  .bar-row { display: flex; align-items: center; margin-bottom: 8px; gap: 8px; }
+  .bar-lbl { width: 240px; font-size: 12px; color: #333; flex-shrink: 0; line-height: 1.4; }
+  .bar-wrap { flex: 1; background: #eef0f5; border-radius: 3px; height: 22px; position: relative; overflow: hidden; min-width: 60px; }
+  .bar-fill { height: 100%; border-radius: 3px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; }
+  .bar-num { width: 96px; font-size: 12px; font-weight: 600; color: #1a1a2e; text-align: right; flex-shrink: 0; }
+
+  .cf-section { margin-bottom: 12px; }
+  .cf-header { font-size: 12px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding: 6px 12px; background: #f5f6fa; border-radius: 6px; }
+  .cf-row { display: flex; justify-content: space-between; padding: 5px 12px; font-size: 12px; border-bottom: 1px solid #eee; gap: 10px; }
+  .cf-row:last-child { border-bottom: none; }
+  .cf-row.total-row { font-weight: 700; background: #f5f6fa; border-radius: 4px; margin-top: 4px; padding: 7px 12px; }
+  .cf-lbl { color: #333; }
+  .cf-val { font-weight: 600; color: #1a1a2e; white-space: nowrap; }
+
+  .note { font-size: 11px; color: #444; margin-top: 8px; margin-bottom: 12px; padding: 8px 12px; background: #fff; border: 1px solid #e2e4ea; border-radius: 6px; border-left: 3px solid #2563eb; line-height: 1.7; }
+  .note.yellow { border-left-color: #c2600a; }
+  .note.red { border-left-color: #b91c1c; }
+  .note.grey { border-left-color: #94a3b8; }
+
+  @media (max-width: 700px) {
+    .quad-grid, .stance-grid, .tech-grid { grid-template-columns: 1fr; }
+    .bu-grid { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .bar-lbl { width: 130px; }
+  }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>3M Company (MMM) — FY2026 Q2 法說會＋財報完整分析</h1>
+  <p>Q&amp;A 問答分析／Madison JV 交易拆解／技術與產品線／供應鏈／風險矩陣／損益表／業務部門／資產負債表／現金流量／估值觀察（共 10 個分頁）
+  &nbsp;·&nbsp; 法說會日期：2026 年 7 月 21 日
+  &nbsp;·&nbsp; 交叉比對 SEC EDGAR：Q2 FY2026 Form 10-Q（2026/7/21 申報）、FY2025 Form 10-K（2026/2/3 申報）、2026 年 50 件 Form 4</p>
+</div>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="sw('qa',this)">Q&amp;A 問答分析</div>
+    <div class="tab" onclick="sw('deal',this)">Madison JV 交易拆解</div>
+    <div class="tab" onclick="sw('tech',this)">技術與產品線</div>
+    <div class="tab" onclick="sw('chain',this)">供應鏈</div>
+    <div class="tab" onclick="sw('risk',this)">風險矩陣</div>
+    <div class="tab" onclick="sw('inc',this)">損益表</div>
+    <div class="tab" onclick="sw('bu',this)">業務部門</div>
+    <div class="tab" onclick="sw('bs',this)">資產負債表</div>
+    <div class="tab" onclick="sw('cf',this)">現金流量</div>
+    <div class="tab" onclick="sw('val',this)">估值觀察</div>
+  </div>
+
+  <!-- ============ TAB 1: Q&A ============ -->
+  <div id="panel-qa" class="panel active">
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-val">11</div><div class="stat-lbl">分析師提問</div></div>
+      <div class="stat-box"><div class="stat-val">18</div><div class="stat-lbl">核心問題（含追問）</div></div>
+      <div class="stat-box"><div class="stat-val">10</div><div class="stat-lbl">邏輯缺口</div></div>
+    </div>
+    <div class="note grey">本分頁的本質是<b>話術偵測</b>，不是摘要。每一則卡片底部附逐字稿原文引用框（未經節錄的原始交換），
+    解讀與缺口判斷一律寫在紅框內，供讀者自行覆核。全場最關鍵的一個結構性事實先講在前面：
+    管理層口中的「organic growth 5.4%」是<b>非 GAAP 調整後</b>數字；同日申報的 10-Q 顯示 <b>GAAP 有機成長為 2.3%、總營收成長 2.4%</b>，
+    兩者差距 3.1 個百分點全部來自「移除 manufactured PFAS products 特別項目」（把去年同期 Corporate 的 $186M PFAS 營收從比較基期扣掉）。
+    整場法說會沒有任何一位分析師問到這件事。</div>
+
+    <div class="qa-item open">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Jeff Sprague（Vertical Research）</div><div class="qa-topic">成長來源拆解 × 2 倍 macro 是否為可持續模式｜追問：Madison 為何不入財測、稅率</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">新產品營收超出計畫多少？cross-sell 與客戶流失率下降各扮演什麼角色？最終想問的是：<b>約 2 倍 macro 的成長算式，是否為 3M 可持續的長期模型？</b></div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Bill Brown：強調「不是 macro 順風、主要是內部表現」；上半年主要靠 commercial excellence（銷售力、定價治理、通路 joint business plan），
+          客戶流失率改善約 200bps（主要來自 SIBG），但「仍然太高」；下半年與 2027 年 innovation 貢獻會更大。
+          給出的唯一量化：<b>今年高於 macro 約 $450M</b>，優於上季預估的 $340–350M。<b>全程沒有回答「2 倍 macro 是否可持續」。</b></div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 1 ─ 承諾算式的缺口被 $450M 這個「好消息」掩蓋</div>
+          <div class="q-text">Investor Day 的承諾是 2025–2027 三年合計高於 macro <b>$10 億</b>。依 Bill 自己在本場給的數字：2025 年「好一點，$100M 出頭」、2026 年「$450M」，
+          累計約 $550M ── 意味著<b>單 2027 一年就必須再做出 $450M 以上</b>才能達標，等於要複製今年這個「最好的一年」的全部增量。
+          Bill 用「we'll come back early next year and talk about next year」帶過，沒有承認這個算式已經把壓力全部後推到最後一年。
+          分析師 Amit Mehrotra 稍後也提到市場原本預期 2027 年 outgrowth 約 $600M ── 若以 $600M 計，三年累計 $1.15B 才勉強達標，但那需要 2027 年再加速 33%。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 2 ─ Madison「對 EPS 財測無重大影響」與 10-Q 揭露的結構不一致</div>
+          <div class="q-text">Anurag 回答 Madison 未納入財測是為了「apple-to-apple」，並稱「does not have a material impact to the EPS guidance range」。
+          但同日申報的 10-Q Note 3 揭露了三件不只是「時點差」的事：① Bain 的少數股權<b>五年後可贖回</b>，須列於永久權益之外（mezzanine），
+          按帳面值與<b>估計贖回值孰高</b>衡量，且明文寫著「<b>affecting net income attributable to 3M</b>」；
+          ② 退場與流動性條款另外形成一個<b>須按公允價值列帳的衍生工具</b>；③ 合資公司動用了 <b>$1.43B 定期貸款</b>（7 月已提取）。
+          換言之，Madison 帶進來的不是一條可加總的營收，而是一組會持續在損益表下方產生波動的結構性項目 ── 這在法說會上完全沒有被描述。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Jeff Sprague:</b> "Hey, thanks. Good morning, everyone. Nice to see the top line here. Bill, I was wondering if you could just even unpack this a little bit more. There's some great detail on these slides, but just kind of looking at the new product launches and the like, closely on track to what you thought, I believe, right? The revenues are coming in better. Do we have a combination of just upside in new product revenue relative to plan? It sounds like cross-sell is a little bit better. Maybe what role kind of reduced churn is playing in all this. I guess really what I want to get to at the end of the question is, an algorithm of roughly two times macro, do you view that as sort of a sustainable model for 3M going forward?"<br><br>
+          <b>Bill Brown:</b> "Good morning, Jeff. That's a great question. Thank you for that. We're very confident in where the growth happens to be. We came in stronger than we had expected in the quarter. It really is a combination of both commercial excellence and innovation excellence, the journey that we've been on for two years that is maturing, I think, very rapidly. It's not really macro tailwind. The macro on the industrial side looks pretty good, but there's some headwinds in the marketplace. It's mostly just internal performance. When you look at just the quarter, we're a little bit better than we had expected. Over the last 12 months at 3%, it's clearly trending above the macro. We think it's pretty good. Mostly driven in the first half from commercial excellence activities. A lot of the things we've laid out in the past around sales force effectiveness, better performance at the front end, pricing governance. We're pushing a lot with our channel partners, joint business plans. Cross-selling is much better. On loyalty, we are getting better on attrition. We've been tracking this very carefully over the last couple of years. We've seen about 200 basis points of improvement in attrition, primarily coming out of our SIBG business. It would take some time for that to turn, but it's starting to turn. It's still too high, but it's actually making some good improvements here. As we look to the back end of the year, we do see the innovation engine contributing even more in the back half. In fact, even greater into 2027, based on just the momentum that we happen to be building here. We feel pretty good. This year, we think we'll be about $450 million above macro in the full year. A little bit better than we thought last quarter, around $340 million-$350 million, and that's largely on the back of good commercial excellence, but the machine churning faster on innovation. All good signs and we're very pleased with the performance in the quarter, and we expect our momentum continue."<br><br>
+          <b>Jeff Sprague:</b> "Great. Maybe just unrelated, follow-up for Anurag. Madison not included in the guide, although it's closed. Is there some peculiarity we need to work through before we dial this in? Just curious on why that wasn't included, and are we looking at a lower tax rate for the year? Thanks."<br><br>
+          <b>Anurag Maheshwari:</b> "Great. Well, thanks for the question, Jeff. No, we just wanted to provide an apple-to-apple guidance from our last earnings call so that we can see how our organic performance has impacted our revenue, EPS, and cash. We have a page at the back of the webcast that has the revenue margin and other information on Madison. It does not have a material impact to the EPS guidance range or the numbers, and we'll incorporate that in our third quarter call. Just for tax, we still plan to be around 20% for the year."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Scott Davis（Melius Research）</div><div class="qa-topic">EBO 光連接器的重大性與擴散路徑｜追問：中國是否重新成為成長引擎</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">EBO（Expanded Beam Optical）看起來有趣，但<b>重大性（materiality）</b>到底多大？如何規模化？Microsoft 之外能否擴散到其他 hyperscaler？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Bill Brown 給了本場最完整的一組量化：可縮短資料中心線路安裝時間約 <b>85%</b>；<b>100 項專利、50 項申請中</b>；
+          <b>今年營收 $40–50M</b>；未來數年「could be 4x or 5x that or even more」；今年產能翻倍、未來 12–18 個月再翻倍，
+          但「even that isn't anywhere near the volume demand」；已組建 <b>44 家參與者</b>的多方供應協議；
+          <b>今年 TAM 約 $10 億，2028 年成長至 $20 億</b>。中國方面：Q2 雙位數成長、上半年約 8%，內銷／出口約 50/50，逾 5,000 人、6 座工廠。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 3 ─ 分子給得很完整，分母始終沒出現</div>
+          <div class="q-text">Scott 問的字面就是「materiality」。Bill 給出 $40–50M 與「4–5 倍」，但<b>從未把它放回 3M 的營收基數</b>。
+          代入 10-Q：Q2 總營收 $6,500M、年化約 $250 億。EBO 今年 $40–50M 佔比 <b>約 0.18%</b>；
+          即使數年後做到 4–5 倍（$160–250M），也只有 <b>約 0.6–1.0%</b>。
+          對照 TEBG 底下的 Electronics 產品線 Q2 就有 $682M ── EBO 目前規模不到該產品線的 7%。
+          這不是說 EBO 不重要，而是：本季股價敘事中最被放大的一項技術，其可見的財務貢獻在 2028 年前都不足以改變 3M 的成長率，
+          而管理層選擇讓聽眾自行完成這個除法。</div>
+        </div>
+        <div class="flag-box obs">
+          <div class="q-label">◇ 可覆核性註記</div>
+          <div class="q-text">中國「內銷／出口 50/50」「6 座工廠、5,000 人」全部<b>僅見於法說會口述</b>，10-K 與 10-Q 皆無按國別的產能或採購揭露，
+          投資人無法獨立驗證。可覆核的僅有：10-Q Note 2 揭露 China/Hong Kong Q2 營收 <b>$859M</b>（去年同期 $754M，+13.9%），佔全公司 13.2%。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Scott Davis:</b> "This Expanded Beam Optical thing seems interesting, but I'm trying to get a sense, I guess, of a couple things. One is really materiality and how that scales out. It looks like it was launched with Microsoft as kind of the partner. Is there an opportunity for that to scale across more hyperscalers and how do you think about that? I'll just leave that as a little bit of an open-ended to help us understand where the upside is in that market."<br><br>
+          <b>Bill Brown:</b> "Scott, thanks for the question. It's getting quite a bit of excitement, and we're excited internally as well. It's been a technology that's developed several years ago. Just in a nutshell, it's very durable, dust resistant, vibration resistant, fiber optic connection technology. We've proven with a hyperscaler that it can reduce by about 85% the time to revenue, time to install circuits in a data center. We've got about 100 patents in this space, 50 pending. It's very well protected, and we're very excited about this. It's been in testing for several years with Microsoft. We're very pleased that they have qualified us as a technology for the Azure data centers. That's very encouraging. The revenue this year, it was in the $40 million-$50 million range. We do think it will scale over time. Could be 4x or 5x that or even more over the next several years, depending upon our progress here, as well as the adoption of optical technologies in data centers as that transitions. A couple of things are happening here. One, as we continue to develop the technology, each hyperscaler has some uniqueness in their architecture, so that's got to be developed. We've got to scale it both internally and externally. Earlier this year, we announced that we would double our capacity on EBO this year and another doubling over the next year to 18 months. Even that isn't anywhere near the volume demand in the marketplace. We're also working with various contract manufacturers, we're pretty developed on one. The third item in this is that, we will not be successful as a sole provider here. This is about enabling an ecosystem of partners. We formed a multi-supplier agreement. There's 44 players in this agreement all throughout the ecosystem. There's multiple hyperscalers, chip manufacturers, connector manufacturers, and it's about how do you enable the whole ecosystem. All of those things are in place. We're deep in the trials with other hyperscalers. I won't say much more about that. The TAM this year for EBO Technologies is around $1 billion. We think it'll grow to two by 2028. $2 billion, it could be beyond that over time. Again, we've got to be very successful in how we scale this product and make sure we've got good quality, deliver on time, all those basic pieces. We're very encouraged about the progress that we're on, the results that we're seeing. The team's done a great job here, and we're optimistic about the growth in the space."<br><br>
+          <b>Scott Davis:</b> "Okay. That's helpful. Then just a quick follow-up. I'd kind of given up on China, but it sounds like China could potentially be a growth engine for you guys again. Is that an exaggeration, or how do you view the short, medium, long-term kind of China market today versus maybe when you took over the job a couple years back?"<br><br>
+          <b>Bill Brown:</b> "Yeah, good question, Scott. I mean, look, we've been pretty consistent that China's been a very special market for us. It's performing really well. We've got a great team on the ground. We've organized a little bit differently and uniquely there as well as in India, sort of a hybrid organizational model. We have global business groups, but we stood up a team focused on China, based in China, same thing in India, and we're seeing the results. In the second quarter, we were a double-digit growth, first half about 8%. A lot of the performance there, keep in mind again, we're 50/50 between domestic production and export. The domestic economy, from an industrial perspective, remains pretty solid in China, and we're performing well. A lot of it is localizing NPI and a lot of it is commercial execution on the ground. The team is doing a fantastic job. We have more than 5,000 people there, six factories, and again, we're developing more localized technology. The export is the other 50% of the business. That part of the economy has done pretty well, and we feel pretty good about the results, and we'll continue to press it every quarter as we are in Q3 in the back end of the year. Long term, we like our position in China, we like the team that's executing in China, the strategy, and we're pretty optimistic about the future in China."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Amit Mehrotra（UBS）</div><div class="qa-topic">NPI 何時真正轉化為營收、產品分級結構｜追問：毛利率能否回到 high 40s</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">新產品通常要幾季才會 inflect？這些是「真正的新產品」還是所謂 Class 3 的改版產品？2027 年 outgrowth $600M 的預期還成立嗎？
+          追問：Analyst Day 原本的故事是把<b>毛利率</b>從 low 40s 拉回 high 40s，但關稅等因素下毛利率仍卡在 very low 40s ── 結構上還回得去嗎？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Bill：開發到上市週期約 <b>250 天</b>，2027 年將較基期縮短約 20%；<b>Class 3 目前佔上市數量約 75%</b>，Class 4/5 約 25%，未來升至 30%＋，
+          工業端（TEBG／SIBG）目標 40%＋。毛利率方面：「<b>On gross margins, we're tracking close to mid-40s right now</b>」，
+          並列舉 cost of poor quality 下降、OEE 上升、採購淨節省、Kaizen 場次加倍等，結論是「有能力隨時間達到 high 40s」。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 4 ─ 「毛利率接近 mid-40s」與同日 10-Q 的數字對不上（本場最直接的一處）</div>
+          <div class="q-text">依同日申報的 10-Q 損益表：Q2 2026 淨銷售 $6,500M、cost of sales $3,817M ── <b>GAAP 毛利率 = 41.3%</b>（去年同期 42.5%，<b>YoY 下降 1.2pp</b>）；
+          上半年 41.0%；FY2025 全年 39.9%。10-Q MD&amp;A 自己也寫明 cost of sales 佔營收比重<b>上升</b> 1.2pp，主因是 PFAS 製造退出後的成本 dis-synergy、油價上漲與關稅。<br>
+          即使把本季全部 $631M 特別項目都當成 COGS 加回（實際上其中僅 transformation costs 的一部分落在 COGS，多數在 SG&amp;A 與處分損失），
+          毛利率上限也只到約 <b>43.6%</b>。無論用哪一種算法，都到不了「接近 mid-40s」。
+          更值得注意的是提問者 Amit 已經在問題裡把事實講對了（「gross margin being sort of stuck in the very low 40s」），
+          Bill 的回答等於<b>直接改寫了提問前提</b>，而現場無人追問。</div>
+        </div>
+        <div class="flag-box obs">
+          <div class="q-label">◇ 觀察：營益率的擴張並非來自毛利率</div>
+          <div class="q-text">同一份 10-Q 顯示 SG&amp;A 佔營收比重由 19.9% 降至 <b>16.4%（−3.5pp）</b>，主因是「lower net costs from significant litigation」。
+          也就是說，本季調整後營益率 +40bps 的來源是<b>費用端（且與訴訟費用波動高度相關）</b>，毛利端反而是逆風。
+          Bill 在回答中確實提到「both gross margin, but also importantly in SG&amp;A, in IT」，但把兩者並列的措辭掩蓋了兩者<b>方向相反</b>的事實。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Amit Mehrotra:</b> "Thanks. Morning. Bill, Anurag, just hoping to get a little bit more color on NPI in terms of when you typically expect these new products to sort of really inflect. I'm sure it takes a few quarters or maybe a year or two. Anything within the NPI in terms of are these truly new products or increasingly still new products or I know what you call Class 3 products or refresh products, any thought there? I think there was this expectation that maybe $600 million of outgrow next year on year 3 of the plan. Is that still the way to think about the outgrowths from a lot of these actions? Thank you."<br><br>
+          <b>Bill Brown:</b> "Amit, a bunch of good questions. First, on the last piece around the outgrowth next year. Look, this year, we originally said we would be $1 billion over the macro, 2025, 2026, and 2027. Clearly last year we did a bit better than $100 million. This year we'll do more than $300 million, around $450 million. That continues to ramp. We'll come back early next year and talk about next year. Clearly we're performing better than the macro, and it's both commercial excellence as well as in innovation or NPI. Look, on NPI, the progress has been fantastic, and the chart that we put into the webcast, a very important one. It shows this very deep inflection, and we're clearly on the right track here. We typically would launch a product within about, from the beginning of development to launch, it's running around 250 days. It's down substantially than where it was two years ago. By 2027, it's kind of around 20% reduction in overall cycle time. There's some nuances in the data here. We're launching more Class 3s, which are shorter in duration. They're more incremental. The company is pivoting more to what we call Class 4s and Class 5s, and Class 4s are those that move into adjacent markets, and Class 5s are completely new products for new markets going into. The team is focusing more on the 4s and 5s. You'll see more impact in the back half of the year as those products that we started to work on a few years ago start to launch this year and become meaningful in the back half. They'll be even more meaningful into 2027. The engine's moving. The momentum is really building. The team is executing, I think, fantastically well across all these various dimensions. We're launching more, but there's more ideas coming into the front end of the funnel. The health of the pipeline is very good. It's what we're known for, material science and using material science to make differences in the world, and I think we're doing a good job with that."<br><br>
+          <b>Amit Mehrotra:</b> "Okay. That's very helpful. Thanks, Bill. Just as a quick follow-up, when we started, I remember at the Analyst Day, the story originally was really about sort of getting the gross margin from the low 40s to the high 40s where you guys used to be. Obviously with tariffs and all the developments that have happened, you've still been able to move the needle on the operating margin line, much to your credit, despite sort of gross margin being sort of stuck in the very low 40s. Is there an opportunity, do you think, structurally at least, with all that we know now, we can still get back to the high 40% margin on gross margin? If you can just sort of talk about that, just given all the structural dynamics that have occurred over the last couple of years."<br><br>
+          <b>Bill Brown:</b> "Look, Amit, on margins, you can see the chart, up 500 basis points from a couple of years ago. We are making really strong progress here, and it's both gross margin, but also importantly in SG&amp;A, in IT, and other kinds of expenses, indirect costs. We've talked about that quite a bit. There was more to squeeze in that area, more cost to take out than we'd anticipated, and we've done a good job. On gross margins, we're tracking close to mid-40s right now. The company has done a good job. Productivity is really solid. We had great productivity in the quarter. We continue to build momentum. I give you sort of the metrics around that. We are reducing our cost per quality. That came down again. Our operating equipment effectiveness is coming up. We're driving hard on procurement. We're seeing net savings even after inflation. Four-wall spend, we've doubled the number of Kaizen events inside the company. Look, there's a ton of opportunity here just running the network, the distribution side better as it exists today. The next step, really, as we transform, is simplifying, standardizing, automating more of our processes, both on our SG&amp;A side, and I talked a little bit about that in the prepared remarks, but also on the factory side, the network side. There's plenty of headroom here in front of us. We see ourselves marching ahead and with an ability to hit the high 40s over time. The roadmap is relatively clear. It's along the same lines we've been laying out and talking about over the last couple of years. As we get into transformation, we'll see margins continue to expand. We feel good about the performance and optimistic about the future on margins."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Nigel Coe（Wolfe Research）</div><div class="qa-topic">季內營收線性度、訂單與在手訂單｜追問：Consumer 通路去庫存持續多久</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">5.4% 的成長在 4 月到 6 月之間如何分布？出季時的訂單與在手訂單狀況？追問：6 月下半的 Consumer 通路去庫存會持續多久？SIBG／TEBG 的庫存水位如何？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Anurag：季內「比以往更線性」；4、5 月較過往各季前兩月<b>好約 600bps</b>；<b>訂單 YoY +10%、在手訂單 +近 20%</b>；
+          並主動揭露「<b>75% of our business is book and ship</b>」。Bill：SIBG／TEBG 庫存正常；CBG 的 POS（sell-out）約 <b>+2.5%</b>，
+          問題「只是幾家零售商」把週轉水位下調<b>約一週</b>，預期 Q3 隨返校季回補，下半年 Consumer 可望持平至小幅成長。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 5 ─ 「在手訂單 +20%」的可見度被高估了 4 倍</div>
+          <div class="q-text">Anurag 同時說出兩件互相制約的事實，但沒有把它們相乘：既然 <b>75% 是 book and ship</b>（當期接單當期出貨），
+          在手訂單就只覆蓋<b>約 25% 的營收</b>。因此「backlog +20% YoY」對全年營收的可見度貢獻約為 20% × 25% ≈ <b>5%</b> 的營收基數，
+          而不是聽起來的那種「已經看到下半年」。管理層自己也補了一句「so far, the first two weeks, orders and backlog look good」──
+          用兩週的訂單來支撐半年的信心，正是可見度有限的自我證明。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 6 ─ 「一週水位、幾家零售商」無法解釋 Packaging &amp; Expression −10.3%</div>
+          <div class="q-text">Bill 把 Consumer 的疲弱定性為「isolated to a couple of retailers」「about a one-week delta」，且發生在<b>6 月下半</b>（即整季最後兩週）。
+          但 10-Q Note 2 顯示 Consumer 內部並非均勻受損：<b>Packaging and Expression 由 $310M 降至 $278M（−10.3%）、Home Improvement −3.2%</b>，
+          而 Home &amp; Auto Care +3.9%、Consumer Safety +3.2%。單季最後兩週、單一週的補貨水位差，難以在單一產品線造成雙位數的季度衰退；
+          10-Q 的文字也把成因寫得比法說會廣：「<b>Lower U.S. retailer inventory levels</b> more than offset positive POS and share gains」，並未加上「a couple of」這個限定詞。
+          此外 Consumer 部門營益率由 21.1% 降至 20.1%，H1 也降 0.6pp ── 若真是短暫的通路時點差，營益率不應同步走弱。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Nigel Coe:</b> "Thanks. Good morning, everyone. Quite a different pick quarter. I think Bill or Anurag, you mentioned last quarter started off quite weak and it got better through 1Q. I'm just wondering how the 5.4% looked from April through June. Did we start off stronger, got weaker? Any color there? Any updates on how orders and maybe backlog exited the quarter?"<br><br>
+          <b>Anurag Maheshwari:</b> "Yeah. Hey, good morning, Nigel. Hey, it was quite good throughout the course of the quarter. It was more linear than we've typically seen. As you said, we started the quarter with very good backlog. If I look at April and May, it was probably 600 basis points better relative to other first two months of prior quarters. It was quite good as we went into the first two months of the quarter. June, the auto momentum kind of sustained as well because we did our price increases, which came with effect from May 1st. Just through the course of the quarter, we saw very good linearity, and the team executed very well to post a 5.4% growth. We did see similar, as I said, auto momentum in the second quarter, like the first quarter, which strengthened the industrial side of the business. Our orders were up about 10% for the quarter, and backlog about close to 20% up year-over-year. As we get into Q3, we feel good visibility for Q3 and the second half of the year. Obviously, 75% of our business is book and ship, so we have to monitor as we go along. But so far, the first two weeks, orders and backlog look good."<br><br>
+          <b>Nigel Coe:</b> "That's great. That's really encouraging. My next question is really, you mentioned the Consumer channel destock in the second half of June. Just wondering how long do you think this destock will happen? Any intel on how inventories look for 3M products? Then any color on how inventories are looking in SIBG and TE and selling the sell-through color would be helpful as well."<br><br>
+          <b>Bill Brown:</b> "Inventory levels in SIBG and TEBG are normal. There's no discernible trend one way or another. Not a concern. On CBG, look, I think what was encouraging is to continue to see the point of sale growth or sell-out growth around 2.5% in the quarter, which was very positive. We felt good about that. It was really isolated to a couple of retailers, and we saw them step back a little bit in the U.S. channel, step back a little bit in terms of weeks of supply. It was about a one-week delta. As we come into July and into Q3, we think this will normalize here, especially as retailer stock for back-to-school season. We'll keep monitoring it and communicate with investors as we need. We feel it's going to normalize here and help us in the back half of Consumer to be flat to up slightly, is what our expectation would be in the back half of the year."</div>
+        </div>
+      </div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Chigusa Katoku（JPMorgan）</div><div class="qa-topic">財測隱含下半年減速｜追問：本季利潤率驅動因子、2027 目標何時更新</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">有機成長財測雖上調，但<b>相對強勁的 Q2 仍隱含下半年減速</b> ── 是 Consumer／電子的關係、出貨時點，還是保守？
+          追問：本季利潤率走強是 mix、price cost 還是 productivity？<b>你們現在幾乎已經達到 2027 年的利潤率目標，何時會更新目標？</b></div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Bill：「the second half will be accelerating from the first half」；正面因子為一般工業、安全、半導體／資料中心／航太國防、
+          roofing granules 的低基期，以及定價（全年約 +1.5pp、下半年約 +2pp）。觀察名單：消費電子（下半年裝置生產量預估年減 high teens）、
+          汽車產量、汽車售後（維修理賠件數下滑）、謹慎的美國消費者。
+          Anurag：24.9% 是「the highest we've ever been」，較內部預期高 40bps，主因是營收超標（預期 3%、實際逾 5%）＋ G&amp;A 與供應鏈雙邊 productivity，「broad-based」。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 7 ─ 用「vs 上半年」偷換了提問者的「vs Q2」</div>
+          <div class="q-text">Chigusa 問的比較基準是 <b>Q2 的 5.4%</b>，Bill 的回答改用 <b>H1 的 3.3%</b> 當基準，於是「減速」被講成「加速」。
+          用管理層自己的數字驗算：全年有機 &gt;3.5%、H1 為 3.3%，Anurag 另稱下半年為「high threes or better」──
+          即下半年約 <b>3.7–4%</b>，確實<b>低於 Q2 的 5.4%</b>。提問者的前提從頭到尾是對的。
+          Bill 隨後那句「We came in above Q2 rather, we came in about five」在逐字稿上語句破碎，也顯示這段是即興重構而非既定口徑。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 8 ─ 「何時更新 2027 目標」被完全略過，且「歷史最高」是調整後口徑</div>
+          <div class="q-text">Chigusa 的追問有兩段，Anurag <b>只回答了第一段</b>（利潤率驅動因子），對「2027 目標已被提前達成、何時更新」<b>一字未答</b>，
+          主持人也未回頭補問。這是本場唯一一個被完整略過的問題。<br>
+          另外「the highest we've ever been」指的是 <b>adjusted</b> 營益率 24.9%；同日 10-Q 的 <b>GAAP 營益率為 15.1%，YoY 下降 2.9pp</b>
+          （主因 Dyneon 處分損失 $336M 與轉型費用 $100M）。整場法說會中，「24.9%」出現多次，「15.1%」一次也沒出現。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Chigusa Katoku:</b> "Morning. Congrats on a great quarter, and thanks for taking my question. My first question is on organic growth. You've raised your organic growth guidance nicely, but it still implies some deceleration in the second half from the strong second quarter levels. I think pricing should come through when you have some EBO delivery schedules on the back end. What's driving this? Is this Consumer and electronics, or the timing of deliveries, or is this prudence?"<br><br>
+          <b>Bill Brown:</b> "Chigusa, thank you. I mean, look, it's a good question. The fact is the second half will be accelerating from the first half, you mentioned specifically Q2, but it does continue to accelerate. There's some positives here. We continue to see good momentum in general industrial, safety. We see semis, data center, A&amp;D remains pretty strong. I don't know our communicator about the roofing granules business is not very big, but we see some improvements in the back half on easier comps, and we do see some tailwind on pricing. For the year, we'll be up about a point and a half, which implies about two points in the back half. All those things give us encouragement in the back half. Look, the watch items are, number one, is going to be Consumer electronics. The market data indicates a deteriorating production volume of devices, PCs, tablets in the back half of the year, expected to be down high teens. It's lower than it was in the first half. That's a watch area. Auto is stabilizing in general for us, but it's still expected to be down on the build rate year-over-year in the back half. The auto aftermarket business we still think was going to be soft. Repair claims is still expected to be down in the back half of the year. Look, the U.S. consumer remains cautious. As I just commented, we do expect flat to up growth in Consumer in the back half, but the consumer remains cautious and value-focused. Those are the things that we're more cautious about. At the end of the day, we had anticipated being above three in Q3. We came in above Q2 rather, we came in about five. We do expect good momentum going into the back half of the year."<br><br>
+          <b>Chigusa Katoku:</b> "Great. Thanks so much for the color. As a follow-up, I just was wondering if you could give a little bit more color on what drove the strength in margins this quarter. Is it mix, price cost, or productivity? You're pretty much at your 2027 margin target right now in the second quarter. When should we kind of expect to hear about updated targets?"<br><br>
+          <b>Anurag Maheshwari:</b> "Okay. Hey, thanks for the question. We finished the quarter at 24.9% margin, which is the highest we've ever been. This was 40 basis points higher than we thought where we would be. A large part of it was the volume performance relative to the 3%, we came in over 5%, it was also continuation on the productivity side as a combination of both G&amp;A and on the supply chain, which had actually very good productivity for the quarter. I would say it's broad-based between volume and productivity."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Chris Snyder（Morgan Stanley）</div><div class="qa-topic">EBO 競爭格局與 3M 可取得的市佔｜追問：Q2 price cost 與下半年走勢</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">EBO 若 2028 年是 $20 億市場，<b>競爭格局如何？3M 能吃到多少份額？</b>
+          追問：Q2 的 price cost 應該有遞延效應，下半年會不會轉好？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Bill：3M 目前在資料中心以 TwinAx 銅纜為主，銅轉光是漸進趨勢；EBO 的差異化在於免研磨、免專業人力的快速連接。
+          關鍵句：「<b>We have and we will continue to license other ecosystem players to manufacture that technology</b>… because that's required by hyperscalers.
+          There's no one company or supplier that would provide all of the demand」；目前「$40–50M of a billion dollars」，
+          未來份額「will grow materially」。
+          price cost：Q2 定價 +1.6%、H1 約 +1%、H2 約 +2%；油價通膨全年 $150–175M（原 $125M），以定價「dollar for dollar」對沖，
+          <b>油品的 price cost 為中性</b>，加計其他漲價後「slightly positive」。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 9 ─ 「授權他人製造」與「份額將顯著成長」在同一段話裡互相抵銷</div>
+          <div class="q-text">Bill 明確說 hyperscaler <b>要求</b> 多重供應來源，因此 3M 會持續<b>授權其他生態系成員製造 EBO</b>，且對外找代工。
+          這代表 $20 億 TAM 中，3M 能以<b>自有製造毛利</b>取得的部分，結構上被封頂在遠低於 100% 之處，其餘只能收取權利金 ──
+          兩者的每一美元營收含金量差距極大。管理層既沒有拆分「自製 vs 授權」的預期比重，也沒有揭露權利金費率，
+          卻同時給出「share will grow materially」的結論。可覆核性註記：EBO 相關數字<b>在 10-Q 與 10-K 中零揭露</b>，
+          Electronics 產品線整體 Q2 為 $682M，是目前唯一能綁定的財報科目。</div>
+        </div>
+        <div class="flag-box obs">
+          <div class="q-label">◇ 觀察：「dollar for dollar」對沖，在數學上必然稀釋利潤率</div>
+          <div class="q-text">以相同金額的漲價去覆蓋相同金額的成本，分子（毛利）不變、分母（營收）變大，利潤率必然下降 ──
+          Anurag 在準備稿中已自行量化為 <b>20bps</b> 的利潤率影響，並說要用 volume 與 productivity 補回。
+          這段是本場少數「管理層主動把不利的算術講清楚」的地方，值得正面記錄；
+          但它同時意味著：財測中的利潤率擴張，有 20bps 是靠<b>另外找補</b>而來，而非本業改善。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Chris Snyder:</b> "Thank you. I wanted to follow up on the data center conversation, specifically the EBO opportunity. I think you said that this could be a $2 billion market by 2028. I'm just kind of curious, what is the competitive environment here? Just as we try to think about what share of that $2 billion market could accrue to 3M. It feels like a new technology that I would think the company is well positioned from a share perspective. Just any color on that. Thank you."<br><br>
+          <b>Bill Brown:</b> "Yeah, Chris, look, it's a good question. We do play today inside the data center in a couple of ways. We play on sort of copper networking, with our TwinAx product, sold into data centers. There is a gradual transition from copper to fiber that's happening. It's across the data center, across the racks. It eventually will start to move down to the chip, which today is mostly copper-based solutions. We've been playing on the copper side, and optics is going to become a bigger share over time of networking in the data centers. Typically, fiber optic connections are point to point. It's very difficult to do that. The ends have to be polished. It's specialized labor. It takes time. It takes effort. When you're thinking about billions of individual fiber strands being connected in data centers, the market is looking for better solutions here, and EBO connections allows them to do this more quickly, and seamlessly, and more reliably. I think that's kind of an important differentiator. As I mentioned earlier, we've got substantial patent protection around the technology, 100 patents today with another 50 that are pending. We have and we will continue to license other ecosystem players to manufacture that technology, that EBO, Expanded Beam Optical technology, because that's required by hyperscalers. There's no one company or supplier that would provide all of the demand for these hyperscalers, whether it be servers or chips or racks or whatever it happens to be, including EBO connectors. That's the path that we're on. We've got a small share today. It's in the $40 million-$50 million range of a billion dollars. Over time, given our technology and the momentum we think we're building here and our ability to scale, we think our share in that segment will grow materially, and that's what we would expect."<br><br>
+          <b>Chris Snyder:</b> "Thank you. I appreciate that. Maybe if I could follow up on price cost. I would imagine there was some lag on Q2 price cost, just given how quickly the commodities inflated and when we think about the timing of your price actions in April and May. Can you maybe just kind of talk about price cost in Q2? Is it fair to assume that price cost gets better as we look into the back half, just with the incremental price coming through while commodity inflation is still certainly persisting, it does seem like a lot of these petrochemical inputs have eased a bit, versus what we saw earlier in the spring. Thank you."<br><br>
+          <b>Bill Brown:</b> "Look, it's a great question, Chris. Q2, our price was at 1.6%, so it was about in line with what we'd expected. In the first half, it was around a percent. We started the year a little bit lighter. We do see that increasing in the back half of the year to be about 2%. As Anurag mentioned in his commentary, the impact for us this year, embedded in our year, is $150 million-$175 million from oil-based increases. That is up from where we were earlier in the year at $125 million. To your point, there is a bit of a lag in that kind of rolling through the system, we're being adaptable here. We're adjusting as we go. We are trying to offset that dollar for dollar. It will impact margins, we do expect we'll offset the higher price of oil on a dollar for dollar basis through pricing. We're executing this a little bit better. We got on it faster this time, earlier in the quarter. We're being very careful to watch volume here, at the end of the day, I think we're capturing it. Price cost on oil is sort of neutral. Overall, with the other price increases, it'll be slightly positive from where we stand today."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-header" onclick="toggleQA(this)">
+        <div><div class="qa-analyst">Nicole DeBlase（Deutsche Bank）</div><div class="qa-topic">生產力、stranded cost 與投資的上下半年節奏｜追問：下半年買回節奏</div></div>
+        <div class="qa-arrow">▼</div>
+      </div>
+      <div class="qa-body">
+        <div class="q-block">
+          <div class="q-label q">問題核心</div>
+          <div class="q-text">生產力、stranded cost、成長投資的展望有無變化？上下半年節奏如何？追問：上半年已買回 $30 億、超出原本 $25 億的全年指引，下半年還買不買？</div>
+        </div>
+        <div class="q-block">
+          <div class="q-label a">管理層回應</div>
+          <div class="q-text">Anurag：stranded cost 全年仍為 <b>$150M</b>（下半年較多）；投資全年 <b>$225M</b>，「$75M 在上半年、$115M 在下半年」；
+          生產力「明顯優於年初以來的水準」。買回：「continue to be opportunistic and disciplined」，
+          上半年 <b>$3.0B、均價約 $153</b>，未來「繼續機會主義」。</div>
+        </div>
+        <div class="flag-box">
+          <div class="q-label flag">⚑ 邏輯缺口 10 ─ 兩個沒被說出口的天花板（本報告的原創前瞻風險，見風險矩陣）</div>
+          <div class="q-text">Anurag 用「opportunistic」回答買回節奏，但同日 10-Q 揭露了兩個硬性上限，兩者都指向<b>下半年買回必須大幅減速</b>：<br>
+          ① <b>授權額度</b>：2025/2 董事會核准的 $7.5B 買回計畫，截至 2026/6/30 <b>僅剩 $1,766M</b>（10-Q Part II Item 2）。
+          以上半年 $3.0B 的速度，剩餘授權只夠約 <b>3.5 個月</b>。<br>
+          ② <b>股東回報承諾</b>：Bill 在準備稿說「Since 2025, we returned $8.6 billion… against our commitment to return $10 billion+ through 2027」──
+          即 2026 下半年到 2027 全年（共 6 個季度）只剩 <b>約 $1.4B</b> 的承諾額度，而<b>光是股利就要花掉約 $2.4B</b>（每季約 $0.40B×6）。
+          承諾本身若不上調，隱含的買回空間近乎為零。<br>
+          ③ 更硬的約束在現金端：10-Q 揭露<b>美國境內現金＋有價證券已由 $2.4B 降至 $0.5B</b>，7 月又為 Madison 提取 $1.43B 定期貸款。<br>
+          分析師已經問到正確的問題（「下半年還買不買」），而回答用一個沒有內容的形容詞（opportunistic）覆蓋了三個可量化的限制。</div>
+        </div>
+        <div class="flag-box obs">
+          <div class="q-label">◇ 算術瑕疵</div>
+          <div class="q-text">Anurag 說投資「$225 million… $75 million in the first half, $115 million in the second half」──
+          上下半年相加為 <b>$190M</b>，與 $225M 差 $35M。可能是口誤或是有部分投資列在其他科目，
+          但這是本場唯一一處管理層自述數字內部不自洽之處，值得在下季法說會追問。</div>
+        </div>
+        <div class="orig-box">
+          <div class="orig-label">逐字稿原文</div>
+          <div class="orig-text"><b>Nicole DeBlase:</b> "Maybe just on productivity and stranded costs and growth investments, had anything shifted at all in that outlook? Anything major to highlight as we consider the cadence in those items between the first half and the second half?"<br><br>
+          <b>Anurag Maheshwari:</b> "Yeah. Overall, Nicole, I would say nothing has changed significantly in terms of the cadence. What's gotten better is productivity, which I'll come to that in a second. Just on the stranded cost, it's still $150 million for the year. More in the second half versus the first half. On investments, we said it's going to be $225 million, and the investments are spread over growth, productivity, and foundation stuff of about $225 million. $75 million in the first half, $115 million in the second half. I wouldn't say anything has changed on those two items. Clearly on the productivity side, as Bill earlier mentioned on supply chain, it's definitely better than what we have seen through the course of the year."<br><br>
+          <b>Nicole DeBlase:</b> "Okay, got it. Thanks, Anurag. I think you guys did like $3 billion of buybacks in the first half, and the prior guidance was for $2.5 billion, so you've already exceeded that. How are you thinking about buyback cadence, if there is any, in the H2 of the year?"<br><br>
+          <b>Anurag Maheshwari:</b> "Listen, we'll continue to be opportunistic and disciplined in just an overall capital allocation framework. As you correctly said, we started the year at $2.5 billion. We found the opportunity to buy more stock. We've done about $3 billion at an average price of about $153 for the first half, and we'll just continue to be opportunistic going forward."</div>
+        </div>
+      </div>
+    </div>
+<!--MORE-->
+  </div>
+</div>
+
+<div class="foot-note">僅供資訊參考，非投資建議。</div>
+
+<script>
+function sw(id, el) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function toggleQA(header) {
+  header.parentElement.classList.toggle('open');
+}
+</script>
+</body>
+</html>

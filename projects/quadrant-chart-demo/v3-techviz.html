@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>象限圖工具 · 科技資料視覺化風</title>
+<style>
+  :root{
+    --ink:#0a0a0a;
+    --sub:#71717a;
+    --line:#e4e4e7;
+    --grid:#f0f0f2;
+    --mono:'SF Mono','Cascadia Code','Consolas',monospace;
+    --accent:#0a0a0a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#ffffff;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;}
+  .app{display:grid;grid-template-columns:330px 1fr;min-height:100vh;}
+  .panel{background:#fff;border-right:1px solid var(--line);padding:24px 22px;overflow-y:auto;max-height:100vh;}
+  .panel h1{font-size:14px;font-weight:700;margin:0 0 3px;font-family:var(--mono);}
+  .panel .tag{font-size:10.5px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:22px;font-family:var(--mono);}
+  .section{margin-bottom:22px;}
+  .section-title{
+    font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);
+    margin-bottom:10px;font-family:var(--mono);border-bottom:1px dashed var(--line);padding-bottom:6px;
+  }
+  label{display:block;font-size:11px;color:var(--sub);margin-bottom:4px;margin-top:9px;font-family:var(--mono);}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=number]{
+    width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:3px;
+    font-size:12.5px;background:#fafafa;color:var(--ink);font-family:var(--mono);
+  }
+  input[type=text]:focus,input[type=number]:focus{outline:none;border-color:var(--ink);background:#fff;}
+  input[type=color]{width:30px;height:26px;border:1px solid var(--line);border-radius:3px;padding:2px;background:#fff;cursor:pointer;}
+  .quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .row{display:flex;gap:6px;}
+  .row > div{flex:1;}
+  .btn{
+    width:100%;padding:8px 10px;border-radius:3px;border:1px solid var(--ink);
+    background:var(--ink);color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;
+    font-family:var(--mono);letter-spacing:.02em;
+  }
+  .btn:hover{background:#333;}
+  .btn.ghost{background:#fff;color:var(--ink);}
+  .btn.ghost:hover{background:#f4f4f5;}
+  .btn-row{display:flex;gap:6px;}
+  .btn-row .btn{flex:1;}
+  .toggle{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 10px;border:1px solid var(--line);border-radius:3px;cursor:pointer;
+    font-size:11.5px;font-family:var(--mono);user-select:none;background:#fafafa;
+  }
+  .toggle.active{background:var(--ink);color:#fff;}
+  .toggle .indicator{width:6px;height:6px;border-radius:50%;background:#a1a1aa;}
+  .toggle.active .indicator{background:#4ade80;box-shadow:0 0 6px #4ade80;}
+
+  .pt-list{display:flex;flex-direction:column;gap:5px;max-height:230px;overflow-y:auto;font-family:var(--mono);}
+  .pt-item{display:grid;grid-template-columns:18px 1fr 42px 42px 18px;gap:5px;align-items:center;}
+  .pt-item input[type=text]{padding:4px 5px;font-size:11px;}
+  .pt-item input[type=number]{padding:4px 3px;font-size:10.5px;}
+  .pt-del{cursor:pointer;color:var(--sub);font-size:14px;text-align:center;line-height:1;background:none;border:none;padding:0;}
+  .pt-del:hover{color:#dc2626;}
+  .empty-hint{font-size:11px;color:var(--sub);font-family:var(--mono);}
+
+  .main{display:flex;align-items:center;justify-content:center;padding:36px;position:relative;background:#fff;}
+  .chart-wrap{width:min(78vh,700px);aspect-ratio:1/1;position:relative;}
+  svg{width:100%;height:100%;display:block;}
+  svg.addmode{cursor:crosshair;}
+  .qlabel{font-size:11.5px;font-weight:700;fill:#18181b;letter-spacing:.06em;font-family:var(--mono);text-transform:uppercase;}
+  .axislabel{font-size:11px;fill:#3f3f46;font-weight:600;font-family:var(--mono);}
+  .pt-label{font-size:10.5px;fill:#18181b;font-weight:600;pointer-events:none;font-family:var(--mono);}
+  .tick{font-size:9px;fill:#a1a1aa;font-family:var(--mono);}
+  .readout{
+    position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:11px;color:var(--sub);
+    background:#fafafa;border:1px solid var(--line);padding:6px 10px;border-radius:3px;pointer-events:none;
+    min-width:120px;text-align:right;
+  }
+  .readout b{color:var(--ink);}
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:var(--ink);color:#fff;padding:9px 18px;border-radius:3px;font-size:12px;font-family:var(--mono);
+    opacity:0;pointer-events:none;transition:all .25s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <span class="tag">// quadrant_chart.v3 — techviz</span>
+    <h1>象限圖工具 — 科技資料視覺化風</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">axis_config</div>
+      <label>x_label</label>
+      <input type="text" id="xName" value="市場成長率">
+      <label>y_label</label>
+      <input type="text" id="yName" value="相對市佔率">
+      <label>range (±N)</label>
+      <input type="number" id="axisRange" value="10" min="1" max="1000">
+      <div class="toggle" id="gridToggle" style="margin-top:9px;"><span>顯示格線 / ticks</span><span class="indicator"></span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">quadrant_config</div>
+      <div class="quad-grid">
+        <input type="text" id="qTR" value="明星" placeholder="TR">
+        <input type="text" id="qTL" value="問題" placeholder="TL">
+        <input type="text" id="qBL" value="瘦狗" placeholder="BL">
+        <input type="text" id="qBR" value="金牛" placeholder="BR">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">add_point()</div>
+      <div class="toggle" id="addModeToggle"><span>click-to-place mode</span><span class="indicator"></span></div>
+      <label>name</label>
+      <input type="text" id="newName" placeholder="e.g. 2330.TW">
+      <div class="row" style="margin-top:8px;">
+        <div><label style="margin-top:0;">x</label><input type="number" id="newX" value="0" step="0.1"></div>
+        <div><label style="margin-top:0;">y</label><input type="number" id="newY" value="0" step="0.1"></div>
+        <div style="flex:0 0 40px;"><label style="margin-top:0;">色</label><input type="color" id="newColor" value="#0a0a0a"></div>
+      </div>
+      <button class="btn" id="addBtn" style="margin-top:10px;">+ insert point</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">points[] <span id="ptCount">0</span></div>
+      <div class="pt-list" id="ptList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">// empty — click canvas or add above</div>
+    </div>
+
+    <div class="section">
+      <div class="btn-row" style="margin-bottom:6px;">
+        <button class="btn ghost" id="clearBtn">clear()</button>
+        <button class="btn ghost" id="seedBtn">seed()</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="exportPng">export.png</button>
+        <button class="btn" id="exportEmbed">copy embed</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <div class="readout" id="readout">x: <b>0.00</b> · y: <b>0.00</b></div>
+      <svg id="chart" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const VB = 700, PAD = 80, HALF = (VB - PAD*2) / 2, CX = VB/2, CY = VB/2;
+  const palette = ['#0a0a0a','#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#0891b2','#db2777'];
+  let range = 10;
+  let points = [];
+  let idSeq = 1;
+  let addMode = false;
+  let showGrid = true;
+
+  const svg = document.getElementById('chart');
+  const els = {};
+  ['xName','yName','axisRange','qTR','qTL','qBL','qBR','gridToggle',
+   'addModeToggle','newName','newX','newY','newColor','addBtn','ptList','emptyHint',
+   'clearBtn','seedBtn','exportPng','exportEmbed','toast','ptCount','readout'
+  ].forEach(id=> els[id] = document.getElementById(id));
+
+  function elS(tag, attrs, text){
+    const e = document.createElementNS(SVGNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(text !== undefined) e.textContent = text;
+    return e;
+  }
+  function dataToSvg(x, y){ return { x: CX + (x/range)*HALF, y: CY - (y/range)*HALF }; }
+  function svgToData(sx, sy){
+    let x = ((sx - CX)/HALF) * range;
+    let y = ((CY - sy)/HALF) * range;
+    x = Math.max(-range, Math.min(range, x));
+    y = Math.max(-range, Math.min(range, y));
+    return { x: Math.round(x*100)/100, y: Math.round(y*100)/100 };
+  }
+  function clientToSvg(evt){
+    const rect = svg.getBoundingClientRect();
+    return { sx: (evt.clientX-rect.left)*(VB/rect.width), sy: (evt.clientY-rect.top)*(VB/rect.height) };
+  }
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>els.toast.classList.remove('show'), 1600);
+  }
+  function clamp(v){ return Math.max(-range, Math.min(range, v)); }
+  function escapeAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function render(){
+    svg.innerHTML = '';
+    svg.classList.toggle('addmode', addMode);
+
+    // background
+    const bg = elS('rect', {x:0,y:0,width:VB,height:VB,fill:'#ffffff'});
+    bg.addEventListener('click', onBgClick);
+    bg.addEventListener('mousemove', onBgMove);
+    svg.appendChild(bg);
+
+    // grid + ticks
+    if(showGrid){
+      const step = HALF/5;
+      for(let i=-5;i<=5;i++){
+        if(i===0) continue;
+        const gx = CX + i*step, gy = CY + i*step;
+        svg.appendChild(elS('line', {x1:gx, y1:CY-HALF, x2:gx, y2:CY+HALF, stroke:'var(--grid)', 'stroke-width':1}));
+        svg.appendChild(elS('line', {x1:CX-HALF, y1:gy, x2:CX+HALF, y2:gy, stroke:'var(--grid)', 'stroke-width':1}));
+        svg.appendChild(elS('text', {x:gx, y:CY+14, 'text-anchor':'middle', class:'tick'}, (i*range/5).toFixed(0)));
+        svg.appendChild(elS('text', {x:CX-10, y:gy+3, 'text-anchor':'end', class:'tick'}, (-i*range/5).toFixed(0)));
+      }
+    }
+
+    svg.appendChild(elS('rect', {x:CX-HALF, y:CY-HALF, width:HALF*2, height:HALF*2, fill:'none', stroke:'#e4e4e7', 'stroke-width':1}));
+
+    // quadrant labels
+    const qPos = [
+      {x: CX+HALF-14, y: CY-HALF+26, anchor:'end', text: els.qTR.value},
+      {x: CX-HALF+14, y: CY-HALF+26, anchor:'start', text: els.qTL.value},
+      {x: CX-HALF+14, y: CY+HALF-14, anchor:'start', text: els.qBL.value},
+      {x: CX+HALF-14, y: CY+HALF-14, anchor:'end', text: els.qBR.value}
+    ];
+    qPos.forEach(q=> svg.appendChild(elS('text', {x:q.x, y:q.y, 'text-anchor':q.anchor, class:'qlabel'}, q.text || '')));
+
+    // axes
+    const defs = elS('defs', {});
+    const marker = elS('marker', {id:'arrow3', markerWidth:'9', markerHeight:'9', refX:'5', refY:'2.5', orient:'auto'});
+    marker.appendChild(elS('path', {d:'M0,0 L5,2.5 L0,5 Z', fill:'#0a0a0a'}));
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+    svg.appendChild(elS('line', {x1:CX-HALF-10, y1:CY, x2:CX+HALF+10, y2:CY, stroke:'#0a0a0a', 'stroke-width':1.75, 'marker-end':'url(#arrow3)'}));
+    svg.appendChild(elS('line', {x1:CX, y1:CY+HALF+10, x2:CX, y2:CY-HALF-10, stroke:'#0a0a0a', 'stroke-width':1.75, 'marker-end':'url(#arrow3)'}));
+    svg.appendChild(elS('text', {x:CX+HALF-2, y:CY+26, 'text-anchor':'end', class:'axislabel'}, els.xName.value || 'X'));
+    svg.appendChild(elS('text', {x:CX-8, y:CY-HALF-16, 'text-anchor':'end', class:'axislabel'}, els.yName.value || 'Y'));
+
+    // points
+    points.forEach(p=>{
+      const pos = dataToSvg(p.x, p.y);
+      const g = elS('g', {});
+      const cross = elS('path', {d:`M${pos.x-4},${pos.y} L${pos.x+4},${pos.y} M${pos.x},${pos.y-4} L${pos.x},${pos.y+4}`, stroke:p.color, 'stroke-width':1, opacity:0.5});
+      const circle = elS('circle', {cx:pos.x, cy:pos.y, r:6, fill:'#ffffff', stroke:p.color, 'stroke-width':2.5, style:'cursor:grab;'});
+      circle.addEventListener('pointerdown', (e)=>startDrag(e, p.id));
+      g.appendChild(cross);
+      g.appendChild(circle);
+      g.appendChild(elS('text', {x:pos.x+10, y:pos.y-8, class:'pt-label'}, `${p.name}`));
+      g.appendChild(elS('text', {x:pos.x+10, y:pos.y+4, class:'tick'}, `(${p.x}, ${p.y})`));
+      svg.appendChild(g);
+    });
+
+    renderList();
+  }
+
+  function onBgMove(evt){
+    const {sx, sy} = clientToSvg(evt);
+    const d = svgToData(sx, sy);
+    els.readout.innerHTML = `x: <b>${d.x.toFixed(2)}</b> · y: <b>${d.y.toFixed(2)}</b>`;
+  }
+
+  function startDrag(evt, id){
+    evt.stopPropagation();
+    const target = evt.currentTarget;
+    target.setPointerCapture(evt.pointerId);
+    target.style.cursor = 'grabbing';
+    const move = (e)=>{
+      const {sx, sy} = clientToSvg(e);
+      const d = svgToData(sx, sy);
+      const p = points.find(pp=>pp.id===id);
+      if(p){ p.x = d.x; p.y = d.y; render();
+        els.readout.innerHTML = `x: <b>${d.x.toFixed(2)}</b> · y: <b>${d.y.toFixed(2)}</b>`; }
+    };
+    const up = ()=>{
+      target.releasePointerCapture(evt.pointerId);
+      target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', up);
+    };
+    target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', up);
+  }
+
+  function onBgClick(evt){
+    if(!addMode) return;
+    const {sx, sy} = clientToSvg(evt);
+    const d = svgToData(sx, sy);
+    addPoint(`P${idSeq}`, d.x, d.y, palette[(idSeq-1) % palette.length]);
+  }
+
+  function addPoint(name, x, y, color){
+    const id = idSeq++;
+    points.push({id, name, x, y, color});
+    render();
+    requestAnimationFrame(()=>{
+      const row = els.ptList.querySelector(`[data-row="${id}"] input[type=text]`);
+      if(row){ row.focus(); row.select(); }
+    });
+  }
+
+  function renderList(){
+    els.ptList.innerHTML = '';
+    els.ptCount.textContent = `[${points.length}]`;
+    els.emptyHint.style.display = points.length ? 'none' : 'block';
+    points.forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'pt-item';
+      row.dataset.row = p.id;
+      row.innerHTML = `
+        <input type="color" value="${p.color}">
+        <input type="text" value="${escapeAttr(p.name)}">
+        <input type="number" step="0.1" value="${p.x}">
+        <input type="number" step="0.1" value="${p.y}">
+        <button class="pt-del" title="del">×</button>
+      `;
+      const [colorI, nameI, xI, yI] = row.querySelectorAll('input');
+      colorI.addEventListener('input', ()=>{ p.color = colorI.value; render(); });
+      nameI.addEventListener('input', ()=>{ p.name = nameI.value; render(); });
+      xI.addEventListener('input', ()=>{ p.x = clamp(parseFloat(xI.value)||0); render(); });
+      yI.addEventListener('input', ()=>{ p.y = clamp(parseFloat(yI.value)||0); render(); });
+      row.querySelector('.pt-del').addEventListener('click', ()=>{ points = points.filter(pp=>pp.id!==p.id); render(); });
+      els.ptList.appendChild(row);
+    });
+  }
+
+  [els.xName, els.yName, els.qTR, els.qTL, els.qBL, els.qBR].forEach(i=>i.addEventListener('input', render));
+  els.axisRange.addEventListener('input', ()=>{ range = Math.max(0.01, parseFloat(els.axisRange.value)||10); render(); });
+  els.gridToggle.addEventListener('click', ()=>{
+    showGrid = !showGrid;
+    els.gridToggle.classList.toggle('active', showGrid);
+    render();
+  });
+  els.addModeToggle.addEventListener('click', ()=>{
+    addMode = !addMode;
+    els.addModeToggle.classList.toggle('active', addMode);
+    render();
+  });
+  els.addBtn.addEventListener('click', ()=>{
+    const name = els.newName.value.trim() || `P${idSeq}`;
+    addPoint(name, clamp(parseFloat(els.newX.value)||0), clamp(parseFloat(els.newY.value)||0), els.newColor.value);
+    els.newName.value = '';
+  });
+  els.clearBtn.addEventListener('click', ()=>{ points = []; render(); });
+  els.seedBtn.addEventListener('click', seed);
+
+  els.exportPng.addEventListener('click', ()=>{
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    const xml = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([xml], {type:'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = VB*scale; canvas.height = VB*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob=>{
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'quadrant-chart.png';
+        a.click();
+        showToast('exported → quadrant-chart.png');
+      });
+    };
+    img.src = url;
+  });
+
+  els.exportEmbed.addEventListener('click', ()=>{
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    clone.removeAttribute('class');
+    const xml = new XMLSerializer().serializeToString(clone);
+    const code = `<div style="max-width:640px;margin:0 auto;">\n${xml}\n</div>`;
+    navigator.clipboard.writeText(code).then(()=>showToast('embed code copied'));
+  });
+
+  function seed(){
+    points = []; idSeq = 1;
+    addPoint('2330.TW', 7.5, 8.2, palette[0]);
+    addPoint('2454.TW', 5.1, 4.8, palette[2]);
+    addPoint('NEWCO_A', 6.8, -3.2, palette[3]);
+    addPoint('LEGACY_B', -6.5, -6.9, palette[1]);
+  }
+
+  els.gridToggle.classList.add('active');
+  seed();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -117,6 +117,18 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wf-pill{padding:8px 18px;border:1px solid #ddd;border-radius:100px;font-family:'Calibri',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#888;cursor:pointer;background:#fff;transition:all .2s ease;user-select:none}
 .wf-pill:hover{border-color:#bbb;color:#333}
 .wf-pill.active{background:var(--c-ink);border-color:var(--c-ink);color:#fff}
+.topics-bar{display:flex;align-items:center;gap:10px;margin:-28px 0 32px}
+.topics-toggle{display:inline-flex;align-items:center;gap:6px;font-family:'Calibri',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#999;cursor:pointer;user-select:none;transition:color .2s ease}
+.topics-toggle:hover{color:#555}
+.topics-toggle .tt-icon{display:inline-block;font-size:13px;line-height:1;transition:transform .2s ease}
+.topics-toggle.open .tt-icon{transform:rotate(45deg)}
+.topics-active-count{font-size:10px;color:var(--c-accent);letter-spacing:.04em}
+.topics-panel{display:none;flex-wrap:wrap;gap:8px;margin:0 0 32px;padding:20px 22px;background:#fafafa;border:1px solid #eee;border-radius:14px}
+.topics-panel.open{display:flex}
+.topic-chip{padding:6px 14px;border:1px solid #e2e2e2;border-radius:100px;font-family:'Calibri',sans-serif;font-size:10.5px;letter-spacing:.04em;color:#888;cursor:pointer;background:#fff;transition:all .2s ease;user-select:none;white-space:nowrap}
+.topic-chip:hover{border-color:#bbb;color:#333}
+.topic-chip.active{background:var(--c-accent);border-color:var(--c-accent);color:#fff}
+.topic-chip .tc-count{opacity:.65;margin-left:4px;font-size:9.5px}
 .works-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:wk-idx}
 .wk-card{cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:26px;border:1px solid #eee;border-radius:16px;overflow:visible;position:relative;transition:transform .3s cubic-bezier(.4,0,.2,1),border-color .3s ease,box-shadow .3s ease}
 .wk-card.wk-hidden{display:none}
@@ -443,6 +455,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
       <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div>
     </div>
+    <div class="topics-bar">
+      <div class="topics-toggle" id="topics-toggle" onclick="toggleTopicsPanel()"><span class="tt-icon" id="tt-icon">+</span> 依主題瀏覽 &middot; Browse by Topic</div>
+      <span class="topics-active-count" id="topics-active-count"></span>
+    </div>
+    <div class="topics-panel" id="topics-panel"></div>
     <!-- Sticky sidebar timeline for the company-specific Earnings Call cards below (Sankey Diagram
          Tool card is a supporting tool, not a company report, and intentionally has no date entry).
          Shown only when the "Earnings Call" filter is active — see enterEarningsView()/
@@ -468,44 +485,44 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
         <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
       </div>
       <div class="wk-group-title first">矽晶圓 &middot; Silicon Wafer</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="SUMCO Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SUMCO_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="foundry,memory-cycle" tabindex="0" role="button" aria-label="SUMCO Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SUMCO_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">SUMCO Corporation</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 財報簡報 &middot; 損益摘要 &middot; 現金流 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06</div></div>
       </div>
 
       <div class="wk-group-title">資安 &middot; Cybersecurity</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Palo Alto Networks FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/PANW_FY26Q3_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ma-integration,cybersecurity" tabindex="0" role="button" aria-label="Palo Alto Networks FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/PANW_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Palo Alto Networks</div><div class="wk-type">FY2026 Q3（2026年2–4月）&middot; 法說會 &middot; Q&amp;A &middot; M&amp;A整合 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/24</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Cloudflare FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NET_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="gaap-adjustment,cybersecurity,convertible-debt" tabindex="0" role="button" aria-label="Cloudflare FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NET_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Cloudflare</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; GAAP落差與可轉債結構 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/30</div></div>
       </div>
 
       <div class="wk-group-title">CPU</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Advanced Micro Devices FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/AMD_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="warrant-structure,ai-accelerator" tabindex="0" role="button" aria-label="Advanced Micro Devices FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/AMD_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Advanced Micro Devices</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; 認股權證 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/04</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Intel Corporation FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/INTC_FY26Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="government-stake,turnaround" tabindex="0" role="button" aria-label="Intel Corporation FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/INTC_FY26Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Intel Corporation</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; 政府持股結構深度拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/22（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Arm Holdings plc FY2026 Q4 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ARM_FY26Q4_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-accelerator,licensing-model" tabindex="0" role="button" aria-label="Arm Holdings plc FY2026 Q4 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ARM_FY26Q4_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Arm Holdings plc</div><div class="wk-type">FY2026 Q4（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; AGI CPU矽晶片轉型與需求財測落差 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/30（預估）</div></div>
       </div>
 
       <div class="wk-group-title">PMIC &middot; 功率半導體</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="STMicroelectronics N.V. Q1 FY2026 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/STM_FY2026Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="warrant-structure,ma-integration,foundry" tabindex="0" role="button" aria-label="STMicroelectronics N.V. Q1 FY2026 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/STM_FY2026Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">STMicroelectronics N.V.</div><div class="wk-type">Q1 FY2026（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; NXP MEMS＋AWS認股權證特殊交易 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/23（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Texas Instruments Incorporated Q2 2026 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TXN_FY2026Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="capital-allocation,cfo-transition" tabindex="0" role="button" aria-label="Texas Instruments Incorporated Q2 2026 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TXN_FY2026Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Texas Instruments Incorporated</div><div class="wk-type">Q2 2026（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; CFO交接與資本配置延續性 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/21（預估）</div></div>
       </div>
 
       <div class="wk-group-title">AI加速器 &middot; AI Accelerators</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="NVIDIA Corporation FY2027 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NVDA_FY27Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="ai-accelerator,ai-capex" tabindex="0" role="button" aria-label="NVIDIA Corporation FY2027 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NVDA_FY27Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">NVIDIA Corporation</div><div class="wk-type">FY2027 Q1（2026年1–4月）&middot; 法說會 &middot; Q&amp;A &middot; Vera CPU $200B TAM與獲利品質拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/26</div></div>
       </div>
 
       <div class="wk-group-title">晶圓代工 &middot; Foundry</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Taiwan Semiconductor Manufacturing FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TSM_FY2026Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="foundry,capacity-expansion,geopolitics" tabindex="0" role="button" aria-label="Taiwan Semiconductor Manufacturing FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TSM_FY2026Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Taiwan Semiconductor (TSMC)</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; Arizona追加投資 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/15（預估）</div></div>
       </div>
 
@@ -515,94 +532,94 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
 
       <div class="wk-group-title">晶圓級封測 &middot; WLP &amp; Test</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="精材科技 Xintec FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/XINTEC_FY2026Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="foundry,government-stake,capacity-expansion" tabindex="0" role="button" aria-label="精材科技 Xintec FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/XINTEC_FY2026Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">精材科技 Xintec (3374)</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; 說法對帳 &middot; 新廠與政府優惠貸款拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/14（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="日月光投控 ASE Technology 2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ASX_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="foundry,capacity-expansion" tabindex="0" role="button" aria-label="日月光投控 ASE Technology 2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ASX_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">日月光投控 ASE Technology (ASX)</div><div class="wk-type">2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; LEAP上修與CapEx加碼拆解 &middot; 供應鏈 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/30（預估）</div></div>
       </div>
 
       <div class="wk-group-title">Memory</div>
-      <div class="wk-card reveal" data-cat="earnings" tabindex="0" role="button" aria-label="Micron Technology FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html')">
+      <div class="wk-card reveal" data-cat="earnings" data-tags="memory-cycle" tabindex="0" role="button" aria-label="Micron Technology FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MU_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Micron Technology</div><div class="wk-type">FY2026 Q3（2026年3–5月）&middot; 法說會 &middot; SCA &middot; 財務分析 &middot; 估值</div><div class="wk-next-earn">下次財報：2026/09/29</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Sandisk Corporation FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SNDK_FY26Q3_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="memory-cycle,business-model-shift" tabindex="0" role="button" aria-label="Sandisk Corporation FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SNDK_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Sandisk Corporation</div><div class="wk-type">FY2026 Q3（2026年1–4月）&middot; 法說會 &middot; Q&amp;A &middot; NBM新商業模式深度拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/05</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Western Digital Corporation FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/WDC_FY26Q3_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="memory-cycle,divestiture-restructure" tabindex="0" role="button" aria-label="Western Digital Corporation FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/WDC_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Western Digital Corporation</div><div class="wk-type">FY2026 Q3（2026年1–4月）&middot; 法說會 &middot; Q&amp;A &middot; SanDisk撤資與債轉股深度拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/05</div></div>
       </div>
 
       <div class="wk-group-title">金融 &middot; Finance</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Goldman Sachs Group FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GS_FY26Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-capex,cloud-infra-financing" tabindex="0" role="button" aria-label="Goldman Sachs Group FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GS_FY26Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Goldman Sachs Group</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; AI基建融資與Capital Solutions Group &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/14（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Morgan Stanley FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MS_FY26Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="ai-capex,cloud-infra-financing" tabindex="0" role="button" aria-label="Morgan Stanley FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MS_FY26Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Morgan Stanley</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; Workplace NNA引擎與AI CapEx週期 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/16（預估）</div></div>
       </div>
 
       <div class="wk-group-title">Networking</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Marvell Technology FY2027 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MRVL_FY27Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="ma-integration,ai-accelerator" tabindex="0" role="button" aria-label="Marvell Technology FY2027 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MRVL_FY27Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Marvell Technology</div><div class="wk-type">FY2027 Q1（2026年2–5月）&middot; 法說會 &middot; Q&amp;A &middot; 收購整合 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/20</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Astera Labs FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ALAB_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="warrant-structure,ma-integration,ai-accelerator" tabindex="0" role="button" aria-label="Astera Labs FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ALAB_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Astera Labs</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; 收購與認股權證結構 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/04</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Corning Incorporated FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GLW_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="customer-concentration" tabindex="0" role="button" aria-label="Corning Incorporated FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GLW_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Corning Incorporated</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; 客戶預付款結構 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/28（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Lumentum Holdings FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/LITE_FY26Q3_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="equity-stake-deal,ai-accelerator,customer-concentration" tabindex="0" role="button" aria-label="Lumentum Holdings FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/LITE_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Lumentum Holdings</div><div class="wk-type">FY2026 Q3（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; NVIDIA策略性股權投資深度拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/11</div></div>
       </div>
 
       <div class="wk-group-title">Racks</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Dell Technologies FY2027 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DELL_FY27Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-capex" tabindex="0" role="button" aria-label="Dell Technologies FY2027 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DELL_FY27Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Dell Technologies</div><div class="wk-type">FY2027 Q1（2026年2–4月）&middot; 法說會 &middot; Q&amp;A &middot; AI Backlog &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/09/03</div></div>
       </div>
 
       <div class="wk-group-title">微影設備 &middot; Lithography</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="ASML Holding FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ASML_FY26Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="capacity-expansion,foundry" tabindex="0" role="button" aria-label="ASML Holding FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ASML_FY26Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">ASML Holding</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; 逐字稿解析 &middot; 產能擴張路線圖 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/14（預估）</div></div>
       </div>
 
       <div class="wk-group-title">蝕刻與沉積設備 &middot; Etch &amp; Deposition</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Lam Research FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/LRCX_FY2026Q3_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="capacity-expansion,memory-cycle" tabindex="0" role="button" aria-label="Lam Research FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/LRCX_FY2026Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Lam Research</div><div class="wk-type">FY2026 Q3（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; NAND $40B轉換提前拉貨 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/29（預估）</div></div>
       </div>
 
       <div class="wk-group-title">CSP雲端服務巨頭 &middot; Cloud Service Providers</div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Microsoft Corporation FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MSFT_FY26Q3_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="ai-capex,cloud-infra-financing" tabindex="0" role="button" aria-label="Microsoft Corporation FY2026 Q3 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/MSFT_FY26Q3_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Microsoft Corporation</div><div class="wk-type">FY2026 Q3（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; OpenAI關係重組與座位制轉消費制拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/29</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Amazon.com FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/AMZN_FY2026Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-capex,ma-integration,cloud-infra-financing" tabindex="0" role="button" aria-label="Amazon.com FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/AMZN_FY2026Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Amazon.com</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Trainium資本支出與Leo/Globalstar併購 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/31（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Alphabet Inc. FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GOOG_FY26Q2_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="ai-capex,cloud-infra-financing,equity-stake-deal" tabindex="0" role="button" aria-label="Alphabet Inc. FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/GOOG_FY26Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Alphabet Inc.</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; 史上首度股權＋特別股＋債券籌資 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/27（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Meta Platforms FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/META_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-capex,memory-cycle" tabindex="0" role="button" aria-label="Meta Platforms FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/META_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Meta Platforms</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; CapEx上修至$125–145B與記憶體漲價拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/29</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="CoreWeave FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/CRWV_FY2026Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="ai-capex,customer-concentration,cloud-infra-financing" tabindex="0" role="button" aria-label="CoreWeave FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/CRWV_FY2026Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">CoreWeave</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; DDTL投資級融資與前兩大客戶集中度65%拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Nebius Group N.V. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NBIS_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="customer-concentration,cloud-infra-financing,ai-capex" tabindex="0" role="button" aria-label="Nebius Group N.V. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NBIS_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Nebius Group N.V.</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Meta270億合約深度拆解與客戶集中度風險 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/12（預估）</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Oracle Corporation FY2026 Q4 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ORCL_FY26Q4_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-capex,gaap-adjustment,cloud-infra-financing" tabindex="0" role="button" aria-label="Oracle Corporation FY2026 Q4 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/ORCL_FY26Q4_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Oracle Corporation</div><div class="wk-type">FY2026 Q4（2026年3–5月）&middot; 法說會 &middot; Q&amp;A &middot; BYOH／預付AI基礎設施合約與自由現金流轉負拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/09/10</div></div>
       </div>
 
       <div class="wk-group-title">企業工作流SaaS &middot; Enterprise Workflow SaaS</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="ServiceNow, Inc. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NOW_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ma-integration" tabindex="0" role="button" aria-label="ServiceNow, Inc. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/NOW_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">ServiceNow, Inc.</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Armis＋Veza＋Moveworks整合戰略 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/07/22</div></div>
       </div>
-      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" tabindex="0" role="button" aria-label="Datadog, Inc. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DDOG_FY26Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="customer-concentration" tabindex="0" role="button" aria-label="Datadog, Inc. FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DDOG_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Datadog, Inc.</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; AI原生客戶集中度與最大客戶保守調整 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06</div></div>
       </div>
 
       <div class="wk-group-title">電力基礎設施 &middot; Power Infrastructure</div>
-      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Bloom Energy Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/BE_FY2026Q1_Analysis.html')">
+      <div class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="ai-capex,power-infrastructure" tabindex="0" role="button" aria-label="Bloom Energy Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/BE_FY2026Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">Bloom Energy Corporation</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Oracle Project Jupiter深度拆解 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/05（預估）</div></div>
       </div>
 
@@ -1530,7 +1547,85 @@ function updateWorksCount() {
   wc.innerHTML = '<b class="wc-num">' + n + '</b> Projects';
 }
 
+/* ── Works: cross-report Topic tags — independent of the category pills above.
+   Tags come from each earnings card's data-tags attribute (comma-separated, assigned by hand
+   when a report is written; see the earnings-call framework section in CLAUDE.md). Selecting a
+   topic overrides the category pills and searches every card regardless of category, because the
+   point is surfacing the cross-domain thread (e.g. "ai-capex") that cuts across companies/industries
+   the pills otherwise keep separated. Maintenance: give a new earnings card 1-3 data-tags values;
+   reuse an existing key from TOPIC_LABELS where the theme matches instead of coining a new one. */
+var TOPIC_LABELS = {
+  'ai-capex':'AI資本支出循環','ai-accelerator':'AI加速器/晶片','warrant-structure':'認股權證結構',
+  'ma-integration':'併購/整合','customer-concentration':'客戶集中度','government-stake':'政府持股/補貼',
+  'capacity-expansion':'產能擴張','gaap-adjustment':'GAAP落差/財務結構','capital-allocation':'資本配置',
+  'cfo-transition':'管理層交接','foundry':'晶圓代工/供應鏈','memory-cycle':'記憶體循環',
+  'divestiture-restructure':'撤資/重組','business-model-shift':'商業模式轉型','cloud-infra-financing':'雲端基建融資',
+  'equity-stake-deal':'策略性股權投資','power-infrastructure':'電力基礎設施','turnaround':'轉型/復甦',
+  'licensing-model':'授權模式轉型','cybersecurity':'資安','convertible-debt':'可轉債結構','geopolitics':'地緣政治/在地化'
+};
+var activeTopics = new Set();
+var lastActiveCat = 'finance';
+
+function getCardTags(card) {
+  return (card.dataset.tags || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+}
+
+function toggleTopicsPanel() {
+  var panel = document.getElementById('topics-panel');
+  var toggle = document.getElementById('topics-toggle');
+  var isOpen = panel.classList.toggle('open');
+  toggle.classList.toggle('open', isOpen);
+  if (isOpen && !panel.dataset.built) {
+    renderTopicsPanel();
+    panel.dataset.built = '1';
+  }
+}
+
+function renderTopicsPanel() {
+  var counts = {};
+  document.querySelectorAll('.wk-card').forEach(function (card) {
+    getCardTags(card).forEach(function (tag) { counts[tag] = (counts[tag] || 0) + 1; });
+  });
+  var panel = document.getElementById('topics-panel');
+  var tags = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+  panel.innerHTML = tags.map(function (tag) {
+    var label = TOPIC_LABELS[tag] || tag;
+    return '<div class="topic-chip" data-tag="' + tag + '" onclick="toggleTopicTag(\'' + tag + '\',this)">' + label + '<span class="tc-count">' + counts[tag] + '</span></div>';
+  }).join('');
+}
+
+function toggleTopicTag(tag, chipEl) {
+  if (activeTopics.has(tag)) { activeTopics.delete(tag); chipEl.classList.remove('active'); }
+  else { activeTopics.add(tag); chipEl.classList.add('active'); }
+  applyTopicFilter();
+}
+
+function applyTopicFilter() {
+  var countEl = document.getElementById('topics-active-count');
+  if (activeTopics.size === 0) {
+    countEl.textContent = '';
+    filterCat(lastActiveCat, document.querySelector('.wf-pill[data-cat="' + lastActiveCat + '"]'));
+    return;
+  }
+  if (earningsViewActive) exitEarningsView();
+  document.querySelectorAll('.wf-pill').forEach(function (p) { p.classList.remove('active'); });
+  document.querySelectorAll('.wk-card').forEach(function (card) {
+    var tags = getCardTags(card);
+    var match = tags.some(function (t) { return activeTopics.has(t); });
+    card.classList.toggle('wk-hidden', !match);
+  });
+  countEl.textContent = activeTopics.size + ' topic' + (activeTopics.size > 1 ? 's' : '') + ' selected';
+  updateWorksCount();
+}
+
 function filterCat(cat, pillEl) {
+  lastActiveCat = cat;
+  if (activeTopics.size) {
+    activeTopics.clear();
+    document.querySelectorAll('.topic-chip.active').forEach(function (c) { c.classList.remove('active'); });
+    var countEl = document.getElementById('topics-active-count');
+    if (countEl) countEl.textContent = '';
+  }
   document.querySelectorAll('.wf-pill').forEach(p => p.classList.toggle('active', p === pillEl));
   document.querySelectorAll('.wk-card').forEach(card => {
     card.classList.toggle('wk-hidden', card.dataset.cat !== cat);

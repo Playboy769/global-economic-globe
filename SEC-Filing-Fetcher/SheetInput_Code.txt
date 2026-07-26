@@ -1,0 +1,7 @@
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Not Intersect(Target, Me.Range("A1")) Is Nothing Then
+        If Me.Range("A1").Value <> "" Then
+            Call modSEC.FetchSECFilings
+        End If
+    End If
+End Sub

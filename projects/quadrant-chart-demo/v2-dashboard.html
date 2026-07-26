@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>象限圖工具 · 儀表板風</title>
+<style>
+  :root{
+    --ink:#111827;
+    --sub:#6b7280;
+    --line:#e5e7eb;
+    --bg:#ffffff;
+    --panel:#f9fafb;
+    --card-shadow:0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#f3f4f6;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;}
+  .app{display:grid;grid-template-columns:340px 1fr;min-height:100vh;gap:16px;padding:16px;}
+  .card{background:#fff;border-radius:12px;box-shadow:var(--card-shadow);border:1px solid var(--line);}
+  .panel{padding:22px;overflow-y:auto;max-height:calc(100vh - 32px);}
+  .panel h1{font-size:16px;font-weight:700;margin:0 0 2px;}
+  .panel .tag{font-size:11px;color:#9ca3af;font-weight:600;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:20px;}
+  .section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--line);}
+  .section:last-of-type{border-bottom:none;}
+  .section-title{font-size:12px;font-weight:700;color:#374151;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .section-title .n{width:18px;height:18px;border-radius:5px;background:#111827;color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;}
+  label{display:block;font-size:11.5px;color:var(--sub);margin-bottom:4px;margin-top:9px;font-weight:600;}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=number]{
+    width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;
+    font-size:13px;background:#fff;color:var(--ink);font-family:inherit;
+  }
+  input[type=text]:focus,input[type=number]:focus{outline:none;border-color:#6366f1;}
+  input[type=color]{width:34px;height:30px;border:1.5px solid var(--line);border-radius:8px;padding:2px;background:#fff;cursor:pointer;}
+  .quad-config{display:flex;flex-direction:column;gap:8px;}
+  .quad-config .qrow{display:flex;gap:8px;align-items:center;background:var(--panel);padding:6px;border-radius:8px;}
+  .quad-config .qrow input[type=text]{flex:1;border:none;background:transparent;padding:4px 6px;}
+  .row{display:flex;gap:8px;align-items:flex-end;}
+  .row > div{flex:1;}
+  .btn{
+    width:100%;padding:10px 12px;border-radius:8px;border:none;
+    background:#111827;color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .btn:hover{background:#1f2937;}
+  .btn.secondary{background:#eef2ff;color:#4338ca;}
+  .btn.secondary:hover{background:#e0e7ff;}
+  .btn.ghost{background:#f3f4f6;color:#374151;}
+  .btn.ghost:hover{background:#e5e7eb;}
+  .btn-row{display:flex;gap:8px;}
+  .btn-row .btn{flex:1;}
+  .toggle{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;
+    background:var(--panel);border:1.5px solid var(--line); user-select:none;
+  }
+  .toggle.active{background:#eef2ff;border-color:#6366f1;color:#4338ca;}
+  .switch{width:34px;height:18px;border-radius:9px;background:#d1d5db;position:relative;transition:.2s;}
+  .switch::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .toggle.active .switch{background:#6366f1;}
+  .toggle.active .switch::after{left:18px;}
+
+  .pt-list{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;}
+  .pt-item{display:grid;grid-template-columns:22px 1fr 44px 44px 20px;gap:6px;align-items:center;background:var(--panel);padding:6px;border-radius:8px;}
+  .pt-item input[type=text]{padding:5px 6px;font-size:11.5px;border-radius:5px;}
+  .pt-item input[type=number]{padding:5px 4px;font-size:11px;border-radius:5px;}
+  .pt-del{cursor:pointer;color:#9ca3af;font-size:16px;text-align:center;line-height:1;background:none;border:none;padding:0;}
+  .pt-del:hover{color:#dc2626;}
+  .empty-hint{font-size:12px;color:var(--sub);font-style:italic;padding:12px;text-align:center;}
+  .badge-count{display:inline-flex;align-items:center;justify-content:center;background:#111827;color:#fff;border-radius:20px;font-size:10.5px;padding:1px 8px;font-weight:700;margin-left:auto;}
+
+  .main{padding:8px;display:flex;align-items:center;justify-content:center;}
+  .chart-card{width:min(78vh,700px);padding:28px;position:relative;}
+  .chart-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+  .chart-header .title{font-size:13px;font-weight:700;color:#374151;}
+  .chart-header .legend{font-size:11px;color:var(--sub);}
+  .chart-wrap{aspect-ratio:1/1;position:relative;}
+  svg{width:100%;height:100%;display:block;}
+  svg.addmode{cursor:crosshair;}
+  .qlabel{font-size:14px;font-weight:800;letter-spacing:.01em;}
+  .axislabel{font-size:12px;fill:#374151;font-weight:700;}
+  .pt-label{font-size:11px;fill:#111827;font-weight:600;pointer-events:none;}
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:#111827;color:#fff;padding:10px 20px;border-radius:24px;font-size:12.5px;font-weight:600;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 8px 24px rgba(0,0,0,.2);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="card panel">
+    <span class="tag">Quadrant Chart · v2 Dashboard</span>
+    <h1>象限圖工具 — 儀表板風</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title"><span class="n">1</span>軸設定</div>
+      <label>X 軸名稱（水平）</label>
+      <input type="text" id="xName" value="市場成長率">
+      <label>Y 軸名稱（垂直）</label>
+      <input type="text" id="yName" value="相對市佔率">
+      <label>軸範圍 ±</label>
+      <input type="number" id="axisRange" value="10" min="1" max="1000">
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">2</span>象限設定</div>
+      <div class="quad-config">
+        <div class="qrow"><input type="color" id="cTR" value="#4f46e5"><input type="text" id="qTR" value="明星"></div>
+        <div class="qrow"><input type="color" id="cTL" value="#0891b2"><input type="text" id="qTL" value="問題"></div>
+        <div class="qrow"><input type="color" id="cBL" value="#6b7280"><input type="text" id="qBL" value="瘦狗"></div>
+        <div class="qrow"><input type="color" id="cBR" value="#d97706"><input type="text" id="qBR" value="金牛"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">3</span>新增資料點</div>
+      <div class="toggle" id="addModeToggle"><span>點擊畫布新增</span><span class="switch"></span></div>
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:2;">
+          <label style="margin-top:0;">名稱</label>
+          <input type="text" id="newName" placeholder="例如 台積電">
+        </div>
+        <div>
+          <label style="margin-top:0;">顏色</label>
+          <input type="color" id="newColor" value="#4f46e5">
+        </div>
+      </div>
+      <div class="row">
+        <div><label>X</label><input type="number" id="newX" value="0" step="0.1"></div>
+        <div><label>Y</label><input type="number" id="newY" value="0" step="0.1"></div>
+      </div>
+      <button class="btn" id="addBtn" style="margin-top:12px;">＋ 加入資料點</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">4</span>資料點清單<span class="badge-count" id="ptCount">0</span></div>
+      <div class="pt-list" id="ptList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無資料點</div>
+    </div>
+
+    <div class="section" style="border-bottom:none;padding-bottom:0;">
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button class="btn ghost" id="clearBtn">清空</button>
+        <button class="btn ghost" id="seedBtn">範例資料</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" id="exportPng">匯出 PNG</button>
+        <button class="btn secondary" id="exportEmbed">複製嵌入代碼</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card chart-card">
+      <div class="chart-header">
+        <span class="title">象限分析圖</span>
+        <span class="legend" id="legendText">4 個象限 · 依顏色分類</span>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const VB = 700, PAD = 90, HALF = (VB - PAD*2) / 2, CX = VB/2, CY = VB/2;
+  const palette = ['#4f46e5','#0891b2','#d97706','#dc2626','#16a34a','#db2777','#7c3aed','#65a30d'];
+  let range = 10;
+  let points = [];
+  let idSeq = 1;
+  let addMode = false;
+
+  const svg = document.getElementById('chart');
+  const els = {};
+  ['xName','yName','axisRange','qTR','qTL','qBL','qBR','cTR','cTL','cBL','cBR',
+   'addModeToggle','newName','newX','newY','newColor','addBtn','ptList','emptyHint',
+   'clearBtn','seedBtn','exportPng','exportEmbed','toast','ptCount','legendText'
+  ].forEach(id=> els[id] = document.getElementById(id));
+
+  function elS(tag, attrs, text){
+    const e = document.createElementNS(SVGNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(text !== undefined) e.textContent = text;
+    return e;
+  }
+  function hexToRgba(hex, a){
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function dataToSvg(x, y){ return { x: CX + (x/range)*HALF, y: CY - (y/range)*HALF }; }
+  function svgToData(sx, sy){
+    let x = ((sx - CX)/HALF) * range;
+    let y = ((CY - sy)/HALF) * range;
+    x = Math.max(-range, Math.min(range, x));
+    y = Math.max(-range, Math.min(range, y));
+    return { x: Math.round(x*100)/100, y: Math.round(y*100)/100 };
+  }
+  function clientToSvg(evt){
+    const rect = svg.getBoundingClientRect();
+    return { sx: (evt.clientX-rect.left)*(VB/rect.width), sy: (evt.clientY-rect.top)*(VB/rect.height) };
+  }
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>els.toast.classList.remove('show'), 1600);
+  }
+  function clamp(v){ return Math.max(-range, Math.min(range, v)); }
+  function escapeAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function render(){
+    svg.innerHTML = '';
+    svg.classList.toggle('addmode', addMode);
+
+    const qColors = { TR: els.cTR.value, TL: els.cTL.value, BL: els.cBL.value, BR: els.cBR.value };
+    const qNames  = { TR: els.qTR.value, TL: els.qTL.value, BL: els.qBL.value, BR: els.qBR.value };
+
+    // quadrant tinted backgrounds
+    svg.appendChild(elS('rect', {x:CX, y:CY-HALF, width:HALF, height:HALF, fill:hexToRgba(qColors.TR,0.07)}));
+    svg.appendChild(elS('rect', {x:CX-HALF, y:CY-HALF, width:HALF, height:HALF, fill:hexToRgba(qColors.TL,0.07)}));
+    svg.appendChild(elS('rect', {x:CX-HALF, y:CY, width:HALF, height:HALF, fill:hexToRgba(qColors.BL,0.07)}));
+    svg.appendChild(elS('rect', {x:CX, y:CY, width:HALF, height:HALF, fill:hexToRgba(qColors.BR,0.07)}));
+
+    // outer border
+    svg.appendChild(elS('rect', {x:CX-HALF, y:CY-HALF, width:HALF*2, height:HALF*2, fill:'none', stroke:'#e5e7eb', 'stroke-width':1.5, rx:6}));
+
+    // background click catcher (transparent, above tint, below axes/points)
+    const bg = elS('rect', {x:CX-HALF, y:CY-HALF, width:HALF*2, height:HALF*2, fill:'transparent'});
+    bg.addEventListener('click', onBgClick);
+    svg.appendChild(bg);
+
+    // quadrant labels with colored chip
+    const qPos = [
+      {x: CX+HALF-16, y: CY-HALF+34, anchor:'end', text:qNames.TR, color:qColors.TR},
+      {x: CX-HALF+16, y: CY-HALF+34, anchor:'start', text:qNames.TL, color:qColors.TL},
+      {x: CX-HALF+16, y: CY+HALF-18, anchor:'start', text:qNames.BL, color:qColors.BL},
+      {x: CX+HALF-16, y: CY+HALF-18, anchor:'end', text:qNames.BR, color:qColors.BR}
+    ];
+    qPos.forEach(q=>{
+      svg.appendChild(elS('text', {x:q.x, y:q.y, 'text-anchor':q.anchor, class:'qlabel', fill:q.color}, q.text || ''));
+    });
+
+    // axis lines
+    const defs = elS('defs', {});
+    const marker = elS('marker', {id:'arrow2', markerWidth:'10', markerHeight:'10', refX:'6', refY:'3', orient:'auto'});
+    marker.appendChild(elS('path', {d:'M0,0 L6,3 L0,6 Z', fill:'#111827'}));
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+    svg.appendChild(elS('line', {x1:CX-HALF-14, y1:CY, x2:CX+HALF+14, y2:CY, stroke:'#111827', 'stroke-width':2.5, 'marker-end':'url(#arrow2)'}));
+    svg.appendChild(elS('line', {x1:CX, y1:CY+HALF+14, x2:CX, y2:CY-HALF-14, stroke:'#111827', 'stroke-width':2.5, 'marker-end':'url(#arrow2)'}));
+
+    svg.appendChild(elS('text', {x:CX+HALF+10, y:CY-10, 'text-anchor':'end', class:'axislabel'}, els.xName.value || 'X'));
+    svg.appendChild(elS('text', {x:CX+14, y:CY-HALF-18, 'text-anchor':'start', class:'axislabel'}, els.yName.value || 'Y'));
+
+    // points
+    points.forEach(p=>{
+      const pos = dataToSvg(p.x, p.y);
+      const g = elS('g', {});
+      g.appendChild(elS('circle', {cx:pos.x, cy:pos.y, r:9, fill:p.color, opacity:0.18}));
+      const circle = elS('circle', {cx:pos.x, cy:pos.y, r:7, fill:p.color, stroke:'#ffffff', 'stroke-width':2.5, style:'cursor:grab;'});
+      circle.addEventListener('pointerdown', (e)=>startDrag(e, p.id));
+      g.appendChild(circle);
+      g.appendChild(elS('text', {x:pos.x, y:pos.y-14, 'text-anchor':'middle', class:'pt-label'}, p.name));
+      svg.appendChild(g);
+    });
+
+    els.legendText.textContent = `${points.length} 個資料點 · 4 個象限`;
+    renderList();
+  }
+
+  function startDrag(evt, id){
+    evt.stopPropagation();
+    const target = evt.currentTarget;
+    target.setPointerCapture(evt.pointerId);
+    target.style.cursor = 'grabbing';
+    const move = (e)=>{
+      const {sx, sy} = clientToSvg(e);
+      const d = svgToData(sx, sy);
+      const p = points.find(pp=>pp.id===id);
+      if(p){ p.x = d.x; p.y = d.y; render(); }
+    };
+    const up = (e)=>{
+      target.releasePointerCapture(evt.pointerId);
+      target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', up);
+    };
+    target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', up);
+  }
+
+  function onBgClick(evt){
+    if(!addMode) return;
+    const {sx, sy} = clientToSvg(evt);
+    const d = svgToData(sx, sy);
+    addPoint(`P${idSeq}`, d.x, d.y, palette[(idSeq-1) % palette.length]);
+  }
+
+  function addPoint(name, x, y, color){
+    const id = idSeq++;
+    points.push({id, name, x, y, color});
+    render();
+    requestAnimationFrame(()=>{
+      const row = els.ptList.querySelector(`[data-row="${id}"] input[type=text]`);
+      if(row){ row.focus(); row.select(); }
+    });
+  }
+
+  function renderList(){
+    els.ptList.innerHTML = '';
+    els.ptCount.textContent = points.length;
+    els.emptyHint.style.display = points.length ? 'none' : 'block';
+    points.forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'pt-item';
+      row.dataset.row = p.id;
+      row.innerHTML = `
+        <input type="color" value="${p.color}">
+        <input type="text" value="${escapeAttr(p.name)}">
+        <input type="number" step="0.1" value="${p.x}">
+        <input type="number" step="0.1" value="${p.y}">
+        <button class="pt-del" title="刪除">×</button>
+      `;
+      const [colorI, nameI, xI, yI] = row.querySelectorAll('input');
+      colorI.addEventListener('input', ()=>{ p.color = colorI.value; render(); });
+      nameI.addEventListener('input', ()=>{ p.name = nameI.value; render(); });
+      xI.addEventListener('input', ()=>{ p.x = clamp(parseFloat(xI.value)||0); render(); });
+      yI.addEventListener('input', ()=>{ p.y = clamp(parseFloat(yI.value)||0); render(); });
+      row.querySelector('.pt-del').addEventListener('click', ()=>{ points = points.filter(pp=>pp.id!==p.id); render(); });
+      els.ptList.appendChild(row);
+    });
+  }
+
+  [els.xName, els.yName, els.qTR, els.qTL, els.qBL, els.qBR, els.cTR, els.cTL, els.cBL, els.cBR]
+    .forEach(i=>i.addEventListener('input', render));
+  els.axisRange.addEventListener('input', ()=>{ range = Math.max(0.01, parseFloat(els.axisRange.value)||10); render(); });
+  els.addModeToggle.addEventListener('click', ()=>{
+    addMode = !addMode;
+    els.addModeToggle.classList.toggle('active', addMode);
+    render();
+  });
+  els.addBtn.addEventListener('click', ()=>{
+    const name = els.newName.value.trim() || `P${idSeq}`;
+    addPoint(name, clamp(parseFloat(els.newX.value)||0), clamp(parseFloat(els.newY.value)||0), els.newColor.value);
+    els.newName.value = '';
+  });
+  els.clearBtn.addEventListener('click', ()=>{ points = []; render(); });
+  els.seedBtn.addEventListener('click', seed);
+
+  els.exportPng.addEventListener('click', ()=>{
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    const xml = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([xml], {type:'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = VB*scale; canvas.height = VB*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob=>{
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'quadrant-chart.png';
+        a.click();
+        showToast('已匯出 PNG');
+      });
+    };
+    img.src = url;
+  });
+
+  els.exportEmbed.addEventListener('click', ()=>{
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    clone.removeAttribute('class');
+    const xml = new XMLSerializer().serializeToString(clone);
+    const code = `<div style="max-width:640px;margin:0 auto;">\n${xml}\n</div>`;
+    navigator.clipboard.writeText(code).then(()=>showToast('嵌入代碼已複製到剪貼簿'));
+  });
+
+  function seed(){
+    points = []; idSeq = 1;
+    addPoint('台積電', 7.5, 8.2, els.cTR.value);
+    addPoint('聯發科', 5.1, 4.8, els.cTR.value);
+    addPoint('某新創A', 6.8, -3.2, els.cBR.value);
+    addPoint('某夕陽業務', -6.5, -6.9, els.cBL.value);
+    addPoint('新技術B', -4.2, 5.5, els.cTL.value);
+  }
+
+  seed();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>象限圖工具 · 三版選擇</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;padding:48px 24px;background:#fff;color:#111;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 6px;}
+  p.sub{color:#666;font-size:14px;margin:0 0 40px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .card{border:1px solid #e5e5e5;border-radius:12px;padding:22px;text-decoration:none;color:inherit;
+    transition:box-shadow .15s, transform .15s;display:block;}
+  .card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-2px);}
+  .card .thumb{height:120px;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;letter-spacing:.05em;}
+  .thumb1{background:#fafafa;border:1px solid #eee;}
+  .thumb2{background:linear-gradient(135deg,#eef2ff,#fff);border:1px solid #e5e7eb;}
+  .thumb3{background:#fff;border:1px solid #e4e4e7;background-image:linear-gradient(#f0f0f2 1px,transparent 1px),linear-gradient(90deg,#f0f0f2 1px,transparent 1px);background-size:16px 16px;}
+  .card h2{font-size:15px;margin:0 0 6px;}
+  .card .desc{font-size:12.5px;color:#666;line-height:1.6;margin:0 0 12px;}
+  .card ul{margin:0;padding-left:16px;font-size:12px;color:#555;line-height:1.8;}
+  .open{display:inline-block;margin-top:14px;font-size:12px;font-weight:600;color:#111;}
+  .open::after{content:' →';}
+  .note{margin-top:40px;font-size:12.5px;color:#888;line-height:1.8;border-top:1px solid #eee;padding-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>象限圖工具 — 三個設計版本</h1>
+  <p class="sub">黑色 XY 軸、白底、可自訂象限與軸名稱皆已具備。點卡片開啟該版本試用，確定要用哪個再回來告訴我。</p>
+  <div class="grid">
+    <a class="card" href="v1-minimal.html">
+      <div class="thumb thumb1">MINIMAL</div>
+      <h2>v1 · 極簡風</h2>
+      <p class="desc">大量留白、細線條、低彩度，象限名稱以灰階小字呈現，適合放進報告或簡報。</p>
+      <ul>
+        <li>單色主視覺，介面乾淨</li>
+        <li>點擊新增 + 表單新增</li>
+        <li>拖曳移動 / 顏色自訂</li>
+      </ul>
+      <span class="open">開啟試用</span>
+    </a>
+    <a class="card" href="v2-dashboard.html">
+      <div class="thumb thumb2">DASHBOARD</div>
+      <h2>v2 · 儀表板風</h2>
+      <p class="desc">卡片式版面、象限淺色底色可自訂，資訊層次分明，適合當作分析儀表板的一個模組。</p>
+      <ul>
+        <li>四象限各自可配色（含底色）</li>
+        <li>清單計數 / 分區編號引導</li>
+        <li>拖曳移動 / 顏色自訂</li>
+      </ul>
+      <span class="open">開啟試用</span>
+    </a>
+    <a class="card" href="v3-techviz.html">
+      <div class="thumb thumb3">TECH / DATA-VIZ</div>
+      <h2>v3 · 科技資料視覺化風</h2>
+      <p class="desc">等寬字體、細格線與座標刻度、即時游標座標讀出，偏向分析工具 / 終端機質感。</p>
+      <ul>
+        <li>格線與刻度可切換顯示</li>
+        <li>即時滑鼠座標讀出</li>
+        <li>拖曳移動 / 顏色自訂</li>
+      </ul>
+      <span class="open">開啟試用</span>
+    </a>
+  </div>
+  <div class="note">
+    三版共通功能：可自訂 X/Y 軸名稱、4 個象限名稱、軸範圍（±N）、黑色 XY 軸＋白底、點擊畫布或表單新增資料點、
+    資料點可拖曳/改色/改名/刪除、匯出 PNG、複製可嵌入的 SVG 代碼。設計參考了 BCG 成長占有率矩陣、Gartner
+    Magic Quadrant、風險機率-衝擊矩陣等常見象限圖範例的版面配置邏輯。
+  </div>
+</div>
+</body>
+</html>

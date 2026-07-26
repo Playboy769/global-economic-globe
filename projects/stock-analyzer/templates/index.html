@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台美股分析工具</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: #0d0d0d;
+    color: #cccccc;
+    font-family: Calibri, 'Yu Gothic', 'Microsoft JhengHei', sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a7fff; }
+
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Drop Zone ── */
+  #drop-zone {
+    height: 42px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 1px dashed #2a2a2a;
+    background: #0d0d0d;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    flex-shrink: 0;
+  }
+  #drop-zone:hover {
+    border-color: #4a7fff;
+    background: #111;
+  }
+  #drop-zone.drag-over {
+    border-color: #6a9fff;
+    background: #0d1a30;
+  }
+
+  .drop-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    font-size: 12px;
+  }
+  .drop-arrow {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .drop-badges {
+    display: flex;
+    gap: 5px;
+  }
+  .badge {
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    color: #555;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  #file-input { display: none; }
+
+  /* ── File Tabs ── */
+  #file-tabs {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    background: #080808;
+    border-bottom: 1px solid #1a1a1a;
+    overflow-x: auto;
+    flex-shrink: 0;
+    height: 34px;
+    min-height: 34px;
+  }
+  #file-tabs::-webkit-scrollbar { height: 3px; }
+  .file-tab {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 12px;
+    height: 100%;
+    cursor: pointer;
+    white-space: nowrap;
+    border-right: 1px solid #1a1a1a;
+    color: #666;
+    font-size: 12px;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .file-tab:hover { background: #111; color: #aaa; }
+  .file-tab.active { color: #ffffff; background: #0d0d0d; border-bottom: 2px solid #4a7fff; }
+  .file-tab .tab-close {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #555;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+  }
+  .file-tab .tab-close:hover { background: #e74c3c; color: #fff; }
+
+  /* ── Main Content ── */
+  #main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Sheet Bar ── */
+  #sheet-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+  #sheet-bar label { color: #666; font-size: 12px; }
+  #sheet-select {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    color: #cccccc;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+  }
+  #sheet-select:focus { border-color: #4a7fff; }
+
+  /* ── Sub-tabs ── */
+  #sub-tabs {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding: 0 14px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #1a1a1a;
+    flex-shrink: 0;
+    height: 36px;
+    min-height: 36px;
+  }
+  .sub-tab {
+    padding: 0 14px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 12px;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  .sub-tab:hover { color: #aaa; }
+  .sub-tab.active { color: #ffffff; border-bottom-color: #4a7fff; }
+
+  /* ── Panels ── */
+  #table-panel, #charts-panel {
+    flex: 1;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+  }
+  #table-panel.visible, #charts-panel.visible { display: flex; }
+
+  /* ── Search Bar ── */
+  #search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+  #search-input {
+    flex: 1;
+    max-width: 300px;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    color: #cccccc;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #search-input:focus { border-color: #4a7fff; }
+  #row-count { color: #444; font-size: 11px; }
+
+  /* ── Table Container ── */
+  #table-container {
+    flex: 1;
+    overflow: auto;
+  }
+  #data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  #data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #data-table thead th {
+    background: #111111;
+    color: #cccccc;
+    padding: 6px 10px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid #1a1a1a;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    font-size: 11px;
+    position: relative;
+  }
+  #data-table thead th:hover { background: #181818; color: #ffffff; }
+  #data-table thead th.sort-asc::after { content: " ▲"; color: #4a7fff; font-size: 9px; }
+  #data-table thead th.sort-desc::after { content: " ▼"; color: #4a7fff; font-size: 9px; }
+  #data-table thead th.numeric { text-align: right; }
+  #data-table tbody tr:nth-child(odd)  { background: #0d0d0d; }
+  #data-table tbody tr:nth-child(even) { background: #111111; }
+  #data-table tbody tr:hover { background: #1a2a50; }
+  #data-table tbody td {
+    padding: 4px 10px;
+    border-bottom: 1px solid #161616;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  #data-table tbody td.numeric { text-align: right; }
+  .val-pos { color: #4CAF50; }
+  .val-neg { color: #F44336; }
+
+  /* ── Charts Panel ── */
+  #charts-panel {
+    overflow-y: auto;
+    padding: 10px;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-content: flex-start;
+  }
+  .chart-card {
+    background: #111111;
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+    min-width: 340px;
+    flex: 1 1 420px;
+    max-width: 100%;
+  }
+  .chart-title {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: #888;
+    border-bottom: 1px solid #1a1a1a;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chart-error {
+    padding: 16px;
+    color: #e74c3c;
+    font-size: 12px;
+    font-style: italic;
+  }
+  .chart-placeholder {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 12px;
+  }
+
+  /* ── Empty State ── */
+  #empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #2a2a2a;
+  }
+  #empty-state svg { opacity: 0.3; }
+  #empty-state p { font-size: 14px; }
+
+  /* ── Status Bar ── */
+  #status-bar {
+    height: 22px;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    background: #080808;
+    border-top: 1px solid #141414;
+    color: #444;
+    font-size: 11px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  #status-msg { flex: 1; }
+  #status-info { color: #333; }
+
+  /* ── Loading overlay ── */
+  #loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    color: #ccc;
+    font-size: 13px;
+  }
+  #loading.visible { display: flex; }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #222;
+    border-top-color: #4a7fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Drop Zone -->
+  <div id="drop-zone" title="點擊選擇或拖曳檔案">
+    <div class="drop-left">
+      <svg class="drop-arrow" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 2v10M5 8l4-4 4 4" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 14h12" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>拖曳或點擊此處開啟選股檔案</span>
+    </div>
+    <div class="drop-badges">
+      <span class="badge">CSV</span>
+      <span class="badge">XLSX</span>
+      <span class="badge">XLSM</span>
+    </div>
+  </div>
+  <input type="file" id="file-input" accept=".csv,.xlsx,.xlsm" multiple>
+
+  <!-- File Tabs -->
+  <div id="file-tabs"></div>
+
+  <!-- Main Content -->
+  <div id="main-content">
+
+    <!-- Empty state -->
+    <div id="empty-state">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="48" height="48" rx="6" stroke="#333" stroke-width="2"/>
+        <path d="M20 32h24M20 22h24M20 42h16" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>上傳 CSV、XLSX 或 XLSM 檔案以開始分析</p>
+    </div>
+
+    <!-- Sheet Bar -->
+    <div id="sheet-bar">
+      <label for="sheet-select">工作表：</label>
+      <select id="sheet-select"></select>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div id="sub-tabs">
+      <div class="sub-tab active" data-tab="table">📋 原始資料</div>
+      <div class="sub-tab" data-tab="charts">📈 圖表分析</div>
+    </div>
+
+    <!-- Table Panel -->
+    <div id="table-panel">
+      <div id="search-bar">
+        <input type="text" id="search-input" placeholder="搜尋...">
+        <span id="row-count"></span>
+      </div>
+      <div id="table-container">
+        <table id="data-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts Panel -->
+    <div id="charts-panel"></div>
+
+  </div>
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <span id="status-msg">就緒</span>
+    <span id="status-info"></span>
+  </div>
+
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading">
+  <div class="spinner"></div>
+  <span id="loading-msg">讀取中...</span>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const state = {
+  files: new Map(),      // sid -> fileData
+  activeFile: null,      // sid
+  activeTab: 'table',    // 'table' | 'charts'
+};
+
+// sort state per-sheet: { colIdx, dir }
+let sortState = null;
+let allRows = [];        // full unfiltered rows for current sheet
+let filteredRows = [];   // after search
+let currentHeaders = [];
+let numericCols = new Set();
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const dropZone     = document.getElementById('drop-zone');
+const fileInput    = document.getElementById('file-input');
+const fileTabs     = document.getElementById('file-tabs');
+const mainContent  = document.getElementById('main-content');
+const emptyState   = document.getElementById('empty-state');
+const sheetBar     = document.getElementById('sheet-bar');
+const sheetSelect  = document.getElementById('sheet-select');
+const subTabs      = document.getElementById('sub-tabs');
+const tablePanel   = document.getElementById('table-panel');
+const chartsPanel  = document.getElementById('charts-panel');
+const tableHead    = document.getElementById('table-head');
+const tableBody    = document.getElementById('table-body');
+const searchInput  = document.getElementById('search-input');
+const rowCount     = document.getElementById('row-count');
+const statusMsg    = document.getElementById('status-msg');
+const statusInfo   = document.getElementById('status-info');
+const loading      = document.getElementById('loading');
+const loadingMsg   = document.getElementById('loading-msg');
+
+// ── Drop Zone ─────────────────────────────────────────────────────────────────
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  for (const f of e.target.files) uploadFile(f);
+  fileInput.value = '';
+});
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  for (const f of e.dataTransfer.files) uploadFile(f);
+});
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+async function uploadFile(file) {
+  showLoading(`讀取 ${file.name}...`);
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    // initialise per-sheet cache
+    const sid = data.session_id;
+    data.sheets = new Map();
+    data.sheets.set(data.current_sheet, { table: data.table, charts: data.charts });
+    state.files.set(sid, data);
+    renderFileTabs();
+    switchFile(sid);
+    setStatus(`已載入 ${data.meta.filename}（${data.meta.rows} 列 × ${data.meta.cols} 欄）`);
+  } catch (err) {
+    setStatus(`錯誤：${err.message}`, true);
+    alert(`載入失敗：${err.message}`);
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── File Tabs ─────────────────────────────────────────────────────────────────
+function renderFileTabs() {
+  fileTabs.innerHTML = '';
+  for (const [sid, data] of state.files) {
+    const tab = document.createElement('div');
+    tab.className = 'file-tab' + (sid === state.activeFile ? ' active' : '');
+    tab.dataset.sid = sid;
+    const name = document.createElement('span');
+    name.textContent = data.meta.filename;
+    const close = document.createElement('span');
+    close.className = 'tab-close';
+    close.textContent = '✕';
+    close.title = '關閉';
+    close.addEventListener('click', e => { e.stopPropagation(); closeFile(sid); });
+    tab.appendChild(name);
+    tab.appendChild(close);
+    tab.addEventListener('click', () => switchFile(sid));
+    fileTabs.appendChild(tab);
+  }
+  fileTabs.style.display = state.files.size > 0 ? 'flex' : 'none';
+}
+
+function switchFile(sid) {
+  state.activeFile = sid;
+  renderFileTabs();
+  const data = state.files.get(sid);
+  if (!data) return;
+
+  // Rebuild sheet selector
+  const sheetNames = data.sheet_names;
+  sheetSelect.innerHTML = '';
+  for (const sn of sheetNames) {
+    const opt = document.createElement('option');
+    opt.value = sn;
+    opt.textContent = sn;
+    sheetSelect.appendChild(opt);
+  }
+  sheetSelect.value = data.current_sheet;
+  sheetBar.style.display = sheetNames.length > 1 ? 'flex' : 'none';
+
+  emptyState.style.display = 'none';
+  subTabs.style.display = 'flex';
+
+  const sheetData = data.sheets.get(data.current_sheet);
+  if (state.activeTab === 'table') {
+    showPanel('table');
+    renderTable(sheetData.table);
+  } else {
+    showPanel('charts');
+    renderCharts(sid, data.current_sheet);
+  }
+  statusInfo.textContent = `${data.meta.rows} 列 · ${data.meta.cols} 欄`;
+}
+
+function closeFile(sid) {
+  state.files.delete(sid);
+  if (state.activeFile === sid) {
+    state.activeFile = null;
+    const next = state.files.keys().next().value;
+    if (next) {
+      switchFile(next);
+    } else {
+      showEmptyState();
+    }
+  }
+  renderFileTabs();
+}
+
+// ── Sheet Select ──────────────────────────────────────────────────────────────
+sheetSelect.addEventListener('change', async () => {
+  const sid = state.activeFile;
+  const data = state.files.get(sid);
+  if (!data) return;
+  const sheet_name = sheetSelect.value;
+  if (data.sheets.has(sheet_name)) {
+    data.current_sheet = sheet_name;
+    const sheetData = data.sheets.get(sheet_name);
+    renderTable(sheetData.table);
+    if (state.activeTab === 'charts') renderCharts(sid, sheet_name);
+    return;
+  }
+  showLoading('切換工作表...');
+  try {
+    const res = await fetch('/api/sheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sid, sheet_name }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.detail || `HTTP ${res.status}`);
+    data.sheets.set(sheet_name, { table: result.table, charts: result.charts });
+    data.current_sheet = sheet_name;
+    renderTable(result.table);
+    if (state.activeTab === 'charts') renderCharts(sid, sheet_name);
+    setStatus(`已切換至工作表：${sheet_name}`);
+  } catch (err) {
+    setStatus(`切換失敗：${err.message}`, true);
+  } finally {
+    hideLoading();
+  }
+});
+
+// ── Sub-tabs ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.sub-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    switchTab(btn.dataset.tab);
+  });
+});
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  const sid = state.activeFile;
+  if (!sid) return;
+  const data = state.files.get(sid);
+  if (!data) return;
+  const sheetData = data.sheets.get(data.current_sheet);
+  if (tab === 'table') {
+    showPanel('table');
+    renderTable(sheetData.table);
+  } else {
+    showPanel('charts');
+    renderCharts(sid, data.current_sheet);
+  }
+}
+
+function showPanel(which) {
+  tablePanel.classList.toggle('visible', which === 'table');
+  chartsPanel.classList.toggle('visible', which === 'charts');
+}
+
+// ── Table Rendering ───────────────────────────────────────────────────────────
+const CHANGE_KEYWORDS = ['漲幅', '漲跌', 'change', 'chg', 'return', '報酬', '偏離', 'deviation', 'dev'];
+
+function isChangeCol(name) {
+  const low = name.toLowerCase();
+  return CHANGE_KEYWORDS.some(k => low.includes(k));
+}
+
+function renderTable(tableData) {
+  if (!tableData) return;
+  currentHeaders = tableData.headers;
+  allRows = tableData.rows;
+  sortState = null;
+  numericCols.clear();
+  searchInput.value = '';
+
+  // Detect numeric columns
+  if (allRows.length > 0) {
+    allRows.slice(0, 20).forEach(row => {
+      row.forEach((v, i) => {
+        if (typeof v === 'number') numericCols.add(i);
+      });
+    });
+  }
+
+  buildTableHead();
+  filteredRows = [...allRows];
+  buildTableBody(filteredRows);
+  updateRowCount();
+}
+
+function buildTableHead() {
+  tableHead.innerHTML = '';
+  const tr = document.createElement('tr');
+  currentHeaders.forEach((h, i) => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    th.dataset.col = i;
+    if (numericCols.has(i)) th.classList.add('numeric');
+    th.addEventListener('click', () => sortTable(i));
+    tr.appendChild(th);
+  });
+  tableHead.appendChild(tr);
+}
+
+function buildTableBody(rows) {
+  tableBody.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    row.forEach((v, i) => {
+      const td = document.createElement('td');
+      const text = v === null || v === undefined ? '' : String(v);
+      td.textContent = text;
+      if (numericCols.has(i)) {
+        td.classList.add('numeric');
+        if (isChangeCol(currentHeaders[i] || '')) {
+          const num = parseFloat(text);
+          if (!isNaN(num)) {
+            td.classList.add(num >= 0 ? 'val-pos' : 'val-neg');
+          }
+        }
+      }
+      tr.appendChild(td);
+    });
+    frag.appendChild(tr);
+  });
+  tableBody.appendChild(frag);
+}
+
+function updateRowCount() {
+  const total = allRows.length;
+  const shown = filteredRows.length;
+  rowCount.textContent = shown === total ? `${total} 列` : `${shown} / ${total} 列`;
+}
+
+// ── Sort ──────────────────────────────────────────────────────────────────────
+function sortTable(colIdx) {
+  if (!sortState || sortState.colIdx !== colIdx) {
+    sortState = { colIdx, dir: 1 };
+  } else {
+    sortState.dir *= -1;
+  }
+  const dir = sortState.dir;
+  filteredRows = [...filteredRows].sort((a, b) => {
+    const av = a[colIdx], bv = b[colIdx];
+    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+    return String(av).localeCompare(String(bv), 'zh-TW') * dir;
+  });
+  // Update header indicators
+  document.querySelectorAll('#table-head th').forEach((th, i) => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (i === colIdx) th.classList.add(dir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+  buildTableBody(filteredRows);
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase().trim();
+  if (!q) {
+    filteredRows = sortState
+      ? [...allRows].sort((a, b) => {
+          const i = sortState.colIdx, d = sortState.dir;
+          const av = a[i], bv = b[i];
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * d;
+          return String(av).localeCompare(String(bv), 'zh-TW') * d;
+        })
+      : [...allRows];
+  } else {
+    filteredRows = allRows.filter(row =>
+      row.some(v => String(v).toLowerCase().includes(q))
+    );
+  }
+  buildTableBody(filteredRows);
+  updateRowCount();
+});
+
+// ── Charts Rendering ──────────────────────────────────────────────────────────
+function renderCharts(sid, sheetName) {
+  const cacheKey = `${sid}:${sheetName}`;
+  if (chartsPanel.dataset.cacheKey === cacheKey) return;  // already rendered
+  chartsPanel.innerHTML = '';
+  chartsPanel.dataset.cacheKey = cacheKey;
+
+  const data = state.files.get(sid);
+  if (!data) return;
+  const sheetData = data.sheets.get(sheetName);
+  if (!sheetData || !sheetData.charts) return;
+
+  const charts = sheetData.charts;
+  if (!charts.length) {
+    const msg = document.createElement('div');
+    msg.className = 'chart-placeholder';
+    msg.textContent = '此工作表無可用圖表';
+    chartsPanel.appendChild(msg);
+    return;
+  }
+
+  charts.forEach((ch, idx) => {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'chart-title';
+    titleEl.textContent = ch.title || `圖表 ${idx + 1}`;
+    card.appendChild(titleEl);
+
+    if (ch.error || !ch.json) {
+      const errEl = document.createElement('div');
+      errEl.className = 'chart-error';
+      errEl.textContent = ch.error || '圖表資料為空';
+      card.appendChild(errEl);
+    } else {
+      const plotDiv = document.createElement('div');
+      plotDiv.id = `chart-${sid.slice(0, 8)}-${idx}`;
+      plotDiv.style.width = '100%';
+      card.appendChild(plotDiv);
+      chartsPanel.appendChild(card);
+
+      // Render Plotly asynchronously to keep UI responsive
+      requestAnimationFrame(() => {
+        try {
+          const fig = JSON.parse(ch.json);
+          // Force dark paper/plot bg and font in case layout is missing
+          fig.layout = fig.layout || {};
+          fig.layout.paper_bgcolor = fig.layout.paper_bgcolor || '#0a0a0a';
+          fig.layout.plot_bgcolor  = fig.layout.plot_bgcolor  || '#0f0f0f';
+          fig.layout.font = fig.layout.font || { color: '#ffffff' };
+          fig.layout.margin = fig.layout.margin || { l: 10, r: 10, t: 40, b: 20 };
+          Plotly.newPlot(plotDiv, fig.data, fig.layout, {
+            responsive: true,
+            displayModeBar: false,
+          });
+        } catch (e) {
+          plotDiv.textContent = `渲染失敗：${e.message}`;
+          plotDiv.style.color = '#e74c3c';
+          plotDiv.style.padding = '12px';
+          plotDiv.style.fontSize = '12px';
+        }
+      });
+      return; // card already appended above
+    }
+    chartsPanel.appendChild(card);
+  });
+}
+
+// ── Empty State ───────────────────────────────────────────────────────────────
+function showEmptyState() {
+  emptyState.style.display = 'flex';
+  sheetBar.style.display = 'none';
+  subTabs.style.display = 'none';
+  tablePanel.classList.remove('visible');
+  chartsPanel.classList.remove('visible');
+  statusInfo.textContent = '';
+  setStatus('就緒');
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+function setStatus(msg, isErr = false) {
+  statusMsg.textContent = msg;
+  statusMsg.style.color = isErr ? '#e74c3c' : '#555';
+}
+
+function showLoading(msg) {
+  loadingMsg.textContent = msg || '載入中...';
+  loading.classList.add('visible');
+}
+
+function hideLoading() {
+  loading.classList.remove('visible');
+}
+</script>
+</body>
+</html>

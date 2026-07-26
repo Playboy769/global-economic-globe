@@ -1,0 +1,119 @@
+EMA Bias 加倉模型 — 使用步驟
+=====================================
+
+【一次性安裝】
+1. 開啟 Excel → 新增空白活頁簿
+2. 另存新檔 → 檔案類型選「Excel 啟用巨集的活頁簿 (*.xlsm)」
+3. 按 Alt + F11 開啟 VBA 編輯器
+4. 選單 File → Import File → 選 EMA_Bias_Model.bas
+5. 關閉 VBA 編輯器
+
+【執行】
+- 在 Excel 按 Alt + F8 → 選 Setup → 執行
+  會自動建立 5 個分頁：
+    Data       — 標的 OHLCV
+    IndexTWII  — 加權指數 + EMA20 + 連跌天數
+    IndexOTC   — 櫃買指數 + EMA20 + 連跌天數
+    Model      — 每日所有指標與分數
+    Dashboard  — 最新一日總覽 + A2 輸入框 + 計分規則
+  抓 2330.TW + 大盤 + 櫃買近 2 年日線並算完所有分數。
+
+【換標的 — 三種方式】
+1. (推薦) 在 Dashboard A2 直接輸入代碼 (例如 2454.TW)
+   → 按 [套用 A2 代碼] 按鈕
+2. (進階) 安裝 A2 自動觸發事件 (見 Dashboard_EventCode.txt)
+   → 改 A2 後按 Enter 即自動重算，不用點按鈕
+3. (程式) Alt+F8 → Refresh 或 VBA Immediate 視窗:
+   Call Refresh("2454.TW")
+
+【代碼格式】Yahoo Finance / yfinance 規格:
+  台股加 .TW (例如 2454.TW、0050.TW)
+  櫃買加 .TWO (例如 5483.TWO)
+  港股加 .HK (例如 2800.HK)
+  美股直接代號 (例如 AAPL、TSLA、QQQ)
+  加密 BTC-USD、ETH-USD
+
+【看哪裡】
+- Dashboard：最新一日的分數、建議倉位、訊號
+- Model：每日的所有指標與分數歷史（可篩選研究訊號）
+- Data：原始 OHLCV
+
+【權重與規則】
+- EMA 65% = 排列分 25 + 乖離分 40
+- 量能 35%（基於 20 日均量）
+- 指數拖累 (僅台股套用，無上限):
+    加權連跌: 每天扣 0.75 分
+    櫃買連跌: 每天扣 0.5 分
+    可累計到 60+ 觸發恐慌條款
+- 總分 = OrderScore + DeviationScore + VolScore - IndexPenalty (下界 0)
+- 總分 < 40 不加倉，40-50 觀望，50-65 小加，65-80 加，80+ 重倉
+- 連續映射：倉位 % = MAX(0, (Score-40)/60 × 100)，上限 100%
+
+【★ 恐慌條款】
+觸發條件: IndexPenalty > 60 (加權跌 50+ 天 或 雙指數同跌 30+ 天)
+         且 近 5 日跌幅 < -15%
+觸發後 (PanicFlag = 1):
+  - VolScore × 2 (max 35 → 70，反映恐慌爆量分配權重)
+  - 跳過 IndexPenalty 扣分 (此時越爛越要逆向加碼)
+  - 訊號變為「恐慌性補倉」覆寫一般訊號
+  - 例如: 假設爆量比 1.8x (VolScore=35×2=70) + Order=0 (排列已破) + Dev=5
+          → Score = 75 → 倉位 58%
+  - 注意這條款是「個股當天條件」配「大盤系統性風險」的雙重確認
+  - 典型觸發場景: 2020/3 covid 崩盤、2008/10 金融海嘯
+
+【Mode 欄位】告訴你這次加碼性質：
+- 趨勢加碼   = Price > EMA6 + 多頭排列 (順勢買，但留意是否已過熱)
+- 淺回檔加碼 = EMA13 ≤ Price < EMA6 (黃金回踩，主力上車區)
+- 深回檔加碼 = EMA30 ≤ Price < EMA13 (需要放量止跌訊號)
+- 趨勢轉弱   = Price < EMA30 但排列仍多頭 (警戒，量縮就減倉)
+- 整理破壞   = EMA 排列已亂 (不建議加碼，等重整)
+
+→ 配合 IndexPenalty 看：
+   如果是「淺回檔加碼 + 指數拖累 0」: 黃金加碼點
+   如果是「趨勢加碼 + 指數拖累 -20」: 個股強但大環境差，建議減半
+
+【注意】
+- 資料源為 Yahoo Finance v8 chart API (yfinance 底層相同端點)
+- 盤中數據會更新，但收盤確認以 Yahoo 結算為準
+- Yahoo 偶爾會 rate limit (HTTP 429)，過幾分鐘再試
+- 若公司網路擋 yahoo.com，FetchData 會失敗
+- 此模型只給訊號與建議倉位，不含停損與出場邏輯，需自行配合風控
+
+=====================================
+【Portfolio 多股最佳化 (v1)】
+=====================================
+適用 15+ 檔股票組合，產出效率前緣 (Efficient Frontier)。
+
+[VBA 部分]
+1. 匯入 Portfolio.bas (跟 EMA_Bias_Model.bas 一樣的 import 步驟)
+2. Alt+F8 → 跑 BuildPortfolio
+   - 第一次跑會建立 Portfolio 分頁含 15 檔範本
+   - 修改 A 欄成你的股票池後再跑一次
+   - 會逐檔抓資料 + 跑模型 + 抽 Position 加權報酬
+   - 完成後 PortfolioReturns 分頁存有每日模型驅動報酬矩陣
+3. Alt+F8 → 跑 ExportPortfolioCSV
+   - 匯出 portfolio_returns.csv 到 .xlsm 同目錄
+
+[Python 部分]
+4. 開 Anaconda Prompt 或 cmd，切到此資料夾:
+     cd /d C:\Users\ryan9\OneDrive\桌面\Claudecode
+5. 安裝套件 (一次):
+     pip install -r requirements.txt
+6. 跑優化:
+     python portfolio_optimizer.py
+7. 看輸出:
+   - frontier.csv  — 25 個前緣點的 weight + IS/OOS 指標
+   - frontier.png  — Risk-Return 與 DD-Return 兩張圖
+   - 終端列印「OOS Sharpe 最佳」的配置權重
+
+[方法說明]
+- Walk-forward 70/30 切分 (時間順序，無洩漏)
+- Ledoit-Wolf 共變異 shrinkage (15+ 股關鍵正則)
+- cvxpy 解二次規劃: min w'Σw s.t. μ'w ≥ target, Σw=1, w≥0
+- 同步比較 IS vs OOS std gap，gap>5% 觸發過擬合警告
+
+[v1 限制 / 之後可加]
+- v1 用解析變異數 (degree-2)，未做 DD 多項式回歸
+- 若要把 DD 也納入軟約束，需做 polynomial regression on DD ~ weights
+  搭配 ridge 正則 + 交叉驗證 — 此為 v2 範圍
+- 短歷史 (<2 年) 或關聯度高的股池會放大 OOS gap，要看警告

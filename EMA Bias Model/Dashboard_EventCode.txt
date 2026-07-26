@@ -1,0 +1,24 @@
+' ============================================================
+' Dashboard 自動重算事件處理 (選用安裝，安裝後 A2 改值即觸發)
+' ============================================================
+'
+' 【安裝步驟】只需做一次:
+'   1. Alt + F11 開 VBA 編輯器
+'   2. 左側 Project 樹找到「Microsoft Excel Objects」
+'   3. 雙擊「Dashboard」(底下會顯示工作表名稱)
+'   4. 把下面這段 (兩個 Sub) 整段貼到右邊空白程式碼視窗
+'   5. 存檔 (Ctrl+S)，關閉 VBA 編輯器
+'
+' 之後在 Dashboard A2 直接打代碼 (例如 2454.TW) 按 Enter，
+' 模型會自動重算 — 不用再按按鈕。
+'
+' ============================================================
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Intersect(Target, Me.Range("A2")) Is Nothing Then Exit Sub
+    Application.EnableEvents = False
+    On Error Resume Next
+    Call EMA_Bias_Model.RunFromInput
+    On Error GoTo 0
+    Application.EnableEvents = True
+End Sub
