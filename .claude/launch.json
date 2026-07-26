@@ -116,6 +116,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8142", "--directory", "research/lite-analysis-fy26q3"],
       "port": 8142
+    },
+    {
+      "name": "xintec-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8143", "--directory", "research/xintec-analysis-2026q1"],
+      "port": 8143
     }
   ]
 }
