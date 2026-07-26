@@ -110,6 +110,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8141", "--directory", "research/orcl-analysis-fy2026q4"],
       "port": 8141
+    },
+    {
+      "name": "lite-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8142", "--directory", "research/lite-analysis-fy26q3"],
+      "port": 8142
     }
   ]
 }
