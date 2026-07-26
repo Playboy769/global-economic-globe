@@ -122,6 +122,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8143", "--directory", "research/xintec-analysis-2026q1"],
       "port": 8143
+    },
+    {
+      "name": "asx-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8144", "--directory", "research/asx-analysis-2026q1"],
+      "port": 8144
     }
   ]
 }
