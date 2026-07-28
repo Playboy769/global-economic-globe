@@ -128,6 +128,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8144", "--directory", "research/asx-analysis-2026q1"],
       "port": 8144
+    },
+    {
+      "name": "aapl-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8145", "--directory", "research/aapl-analysis-fy26q2"],
+      "port": 8145
     }
   ]
 }
