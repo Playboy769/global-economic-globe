@@ -4,136 +4,284 @@
     {
       "name": "globe",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8124", "--directory", "app/GlobalEco"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8124",
+        "--directory",
+        "app/GlobalEco"
+      ],
       "port": 8124
     },
     {
       "name": "outside-framework",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8125", "--directory", "app/OutsideFramework"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8125",
+        "--directory",
+        "app/OutsideFramework"
+      ],
       "port": 8125
     },
     {
       "name": "investframe",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8126", "--directory", "app/InvestFrame"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8126",
+        "--directory",
+        "app/InvestFrame"
+      ],
       "port": 8126
     },
     {
       "name": "article-db",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", "8127"],
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8127"
+      ],
       "port": 8127,
       "cwd": "article_db"
     },
     {
       "name": "causalframe",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8128", "--directory", "app/CausalFrame"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8128",
+        "--directory",
+        "app/CausalFrame"
+      ],
       "port": 8128
     },
     {
       "name": "structural-holes",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8129"],
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8129"
+      ],
       "port": 8129,
       "cwd": "structural_holes"
-    }
-    ,{
+    },
+    {
       "name": "warning-radar",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8130", "--directory", "projects/market-warning-radar"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8130",
+        "--directory",
+        "projects/market-warning-radar"
+      ],
       "port": 8130
     },
     {
       "name": "food-calorie-lookup",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8131", "--directory", "projects/food-calorie-lookup"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8131",
+        "--directory",
+        "projects/food-calorie-lookup"
+      ],
       "port": 8131
     },
     {
       "name": "brownian-motion-simulator",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8132", "--directory", "projects/brownian-motion-simulator"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8132",
+        "--directory",
+        "projects/brownian-motion-simulator"
+      ],
       "port": 8132
     },
     {
       "name": "panw-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8133", "--directory", "research/panw-analysis-2026q3/PANW_FY26Q3_Analysis"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8133",
+        "--directory",
+        "research/panw-analysis-2026q3/PANW_FY26Q3_Analysis"
+      ],
       "port": 8133
     },
     {
       "name": "sumco-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8134", "--directory", "research/sumco-analysis-2026q1/SUMCO_FY26Q1_Analysis"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8134",
+        "--directory",
+        "research/sumco-analysis-2026q1/SUMCO_FY26Q1_Analysis"
+      ],
       "port": 8134
     },
     {
       "name": "dell-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8135", "--directory", "research/dell-analysis-2027q1/DELL_FY27Q1_Analysis"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8135",
+        "--directory",
+        "research/dell-analysis-2027q1/DELL_FY27Q1_Analysis"
+      ],
       "port": 8135
     },
     {
       "name": "globe-invest-app",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8136", "--directory", "globe-invest/app"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8136",
+        "--directory",
+        "globe-invest/app"
+      ],
       "port": 8136
     },
     {
       "name": "sankey-diagram-demo",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8137", "--directory", "projects/sankey-diagram-demo"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8137",
+        "--directory",
+        "projects/sankey-diagram-demo"
+      ],
       "port": 8137
     },
     {
       "name": "tsmc-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8138", "--directory", "research/tsmc-analysis-2025"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8138",
+        "--directory",
+        "research/tsmc-analysis-2025"
+      ],
       "port": 8138
     },
     {
       "name": "ms-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8139", "--directory", "research/ms-analysis-2026q2"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8139",
+        "--directory",
+        "research/ms-analysis-2026q2"
+      ],
       "port": 8139
     },
     {
       "name": "lrcx-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8140", "--directory", "research/lrcx-analysis-fy2026q3"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8140",
+        "--directory",
+        "research/lrcx-analysis-fy2026q3"
+      ],
       "port": 8140
     },
     {
       "name": "orcl-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8141", "--directory", "research/orcl-analysis-fy2026q4"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8141",
+        "--directory",
+        "research/orcl-analysis-fy2026q4"
+      ],
       "port": 8141
     },
     {
       "name": "lite-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8142", "--directory", "research/lite-analysis-fy26q3"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8142",
+        "--directory",
+        "research/lite-analysis-fy26q3"
+      ],
       "port": 8142
     },
     {
       "name": "xintec-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8143", "--directory", "research/xintec-analysis-2026q1"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8143",
+        "--directory",
+        "research/xintec-analysis-2026q1"
+      ],
       "port": 8143
     },
     {
       "name": "asx-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8144", "--directory", "research/asx-analysis-2026q1"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8144",
+        "--directory",
+        "research/asx-analysis-2026q1"
+      ],
       "port": 8144
     },
     {
       "name": "aapl-analysis",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8145", "--directory", "research/aapl-analysis-fy26q2"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8145",
+        "--directory",
+        "research/aapl-analysis-fy26q2"
+      ],
       "port": 8145
+    },
+    {
+      "name": "mmm-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8146",
+        "--directory",
+        "research/mmm-analysis-2026q2/MMM_FY26Q2_Analysis"
+      ],
+      "port": 8146
     }
   ]
 }
