@@ -479,6 +479,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wf-pill" data-cat="network" onclick="filterCat('network',this)">Network Analysis</div>
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
       <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div>
+      <div class="wf-pill" data-cat="tech-notes" onclick="filterCat('tech-notes',this)">Tech Notes</div>
     </div>
     <div class="topics-bar">
       <div class="topics-toggle" id="topics-toggle" onclick="toggleTopicsPanel()"><span class="tt-icon" id="tt-icon">+</span> 依主題瀏覽 &middot; Browse by Topic</div>
@@ -685,6 +686,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
       <div data-published="2026-06-21" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="previewWork(this,'https://articlebase.up.railway.app/')">
         <div class="wk-info"><div class="wk-name">Article Database</div><div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div></div>
+      </div>
+
+      <!-- Tech Notes: 深度技術/基礎設施筆記，與 Earnings Call 分開。這一類沒有 .wk-group-title 分群
+           （分群機制只作用於 data-cat="earnings"，見 buildEarningsRows()）；新增時直接加 .wk-card 即可。 -->
+      <div data-published="2026-07-28" class="wk-card reveal" data-cat="tech-notes" data-tags="ai-capex,power-infrastructure,foundry" tabindex="0" role="button" aria-label="伺服器機櫃全鏈技術解剖 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Server_Rack_Full_Chain.html')">
+        <div class="wk-info"><div class="wk-name">Server Rack · 全鏈解剖</div><div class="wk-type">晶片設計 &rarr; 製造封裝 &rarr; 機櫃 &rarr; 資料中心 &middot; 12 環節 &middot; AI／x86 對照</div></div>
       </div>
 
     </div>
@@ -1707,7 +1714,7 @@ filterCat('finance', document.querySelector('.wf-pill[data-cat="finance"]'));
    (not moved/cloned - see the big comment above #page-timeline in the HTML) and renders an
    independent reverse-chronological list. Runs once at load since every .wk-card already
    exists statically in the DOM regardless of which page is currently visible. */
-var CAT_LABEL = { finance: 'Finance & Markets', earnings: 'Earnings Call', network: 'Network Analysis', causal: 'Causal Logic', knowledge: 'Knowledge' };
+var CAT_LABEL = { finance: 'Finance & Markets', earnings: 'Earnings Call', network: 'Network Analysis', causal: 'Causal Logic', knowledge: 'Knowledge', 'tech-notes': 'Tech Notes' };
 var MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 var MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
