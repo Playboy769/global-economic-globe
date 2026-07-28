@@ -282,6 +282,18 @@
         "research/mmm-analysis-2026q2/MMM_FY26Q2_Analysis"
       ],
       "port": 8146
+    },
+    {
+      "name": "server-rack-technote",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8147",
+        "--directory",
+        "research/server-rack-full-chain"
+      ],
+      "port": 8147
     }
   ]
 }
