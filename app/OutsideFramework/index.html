@@ -34,9 +34,8 @@ body.not-home #top-nav{justify-content:space-between}
 #top-nav.hidden{transform:translateY(-100%)}
 .nav-logo{font-family:'Orchid','Noto Serif TC',serif;font-size:15px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#0a0a0a;cursor:pointer;display:none}
 body.not-home .nav-logo{display:block}
-.nav-links{display:flex;align-items:center;gap:36px;max-width:100%;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
-.nav-links::-webkit-scrollbar{display:none}
-.nav-btn{position:relative;font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.03em;transition:color .25s ease;font-family:'Orchid','Noto Serif TC',serif;padding:0 0 10px;flex-shrink:0}
+.nav-links{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:12px 36px;max-width:100%}
+.nav-btn{position:relative;font-size:13px;font-weight:400;color:#aaa;cursor:pointer;border:none;background:none;letter-spacing:.03em;transition:color .25s ease;font-family:'Orchid','Noto Serif TC',serif;padding:0 0 10px}
 .nav-btn.active{color:var(--c-ink)}
 .nav-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c-accent);border-radius:2px}
 .nav-btn:hover:not(.active){color:#555}
@@ -344,11 +343,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   .nav-links{gap:14px}
 }
 @media(max-width:480px){
-  /* 7 nav items (incl. Login/Logout) no longer all fit at the 600px-breakpoint sizing on
-     narrow phones — tighten further so most of them still fit without scrolling; .nav-links
-     itself is horizontally scrollable (see base rule) as a fallback for anything narrower. */
+  /* 7 nav items (incl. Login/Logout) no longer all fit on one line at the 600px-breakpoint
+     sizing on narrow phones — tighten further so more fit per row before wrapping (see the
+     base .nav-links rule, which wraps to a second line rather than clipping/scrolling). */
   #top-nav{padding:16px 20px}
-  .nav-links{gap:10px}
+  .nav-links{gap:8px 10px}
   .nav-btn{font-size:12px}
 }
 </style>
