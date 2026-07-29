@@ -303,6 +303,18 @@
         "research/stx-analysis-2026q4/STX_FY26Q4_Analysis"
       ],
       "port": 8148
+    },
+    {
+      "name": "be-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8149",
+        "--directory",
+        "research/be-analysis-2026q2/BE_FY2026Q2_Analysis"
+      ],
+      "port": 8149
     }
   ]
 }
