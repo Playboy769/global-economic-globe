@@ -18,7 +18,9 @@ const fs = require('fs');
 const path = require('path');
 const auth = require('./auth');
 
-const PORT = process.env.PORT || 8080;
+// process.argv[2] lets .claude/launch.json pin the local dev port (8125) without needing
+// to inject an env var — Railway sets PORT itself in production, which takes priority.
+const PORT = process.env.PORT || process.argv[2] || 8080;
 // In the Docker image, index.html lives at /app (see Dockerfile). Locally there's no /app,
 // so fall back to the dev-source copy relative to this file — lets `node server.js` run
 // straight from a repo checkout with no extra configuration.
