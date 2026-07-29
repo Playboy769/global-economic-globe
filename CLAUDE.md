@@ -236,6 +236,8 @@ block pushes.
   查詢時帶 User-Agent。查到的檔案摘要存入同資料夾（如 `<TICKER> 10-K Supply Chain Notes.md`）。
   - Form 4 → 法說會前後的內部人買賣納入**風險矩陣/訊號解讀**（管理層信心交叉訊號）。
   - 10-K/20-F/10-Q → 供「供應鏈」tab 與財報數字覆核。
+  - **若標的為美國公司或 ADR**：額外抓過去 6 期 10-Q（非僅本季），拉出逐季趨勢做財務比較
+    （營收/毛利率/營業利益率/現金流等關鍵科目），不要只停留在單季 QoQ／YoY 兩個對比點。
 - **輸出一份合併的單檔 HTML**（tab 導覽、沿用既有 CSS 元件庫：
   `.tabs`/`sw()`、`.card`、`.stat-box`、`.risk-item`/`.risk-badge`、`.qa-item`/`toggleQA()`、
   `.kpi-row`/`.kpi`、`tr.section-head`、`.bu-card`、`.cf-row`、`.bar-row`）：
