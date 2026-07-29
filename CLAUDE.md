@@ -348,7 +348,11 @@ block pushes.
    仿照鄰近卡片格式新增一張 `.wk-card`，連結指向
    `https://globe-invest.up.railway.app/research/<TICKER>_..._Analysis.html`；同時把該公司的
    下次財報日期加進 `EARN_DATES` 陣列（依日期遞增排序插入正確位置），並在新卡片的 `.wk-info`
-   內加對應的 `.wk-next-earn` 行（見該區塊上方的 Maintenance 註解）。
+   內加對應的 `.wk-next-earn` 行（見該區塊上方的 Maintenance 註解）。**新卡片務必帶
+   `data-published="YYYY-MM-DD"` 屬性**——Timeline 頁面（`#page-timeline`）沒有獨立資料來源，
+   完全是 `buildTimelineRows()` 在讀取 `#page-works` 下所有帶 `data-published` 的 `.wk-card`
+   自動產生排序清單，漏了這個屬性等於這篇報告不會出現在 Timeline。上架後應打開 Timeline
+   頁面確認新報告有出現在清單最上方，而不是假設它會自動生效。
 3. **兩邊都要 commit + push**：本 repo（origin）內，research 原始檔案（含新增的
    `.claude/launch.json` 本地預覽 port，若有）與 OutsideFramework 上架異動依 Commit hygiene
    規則切成獨立 commit；`globe-invest/app/research/` 的鏡像檔案則在 `globe-invest` 自己的 repo
