@@ -294,6 +294,18 @@
         "research/server-rack-full-chain"
       ],
       "port": 8147
+    },
+    {
+      "name": "stx-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8148",
+        "--directory",
+        "research/stx-analysis-2026q4/STX_FY26Q4_Analysis"
+      ],
+      "port": 8148
     }
   ]
 }
