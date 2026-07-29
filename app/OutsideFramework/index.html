@@ -505,7 +505,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     </div>
     <div class="works-grid">
 
-      <!--GATE-->
       <div data-published="2026-06-21" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Economy — 開啟預覽" onclick="openGatedWork('econ')">
         <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
       </div>
@@ -515,7 +514,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div data-published="2026-06-21" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="InvestFrame — 開啟預覽" onclick="openGatedWork('invest')">
         <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
       </div>
-      <!--/GATE-->
       <div class="wk-group-title first">矽晶圓 &middot; Silicon Wafer</div>
       <div data-published="2026-07-11" class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="foundry,memory-cycle" tabindex="0" role="button" aria-label="SUMCO Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SUMCO_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">SUMCO Corporation</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 財報簡報 &middot; 損益摘要 &middot; 現金流 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06</div></div>
@@ -681,7 +679,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div data-published="2026-07-16" class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Sankey Diagram Tool — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/sankey')">
         <div class="wk-info"><div class="wk-name">Sankey Diagram Tool</div><div class="wk-type">供應鏈 &middot; 營收分部 &middot; 股權結構 &middot; GoJS 關係圖編輯器（TSMC關係圖即由此工具產生）</div></div>
       </div>
-      <!--GATE-->
       <div data-published="2026-06-29" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="openGatedWork('warning')">
         <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
       </div>
@@ -700,7 +697,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div data-published="2026-06-21" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="openGatedWork('https://articlebase.up.railway.app/')">
         <div class="wk-info"><div class="wk-name">Article Database</div><div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div></div>
       </div>
-      <!--/GATE-->
 
       <!-- Tech Notes: 深度技術/基礎設施筆記，與 Earnings Call 分開。這一類沒有 .wk-group-title 分群
            （分群機制只作用於 data-cat="earnings"，見 buildEarningsRows()）；新增時直接加 .wk-card 即可。 -->
@@ -1758,13 +1754,6 @@ function filterCat(cat, pillEl) {
   }
   updateWorksCount();
 }
-(function () {
-  // Guests never get the "finance" pill/cards (server strips them) — fall back
-  // to "earnings" so the default view isn't empty. Checked at runtime instead of
-  // hardcoding per variant so this stays correct if the gated category set changes.
-  var defaultCat = document.querySelector('.wf-pill[data-cat="finance"]') ? 'finance' : 'earnings';
-  filterCat(defaultCat, document.querySelector('.wf-pill[data-cat="' + defaultCat + '"]'));
-})();
 
 /* ── Timeline: reads data-published off the existing #page-works .wk-card elements once
    (not moved/cloned - see the big comment above #page-timeline in the HTML) and renders an
@@ -1777,13 +1766,20 @@ var MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP'
 function buildTimelineRows() {
   var rows = [];
   document.querySelectorAll('#page-works .wk-card[data-published]').forEach(function (card) {
-    var m = (card.getAttribute('onclick') || '').match(/previewWork\(this,\s*'([^']*)'\)/);
+    var onclick = card.getAttribute('onclick') || '';
+    var m = onclick.match(/previewWork\(this,\s*'([^']*)'\)/);
+    var handler = 'preview';
+    if (!m) {
+      m = onclick.match(/openGatedWork\('([^']*)'\)/);
+      handler = 'gated';
+    }
     if (!m) return;
     var nameEl = card.querySelector('.wk-name');
     var typeEl = card.querySelector('.wk-type');
     rows.push({
       date: card.dataset.published,
       mode: m[1],
+      handler: handler,
       name: nameEl ? nameEl.textContent.trim() : '',
       type: typeEl ? typeEl.textContent.trim() : '',
       cat: card.dataset.cat
@@ -1806,7 +1802,8 @@ function renderTimeline() {
     var dd = String(d.getDate()).padStart(2, '0');
     var safeName = r.name.replace(/"/g, '&quot;');
     var safeMode = r.mode.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    html += '<div class="wk-card tl-row" data-cat="' + r.cat + '" tabindex="0" role="button" aria-label="' + safeName + ' — 開啟預覽" onclick="previewWork(this,\'' + safeMode + '\')">' +
+    var clickAttr = r.handler === 'gated' ? 'openGatedWork(\'' + safeMode + '\')' : 'previewWork(this,\'' + safeMode + '\')';
+    html += '<div class="wk-card tl-row" data-cat="' + r.cat + '" tabindex="0" role="button" aria-label="' + safeName + ' — 開啟預覽" onclick="' + clickAttr + '">' +
       '<div class="tl-date">' + MONTH_SHORT[d.getMonth()] + ' ' + dd + '</div>' +
       '<div class="tl-node"><div class="dot"></div></div>' +
       '<div class="tl-body"><span class="tl-tag">[ ' + (CAT_LABEL[r.cat] || r.cat).toUpperCase() + ' ]</span><div class="wk-name">' + r.name + '</div><div class="wk-type">' + r.type + '</div></div>' +
@@ -2254,6 +2251,18 @@ function flashRow(name) {
   if (typeof currentPage !== 'undefined' && currentPage === 'quotes') startScene();
 })();
 
+// Guests never get the "finance" pill (server strips it) — fall back to "earnings" so
+// the default Works view isn't empty. Checked at runtime instead of hardcoding per variant
+// so this stays correct if the gated category set changes. Deliberately placed at the very
+// end of this script, after every var/function it (transitively, via enterEarningsView) can
+// reach — EARN_DATES, TAG_STOPLIST, etc. are declared with `var` further up and only get
+// their values assigned when that line of the script actually runs; calling this any
+// earlier throws on every guest load and silently aborts the rest of the script below it
+// (which is what broke Timeline/Quotes/the earnings sidebar previously).
+(function () {
+  var defaultCat = document.querySelector('.wf-pill[data-cat="finance"]') ? 'finance' : 'earnings';
+  filterCat(defaultCat, document.querySelector('.wf-pill[data-cat="' + defaultCat + '"]'));
+})();
 </script>
 </body>
 </html>
