@@ -1,6 +1,6 @@
-FROM nginx:1.25-alpine
-ENV PORT=8080
-COPY app/OutsideFramework/index.html /usr/share/nginx/html/index.html
-COPY app/OutsideFramework/assets /usr/share/nginx/html/assets
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+FROM node:20-alpine
+COPY app/OutsideFramework /app
+COPY server.js /server.js
+COPY auth.js /auth.js
 EXPOSE 8080
+CMD ["node", "/server.js"]

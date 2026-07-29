@@ -39,6 +39,9 @@ body.not-home .nav-logo{display:block}
 .nav-btn.active{color:var(--c-ink)}
 .nav-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c-accent);border-radius:2px}
 .nav-btn:hover:not(.active){color:#555}
+a.nav-btn{text-decoration:none;display:inline-block}
+.works-login-hint{grid-column:1/-1;margin-top:8px;padding:22px 26px;border:1px solid #e2e2e2;border-radius:12px;text-align:center;font-size:13px;color:#555;letter-spacing:.02em}
+.works-login-hint a{color:var(--c-accent);text-decoration:none;font-weight:600;border-bottom:1px solid var(--c-accent)}
 
 /* ── Pages ── */
 .page{display:none;opacity:0;transition:opacity .4s ease}
@@ -353,6 +356,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <button class="nav-btn" data-page="timeline">Timeline</button>
     <button class="nav-btn" data-page="philosophy">Philosophy</button>
     <button class="nav-btn" data-page="quotes">Quotes</button>
+    <!--NAV_AUTH-->
   </div>
 </nav>
 
@@ -474,11 +478,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <span class="works-count reveal reveal-delay-2" id="works-count"></span>
     </div>
     <div class="works-filter" id="works-filter">
-      <div class="wf-pill active" data-cat="finance" onclick="filterCat('finance',this)">Finance &amp; Markets</div>
+      <!--GATE--><div class="wf-pill active" data-cat="finance" onclick="filterCat('finance',this)">Finance &amp; Markets</div><!--/GATE-->
       <div class="wf-pill" data-cat="earnings" onclick="filterCat('earnings',this)">Earnings Call</div>
-      <div class="wf-pill" data-cat="network" onclick="filterCat('network',this)">Network Analysis</div>
+      <!--GATE--><div class="wf-pill" data-cat="network" onclick="filterCat('network',this)">Network Analysis</div>
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
-      <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div>
+      <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div><!--/GATE-->
       <div class="wf-pill" data-cat="tech-notes" onclick="filterCat('tech-notes',this)">Tech Notes</div>
     </div>
     <div class="topics-bar">
@@ -501,15 +505,17 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     </div>
     <div class="works-grid">
 
-      <div data-published="2026-06-21" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Economy — 開啟預覽" onclick="previewWork(this,'econ')">
+      <!--GATE-->
+      <div data-published="2026-06-21" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Economy — 開啟預覽" onclick="openGatedWork('econ')">
         <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
       </div>
-      <div data-published="2026-06-21" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="Energy — 開啟預覽" onclick="previewWork(this,'energy')">
+      <div data-published="2026-06-21" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="Energy — 開啟預覽" onclick="openGatedWork('energy')">
         <div class="wk-info"><div class="wk-name">Energy</div><div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div></div>
       </div>
-      <div data-published="2026-06-21" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="InvestFrame — 開啟預覽" onclick="previewWork(this,'invest')">
+      <div data-published="2026-06-21" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="InvestFrame — 開啟預覽" onclick="openGatedWork('invest')">
         <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
       </div>
+      <!--/GATE-->
       <div class="wk-group-title first">矽晶圓 &middot; Silicon Wafer</div>
       <div data-published="2026-07-11" class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="foundry,memory-cycle" tabindex="0" role="button" aria-label="SUMCO Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SUMCO_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">SUMCO Corporation</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 財報簡報 &middot; 損益摘要 &middot; 現金流 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06</div></div>
@@ -675,24 +681,26 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div data-published="2026-07-16" class="wk-card reveal reveal-delay-1" data-cat="earnings" tabindex="0" role="button" aria-label="Sankey Diagram Tool — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/sankey')">
         <div class="wk-info"><div class="wk-name">Sankey Diagram Tool</div><div class="wk-type">供應鏈 &middot; 營收分部 &middot; 股權結構 &middot; GoJS 關係圖編輯器（TSMC關係圖即由此工具產生）</div></div>
       </div>
-      <div data-published="2026-06-29" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="previewWork(this,'warning')">
+      <!--GATE-->
+      <div data-published="2026-06-29" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="openGatedWork('warning')">
         <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
       </div>
-      <div data-published="2026-06-30" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="Options Guide — 開啟預覽" onclick="previewWork(this,'options')">
+      <div data-published="2026-06-30" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="Options Guide — 開啟預覽" onclick="openGatedWork('options')">
         <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
       </div>
-      <div data-published="2026-07-01" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Brownian Motion — 開啟預覽" onclick="previewWork(this,'brownian')">
+      <div data-published="2026-07-01" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Brownian Motion — 開啟預覽" onclick="openGatedWork('brownian')">
         <div class="wk-info"><div class="wk-name">Brownian Motion</div><div class="wk-type">Random Walk &middot; Monte Carlo &middot; Simulation</div></div>
       </div>
-      <div data-published="2026-05-12" class="wk-card reveal" data-cat="network" tabindex="0" role="button" aria-label="Structural Holes — 開啟預覽" onclick="previewWork(this,'https://structural-holes-production.up.railway.app/')">
+      <div data-published="2026-05-12" class="wk-card reveal" data-cat="network" tabindex="0" role="button" aria-label="Structural Holes — 開啟預覽" onclick="openGatedWork('https://structural-holes-production.up.railway.app/')">
         <div class="wk-info"><div class="wk-name">Structural Holes</div><div class="wk-type">Network Analysis &middot; Graph Theory</div></div>
       </div>
-      <div data-published="2026-06-22" class="wk-card reveal" data-cat="causal" tabindex="0" role="button" aria-label="CausalFrame — 開啟預覽" onclick="previewWork(this,'causal')">
+      <div data-published="2026-06-22" class="wk-card reveal" data-cat="causal" tabindex="0" role="button" aria-label="CausalFrame — 開啟預覽" onclick="openGatedWork('causal')">
         <div class="wk-info"><div class="wk-name">CausalFrame</div><div class="wk-type">Causal Logic &middot; Diagram</div></div>
       </div>
-      <div data-published="2026-06-21" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="previewWork(this,'https://articlebase.up.railway.app/')">
+      <div data-published="2026-06-21" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="openGatedWork('https://articlebase.up.railway.app/')">
         <div class="wk-info"><div class="wk-name">Article Database</div><div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div></div>
       </div>
+      <!--/GATE-->
 
       <!-- Tech Notes: 深度技術/基礎設施筆記，與 Earnings Call 分開。這一類沒有 .wk-group-title 分群
            （分群機制只作用於 data-cat="earnings"，見 buildEarningsRows()）；新增時直接加 .wk-card 即可。 -->
@@ -702,6 +710,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div data-published="2026-07-28" class="wk-card reveal" data-cat="tech-notes" data-tags="ai-accelerator,ai-capex,power-infrastructure" tabindex="0" role="button" aria-label="AMD Helios 對照 Nvidia Vera Rubin — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_AMD_Helios_vs_Vera_Rubin.html')">
         <div class="wk-info"><div class="wk-name">Helios · 對照 Vera Rubin</div><div class="wk-type">組裝 &rarr; 晶粒拓樸 &rarr; 供電 &rarr; 定價 &rarr; 生態系 &middot; 7 環節 &middot; 機櫃級對照</div></div>
       </div>
+
+      <!--GUEST_ONLY-->
+      <div class="works-login-hint">目前顯示的是公開內容（Earnings Call &amp; Tech Notes）。<a href="/auth/google">登入</a>解鎖其餘作品與工具。</div>
+      <!--/GUEST_ONLY-->
 
     </div>
   </div>
@@ -797,6 +809,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 </div>
 
 <script>
+<!--AUTH_TOKENS_SCRIPT-->
 /* ── Home Clock ── */
 (function(){
   const el=document.getElementById('home-clock');
@@ -836,6 +849,34 @@ const WARN_BASE    = 'https://globe-invest.up.railway.app/warning';
 const HP_BASE      = 'https://globe-invest.up.railway.app/high-price';
 const OPTIONS_BASE = 'https://globe-invest.up.railway.app/options';
 const BROWNIAN_BASE = (location.hostname === 'localhost' && location.port === '8125') ? 'http://localhost:8132' : 'https://globe-invest.up.railway.app/brownian';
+
+// Gated Works cards (finance/network/causal/knowledge — everything that isn't Earnings
+// Call or Tech Notes) open in a real new tab instead of the in-page iframe preview used
+// by previewWork() below. Reason: those destinations now require login, and the login
+// handoff (redirect to the central auth service, then to Google) cannot complete inside
+// an iframe — Google refuses to render its consent screen when framed, and third-party
+// cookies would block the resulting session cookie from reaching an embedded iframe
+// anyway. A top-level navigation sidesteps both problems. window.__AUTH_TOKENS__ is
+// injected server-side (see server.js) only for already-logged-in visitors, keyed by
+// destination origin, so the very first cross-domain hop already carries proof of login.
+function openGatedWork(mode) {
+  var url;
+  if (mode.indexOf('http') === 0) url = mode;
+  else if (mode === 'invest') url = INVEST_BASE;
+  else if (mode === 'causal') url = CAUSAL_BASE;
+  else if (mode === 'warning') url = WARN_BASE;
+  else if (mode === 'high-price') url = HP_BASE;
+  else if (mode === 'globe') url = GLOBE_BASE;
+  else if (mode === 'options') url = OPTIONS_BASE;
+  else if (mode === 'brownian') url = BROWNIAN_BASE;
+  else url = GLOBE_BASE + '?mode=' + mode;
+  var origin = null;
+  try { origin = new URL(url, location.href).origin; } catch (e) {}
+  if (origin && window.__AUTH_TOKENS__ && window.__AUTH_TOKENS__[origin]) {
+    url += (url.indexOf('?') === -1 ? '?' : '&') + 'auth=' + encodeURIComponent(window.__AUTH_TOKENS__[origin]);
+  }
+  window.open(url, '_blank', 'noopener');
+}
 
 /* ── Work Card → Fullscreen Preview ── */
 const wkPreviewState = { open: false, animating: false, mode: null, cardEl: null };
@@ -1717,7 +1758,13 @@ function filterCat(cat, pillEl) {
   }
   updateWorksCount();
 }
-filterCat('finance', document.querySelector('.wf-pill[data-cat="finance"]'));
+(function () {
+  // Guests never get the "finance" pill/cards (server strips them) — fall back
+  // to "earnings" so the default view isn't empty. Checked at runtime instead of
+  // hardcoding per variant so this stays correct if the gated category set changes.
+  var defaultCat = document.querySelector('.wf-pill[data-cat="finance"]') ? 'finance' : 'earnings';
+  filterCat(defaultCat, document.querySelector('.wf-pill[data-cat="' + defaultCat + '"]'));
+})();
 
 /* ── Timeline: reads data-published off the existing #page-works .wk-card elements once
    (not moved/cloned - see the big comment above #page-timeline in the HTML) and renders an

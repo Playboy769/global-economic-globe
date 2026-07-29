@@ -1,3 +1,4 @@
 *
-!nginx.conf
+!server.js
+!auth.js
 !app
