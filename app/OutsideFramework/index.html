@@ -60,6 +60,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .home-diagram-stack{display:flex;flex-direction:column;align-items:flex-start;gap:28px}
 .home-meta{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .home-clock{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:var(--c-accent);letter-spacing:.06em;line-height:1.6;font-variant-numeric:tabular-nums;white-space:pre;text-align:left}
+.home-quicklinks{display:flex;flex-direction:column;gap:6px}
+.home-ql-link{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;font-weight:300;color:#999;letter-spacing:.06em;text-decoration:none;cursor:pointer;transition:color .2s ease}
+.home-ql-link:hover{color:var(--c-accent-deep)}
 .home-photo-strip{position:absolute;top:50%;right:min(32px,3vw);width:min(1040px,74vw);height:min(620px,78vh);overflow:hidden;opacity:0;-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 26%);mask-image:linear-gradient(to right,transparent 0%,#000 26%);animation:fadeInStrip 1.6s cubic-bezier(.16,1,.3,1) .6s forwards}
 @keyframes fadeInStrip{from{opacity:0;transform:translateY(-50%) translateY(8px) scale(.98)}to{opacity:1;transform:translateY(-50%) translateY(0) scale(1)}}
 .home-photo-strip-track{position:absolute;top:0;left:0;display:flex;align-items:center;height:100%;animation:stripFlow 146s linear 1.8s infinite backwards;will-change:transform}
@@ -394,6 +397,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <div class="home-diagram-stack">
       <div class="home-meta">
         <div class="home-clock" id="home-clock"></div>
+        <div class="home-quicklinks">
+          <a href="#works" class="home-ql-link" onclick="homeQuickLink('works','earnings','產業研究');return false;">產業研究</a>
+          <a href="#works" class="home-ql-link" onclick="homeQuickLink('works','earnings','公司法說分析');return false;">公司法說分析</a>
+          <a href="#works" class="home-ql-link" onclick="homeQuickLink('works','tech-notes','科技研究');return false;">科技研究</a>
+          <a href="#quotes" class="home-ql-link" onclick="homeQuickLink('quotes',null,'人生哲學');return false;">人生哲學</a>
+        </div>
       </div>
     </div>
     <div class="home-photo-strip">
@@ -1708,6 +1717,15 @@ function switchPage(id, fromPopstate, skipTrack) {
   // recorded one pageview for this same request (as "/", since the #hash never reaches it),
   // so firing another beacon here would double-count a single physical page load.
   if (!skipTrack) trackEvent('pageview', id === 'home' ? '/' : '/#' + id);
+}
+
+// Home-page quick links (產業研究/公司法說分析/科技研究 -> Works filtered by category,
+// 人生哲學 -> Quotes). Tracked as work_click like any other Works entry point so the
+// admin dashboard's "作品點擊排行" reflects whether anyone actually uses them.
+function homeQuickLink(page, cat, label) {
+  trackEvent('work_click', page === 'works' ? '/#works' : '/#' + page, label);
+  switchPage(page);
+  if (cat) filterCat(cat, document.querySelector('.wf-pill[data-cat="' + cat + '"]'));
 }
 
 btns.forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
