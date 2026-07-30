@@ -2308,11 +2308,18 @@ function flashRow(name) {
       gl_FragColor=vec4(col,clamp(alpha,0.0,1.0));
     }`;
 
+  // Pinned version + subresource integrity: without the hash, whoever controls the CDN
+  // response controls a script running on this origin. The hash is of three@0.160.1's
+  // build/three.min.js exactly — bump both together or the script silently stops loading
+  // and the Quotes scene just never appears.
   function loadThree(cb) {
     if (window.THREE) { cb(); return; }
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js';
+    s.integrity = 'sha384-qOkzR5Ke/XkQxuGVJ9hpFEpDlcoLtWwVYhnJf06cLIZa2vaIptSqaubivErzmD5O';
+    s.crossOrigin = 'anonymous';
     s.onload = cb;
+    s.onerror = function () { console.error('three.js failed integrity check or did not load'); };
     document.head.appendChild(s);
   }
 
