@@ -37,11 +37,30 @@ work. This applies even when the request looks unambiguous. This overrides the g
 | `auth.js` | HMAC token 簽發與驗證、cookie、速率限制 | **必須與 globe-invest / structural_holes / article_db 的副本逐字一致**（Python 版為 `auth.py`），且四邊共用同一組 `AUTH_SIGNING_SECRET` |
 | `analytics.js` | 訪客流量 SQLite（`node:sqlite`，Railway volume `/data`） | 欄位名要進 `GROUPABLE` 白名單才能拿來 GROUP BY |
 
-**Token 規則（2026-07-30 安全稽核後）**：每張 token 都必須帶 `aud`（目標服務 origin）與 `typ`
-（`session` / `handoff` / `state`），驗證時兩者都要比對。在此之前 `aud` 有簽名卻從未被檢查，
-導致任何一個服務的 token 都能當成任何其他服務的管理員 session —— 而 handoff token 是掛在
-網址 `?auth=` 上傳遞的，會經由 Referer、瀏覽器歷史與下游 log 外洩。**若要修改 `auth.js`，
-四個服務必須同步更新**，否則跨網域登入會斷。
+### Token 規則（2026-07-30 安全稽核後，四個服務一致）
+
+**每張 token 都必須帶 `aud`（目標服務 origin）與 `typ`（`session` / `handoff` / `state`），
+且簽章金鑰由 `aud` 衍生**：
+
+```
+service_key(aud) = HMAC-SHA256(AUTH_SIGNING_SECRET, "ofw-token-v2|" + aud)
+```
+
+所以為 globe-invest 簽的 token 在 article-db **簽章根本對不上**，不是靠某處記得比對欄位。
+用 `signFor()` / `verifyFor()`（Python：`sign_for()` / `verify_for()`），**不要**直接用
+`signToken` / `verifyToken` 做存取控制 —— 前者沒指定 `aud` 就無法呼叫（因為 `aud` 決定金鑰），
+後者可以，那正是出事的地方。
+
+稽核前的狀況：`aud` 有簽名卻從未在 session 路徑被檢查，而且**每個服務簽給自己的 session
+cookie 完全沒有 `aud`** —— `sh_sid`/`gi_sid`/`adb_sid` 三張 cookie 彼此可互換，等於萬用鑰匙。
+handoff token 又是掛在網址 `?auth=` 上傳遞，會經由 Referer、瀏覽器歷史與下游 log 外洩。
+
+⚠️ **`auth.js` / `auth.py` 改動必須四個服務同步**，否則跨網域登入會斷。且因為 Railway 無法
+原子性同時部署四個服務，切換簽章方案時**先推三個下游、最後推 ofw** —— 下游有迴圈斷路器，
+這個順序讓中間窗口變成一次 503 說明頁；反過來推會變成瀏覽器無限重導向。
+
+> 目前**尚未**做的是縮小爆炸半徑：四邊仍共用同一把 master secret，彼此都能推導出對方的金鑰。
+> 要讓每個服務只持有自己的衍生金鑰，需要在三個 Railway 服務各設一組環境變數。
 
 | 小功能 | 檔內錨點 | 對外連結目的地 |
 |---|---|---|
@@ -164,9 +183,12 @@ from this repo. Confirmed by diffing `article_db/index.html` against
 `git show article-db/main:index.html` — they were byte-identical (mod line endings) except for
 the missing fix, meaning the two copies really had been hand-synced up to that point.
 
-**Whenever you edit `article_db/index.html`: after committing here, run
+**Whenever you edit `article_db/index.html`, `app.py` or `auth.py`: after committing here, run
 `scripts/sync-article-db.ps1`** to push the same content to the `article-db` remote's `main`
-branch — otherwise the live site silently stays on the old version indefinitely. The script
+branch — otherwise the live site silently stays on the old version indefinitely. `auth.py` was
+added to the script's scope on 2026-07-30: it had been excluded, which meant syncing `app.py`
+alone could ship a call into a function the deployed `auth.py` didn't define and 500 every
+request. The script
 fetches `article-db`, checks out its `main` into a throwaway worktree, copies the file in, and
 lets `git status`/`git diff` inside that worktree (not a hand-extracted blob comparison) decide
 whether there's a real change — so line-ending normalization follows the target repo's own git
@@ -228,7 +250,9 @@ unrelated file, split it into its own commit even when working fast.
 
 ## Workflow preference
 
-This repo is iterated on fast and pushed directly to `main` on both `origin` and `globe-invest` —
+This repo is iterated on fast and pushed directly to the default branch on both `origin` and
+`globe-invest` — note `globe-invest`'s default branch is **`master`**, not `main`
+(`structural-holes` and `article-db` both use `main`) —
 that's a deliberate choice for solo-project velocity, not an oversight. Don't propose branch
 protection or PR gating; instead lean on the sync script above and `globe-invest`'s CI
 (`.github/workflows/ci.yml`, runs `node --check` on push) as lightweight safety nets that don't
