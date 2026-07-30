@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Syncs the dev-source copies of article_db/index.html and article_db/app.py (this repo) to the
+  Syncs the dev-source copies of article_db/index.html, app.py and auth.py (this repo) to the
   deployed article-db-api repo (remote `article-db`, branch `main`), which is what Railway's
   articlebase.up.railway.app actually builds from.
 
@@ -17,14 +17,22 @@
   by string-processing the blob through PowerShell's pipeline.
 
 .SCOPE
-  article_db/index.html <-> article-db-api's root index.html, and
-  article_db/app.py     <-> article-db-api's root app.py.
-  Both files are copied into the same worktree and diffed/committed/pushed together as one
-  commit (only whichever of the two actually changed shows up in the diff/commit).
+  article_db/index.html <-> article-db-api's root index.html,
+  article_db/app.py     <-> article-db-api's root app.py, and
+  article_db/auth.py    <-> article-db-api's root auth.py.
+  All three are copied into the same worktree and diffed/committed/pushed together as one
+  commit (only whichever of them actually changed shows up in the diff/commit).
 
-  article-db-api also has its own auth.py/config.py/db.py/init_db.sql — those are NOT covered
-  here (this repo doesn't carry dev-source copies of them), so don't add them without checking
-  whether they're meant to be hand-synced too.
+  auth.py was added to this list on 2026-07-30. It had been excluded on the grounds that this
+  repo carried no dev-source copy of it — but it does, and it must stay byte-identical across
+  all four services (see its own file header). Leaving it out was a live hazard rather than a
+  neutral omission: app.py calls into auth.py, so syncing app.py alone can ship a call to a
+  function the deployed auth.py does not have, and every request 500s. Verified before adding
+  that the remote's auth.py was byte-identical to this repo's copy, i.e. it really had been
+  hand-synced all along.
+
+  article-db-api also has its own config.py/db.py/init_db.sql — those are still NOT covered
+  here, so don't add them without checking whether they're meant to be hand-synced too.
 
   This does NOT commit or push anything in this repo (origin) — do that yourself as usual.
   This script only handles pushing these files to the article-db remote.
@@ -43,7 +51,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $remoteName = 'article-db'
 $remoteBranch = 'main'
-$files = @('index.html', 'app.py')
+$files = @('index.html', 'app.py', 'auth.py')
 
 foreach ($f in $files) {
   $srcPath = Join-Path $root "article_db/$f"
