@@ -34,7 +34,21 @@ let db = null;
 function open() {
   if (db) return db;
   const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  // A real Railway volume mount already exists as a directory before this process starts,
+  // even empty — so if it's missing here, on the default /data path this almost certainly
+  // means the volume was never attached, not that today's traffic is the first write ever.
+  // Silently mkdir-ing over it would just start writing into the container's throwaway
+  // filesystem with no sign anything is wrong until the next deploy erases it all.
+  if (!fs.existsSync(dir)) {
+    if (!process.env.ANALYTICS_DATA_DIR && !process.env.ANALYTICS_DB_PATH) {
+      console.error(
+        'WARNING: ' + dir + ' does not exist — analytics is very likely NOT on a ' +
+        'persistent volume and will reset on the next deploy. Mount a Railway Volume at ' +
+        dir + ' (or set ANALYTICS_DATA_DIR) to fix this.'
+      );
+    }
+    fs.mkdirSync(dir, { recursive: true });
+  }
   db = new DatabaseSync(DB_PATH);
   db.exec('PRAGMA journal_mode = WAL');
   db.exec(`
