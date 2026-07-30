@@ -41,6 +41,22 @@ body.not-home .nav-logo{display:block}
 .nav-btn:hover:not(.active){color:#555}
 a.nav-btn{text-decoration:none;display:inline-block}
 
+/* ── Mobile bottom dock ── replaces the inline .nav-links page buttons on phones; only
+   the auth link (Login/Admin/Logout) stays in the top bar. See the max-width:640px block
+   near the bottom of this stylesheet for what shows/hides. Kept in the same thin-hairline,
+   line-drawn vocabulary as the rest of the site (.divider, .about-label::before, the
+   .nav-btn.active underline) rather than a filled app-style icon dock — a slim full-width
+   bar with a hairline top border, plain line-stroke icons, and a short accent underline for
+   the active page instead of a solid highlight behind it. Hidden on desktop by
+   .mobile-dock{display:none} — the max-width:640px block flips it to flex. */
+.mobile-dock{display:none}
+.dock-item{position:relative;width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0}
+.dock-icon{width:20px;height:20px;color:#aaa;transition:color .25s ease,transform .15s ease}
+.dock-icon svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.dock-item.active .dock-icon{color:var(--c-accent-deep)}
+.dock-item:active .dock-icon{transform:scale(.86)}
+.dock-item.active::after{content:'';position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:14px;height:1.5px;background:var(--c-accent);border-radius:1px}
+
 /* ── Pages ── */
 .page{display:none;opacity:0;transition:opacity .4s ease}
 .page.active{display:block;opacity:1}
@@ -61,6 +77,20 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .home-meta{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .home-clock{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:var(--c-accent);letter-spacing:.06em;line-height:1.6;font-variant-numeric:tabular-nums;white-space:pre;text-align:left}
 .home-quicklinks{display:flex;flex-direction:column;gap:6px}
+.home-quicklinks-hot{margin-top:14px;padding-top:14px;border-top:1px solid #eee}
+.home-ql-label{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:11px;font-weight:700;color:#999;letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
+.home-quicklinks-hot .home-ql-link{display:inline-flex;align-items:center;gap:7px}
+/* Heat level: a 3-bar signal/equalizer glyph instead of a bare "1./2./3." rank number —
+   rank 1 lights all 3 bars, rank 2 lights 2, rank 3 lights 1, so relative "熱門程度" reads
+   at a glance the same way a signal-strength icon does. */
+.home-ql-heat{display:inline-flex;align-items:flex-end;gap:2px;height:10px;flex-shrink:0}
+.home-ql-heat i{display:block;width:2.5px;border-radius:1px;background:#e2e2e2;font-style:normal}
+.home-ql-heat i:nth-child(1){height:4px}
+.home-ql-heat i:nth-child(2){height:7px}
+.home-ql-heat i:nth-child(3){height:10px}
+.home-quicklinks-hot .home-ql-link:nth-of-type(1) .home-ql-heat i{background:var(--c-accent)}
+.home-quicklinks-hot .home-ql-link:nth-of-type(2) .home-ql-heat i:nth-child(-n+2){background:var(--c-accent)}
+.home-quicklinks-hot .home-ql-link:nth-of-type(3) .home-ql-heat i:nth-child(1){background:var(--c-accent)}
 .home-ql-link{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;font-weight:300;color:#999;letter-spacing:.06em;text-decoration:none;cursor:pointer;transition:color .2s ease}
 .home-ql-link:hover{color:var(--c-accent-deep)}
 .home-photo-strip{position:absolute;top:50%;right:min(32px,3vw);width:min(1040px,74vw);height:min(620px,78vh);overflow:hidden;opacity:0;-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 26%);mask-image:linear-gradient(to right,transparent 0%,#000 26%);animation:fadeInStrip 1.6s cubic-bezier(.16,1,.3,1) .6s forwards}
@@ -77,6 +107,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .home-footer{position:fixed;bottom:0;left:0;right:0;padding:28px 48px;display:flex;align-items:flex-end;justify-content:space-between;z-index:50}
 .home-footer-brand{font-family:'Orchid','Noto Serif TC',serif;font-size:clamp(20px,3vw,32px);font-weight:400;color:#0a0a0a;letter-spacing:-.01em;line-height:1;cursor:pointer}
 .home-footer-brand .out-outline{color:var(--c-accent)}
+/* Phone-only tagline under the brand — see .home-tagline in the max-width:640px block
+   below for the actual mobile layout; hidden here so desktop (where the brand sits in
+   the fixed bottom-left corner, not centered) never shows it. */
+.home-tagline{display:none}
 .home-cta{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;background:var(--c-accent);color:#fff;font-size:13px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;border-radius:100px;border:1px solid var(--c-accent);cursor:pointer;transition:all .3s ease;font-family:'Orchid','Noto Serif TC',serif;margin-bottom:4px;box-shadow:0 6px 20px -8px rgba(209,89,31,.55)}
 .home-cta:hover{background:var(--c-accent-deep);border-color:var(--c-accent-deep);box-shadow:0 8px 24px -6px rgba(209,89,31,.6)}
 .home-cta svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .3s ease}
@@ -212,11 +246,16 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wk-group-title{display:none}
 
 @media(max-width:640px){
-  .wec-view.show{grid-template-columns:1fr}
-  .wec-rail{position:static;display:flex;overflow-x:auto;gap:4px;padding-bottom:10px;margin-bottom:16px;border-bottom:1px solid #eee}
-  .wec-rail-title,.wec-rail-month{display:none}
-  .wec-rail-group{flex:0 0 auto;padding:6px 14px}
-  .wec-rail-group::before{display:none}
+  /* minmax(0,1fr) — not plain 1fr: without it the (now-hidden) rail column still keeps
+     min-width:auto, so its content width leaks into track sizing and pushes
+     .wk-next-earn off the right edge of the viewport.
+     The rail itself (a sticky date sidebar on desktop) doesn't survive the trip to a single
+     narrow column well — as a horizontal scroller it crammed several company names per date
+     into 11px text, which read as cluttered rather than useful. The grouped list below already
+     carries each card's own next-report date, so the rail is dropped on phones instead of
+     squeezed. */
+  .wec-view.show{grid-template-columns:minmax(0,1fr)}
+  .wec-rail{display:none}
 }
 
 /* ── PHILOSOPHY ── */
@@ -357,15 +396,93 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   .works-grid{grid-template-columns:1fr}
   .wk-name{font-size:14px}
   .phi-item{grid-template-columns:1fr;gap:12px}
-  .nav-links{gap:14px}
 }
 @media(max-width:480px){
-  /* 7 nav items (incl. Login/Logout) no longer all fit on one line at the 600px-breakpoint
-     sizing on narrow phones — tighten further so more fit per row before wrapping (see the
-     base .nav-links rule, which wraps to a second line rather than clipping/scrolling). */
   #top-nav{padding:16px 20px}
-  .nav-links{gap:8px 10px}
-  .nav-btn{font-size:12px}
+}
+/* 7 nav items (incl. Login/Logout) can't fit on one line on a phone — below this width the
+   inline .nav-links page buttons hand off to a slim hairline-bordered bottom icon bar (see
+   .mobile-dock/.dock-item base rules near the top of this stylesheet); only the auth link
+   (Login/Admin/Logout) stays behind in the top bar. This block also covers the rest of the
+   phone-only layout: a left-aligned Home hero with tagline, single-column Works
+   cards/earnings rows, and a stacked footer link row — none of it touches desktop, which
+   never matches max-width:640px. */
+@media(max-width:640px){
+  /* -- Nav: page buttons move to the bottom dock; only the auth link stays up top -- */
+  .nav-links .nav-btn:not(.nav-auth-btn){display:none}
+  .mobile-dock{
+    display:flex;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:97;
+    justify-content:center;gap:4px;padding:9px 14px;
+    background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid #eee;border-radius:22px;box-shadow:0 16px 32px -18px rgba(0,0,0,.22);
+  }
+  .container{padding-bottom:90px}
+
+  /* The 140px/110px top padding on inner pages was sized for the old two-row desktop nav;
+     the mobile top bar is now a single slim row (~57px, just the auth link), so that padding
+     read as a wall of blank space before any content. Tighten it uniformly. */
+  #page-about,#page-privacy,#page-works,#page-timeline,#page-terms{padding-top:90px}
+  #page-philosophy{padding-top:90px}
+
+  /* -- Home hero: left-aligned brand + tagline instead of the corner-anchored desktop
+     layout. The clock is dropped on phones — the date/time readout wasn't worth the space
+     it took above the quicklinks. The flex/centering rules target .home-hero-mobile (a
+     wrapper inside #page-home), not #page-home itself — see the big comment on that
+     wrapper in the HTML for why: switchPage() inline-styles #page-home's own display to
+     show/hide it, and a stylesheet rule on the same element/property fights that in ways
+     that go wrong in both directions (lose to it silently, or !important it and the page
+     can never be hidden again). The wrapper sidesteps the conflict entirely. -- */
+  .home-hero-mobile{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:90px 28px 100px;min-height:100vh}
+  .home-center{flex:none;min-height:0;padding:0;justify-content:flex-start;margin-top:36px}
+  .home-diagram-stack{align-items:flex-start}
+  .home-meta{align-items:flex-start}
+  .home-clock{display:none}
+  .home-quicklinks{align-items:flex-start}
+  .home-footer{position:static;padding:0;justify-content:center;align-items:flex-start;flex-direction:column;gap:14px}
+  .home-footer-brand{font-size:clamp(30px,9vw,44px);text-align:left}
+  .home-tagline{display:block;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:14.5px;color:#888;line-height:1.75;max-width:340px;text-align:left}
+
+  /* -- Works: stacked head, tighter cards, earnings rows redesigned as stacked (not
+     grid name+date columns, which is what overflowed the viewport before) -- */
+  .works-head{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:36px}
+  .works-count{display:none}
+  /* Mobile only ever shows the two ungated categories (Earnings Call / Tech Notes) —
+     Finance & Markets, Network Analysis, Causal Logic and Knowledge are already
+     login-gated server-side for guests (see the GATE comment-markers wrapping these
+     same pills further down in this file, stripped out by stripBlock() in server.js);
+     this just keeps them out of the phone UI entirely regardless of login state. The
+     matching default-category JS near the bottom of the script picks "earnings" instead
+     of "finance" on this breakpoint so the page doesn't land on a now-hidden pill's
+     cards. NOTE: never spell out the literal GATE comment-marker syntax anywhere in
+     this file, including in prose — stripBlock() does a plain string search over the
+     whole raw file, not just real markup, so an unpaired mention here previously ate
+     everything up to the next real closing marker. Same reasoning applies to writing
+     out a real style/body closing tag inside this very comment block — the HTML
+     tokenizer ends a style element on that literal text regardless of CSS comment
+     syntax, which is a second, unrelated way to break this same block. */
+  .works-filter .wf-pill[data-cat="finance"],
+  .works-filter .wf-pill[data-cat="network"],
+  .works-filter .wf-pill[data-cat="causal"],
+  .works-filter .wf-pill[data-cat="knowledge"]{display:none}
+  .wk-card{padding:20px 18px;gap:10px}
+  .wk-card::after{top:20px;right:18px}
+  .grp-body .wk-card{flex-direction:column;align-items:stretch;gap:6px;padding:16px 34px 16px 18px}
+  .grp-body .wk-card::after{top:16px;right:16px}
+  .grp-body .wk-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+  .grp-body .wk-name{white-space:normal;font-size:14.5px;font-weight:600}
+  .grp-body .wk-next-earn{text-align:left}
+
+  /* -- Timeline: drop the long grey description line per row, keep date/tag/name only -- */
+  .tl-body .wk-type{display:none}
+
+  /* -- Footer link row: let it wrap onto its own centered lines instead of forcing
+     three links + copyright into one row -- */
+  .pg-footer-links{flex-wrap:wrap;row-gap:10px;font-size:10.5px;text-align:center}
+  .pg-footer-links .fl-dot:last-of-type{display:none}
+  .about-sig{display:none}
+
+  /* Quotes hero isn't inside .container, so it needs its own clearance above the dock. */
+  .quotes-hero{padding-bottom:120px}
 }
 </style>
 </head>
@@ -379,7 +496,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 <!-- ── Top Navigation ── -->
 <nav id="top-nav">
-  <div class="nav-links">
+  <div class="nav-links" id="nav-links">
     <button class="nav-btn active" data-page="home">Home</button>
     <button class="nav-btn" data-page="about">About</button>
     <button class="nav-btn" data-page="works">Works</button>
@@ -391,8 +508,52 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="nav-logo" onclick="switchPage('home')">Silas</div>
 </nav>
 
+<!-- ── Mobile bottom dock — slim hairline icon bar, phones only (see .mobile-dock in the
+     max-width:640px block). Dock items share the .nav-btn selector class the desktop
+     nav-links buttons use (see the `const btns = document.querySelectorAll('.nav-btn')`
+     wiring near the bottom of the script) so page-switching and active-state stay in sync
+     with the top bar for free — no separate click handler needed here. -->
+<nav class="mobile-dock" id="mobile-dock" aria-label="行動裝置導覽">
+  <button class="nav-btn dock-item active" data-page="home" aria-label="Home">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h5v-6h2v6h5v-9"/></svg></span>
+  </button>
+  <button class="nav-btn dock-item" data-page="about" aria-label="About">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.8v.1"/></svg></span>
+  </button>
+  <button class="nav-btn dock-item" data-page="works" aria-label="Works">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/></svg></span>
+  </button>
+  <button class="nav-btn dock-item" data-page="timeline" aria-label="Timeline">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.2 2"/></svg></span>
+  </button>
+  <button class="nav-btn dock-item" data-page="philosophy" aria-label="Philosophy">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><path d="M9.5 18.5h5"/><path d="M10.2 21h3.6"/><path d="M12 3.2a5.8 5.8 0 0 0-3.6 10.3c.9.8 1.4 1.6 1.5 2.5h4.2c.1-.9.6-1.7 1.5-2.5A5.8 5.8 0 0 0 12 3.2Z"/></svg></span>
+  </button>
+  <button class="nav-btn dock-item" data-page="quotes" aria-label="Quotes">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><path d="M7.5 7.2h3.6v3.6c0 2-1.1 3.6-2.8 4.5l-.9-1.4c1-.5 1.7-1.3 1.9-2.3H7.5V7.2Z"/><path d="M14.4 7.2H18v3.6c0 2-1.1 3.6-2.8 4.5l-.9-1.4c1-.5 1.7-1.3 1.9-2.3h-1.8V7.2Z"/></svg></span>
+  </button>
+</nav>
+
 <!-- ── HOME ── -->
 <div class="page active" id="page-home">
+  <!-- home-hero-mobile: a wrapper, not styling applied straight to #page-home. switchPage()
+       sets an inline style="display:block/none" directly on #page-home (and every other
+       .page) every time it shows/hides a page — a plain CSS rule on #page-home itself can't
+       reliably override that (order matters, and !important overriding the "block" case also
+       overrides the "none" case, permanently pinning Home visible and pushing every other
+       page down by a full viewport — learned that one live). Putting the mobile
+       display:flex/centering on this inner wrapper instead means JS only ever touches
+       #page-home's own display, and never conflicts with it.
+       home-footer (brand+tagline) is placed before home-center in the DOM on purpose too —
+       on mobile it's the visual lead (see the max-width:640px block); source order survives
+       the same inline-style churn that flexbox `order` doesn't. On desktop this wrapper and
+       the reordering are both no-ops: .home-footer is position:fixed there regardless of
+       where it sits in the DOM. -->
+  <div class="home-hero-mobile">
+  <div class="home-footer">
+    <h1 class="home-footer-brand" onclick="switchPage('works')">Outside <span class="out-outline">Frame</span>Work</h1>
+    <p class="home-tagline">想要用不同的視角看公司嗎，恭喜你來對地方了。</p>
+  </div>
   <div class="home-center">
     <div class="home-diagram-stack">
       <div class="home-meta">
@@ -402,6 +563,16 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
           <a href="#works" class="home-ql-link" onclick="homeQuickLink('works','earnings','公司法說分析');return false;">公司法說分析</a>
           <a href="#works" class="home-ql-link" onclick="homeQuickLink('works','tech-notes','科技研究');return false;">科技研究</a>
           <a href="#quotes" class="home-ql-link" onclick="homeQuickLink('quotes',null,'人生哲學');return false;">人生哲學</a>
+        </div>
+        <!-- Hot-right-now earnings call reports — opens straight to the report (same
+             openGatedWork() flow as the Structural Holes/Article Database cards on Works),
+             not the internal Works filter, since these point at 3 specific reports rather
+             than a whole category. Update this trio as attention rotates to new names. -->
+        <div class="home-quicklinks home-quicklinks-hot">
+          <div class="home-ql-label">近期熱門</div>
+          <a href="https://globe-invest.up.railway.app/research/BE_FY2026Q2_Analysis.html" class="home-ql-link" onclick="openGatedWork(this.href);return false;"><span class="home-ql-heat" aria-hidden="true"><i></i><i></i><i></i></span>Bloom Energy 法說會</a>
+          <a href="https://globe-invest.up.railway.app/research/SKHY_FY2026Q2_Analysis.html" class="home-ql-link" onclick="openGatedWork(this.href);return false;"><span class="home-ql-heat" aria-hidden="true"><i></i><i></i><i></i></span>SK hynix 法說會</a>
+          <a href="https://globe-invest.up.railway.app/research/AMD_FY26Q1_Analysis.html" class="home-ql-link" onclick="openGatedWork(this.href);return false;"><span class="home-ql-heat" aria-hidden="true"><i></i><i></i><i></i></span>AMD 法說會</a>
         </div>
       </div>
     </div>
@@ -436,9 +607,8 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
     </div>
   </div>
-  <div class="home-footer">
-    <h1 class="home-footer-brand" onclick="switchPage('works')">Outside <span class="out-outline">Frame</span>Work</h1>
   </div>
+
 </div>
 
 <!-- ── ABOUT ── -->
@@ -1650,6 +1820,10 @@ document.addEventListener('keydown', e => {
 });
 
 const nav = document.getElementById('top-nav');
+// Matches both the desktop top-bar buttons (.nav-links .nav-btn) and the phone bottom-dock
+// buttons (.mobile-dock .dock-item, which also carries the .nav-btn class) — one selector so
+// switchPage()'s active-state toggling and the click wiring below stay in sync across both
+// without any dock-specific code.
 const btns = document.querySelectorAll('.nav-btn');
 let currentPage = 'home';
 let navVisible = true;
@@ -2409,15 +2583,20 @@ function flashRow(name) {
 })();
 
 // Guests never get the "finance" pill (server strips it) — fall back to "earnings" so
-// the default Works view isn't empty. Checked at runtime instead of hardcoding per variant
-// so this stays correct if the gated category set changes. Deliberately placed at the very
-// end of this script, after every var/function it (transitively, via enterEarningsView) can
-// reach — EARN_DATES, TAG_STOPLIST, etc. are declared with `var` further up and only get
-// their values assigned when that line of the script actually runs; calling this any
-// earlier throws on every guest load and silently aborts the rest of the script below it
-// (which is what broke Timeline/Quotes/the earnings sidebar previously).
+// the default Works view isn't empty. Same fallback applies on phones even when logged
+// in: the max-width:640px block hides every gated pill (finance/network/causal/knowledge)
+// from the mobile UI outright, so "finance" would land on a pill nobody can see or get
+// back to. Checked at runtime instead of hardcoding per variant so this stays correct if
+// the gated category set (or the mobile breakpoint) changes. Deliberately placed at the
+// very end of this script, after every var/function it (transitively, via
+// enterEarningsView) can reach — EARN_DATES, TAG_STOPLIST, etc. are declared with `var`
+// further up and only get their values assigned when that line of the script actually
+// runs; calling this any earlier throws on every guest load and silently aborts the rest
+// of the script below it (which is what broke Timeline/Quotes/the earnings sidebar
+// previously).
 (function () {
-  var defaultCat = document.querySelector('.wf-pill[data-cat="finance"]') ? 'finance' : 'earnings';
+  var isMobile = window.matchMedia('(max-width:640px)').matches;
+  var defaultCat = (!isMobile && document.querySelector('.wf-pill[data-cat="finance"]')) ? 'finance' : 'earnings';
   filterCat(defaultCat, document.querySelector('.wf-pill[data-cat="' + defaultCat + '"]'));
 })();
 
