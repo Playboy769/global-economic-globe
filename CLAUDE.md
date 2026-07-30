@@ -25,8 +25,23 @@ work. This applies even when the request looks unambiguous. This overrides the g
 > diff 為準，不要只信這欄。
 
 ### 1. OutsideFramework 作品集首頁
-- 本 repo (`global-economic-globe.git`) · `app/OutsideFramework/index.html`（+`assets/`）· 本地 `outside-framework` :8125
-- **部署**：Dockerfile 直接 COPY 這份 → nginx。**無鏡像、無需同步**。
+- 本 repo (`global-economic-globe.git`) · `app/OutsideFramework/index.html`（+`assets/`、`admin.html`）· 本地 `outside-framework` :8125
+- **部署**：Dockerfile → `node /server.js`（**不是 nginx**）。**無鏡像、無需同步**。線上 `ofw.up.railway.app`。
+- ⚠️ 本目錄根的 `nginx.conf` 已是**孤兒檔**，Dockerfile 沒有引用它；別再照它推論部署方式。
+
+**這是一個有後端的服務，不是靜態站。** 根目錄三個檔案才是真正的執行體，改動時它們與 HTML 同等重要：
+
+| 檔案 | 職責 | 動到時要注意 |
+|---|---|---|
+| `server.js` | HTTP 路由、Google OAuth、guest/full 兩種 HTML 變體、handoff token 簽發 | 請求標頭（Host / X-Forwarded-Proto / X-Forwarded-For）**一律不可信**，不得用來決定 cookie 旗標、origin 或速率限制分桶 |
+| `auth.js` | HMAC token 簽發與驗證、cookie、速率限制 | **必須與 globe-invest / structural_holes / article_db 的副本逐字一致**（Python 版為 `auth.py`），且四邊共用同一組 `AUTH_SIGNING_SECRET` |
+| `analytics.js` | 訪客流量 SQLite（`node:sqlite`，Railway volume `/data`） | 欄位名要進 `GROUPABLE` 白名單才能拿來 GROUP BY |
+
+**Token 規則（2026-07-30 安全稽核後）**：每張 token 都必須帶 `aud`（目標服務 origin）與 `typ`
+（`session` / `handoff` / `state`），驗證時兩者都要比對。在此之前 `aud` 有簽名卻從未被檢查，
+導致任何一個服務的 token 都能當成任何其他服務的管理員 session —— 而 handoff token 是掛在
+網址 `?auth=` 上傳遞的，會經由 Referer、瀏覽器歷史與下游 log 外洩。**若要修改 `auth.js`，
+四個服務必須同步更新**，否則跨網域登入會斷。
 
 | 小功能 | 檔內錨點 | 對外連結目的地 |
 |---|---|---|
@@ -130,7 +145,7 @@ this main repo itself:
 
 | Deployment | Repo | Source path | Live URL |
 |---|---|---|---|
-| OutsideFramework (portfolio homepage) | this repo (`origin` = `global-economic-globe.git`) | `app/OutsideFramework/index.html` → `Dockerfile` → nginx | — |
+| OutsideFramework (portfolio homepage + central auth) | this repo (`origin` = `global-economic-globe.git`) | `app/OutsideFramework/` + root `server.js`/`auth.js`/`analytics.js` → `Dockerfile` → **node** | `ofw.up.railway.app` |
 | globe / invest / causal / brownian | **`globe-invest/` — its own repo** (`globe-invest.git`) | `globe-invest/app/{globe,invest,causal,brownian}/index.html` + `globe-invest/server.js` | `globe-invest.up.railway.app` |
 | structural-holes | **`structural_holes/` — its own repo** | — | `structural-holes-production.up.railway.app` |
 | article-db | **separate repo `article-db-api.git`** (this repo has it as remote `article-db`) | `index.html` at that repo's root — mirrors this repo's `article_db/index.html` | `articlebase.up.railway.app` |
