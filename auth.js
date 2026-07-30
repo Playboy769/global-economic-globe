@@ -108,6 +108,54 @@ function verifyToken(token, secret, expected = {}) {
   return payload;
 }
 
+// ── Per-audience key derivation ──────────────────────────────────────────────────────
+// Every token is signed with a key derived from the audience it is minted for:
+//
+//   service_key(aud) = HMAC-SHA256(AUTH_SIGNING_SECRET, "ofw-token-v2|" + aud)
+//
+// So a token minted for globe-invest cannot verify at article-db — not because someone
+// remembered to compare `aud`, but because the signature is computed under a different
+// key. That is the whole point: the audit found `aud` signed-but-unchecked in four places,
+// and a rule that depends on every call site remembering a comparison is a rule that will
+// break again. verifyFor() cannot even be called without naming the audience, because the
+// audience is what produces the key.
+//
+// This is deliberately NOT a blast-radius fix: all four services still hold the same
+// master secret, so any of them can derive any other's key. Splitting the master out so
+// each service only holds its own derived key is a separate change requiring per-service
+// Railway env vars.
+const KEY_CONTEXT = 'ofw-token-v2';
+
+function deriveKey(masterSecret, aud) {
+  return crypto
+    .createHmac('sha256', String(masterSecret))
+    .update(KEY_CONTEXT + '|' + String(aud))
+    .digest();
+}
+
+// Signs a payload under its own audience's key. Throws rather than silently producing a
+// token nobody can verify — a missing aud/typ here is a programming error, not input.
+function signFor(payload, masterSecret) {
+  if (!payload || typeof payload.aud !== 'string' || !payload.aud) {
+    throw new Error('signFor: payload.aud is required');
+  }
+  if (typeof payload.typ !== 'string' || !payload.typ) {
+    throw new Error('signFor: payload.typ is required');
+  }
+  return signToken(payload, deriveKey(masterSecret, payload.aud));
+}
+
+// Verifies a token that was minted for `expected.aud` with purpose `expected.typ`. Both
+// are mandatory. Returns the payload or null.
+function verifyFor(token, masterSecret, expected) {
+  if (!expected || typeof expected.aud !== 'string' || !expected.aud) return null;
+  if (typeof expected.typ !== 'string' || !expected.typ) return null;
+  return verifyToken(token, deriveKey(masterSecret, expected.aud), {
+    aud: expected.aud,
+    typ: expected.typ,
+  });
+}
+
 function parseCookies(header) {
   const out = {};
   if (!header) return out;
@@ -236,10 +284,14 @@ module.exports = {
   TYP_SESSION,
   TYP_HANDOFF,
   TYP_STATE,
+  KEY_CONTEXT,
   b64url,
   b64urlDecode,
   signToken,
   verifyToken,
+  deriveKey,
+  signFor,
+  verifyFor,
   parseCookies,
   cookieHeader,
   clearCookieHeader,

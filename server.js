@@ -182,7 +182,9 @@ function renderFullHtml(email, origin) {
   const tokens = {};
   const exp = nowSec() + HANDOFF_TTL_SEC;
   for (const target of GATED_ORIGINS) {
-    tokens[target] = auth.signToken({ email, aud: target, typ: auth.TYP_HANDOFF, exp }, SECRET);
+    // signFor derives the key from `aud`, so each service's token is signed under a key
+    // only that service's audience produces.
+    tokens[target] = auth.signFor({ email, aud: target, typ: auth.TYP_HANDOFF, exp }, SECRET);
   }
   const script = 'window.__AUTH_TOKENS__=' + JSON.stringify(tokens) + ';';
   // Function replacer: a plain string replacement would interpret $& / $1 inside the
@@ -203,10 +205,11 @@ function selfOrigin(req) {
 
 function getSessionEmail(req) {
   const cookies = auth.parseCookies(req.headers.cookie);
-  // Audience AND purpose are both asserted here. Without them, any token signed with the
-  // shared secret — including a handoff token minted for a different service, which
-  // travels through URLs and logs — authenticated as the owner on this service.
-  const payload = auth.verifyToken(cookies[COOKIE_NAME], SECRET, {
+  // Audience AND purpose are both asserted, and the verification key is derived from the
+  // audience — so a handoff token minted for a different service (which travels through
+  // URLs, Referer headers and downstream logs) does not even produce a matching signature
+  // here, let alone pass the aud check.
+  const payload = auth.verifyFor(cookies[COOKIE_NAME], SECRET, {
     typ: auth.TYP_SESSION,
     aud: selfOrigin(req),
   });
@@ -436,7 +439,7 @@ const server = http.createServer(async (req, res) => {
       // requires possession of both. Signing alone made state a bearer value: any valid
       // state worked in any browser, which is the shape of an OAuth login-CSRF.
       const nonce = auth.randomToken(16);
-      const state = auth.signToken(
+      const state = auth.signFor(
         { n: nonce, typ: auth.TYP_STATE, returnTo: returnTo || null, aud: selfOrigin(req), exp: nowSec() + STATE_TTL_SEC },
         SECRET
       );
@@ -472,7 +475,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const code = parsedUrl.searchParams.get('code');
-      const statePayload = auth.verifyToken(parsedUrl.searchParams.get('state'), SECRET, {
+      const statePayload = auth.verifyFor(parsedUrl.searchParams.get('state'), SECRET, {
         typ: auth.TYP_STATE,
         aud: selfOrigin(req),
       });
@@ -523,7 +526,7 @@ const server = http.createServer(async (req, res) => {
         res.end('<h1>此帳號未被授權</h1><p><a href="/">回首頁</a></p>');
         return;
       }
-      const sessionToken = auth.signToken(
+      const sessionToken = auth.signFor(
         { email, aud: selfOrigin(req), typ: auth.TYP_SESSION, exp: nowSec() + SESSION_TTL_SEC },
         SECRET
       );
@@ -535,7 +538,7 @@ const server = http.createServer(async (req, res) => {
       const returnTo = statePayload.returnTo;
       if (returnTo && auth.isAllowedReturnTo(returnTo)) {
         const origin = auth.originOf(returnTo);
-        const handoffToken = auth.signToken(
+        const handoffToken = auth.signFor(
           { email, aud: origin, typ: auth.TYP_HANDOFF, exp: nowSec() + HANDOFF_TTL_SEC },
           SECRET
         );
@@ -565,7 +568,7 @@ const server = http.createServer(async (req, res) => {
       const email = getSessionEmail(req);
       if (email) {
         const origin = auth.originOf(returnTo);
-        const token = auth.signToken(
+        const token = auth.signFor(
           { email, aud: origin, typ: auth.TYP_HANDOFF, exp: nowSec() + HANDOFF_TTL_SEC },
           SECRET
         );
