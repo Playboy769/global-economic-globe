@@ -236,6 +236,20 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .pf-brand .out-outline{color:var(--c-accent)}
 .pf-copy{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#bbb;letter-spacing:.04em}
 
+/* ── Shared page-bottom link row (Privacy/Terms/Threads) — every page but Home ── */
+.pg-footer-links{margin-top:64px;padding-top:24px;border-top:1px solid #eee;display:flex;
+  justify-content:center;align-items:center;gap:14px;font-family:'Orchid','Noto Serif TC',serif;
+  font-size:12px;letter-spacing:.06em;color:#bbb}
+.pg-footer-links a{color:#999;transition:color .2s ease}
+.pg-footer-links a:hover{color:var(--c-accent)}
+.pg-footer-links .fl-dot{color:#ddd}
+/* Philosophy already has its own hairline+brand footer directly below — skip this row's
+   own border/spacing so the two don't stack into a double line. */
+#page-philosophy .pg-footer-links{margin-top:0;padding-top:0;border-top:none}
+
+/* ── TERMS ── */
+#page-terms{padding:140px 0 100px}
+
 /* ── QUOTES ── */
 #page-quotes{padding:0;min-height:100vh;position:relative;overflow:hidden;background:var(--c-canvas)}
 .quotes-hero{position:relative;width:100%;min-height:100vh;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding-bottom:min(110px,11vh)}
@@ -445,6 +459,13 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
         <p>我們不只是整理數據，而是在數據的沉默中傾聽故事。每一張圖表背後，都是一段等待被理解的關係；每一條看不見的連結，都在訴說：這個世界比你以為的，更加彼此相依。</p>
         <div class="about-sig"><b>Silas</b> · Outside FrameWork</div>
       </div>
+    </div>
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
     </div>
   </div>
 </div>
@@ -703,6 +724,13 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
 
     </div>
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
+    </div>
   </div>
 </div>
 
@@ -726,6 +754,13 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <span class="works-count reveal reveal-delay-2" id="timeline-count"></span>
     </div>
     <div id="timeline-list"></div>
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
+    </div>
   </div>
 </div>
 
@@ -759,6 +794,13 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
         </div>
       </div>
     </div>
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
+    </div>
     <div class="phil-footer">
       <div class="pf-brand">Outside <span class="out-outline">Frame</span>Work</div>
       <div class="pf-copy">&copy; 2025 All rights reserved.</div>
@@ -781,6 +823,15 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="quotes-counter" id="quotes-counter"></div>
     </div>
   </section>
+  <div class="container">
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
+    </div>
+  </div>
 </div>
 
 <!-- ── PRIVACY ── (no nav-bar entry; reached from the cookie notice / direct #privacy link) -->
@@ -795,6 +846,36 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <p><b>登入用的 cookie。</b>另外還有 <code>ofw_sid</code> 與 <code>csrf_token</code> 兩枚 cookie，但只有在您（網站經營者）主動登入時才會產生，用途是維持登入狀態與防止跨站請求偽造，屬於功能性必要 cookie，與流量分析無關。</p>
       <p><b>如何選擇。</b>分析用 cookie 不影響一般瀏覽功能；若您不希望被記錄造訪次數，可在瀏覽器設定中封鎖或清除 cookie，不會影響您使用本站其他內容。</p>
       <div class="about-sig"><b>Silas</b> · Outside FrameWork · 最後更新 2026-07-30</div>
+    </div>
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── TERMS ── (no nav-bar entry; reached from the footer link row / direct #terms link) -->
+<div class="page" id="page-terms">
+  <div class="container">
+    <div class="about-label reveal">Terms</div>
+    <div class="about-statement reveal reveal-delay-1" style="font-size:clamp(24px,3vw,34px)">服務條款</div>
+    <div class="about-body reveal reveal-delay-2" style="max-width:640px">
+      <p><b>網站性質與內容用途。</b>Outside FrameWork 為個人研究與作品展示網站，站上文章、財報分析、產業圖表與互動工具，僅供資訊分享與參考，不構成任何投資、財務、法律或其他專業建議；讀者依本站內容做出的任何決策，須自行承擔風險與後果。</p>
+      <p><b>智慧財產權。</b>本站原創文字、圖表與程式碼，除另有標明，著作權均歸站主 Silas 所有；非經授權，請勿逕自重製、轉載或用於商業用途，引用時請註明出處與連結。</p>
+      <p><b>外部連結與第三方內容。</b>本站部分作品連結至站主自建的延伸服務（globe-invest.up.railway.app、structural-holes-production.up.railway.app、articlebase.up.railway.app）；對於連結指向的其他第三方網站內容，本站不負保證或監督責任。</p>
+      <p><b>免責聲明。</b>本站內容以現狀提供，不保證資料之正確性、即時性或完整性；因使用或無法使用本站內容所生之任何直接或間接損失，站主不負賠償責任。</p>
+      <p><b>服務變更與條款更新。</b>站主保留隨時修改、暫停或終止本站任何功能與內容之權利；本條款如有修訂將直接更新於本頁，不另行個別通知，建議您不定期查閱。</p>
+      <div class="about-sig"><b>Silas</b> · Outside FrameWork · 最後更新 2026-07-30</div>
+    </div>
+    <div class="pg-footer-links">
+      <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
+      <span class="fl-dot">·</span>
+      <a href="#terms" onclick="switchPage('terms');return false;">服務條款</a>
+      <span class="fl-dot">·</span>
+      <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
     </div>
   </div>
 </div>
@@ -1552,9 +1633,10 @@ let navVisible = true;
 let lastScrollY = 0;
 let hideTimer = null;
 
-// 'privacy' has no nav-bar button — reached only via the cookie notice link and direct
-// /#privacy links — but still needs to be here so initHashRoute()/popstate recognize it.
-const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes', 'privacy'];
+// 'privacy' and 'terms' have no nav-bar button — reached only via footer links and direct
+// /#privacy or /#terms URLs — but still need to be here so initHashRoute()/popstate
+// recognize them.
+const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes', 'privacy', 'terms'];
 
 // Traffic beacon. The server records the initial HTML load itself; this only reports what
 // happens after, which on a single-page app is every subsequent navigation. keepalive lets
