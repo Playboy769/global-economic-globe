@@ -298,6 +298,19 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #overlay-close{font-size:10px;font-weight:400;color:var(--c-accent,#d1591f);letter-spacing:.14em;text-transform:uppercase;font-family:'Orchid','Noto Serif TC',serif;border:none;background:none;cursor:pointer;padding:6px 0;display:none;transition:color .2s ease}
 #overlay-close:hover{color:var(--c-accent-deep,#a94515)}
 
+/* ── Cookie Notice ── */
+.cookie-notice{position:fixed;right:20px;bottom:20px;z-index:400;max-width:300px;background:#fff;
+  border:1px solid #eee;border-radius:14px;padding:16px 18px;box-shadow:0 12px 32px -18px rgba(0,0,0,.18);
+  opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .4s ease,transform .4s ease}
+.cookie-notice.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.cookie-notice p{margin:0 0 12px;font-size:12.5px;line-height:1.7;color:#666;font-family:'Orchid','Noto Serif TC',serif}
+.cookie-notice .cn-actions{display:flex;justify-content:flex-end}
+.cookie-notice button{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;letter-spacing:.06em;
+  color:var(--c-accent);background:none;border:none;padding:0 0 1px;cursor:pointer;
+  border-bottom:1px solid transparent;transition:border-color .2s ease}
+.cookie-notice button:hover{border-color:var(--c-accent)}
+@media(max-width:480px){.cookie-notice{right:14px;left:14px;bottom:14px;max-width:none}}
+
 /* ── Scroll Animations ── */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.4,0,.2,1)}
 .reveal.visible{opacity:1;transform:translateY(0)}
@@ -335,6 +348,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 </style>
 </head>
 <body>
+
+<!-- ── Cookie Notice ── -->
+<div id="cookie-notice" class="cookie-notice" role="status" aria-live="polite">
+  <p>本站使用一枚 cookie 匿名記錄造訪次數與瀏覽頁面，用於流量統計，不會用來識別您的身份。</p>
+  <div class="cn-actions"><button type="button" onclick="dismissCookieNotice()">知道了</button></div>
+</div>
 
 <!-- ── Top Navigation ── -->
 <nav id="top-nav">
@@ -2253,6 +2272,24 @@ function flashRow(name) {
 (function () {
   var defaultCat = document.querySelector('.wf-pill[data-cat="finance"]') ? 'finance' : 'earnings';
   filterCat(defaultCat, document.querySelector('.wf-pill[data-cat="' + defaultCat + '"]'));
+})();
+
+// Notice-only, not a consent gate — the ofw_vid analytics cookie is already set by the
+// server regardless of this banner (see server.js). This only has to remember, per
+// browser, that the visitor has seen the notice, so localStorage is enough; it doesn't
+// need to be readable server-side and doesn't need to be a cookie itself.
+(function initCookieNotice() {
+  var DISMISS_KEY = 'ofw_cookie_notice_seen';
+  var el = document.getElementById('cookie-notice');
+  if (!el) return;
+  var seen = false;
+  try { seen = !!localStorage.getItem(DISMISS_KEY); } catch (e) {}
+  if (seen) return;
+  setTimeout(function () { el.classList.add('show'); }, 900);
+  window.dismissCookieNotice = function () {
+    el.classList.remove('show');
+    try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}
+  };
 })();
 </script>
 </body>
