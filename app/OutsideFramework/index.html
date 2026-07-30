@@ -1664,7 +1664,7 @@ function trackEvent(type, path, label) {
   } catch (e) {}
 }
 
-function switchPage(id, fromPopstate) {
+function switchPage(id, fromPopstate, skipTrack) {
   if (id === currentPage) return;
   currentPage = id;
   btns.forEach(b => b.classList.toggle('active', b.dataset.page === id));
@@ -1704,7 +1704,10 @@ function switchPage(id, fromPopstate) {
   // Match the path this exact state actually shows in the URL bar (see the pushState
   // branch above) — otherwise "Home" reached by clicking back from another tab records as
   // /#home while the initial load records as /, splitting one page into two dashboard rows.
-  trackEvent('pageview', id === 'home' ? '/' : '/#' + id);
+  // skipTrack is set only by initHashRoute()'s initial-paint call below: the server already
+  // recorded one pageview for this same request (as "/", since the #hash never reaches it),
+  // so firing another beacon here would double-count a single physical page load.
+  if (!skipTrack) trackEvent('pageview', id === 'home' ? '/' : '/#' + id);
 }
 
 btns.forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
@@ -1718,7 +1721,7 @@ window.addEventListener('popstate', () => {
 (function initHashRoute(){
   const hash = location.hash.replace('#', '');
   if (VALID_PAGES.includes(hash) && hash !== 'home') {
-    switchPage(hash, true);
+    switchPage(hash, true, true);
   }
 })();
 
