@@ -78,19 +78,15 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .home-clock{font-family:'Orchid','Noto Serif TC',serif;font-size:13px;font-weight:300;color:var(--c-accent);letter-spacing:.06em;line-height:1.6;font-variant-numeric:tabular-nums;white-space:pre;text-align:left}
 .home-quicklinks{display:flex;flex-direction:column;gap:6px}
 .home-quicklinks-hot{margin-top:14px;padding-top:14px;border-top:1px solid #eee}
-.home-ql-label{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:11px;font-weight:700;color:#999;letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
-.home-quicklinks-hot .home-ql-link{display:inline-flex;align-items:center;gap:7px}
-/* Heat level: a 3-bar signal/equalizer glyph instead of a bare "1./2./3." rank number —
-   rank 1 lights all 3 bars, rank 2 lights 2, rank 3 lights 1, so relative "熱門程度" reads
-   at a glance the same way a signal-strength icon does. */
-.home-ql-heat{display:inline-flex;align-items:flex-end;gap:2px;height:10px;flex-shrink:0}
-.home-ql-heat i{display:block;width:2.5px;border-radius:1px;background:#e2e2e2;font-style:normal}
-.home-ql-heat i:nth-child(1){height:4px}
-.home-ql-heat i:nth-child(2){height:7px}
-.home-ql-heat i:nth-child(3){height:10px}
-.home-quicklinks-hot .home-ql-link:nth-of-type(1) .home-ql-heat i{background:var(--c-accent)}
-.home-quicklinks-hot .home-ql-link:nth-of-type(2) .home-ql-heat i:nth-child(-n+2){background:var(--c-accent)}
-.home-quicklinks-hot .home-ql-link:nth-of-type(3) .home-ql-heat i:nth-child(1){background:var(--c-accent)}
+.home-ql-label{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:12px;font-weight:700;color:#999;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+.home-quicklinks-hot .home-ql-link{display:inline-flex;align-items:center;gap:8px;font-size:13.5px}
+/* Heat level: a 3-bar signal/equalizer glyph — all 3 lit for every entry here, since this
+   is a curated "these are all hot right now" trio rather than a ranked 1st/2nd/3rd list. */
+.home-ql-heat{display:inline-flex;align-items:flex-end;gap:2.5px;height:13px;flex-shrink:0}
+.home-ql-heat i{display:block;width:3px;border-radius:1px;background:var(--c-accent);font-style:normal}
+.home-ql-heat i:nth-child(1){height:6px}
+.home-ql-heat i:nth-child(2){height:9.5px}
+.home-ql-heat i:nth-child(3){height:13px}
 .home-ql-link{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;font-weight:300;color:#999;letter-spacing:.06em;text-decoration:none;cursor:pointer;transition:color .2s ease}
 .home-ql-link:hover{color:var(--c-accent-deep)}
 .home-photo-strip{position:absolute;top:50%;right:min(32px,3vw);width:min(1040px,74vw);height:min(620px,78vh);overflow:hidden;opacity:0;-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 26%);mask-image:linear-gradient(to right,transparent 0%,#000 26%);animation:fadeInStrip 1.6s cubic-bezier(.16,1,.3,1) .6s forwards}
@@ -470,7 +466,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   .grp-body .wk-card::after{top:16px;right:16px}
   .grp-body .wk-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
   .grp-body .wk-name{white-space:normal;font-size:14.5px;font-weight:600}
-  .grp-body .wk-next-earn{text-align:left}
+  .grp-body .wk-next-earn{display:none}
 
   /* -- Timeline: drop the long grey description line per row, keep date/tag/name only -- */
   .tl-body .wk-type{display:none}
