@@ -81,6 +81,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 /* ── ABOUT ── */
 #page-about{padding:140px 0 100px}
+/* ── PRIVACY ── */
+#page-privacy{padding:140px 0 100px}
+#page-privacy code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:var(--c-accent-soft);padding:1px 6px;border-radius:5px;color:var(--c-accent-deep)}
 .about-intro{display:grid;grid-template-columns:1.08fr 1fr;gap:80px;margin-bottom:100px;align-items:start;position:relative}
 .about-motif{position:absolute;top:-56px;right:-24px;width:min(420px,36vw);opacity:0;pointer-events:none;z-index:-1;animation:aboutMotifIn 1.4s ease .3s forwards}
 @keyframes aboutMotifIn{to{opacity:.05}}
@@ -304,6 +307,8 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .4s ease,transform .4s ease}
 .cookie-notice.show{opacity:1;transform:translateY(0);pointer-events:auto}
 .cookie-notice p{margin:0 0 12px;font-size:12.5px;line-height:1.7;color:#666;font-family:'Orchid','Noto Serif TC',serif}
+.cookie-notice p a{color:var(--c-accent);border-bottom:1px solid var(--c-accent-soft);transition:border-color .2s ease}
+.cookie-notice p a:hover{border-color:var(--c-accent)}
 .cookie-notice .cn-actions{display:flex;justify-content:flex-end}
 .cookie-notice button{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;letter-spacing:.06em;
   color:var(--c-accent);background:none;border:none;padding:0 0 1px;cursor:pointer;
@@ -351,7 +356,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 <!-- ── Cookie Notice ── -->
 <div id="cookie-notice" class="cookie-notice" role="status" aria-live="polite">
-  <p>本站使用一枚 cookie 匿名記錄造訪次數與瀏覽頁面，用於流量統計，不會用來識別您的身份。</p>
+  <p>為了持續優化網站內容與瀏覽體驗，本站使用一枚 cookie 進行匿名流量分析，不會用來識別您的身份。若您繼續瀏覽本站，即表示同意我們的使用方式；更多說明請參閱<a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>。</p>
   <div class="cn-actions"><button type="button" onclick="dismissCookieNotice()">知道了</button></div>
 </div>
 
@@ -776,6 +781,22 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="quotes-counter" id="quotes-counter"></div>
     </div>
   </section>
+</div>
+
+<!-- ── PRIVACY ── (no nav-bar entry; reached from the cookie notice / direct #privacy link) -->
+<div class="page" id="page-privacy">
+  <div class="container">
+    <div class="about-label reveal">Privacy</div>
+    <div class="about-statement reveal reveal-delay-1" style="font-size:clamp(24px,3vw,34px)">隱私權政策</div>
+    <div class="about-body reveal reveal-delay-2" style="max-width:640px">
+      <p><b>我們使用什麼 cookie。</b>本站在您造訪時會設置一枚匿名的 <code>ofw_vid</code> cookie，僅用於統計造訪次數與瀏覽頁面，不會用來識別您的身份，也不會與您的姓名、電子郵件或任何個人資料產生關聯。</p>
+      <p><b>我們記錄哪些資料。</b>瀏覽的頁面／打開過的作品卡片、裝置類型（Desktop／Mobile／Tablet）、瀏覽器種類、來源網站的網域（不含完整網址或搜尋字詞）、以及您連線所在的粗略邊緣節點區域。我們<b>不記錄</b> IP 位址，也不使用任何第三方廣告或追蹤工具。</p>
+      <p><b>資料保存與存取。</b>上述紀錄最長保留 400 天後自動清除；僅網站經營者本人登入後台才能查看彙總統計，資料不會對外公開，也不會出售或提供給第三方。</p>
+      <p><b>登入用的 cookie。</b>另外還有 <code>ofw_sid</code> 與 <code>csrf_token</code> 兩枚 cookie，但只有在您（網站經營者）主動登入時才會產生，用途是維持登入狀態與防止跨站請求偽造，屬於功能性必要 cookie，與流量分析無關。</p>
+      <p><b>如何選擇。</b>分析用 cookie 不影響一般瀏覽功能；若您不希望被記錄造訪次數，可在瀏覽器設定中封鎖或清除 cookie，不會影響您使用本站其他內容。</p>
+      <div class="about-sig"><b>Silas</b> · Outside FrameWork · 最後更新 2026-07-30</div>
+    </div>
+  </div>
 </div>
 
 <!-- ── Work Preview ── -->
@@ -1531,7 +1552,9 @@ let navVisible = true;
 let lastScrollY = 0;
 let hideTimer = null;
 
-const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes'];
+// 'privacy' has no nav-bar button — reached only via the cookie notice link and direct
+// /#privacy links — but still needs to be here so initHashRoute()/popstate recognize it.
+const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes', 'privacy'];
 
 // Traffic beacon. The server records the initial HTML load itself; this only reports what
 // happens after, which on a single-page app is every subsequent navigation. keepalive lets
