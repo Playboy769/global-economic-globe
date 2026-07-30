@@ -1,0 +1,478 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>流量後台 — OutsideFramework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Deliberately light-only: this page is read as part of a white editorial site, and the
+   repo's visual rule for reports is white background + high-contrast dark text. Chrome
+   (headings, labels) wears the site serif; every number and chart label wears the system
+   sans, because equal-width serif figures read as decoration at display sizes. */
+:root{
+  --c-canvas:#fff; --c-ink:#0a0a0a; --c-accent:#d1591f; --c-accent-deep:#a94515;
+  --c-accent-soft:rgba(209,89,31,.08);
+  /* Validated on #ffffff: all-pairs CVD ΔE 25.9, normal-vision 31.7, both >= 3:1 */
+  --series-views:#d1591f;
+  --series-visitors:#2a78d6;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+  --grid:#e8e7e2; --axis:#c3c2b7; --hairline:rgba(11,11,11,.10);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --serif:'Orchid','Noto Serif TC','PMingLiU',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--c-canvas);color:var(--c-ink);font-family:var(--serif);font-weight:400;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+.wrap{max-width:1180px;margin:0 auto;padding:48px 28px 80px}
+@media(max-width:640px){.wrap{padding:32px 18px 60px}}
+
+/* ── Header ── */
+.pg-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
+  flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid var(--hairline);margin-bottom:28px}
+.pg-eyebrow{font-size:12px;color:var(--text-muted);letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px}
+.pg-title{font-size:clamp(30px,4.4vw,44px);font-weight:300;line-height:1.1;letter-spacing:.01em}
+.pg-sub{margin-top:12px;font-size:13px;color:var(--text-secondary);line-height:1.8}
+.pg-back{font-size:12px;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase;
+  border-bottom:1px solid transparent;transition:color .2s,border-color .2s;padding-bottom:2px;white-space:nowrap}
+.pg-back:hover{color:var(--c-accent);border-color:var(--c-accent)}
+
+/* ── Filter row — one row above everything it scopes ── */
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:34px}
+.fgroup{display:inline-flex;border:1px solid var(--hairline);border-radius:100px;overflow:hidden}
+.fbtn{font-family:var(--sans);font-size:12px;color:var(--text-secondary);background:none;border:none;
+  cursor:pointer;padding:8px 15px;transition:background .2s,color .2s;letter-spacing:.02em}
+.fbtn+.fbtn{border-left:1px solid var(--hairline)}
+.fbtn:hover{background:var(--c-accent-soft);color:var(--c-accent-deep)}
+.fbtn[aria-pressed="true"]{background:var(--c-accent);color:#fff}
+.fbtn:focus-visible{outline:2px solid var(--c-accent);outline-offset:-2px}
+.fspacer{flex:1 1 auto}
+.fnote{font-family:var(--sans);font-size:11px;color:var(--text-muted);letter-spacing:.02em}
+
+/* ── Stat tiles ── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;
+  background:var(--hairline);border:1px solid var(--hairline);border-radius:14px;overflow:hidden;margin-bottom:34px}
+.tile{background:var(--c-canvas);padding:22px 24px 24px}
+.tile-label{font-family:var(--sans);font-size:11px;color:var(--text-muted);letter-spacing:.09em;
+  text-transform:uppercase;margin-bottom:10px}
+/* Proportional figures — tabular-nums makes a display-size number look loose */
+.tile-val{font-family:var(--sans);font-weight:600;font-size:30px;line-height:1.05;color:var(--text-primary);letter-spacing:-.01em}
+.tile.hero .tile-val{font-size:52px;font-weight:600}
+@media(max-width:640px){.tile.hero .tile-val{font-size:42px}}
+.tile-meta{font-family:var(--sans);font-size:11px;color:var(--text-muted);margin-top:8px;letter-spacing:.02em}
+
+/* ── Chart cards ── */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px;margin-bottom:18px}
+.card{border:1px solid var(--hairline);border-radius:14px;padding:22px 22px 18px;background:var(--c-canvas);min-width:0}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}
+.card-title{font-size:15px;font-weight:500;letter-spacing:.01em;color:var(--text-primary)}
+.card-hint{font-family:var(--sans);font-size:11px;color:var(--text-muted);letter-spacing:.02em}
+.card-note{font-family:var(--sans);font-size:11px;color:var(--text-secondary);line-height:1.7;margin-top:12px;
+  padding-top:11px;border-top:1px solid var(--hairline)}
+.card-note b{font-weight:600;color:var(--text-primary)}
+.plot{margin-top:14px;position:relative;min-width:0}
+.plot svg{display:block;width:100%;height:auto;overflow:visible}
+/* Wide content scrolls inside its own container — the page body never scrolls sideways */
+.scroll-x{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.empty{font-family:var(--sans);font-size:12px;color:var(--text-muted);padding:34px 0;text-align:center;letter-spacing:.03em}
+
+/* Legend — always present for >= 2 series; identity never rests on color alone */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:var(--sans);font-size:11.5px;color:var(--text-secondary)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:14px;height:2px;border-radius:1px;flex:0 0 auto}
+
+/* Chart text wears text tokens, never the series color */
+.ax{font-family:var(--sans);font-size:10.5px;fill:var(--text-muted);font-variant-numeric:tabular-nums}
+.dlabel{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--text-primary);font-variant-numeric:tabular-nums}
+.blabel{font-family:var(--sans);font-size:11.5px;fill:var(--text-primary)}
+.bval{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--text-primary);font-variant-numeric:tabular-nums}
+
+/* Tooltip — enhances, never gates: every value is also in the table view */
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:5;
+  background:#fff;border:1px solid var(--hairline);border-radius:9px;padding:9px 12px;
+  box-shadow:0 12px 28px -14px rgba(0,0,0,.28);font-family:var(--sans);font-size:11.5px;
+  color:var(--text-primary);white-space:nowrap;min-width:96px}
+.tip.on{opacity:1}
+.tip-h{font-weight:600;margin-bottom:5px;font-size:11px;color:var(--text-secondary);letter-spacing:.02em}
+.tip-r{display:flex;align-items:center;gap:7px;line-height:1.7}
+.tip-r i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.tip-r b{font-weight:600;margin-left:auto;padding-left:12px;font-variant-numeric:tabular-nums}
+
+/* ── Table view (the WCAG-clean twin of every chart) ── */
+table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:12px}
+th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--hairline);white-space:nowrap}
+th{font-size:10.5px;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+td{color:var(--text-primary)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0}
+td.wrap-cell{white-space:normal;min-width:180px;word-break:break-word}
+tbody tr:last-child td{border-bottom:none}
+.tbl-scroll{max-height:340px;overflow-y:auto;overflow-x:auto;margin-top:14px}
+
+/* Refetch holds the previous render at reduced opacity — no skeleton flash, no layout jump */
+#dash{transition:opacity .18s ease}
+#dash.loading{opacity:.45}
+.pg-foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--hairline);
+  font-family:var(--sans);font-size:11px;color:var(--text-muted);line-height:1.9}
+.pg-foot code{font-size:10.5px;background:#f6f5f2;padding:1px 5px;border-radius:4px}
+.err{font-family:var(--sans);font-size:13px;color:#b3261e;padding:20px 0}
+</style>
+
+<div class="wrap">
+  <div class="pg-head">
+    <div>
+      <div class="pg-eyebrow">Analytics</div>
+      <h1 class="pg-title">流量後台</h1>
+      <p class="pg-sub">
+        訪客以一枚匿名 cookie（<code>ofw_vid</code>）識別，不記錄 IP、不寫入任何個資。<br>
+        僅本人（已登入帳號）可讀取本頁。
+      </p>
+    </div>
+    <a class="pg-back" href="/">← 回首頁</a>
+  </div>
+
+  <div class="filters">
+    <div class="fgroup" role="group" aria-label="時間範圍">
+      <button class="fbtn" data-days="7">7 天</button>
+      <button class="fbtn" data-days="30" aria-pressed="true">30 天</button>
+      <button class="fbtn" data-days="90">90 天</button>
+      <button class="fbtn" data-days="365">365 天</button>
+    </div>
+    <div class="fgroup" role="group" aria-label="檢視方式">
+      <button class="fbtn" id="btn-chart" aria-pressed="true">圖表</button>
+      <button class="fbtn" id="btn-table">表格</button>
+    </div>
+    <div class="fgroup">
+      <button class="fbtn" id="btn-owner" aria-pressed="false">含我自己的造訪</button>
+    </div>
+    <div class="fspacer"></div>
+    <div class="fnote" id="range-note"></div>
+  </div>
+
+  <div id="dash"></div>
+
+  <div class="pg-foot">
+    資料保留 400 天後自動清除，儲存於 Railway 持久化磁碟（<code>/data/analytics.db</code>）。
+    「地區」來自邊緣節點（<code>x-railway-edge</code>）而非 IP 定位，僅為粗略區域訊號。
+    機器人流量已於寫入前依 User-Agent 過濾。
+  </div>
+</div>
+
+<script>
+'use strict';
+var state = { days: 30, includeOwner: false, view: 'chart', data: null };
+
+var fmt = function (n) { return (n == null ? 0 : n).toLocaleString('en-US'); };
+var esc = function (s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+};
+
+/* Bars grow from a single baseline with a 4px rounded data-end and a square baseline end. */
+function barPath(x, y, w, h, r) {
+  if (!(w > 0)) return '';
+  r = Math.min(r, w, h / 2);
+  return 'M' + x + ',' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) +
+    'V' + (y + h - r) + 'Q' + (x + w) + ',' + (y + h) + ' ' + (x + w - r) + ',' + (y + h) + 'H' + x + 'Z';
+}
+
+/* Pick the STEP on a 1/2/2.5/5 x 10^n ladder and derive the max from it, so every tick is
+   a round number. Deriving ticks by dividing an arbitrary max into N instead is what
+   produces axes like 0/13/25/38/50. Step is floored at 1 — these are all counts. */
+function niceScale(rawMax) {
+  if (!(rawMax > 0)) return { max: 4, step: 1 };
+  if (rawMax <= 5) return { max: Math.max(2, Math.ceil(rawMax)), step: 1 };
+  var rough = rawMax / 5;
+  var pow = Math.pow(10, Math.floor(Math.log10(rough)));
+  var f = rough / pow;
+  var mult = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+  var step = Math.max(1, mult * pow);
+  return { max: Math.ceil(rawMax / step) * step, step: step };
+}
+function ticksOf(scale) {
+  var out = [];
+  for (var v = 0; v <= scale.max + 1e-9; v += scale.step) out.push(Math.round(v));
+  return out;
+}
+function mdLabel(day) { return day.slice(5).replace('-', '/'); }
+
+/* ── Trend: two count series on ONE axis (never a second y-scale) ── */
+function renderTrend(t) {
+  var host = document.getElementById('plot-trend');
+  if (!host) return;
+  if (!t.length) { host.innerHTML = '<div class="empty">尚無資料</div>'; return; }
+
+  var W = 980, H = 260, L = 46, R = 18, T = 16, B = 30;
+  var pw = W - L - R, ph = H - T - B;
+  var rawMax = Math.max.apply(null, t.map(function (d) { return Math.max(d.views, d.visitors); }));
+  var scale = niceScale(rawMax);
+  var maxV = scale.max;
+  var n = t.length;
+  var xAt = function (i) { return n === 1 ? L + pw / 2 : L + (pw * i) / (n - 1); };
+  var yAt = function (v) { return T + ph - (ph * v) / maxV; };
+
+  var tk = ticksOf(scale);
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="每日瀏覽次數與訪客數趨勢">';
+  // Hairline solid gridlines, one shade off the surface — never dashed
+  tk.forEach(function (v) {
+    var y = yAt(v);
+    svg += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="var(--grid)" stroke-width="1"/>';
+    svg += '<text class="ax" x="' + (L - 9) + '" y="' + (y + 3.5) + '" text-anchor="end">' + fmt(v) + '</text>';
+  });
+  svg += '<line x1="' + L + '" y1="' + (T + ph) + '" x2="' + (W - R) + '" y2="' + (T + ph) + '" stroke="var(--axis)" stroke-width="1"/>';
+
+  var every = Math.max(1, Math.ceil(n / 7));
+  t.forEach(function (d, i) {
+    if (i % every !== 0 && i !== n - 1) return;
+    svg += '<text class="ax" x="' + xAt(i) + '" y="' + (T + ph + 19) + '" text-anchor="middle">' + mdLabel(d.day) + '</text>';
+  });
+
+  [{ k: 'visitors', c: 'var(--series-visitors)' }, { k: 'views', c: 'var(--series-views)' }].forEach(function (s) {
+    var pts = t.map(function (d, i) { return xAt(i) + ',' + yAt(d[s.k]); }).join(' ');
+    svg += '<polyline points="' + pts + '" fill="none" stroke="' + s.c +
+      '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    // End marker >= 8px with a 2px surface ring so it stays legible where the lines cross
+    var lx = xAt(n - 1), ly = yAt(t[n - 1][s.k]);
+    svg += '<circle cx="' + lx + '" cy="' + ly + '" r="4" fill="' + s.c + '" stroke="var(--c-canvas)" stroke-width="2"/>';
+  });
+
+  // Label selectively: the two endpoints only, nudged apart if they'd collide
+  var lastV = t[n - 1].views, lastU = t[n - 1].visitors;
+  var yV = yAt(lastV), yU = yAt(lastU);
+  if (Math.abs(yV - yU) < 13) { if (yV <= yU) { yV -= 6; yU += 7; } else { yV += 7; yU -= 6; } }
+  svg += '<text class="dlabel" x="' + (xAt(n - 1) - 9) + '" y="' + (yV - 8) + '" text-anchor="end">' + fmt(lastV) + '</text>';
+  svg += '<text class="dlabel" x="' + (xAt(n - 1) - 9) + '" y="' + (yU - 8) + '" text-anchor="end">' + fmt(lastU) + '</text>';
+
+  svg += '<line id="tr-cross" x1="0" y1="' + T + '" x2="0" y2="' + (T + ph) + '" stroke="var(--axis)" stroke-width="1" opacity="0"/>';
+  svg += '<rect id="tr-hit" x="' + L + '" y="' + T + '" width="' + pw + '" height="' + ph + '" fill="transparent" style="cursor:crosshair"/>';
+  svg += '</svg><div class="tip" id="tr-tip"></div>';
+  host.innerHTML = svg;
+
+  var svgEl = host.querySelector('svg'), hit = host.querySelector('#tr-hit');
+  var cross = host.querySelector('#tr-cross'), tip = host.querySelector('#tr-tip');
+  function move(ev) {
+    var r = svgEl.getBoundingClientRect();
+    var cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    var sx = ((cx - r.left) / r.width) * W;
+    var i = n === 1 ? 0 : Math.round(((sx - L) / pw) * (n - 1));
+    i = Math.max(0, Math.min(n - 1, i));
+    var d = t[i], px = xAt(i);
+    cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('opacity', '1');
+    tip.innerHTML = '<div class="tip-h">' + esc(d.day) + '</div>' +
+      '<div class="tip-r"><i style="background:var(--series-views)"></i>瀏覽<b>' + fmt(d.views) + '</b></div>' +
+      '<div class="tip-r"><i style="background:var(--series-visitors)"></i>訪客<b>' + fmt(d.visitors) + '</b></div>';
+    tip.classList.add('on');
+    var leftPx = (px / W) * r.width;
+    var tw = tip.offsetWidth || 120;
+    tip.style.left = Math.max(0, Math.min(r.width - tw, leftPx - tw / 2)) + 'px';
+    tip.style.top = '4px';
+  }
+  hit.addEventListener('mousemove', move);
+  hit.addEventListener('touchmove', function (e) { move(e); }, { passive: true });
+  hit.addEventListener('mouseleave', function () { cross.setAttribute('opacity', '0'); tip.classList.remove('on'); });
+}
+
+/* ── Horizontal bars: ONE hue for every bar (magnitude, not identity) ── */
+function renderBars(hostId, rows, unitLabel) {
+  var host = document.getElementById(hostId);
+  if (!host) return;
+  if (!rows || !rows.length) { host.innerHTML = '<div class="empty">尚無資料</div>'; return; }
+
+  var W = 620, BH = 18, GAP = 14, LW = 190, VW = 52;
+  var pad = 4, H = rows.length * (BH + GAP) - GAP + pad * 2;
+  var max = Math.max.apply(null, rows.map(function (r) { return r.count; })) || 1;
+  var pw = W - LW - VW;
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(unitLabel) + '排行">';
+  rows.forEach(function (r, i) {
+    var y = pad + i * (BH + GAP);
+    var w = Math.max(0, (pw * r.count) / max);
+    var name = String(r.name || '');
+    var shown = name.length > 26 ? name.slice(0, 25) + '…' : name;
+    svg += '<text class="blabel" x="' + (LW - 12) + '" y="' + (y + BH / 2 + 4) + '" text-anchor="end">' + esc(shown) + '</text>';
+    svg += '<path d="' + barPath(LW, y, w, BH, 4) + '" fill="var(--series-views)"/>';
+    // Value rides outside the bar end, so it can never be clipped by a short bar
+    svg += '<text class="bval" x="' + (LW + w + 9) + '" y="' + (y + BH / 2 + 4) + '">' + fmt(r.count) + '</text>';
+    svg += '<rect class="bhit" x="0" y="' + (y - GAP / 2) + '" width="' + W + '" height="' + (BH + GAP) +
+      '" fill="transparent" data-i="' + i + '" style="cursor:default"/>';
+  });
+  svg += '</svg><div class="tip"></div>';
+  host.innerHTML = svg;
+
+  var svgEl = host.querySelector('svg'), tip = host.querySelector('.tip');
+  host.querySelectorAll('.bhit').forEach(function (el) {
+    el.addEventListener('mouseenter', function () {
+      var r = rows[+el.dataset.i], box = svgEl.getBoundingClientRect();
+      tip.innerHTML = '<div class="tip-h">' + esc(r.name) + '</div>' +
+        '<div class="tip-r"><i style="background:var(--series-views)"></i>' + esc(unitLabel) + '<b>' + fmt(r.count) + '</b></div>' +
+        '<div class="tip-r"><i style="background:var(--series-visitors)"></i>不同訪客<b>' + fmt(r.visitors) + '</b></div>';
+      tip.classList.add('on');
+      var yPx = ((+el.getAttribute('y') + 10) / (svgEl.viewBox.baseVal.height || 1)) * box.height;
+      tip.style.top = Math.max(0, yPx - 8) + 'px';
+      tip.style.left = '12px';
+    });
+    el.addEventListener('mouseleave', function () { tip.classList.remove('on'); });
+  });
+}
+
+function tableOf(rows, nameHead, valHead) {
+  if (!rows || !rows.length) return '<div class="empty">尚無資料</div>';
+  var h = '<div class="tbl-scroll"><table><thead><tr><th>' + esc(nameHead) +
+    '</th><th class="num">' + esc(valHead) + '</th><th class="num">不同訪客</th></tr></thead><tbody>';
+  rows.forEach(function (r) {
+    h += '<tr><td class="wrap-cell">' + esc(r.name) + '</td><td class="num">' + fmt(r.count) +
+      '</td><td class="num">' + fmt(r.visitors) + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+
+function trendTable(t) {
+  if (!t.length) return '<div class="empty">尚無資料</div>';
+  var h = '<div class="tbl-scroll"><table><thead><tr><th>日期</th><th class="num">瀏覽次數</th><th class="num">訪客數</th></tr></thead><tbody>';
+  t.slice().reverse().forEach(function (d) {
+    h += '<tr><td>' + esc(d.day) + '</td><td class="num">' + fmt(d.views) + '</td><td class="num">' + fmt(d.visitors) + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
+}
+
+var SECTIONS = [
+  { id: 'pages',     key: 'topPages',  title: '熱門頁面',        hint: '依瀏覽次數', unit: '瀏覽次數', nameHead: '頁面',
+    note: '路徑為 <b>/#works</b> 這類形式者來自單頁切換；<b>/</b> 為首次載入。' },
+  { id: 'works',     key: 'topWorks',  title: '作品點擊排行',    hint: '依點擊次數', unit: '點擊次數', nameHead: '作品',
+    note: '記錄 Works 卡片被打開的次數，可看出哪幾篇分析真的有人點進去。' },
+  { id: 'referrers', key: 'referrers', title: '流量來源',        hint: '依瀏覽次數', unit: '瀏覽次數', nameHead: '來源網域',
+    note: '站內跳轉已排除；空白來源（直接輸入網址或書籤）不列入。' },
+  { id: 'devices',   key: 'devices',   title: '裝置',            hint: '依瀏覽次數', unit: '瀏覽次數', nameHead: '裝置',
+    note: '由 User-Agent 判斷，僅分 Desktop / Mobile / Tablet 三類。' },
+  { id: 'browsers',  key: 'browsers',  title: '瀏覽器',          hint: '依瀏覽次數', unit: '瀏覽次數', nameHead: '瀏覽器',
+    note: 'Edge 與 Opera 的 UA 都自稱 Chrome，此處已依序優先比對而不會誤判。' },
+  { id: 'regions',   key: 'regions',   title: '地區（邊緣節點）', hint: '依瀏覽次數', unit: '瀏覽次數', nameHead: '節點',
+    note: '這是 Railway 邊緣節點代碼（如 <b>hkg1</b>＝香港），<b>不是</b> IP 定位出的國家。' },
+];
+
+function render() {
+  var d = state.data;
+  var host = document.getElementById('dash');
+  if (!d) return;
+  var s = d.summary, isTable = state.view === 'table';
+
+  var retPct = s.visitors ? Math.round((s.returningVisitors / s.visitors) * 100) : 0;
+  var perSession = s.sessions ? (s.views / s.sessions) : 0;
+
+  var h = '';
+  h += '<div class="tiles">' +
+    '<div class="tile hero"><div class="tile-label">瀏覽次數</div><div class="tile-val">' + fmt(s.views) +
+      '</div><div class="tile-meta">近 ' + d.days + ' 天</div></div>' +
+    '<div class="tile"><div class="tile-label">不同訪客</div><div class="tile-val">' + fmt(s.visitors) +
+      '</div><div class="tile-meta">依 cookie 去重</div></div>' +
+    '<div class="tile"><div class="tile-label">造訪次數</div><div class="tile-val">' + fmt(s.sessions) +
+      '</div><div class="tile-meta">每次約 ' + perSession.toFixed(1) + ' 頁</div></div>' +
+    '<div class="tile"><div class="tile-label">回訪訪客</div><div class="tile-val">' + fmt(s.returningVisitors) +
+      '</div><div class="tile-meta">占訪客 ' + retPct + '%</div></div>' +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><div class="card-title">每日流量趨勢</div>' +
+    '<div class="card-hint">瀏覽次數與訪客數 · 同一數量軸</div></div>' +
+    (isTable ? trendTable(d.trend) : '<div class="plot scroll-x" id="plot-trend"></div>' +
+      '<div class="legend"><span><i style="background:var(--series-views)"></i>瀏覽次數</span>' +
+      '<span><i style="background:var(--series-visitors)"></i>不同訪客</span></div>') +
+    '<div class="card-note">⚑ 兩條線都是「次數」，共用同一條 Y 軸，沒有第二座標軸可以拉扯比例。' +
+    '兩線靠近代表多數訪客只看一頁；瀏覽線明顯高於訪客線才表示有人逐頁讀下去。</div></div>';
+
+  h += '<div class="grid2">';
+  SECTIONS.forEach(function (sec, i) {
+    var rows = d[sec.key] || [];
+    h += '<div class="card"><div class="card-head"><div class="card-title">' + sec.title + '</div>' +
+      '<div class="card-hint">' + sec.hint + '</div></div>' +
+      (isTable ? tableOf(rows, sec.nameHead, sec.unit)
+               : '<div class="plot scroll-x" id="plot-' + sec.id + '"></div>') +
+      '<div class="card-note">⚑ ' + sec.note + '</div></div>';
+    if (i === 1 || i === 3) h += '</div><div class="grid2">';
+  });
+  h += '</div>';
+
+  h += '<div class="card"><div class="card-head"><div class="card-title">最近造訪</div>' +
+    '<div class="card-hint">最新 ' + (d.recent || []).length + ' 筆</div></div>';
+  if (!(d.recent || []).length) h += '<div class="empty">尚無資料</div>';
+  else {
+    h += '<div class="tbl-scroll"><table><thead><tr><th>時間</th><th>類型</th><th>頁面 / 作品</th>' +
+      '<th>來源</th><th>裝置</th><th>瀏覽器</th><th>節點</th></tr></thead><tbody>';
+    d.recent.forEach(function (r) {
+      var when = new Date(r.ts * 1000).toLocaleString('zh-TW', { hour12: false });
+      h += '<tr><td>' + esc(when) + '</td><td>' + (r.type === 'work_click' ? '作品點擊' : '瀏覽') +
+        '</td><td class="wrap-cell">' + esc(r.label || r.path || '—') + '</td><td>' + esc(r.referrer || '—') +
+        '</td><td>' + esc(r.device || '—') + '</td><td>' + esc(r.browser || '—') +
+        '</td><td>' + esc(r.region || '—') + (r.is_owner ? ' · 我' : '') + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+  h += '<div class="card-note">⚑ 標記「我」的是你自己登入後的造訪；預設已排除在上方所有統計之外，' +
+    '可用上方「含我自己的造訪」切換。</div></div>';
+
+  host.innerHTML = h;
+
+  if (!isTable) {
+    renderTrend(d.trend);
+    SECTIONS.forEach(function (sec) { renderBars('plot-' + sec.id, d[sec.key], sec.unit); });
+  }
+
+  var first = d.trend[0], last = d.trend[d.trend.length - 1];
+  document.getElementById('range-note').textContent =
+    first && last ? first.day + ' → ' + last.day : '';
+}
+
+function load() {
+  var host = document.getElementById('dash');
+  host.classList.add('loading');
+  fetch('/api/admin/stats?days=' + state.days + (state.includeOwner ? '&includeOwner=1' : ''), {
+    headers: { Accept: 'application/json' },
+  })
+    .then(function (r) {
+      if (r.status === 403) throw new Error('尚未登入或帳號未授權，請先回首頁登入。');
+      if (!r.ok) throw new Error('讀取失敗（HTTP ' + r.status + '）');
+      return r.json();
+    })
+    .then(function (j) { state.data = j; render(); })
+    .catch(function (e) { host.innerHTML = '<div class="err">' + esc(e.message) + '</div>'; })
+    .then(function () { host.classList.remove('loading'); });
+}
+
+document.querySelectorAll('.fbtn[data-days]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    state.days = +b.dataset.days;
+    document.querySelectorAll('.fbtn[data-days]').forEach(function (o) {
+      o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+    });
+    load();
+  });
+});
+document.getElementById('btn-chart').addEventListener('click', function () {
+  state.view = 'chart';
+  this.setAttribute('aria-pressed', 'true');
+  document.getElementById('btn-table').setAttribute('aria-pressed', 'false');
+  render();
+});
+document.getElementById('btn-table').addEventListener('click', function () {
+  state.view = 'table';
+  this.setAttribute('aria-pressed', 'true');
+  document.getElementById('btn-chart').setAttribute('aria-pressed', 'false');
+  render();
+});
+document.getElementById('btn-owner').addEventListener('click', function () {
+  state.includeOwner = !state.includeOwner;
+  this.setAttribute('aria-pressed', state.includeOwner ? 'true' : 'false');
+  load();
+});
+
+// Charts are sized from their container's rendered width, so a resize needs a re-layout.
+var rt;
+window.addEventListener('resize', function () {
+  clearTimeout(rt);
+  rt = setTimeout(function () { if (state.data && state.view === 'chart') render(); }, 200);
+});
+
+load();
+</script>

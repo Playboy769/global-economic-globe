@@ -823,6 +823,7 @@ const BROWNIAN_BASE = (location.hostname === 'localhost' && location.port === '8
 // injected server-side (see server.js) only for already-logged-in visitors, keyed by
 // destination origin, so the very first cross-domain hop already carries proof of login.
 function openGatedWork(mode) {
+  trackEvent('work_click', '/#works', mode);
   var url;
   if (mode.indexOf('http') === 0) url = mode;
   else if (mode === 'invest') url = INVEST_BASE;
@@ -1195,6 +1196,8 @@ function renderWkExtras(root, extras, reduced) {
 
 function previewWork(cardEl, mode) {
   if (wkPreviewState.open || wkPreviewState.animating) return;
+  var wkNameEl = cardEl && cardEl.querySelector('.wk-name');
+  trackEvent('work_click', '/#works', wkNameEl ? wkNameEl.textContent.trim() : mode);
   wkPreviewState.animating = true;
   wkPreviewState.mode = mode;
   wkPreviewState.cardEl = cardEl;
@@ -1511,6 +1514,20 @@ let hideTimer = null;
 
 const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes'];
 
+// Traffic beacon. The server records the initial HTML load itself; this only reports what
+// happens after, which on a single-page app is every subsequent navigation. keepalive lets
+// the request survive the tab closing right after a click.
+function trackEvent(type, path, label) {
+  try {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type, path: path || '', label: label || '' }),
+      keepalive: true,
+    }).catch(function () {});
+  } catch (e) {}
+}
+
 function switchPage(id, fromPopstate) {
   if (id === currentPage) return;
   currentPage = id;
@@ -1547,6 +1564,11 @@ function switchPage(id, fromPopstate) {
     if (id === 'home') history.pushState(null, '', location.pathname + location.search);
     else history.pushState(null, '', '#' + id);
   }
+
+  // Match the path this exact state actually shows in the URL bar (see the pushState
+  // branch above) — otherwise "Home" reached by clicking back from another tab records as
+  // /#home while the initial load records as /, splitting one page into two dashboard rows.
+  trackEvent('pageview', id === 'home' ? '/' : '/#' + id);
 }
 
 btns.forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));

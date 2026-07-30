@@ -9,5 +9,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Analytics SQLite DB — lives on the Railway /data volume in production; only ever
+# appears here if a dev run is pointed at the repo via ANALYTICS_DB_PATH.
+analytics.db
+analytics.db-wal
+analytics.db-shm
+
 # Nested git repos (globe-invest/, my-slide/, structural_holes/) manage their own
 # .gitignore — do not duplicate their rules here.

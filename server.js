@@ -17,6 +17,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const auth = require('./auth');
+const analytics = require('./analytics');
 
 // process.argv[2] lets .claude/launch.json pin the local dev port (8125) without needing
 // to inject an env var — Railway sets PORT itself in production, which takes priority.
@@ -39,6 +40,14 @@ const COOKIE_NAME = 'ofw_sid';
 const SESSION_TTL_SEC = 12 * 60 * 60; // 12h local session
 const HANDOFF_TTL_SEC = 5 * 60;       // 5min cross-service handoff token
 const STATE_TTL_SEC = 10 * 60;        // 10min to complete the Google consent screen
+
+// Analytics visitor cookie. Deliberately just an opaque random id with no signature and
+// no personal data in it: it only has to be stable enough to tell "same browser came
+// back" apart from "two different browsers", and a forged value can at worst skew the
+// owner's own private stats. A year is long enough to measure return visits.
+const VISITOR_COOKIE = 'ofw_vid';
+const VISITOR_TTL_SEC = 365 * 24 * 60 * 60;
+const VISITOR_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
 // The three downstream services that need a handoff token minted for them whenever an
 // already-logged-in visitor is served the full homepage (so the first cross-domain click
@@ -77,7 +86,11 @@ GUEST_HTML = GUEST_HTML.replace('<!--NAV_AUTH-->', '<a class="nav-btn nav-auth-b
 
 let FULL_TEMPLATE = unwrapBlock(RAW_HTML, 'GATE');
 FULL_TEMPLATE = stripBlock(FULL_TEMPLATE, 'GUEST_ONLY');
-FULL_TEMPLATE = FULL_TEMPLATE.replace('<!--NAV_AUTH-->', '<a class="nav-btn nav-auth-btn" href="/auth/logout">Logout</a>');
+FULL_TEMPLATE = FULL_TEMPLATE.replace(
+  '<!--NAV_AUTH-->',
+  '<a class="nav-btn nav-auth-btn" href="/admin">Admin</a>' +
+    '<a class="nav-btn nav-auth-btn" href="/auth/logout">Logout</a>'
+);
 // <!--AUTH_TOKENS_SCRIPT--> is left in place here — substituted per-request in renderFullHtml()
 // because handoff tokens are short-lived and must be freshly signed on every load.
 
@@ -180,6 +193,87 @@ function serveStatic(res, filePath) {
 // abuse. See auth.js for why this is deliberately not a distributed limiter.
 const callbackLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 const handoffLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 60 });
+// /api/track is the one write endpoint open to anonymous visitors, so it carries its own
+// (looser, but real) limit — a single reader legitimately fires one beacon per page switch.
+const trackLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 300 });
+
+// Railway exposes no visitor-country header; x-railway-edge names the edge PoP that served
+// the request (e.g. "hkg1"), which is a coarse regional hint, not a country. The dashboard
+// labels it as such rather than dressing it up as geolocation.
+function visitorRegion(req) {
+  return (
+    req.headers['cf-ipcountry'] ||
+    req.headers['x-vercel-ip-country'] ||
+    req.headers['x-railway-edge'] ||
+    ''
+  );
+}
+
+function visitorIdFrom(req) {
+  const raw = auth.parseCookies(req.headers.cookie)[VISITOR_COOKIE];
+  return VISITOR_ID_RE.test(raw || '') ? raw : null;
+}
+
+function visitorCookieHeader(id, isProd) {
+  // Not HttpOnly-exempt for a reason: nothing client-side reads this, so keeping it
+  // HttpOnly means page scripts (and anything injected into them) can't see or spoof it.
+  return auth.cookieHeader(VISITOR_COOKIE, id, {
+    maxAgeSec: VISITOR_TTL_SEC,
+    httpOnly: true,
+    secure: isProd,
+  });
+}
+
+function trackEvent(req, { visitorId, type, path: evPath, label, isOwner }) {
+  const ua = req.headers['user-agent'] || '';
+  if (analytics.isBot(ua)) return;
+  analytics.record({
+    visitorId,
+    type,
+    path: evPath,
+    label,
+    referrer: analytics.parseReferrer(req.headers.referer || '', req.headers.host),
+    device: analytics.parseDevice(ua),
+    browser: analytics.parseBrowser(ua),
+    region: visitorRegion(req),
+    isOwner,
+  });
+}
+
+// The GET catch-all below serves the SPA shell for *every* unmatched path, so without this
+// gate /favicon.ico (and any other asset or probe URL) is counted as a page view and shows
+// up in "top pages". Extension check catches assets; the Accept check catches the rest.
+function isPageRequest(req, urlPath) {
+  if (/\.[a-z0-9]{1,8}$/i.test(urlPath)) return false;
+  const accept = req.headers.accept || '';
+  return accept === '' || accept === '*/*' || accept.includes('text/html');
+}
+
+function readJsonBody(req, maxBytes) {
+  return new Promise((resolve) => {
+    let data = '';
+    let tooBig = false;
+    req.on('data', (c) => {
+      if (tooBig) return;
+      data += c;
+      if (data.length > maxBytes) {
+        tooBig = true;
+        data = '';
+      }
+    });
+    req.on('end', () => {
+      if (tooBig) return resolve(null);
+      try {
+        resolve(JSON.parse(data));
+      } catch {
+        resolve(null);
+      }
+    });
+    req.on('error', () => resolve(null));
+  });
+}
+
+const ADMIN_HTML_PATH = path.join(APP_DIR, 'admin.html');
 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, selfOrigin(req));
@@ -303,6 +397,75 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // Anonymous-writable: the homepage is a single-page app, so every page switch after
+    // the initial load is invisible to the server. This beacon fills that gap (and records
+    // Works-card opens). No CSRF token is required because guests never get one — the
+    // endpoint writes only to the owner's private stats and accepts no reflected content.
+    if (url === '/api/track' && method === 'POST') {
+      if (!trackLimiter(auth.clientIp(req))) {
+        res.writeHead(429, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'rate_limited' }));
+        return;
+      }
+      // A body that was unparsable or over the cap records nothing — earlier this fell
+      // through to {} and wrote a phantom pageview with an empty path.
+      const body = await readJsonBody(req, 2048);
+      if (!body || typeof body.path !== 'string' || !body.path) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'bad_request' }));
+        return;
+      }
+      const type = body.type === 'work_click' ? 'work_click' : 'pageview';
+      let visitorId = visitorIdFrom(req);
+      const headers = { 'Content-Type': 'application/json' };
+      if (!visitorId) {
+        visitorId = auth.randomToken(16);
+        headers['Set-Cookie'] = visitorCookieHeader(visitorId, isProd);
+      }
+      trackEvent(req, {
+        visitorId,
+        type,
+        path: body.path,
+        label: body.label,
+        isOwner: !!getSessionEmail(req),
+      });
+      res.writeHead(204, headers);
+      res.end();
+      return;
+    }
+
+    if (url === '/api/admin/stats' && method === 'GET') {
+      if (!getSessionEmail(req)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'forbidden' }));
+        return;
+      }
+      const days = Math.min(Math.max(parseInt(parsedUrl.searchParams.get('days'), 10) || 30, 1), 400);
+      const includeOwner = parsedUrl.searchParams.get('includeOwner') === '1';
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify(analytics.stats({ days, includeOwner })));
+      return;
+    }
+
+    if (url === '/admin' && method === 'GET') {
+      if (!getSessionEmail(req)) {
+        res.writeHead(302, { Location: '/auth/google?return_to=' + encodeURIComponent(selfOrigin(req) + '/admin') });
+        res.end();
+        return;
+      }
+      let adminHtml;
+      try {
+        adminHtml = fs.readFileSync(ADMIN_HTML_PATH, 'utf8');
+      } catch {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('admin.html not found');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(adminHtml);
+      return;
+    }
+
     if (url.startsWith('/assets/') && method === 'GET') {
       serveStatic(res, path.join(APP_DIR, url));
       return;
@@ -311,7 +474,17 @@ const server = http.createServer(async (req, res) => {
     if (method === 'GET') {
       const email = getSessionEmail(req);
       const html = email ? renderFullHtml(email) : GUEST_HTML;
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
+      const headers = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' };
+      const isPage = isPageRequest(req, url);
+      let visitorId = visitorIdFrom(req);
+      if (!visitorId && isPage) {
+        visitorId = auth.randomToken(16);
+        headers['Set-Cookie'] = visitorCookieHeader(visitorId, isProd);
+      }
+      // Only real page requests are counted, and only they mint a visitor id — otherwise a
+      // favicon fetch racing the page load would burn a second id for the same reader.
+      if (isPage) trackEvent(req, { visitorId, type: 'pageview', path: url, isOwner: !!email });
+      res.writeHead(200, headers);
       res.end(html);
       return;
     }
