@@ -31,6 +31,20 @@ const DEV_ORIGINS = [
   'http://localhost:8127', // article-db (local dev)
 ];
 
+// Token purposes. Every token carries one, and verifyToken() will only accept a token
+// whose purpose matches what the caller asked for.
+//
+// Why this exists: before it, `aud` was signed into every token but never actually
+// checked, which made the four services' tokens fully interchangeable — a 5-minute
+// handoff token minted for globe-invest was accepted as an OutsideFramework admin
+// session cookie, and handoff tokens travel in URL query strings (?auth=...) where they
+// leak through Referer headers, browser history and downstream access logs. Purpose +
+// audience are now both enforced, so a token can only be replayed as the exact thing it
+// was minted to be, at the exact service it was minted for.
+const TYP_SESSION = 'session'; // long-lived local login cookie for one service
+const TYP_HANDOFF = 'handoff'; // short-lived cross-service handoff, travels in a URL
+const TYP_STATE = 'state';     // OAuth state parameter, binds one consent-screen round trip
+
 function b64url(bufOrStr) {
   const buf = Buffer.isBuffer(bufOrStr) ? bufOrStr : Buffer.from(bufOrStr);
   return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -48,9 +62,14 @@ function signToken(payloadObj, secret) {
   return payloadB64 + '.' + b64url(sig);
 }
 
-// Returns the decoded payload object on success, or null on any failure
-// (malformed token, bad signature, expired). Never throws.
-function verifyToken(token, secret) {
+// Returns the decoded payload object on success, or null on any failure (malformed
+// token, bad signature, expired, wrong audience, wrong purpose). Never throws.
+//
+// `expected` is REQUIRED to carry { typ } and — for anything that grants access — { aud }.
+// Callers that pass neither get signature+expiry checking only, which is what the old
+// behavior was; that path is kept solely so token-inspection utilities can decode a token
+// without asserting what it is. Never use it to gate access.
+function verifyToken(token, secret, expected = {}) {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;
@@ -70,7 +89,22 @@ function verifyToken(token, secret) {
   } catch {
     return null;
   }
+  if (!payload || typeof payload !== 'object') return null;
   if (typeof payload.exp !== 'number' || Date.now() / 1000 > payload.exp) return null;
+
+  // Purpose check. A token minted without a typ is a pre-fix token: reject it rather than
+  // grandfathering it in, because "no typ" is exactly what a replayed old token looks like.
+  // The only cost is that sessions issued before this deploy need one fresh login.
+  if (expected.typ) {
+    if (payload.typ !== expected.typ) return null;
+  }
+
+  // Audience check. Accepts a single origin or a list.
+  if (expected.aud) {
+    const allowed = Array.isArray(expected.aud) ? expected.aud : [expected.aud];
+    if (typeof payload.aud !== 'string' || !allowed.includes(payload.aud)) return null;
+  }
+
   return payload;
 }
 
@@ -108,6 +142,15 @@ function clearCookieHeader(name, opts = {}) {
 
 function randomToken(bytes = 24) {
   return b64url(crypto.randomBytes(bytes));
+}
+
+// Constant-time compare for two short opaque strings (state nonces, CSRF values).
+// Falls back to a plain length check first so unequal lengths don't throw.
+function safeEqual(a, b) {
+  const ba = Buffer.from(String(a == null ? '' : a));
+  const bb = Buffer.from(String(b == null ? '' : b));
+  if (ba.length !== bb.length || ba.length === 0) return false;
+  return crypto.timingSafeEqual(ba, bb);
 }
 
 function originOf(urlStr) {
@@ -149,15 +192,50 @@ function makeRateLimiter({ windowMs = 10 * 60 * 1000, max = 20 } = {}) {
   };
 }
 
+// How many reverse proxies sit in front of this service.
+//
+// X-Forwarded-For is APPENDED to by each proxy: a proxy writes the address it received
+// the connection from onto the end. So with one trusted proxy the LAST entry is the only
+// one written by infrastructure we control, and everything left of it is attacker text.
+// Reading the FIRST entry — as this did before — let any client choose its own rate-limit
+// bucket just by sending the header, which silently disabled every limiter built on it
+// (verified: 340 requests with a rotating header, 0 blocked).
+//
+// Getting the direction right is only half of it. If NOTHING is in front of the process,
+// there is no appended entry, so even the last element is still just whatever the client
+// typed. That is why the header is ignored outright unless we are actually deployed behind
+// a proxy — a directly-reachable server must use the socket address and nothing else.
+const TRUSTED_PROXY_HOPS = (() => {
+  const raw = process.env.TRUSTED_PROXY_HOPS;
+  if (raw !== undefined && raw !== '') return Math.max(0, Number(raw) || 0);
+  const behindRailway =
+    process.env.NODE_ENV === 'production' ||
+    !!process.env.RAILWAY_PROJECT_ID ||
+    !!process.env.RAILWAY_ENVIRONMENT_NAME;
+  return behindRailway ? 1 : 0;
+})();
+
 function clientIp(req) {
-  const xf = req.headers['x-forwarded-for'];
-  if (xf) return xf.split(',')[0].trim();
-  return req.socket && req.socket.remoteAddress;
+  const socketIp = (req.socket && req.socket.remoteAddress) || 'unknown';
+  if (TRUSTED_PROXY_HOPS === 0) return socketIp;
+  const raw = req.headers['x-forwarded-for'];
+  if (!raw) return socketIp;
+  const parts = String(raw)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  // A header with fewer entries than there are proxies in front of us cannot have been
+  // produced by those proxies — treat it as forged and fall back to the socket.
+  if (parts.length < TRUSTED_PROXY_HOPS) return socketIp;
+  return parts[parts.length - TRUSTED_PROXY_HOPS] || socketIp;
 }
 
 module.exports = {
   ALLOWED_ORIGINS,
   DEV_ORIGINS,
+  TYP_SESSION,
+  TYP_HANDOFF,
+  TYP_STATE,
   b64url,
   b64urlDecode,
   signToken,
@@ -166,6 +244,7 @@ module.exports = {
   cookieHeader,
   clearCookieHeader,
   randomToken,
+  safeEqual,
   originOf,
   isAllowedReturnTo,
   makeRateLimiter,

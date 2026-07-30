@@ -69,13 +69,26 @@ function open() {
   db.exec('CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_events_visitor ON events(visitor_id, ts)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_events_type_ts ON events(type, ts)');
+  prune();
+  return db;
+}
+
+// Retention used to be enforced only here, inside open() — which memoizes `db`, so it ran
+// exactly once per process. A container that stays up for months therefore never pruned
+// again and the "400 days" ceiling was really "400 days, or however long since the last
+// deploy, whichever is longer". Now it also runs from record(), at most once a day.
+let lastPruneMs = 0;
+const PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+function prune() {
+  if (!db) return;
   try {
     const cutoff = Math.floor(Date.now() / 1000) - RETENTION_DAYS * 86400;
     db.prepare('DELETE FROM events WHERE ts < ?').run(cutoff);
+    lastPruneMs = Date.now();
   } catch (e) {
     console.error('analytics: retention prune failed', e.message);
   }
-  return db;
 }
 
 // Bots identify themselves in the UA far more often than not, and the ones that don't
@@ -129,6 +142,7 @@ function clamp(s, max) {
 function record(ev) {
   try {
     const d = open();
+    if (Date.now() - lastPruneMs > PRUNE_INTERVAL_MS) prune();
     d.prepare(
       `INSERT INTO events (visitor_id, ts, type, path, label, referrer, device, browser, region, is_owner)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -245,7 +259,13 @@ function dailyTrend(days, includeOwner) {
   return out;
 }
 
+// A column name cannot be a bound parameter, so it is interpolated — which means it must
+// come from this list and nowhere else. Every call site below passes a literal today; the
+// whitelist is what keeps that true after someone wires a column name to a query string.
+const GROUPABLE = new Set(['path', 'label', 'referrer', 'device', 'browser', 'region']);
+
 function topBy(column, days, includeOwner, type, limit) {
+  if (!GROUPABLE.has(column)) throw new Error('analytics: refusing to group by ' + column);
   const d = open();
   const { since, ownerSql } = windowClause(days, includeOwner);
   return d
@@ -282,7 +302,6 @@ function stats({ days = 30, includeOwner = false } = {}) {
     browsers: topBy('browser', days, includeOwner, 'pageview', 6),
     regions: topBy('region', days, includeOwner, 'pageview', 10),
     recent: recentVisits(includeOwner, 40),
-    dbPath: DB_PATH,
   };
 }
 
