@@ -578,9 +578,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="cn-actions"><button type="button" onclick="dismissCookieNotice()">知道了</button></div>
 </div>
 
+<!-- ── Support (one-time ECPay Checkout) — persistent across every page, not tied to
+     any .page container. openSupportModal()/closeSupportModal() and the submit handler
+     live near dismissCookieNotice() further down the script. -->
 <!-- Payment flow (ECPay checkout) is built but not yet marked ready for real visitors —
      button stays visible but shows a "coming soon" toast instead of opening the real
-     payment modal. Swap the onclick back to openSupportModal() when it is ready to go live. -->
+     payment modal. Swap the onclick back to openSupportModal() when it's ready to go live. -->
 <button class="support-fab" id="support-fab" type="button" aria-label="支持這個網站（開發中）" onclick="showSupportToast('此功能開發中，敬請期待！')">
   <svg viewBox="0 0 24 24"><path d="M12 20.5S3.5 15.4 3.5 9.6C3.5 6.5 5.8 4.3 8.5 4.3c1.6 0 3 .8 3.5 2 .5-1.2 1.9-2 3.5-2 2.7 0 5 2.2 5 5.3 0 5.8-8.5 10.9-8.5 10.9Z"/></svg>
   <span>支持這個網站（開發中）</span>
@@ -889,6 +892,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div class="wk-group-title">醫療保健 &middot; Healthcare</div>
       <div data-published="2026-07-29" class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="doj-investigation,margin-recovery,segment-realignment" tabindex="0" role="button" aria-label="UnitedHealth Group Incorporated FY2026 Q2 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/UNH_FY2026Q2_Analysis.html')">
         <div class="wk-info"><div class="wk-name">UnitedHealth Group Incorporated</div><div class="wk-type">FY2026 Q2（2026年4–6月）&middot; 法說會 &middot; Q&amp;A &middot; DOJ司法調查深度拆解 &middot; 醫療網絡與藥事生態 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/10/15（預估）</div></div>
+      </div>
+
+      <div class="wk-group-title">製藥與生技 &middot; Pharma &amp; Biotech</div>
+      <div data-published="2026-07-31" class="wk-card reveal reveal-delay-1" data-cat="earnings" data-tags="glp-1,obesity,ma-integration" tabindex="0" role="button" aria-label="Eli Lilly and Company FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/LLY_FY26Q1_Analysis.html')">
+        <div class="wk-info"><div class="wk-name">Eli Lilly and Company</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 法說會 &middot; Q&amp;A &middot; Foundayo口服GLP-1上市＋BD併購潮三象限拆解 &middot; 供應鏈 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06（預估）</div></div>
       </div>
 
       <div class="wk-group-title">Networking</div>
@@ -2264,6 +2272,7 @@ var EARN_DATES = [
   { name:'Sandisk Corporation', date:'2026-08-05' },
   { name:'Western Digital Corporation', date:'2026-08-05' },
   { name:'SUMCO Corporation', date:'2026-08-06' },
+  { name:'Eli Lilly and Company', date:'2026-08-06', predicted:true },
   { name:'CoreWeave', date:'2026-08-06', predicted:true },
   { name:'Howmet Aerospace Inc.', date:'2026-08-06', predicted:true },
   { name:'Datadog, Inc.', date:'2026-08-06' },
