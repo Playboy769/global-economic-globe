@@ -256,19 +256,24 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 
 /* ── PHILOSOPHY ── */
 #page-philosophy{padding:110px 0 60px}
-.phil-head{margin-bottom:48px;position:relative}
-.phil-quote{font-size:clamp(24px,3.5vw,40px);font-weight:700;line-height:1.5;letter-spacing:-.01em;max-width:800px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;position:relative}
-.phil-quote em{font-style:normal;color:#999}
-.phil-items{display:flex;flex-direction:column}
-.phi-item{display:grid;grid-template-columns:80px 1fr;gap:24px;padding:32px 0;border-top:1px solid #eee;align-items:start;position:relative}
-.phi-item::before{content:'';position:absolute;top:-1px;left:0;width:0;height:2px;background:var(--c-accent);transition:width .5s cubic-bezier(.16,1,.3,1)}
-.phi-item:hover::before{width:64px}
-.phi-num{font-family:'Orchid','Noto Serif TC',serif;font-size:48px;font-weight:300;color:var(--c-accent);opacity:.22;line-height:1;font-style:italic;transition:opacity .3s ease,transform .3s ease;display:inline-block}
-.phi-item:hover .phi-num{opacity:.5;transform:translateX(4px)}
-.phi-content{}
-.phi-title{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif;transition:color .3s ease}
-.phi-item:hover .phi-title{color:var(--c-accent-deep)}
-.phi-text{font-size:14px;color:#777;line-height:1.9;font-weight:400;max-width:600px;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.phil-head{margin-bottom:64px;position:relative}
+
+/* Four steles of equal weight — same font size, same weight, same treatment — laid out
+   side by side like inscriptions standing in a row. Each quote is genuinely vertical CJK
+   text (writing-mode:vertical-rl), not a decorative rotation: this is the native layout
+   Traditional Chinese used before horizontal type, and it lets each quote's own length
+   decide its column count instead of forcing every panel to the same pixel width. No
+   borders, no hover lines — the only emphasis device is ink-vs-muted color on a fixed thin
+   weight, same device used across the rest of the site. */
+.phil-steles{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;align-items:start;
+  padding:8px 0 12px}
+.ph-stele{display:flex;flex-direction:column;align-items:center;gap:22px}
+.ph-vert{writing-mode:vertical-rl;text-orientation:upright;font-weight:200;
+  font-size:clamp(19px,1.7vw,25px);line-height:2.15;letter-spacing:.14em;color:var(--c-ink);
+  height:clamp(340px,44vh,500px);font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
+.ph-vert .soft{color:#a8a8a8}
+.ph-src{font-family:'Orchid','Noto Serif TC',serif;font-size:11.5px;color:#999;
+  letter-spacing:.04em;text-align:center;line-height:1.6}
 .phil-footer{margin-top:48px;padding:32px 0;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
 .pf-brand{font-size:16px;font-weight:700;letter-spacing:-.01em;font-family:'Orchid','Noto Serif TC',serif}
 .pf-brand .out-outline{color:var(--c-accent)}
@@ -281,9 +286,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .pg-footer-links a{color:#999;transition:color .2s ease}
 .pg-footer-links a:hover{color:var(--c-accent)}
 .pg-footer-links .fl-dot{color:#ddd}
-/* Philosophy already has its own hairline+brand footer directly below — skip this row's
-   own border/spacing so the two don't stack into a double line. */
-#page-philosophy .pg-footer-links{margin-top:0;padding-top:0;border-top:none}
+/* Philosophy has no border here (its steles already carry enough visual weight without
+   another hairline), but it still needs real top space — zeroing margin-top entirely (as
+   this did before the steles redesign, back when the last .phi-item's own border-top sat
+   right above this row) left the footer links crowding the last stele's caption text. */
+#page-philosophy .pg-footer-links{margin-top:56px;padding-top:0;border-top:none}
 
 /* ── TERMS ── */
 #page-terms{padding:140px 0 100px}
@@ -439,14 +446,20 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   .about-intro{grid-template-columns:1fr;gap:40px}
   .about-motif{display:none}
   .works-grid{grid-template-columns:repeat(2,1fr)}
-  .phi-item{grid-template-columns:80px 1fr;gap:24px}
-  .phi-num{font-size:40px}
+  /* Below tablet width four vertical columns no longer have room to breathe, so the
+     quotes fall back to horizontal — same ink/soft split, just reading left-to-right.
+     One per row: two shorter quotes side by side read as a mismatched pair once they're
+     no longer vertical columns of equal height, since horizontal quotes carry their own
+     length in their width instead of their height. */
+  .phil-steles{grid-template-columns:1fr;gap:40px}
+  .ph-vert{writing-mode:horizontal-tb;height:auto;letter-spacing:.01em;line-height:1.7;
+    text-align:center}
   .phil-footer{flex-direction:column;gap:16px;text-align:center}
 }
 @media(max-width:600px){
   .works-grid{grid-template-columns:1fr}
   .wk-name{font-size:14px}
-  .phi-item{grid-template-columns:1fr;gap:12px}
+  .phil-steles{gap:36px}
 }
 @media(max-width:480px){
   #top-nav{padding:16px 20px}
@@ -1029,29 +1042,23 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="container">
     <div class="phil-head">
       <div class="about-label reveal">Philosophy</div>
-      <div class="phil-quote reveal reveal-delay-1">有些人的成長，不是被風推著走的。<em>是在某個深夜，被擊碎之後，一片一片把自己撿回來的。</em></div>
     </div>
-    <div class="phil-items">
-      <div class="phi-item reveal">
-        <div class="phi-num">01</div>
-        <div class="phi-content">
-          <div class="phi-title">那年，我以為我懂了</div>
-          <div class="phi-text">我曾相信，只要框架夠嚴密，世界就會配合運轉。我把模型當護盾，把數字當真理，以為看穿邏輯就等於看穿了現實。直到市場在三天內崩掉我三年建立的判斷，我才第一次真正坐下來，看著那片廢墟，問自己一個從未認真問過的問題——我，真的懂嗎？</div>
-        </div>
+    <div class="phil-steles">
+      <div class="ph-stele reveal">
+        <div class="ph-vert">光而不耀，<span class="soft">靜水深流</span></div>
+        <div class="ph-src">《道德經》五十八章・「靜水深流」為後世俗諺</div>
       </div>
-      <div class="phi-item reveal">
-        <div class="phi-num">02</div>
-        <div class="phi-content">
-          <div class="phi-title">我在那裡待了很久</div>
-          <div class="phi-text">沒有馬上重來。我把每個「我以為正確的前提」一條條拆開，問自己：這是誰告訴我的？我為什麼信了？那段日子丟掉了很多——確定感、自信，還有那份「我比別人看得更遠」的傲慢。但也是在那裡，我第一次看見框架本身的邊界，第一次真正愛上了那道縫。</div>
-        </div>
+      <div class="ph-stele reveal reveal-delay-1">
+        <div class="ph-vert">兵無常勢，<span class="soft">水無常形</span></div>
+        <div class="ph-src">《孫子兵法・虛實篇》</div>
       </div>
-      <div class="phi-item reveal">
-        <div class="phi-num">03</div>
-        <div class="phi-content">
-          <div class="phi-title">愈挫，愈放不下</div>
-          <div class="phi-text">跌倒不是因為不夠努力，而是因為帶著錯誤的地圖走了太遠的路。每一次重建，都是一次更誠實地面對世界的機會。我不是因為堅強才繼續，而是因為放不下——那個想要真正搞懂這個世界的執念，讓我在每一次被打趴之後，還是爬起來，重新問問題。這個框架，是那份執念留下的形狀。</div>
-        </div>
+      <div class="ph-stele reveal reveal-delay-2">
+        <div class="ph-vert">凡所有相，皆是虛妄。<span class="soft">若見諸相非相，即見如來</span></div>
+        <div class="ph-src">《金剛經》</div>
+      </div>
+      <div class="ph-stele reveal reveal-delay-3">
+        <div class="ph-vert">驅動一切生命的「意志」永遠不會真正滿足，<span class="soft">因此痛苦幾乎是生命的底色。</span></div>
+        <div class="ph-src">叔本華・意志哲學（大意）</div>
       </div>
     </div>
     <div class="pg-footer-links">
