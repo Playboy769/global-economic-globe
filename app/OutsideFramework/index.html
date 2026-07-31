@@ -40,6 +40,24 @@ body.not-home .nav-logo{display:block}
 .nav-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c-accent);border-radius:2px}
 .nav-btn:hover:not(.active){color:#555}
 a.nav-btn{text-decoration:none;display:inline-block}
+/* ── Bilingual nav convention ──────────────────────────────────────────────────────────
+   English stays the primary label (unchanged size/weight/color) with a small muted Chinese
+   line stacked underneath — not inline, so the English word never has to share a line and
+   fight for space. This is the site's first bilingual wayfinding element: every other
+   eyebrow label (.about-label — "About", "Works", "Philosophy", "Timeline") is still
+   English-only by deliberate design, so extending this to those later is a separate,
+   larger change, not an oversight to "fix" to match here.
+   SCOPE: SPA page buttons only (Home/About/Works/Timeline/Philosophy/Quotes), marked up as
+   two spans, .nb-en + .nb-zh. The auth link (Login/Admin/Logout) deliberately stays
+   English-only — it's a real server route, not a page in this set, and reads as a distinct
+   action rather than a destination — and .mobile-dock reuses the .nav-btn class on its
+   icon-only buttons for unrelated styling reasons (see the comment above .dock-item).
+   :has(.nb-zh) scopes the stacked layout to exactly the buttons that carry the Chinese
+   span, so it can never leak into either of those by class-selector specificity accident. */
+.nav-btn:has(.nb-zh){display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15}
+.nav-btn .nb-zh{font-size:10px;font-weight:400;color:#c7c7c7;letter-spacing:.04em;transition:color .25s ease}
+.nav-btn.active .nb-zh{color:#aaa}
+.nav-btn:hover:not(.active) .nb-zh{color:#999}
 
 /* ── Mobile bottom dock ── replaces the inline .nav-links page buttons on phones; only
    the auth link (Login/Admin/Logout) stays in the top bar. See the max-width:640px block
@@ -587,12 +605,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <!-- ── Top Navigation ── -->
 <nav id="top-nav">
   <div class="nav-links" id="nav-links">
-    <button class="nav-btn active" data-page="home">Home</button>
-    <button class="nav-btn" data-page="about">About</button>
-    <button class="nav-btn" data-page="works">Works</button>
-    <button class="nav-btn" data-page="timeline">Timeline</button>
-    <button class="nav-btn" data-page="philosophy">Philosophy</button>
-    <button class="nav-btn" data-page="quotes">Quotes</button>
+    <button class="nav-btn active" data-page="home"><span class="nb-en">Home</span><span class="nb-zh">首頁</span></button>
+    <button class="nav-btn" data-page="about"><span class="nb-en">About</span><span class="nb-zh">關於</span></button>
+    <button class="nav-btn" data-page="works"><span class="nb-en">Works</span><span class="nb-zh">作品</span></button>
+    <button class="nav-btn" data-page="timeline"><span class="nb-en">Timeline</span><span class="nb-zh">時間軸</span></button>
+    <button class="nav-btn" data-page="philosophy"><span class="nb-en">Philosophy</span><span class="nb-zh">哲學</span></button>
+    <button class="nav-btn" data-page="quotes"><span class="nb-en">Quotes</span><span class="nb-zh">語錄</span></button>
     <!--NAV_AUTH-->
   </div>
   <div class="nav-logo" onclick="switchPage('home')">Silas</div>

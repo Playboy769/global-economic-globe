@@ -73,6 +73,20 @@ handoff token 又是掛在網址 `?auth=` 上傳遞，會經由 Referer、瀏覽
 | Works 卡片 · Article Database | 行 528 | `articlebase.up.railway.app/` |
 | Works 卡片 · Globe/Invest/Causal/Warning/High-price | 行 651–657 | `…/globe` … `/high-price` |
 
+**導覽列雙語慣例（2026-07-31 起）**：桌面導覽列（`.nav-links` 內的 6 個 SPA 分頁按鈕）採
+「英文在上、中文小字在下」堆疊，標記為 `<span class="nb-en">`＋`<span class="nb-zh">`，CSS
+用 `.nav-btn:has(.nb-zh)` 限定套用範圍——刻意不用裸的 `.nav-btn`，因為 `.mobile-dock` 的圖示
+按鈕與 Login/Admin/Logout（`.nav-auth-btn`）都共用 `.nav-btn` 這個 class，`:has()` 可以精準
+只選到真的包中文 span 的那 6 個按鈕，不會因為 CSS specificity 意外影響到另外兩種。
+
+翻譯對照：Home→首頁、About→關於、Works→作品、Timeline→時間軸、Philosophy→哲學、
+Quotes→語錄（語錄二字是照抄站內既有的 `aria-label="語錄進度"`，不是新造詞）。
+
+⚠️ **這暫時只套用在導覽列，全站其他地方的英文標籤（`.about-label` 顯示的
+"About"/"Works"/"Philosophy"/"Timeline" 等 eyebrow 字樣、Works 分類標籤、頁尾連結）仍是
+純英文，是刻意保留、不是忘記改。若之後要把雙語擴大到那些地方，套用同一套
+`.nb-en`/`.nb-zh` span 命名＋`:has()` 選擇器手法即可，但那是後續的獨立改動。
+
 ### 2. GlobalEco（globe 3D 地球）
 - Dev：本 repo · `app/GlobalEco/index.html` · 本地 `globe` :8124
 - **鏡像**：`globe-invest.git` · `globe-invest/app/globe/index.html` → `/globe` · **sync：`scripts/sync-globe-invest.ps1`**
