@@ -36,11 +36,16 @@ const APP_ROOT = path.resolve(APP_DIR);
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const AUTHORIZED_EMAIL = (process.env.AUTHORIZED_EMAIL || '').toLowerCase();
+// Comma-separated whitelist — small, rarely-changed list of trusted people, all with equal
+// full access to every gated service (no per-user role/permission split).
+const AUTHORIZED_EMAILS = (process.env.AUTHORIZED_EMAILS || '')
+  .split(',')
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 const SECRET = process.env.AUTH_SIGNING_SECRET || '';
 
 if (!SECRET) console.error('WARNING: AUTH_SIGNING_SECRET is not set — auth will not work.');
-if (!AUTHORIZED_EMAIL) console.error('WARNING: AUTHORIZED_EMAIL is not set — no one will be able to log in.');
+if (!AUTHORIZED_EMAILS.length) console.error('WARNING: AUTHORIZED_EMAILS is not set — no one will be able to log in.');
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) console.error('WARNING: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set.');
 
 // Whether to mark cookies Secure, and which origin to fall back to. Both come from the
@@ -244,7 +249,7 @@ function getSessionEmail(req) {
     aud: selfOrigin(req),
   });
   if (!payload || !payload.email) return null;
-  if (String(payload.email).toLowerCase() !== AUTHORIZED_EMAIL) return null;
+  if (!AUTHORIZED_EMAILS.includes(String(payload.email).toLowerCase())) return null;
   return payload.email;
 }
 
@@ -666,7 +671,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const email = String(idPayload.email).toLowerCase();
-      if (email !== AUTHORIZED_EMAIL) {
+      if (!AUTHORIZED_EMAILS.includes(email)) {
         res.writeHead(
           403,
           securityHeaders({ 'Content-Type': 'text/html; charset=utf-8', 'Set-Cookie': clearState })
