@@ -44,6 +44,24 @@ const AUTHORIZED_EMAILS = (process.env.AUTHORIZED_EMAILS || '')
   .filter(Boolean);
 const SECRET = process.env.AUTH_SIGNING_SECRET || '';
 
+// Strips a leading "::ffff:" IPv4-mapped prefix, which some dual-stack sockets add in front
+// of an otherwise-plain IPv4 address. Without this, an owner IP configured as "1.2.3.4"
+// silently never matches a request that arrives as "::ffff:1.2.3.4".
+function normalizeIp(ip) {
+  return String(ip || '').replace(/^::ffff:/i, '');
+}
+
+// IPs to exclude from analytics entirely — not soft-hidden like is_owner (which still writes
+// the row, just flags it), but never written to the DB at all. This is the owner's own
+// request: their home network and phone should not be recorded as visitors. Empty by
+// default, so nothing is excluded until this is explicitly configured.
+const OWNER_IPS = new Set(
+  (process.env.OWNER_IPS || '')
+    .split(',')
+    .map((s) => normalizeIp(s.trim()))
+    .filter(Boolean)
+);
+
 if (!SECRET) console.error('WARNING: AUTH_SIGNING_SECRET is not set — auth will not work.');
 if (!AUTHORIZED_EMAILS.length) console.error('WARNING: AUTHORIZED_EMAILS is not set — no one will be able to log in.');
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) console.error('WARNING: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set.');
@@ -449,6 +467,11 @@ function visitorCookieHeader(id) {
 }
 
 function trackEvent(req, { visitorId, type, path: evPath, label, isOwner }) {
+  const ip = normalizeIp(auth.clientIp(req));
+  // Hard exclusion, checked first: a configured owner IP is never written at all, unlike
+  // is_owner below (session-based — only covers active logins, and only hides the row from
+  // default stats rather than skipping the write).
+  if (OWNER_IPS.size && OWNER_IPS.has(ip)) return;
   const ua = req.headers['user-agent'] || '';
   if (analytics.isBot(ua)) return;
   analytics.record({
@@ -461,6 +484,7 @@ function trackEvent(req, { visitorId, type, path: evPath, label, isOwner }) {
     browser: analytics.parseBrowser(ua),
     region: visitorRegion(req),
     isOwner,
+    ip,
   });
 }
 
@@ -896,11 +920,26 @@ const server = http.createServer(async (req, res) => {
       }
       const days = Math.min(Math.max(parseInt(parsedUrl.searchParams.get('days'), 10) || 30, 1), 400);
       const includeOwner = parsedUrl.searchParams.get('includeOwner') === '1';
+      const result = analytics.stats({ days, includeOwner });
+      // Geolocation is resolved here, on-demand, rather than at write time: it's a network
+      // call to a third party, and doing that on every visitor pageview would put a
+      // stranger's API latency (and rate limit) on this site's critical path. Resolving only
+      // the up-to-40 "recent visits" rows, only when the owner opens the dashboard, keeps
+      // that entirely off the visitor-facing path — cached lookups (analytics.resolveGeo)
+      // make repeat views instant.
+      const distinctIps = [...new Set((result.recent || []).map((r) => r.ip).filter(Boolean))];
+      const geoByIp = new Map(
+        await Promise.all(distinctIps.map(async (ip) => [ip, await analytics.resolveGeo(ip)]))
+      );
+      result.recent = (result.recent || []).map((r) => {
+        const geo = geoByIp.get(r.ip) || { country: '', city: '' };
+        return Object.assign({}, r, { country: geo.country, city: geo.city });
+      });
       res.writeHead(
         200,
         securityHeaders({ 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
       );
-      res.end(JSON.stringify(analytics.stats({ days, includeOwner })));
+      res.end(JSON.stringify(result));
       return;
     }
 

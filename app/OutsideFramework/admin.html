@@ -398,11 +398,13 @@ function render() {
     '<div class="card-hint">最新 ' + (d.recent || []).length + ' 筆</div></div>';
   if (!(d.recent || []).length) h += '<div class="empty">尚無資料</div>';
   else {
-    h += '<div class="tbl-scroll"><table><thead><tr><th>時間</th><th>類型</th><th>頁面 / 作品</th>' +
+    h += '<div class="tbl-scroll"><table><thead><tr><th>時間</th><th>IP</th><th>位置</th><th>類型</th><th>頁面 / 作品</th>' +
       '<th>來源</th><th>裝置</th><th>瀏覽器</th><th>節點</th></tr></thead><tbody>';
     d.recent.forEach(function (r) {
       var when = new Date(r.ts * 1000).toLocaleString('zh-TW', { hour12: false });
-      h += '<tr><td>' + esc(when) + '</td><td>' + (r.type === 'work_click' ? '作品點擊' : '瀏覽') +
+      var geo = [r.country, r.city].filter(Boolean).join(' · ') || '—';
+      h += '<tr><td>' + esc(when) + '</td><td>' + esc(r.ip || '—') + '</td><td>' + esc(geo) +
+        '</td><td>' + (r.type === 'work_click' ? '作品點擊' : '瀏覽') +
         '</td><td class="wrap-cell">' + esc(r.label || r.path || '—') + '</td><td>' + esc(r.referrer || '—') +
         '</td><td>' + esc(r.device || '—') + '</td><td>' + esc(r.browser || '—') +
         '</td><td>' + esc(r.region || '—') + (r.is_owner ? ' · 我' : '') + '</td></tr>';
