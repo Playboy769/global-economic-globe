@@ -327,6 +327,18 @@
         "research/lly-analysis-2026q1/LLY_FY26Q1_Analysis"
       ],
       "port": 8150
+    },
+    {
+      "name": "jnj-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8151",
+        "--directory",
+        "research/jnj-analysis-2026q2/JNJ_FY2026Q2_Analysis"
+      ],
+      "port": 8151
     }
   ]
 }
