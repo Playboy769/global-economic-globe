@@ -1905,7 +1905,13 @@ const nav = document.getElementById('top-nav');
 // buttons (.mobile-dock .dock-item, which also carries the .nav-btn class) — one selector so
 // switchPage()'s active-state toggling and the click wiring below stay in sync across both
 // without any dock-specific code.
-const btns = document.querySelectorAll('.nav-btn');
+// Excludes .nav-auth-btn (Login/Admin/Logout): those are real server routes
+// (/auth/google, /admin, /auth/logout), not SPA pages, and carry no data-page. Wiring them
+// into the same click handler as the SPA nav buttons called switchPage(undefined) on every
+// click — history.pushState(null,'','#'+undefined) leaves "#undefined" in the URL bar,
+// visible whenever the browser lands back on this page (failed login, back button) before
+// the auth link's own navigation completes.
+const btns = document.querySelectorAll('.nav-btn:not(.nav-auth-btn)');
 let currentPage = 'home';
 let navVisible = true;
 let lastScrollY = 0;
