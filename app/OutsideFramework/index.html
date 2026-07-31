@@ -99,7 +99,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .hps-tile.off-c{transform:translateY(70px)}
 .hps-tile.off-d{transform:translateY(-20px)}
 @keyframes stripFlow{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-@media(max-width:900px){.home-photo-strip{display:none}.home-center{padding-right:0}}
+@media(max-width:640px){.home-photo-strip{display:none}.home-center{padding-right:0}}
 .home-footer{position:fixed;bottom:0;left:0;right:0;padding:28px 48px;display:flex;align-items:flex-end;justify-content:space-between;z-index:50}
 .home-footer-brand{font-family:'Orchid','Noto Serif TC',serif;font-size:clamp(20px,3vw,32px);font-weight:400;color:#0a0a0a;letter-spacing:-.01em;line-height:1;cursor:pointer}
 .home-footer-brand .out-outline{color:var(--c-accent)}
@@ -1182,7 +1182,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 (function(){
   const track = document.getElementById('hps-track');
   if (!track) return;
-  if (!window.matchMedia || !window.matchMedia('(max-width:900px)').matches) {
+  if (!window.matchMedia || !window.matchMedia('(max-width:640px)').matches) {
     const tiles = Array.from(track.children);
     tiles.forEach(tile => {
       const img = tile.querySelector('img[data-src]');
