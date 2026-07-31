@@ -1985,7 +1985,7 @@ function switchPage(id, fromPopstate, skipTrack) {
   if (!skipTrack) trackEvent('pageview', id === 'home' ? '/' : '/#' + id);
 }
 
-// Home-page quick links (產業研究/公司法說分析/科技研究 -> Works filtered by category,
+// Home-page quick links (公司法說分析/科技研究 -> Works filtered by category,
 // 人生哲學 -> Quotes). Tracked as work_click like any other Works entry point so the
 // admin dashboard's "作品點擊排行" reflects whether anyone actually uses them.
 function homeQuickLink(page, cat, label) {
