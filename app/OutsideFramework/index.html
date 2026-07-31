@@ -368,7 +368,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .cookie-notice button:hover{border-color:var(--c-accent)}
 @media(max-width:480px){.cookie-notice{right:14px;left:14px;bottom:14px;max-width:none}}
 
-/* ── Support (one-time Stripe Checkout) ──
+/* ── Support (one-time ECPay Checkout) ──
    .support-fab sits bottom-RIGHT, same corner as .cookie-notice (z-index 400, above the
    fab's 90) — bottom-LEFT was tried first but .home-footer is a position:fixed, FULL-WIDTH
    bar on the Home page specifically (brand wordmark), so anything fixed to either bottom
@@ -545,7 +545,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="cn-actions"><button type="button" onclick="dismissCookieNotice()">知道了</button></div>
 </div>
 
-<!-- ── Support (one-time Stripe Checkout) — persistent across every page, not tied to
+<!-- ── Support (one-time ECPay Checkout) — persistent across every page, not tied to
      any .page container. openSupportModal()/closeSupportModal() and the submit handler
      live near dismissCookieNotice() further down the script. -->
 <button class="support-fab" id="support-fab" type="button" aria-label="支持這個網站" onclick="openSupportModal()">
@@ -563,7 +563,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <span>NT$</span>
     <input type="number" id="support-amount" inputmode="numeric" min="30" max="50000" step="1" placeholder="輸入金額">
   </div>
-  <div class="support-hint">最低 NT$30，最高 NT$50,000 · 將導向 Stripe 安全付款頁面</div>
+  <div class="support-hint">最低 NT$30，最高 NT$50,000 · 將導向綠界科技安全付款頁面</div>
   <div class="support-error" id="support-error"></div>
   <button class="support-submit" id="support-submit" type="button" onclick="submitSupport()">前往付款</button>
 </div>
@@ -2693,7 +2693,7 @@ function flashRow(name) {
   };
 })();
 
-// ── Support (one-time Stripe Checkout) ──
+// ── Support (one-time ECPay Checkout) ──
 // Bounds mirror the server's own check in server.js (/api/support-checkout) — this copy
 // is only for a fast, friendly error before ever hitting the network; the server never
 // trusts these client-side numbers and re-validates independently.
@@ -2741,33 +2741,29 @@ function submitSupport() {
   supportBusy = true;
   var btn = document.getElementById('support-submit');
   btn.disabled = true;
-  btn.textContent = '處理中…';
-  fetch('/api/support-checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: amount }),
-  })
-    .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
-    .then(function (res) {
-      if (!res.ok || !res.data || !res.data.url) throw new Error((res.data && res.data.error) || 'error');
-      // Full-page navigation to Stripe's hosted checkout — no card data ever touches this
-      // page, so there's nothing here for the CSP's connect-src/form-action to restrict.
-      window.location.href = res.data.url;
-    })
-    .catch(function () {
-      supportBusy = false;
-      btn.disabled = false;
-      btn.textContent = '前往付款';
-      supportError('建立付款連結失敗，請稍後再試一次。');
-    });
+  btn.textContent = '前往中…';
+  // A plain top-level navigation, not fetch — /api/support-checkout responds with a page
+  // that auto-submits a signed form straight to ECPay (see server.js), which is how ECPay's
+  // AioCheckOut integration expects to be reached; there's no JSON envelope/URL to redirect
+  // to like Stripe had, so there's nothing here to catch a network error on. If the amount
+  // fails server-side validation the server just answers with a plain error page instead of
+  // ECPay's checkout, which is an acceptable outcome given the client already validated it
+  // above.
+  window.location.href = '/api/support-checkout?amount=' + encodeURIComponent(amount);
 }
 
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && document.getElementById('support-modal').classList.contains('show')) closeSupportModal();
 });
 
-// ?support=success / ?support=cancelled comes back from Stripe's success_url/cancel_url
-// (see server.js) — clean the query param either way so a page refresh doesn't re-show it.
+// ?support=success comes back from ECPay's ClientBackURL (see buildEcpayOrderParams() in
+// server.js) whenever the payer clicks "return to merchant" on ECPay's own result page —
+// note this fires regardless of whether they actually completed or cancelled the payment,
+// since ECPay (unlike Stripe) doesn't give the browser redirect a distinct pass/fail state;
+// the toast below is a friendly nicety, not proof of payment. The real confirmation is the
+// CheckMacValue-verified server-to-server callback at /api/support-ecpay-notify, which
+// never touches the browser at all. Clean the query param either way so a page refresh
+// doesn't re-show the toast.
 (function handleSupportReturn() {
   var params = new URLSearchParams(location.search);
   var support = params.get('support');

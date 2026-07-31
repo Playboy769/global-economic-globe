@@ -21,6 +21,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const auth = require('./auth');
 const analytics = require('./analytics');
 
@@ -37,13 +38,9 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const AUTHORIZED_EMAIL = (process.env.AUTHORIZED_EMAIL || '').toLowerCase();
 const SECRET = process.env.AUTH_SIGNING_SECRET || '';
-// Secret key only — Checkout Sessions are created server-to-server, so no Stripe key of
-// any kind is ever sent to the browser. Set via Railway env var, never hardcoded here.
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 
 if (!SECRET) console.error('WARNING: AUTH_SIGNING_SECRET is not set — auth will not work.');
 if (!AUTHORIZED_EMAIL) console.error('WARNING: AUTHORIZED_EMAIL is not set — no one will be able to log in.');
-if (!STRIPE_SECRET_KEY) console.error('WARNING: STRIPE_SECRET_KEY is not set — the support checkout button will fail.');
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) console.error('WARNING: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set.');
 
 // Whether to mark cookies Secure, and which origin to fall back to. Both come from the
@@ -55,6 +52,31 @@ const IS_PROD =
   !!process.env.RAILWAY_PROJECT_ID ||
   !!process.env.RAILWAY_ENVIRONMENT_NAME;
 const CANONICAL_ORIGIN = process.env.PUBLIC_ORIGIN || 'https://ofw.up.railway.app';
+
+// ECPay (綠界) one-time support checkout. These are ECPay's own publicly-published
+// sandbox test credentials (https://developers.ecpay.com.tw/?p=7398) — not a secret, safe
+// to default to, and exactly what lets this endpoint work out of the box in dev/test
+// before a real merchant account is approved. Real credentials come from Railway env vars
+// and automatically switch the API base from the staging host to the live one.
+const ECPAY_TEST_MERCHANT_ID = '2000132';
+const ECPAY_TEST_HASH_KEY = '5294y06JbISpM5x9';
+const ECPAY_TEST_HASH_IV = 'v77hoKGq4kWxNNIS';
+const ECPAY_MERCHANT_ID = process.env.ECPAY_MERCHANT_ID || ECPAY_TEST_MERCHANT_ID;
+const ECPAY_HASH_KEY = process.env.ECPAY_HASH_KEY || ECPAY_TEST_HASH_KEY;
+const ECPAY_HASH_IV = process.env.ECPAY_HASH_IV || ECPAY_TEST_HASH_IV;
+const ECPAY_USING_TEST_CREDENTIALS = ECPAY_MERCHANT_ID === ECPAY_TEST_MERCHANT_ID;
+const ECPAY_API_BASE = ECPAY_USING_TEST_CREDENTIALS
+  ? 'https://payment-stage.ecpay.com.tw'
+  : 'https://payment.ecpay.com.tw';
+// A silent fallback to sandbox in production would mean every "support" click looks like
+// it worked (redirects to a real-looking checkout page) but no money ever actually moves —
+// worse than an outright failure, because nobody would notice. Fail loud instead.
+if (IS_PROD && ECPAY_USING_TEST_CREDENTIALS) {
+  console.error(
+    'WARNING: running in production with ECPay SANDBOX credentials — support payments will ' +
+    'not collect real money. Set ECPAY_MERCHANT_ID / ECPAY_HASH_KEY / ECPAY_HASH_IV.'
+  );
+}
 
 // Hosts this service will echo back into redirect URIs and token audiences. Anything
 // else falls back to CANONICAL_ORIGIN rather than reflecting whatever Host was sent.
@@ -119,7 +141,11 @@ const CSP = [
   "frame-ancestors 'none'",
   "base-uri 'none'",
   "object-src 'none'",
-  "form-action 'self'",
+  // 'self' plus both ECPay hosts (staging and live) — the self-submitting form the
+  // /api/support-checkout route serves (see ecpayCheckoutFormHtml() in this file) posts
+  // straight to whichever one ECPAY_API_BASE resolves to; without this, CSP would silently
+  // block that submission and clicking "前往付款" would just do nothing.
+  "form-action 'self' https://payment-stage.ecpay.com.tw https://payment.ecpay.com.tw",
 ].join('; ');
 
 function securityHeaders(extra) {
@@ -273,61 +299,78 @@ function exchangeCodeForToken(code, redirectUri) {
   });
 }
 
-// One-time Stripe Checkout for the support button — no `stripe` npm package (this repo
-// stays zero-dependency, see the Dockerfile comment), just a plain HTTPS POST to Stripe's
-// REST API using the same https.request pattern as exchangeCodeForToken() above. Auth is
-// HTTP Basic with the secret key as the username and an empty password, exactly as Stripe
-// documents for server-side API calls.
+// ECPay (綠界) one-time checkout for the support button. Unlike Stripe there is no clean
+// "create a session, get back a URL" REST call — ECPay's AioCheckOut endpoint expects the
+// PAYER'S OWN BROWSER to POST a signed form directly to it, so the integration pattern is:
+// this server builds the field set + signature and hands back a tiny self-submitting HTML
+// page; the browser (already navigating there via a full page load) submits it immediately
+// on arrival. See ecpayCheckoutFormHtml()'s caller in the route handler below.
 //
-// TWD is NOT one of Stripe's zero-decimal currencies (that list is JPY/KRW/VND and a
-// handful of others — see https://docs.stripe.com/currencies#zero-decimal), so unit_amount
-// is in the smallest subunit like every other 2-decimal currency: amountTwd * 100. This is
-// a real-money correctness assumption, not a style choice — verify it yourself with a
-// small test-mode charge (see the accompanying setup notes) before flipping to live keys.
-function createStripeCheckoutSession({ amountTwd, successUrl, cancelUrl }) {
-  return new Promise((resolve, reject) => {
-    const body = new URLSearchParams({
-      mode: 'payment',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      'line_items[0][quantity]': '1',
-      'line_items[0][price_data][currency]': 'twd',
-      'line_items[0][price_data][unit_amount]': String(Math.round(amountTwd * 100)),
-      'line_items[0][price_data][product_data][name]': '一次性支持 Outside FrameWork',
-    }).toString();
-    const reqOut = https.request(
-      'https://api.stripe.com/v1/checkout/sessions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(body),
-          Authorization: 'Basic ' + Buffer.from(STRIPE_SECRET_KEY + ':').toString('base64'),
-        },
-      },
-      (resIn) => {
-        let data = '';
-        resIn.on('data', (c) => (data += c));
-        resIn.on('end', () => {
-          let parsed;
-          try {
-            parsed = JSON.parse(data);
-          } catch (e) {
-            reject(e);
-            return;
-          }
-          if (resIn.statusCode !== 200) {
-            reject(new Error('stripe ' + resIn.statusCode + ': ' + ((parsed.error && parsed.error.message) || data)));
-            return;
-          }
-          resolve(parsed);
-        });
-      }
-    );
-    reqOut.on('error', reject);
-    reqOut.write(body);
-    reqOut.end();
-  });
+// .NET-style URL-encode (see https://developers.ecpay.com.tw/?p=2902): JS's
+// encodeURIComponent leaves "!*()-_." unescaped like .NET's UrlEncode does, but differs on
+// three characters ECPay's algorithm still needs .NET's behavior for — space becomes "+"
+// (not "%20"), and apostrophe/tilde get escaped (JS leaves them literal). None of our own
+// field values are likely to contain those, but the fix-up is cheap and correct either way.
+function ecpayNetUrlEncode(str) {
+  return encodeURIComponent(str).replace(/%20/g, '+').replace(/'/g, '%27').replace(/~/g, '%7E');
+}
+
+// CheckMacValue: sort params A→Z by key, join as HashKey=...&k=v&...&HashIV=..., .NET-style
+// URL-encode the WHOLE joined string, lowercase it, SHA256, uppercase the hex digest. This
+// exact sequence (and nothing else) is what both signs outgoing orders and verifies ECPay's
+// own payment-notify callback below — get any step out of order and every single
+// transaction fails with "CheckMacValue Error," so this is intentionally not "simplified."
+function ecpayCheckMacValue(params) {
+  const joined = Object.keys(params).sort().map((k) => k + '=' + params[k]).join('&');
+  const raw = 'HashKey=' + ECPAY_HASH_KEY + '&' + joined + '&HashIV=' + ECPAY_HASH_IV;
+  const encoded = ecpayNetUrlEncode(raw).toLowerCase();
+  return crypto.createHash('sha256').update(encoded).digest('hex').toUpperCase();
+}
+
+function ecpayTradeDate(d) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' +
+    pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+// Builds the signed field set for one order. MerchantTradeNo must be unique per merchant
+// and alphanumeric only (ECPay's own constraint) — "SPT" + a millisecond timestamp is both.
+function buildEcpayOrderParams({ amountTwd, returnUrl, clientBackUrl }) {
+  const params = {
+    MerchantID: ECPAY_MERCHANT_ID,
+    MerchantTradeNo: 'SPT' + Date.now(),
+    MerchantTradeDate: ecpayTradeDate(new Date()),
+    PaymentType: 'aio',
+    TotalAmount: String(Math.round(amountTwd)),
+    TradeDesc: '一次性支持 Outside FrameWork',
+    ItemName: '一次性支持',
+    ReturnURL: returnUrl,
+    ClientBackURL: clientBackUrl,
+    ChoosePayment: 'ALL',
+    EncryptType: '1',
+  };
+  params.CheckMacValue = ecpayCheckMacValue(params);
+  return params;
+}
+
+// A minimal auto-submitting form — no styling needed, it's on screen for a moment before
+// the browser navigates on to ECPay's own hosted checkout page.
+function ecpayCheckoutFormHtml(params) {
+  const inputs = Object.keys(params)
+    .map((k) => '<input type="hidden" name="' + k + '" value="' + escapeHtmlAttr(params[k]) + '">')
+    .join('');
+  return (
+    '<!doctype html><html lang="zh-TW"><meta charset="utf-8"><title>前往付款…</title>' +
+    '<body style="font-family:sans-serif;text-align:center;padding-top:20vh;color:#666">' +
+    '<p>正在前往付款頁面…</p>' +
+    '<form id="ecpay-form" method="POST" action="' + ECPAY_API_BASE + '/Cashier/AioCheckOut/V5">' +
+    inputs +
+    '</form><script>document.getElementById("ecpay-form").submit();</script></body></html>'
+  );
+}
+
+function escapeHtmlAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function serveStatic(res, filePath) {
@@ -369,8 +412,8 @@ const trackLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 300 }
 // whole endpoint, because the analytics DB sits on a persistent volume with 400-day
 // retention and unbounded anonymous writes are a disk-exhaustion path, not just noise.
 const trackGlobalLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 5000 });
-// /api/support-checkout is also anonymous-writable, but unlike /api/track each call makes
-// a real outbound request to Stripe's API, so it gets a tighter, dedicated limit.
+// /api/support-checkout is also anonymous-writable, but unlike /api/track each call builds
+// a real ECPay order, so it gets a tighter, dedicated limit.
 const supportLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
 // Railway exposes no visitor-country header; x-railway-edge names the edge PoP that served
@@ -468,6 +511,47 @@ function readJsonBody(req, maxBytes) {
       if (tooBig) return finish(BODY_TOO_LARGE);
       try {
         finish(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+      } catch {
+        finish(null);
+      }
+    });
+    req.on('error', () => finish(null));
+    req.on('aborted', () => finish(null));
+  });
+}
+
+// Same shape as readJsonBody, but ECPay's own payment-notify callback (see
+// /api/support-ecpay-notify below) POSTs application/x-www-form-urlencoded, not JSON.
+function readFormBody(req, maxBytes) {
+  const hardLimit = Math.max(maxBytes * 32, 262144);
+  return new Promise((resolve) => {
+    const chunks = [];
+    let size = 0;
+    let tooBig = false;
+    let done = false;
+    const finish = (v) => {
+      if (done) return;
+      done = true;
+      resolve(v);
+    };
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > maxBytes) {
+        tooBig = true;
+        chunks.length = 0;
+        if (size > hardLimit) {
+          finish(BODY_TOO_LARGE);
+          req.destroy();
+        }
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on('end', () => {
+      if (tooBig) return finish(BODY_TOO_LARGE);
+      try {
+        const params = new URLSearchParams(Buffer.concat(chunks).toString('utf8'));
+        finish(Object.fromEntries(params));
       } catch {
         finish(null);
       }
@@ -727,61 +811,75 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Anonymous-writable, same shape as /api/track above: same-origin check, JSON
-    // content-type requirement, its own rate limit. Unlike /api/track this one talks to a
-    // third party (Stripe) and returns a URL the client immediately navigates to — the
-    // amount is re-validated here regardless of what the client already checked, since the
+    // GET, not POST: ECPay's checkout has to be a real top-level browser navigation (the
+    // response IS an auto-submitting form aimed at ECPay, not a JSON envelope), so the
+    // client does a plain `location.href = '/api/support-checkout?amount=...'`. The amount
+    // is still re-validated here regardless of what the client already checked, since the
     // client-side check in index.html is only a fast-fail UX nicety, never trusted input.
-    if (url === '/api/support-checkout' && method === 'POST') {
+    // isSameOriginRequest still applies — a real click-through navigation sends
+    // Sec-Fetch-Site: same-origin, so this only blocks someone trying to frame/embed the
+    // endpoint from another origin, not the legitimate flow.
+    if (url === '/api/support-checkout' && method === 'GET') {
       if (!isSameOriginRequest(req)) {
-        res.writeHead(403, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'forbidden' }));
-        return;
-      }
-      if (!STRIPE_SECRET_KEY) {
-        res.writeHead(503, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'not_configured' }));
-        return;
-      }
-      const supportCtype = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
-      if (supportCtype !== 'application/json') {
-        res.writeHead(415, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'unsupported_media_type' }));
+        res.writeHead(403, securityHeaders({ 'Content-Type': 'text/plain; charset=utf-8' }));
+        res.end('Forbidden');
         return;
       }
       if (!supportLimiter(auth.clientIp(req))) {
-        res.writeHead(429, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'rate_limited' }));
+        res.writeHead(429, securityHeaders({ 'Content-Type': 'text/plain; charset=utf-8' }));
+        res.end('Too many attempts. Try again later.');
         return;
       }
-      const supportBody = await readJsonBody(req, 512);
-      if (supportBody === BODY_TOO_LARGE) {
-        res.writeHead(413, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'payload_too_large' }));
-        return;
-      }
-      const amount = supportBody && Number(supportBody.amount);
-      // NT$30 floor / NT$50,000 ceiling — a support tip jar, not a general payment
-      // acceptor. Stripe also enforces its own currency-specific minimum independently.
+      const amount = Number(parsedUrl.searchParams.get('amount'));
+      // NT$30 floor / NT$50,000 ceiling — a support tip jar, not a general payment acceptor.
       if (!Number.isFinite(amount) || amount < 30 || amount > 50000) {
-        res.writeHead(400, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'invalid_amount' }));
+        res.writeHead(400, securityHeaders({ 'Content-Type': 'text/plain; charset=utf-8' }));
+        res.end('Invalid amount.');
         return;
       }
       const origin = selfOrigin(req);
-      try {
-        const session = await createStripeCheckoutSession({
-          amountTwd: amount,
-          successUrl: origin + '/?support=success',
-          cancelUrl: origin + '/?support=cancelled',
-        });
-        res.writeHead(200, securityHeaders({ 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }));
-        res.end(JSON.stringify({ url: session.url }));
-      } catch (e) {
-        console.error('stripe checkout session failed:', e.message);
-        res.writeHead(502, securityHeaders({ 'Content-Type': 'application/json' }));
-        res.end(JSON.stringify({ error: 'stripe_error' }));
+      const orderParams = buildEcpayOrderParams({
+        amountTwd: amount,
+        returnUrl: origin + '/api/support-ecpay-notify',
+        clientBackUrl: origin + '/?support=success',
+      });
+      res.writeHead(200, securityHeaders({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }));
+      res.end(ecpayCheckoutFormHtml(orderParams));
+      return;
+    }
+
+    // ECPay's server-to-server payment notification (ReturnURL above). Must respond with
+    // the literal text "1|OK" or ECPay will keep retrying this callback. The CheckMacValue
+    // ECPay sends back is verified the same way an outgoing order is signed — recomputing
+    // it over every OTHER field it sent and comparing — which is what actually proves this
+    // request came from ECPay and not something forged by a third party hitting this URL
+    // directly with a fake "success."
+    if (url === '/api/support-ecpay-notify' && method === 'POST') {
+      const body = await readFormBody(req, 4096);
+      if (!body || body === BODY_TOO_LARGE) {
+        res.writeHead(200, securityHeaders({ 'Content-Type': 'text/plain' }));
+        res.end('0|ParseError');
+        return;
       }
+      const { CheckMacValue: receivedMac, ...rest } = body;
+      const expectedMac = ecpayCheckMacValue(rest);
+      if (!receivedMac || !auth.safeEqual(receivedMac, expectedMac)) {
+        console.error('ECPay notify: CheckMacValue mismatch, ignoring callback.');
+        res.writeHead(200, securityHeaders({ 'Content-Type': 'text/plain' }));
+        res.end('0|CheckMacValueError');
+        return;
+      }
+      // RtnCode "1" means the order succeeded; nothing else needs recording — this is a
+      // donation, not an account entitlement, so there's no state to unlock server-side.
+      // Server-side logging only; never trust rest.RtnCode alone as an authorization check
+      // without this CheckMacValue verification above it.
+      if (rest.RtnCode === '1') {
+        console.log('ECPay support payment succeeded:', rest.MerchantTradeNo, rest.TradeAmt);
+      } else {
+        console.log('ECPay support payment not successful:', rest.MerchantTradeNo, rest.RtnCode, rest.RtnMsg);
+      }
+      res.writeHead(200, securityHeaders({ 'Content-Type': 'text/plain' }));
+      res.end('1|OK');
       return;
     }
 
