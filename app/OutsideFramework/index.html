@@ -368,6 +368,56 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .cookie-notice button:hover{border-color:var(--c-accent)}
 @media(max-width:480px){.cookie-notice{right:14px;left:14px;bottom:14px;max-width:none}}
 
+/* ── Support (one-time Stripe Checkout) ──
+   .support-fab sits bottom-RIGHT, same corner as .cookie-notice (z-index 400, above the
+   fab's 90) — bottom-LEFT was tried first but .home-footer is a position:fixed, FULL-WIDTH
+   bar on the Home page specifically (brand wordmark), so anything fixed to either bottom
+   corner sits in that same band there; bottom-right at least only overlaps the dismissible,
+   one-time cookie notice, which the z-index ordering already resolves cleanly (notice
+   renders on top, fab reappears once it's dismissed) rather than a wordmark visible on
+   every single Home visit. On phones this needs its own bottom offset to clear the
+   mobile-dock (which is centered, so the corners are clear), and .support-modal needs to
+   sit above #wk-preview (150) and #project-overlay (200) since the fab is reachable from
+   any page. */
+.support-fab{position:fixed;right:24px;bottom:24px;z-index:90;display:inline-flex;align-items:center;gap:9px;
+  padding:14px 22px 14px 18px;border-radius:100px;background:var(--c-accent);border:1px solid var(--c-accent);
+  color:#fff;box-shadow:0 14px 30px -12px rgba(209,89,31,.55);cursor:pointer;
+  font-family:'Orchid','Noto Serif TC',serif;font-size:14px;font-weight:500;letter-spacing:.03em;
+  transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.support-fab:hover{background:var(--c-accent-deep);border-color:var(--c-accent-deep);transform:scale(1.05);box-shadow:0 18px 34px -10px rgba(169,69,21,.6)}
+.support-fab svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+@media(max-width:640px){.support-fab{right:16px;bottom:86px;padding:12px 18px 12px 15px;font-size:13px}.support-fab svg{width:17px;height:17px}}
+
+.support-backdrop{position:fixed;inset:0;z-index:249;background:rgba(10,10,10,.42);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s ease}
+.support-backdrop.show{opacity:1;visibility:visible;pointer-events:auto}
+.support-modal{position:fixed;z-index:250;left:50%;top:50%;transform:translate(-50%,-46%);width:min(360px,calc(100vw - 48px));
+  background:#fff;border:1px solid #eee;border-radius:18px;padding:28px 26px;box-shadow:0 30px 60px -20px rgba(0,0,0,.3);
+  opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1)}
+.support-modal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.support-modal h3{font-family:'Orchid','Noto Serif TC',serif;font-size:22px;font-weight:600;margin-bottom:8px}
+.support-modal p{font-size:13px;color:#777;line-height:1.7;margin-bottom:20px}
+.support-modal .support-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border:none;background:none;
+  color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .2s ease}
+.support-modal .support-close:hover{color:var(--c-accent)}
+.support-modal .support-close svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.6;fill:none}
+.support-amount-row{display:flex;align-items:center;border:1px solid #ddd;border-radius:10px;padding:10px 14px;
+  transition:border-color .2s ease;margin-bottom:6px}
+.support-amount-row:focus-within{border-color:var(--c-accent)}
+.support-amount-row span{font-family:'Orchid','Noto Serif TC',serif;font-size:15px;color:#999;margin-right:6px}
+.support-amount-row input{border:none;outline:none;font-size:16px;font-family:'Orchid','Noto Serif TC',serif;width:100%;color:var(--c-ink)}
+.support-hint{font-size:11px;color:#bbb;margin-bottom:18px}
+.support-error{font-size:12px;color:#c0392b;margin-bottom:12px;display:none}
+.support-error.show{display:block}
+.support-submit{width:100%;padding:13px;border-radius:100px;border:1px solid var(--c-accent);background:var(--c-accent);
+  color:#fff;font-family:'Orchid','Noto Serif TC',serif;font-size:14px;letter-spacing:.04em;cursor:pointer;
+  transition:background .2s ease,border-color .2s ease}
+.support-submit:hover{background:var(--c-accent-deep);border-color:var(--c-accent-deep)}
+.support-submit:disabled{opacity:.6;cursor:default}
+.support-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-12px);z-index:260;
+  background:var(--c-ink);color:#fff;font-family:'Orchid','Noto Serif TC',serif;font-size:13px;
+  padding:12px 20px;border-radius:100px;opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease}
+.support-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
 /* ── Scroll Animations ── */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.4,0,.2,1)}
 .reveal.visible{opacity:1;transform:translateY(0)}
@@ -489,6 +539,30 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <p>為了持續優化網站內容與瀏覽體驗，本站使用一枚 cookie 進行匿名流量分析，不會用來識別您的身份。若您繼續瀏覽本站，即表示同意我們的使用方式；更多說明請參閱<a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>。</p>
   <div class="cn-actions"><button type="button" onclick="dismissCookieNotice()">知道了</button></div>
 </div>
+
+<!-- ── Support (one-time Stripe Checkout) — persistent across every page, not tied to
+     any .page container. openSupportModal()/closeSupportModal() and the submit handler
+     live near dismissCookieNotice() further down the script. -->
+<button class="support-fab" id="support-fab" type="button" aria-label="支持這個網站" onclick="openSupportModal()">
+  <svg viewBox="0 0 24 24"><path d="M12 20.5S3.5 15.4 3.5 9.6C3.5 6.5 5.8 4.3 8.5 4.3c1.6 0 3 .8 3.5 2 .5-1.2 1.9-2 3.5-2 2.7 0 5 2.2 5 5.3 0 5.8-8.5 10.9-8.5 10.9Z"/></svg>
+  <span>支持這個網站</span>
+</button>
+<div class="support-backdrop" id="support-backdrop" onclick="closeSupportModal()"></div>
+<div class="support-modal" id="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title">
+  <button class="support-close" type="button" aria-label="關閉" onclick="closeSupportModal()">
+    <svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg>
+  </button>
+  <h3 id="support-modal-title">支持這個網站</h3>
+  <p>如果這裡的分析對你有幫助，歡迎給予一次性的支持 — 金額由你決定。</p>
+  <div class="support-amount-row">
+    <span>NT$</span>
+    <input type="number" id="support-amount" inputmode="numeric" min="30" max="50000" step="1" placeholder="輸入金額">
+  </div>
+  <div class="support-hint">最低 NT$30，最高 NT$50,000 · 將導向 Stripe 安全付款頁面</div>
+  <div class="support-error" id="support-error"></div>
+  <button class="support-submit" id="support-submit" type="button" onclick="submitSupport()">前往付款</button>
+</div>
+<div class="support-toast" id="support-toast"></div>
 
 <!-- ── Top Navigation ── -->
 <nav id="top-nav">
@@ -2612,6 +2686,91 @@ function flashRow(name) {
     el.classList.remove('show');
     try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}
   };
+})();
+
+// ── Support (one-time Stripe Checkout) ──
+// Bounds mirror the server's own check in server.js (/api/support-checkout) — this copy
+// is only for a fast, friendly error before ever hitting the network; the server never
+// trusts these client-side numbers and re-validates independently.
+var SUPPORT_MIN = 30, SUPPORT_MAX = 50000;
+var supportBusy = false;
+
+function openSupportModal() {
+  document.getElementById('support-backdrop').classList.add('show');
+  document.getElementById('support-modal').classList.add('show');
+  document.getElementById('support-error').classList.remove('show');
+  var input = document.getElementById('support-amount');
+  input.value = '';
+  setTimeout(function () { input.focus(); }, 200);
+}
+
+function closeSupportModal() {
+  if (supportBusy) return;
+  document.getElementById('support-backdrop').classList.remove('show');
+  document.getElementById('support-modal').classList.remove('show');
+}
+
+function showSupportToast(text) {
+  var toast = document.getElementById('support-toast');
+  toast.textContent = text;
+  toast.classList.add('show');
+  setTimeout(function () { toast.classList.remove('show'); }, 3200);
+}
+
+function supportError(msg) {
+  var el = document.getElementById('support-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function submitSupport() {
+  if (supportBusy) return;
+  var errEl = document.getElementById('support-error');
+  errEl.classList.remove('show');
+  var raw = document.getElementById('support-amount').value;
+  var amount = Number(raw);
+  if (!raw || !isFinite(amount) || amount < SUPPORT_MIN || amount > SUPPORT_MAX) {
+    supportError('請輸入 NT$' + SUPPORT_MIN + ' – NT$' + SUPPORT_MAX + ' 之間的金額。');
+    return;
+  }
+  supportBusy = true;
+  var btn = document.getElementById('support-submit');
+  btn.disabled = true;
+  btn.textContent = '處理中…';
+  fetch('/api/support-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: amount }),
+  })
+    .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+    .then(function (res) {
+      if (!res.ok || !res.data || !res.data.url) throw new Error((res.data && res.data.error) || 'error');
+      // Full-page navigation to Stripe's hosted checkout — no card data ever touches this
+      // page, so there's nothing here for the CSP's connect-src/form-action to restrict.
+      window.location.href = res.data.url;
+    })
+    .catch(function () {
+      supportBusy = false;
+      btn.disabled = false;
+      btn.textContent = '前往付款';
+      supportError('建立付款連結失敗，請稍後再試一次。');
+    });
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && document.getElementById('support-modal').classList.contains('show')) closeSupportModal();
+});
+
+// ?support=success / ?support=cancelled comes back from Stripe's success_url/cancel_url
+// (see server.js) — clean the query param either way so a page refresh doesn't re-show it.
+(function handleSupportReturn() {
+  var params = new URLSearchParams(location.search);
+  var support = params.get('support');
+  if (!support) return;
+  if (support === 'success') showSupportToast('感謝你的支持！');
+  params.delete('support');
+  var qs = params.toString();
+  history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
 })();
 </script>
 </body>

@@ -37,9 +37,13 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const AUTHORIZED_EMAIL = (process.env.AUTHORIZED_EMAIL || '').toLowerCase();
 const SECRET = process.env.AUTH_SIGNING_SECRET || '';
+// Secret key only — Checkout Sessions are created server-to-server, so no Stripe key of
+// any kind is ever sent to the browser. Set via Railway env var, never hardcoded here.
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 
 if (!SECRET) console.error('WARNING: AUTH_SIGNING_SECRET is not set — auth will not work.');
 if (!AUTHORIZED_EMAIL) console.error('WARNING: AUTHORIZED_EMAIL is not set — no one will be able to log in.');
+if (!STRIPE_SECRET_KEY) console.error('WARNING: STRIPE_SECRET_KEY is not set — the support checkout button will fail.');
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) console.error('WARNING: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set.');
 
 // Whether to mark cookies Secure, and which origin to fall back to. Both come from the
@@ -269,6 +273,63 @@ function exchangeCodeForToken(code, redirectUri) {
   });
 }
 
+// One-time Stripe Checkout for the support button — no `stripe` npm package (this repo
+// stays zero-dependency, see the Dockerfile comment), just a plain HTTPS POST to Stripe's
+// REST API using the same https.request pattern as exchangeCodeForToken() above. Auth is
+// HTTP Basic with the secret key as the username and an empty password, exactly as Stripe
+// documents for server-side API calls.
+//
+// TWD is NOT one of Stripe's zero-decimal currencies (that list is JPY/KRW/VND and a
+// handful of others — see https://docs.stripe.com/currencies#zero-decimal), so unit_amount
+// is in the smallest subunit like every other 2-decimal currency: amountTwd * 100. This is
+// a real-money correctness assumption, not a style choice — verify it yourself with a
+// small test-mode charge (see the accompanying setup notes) before flipping to live keys.
+function createStripeCheckoutSession({ amountTwd, successUrl, cancelUrl }) {
+  return new Promise((resolve, reject) => {
+    const body = new URLSearchParams({
+      mode: 'payment',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      'line_items[0][quantity]': '1',
+      'line_items[0][price_data][currency]': 'twd',
+      'line_items[0][price_data][unit_amount]': String(Math.round(amountTwd * 100)),
+      'line_items[0][price_data][product_data][name]': '一次性支持 Outside FrameWork',
+    }).toString();
+    const reqOut = https.request(
+      'https://api.stripe.com/v1/checkout/sessions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(body),
+          Authorization: 'Basic ' + Buffer.from(STRIPE_SECRET_KEY + ':').toString('base64'),
+        },
+      },
+      (resIn) => {
+        let data = '';
+        resIn.on('data', (c) => (data += c));
+        resIn.on('end', () => {
+          let parsed;
+          try {
+            parsed = JSON.parse(data);
+          } catch (e) {
+            reject(e);
+            return;
+          }
+          if (resIn.statusCode !== 200) {
+            reject(new Error('stripe ' + resIn.statusCode + ': ' + ((parsed.error && parsed.error.message) || data)));
+            return;
+          }
+          resolve(parsed);
+        });
+      }
+    );
+    reqOut.on('error', reject);
+    reqOut.write(body);
+    reqOut.end();
+  });
+}
+
 function serveStatic(res, filePath) {
   const resolved = path.resolve(filePath);
   // path.relative gives a proper containment test. A startsWith() prefix check treats
@@ -308,6 +369,9 @@ const trackLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 300 }
 // whole endpoint, because the analytics DB sits on a persistent volume with 400-day
 // retention and unbounded anonymous writes are a disk-exhaustion path, not just noise.
 const trackGlobalLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 5000 });
+// /api/support-checkout is also anonymous-writable, but unlike /api/track each call makes
+// a real outbound request to Stripe's API, so it gets a tighter, dedicated limit.
+const supportLimiter = auth.makeRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
 // Railway exposes no visitor-country header; x-railway-edge names the edge PoP that served
 // the request (e.g. "hkg1"), which is a coarse regional hint, not a country. The dashboard
@@ -660,6 +724,64 @@ const server = http.createServer(async (req, res) => {
       });
       res.writeHead(204, headers);
       res.end();
+      return;
+    }
+
+    // Anonymous-writable, same shape as /api/track above: same-origin check, JSON
+    // content-type requirement, its own rate limit. Unlike /api/track this one talks to a
+    // third party (Stripe) and returns a URL the client immediately navigates to — the
+    // amount is re-validated here regardless of what the client already checked, since the
+    // client-side check in index.html is only a fast-fail UX nicety, never trusted input.
+    if (url === '/api/support-checkout' && method === 'POST') {
+      if (!isSameOriginRequest(req)) {
+        res.writeHead(403, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'forbidden' }));
+        return;
+      }
+      if (!STRIPE_SECRET_KEY) {
+        res.writeHead(503, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'not_configured' }));
+        return;
+      }
+      const supportCtype = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+      if (supportCtype !== 'application/json') {
+        res.writeHead(415, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'unsupported_media_type' }));
+        return;
+      }
+      if (!supportLimiter(auth.clientIp(req))) {
+        res.writeHead(429, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'rate_limited' }));
+        return;
+      }
+      const supportBody = await readJsonBody(req, 512);
+      if (supportBody === BODY_TOO_LARGE) {
+        res.writeHead(413, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'payload_too_large' }));
+        return;
+      }
+      const amount = supportBody && Number(supportBody.amount);
+      // NT$30 floor / NT$50,000 ceiling — a support tip jar, not a general payment
+      // acceptor. Stripe also enforces its own currency-specific minimum independently.
+      if (!Number.isFinite(amount) || amount < 30 || amount > 50000) {
+        res.writeHead(400, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'invalid_amount' }));
+        return;
+      }
+      const origin = selfOrigin(req);
+      try {
+        const session = await createStripeCheckoutSession({
+          amountTwd: amount,
+          successUrl: origin + '/?support=success',
+          cancelUrl: origin + '/?support=cancelled',
+        });
+        res.writeHead(200, securityHeaders({ 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }));
+        res.end(JSON.stringify({ url: session.url }));
+      } catch (e) {
+        console.error('stripe checkout session failed:', e.message);
+        res.writeHead(502, securityHeaders({ 'Content-Type': 'application/json' }));
+        res.end(JSON.stringify({ error: 'stripe_error' }));
+      }
       return;
     }
 
