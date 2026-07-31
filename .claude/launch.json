@@ -315,6 +315,18 @@
         "research/be-analysis-2026q2/BE_FY2026Q2_Analysis"
       ],
       "port": 8149
+    },
+    {
+      "name": "lly-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8150",
+        "--directory",
+        "research/lly-analysis-2026q1/LLY_FY26Q1_Analysis"
+      ],
+      "port": 8150
     }
   ]
 }
