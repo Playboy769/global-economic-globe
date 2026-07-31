@@ -278,16 +278,25 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 #page-philosophy{padding:110px 0 60px}
 .phil-head{margin-bottom:64px;position:relative}
 
-/* Four steles of equal weight — same font size, same weight, same treatment — laid out
+/* Steles of equal weight — same font size, same weight, same treatment — laid out
    side by side like inscriptions standing in a row. Each quote is genuinely vertical CJK
    text (writing-mode:vertical-rl), not a decorative rotation: this is the native layout
    Traditional Chinese used before horizontal type, and it lets each quote's own length
    decide its column count instead of forcing every panel to the same pixel width. No
    borders, no hover lines — the only emphasis device is ink-vs-muted color on a fixed thin
-   weight, same device used across the rest of the site. */
-.phil-steles{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;align-items:start;
-  padding:8px 0 12px}
-.ph-stele{display:flex;flex-direction:column;align-items:center;gap:22px}
+   weight, same device used across the rest of the site.
+   On desktop the row auto-scrolls right, like a scroll unrolling: the markup renders the
+   steles twice back-to-back (2nd copy is aria-hidden, class ph-dup) and the track animates
+   from -50% to 0, which is exactly one copy's width, so the loop point is seamless. Paused
+   on hover so the vertical text stays readable. Below 900px this reverts to a plain static
+   stack (see the responsive block) — reading a moving column of horizontal text is more
+   friction than it's worth at that width, so the duplicate copy is hidden there too. */
+.phil-steles-viewport{overflow:hidden;padding:8px 0 12px}
+.phil-steles{display:flex;flex-wrap:nowrap;align-items:start;gap:28px;width:max-content;
+  animation:phil-scroll-right 55s linear infinite}
+.phil-steles:hover{animation-play-state:paused}
+@keyframes phil-scroll-right{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+.ph-stele{display:flex;flex-direction:column;align-items:center;gap:22px;flex:0 0 auto}
 .ph-vert{writing-mode:vertical-rl;text-orientation:upright;font-weight:200;
   font-size:clamp(19px,1.7vw,25px);line-height:2.15;letter-spacing:.14em;color:var(--c-ink);
   height:clamp(340px,44vh,500px);font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
@@ -470,8 +479,13 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
      quotes fall back to horizontal — same ink/soft split, just reading left-to-right.
      One per row: two shorter quotes side by side read as a mismatched pair once they're
      no longer vertical columns of equal height, since horizontal quotes carry their own
-     length in their width instead of their height. */
-  .phil-steles{grid-template-columns:1fr;gap:40px}
+     length in their width instead of their height. The auto-scroll marquee also switches
+     off here — the duplicate copy (ph-dup) is hidden and the track goes back to a plain
+     static stack, since a moving column of horizontal text is more friction than it's
+     worth at this width. */
+  .phil-steles-viewport{overflow:visible}
+  .phil-steles{display:flex;flex-direction:column;width:auto;gap:40px;animation:none}
+  .ph-dup{display:none}
   .ph-vert{writing-mode:horizontal-tb;height:auto;letter-spacing:.01em;line-height:1.7;
     text-align:center}
   .phil-footer{flex-direction:column;gap:16px;text-align:center}
@@ -1074,6 +1088,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <div class="phil-head">
       <div class="about-label reveal">Philosophy</div>
     </div>
+    <div class="phil-steles-viewport">
     <div class="phil-steles">
       <div class="ph-stele reveal">
         <div class="ph-vert">光而不耀，<span class="soft">靜水深流</span></div>
@@ -1091,6 +1106,63 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
         <div class="ph-vert">驅動一切生命的「意志」永遠不會真正滿足，<span class="soft">因此痛苦幾乎是生命的底色。</span></div>
         <div class="ph-src">叔本華・意志哲學（大意）</div>
       </div>
+      <div class="ph-stele reveal">
+        <div class="ph-vert">道可道，非常道；<span class="soft">名可名，非常名。</span></div>
+        <div class="ph-src">《道德經》第一章</div>
+      </div>
+      <div class="ph-stele reveal reveal-delay-1">
+        <div class="ph-vert">上善若水，<span class="soft">水善利萬物而不爭。</span></div>
+        <div class="ph-src">《道德經》第八章</div>
+      </div>
+      <div class="ph-stele reveal reveal-delay-2">
+        <div class="ph-vert">知人者智，自知者明。<span class="soft">勝人者有力，自勝者強。</span></div>
+        <div class="ph-src">《道德經》第三十三章</div>
+      </div>
+      <div class="ph-stele reveal reveal-delay-3">
+        <div class="ph-vert">人之生也柔弱，<span class="soft">其死也堅強。</span></div>
+        <div class="ph-src">《道德經》第七十六章</div>
+      </div>
+      <div class="ph-stele reveal">
+        <div class="ph-vert">江海所以能為百谷王者，<span class="soft">以其善下之。</span></div>
+        <div class="ph-src">《道德經》第六十六章</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">光而不耀，<span class="soft">靜水深流</span></div>
+        <div class="ph-src">《道德經》五十八章・「靜水深流」為後世俗諺</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">兵無常勢，<span class="soft">水無常形</span></div>
+        <div class="ph-src">《孫子兵法・虛實篇》</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">凡所有相，皆是虛妄。<span class="soft">若見諸相非相，即見如來</span></div>
+        <div class="ph-src">《金剛經》</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">驅動一切生命的「意志」永遠不會真正滿足，<span class="soft">因此痛苦幾乎是生命的底色。</span></div>
+        <div class="ph-src">叔本華・意志哲學（大意）</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">道可道，非常道；<span class="soft">名可名，非常名。</span></div>
+        <div class="ph-src">《道德經》第一章</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">上善若水，<span class="soft">水善利萬物而不爭。</span></div>
+        <div class="ph-src">《道德經》第八章</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">知人者智，自知者明。<span class="soft">勝人者有力，自勝者強。</span></div>
+        <div class="ph-src">《道德經》第三十三章</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">人之生也柔弱，<span class="soft">其死也堅強。</span></div>
+        <div class="ph-src">《道德經》第七十六章</div>
+      </div>
+      <div class="ph-stele ph-dup" aria-hidden="true">
+        <div class="ph-vert">江海所以能為百谷王者，<span class="soft">以其善下之。</span></div>
+        <div class="ph-src">《道德經》第六十六章</div>
+      </div>
+    </div>
     </div>
     <div class="pg-footer-links">
       <a href="#privacy" onclick="switchPage('privacy');return false;">隱私權政策</a>
