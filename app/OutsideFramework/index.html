@@ -29,9 +29,9 @@ body{background:var(--c-canvas);color:var(--c-ink);font-family:'Orchid','Noto Se
 a{text-decoration:none;color:inherit}
 
 /* ── Top Nav ── */
-#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-start;padding:32px 48px;background:transparent;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+#top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:flex-start;padding:32px 48px;background:transparent;transition:background .35s ease,opacity .35s ease}
 body.not-home #top-nav{justify-content:space-between}
-#top-nav.hidden{transform:translateY(-100%)}
+#top-nav.nav-faded{opacity:.62}
 .nav-logo{font-family:'Orchid','Noto Serif TC',serif;font-size:15px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#0a0a0a;cursor:pointer;display:none}
 body.not-home .nav-logo{display:block}
 .nav-links{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:12px 36px;max-width:100%}
@@ -2017,9 +2017,6 @@ const nav = document.getElementById('top-nav');
 // the auth link's own navigation completes.
 const btns = document.querySelectorAll('.nav-btn:not(.nav-auth-btn)');
 let currentPage = 'home';
-let navVisible = true;
-let lastScrollY = 0;
-let hideTimer = null;
 
 // 'privacy' and 'terms' have no nav-bar button — reached only via footer links and direct
 // /#privacy or /#terms URLs — but still need to be here so initHashRoute()/popstate
@@ -2068,10 +2065,6 @@ function switchPage(id, fromPopstate, skipTrack) {
     if (id === 'quotes') setTimeout(() => window.__quotesPageActivated(true), 320);
     else window.__quotesPageActivated(false);
   }
-  showNav();
-  if (id !== 'home') scheduleHide();
-  else clearTimeout(hideTimer);
-
   if (!fromPopstate) {
     if (id === 'home') history.pushState(null, '', location.pathname + location.search);
     else history.pushState(null, '', '#' + id);
@@ -2110,26 +2103,17 @@ window.addEventListener('popstate', () => {
   }
 })();
 
-function showNav() { if (!navVisible) { nav.classList.remove('hidden'); navVisible = true; } }
-function hideNav() { if (navVisible && currentPage !== 'home') { nav.classList.add('hidden'); navVisible = false; } }
-function scheduleHide() { clearTimeout(hideTimer); hideTimer = setTimeout(hideNav, 3000); }
-
+// Nav bar stays fixed/visible on every page — it only fades slightly once scrolled past
+// the top so it doesn't visually compete with page content, never slides away entirely.
 let ticking = false;
 window.addEventListener('scroll', () => {
   if (!ticking) {
     requestAnimationFrame(() => {
-      const sy = window.scrollY;
-      if (sy < lastScrollY || sy <= 10) { showNav(); if (currentPage !== 'home') scheduleHide(); }
-      else if (sy > lastScrollY && sy > 80) hideNav();
-      lastScrollY = sy;
+      nav.classList.toggle('nav-faded', window.scrollY > 80);
       ticking = false;
     });
     ticking = true;
   }
-});
-
-window.addEventListener('mousemove', e => {
-  if (e.clientY < 80) { showNav(); if (currentPage !== 'home') scheduleHide(); }
 });
 
 /* ── Swipe / Wheel Navigation ── */
