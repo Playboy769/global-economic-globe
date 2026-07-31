@@ -545,12 +545,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   <div class="cn-actions"><button type="button" onclick="dismissCookieNotice()">知道了</button></div>
 </div>
 
-<!-- ── Support (one-time ECPay Checkout) — persistent across every page, not tied to
-     any .page container. openSupportModal()/closeSupportModal() and the submit handler
-     live near dismissCookieNotice() further down the script. -->
-<button class="support-fab" id="support-fab" type="button" aria-label="支持這個網站" onclick="openSupportModal()">
+<!-- Payment flow (ECPay checkout) is built but not yet marked ready for real visitors —
+     button stays visible but shows a "coming soon" toast instead of opening the real
+     payment modal. Swap the onclick back to openSupportModal() when it is ready to go live. -->
+<button class="support-fab" id="support-fab" type="button" aria-label="支持這個網站（開發中）" onclick="showSupportToast('此功能開發中，敬請期待！')">
   <svg viewBox="0 0 24 24"><path d="M12 20.5S3.5 15.4 3.5 9.6C3.5 6.5 5.8 4.3 8.5 4.3c1.6 0 3 .8 3.5 2 .5-1.2 1.9-2 3.5-2 2.7 0 5 2.2 5 5.3 0 5.8-8.5 10.9-8.5 10.9Z"/></svg>
-  <span>支持這個網站</span>
+  <span>支持這個網站（開發中）</span>
 </button>
 <div class="support-backdrop" id="support-backdrop" onclick="closeSupportModal()"></div>
 <div class="support-modal" id="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title">
