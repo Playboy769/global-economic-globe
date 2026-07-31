@@ -386,7 +386,12 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
 .support-fab:hover{background:var(--c-accent-deep);border-color:var(--c-accent-deep);transform:scale(1.05);box-shadow:0 18px 34px -10px rgba(169,69,21,.6)}
 .support-fab svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-@media(max-width:640px){.support-fab{right:16px;bottom:86px;padding:12px 18px 12px 15px;font-size:13px}.support-fab svg{width:17px;height:17px}}
+/* Left-aligned on phones specifically (desktop stays right, see the block comment above) —
+   .home-footer's position:fixed/full-width collision reasoning above doesn't apply here:
+   on mobile .home-footer is position:static (see the max-width:640px Home hero rules
+   further down), so it no longer occupies a fixed bottom band that a left-aligned fab
+   could collide with. */
+@media(max-width:640px){.support-fab{left:16px;right:auto;bottom:86px;padding:12px 18px 12px 15px;font-size:13px}.support-fab svg{width:17px;height:17px}}
 
 .support-backdrop{position:fixed;inset:0;z-index:249;background:rgba(10,10,10,.42);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s ease}
 .support-backdrop.show{opacity:1;visibility:visible;pointer-events:auto}
