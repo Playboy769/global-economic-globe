@@ -339,6 +339,18 @@
         "research/jnj-analysis-2026q2/JNJ_FY2026Q2_Analysis"
       ],
       "port": 8151
+    },
+    {
+      "name": "financial-events-timeline",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8152",
+        "--directory",
+        "research/financial-events-timeline"
+      ],
+      "port": 8152
     }
   ]
 }
