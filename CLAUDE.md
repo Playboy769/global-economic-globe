@@ -411,3 +411,27 @@ block pushes.
    規則切成獨立 commit；`globe-invest/app/research/` 的鏡像檔案則在 `globe-invest` 自己的 repo
    另開一個 commit。兩個 repo 都要 push——只 commit 不 push、或只做了鏡像沒上架、或上架了但
    忘記 push globe-invest，都算這篇報告還沒真正上線。
+
+## Earnings Cycle 概念框架（白板筆記，2026-08-02）
+
+這是 earnings call 分析背後的思考模型，不是操作步驟——上面「Earnings Call 分析框架」講的是
+**怎麼做**一份分析，這裡講的是**為什麼**要那樣做。用途：分析時判斷哪個 tab 該深挖、哪段
+管理層發言屬於「舊資訊」該打折扣、哪段才是真正有增量的 guidance。
+
+核心論點：財報公布的數字是落後指標，超額資訊藏在「客戶意圖 → 下單承諾」與「CEO guidance →
+下一輪客戶意圖」這兩段還沒被財報證實的區間裡。循環的 7 個步驟：
+
+1. **FQ0 – Customer Intention**：起點是下游客戶產生購買意圖，這是需求鏈最早、最難觀察的一環。
+2. **Place Order / Commitment**：意圖轉成正式下單、簽約承諾——這一步開始形成公司的 Backlog。
+3. **Execution(s)**：公司交付訂單，才反映成財報上的 Revenue、EPS、Margin、市佔率；這些產出
+   本質是過去累積的護城河（MOAT）與在手訂單（Backlog）撐出來的，不是當季新創造的。
+4. **Press Release 校正**：headline numbers 公布時其實已經是數月前的舊資訊（訂單早已成立），
+   但市場仍會立刻 re-price，造成股價當下的波動——這是市場對舊資訊即時反應的效率缺口。
+5. **Earnings Call**：真正有增量資訊的地方是 CEO 對當下總體環境的 guidance/口風，而不是剛
+   公布的舊數字。
+6. **回到 Customer Intention（FQ1, FQ2, FQ3...）**：CEO 的 guidance 會回過頭去形塑/暗示下一
+   季甚至未來好幾季的客戶意圖，形成迴圈。但這一步的性質**本質上是未經驗證的假設**——要等
+   下一輪 Execution（步驟 3）真正發生才能證實，這是整個循環裡最大的不確定性缺口。
+7. **下棋 / Critical Thinking / Assumptions**：收尾動作——不要被動接收前 6 步的資訊，要像
+   下棋一樣主動質疑管理層沒明講的假設、往後推演好幾步，對步驟 6 的猜測做壓力測試（交叉比對
+   供應鏈、上下游其他公司的說法），呼應「Earnings Call 分析框架」的**雙層互證**與**留白反推**。
