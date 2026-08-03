@@ -351,6 +351,18 @@
         "research/financial-events-timeline"
       ],
       "port": 8152
+    },
+    {
+      "name": "nvo-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8153",
+        "--directory",
+        "research/nvo-analysis-2026q1/NVO_FY2026Q1_Analysis"
+      ],
+      "port": 8153
     }
   ]
 }
