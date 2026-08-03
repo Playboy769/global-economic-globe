@@ -363,6 +363,18 @@
         "research/nvo-analysis-2026q1/NVO_FY2026Q1_Analysis"
       ],
       "port": 8153
+    },
+    {
+      "name": "etn-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8154",
+        "--directory",
+        "research/etn-analysis-2026q2"
+      ],
+      "port": 8154
     }
   ]
 }
