@@ -292,11 +292,18 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
    stack (see the responsive block) — reading a moving column of horizontal text is more
    friction than it's worth at that width, so the duplicate copy is hidden there too. */
 .phil-steles-viewport{overflow:hidden;padding:8px 0 12px}
-.phil-steles{display:flex;flex-wrap:nowrap;align-items:start;gap:28px;width:max-content;
+.phil-steles{display:flex;flex-wrap:nowrap;align-items:start;gap:56px;width:max-content;
   animation:phil-scroll-right 55s linear infinite}
 .phil-steles:hover{animation-play-state:paused}
 @keyframes phil-scroll-right{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 .ph-stele{display:flex;flex-direction:column;align-items:center;gap:22px;flex:0 0 auto}
+/* Hover-to-dim focus (desktop only): hovering any one stele immediately dims every other
+   one so its column is easier to isolate and read amid the auto-scroll row; moving off it
+   (or off the whole row) restores everyone. Pure CSS — no click/JS needed. */
+@media(min-width:901px){
+  .ph-stele{transition:opacity .3s ease}
+  .phil-steles:hover .ph-stele:not(:hover){opacity:.4}
+}
 .ph-vert{writing-mode:vertical-rl;text-orientation:upright;font-weight:200;
   font-size:clamp(19px,1.7vw,25px);line-height:2.15;letter-spacing:.14em;color:var(--c-ink);
   height:clamp(340px,44vh,500px);font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
