@@ -259,6 +259,17 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .grp-body .wk-next-earn{grid-column:2;grid-row:1/3;white-space:nowrap;text-align:right;color:#aaa;font-weight:400}
 .grp-body .wk-card.wec-next .wk-next-earn{color:var(--c-accent-deep);font-weight:600}
 
+/* Folder row for companies with >1 quarter's report — collapsed by default, shows the latest
+   quarter's summary; expands in place to list every quarter (see buildWkFolder/toggleWkFolder). */
+.wk-folder-count{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:10px;font-weight:400;color:#aaa;border:1px solid #eee;border-radius:100px;padding:1px 8px;margin-left:8px;letter-spacing:.02em;vertical-align:middle}
+.grp-body .wk-folder-head::after{content:'⌄';font-size:12px;transition:transform .25s ease}
+.wk-folder.open .wk-folder-head::after{transform:rotate(180deg)}
+.grp-body .wk-folder:last-child .wk-folder-head::before{display:none}
+.wk-folder-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.wk-folder.open .wk-folder-body{max-height:800px}
+.grp-body .wk-folder-item{padding-left:36px;background:#fbfbfb}
+.grp-body .wk-folder-item .wk-name{font-size:13px;color:#777}
+
 .wk-group-title{display:none}
 
 @media(max-width:640px){
@@ -2188,7 +2199,7 @@ observeReveals();
 function updateWorksCount() {
   const wc = document.getElementById('works-count');
   if (!wc) return;
-  const n = document.querySelectorAll('#page-works .wk-card:not(.wk-hidden)').length;
+  const n = document.querySelectorAll('#page-works .wk-card:not(.wk-hidden):not(.wk-folder-head)').length;
   wc.innerHTML = '<b class="wc-num">' + n + '</b> Projects';
 }
 
@@ -2491,6 +2502,10 @@ function buildEarningsRows() {
   return rows;
 }
 
+/* Companies with more than one quarter's report share one row: a collapsed "folder" row
+   showing the latest quarter's summary + next-earnings date, which expands in place to list
+   every quarter (see buildWkFolder/toggleWkFolder). Grouped by (industry group, company name)
+   so a folder never straddles two .wk-group-title sections. */
 function enterEarningsView() {
   if (earningsViewActive) return;
   var rows = buildEarningsRows();
@@ -2500,6 +2515,14 @@ function enterEarningsView() {
   var groupsEl = document.getElementById('wec-groups');
   groupsEl.innerHTML = '';
   var groupBodies = {};
+  var companyRows = {};
+  rows.forEach(function (r) {
+    var nameEl = r.node.querySelector('.wk-name');
+    r.name = nameEl ? nameEl.textContent.trim() : '';
+    var key = r.group + ' ' + r.name;
+    (companyRows[key] || (companyRows[key] = [])).push(r);
+  });
+  var emitted = {};
   rows.forEach(function (r) {
     if (!groupBodies[r.group]) {
       var grp = document.createElement('div');
@@ -2508,17 +2531,73 @@ function enterEarningsView() {
       groupsEl.appendChild(grp);
       groupBodies[r.group] = grp.querySelector('.grp-body');
     }
-    var nameEl = r.node.querySelector('.wk-name');
-    var name = nameEl ? nameEl.textContent.trim() : '';
-    if (name) r.node.id = 'row-' + slugifyName(name);
-    r.node.classList.toggle('wec-next', !!nextNames[name]);
-    simplifyTypeLine(r.node.querySelector('.wk-type'));
-    groupBodies[r.group].appendChild(r.node);
+    var key = r.group + ' ' + r.name;
+    if (emitted[key]) return;
+    emitted[key] = true;
+    var body = groupBodies[r.group];
+    var sameCompany = companyRows[key];
+    if (sameCompany.length === 1) {
+      var node = r.node;
+      if (r.name) node.id = 'row-' + slugifyName(r.name);
+      node.classList.toggle('wec-next', !!nextNames[r.name]);
+      simplifyTypeLine(node.querySelector('.wk-type'));
+      body.appendChild(node);
+    } else {
+      body.appendChild(buildWkFolder(sameCompany, r.name, nextNames));
+    }
   });
   document.querySelector('.works-grid').style.display = 'none';
   document.getElementById('wec-view').classList.add('show');
   renderWecRail();
   earningsViewActive = true;
+}
+
+function buildWkFolder(sameCompanyRows, name, nextNames) {
+  var sorted = sameCompanyRows.slice().sort(function (a, b) {
+    var da = a.node.dataset.published || '', db = b.node.dataset.published || '';
+    return da < db ? -1 : (da > db ? 1 : 0);
+  });
+  var latest = sorted[sorted.length - 1];
+  var latestType = latest.node.querySelector('.wk-type');
+  var latestNextEarn = latest.node.querySelector('.wk-next-earn');
+
+  var folder = document.createElement('div');
+  folder.className = 'wk-folder';
+
+  var head = document.createElement('div');
+  head.className = 'wk-card wk-folder-head';
+  head.dataset.cat = 'earnings';
+  head.tabIndex = 0;
+  head.setAttribute('role', 'button');
+  head.setAttribute('aria-expanded', 'false');
+  if (name) head.id = 'row-' + slugifyName(name);
+  head.classList.toggle('wec-next', !!nextNames[name]);
+  head.setAttribute('aria-label', name + ' — ' + sorted.length + ' 篇財報，展開選擇季度');
+  head.innerHTML =
+    '<div class="wk-info">' +
+      '<div class="wk-name">' + name + '<span class="wk-folder-count">' + sorted.length + ' 篇</span></div>' +
+      '<div class="wk-type">' + (latestType ? latestType.innerHTML : '') + '</div>' +
+      (latestNextEarn ? latestNextEarn.outerHTML : '') +
+    '</div>';
+  head.addEventListener('click', function () { toggleWkFolder(folder); });
+
+  var body = document.createElement('div');
+  body.className = 'wk-folder-body';
+  sorted.forEach(function (r) {
+    r.node.classList.remove('wec-next');
+    r.node.classList.add('wk-folder-item');
+    simplifyTypeLine(r.node.querySelector('.wk-type'));
+    body.appendChild(r.node);
+  });
+
+  folder.appendChild(head);
+  folder.appendChild(body);
+  return folder;
+}
+
+function toggleWkFolder(folder) {
+  var open = folder.classList.toggle('open');
+  folder.querySelector('.wk-folder-head').setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 function exitEarningsView() {
