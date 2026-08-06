@@ -175,8 +175,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .topic-chip.active{background:var(--c-accent);border-color:var(--c-accent);color:#fff}
 .topic-chip .tc-count{opacity:.65;margin-left:4px;font-size:9.5px}
 
-.wec-jump{display:none;gap:8px;margin:-28px 0 32px;overflow-x:auto;padding-bottom:6px}
+.wec-jump{display:none;gap:8px;margin:12px 0 32px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
 .wec-jump.show{display:flex}
+.wec-jump::-webkit-scrollbar{height:2px}
+.wec-jump::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+.wec-jump::-webkit-scrollbar-track{background:transparent}
 .wec-jump-chip{flex:0 0 auto;padding:6px 14px;border:1px solid #e2e2e2;border-radius:100px;font-family:'Calibri','Noto Sans TC',sans-serif;font-size:10.5px;letter-spacing:.04em;color:#888;cursor:pointer;background:#fff;transition:all .2s ease;user-select:none;white-space:nowrap}
 .wec-jump-chip:hover{border-color:var(--c-accent);color:var(--c-accent-deep)}
 
