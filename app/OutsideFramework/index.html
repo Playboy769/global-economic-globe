@@ -175,6 +175,11 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .topic-chip.active{background:var(--c-accent);border-color:var(--c-accent);color:#fff}
 .topic-chip .tc-count{opacity:.65;margin-left:4px;font-size:9.5px}
 
+.wec-jump{display:none;gap:8px;margin:-28px 0 32px;overflow-x:auto;padding-bottom:6px}
+.wec-jump.show{display:flex}
+.wec-jump-chip{flex:0 0 auto;padding:6px 14px;border:1px solid #e2e2e2;border-radius:100px;font-family:'Calibri','Noto Sans TC',sans-serif;font-size:10.5px;letter-spacing:.04em;color:#888;cursor:pointer;background:#fff;transition:all .2s ease;user-select:none;white-space:nowrap}
+.wec-jump-chip:hover{border-color:var(--c-accent);color:var(--c-accent-deep)}
+
 /* ── Timeline — engineering-drawing/blueprint treatment: dashed month rule, a thin
    connector line with ring nodes, bracketed category tags. Deliberately reuses the same
    dashed-line/arrow/dot schematic vocabulary as .about-motif on the About page instead of
@@ -817,6 +822,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <span class="topics-active-count" id="topics-active-count"></span>
     </div>
     <div class="topics-panel" id="topics-panel"></div>
+    <!-- Industry-group quick-jump strip — populated by enterEarningsView() from each .grp-label
+         it builds, shown only while the Earnings Call sidebar view is active; click a chip to
+         scroll straight to that industry group instead of hand-scrolling the list. -->
+    <div class="wec-jump" id="wec-jump"></div>
     <!-- Sticky sidebar timeline for the company-specific Earnings Call cards below (Sankey Diagram
          Tool card is a supporting tool, not a company report, and intentionally has no date entry).
          Shown only when the "Earnings Call" filter is active — see enterEarningsView()/
@@ -2510,6 +2519,7 @@ function enterEarningsView() {
   groupsEl.innerHTML = '';
   var groupBodies = {};
   var companyRows = {};
+  var jumpChips = [];
   rows.forEach(function (r) {
     var nameEl = r.node.querySelector('.wk-name');
     r.name = nameEl ? nameEl.textContent.trim() : '';
@@ -2521,9 +2531,11 @@ function enterEarningsView() {
     if (!groupBodies[r.group]) {
       var grp = document.createElement('div');
       grp.className = 'grp';
+      grp.id = 'wecgrp-' + slugifyName(r.group);
       grp.innerHTML = '<div class="grp-label">' + r.group + '</div><div class="grp-body"></div>';
       groupsEl.appendChild(grp);
       groupBodies[r.group] = grp.querySelector('.grp-body');
+      jumpChips.push('<div class="wec-jump-chip" onclick="scrollToWecGrp(\'' + grp.id + '\')">' + r.group + '</div>');
     }
     var key = r.group + ' ' + r.name;
     if (emitted[key]) return;
@@ -2542,8 +2554,16 @@ function enterEarningsView() {
   });
   document.querySelector('.works-grid').style.display = 'none';
   document.getElementById('wec-view').classList.add('show');
+  var jumpEl = document.getElementById('wec-jump');
+  jumpEl.innerHTML = jumpChips.join('');
+  jumpEl.classList.add('show');
   renderWecRail();
   earningsViewActive = true;
+}
+
+function scrollToWecGrp(id) {
+  var el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function buildWkFolder(sameCompanyRows, name, nextNames) {
@@ -2606,6 +2626,9 @@ function exitEarningsView() {
   });
   document.getElementById('wec-groups').innerHTML = '';
   document.getElementById('wec-view').classList.remove('show');
+  var jumpEl = document.getElementById('wec-jump');
+  jumpEl.innerHTML = '';
+  jumpEl.classList.remove('show');
   grid.style.display = '';
   earningsViewActive = false;
 }
