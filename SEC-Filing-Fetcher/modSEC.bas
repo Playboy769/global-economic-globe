@@ -57,6 +57,7 @@ Public Sub FetchSECFilings()
     Dim mapInventory As Object, mapAR As Object, mapCurrentAssets As Object, mapCurrentLiabilities As Object
     Dim mapLongTermDebt As Object, mapStockholdersEquity As Object, mapEffectiveTaxRate As Object, mapCapEx As Object
     Dim mapCash As Object, mapDA As Object
+    Dim mapCOGS As Object, mapInterestExpense As Object
 
     Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
     Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
@@ -80,6 +81,8 @@ Public Sub FetchSECFilings()
     Set mapCapEx = BuildConceptMap(usgaapRaw, Array("PaymentsToAcquirePropertyPlantAndEquipment"), "USD")
     Set mapCash = BuildConceptMap(usgaapRaw, Array("CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"), "USD")
     Set mapDA = BuildConceptMap(usgaapRaw, Array("DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"), "USD")
+    Set mapCOGS = BuildConceptMap(usgaapRaw, Array("CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"), "USD")
+    Set mapInterestExpense = BuildConceptMap(usgaapRaw, Array("InterestExpense", "InterestExpenseDebt"), "USD")
 
     SetStatus wsIn, "寫入工作表中..."
     ' Snapshot the accession-number -> segment-note-URL mapping already on the
@@ -102,11 +105,13 @@ Public Sub FetchSECFilings()
     Dim f As Variant
     For Each f In filings10K
         rowIdx = WriteFilingRow(wsOut, rowIdx, entityName, cik, f, mapRevenue, mapNetIncome, mapEps, mapAssets, mapLiabilities, mapCFO, mapGrossProfit, mapOperatingIncome, mapRD, mapSGA, mapDividends, _
-            mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapShares, allMaps, knownSegmentUrls)
+            mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapShares, allMaps, knownSegmentUrls, _
+            mapCOGS, mapInterestExpense, mapCash)
     Next f
     For Each f In filings10Q
         rowIdx = WriteFilingRow(wsOut, rowIdx, entityName, cik, f, mapRevenue, mapNetIncome, mapEps, mapAssets, mapLiabilities, mapCFO, mapGrossProfit, mapOperatingIncome, mapRD, mapSGA, mapDividends, _
-            mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapShares, allMaps, knownSegmentUrls)
+            mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapShares, allMaps, knownSegmentUrls, _
+            mapCOGS, mapInterestExpense, mapCash)
     Next f
 
     If rowIdx > 2 Then
@@ -124,6 +129,10 @@ Public Sub FetchSECFilings()
         wsOut.Range(wsOut.Cells(2, 32), wsOut.Cells(rowIdx - 1, 32)).NumberFormat = "0.00"
         wsOut.Range(wsOut.Cells(2, 33), wsOut.Cells(rowIdx - 1, 33)).NumberFormat = "0.00%"
         wsOut.Range(wsOut.Cells(2, 34), wsOut.Cells(rowIdx - 1, 35)).NumberFormat = "#,##0"
+        wsOut.Range(wsOut.Cells(2, 36), wsOut.Cells(rowIdx - 1, 38)).NumberFormat = "0.00%"
+        wsOut.Range(wsOut.Cells(2, 39), wsOut.Cells(rowIdx - 1, 45)).NumberFormat = "0.00"
+        wsOut.Range(wsOut.Cells(2, 46), wsOut.Cells(rowIdx - 1, 46)).NumberFormat = "#,##0"
+        wsOut.Range(wsOut.Cells(2, 47), wsOut.Cells(rowIdx - 1, 47)).NumberFormat = "0.00"
     End If
 
     Call ApplyDarkTheme(wsOut, wsOut.UsedRange, 1)
@@ -645,7 +654,8 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
     ByVal mapGrossProfit As Object, ByVal mapOperatingIncome As Object, ByVal mapRD As Object, ByVal mapSGA As Object, ByVal mapDividends As Object, _
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapShares As Object, _
-    ByVal allMaps As Variant, ByVal knownSegmentUrls As Object) As Long
+    ByVal allMaps As Variant, ByVal knownSegmentUrls As Object, _
+    ByVal mapCOGS As Object, ByVal mapInterestExpense As Object, ByVal mapCash As Object) As Long
 
     Dim form As String, accn As String, filingDate As String, reportDate As String, primDoc As String, isAmended As Boolean
     form = f("form")
@@ -674,6 +684,14 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
     sharesV = LookupConceptValue(mapShares, accn, reportDate, form)
     capexV = LookupConceptValue(mapCapEx, accn, reportDate, form)
 
+    Dim netIncV As Variant, invV As Variant, arV As Variant, cogsV As Variant, intExpV As Variant, cashV As Variant
+    netIncV = LookupConceptValue(mapNetIncome, accn, reportDate, form)
+    invV = LookupConceptValue(mapInventory, accn, reportDate, form)
+    arV = LookupConceptValue(mapAR, accn, reportDate, form)
+    cogsV = LookupConceptValue(mapCOGS, accn, reportDate, form)
+    intExpV = LookupConceptValue(mapInterestExpense, accn, reportDate, form)
+    cashV = LookupConceptValue(mapCash, accn, reportDate, form)
+
     With wsOut
         .Cells(rowIdx, 1).Value = entityName
         .Cells(rowIdx, 2).Value = cik
@@ -685,7 +703,7 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
         .Cells(rowIdx, 8).Value = accn
         .Cells(rowIdx, 9).Value = BuildDocUrl(cik, accn, primDoc)
         .Cells(rowIdx, 10).Value = SafeNumber(revV)
-        .Cells(rowIdx, 11).Value = SafeNumber(LookupConceptValue(mapNetIncome, accn, reportDate, form))
+        .Cells(rowIdx, 11).Value = SafeNumber(netIncV)
         .Cells(rowIdx, 12).Value = SafeNumber(LookupConceptValue(mapEps, accn, reportDate, form))
         .Cells(rowIdx, 13).Value = SafeNumber(assetsV)
         .Cells(rowIdx, 14).Value = SafeNumber(liabV)
@@ -703,8 +721,8 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
         Else
             .Cells(rowIdx, 24).Value = FindSegmentReportUrl(cik, accn)
         End If
-        .Cells(rowIdx, 25).Value = SafeNumber(LookupConceptValue(mapInventory, accn, reportDate, form))
-        .Cells(rowIdx, 26).Value = SafeNumber(LookupConceptValue(mapAR, accn, reportDate, form))
+        .Cells(rowIdx, 25).Value = SafeNumber(invV)
+        .Cells(rowIdx, 26).Value = SafeNumber(arV)
         .Cells(rowIdx, 27).Value = SafeNumber(curAssetsV)
         .Cells(rowIdx, 28).Value = SafeNumber(curLiabV)
         .Cells(rowIdx, 29).Value = SafeRatio(curAssetsV, curLiabV)
@@ -714,6 +732,18 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
         .Cells(rowIdx, 33).Value = SafeNumber(LookupConceptValue(mapEffectiveTaxRate, accn, reportDate, form))
         .Cells(rowIdx, 34).Value = SafeNumber(capexV)
         .Cells(rowIdx, 35).Value = SafeSubtract(cfoV, capexV)
+        .Cells(rowIdx, 36).Value = SafeRatio(netIncV, revV)
+        .Cells(rowIdx, 37).Value = SafeRatio(netIncV, equityV)
+        .Cells(rowIdx, 38).Value = SafeRatio(netIncV, assetsV)
+        .Cells(rowIdx, 39).Value = SafeRatio(cogsV, invV)
+        .Cells(rowIdx, 40).Value = SafeRatio(revV, arV)
+        .Cells(rowIdx, 41).Value = SafeRatio(revV, assetsV)
+        .Cells(rowIdx, 42).Value = SafeRatio(revV, cashV)
+        .Cells(rowIdx, 43).Value = SafeRatio(SafeSubtract(curAssetsV, invV), curLiabV)
+        .Cells(rowIdx, 44).Value = SafeRatio(liabV, equityV)
+        .Cells(rowIdx, 45).Value = SafeRatio(assetsV, equityV)
+        .Cells(rowIdx, 46).Value = SafeNumber(intExpV)
+        .Cells(rowIdx, 47).Value = SafeRatio(opIncV, intExpV)
     End With
 
     WriteFilingRow = rowIdx + 1
@@ -901,7 +931,10 @@ Private Sub WriteHeaders(ByVal wsOut As Worksheet)
         "修正版", "毛利率 Gross Margin", "營業利益率 Operating Margin", "研發費用 R&D", "SG&A", "負債比 Debt Ratio", "每股股利 Dividend/Share", _
         "申報索引頁", "部門附註連結(如有)", _
         "存貨 Inventory", "應收帳款 AR", "流動資產 Current Assets", "流動負債 Current Liabilities", "流動比率 Current Ratio", _
-        "長期負債 LT Debt", "股東權益 Equity", "每股淨值 Book Value/Share", "有效稅率 Tax Rate", "資本支出 CapEx", "自由現金流 FCF")
+        "長期負債 LT Debt", "股東權益 Equity", "每股淨值 Book Value/Share", "有效稅率 Tax Rate", "資本支出 CapEx", "自由現金流 FCF", _
+        "淨利率 Net Margin", "股東權益報酬率 ROE", "資產報酬率 ROA", "存貨週轉率 Inventory Turnover", "應收帳款週轉率 AR Turnover", _
+        "總資產週轉率 Asset Turnover", "現金週轉率 Cash Turnover", "速動比率 Quick Ratio", "負債權益比 Debt/Equity", "權益乘數 Equity Multiplier", _
+        "利息費用 Interest Expense", "利息保障倍數 Interest Coverage")
     Dim i As Long
     For i = 0 To UBound(headers)
         wsOut.Cells(1, i + 1).Value = headers(i)

@@ -36,7 +36,7 @@ Public Sub ApplyDarkTheme(ByVal ws As Worksheet, ByVal dataRange As Range, Optio
     extendRows = lastDataRow + 200
     If extendRows < 500 Then extendRows = 500
 
-    ws.Range(ws.Cells(1, 1), ws.Cells(extendRows, 40)).Interior.Color = THEME_BLACK
+    ws.Range(ws.Cells(1, 1), ws.Cells(extendRows, 60)).Interior.Color = THEME_BLACK
 
     Dim hdrRange As Range
     Set hdrRange = ws.Range(ws.Cells(headerRow, dataRange.Column), ws.Cells(headerRow, dataRange.Column + dataRange.Columns.Count - 1))
