@@ -387,6 +387,18 @@
         "app/EarningsQuiz"
       ],
       "port": 8155
+    },
+    {
+      "name": "market-weather",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8156",
+        "--directory",
+        "app/MarketWeather"
+      ],
+      "port": 8156
     }
   ]
 }
