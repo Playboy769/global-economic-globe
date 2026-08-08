@@ -375,6 +375,18 @@
         "research/etn-analysis-2026q2"
       ],
       "port": 8154
+    },
+    {
+      "name": "earnings-quiz",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8155",
+        "--directory",
+        "app/EarningsQuiz"
+      ],
+      "port": 8155
     }
   ]
 }
