@@ -383,7 +383,9 @@
       s.values.forEach(function (v, i) {
         if (i >= cats.length) return;
         if (typeof v === 'number' && isFinite(v)) {
-          cur.push({ x: xAt(i), y: yAt(v, s.axis), v: v, i: i });
+          // 這裡就收斂精度：polyline 的 points 是字串拼出來的，不會經過 el() 的
+          // 屬性四捨五入，不先處理的話整條線都是 255.20099999999996 這種值
+          cur.push({ x: CT.round(xAt(i), 2), y: CT.round(yAt(v, s.axis), 2), v: v, i: i });
         } else if (cur.length) { segs.push(cur); cur = []; }
       });
       if (cur.length) segs.push(cur);

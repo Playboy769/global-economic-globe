@@ -173,7 +173,8 @@
   /* ================= 幾何 ================= */
   function polar(cx, cy, r, deg) {
     var rad = (deg - 90) * Math.PI / 180;   // -90 讓 0° 落在 12 點鐘方向
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    // 收斂精度：arcPath 是字串拼出來的，不會經過 el() 的屬性四捨五入
+    return { x: CT.round(cx + r * Math.cos(rad), 2), y: CT.round(cy + r * Math.sin(rad), 2) };
   }
 
   /* 環形扇區路徑。ri=0 時退化成一般圓餅（從圓心畫） */

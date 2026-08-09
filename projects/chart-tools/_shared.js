@@ -21,7 +21,13 @@
   function el(tag, attrs, text) {
     var e = document.createElementNS(SVGNS, tag);
     for (var k in attrs) {
-      if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]);
+      var v = attrs[k];
+      if (v === null || v === undefined) continue;
+      // 座標算出來常是 255.20099999999996 這種浮點雜訊，直接寫進屬性會讓每段
+      // 嵌入代碼平白膨脹一到兩成，貼進報告後也很難讀。SVG 沒有次像素以下的
+      // 顯示差別，統一收斂到小數第 2 位。
+      if (typeof v === 'number' && isFinite(v)) v = Math.round(v * 100) / 100;
+      e.setAttribute(k, v);
     }
     if (text !== undefined && text !== null) e.textContent = text;
     return e;
@@ -78,9 +84,15 @@
     var d = decimals;
     if (d === undefined || d === null) {
       var a = Math.abs(v);
-      d = a >= 100 ? 0 : a >= 10 ? 1 : a >= 1 ? 2 : 3;
-      // 本身就是整數就不要補 .00
+      // 整數就不要補 .00
       if (Math.abs(v - Math.round(v)) < 1e-9) d = 0;
+      // 有小數的就保留一位。早期版本對 >=100 的數字一律取整，結果圖例把使用者
+      // 輸入的 107.7 顯示成 108，跟旁邊表格的 $107.7 對不上——圖與表互相矛盾
+      // 是最傷報告可信度的錯誤，寧可多印一位小數。
+      else if (a >= 1000) d = 0;      // 上千的數字多一位小數沒有資訊量，反而變雜訊
+      else if (a >= 10) d = 1;
+      else if (a >= 1) d = 2;
+      else d = 3;
     }
     var s = v.toFixed(d);
     var parts = s.split('.');
