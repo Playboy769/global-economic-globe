@@ -127,12 +127,210 @@
   }
 
   /* ---------- 調色盤 ----------
-   * 依報告視覺鐵則挑的：全部是能安全放在純白底上的中深色，彼此色相間隔夠大，
-   * 前 4 色在灰階列印下亮度也有差異。 */
+   * 依報告視覺鐵則挑的：全部是能安全放在純白底上的中深色，彼此色相間隔夠大。
+   *
+   * ⚠️ 這組是**螢幕用**的。它的色相分得開，但灰階亮度擠在一起——實測
+   * #dc2626=92 / #2563eb=96 / #7c3aed=98 / #db2777=102，前四色在黑白列印下
+   * 幾乎分不出來。報告會被印或匯 PDF，所以另備 PALETTE_PRINT，並提供
+   * auditColors() 讓工具在使用者自選顏色時也能檢出這類問題。 */
   var PALETTE = ['#2563eb', '#dc2626', '#16a34a', '#d97706',
                  '#7c3aed', '#0891b2', '#db2777', '#65a30d'];
 
+  /* 列印安全版：把灰階亮度**單調拉開**當作主要區分手段，色相只是輔助。
+   * 實測亮度 38 / 65 / 85 / 106 / 125 / 144 / 165 / 187，任兩色至少差 18。
+   *
+   * 這是硬性取捨：8 色要在灰階下兩兩可辨，亮度就得橫跨約 150 的範圍，最後兩色
+   * 因此偏淺。它們當長條/區塊填色沒問題，但當細折線會偏淡——超過 6 個系列時
+   * 建議改用長條圖，或拆成兩張圖。
+   *
+   * 已知限制：**用到第 7、8 色時**，C3（洋紅 #b1408a）與 C6（淺綠 #8fbf5a）在色覺
+   * 缺陷模擬下會接近。試過把 C6 換成偏藍的 #9ab8d8 可以解掉，但它亮度衝到 179、
+   * 與 C7 只差 8，等於拿灰階去換色覺——對「列印安全」這個目的是划不來的交換，
+   * 所以維持現狀。前 6 色在灰階與三種色覺模擬下皆零問題；真的需要 7 個以上系列時，
+   * auditColors() 會即時報警，該做的是拆圖而不是硬塞。 */
+  var PALETTE_PRINT = ['#182456', '#8f1f1f', '#0f6f8a', '#b1408a',
+                       '#b3760f', '#57a0cf', '#8fbf5a', '#d9b48f'];
+
   function paletteAt(i) { return PALETTE[i % PALETTE.length]; }
+  function palettePrintAt(i) { return PALETTE_PRINT[i % PALETTE_PRINT.length]; }
+
+  /* ---------- 色彩工具 ---------- */
+  function hexToRgb(hex) {
+    var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(hex).trim());
+    if (m) return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+    var r = /rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(String(hex));
+    return r ? [+r[1], +r[2], +r[3]] : [0, 0, 0];
+  }
+
+  /* 感知亮度（ITU-R BT.601），與熱力圖決定黑白字用的是同一條公式 */
+  function luminance(color) {
+    var c = hexToRgb(color);
+    return 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+  }
+
+  /* 色覺缺陷模擬（Brettel/Viénot 線性近似）。
+   * 用途只是「這兩色會不會撞在一起」的粗篩，不是色彩科學等級的精確模擬。 */
+  var CVD_MATRIX = {
+    deuteranopia: [[0.625, 0.375, 0], [0.7, 0.3, 0], [0, 0.3, 0.7]],   // 綠盲，最常見
+    protanopia:   [[0.567, 0.433, 0], [0.558, 0.442, 0], [0, 0.242, 0.758]], // 紅盲
+    tritanopia:   [[0.95, 0.05, 0], [0, 0.433, 0.567], [0, 0.475, 0.525]]    // 藍盲，罕見
+  };
+
+  function simulateCVD(color, kind) {
+    var m = CVD_MATRIX[kind];
+    if (!m) return hexToRgb(color);
+    var c = hexToRgb(color);
+    return m.map(function (row) {
+      return Math.max(0, Math.min(255, Math.round(row[0] * c[0] + row[1] * c[1] + row[2] * c[2])));
+    });
+  }
+
+  function rgbDist(a, b) {
+    var dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  }
+
+  /* 檢查一組「名稱＋顏色」在灰階與三種色覺缺陷下是否兩兩可辨。
+   * 回傳問題清單；沒問題就是空陣列。
+   * 門檻：灰階亮度差 < 18（0-255 尺度）或模擬後 RGB 距離 < 55 視為難以區分。
+   * 這兩個數字是拿現行 PALETTE 實測校出來的——調高會把可接受的組合也一起報警。 */
+  function auditColors(items) {
+    var issues = [];
+    for (var i = 0; i < items.length; i++) {
+      for (var j = i + 1; j < items.length; j++) {
+        var a = items[i], b = items[j];
+        if (!a.color || !b.color) continue;
+        var dl = Math.abs(luminance(a.color) - luminance(b.color));
+        if (dl < 18) {
+          issues.push({ a: a.name, b: b.name, kind: '灰階', detail: '亮度差僅 ' + Math.round(dl) });
+        }
+        for (var k in CVD_MATRIX) {
+          var d = rgbDist(simulateCVD(a.color, k), simulateCVD(b.color, k));
+          if (d < 55) {
+            issues.push({
+              a: a.name, b: b.name,
+              kind: k === 'deuteranopia' ? '綠色盲' : k === 'protanopia' ? '紅色盲' : '藍色盲',
+              detail: '模擬後色差僅 ' + Math.round(d)
+            });
+          }
+        }
+      }
+    }
+    return issues;
+  }
+
+  /* ---------- 跨圖配色記憶 ----------
+   * 一篇報告會有 6 張以上的圖，「資料中心」在折線圖是藍、在長條圖變紅，是因為
+   * 每個工具各自從調色盤第 0 個開始排。這裡用一份共用登錄表：同名系列在任何
+   * 工具裡都拿到同一個顏色。
+   *
+   * 刻意做成單一份全域記憶而不是「每份報告一組」——後者需要使用者維護報告代號，
+   * 那就變成另一層要管的東西了。換報告時按「清除配色記憶」即可。 */
+  var REG_KEY = 'chart-tools:colors';
+
+  function colorRegistry() {
+    try { return JSON.parse(localStorage.getItem(REG_KEY) || '{}'); } catch (e) { return {}; }
+  }
+
+  function saveRegistry(reg) {
+    try { localStorage.setItem(REG_KEY, JSON.stringify(reg)); } catch (e) { /* 無痕/配額滿：略過 */ }
+  }
+
+  /* 取得某個具名系列該用的顏色。沒登錄過就配一個「還沒被用掉」的調色盤色並記下來。
+   * usePrint=true 時改用列印安全調色盤。 */
+  function colorFor(name, fallbackIndex, usePrint) {
+    name = String(name || '').trim();
+    var pal = usePrint ? PALETTE_PRINT : PALETTE;
+    if (!name) return pal[fallbackIndex % pal.length];
+    var reg = colorRegistry();
+    if (reg[name]) return reg[name];
+    var used = {};
+    for (var k in reg) used[reg[k].toLowerCase()] = true;
+    var pick = null;
+    for (var i = 0; i < pal.length; i++) {
+      if (!used[pal[i].toLowerCase()]) { pick = pal[i]; break; }
+    }
+    if (!pick) pick = pal[fallbackIndex % pal.length];   // 調色盤用完就開始重複
+    reg[name] = pick;
+    saveRegistry(reg);
+    return pick;
+  }
+
+  /* 使用者在工具裡手動改色時呼叫，讓其他圖跟著一致 */
+  function rememberColor(name, color) {
+    name = String(name || '').trim();
+    if (!name || !color) return;
+    var reg = colorRegistry();
+    reg[name] = color;
+    saveRegistry(reg);
+  }
+
+  function forgetColors() {
+    try { localStorage.removeItem(REG_KEY); } catch (e) { /* 略過 */ }
+  }
+
+  /* ---------- 表格解析 ----------
+   * 讓每個工具都能直接從 Excel / Google Sheets / 10-Q 表格整塊貼上，
+   * 不必一格一格重打。原本只有熱力圖有，現在集中在這裡給所有工具共用。 */
+
+  /* 數字清洗。財報表格的慣例比一般 CSV 髒得多：
+   *   1,234      千分位
+   *   41.2%      百分比（去掉 % 保留數值，單位由使用者在工具裡填）
+   *   $1,234     貨幣符號
+   *   (1,234)    ← 括號代表負數，這是 10-Q/10-K 的標準寫法
+   *   —, -, N/A  無資料
+   * 括號負數若沒處理，整份損益表的費用項會全部變成正的，這是會直接畫錯圖的。 */
+  function parseNumber(raw) {
+    if (raw === null || raw === undefined) return null;
+    var s = String(raw).trim();
+    if (s === '') return null;
+    if (/^(-|—|–|n\/?a|na|null)$/i.test(s)) return null;
+    var neg = false;
+    if (/^\((.*)\)$/.test(s)) { neg = true; s = s.replace(/^\(|\)$/g, ''); }
+    s = s.replace(/[,%$＄¥€£\s ]/g, '');
+    if (s === '' || s === '-') return null;
+    var n = parseFloat(s);
+    if (!isFinite(n)) return null;
+    return neg ? -n : n;
+  }
+
+  /* 把貼上的文字切成二維陣列。優先用 Tab（Excel 複製的預設），沒有 Tab 才用逗號。
+   * 逗號模式支援雙引號包住的欄位，否則 "台積電, 聯電" 這種會被切錯。 */
+  function splitRow(line) {
+    if (line.indexOf('\t') >= 0) return line.split('\t');
+    var out = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line.charAt(i);
+      if (ch === '"') {
+        if (inQ && line.charAt(i + 1) === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ) { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+
+  /* 回傳 { header:[...], rows:[{ label, cells:[原字串], values:[數字或null] }] }
+   * hasHeader=false 時 header 為 null，所有列都當資料列。 */
+  function parseTable(text, hasHeader) {
+    var lines = String(text || '').split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+    if (!lines.length) return null;
+    var grid = lines.map(splitRow).map(function (r) {
+      return r.map(function (c) { return String(c).trim(); });
+    });
+    var header = null;
+    if (hasHeader !== false) { header = grid.shift(); }
+    if (!grid.length) return null;
+    var rows = grid.map(function (r) {
+      return {
+        label: r[0] || '',
+        cells: r.slice(1),
+        values: r.slice(1).map(parseNumber)
+      };
+    });
+    return { header: header, rows: rows };
+  }
 
   /* ---------- 匯出：靜態 SVG ---------- */
   /* keepHooks=false（靜態版）會把互動專用的圖元整個拿掉：
@@ -291,6 +489,95 @@
     }
   }
 
+  /* ---------- 共用 UI：貼上表格 ----------
+   * 六個工具都要這塊，所以集中在這裡產生 DOM 並回呼，避免同樣的面板手寫六次
+   * （那正是各工具解析行為會慢慢分歧的原因）。
+   * opts: { placeholder, hint, headerDefault, onApply(parsed, hasHeader) } */
+  function mountPastePanel(container, opts) {
+    opts = opts || {};
+    container.innerHTML =
+      '<textarea data-paste spellcheck="false" style="height:120px;" placeholder="' +
+        escapeHtml(opts.placeholder || '把表格整塊貼進來') + '"></textarea>' +
+      '<div class="check-row"><input type="checkbox" data-hdr' +
+        (opts.headerDefault === false ? '' : ' checked') +
+        '><label>第一列是標題列</label></div>' +
+      '<div class="btn-row"><button class="btn ghost small" data-apply>套用表格</button></div>' +
+      '<div data-err style="display:none;font-size:11.5px;color:#c33;margin-top:6px;"></div>' +
+      (opts.hint ? '<div class="hint-text">' + opts.hint + '</div>' : '');
+
+    var ta = container.querySelector('[data-paste]');
+    var hdr = container.querySelector('[data-hdr]');
+    var err = container.querySelector('[data-err]');
+
+    function fail(msg) { err.textContent = '⚠ ' + msg; err.style.display = ''; }
+
+    container.querySelector('[data-apply]').addEventListener('click', function () {
+      err.style.display = 'none';
+      var parsed = parseTable(ta.value, hdr.checked);
+      if (!parsed || !parsed.rows.length) { fail('看不出表格內容，至少要有一列資料'); return; }
+      try {
+        var r = opts.onApply(parsed, hdr.checked);
+        if (r && r.error) { fail(r.error); return; }
+        toast('已套用 ' + parsed.rows.length + ' 列');
+      } catch (e) {
+        fail('套用失敗：' + e.message);
+      }
+    });
+
+    return {
+      setText: function (t) { ta.value = t; },
+      getText: function () { return ta.value; }
+    };
+  }
+
+  /* ---------- 共用 UI：配色一致性與可辨識性 ----------
+   * opts: { getItems() -> [{name,color}], onApplyPrint(), onReset() } */
+  function mountColorPanel(container, opts) {
+    opts = opts || {};
+    container.innerHTML =
+      '<div data-audit style="font-size:11.5px;line-height:1.7;"></div>' +
+      '<div class="btn-row">' +
+        '<button class="btn ghost small" data-print>套用列印安全配色</button>' +
+        '<button class="btn ghost small" data-forget>清除配色記憶</button>' +
+      '</div>' +
+      '<div class="hint-text">同名系列在所有工具裡共用同一個顏色，換一篇報告時按「清除配色記憶」重新開始。</div>';
+
+    var box = container.querySelector('[data-audit]');
+
+    container.querySelector('[data-print]').addEventListener('click', function () {
+      if (opts.onApplyPrint) opts.onApplyPrint();
+      toast('已套用列印安全配色');
+    });
+    container.querySelector('[data-forget]').addEventListener('click', function () {
+      forgetColors();
+      if (opts.onReset) opts.onReset();
+      toast('已清除配色記憶');
+    });
+
+    function refresh() {
+      var items = (opts.getItems ? opts.getItems() : []).filter(function (x) { return x && x.color; });
+      if (items.length < 2) { box.innerHTML = '<span style="color:#6b6b6b;">系列不足兩個，無須檢查。</span>'; return; }
+      var issues = auditColors(items);
+      if (!issues.length) {
+        box.innerHTML = '<span style="color:#16a34a;">✓ 灰階與三種色覺模擬下皆可辨識</span>';
+        return;
+      }
+      // 同一組系列可能同時在灰階與色覺模擬下撞色，只報一次最嚴重的
+      var seen = {}, lines = [];
+      issues.forEach(function (it) {
+        var key = it.a + '|' + it.b;
+        if (seen[key]) return;
+        seen[key] = true;
+        lines.push('<div style="color:#b45309;">⚠ <b>' + escapeHtml(it.a) + '</b> 與 <b>' +
+          escapeHtml(it.b) + '</b> 在' + it.kind + '下難以區分（' + it.detail + '）</div>');
+      });
+      box.innerHTML = lines.join('');
+    }
+
+    refresh();
+    return { refresh: refresh };
+  }
+
   /* ---------- toast ---------- */
   function toast(msg) {
     var t = document.getElementById('toast');
@@ -326,7 +613,20 @@
     textWidth: textWidth,
     truncateToWidth: truncateToWidth,
     PALETTE: PALETTE,
+    PALETTE_PRINT: PALETTE_PRINT,
     paletteAt: paletteAt,
+    palettePrintAt: palettePrintAt,
+    luminance: luminance,
+    simulateCVD: simulateCVD,
+    auditColors: auditColors,
+    colorFor: colorFor,
+    rememberColor: rememberColor,
+    forgetColors: forgetColors,
+    colorRegistry: colorRegistry,
+    parseNumber: parseNumber,
+    parseTable: parseTable,
+    mountPastePanel: mountPastePanel,
+    mountColorPanel: mountColorPanel,
     buildStaticEmbed: buildStaticEmbed,
     buildInteractiveEmbed: buildInteractiveEmbed,
     exportPng: exportPng,

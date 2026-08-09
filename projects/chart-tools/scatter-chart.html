@@ -38,6 +38,16 @@
     </div>
 
     <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">資料點</div>
       <div class="hdr"><span>色</span><span>名稱</span><span>X</span><span>Y</span><span>大小</span><span></span></div>
       <div class="item-list" id="ptList"></div>
@@ -147,7 +157,11 @@
         '<input type="number" step="any" value="' + (p.size === null ? '' : p.size) + '" placeholder="—">' +
         '<button class="item-del" title="刪除">×</button>';
       var i = row.querySelectorAll('input');
-      i[0].addEventListener('input', function () { p.color = this.value; render(); });
+      i[0].addEventListener('input', function () {
+        p.color = this.value;
+        CT.rememberColor(p.name, p.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
       i[1].addEventListener('input', function () { p.name = this.value; render(); });
       i[2].addEventListener('input', function () { p.x = num(this.value, 0); render(); });
       i[3].addEventListener('input', function () { p.y = num(this.value, 0); render(); });
@@ -344,6 +358,7 @@
 
     writeOutput();
     CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
   }
 
   /* 把趨勢線段夾進 y 軸範圍：超出範圍的部分改用邊界反推 x，線才不會衝出繪圖區 */
@@ -494,6 +509,54 @@
     syncToInputs(); renderList(); render();
   }
   $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 欄位：名稱、X、Y、大小（大小可省略）。有標題列時直接拿第 2/3 欄的標題
+   * 當軸名稱——同業比較表的欄頭通常就是「本益比」「營收成長率」，省一次手打。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '公司\t營收成長率\t本益比\t市值\nA 公司\t32\t28\t820\nB 公司\t18\t22\t410',
+    hint: '欄位：名稱、X、Y、大小（大小可省略＝一般散點）。有標題列時，第 2、3 欄的標題' +
+          '會自動填成 X／Y 軸名稱。X 或 Y 無法解析的列會被略過。',
+    onApply: function (parsed, hasHeader) {
+      var kept = [], skipped = 0;
+      parsed.rows.forEach(function (r, i) {
+        var x = r.values[0], y = r.values[1];
+        if (x === null || y === null) { skipped++; return; }
+        var name = r.label || ('點' + (i + 1));
+        kept.push({
+          name: name, x: x, y: y,
+          size: r.values.length > 2 ? r.values[2] : null,
+          color: CT.colorFor(name, kept.length)
+        });
+      });
+      if (!kept.length) return { error: '沒有 X／Y 都能解析的列' };
+      state.points = kept;
+      if (hasHeader && parsed.header) {
+        if (parsed.header[1]) state.xName = parsed.header[1];
+        if (parsed.header[2]) state.yName = parsed.header[2];
+      }
+      syncToInputs(); renderList(); render();
+      if (skipped) CT.toast('已略過 ' + skipped + ' 列（X 或 Y 無法解析）');
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.points.map(function (p) { return { name: p.name || '(未命名)', color: p.color }; });
+    },
+    onApplyPrint: function () {
+      state.points.forEach(function (p, i) {
+        p.color = CT.palettePrintAt(i);
+        CT.rememberColor(p.name, p.color);
+      });
+      renderList(); render();
+    },
+    onReset: function () {
+      state.points.forEach(function (p, i) { p.color = CT.colorFor(p.name, i); });
+      renderList(); render();
+    }
+  });
 
   var draft = CT.loadDraft(DRAFT_KEY);
   if (draft && Array.isArray(draft.points) && draft.points.length) {

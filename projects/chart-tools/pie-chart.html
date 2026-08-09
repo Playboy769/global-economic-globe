@@ -28,6 +28,16 @@
     </div>
 
     <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">切片</div>
       <div class="item-list" id="sliceList"></div>
       <div class="empty-hint" id="emptyHint" style="display:none;">尚無切片，按下方「新增切片」</div>
@@ -142,7 +152,11 @@
         '<input type="number" step="any" value="' + s.value + '">' +
         '<button class="item-del" title="刪除">×</button>';
       var inputs = row.querySelectorAll('input');
-      inputs[0].addEventListener('input', function () { s.color = this.value; render(); });
+      inputs[0].addEventListener('input', function () {
+        s.color = this.value;
+        CT.rememberColor(s.name, s.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
       inputs[1].addEventListener('input', function () { s.name = this.value; render(); });
       inputs[2].addEventListener('input', function () {
         var v = parseFloat(this.value);
@@ -330,6 +344,7 @@
 
     writeOutput();
     CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
   }
 
   /* ================= 輸出分頁 ================= */
@@ -460,6 +475,46 @@
     syncToInputs(); renderSliceList(); render();
   }
   $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 兩欄：名稱、數值。第二欄之後的欄位會被忽略——直接從 10-Q 部門附註複製一整塊
+   * 多期資料過來時，只取第一個數值欄，不會因為多貼了幾季而報錯。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '部門\t營收\n資料中心\t5,820\n行動裝置\t2,140\n車用與工業\t1,180',
+    hint: '兩欄：名稱、數值（多貼的欄位會忽略，只取第一個數值欄）。支援千分位與貨幣符號。' +
+          '負值與無法解析的列會被略過並提示——圓餅圖無法表達負值。',
+    onApply: function (parsed) {
+      var kept = [], skipped = 0;
+      parsed.rows.forEach(function (r, i) {
+        var v = r.values[0];
+        if (v === null || v <= 0) { skipped++; return; }
+        var name = r.label || ('項目' + (i + 1));
+        kept.push({ name: name, value: v, color: CT.colorFor(name, kept.length) });
+      });
+      if (!kept.length) return { error: '沒有可用的正值列' };
+      state.slices = kept;
+      syncToInputs(); renderSliceList(); render();
+      if (skipped) CT.toast('已略過 ' + skipped + ' 列（非正值或無法解析）');
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.slices.map(function (s) { return { name: s.name || '(未命名)', color: s.color }; });
+    },
+    onApplyPrint: function () {
+      state.slices.forEach(function (s, i) {
+        s.color = CT.palettePrintAt(i);
+        CT.rememberColor(s.name, s.color);
+      });
+      renderSliceList(); render();
+    },
+    onReset: function () {
+      state.slices.forEach(function (s, i) { s.color = CT.colorFor(s.name, i); });
+      renderSliceList(); render();
+    }
+  });
 
   var draft = CT.loadDraft(DRAFT_KEY);
   if (draft && Array.isArray(draft.slices) && draft.slices.length) {

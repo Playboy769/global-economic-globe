@@ -28,6 +28,11 @@
     </div>
 
     <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">橋接項目</div>
       <div class="item-list" id="itemList"></div>
       <div class="empty-hint" id="emptyHint" style="display:none;">尚無項目，按下方「新增項目」</div>
@@ -440,6 +445,40 @@
     syncToInputs(); renderItemList(); render();
   }
   $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 欄位：名稱、數值、型別（型別可省略）。省略型別時自動判斷——第一列當起點、
+   * 最後一列當結束、中間都是增減項，這正是絕大多數橋接表的長相。
+   * 型別欄可寫中文（起點/增減項/小計/結束）或英文 key。 */
+  var TYPE_ALIAS = {
+    '起點': 'start', 'start': 'start', '期初': 'start',
+    '增減項': 'delta', 'delta': 'delta', '變動': 'delta',
+    '小計': 'subtotal', 'subtotal': 'subtotal',
+    '結束': 'end', 'end': 'end', '期末': 'end'
+  };
+
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '名稱\t金額\t型別\nFY26Q2 營業利益\t1,820\t起點\n出貨量成長\t340\n' +
+                 'ASP 下滑\t(180)\n毛利小計\t\t小計\nFY26Q3 營業利益\t\t結束',
+    hint: '欄位：名稱、數值、型別（型別可省略）。<b>省略型別時：第一列＝起點、最後一列＝結束、' +
+          '中間全部當增減項。</b>括號負數 <code>(180)</code> 會正確解讀為 −180，' +
+          '這是 10-Q 費用項的標準寫法。小計與結束列的數值欄留空即可，工具會自己算累計。',
+    onApply: function (parsed) {
+      var n = parsed.rows.length;
+      var items = parsed.rows.map(function (r, i) {
+        var typeRaw = (r.cells[1] || '').trim().toLowerCase();
+        var type = TYPE_ALIAS[typeRaw] || TYPE_ALIAS[(r.cells[1] || '').trim()];
+        if (!type) type = (i === 0) ? 'start' : (i === n - 1 ? 'end' : 'delta');
+        return {
+          name: r.label || ('項目' + (i + 1)),
+          value: r.values[0] === null ? 0 : r.values[0],
+          type: type
+        };
+      });
+      state.items = items;
+      syncToInputs(); renderItemList(); render();
+    }
+  });
 
   var draft = CT.loadDraft(DRAFT_KEY);
   if (draft && Array.isArray(draft.items) && draft.items.length) {

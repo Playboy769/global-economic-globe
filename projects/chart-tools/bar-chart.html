@@ -57,6 +57,16 @@
     </div>
 
     <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">資料系列</div>
       <div class="item-list" id="seriesList"></div>
       <div class="empty-hint" id="emptyHint" style="display:none;">尚無系列，按下方「新增系列」</div>
@@ -156,7 +166,11 @@
         return (v === null || v === undefined || v !== v) ? '' : v;
       }).join(',');
 
-      colorI.addEventListener('input', function () { s.color = colorI.value; render(); });
+      colorI.addEventListener('input', function () {
+        s.color = colorI.value;
+        CT.rememberColor(s.name, s.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
       nameI.addEventListener('input', function () { s.name = nameI.value; render(); });
       valsI.addEventListener('input', function () {
         s.values = valsI.value.split(',').map(function (t) {
@@ -434,6 +448,7 @@
 
     writeOutput();
     CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
   }
 
   /* ================= 輸出分頁 ================= */
@@ -564,6 +579,48 @@
     syncToInputs(); renderSeriesList(); render();
   }
   $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 版型：第一列＝分類標題，第一欄＝系列名稱。與折線圖相同，同一份表格
+   * 可以直接在兩個工具之間互換，決定哪種畫法比較好讀。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '\t資料中心\t行動裝置\t車用\nFY26Q2\t5,210\t2,260\t1,090\nFY26Q3\t5,820\t2,140\t1,180',
+    hint: '第一列＝分類，第一欄＝系列名稱。支援千分位、<code>%</code>、貨幣符號，' +
+          '以及財報慣用的 <code>(1,234)</code> 括號負數。與折線圖吃同一種版型，可互相貼換。',
+    onApply: function (parsed) {
+      if (!parsed.header || parsed.header.length < 2) {
+        return { error: '第一列要放分類標題（第一格留空）' };
+      }
+      state.categories = parsed.header.slice(1).filter(function (s) { return s !== ''; });
+      state.series = parsed.rows.map(function (r, i) {
+        var name = r.label || ('系列' + (i + 1));
+        return {
+          name: name,
+          color: CT.colorFor(name, i),
+          values: r.values.slice(0, state.categories.length)
+        };
+      });
+      syncToInputs(); renderSeriesList(); render();
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.series.map(function (s) { return { name: s.name || '(未命名)', color: s.color }; });
+    },
+    onApplyPrint: function () {
+      state.series.forEach(function (s, i) {
+        s.color = CT.palettePrintAt(i);
+        CT.rememberColor(s.name, s.color);
+      });
+      renderSeriesList(); render();
+    },
+    onReset: function () {
+      state.series.forEach(function (s, i) { s.color = CT.colorFor(s.name, i); });
+      renderSeriesList(); render();
+    }
+  });
 
   var draft = CT.loadDraft(DRAFT_KEY);
   if (draft && Array.isArray(draft.series) && draft.series.length) {

@@ -53,6 +53,16 @@
     </div>
 
     <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">時程項目</div>
       <div class="item-list" id="itemList"></div>
       <div class="empty-hint" id="emptyHint" style="display:none;">尚無項目，按下方「新增項目」</div>
@@ -217,7 +227,9 @@
         '</div>';
 
       block.querySelector('input[type=color]').addEventListener('input', function () {
-        it.color = this.value; render();
+        it.color = this.value;
+        CT.rememberColor(it.name, it.color);   // 手動改色也要讓其他圖跟著一致
+        render();
       });
       block.querySelector('.g-row1 input[type=text]').addEventListener('input', function () {
         it.name = this.value; render();
@@ -476,6 +488,7 @@
 
     writeOutput();
     CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
   }
 
   /* ================= 輸出分頁 ================= */
@@ -612,6 +625,55 @@
     syncToInputs(); renderItemList(); renderMarkerList(); render();
   }
   $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 欄位：名稱、開始、結束、分組（分組可省略）。日期欄不走 parseNumber，
+   * 直接交給本檔的 parseDate（它才認得 2026-Q3 這種季別寫法）。
+   * 結束欄留空＝里程碑，這與「單一時間點沒有工期」的語意剛好對上。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '項目\t開始\t結束\t分組\nAP7 廠房興建\t2026-Q1\t2027-Q2\t產能開出\n' +
+                 '客戶 A 認證通過\t2027-Q2\t\t客戶認證',
+    hint: '欄位：名稱、開始、結束、分組（分組可省略）。日期可寫 <code>2026</code>、' +
+          '<code>2026-Q3</code>、<code>2026-08</code> 或 <code>2026-08-09</code>。' +
+          '<b>結束欄留空＝里程碑</b>，會畫成菱形。開始日期無法解析的列會被略過。',
+    onApply: function (parsed) {
+      var kept = [], skipped = 0;
+      parsed.rows.forEach(function (r, i) {
+        var start = (r.cells[0] || '').trim();
+        if (parseDate(start) === null) { skipped++; return; }
+        var end = (r.cells[1] || '').trim();
+        var name = r.label || ('項目' + (i + 1));
+        kept.push({
+          name: name, start: start, end: end,
+          group: (r.cells[2] || '').trim(),
+          milestone: end === '',
+          color: CT.colorFor(name, kept.length)
+        });
+      });
+      if (!kept.length) return { error: '沒有開始日期可解析的列' };
+      state.items = kept;
+      syncToInputs(); renderItemList(); renderMarkerList(); render();
+      if (skipped) CT.toast('已略過 ' + skipped + ' 列（開始日期無法解析）');
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.items.map(function (it) { return { name: it.name || '(未命名)', color: it.color }; });
+    },
+    onApplyPrint: function () {
+      state.items.forEach(function (it, i) {
+        it.color = CT.palettePrintAt(i);
+        CT.rememberColor(it.name, it.color);
+      });
+      renderItemList(); render();
+    },
+    onReset: function () {
+      state.items.forEach(function (it, i) { it.color = CT.colorFor(it.name, i); });
+      renderItemList(); render();
+    }
+  });
 
   var draft = CT.loadDraft(DRAFT_KEY);
   if (draft && Array.isArray(draft.items) && draft.items.length) {

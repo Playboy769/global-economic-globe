@@ -40,6 +40,16 @@
     </div>
 
     <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">資料系列</div>
       <div class="item-list" id="seriesList"></div>
       <div class="empty-hint" id="emptyHint" style="display:none;">尚無系列，按下方「新增系列」</div>
@@ -186,7 +196,11 @@
         return (v === null || v === undefined || v !== v) ? '' : v;
       }).join(',');
 
-      colorI.addEventListener('input', function () { s.color = colorI.value; render(); });
+      colorI.addEventListener('input', function () {
+        s.color = colorI.value;
+        CT.rememberColor(s.name, s.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
       nameI.addEventListener('input', function () { s.name = nameI.value; render(); });
       axisS.addEventListener('change', function () { s.axis = axisS.value; render(); });
       valsI.addEventListener('input', function () {
@@ -471,6 +485,8 @@
 
     writeOutput();
     CT.saveDraft(DRAFT_KEY, state);
+    // colorPanel 在下方才建立；render 可能先被呼叫到，所以要防呆
+    if (colorPanel) colorPanel.refresh();
   }
 
   /* ---------------- 輸出分頁 ---------------- */
@@ -601,6 +617,52 @@
     render();
   }
   $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ---------------- 貼上表格 ----------------
+   * 版型：第一列＝期別標題，第一欄＝系列名稱。這是 10-Q 逐季表格最常見的擺法，
+   * 直接從 Excel 選取整塊複製過來就是這個形狀。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '\tFY25Q4\tFY26Q1\tFY26Q2\n營收\t8,053\t8,710\t9,300\n毛利率\t37.5%\t39.5%\t41.2%',
+    hint: '第一列＝期別，第一欄＝系列名稱。支援千分位、<code>%</code>、貨幣符號，' +
+          '以及財報慣用的 <code>(1,234)</code> 括號負數；<code>—</code> 與空格視為缺值（斷線，不補 0）。' +
+          '比率類系列請套用後再改成右軸。',
+    onApply: function (parsed) {
+      if (!parsed.header || parsed.header.length < 2) {
+        return { error: '第一列要放期別標題（第一格留空）' };
+      }
+      state.categories = parsed.header.slice(1).filter(function (s) { return s !== ''; });
+      state.series = parsed.rows.map(function (r, i) {
+        var name = r.label || ('系列' + (i + 1));
+        return {
+          name: name,
+          color: CT.colorFor(name, i),      // 同名系列在其他圖沿用同一個顏色
+          axis: 'left',
+          values: r.values.slice(0, state.categories.length)
+        };
+      });
+      syncToInputs();
+      renderSeriesList();
+      render();
+    }
+  });
+
+  /* ---------------- 配色檢查 ---------------- */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.series.map(function (s) { return { name: s.name || '(未命名)', color: s.color }; });
+    },
+    onApplyPrint: function () {
+      state.series.forEach(function (s, i) {
+        s.color = CT.palettePrintAt(i);
+        CT.rememberColor(s.name, s.color);
+      });
+      renderSeriesList(); render();
+    },
+    onReset: function () {
+      state.series.forEach(function (s, i) { s.color = CT.colorFor(s.name, i); });
+      renderSeriesList(); render();
+    }
+  });
 
   /* ---------------- 啟動 ---------------- */
   var draft = CT.loadDraft(DRAFT_KEY);

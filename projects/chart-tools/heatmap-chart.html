@@ -168,30 +168,22 @@
     }
   }
 
-  /* ================= 表格解析 ================= */
+  /* ================= 表格解析 =================
+   * 改走 _shared.js 的 CT.parseTable：本檔原本自己寫了一份，但它不認得財報慣用的
+   * (1,234) 括號負數，會把費用項讀成正的。集中在共用檔後，八個工具的解析行為一致。 */
   function parseMatrix(text) {
-    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
-    if (lines.length < 2) return null;
-    function split(l) { return l.indexOf('\t') >= 0 ? l.split('\t') : l.split(','); }
-
-    var header = split(lines[0]).map(function (s) { return s.trim(); });
-    var cols = header.slice(1);
-    var rows = [], values = [];
-    for (var i = 1; i < lines.length; i++) {
-      var cells = split(lines[i]);
-      rows.push((cells[0] || '').trim());
-      var vs = [];
-      for (var j = 1; j <= cols.length; j++) {
-        var raw = (cells[j] === undefined ? '' : String(cells[j])).trim();
-        // 容忍從報表複製過來的千分位、百分比與貨幣符號
-        var cleaned = raw.replace(/[,%$＄\s]/g, '');
-        if (cleaned === '' || cleaned === '-' || cleaned === '—' || cleaned === 'N/A') { vs.push(null); continue; }
-        var n = parseFloat(cleaned);
-        vs.push(isFinite(n) ? n : null);
-      }
-      values.push(vs);
-    }
-    return { rows: rows, cols: cols, values: values };
+    var parsed = CT.parseTable(text, true);
+    if (!parsed || !parsed.header || parsed.header.length < 2) return null;
+    var cols = parsed.header.slice(1);
+    return {
+      cols: cols,
+      rows: parsed.rows.map(function (r) { return r.label; }),
+      values: parsed.rows.map(function (r) {
+        var vs = r.values.slice(0, cols.length);
+        while (vs.length < cols.length) vs.push(null);   // 補齊短列，避免右側破洞
+        return vs;
+      })
+    };
   }
 
   function matrixToText() {
