@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>chart-tools · 報告用圖表產生器</title>
+<style>
+  :root { --ink:#111111; --sub:#6b6b6b; --line:#e4e4e4; --panel:#fafafa; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#fff; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 64px 32px 80px; }
+  .tag { font-size:11px; color:var(--sub); letter-spacing:.10em; text-transform:uppercase; display:block; margin-bottom:10px; }
+  h1 { font-size:26px; font-weight:600; margin:0 0 12px; letter-spacing:.01em; }
+  .lede { font-size:14px; line-height:1.85; color:#444; margin:0 0 8px; max-width:660px; }
+  .lede code { background:#f2f2f2; padding:1px 5px; border-radius:3px; font-size:12.5px; }
+
+  h2 { font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+       color:var(--sub); margin:52px 0 14px; }
+
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .card { display:block; text-decoration:none; color:inherit; border:1px solid var(--line);
+          border-radius:10px; padding:20px 22px; background:#fff; transition:border-color .15s, transform .15s; }
+  .card:hover { border-color:var(--ink); transform:translateY(-1px); }
+  .card .ico { display:block; margin-bottom:12px; }
+  .card h3 { font-size:15px; font-weight:600; margin:0 0 6px; }
+  .card p { font-size:12.5px; line-height:1.7; color:var(--sub); margin:0; }
+  .card .use { display:block; font-size:11.5px; color:#888; margin-top:10px; padding-top:10px;
+               border-top:1px dashed var(--line); }
+
+  .card.ext { background:var(--panel); }
+  .card.ext h3::after { content:"↗"; font-size:11px; color:var(--sub); margin-left:6px; vertical-align:2px; }
+
+  .note { margin-top:44px; border-left:3px solid var(--ink); padding:2px 0 2px 16px; }
+  .note h3 { font-size:13px; font-weight:600; margin:0 0 8px; }
+  .note p { font-size:12.5px; line-height:1.85; color:#444; margin:0 0 8px; }
+  .note p:last-child { margin-bottom:0; }
+  .note code { background:#f2f2f2; padding:1px 5px; border-radius:3px; font-size:12px; }
+
+  @media (max-width:760px) { .grid { grid-template-columns:1fr; } .wrap { padding:40px 20px 60px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">chart-tools</span>
+  <h1>報告用圖表產生器</h1>
+  <p class="lede">
+    每個工具都在左側編輯資料、右側即時預覽，然後複製一段<strong>自包含的嵌入代碼</strong>貼進
+    earnings 分析報告的 <code>.card</code> 裡。輸出一律純白底、深色字，對齊報告的視覺鐵則。
+  </p>
+
+  <h2>本目錄的工具</h2>
+  <div class="grid">
+    <a class="card" href="line-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <polyline points="2,26 13,17 24,20 35,8 50,3" stroke="#2563eb" stroke-width="2.2"
+                  stroke-linejoin="round" stroke-linecap="round"/>
+        <polyline points="2,20 13,22 24,13 35,15 50,10" stroke="#dc2626" stroke-width="2"
+                  stroke-dasharray="5 3" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <h3>折線圖</h3>
+      <p>多系列、支援左右雙軸（金額走左軸、比率走右軸自動改虛線）。缺值真的斷線而不是補 0。</p>
+      <span class="use">損益表 tab 的逐季／逐年趨勢、10 季走勢圖</span>
+    </a>
+
+    <a class="card" href="gantt-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <rect x="2" y="4" width="26" height="6" rx="2" fill="#2563eb" fill-opacity=".85"/>
+        <rect x="14" y="13" width="24" height="6" rx="2" fill="#16a34a" fill-opacity=".85"/>
+        <rect x="8" y="22" width="34" height="6" rx="2" fill="#d97706" fill-opacity=".85"/>
+        <path d="M46,25 L49.5,28 L46,31 L42.5,28 Z" fill="#7c3aed" transform="translate(0,-3)"/>
+      </svg>
+      <h3>甘特圖／時程區間</h3>
+      <p>工期橫條、里程碑菱形、分組標題、跨列垂直參考線。日期可寫 <code>2026-Q3</code> 或 <code>2026-08-09</code>。</p>
+      <span class="use">產能開出、客戶認證、長約履約期、專利到期</span>
+    </a>
+
+    <a class="card" href="pie-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <circle cx="15" cy="15" r="12" fill="none" stroke="#2563eb" stroke-width="7"
+                stroke-dasharray="38 75" transform="rotate(-90 15 15)"/>
+        <circle cx="15" cy="15" r="12" fill="none" stroke="#dc2626" stroke-width="7"
+                stroke-dasharray="22 75" stroke-dashoffset="-38" transform="rotate(-90 15 15)"/>
+        <circle cx="15" cy="15" r="12" fill="none" stroke="#16a34a" stroke-width="7"
+                stroke-dasharray="15 75" stroke-dashoffset="-60" transform="rotate(-90 15 15)"/>
+        <rect x="34" y="8" width="16" height="2.5" rx="1" fill="#ccc"/>
+        <rect x="34" y="14" width="12" height="2.5" rx="1" fill="#ccc"/>
+        <rect x="34" y="20" width="14" height="2.5" rx="1" fill="#ccc"/>
+      </svg>
+      <h3>圓餅／甜甜圈</h3>
+      <p>中空比例可調、圖例同時顯示數值與百分比。負值會被濾掉而不是取絕對值。</p>
+      <span class="use">營收結構、成本結構、客戶集中度</span>
+    </a>
+
+    <a class="card" href="waterfall-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <rect x="2" y="14" width="8" height="14" fill="#334155" fill-opacity=".9"/>
+        <rect x="13" y="8" width="8" height="6" fill="#16a34a" fill-opacity=".9"/>
+        <rect x="24" y="8" width="8" height="5" fill="#dc2626" fill-opacity=".9"/>
+        <rect x="35" y="13" width="8" height="4" fill="#16a34a" fill-opacity=".9"/>
+        <rect x="45" y="4" width="5" height="24" fill="#334155" fill-opacity=".9"/>
+        <line x1="10" y1="14" x2="13" y2="14" stroke="#999" stroke-dasharray="2 2"/>
+        <line x1="21" y1="8" x2="24" y2="8" stroke="#999" stroke-dasharray="2 2"/>
+      </svg>
+      <h3>瀑布圖</h3>
+      <p>起點／增減項／小計／結束四種列型，累計自動算。小計與結束不吃自填值，避免跟累計對不上。</p>
+      <span class="use">營業利益橋接、FCF 橋接、毛利率變動拆解</span>
+    </a>
+
+    <a class="card" href="chain-diagram.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <rect x="2" y="3" width="14" height="8" rx="2" fill="#0d6e73" fill-opacity=".85"/>
+        <rect x="22" y="3" width="14" height="8" rx="2" fill="#0d6e73" fill-opacity=".85"/>
+        <rect x="12" y="19" width="16" height="8" rx="2" fill="#111827" fill-opacity=".92"/>
+        <path d="M9,11 L9,15 L20,15 L20,19" stroke="#0d6e73" stroke-width="1.6" fill="none"/>
+        <path d="M29,11 L29,15 L20,15" stroke="#0d6e73" stroke-width="1.6" fill="none"/>
+        <path d="M45,3 L45,23 L28,23" stroke="#8a6d3d" stroke-width="1.6" stroke-dasharray="3 2" fill="none"/>
+        <circle cx="45" cy="3" r="2.4" fill="#8a6d3d"/>
+      </svg>
+      <h3>分層關係圖／產業鏈圖</h3>
+      <p>固定分層＋帶標籤關係線，資料用 JSON 貼上而非表單。自動路由：跨層連結一律繞到畫布外側走道，保證不會壓到節點。</p>
+      <span class="use">供應鏈上下游、產業鏈情狀、組織架構、因果鏈</span>
+    </a>
+
+    <a class="card" href="bar-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <rect x="3" y="12" width="7" height="16" rx="1.5" fill="#94a3b8"/>
+        <rect x="11" y="6" width="7" height="22" rx="1.5" fill="#2563eb"/>
+        <rect x="23" y="18" width="7" height="10" rx="1.5" fill="#94a3b8"/>
+        <rect x="31" y="14" width="7" height="14" rx="1.5" fill="#2563eb"/>
+        <rect x="43" y="22" width="7" height="6" rx="1.5" fill="#94a3b8"/>
+        <line x1="0" y1="28.5" x2="52" y2="28.5" stroke="#111" stroke-width="1"/>
+      </svg>
+      <h3>長條圖</h3>
+      <p>並排／堆疊／百分比堆疊 × 直向／橫向，六種組合。正值往上、負值往下堆；百分比模式遇到負值會在圖上明講略過幾筆。</p>
+      <span class="use">BU 營收 QoQ、量價拆分、成本結構對比</span>
+    </a>
+
+    <a class="card" href="scatter-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <line x1="26" y1="2" x2="26" y2="28" stroke="#bbb" stroke-width="1" stroke-dasharray="3 2"/>
+        <line x1="2" y1="15" x2="50" y2="15" stroke="#bbb" stroke-width="1" stroke-dasharray="3 2"/>
+        <circle cx="12" cy="21" r="4" fill="#2563eb" fill-opacity=".55" stroke="#2563eb"/>
+        <circle cx="34" cy="8" r="6.5" fill="#16a34a" fill-opacity=".55" stroke="#16a34a"/>
+        <circle cx="41" cy="20" r="3" fill="#d97706" fill-opacity=".55" stroke="#d97706"/>
+        <circle cx="19" cy="9" r="3.5" fill="#dc2626" fill-opacity=".55" stroke="#dc2626"/>
+      </svg>
+      <h3>散點／氣泡圖</h3>
+      <p>可用中位數／平均數自動分四象限，另有最小平方趨勢線。氣泡<strong>面積</strong>正比於數值，不是半徑。</p>
+      <span class="use">估值觀察 tab 的同業比較（P/E vs 成長率）</span>
+    </a>
+
+    <a class="card" href="heatmap-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <rect x="2" y="3" width="15" height="11" fill="#dbeafe"/>
+        <rect x="18" y="3" width="15" height="11" fill="#60a5fa"/>
+        <rect x="34" y="3" width="15" height="11" fill="#1e40af"/>
+        <rect x="2" y="15" width="15" height="11" fill="#93c5fd"/>
+        <rect x="18" y="15" width="15" height="11" fill="#1e40af"/>
+        <rect x="34" y="15" width="15" height="11" fill="#dbeafe"/>
+      </svg>
+      <h3>熱力圖／矩陣</h3>
+      <p>可直接從 Excel 複製整塊貼上（千分位、%、破折號都吃）。深色格自動改白字，無資料畫斜線而不是留白造成混淆。</p>
+      <span class="use">部門×季度矩陣、風險矩陣、供應商集中度</span>
+    </a>
+  </div>
+
+  <h2>同系列的其他工具（各自獨立的資料夾與 port）</h2>
+  <div class="grid">
+    <div class="card ext">
+      <h3>Sankey 流向圖</h3>
+      <p>上下游供應鏈、營收流向、股權結構。用 D3 ＋ d3-sankey，嵌入代碼會自動注入 CDN——
+         這是唯一依賴外部 CDN 的一個，離線時圖會空白。</p>
+      <span class="use"><code>projects/sankey-diagram-demo/</code>　本地 port <b>8137</b></span>
+    </div>
+    <div class="card ext">
+      <h3>象限圖（2×2 散點）</h3>
+      <p>兩軸定位＋資料點散布，三種風格版本（極簡／儀表板／科技風）。輸出純 inline SVG。</p>
+      <span class="use"><code>projects/quadrant-chart-demo/</code>　本地 port <b>8160</b></span>
+    </div>
+  </div>
+  <p class="lede" style="margin-top:14px;font-size:12.5px;color:var(--sub);">
+    這兩個工具各有自己的 dev server 設定，不在本頁的 :8158 底下——本頁的伺服器根目錄就是
+    <code>chart-tools/</code>，跳不出去，所以刻意不做成連結而不是留一個會 404 的按鈕。
+  </p>
+
+  <div class="note">
+    <h3>兩種嵌入輸出的差別</h3>
+    <p>
+      <strong>靜態 SVG</strong>：一段純 SVG，零 script、零外部連線。離線、列印、PDF 匯出都正常，
+      也不會被報告本身的 CSS 影響（所有樣式都寫在 SVG 元素的 presentation attribute 上）。
+    </p>
+    <p>
+      <strong>互動版</strong>：同一張 SVG 再加一小段 vanilla script，只負責 hover 提示與淡化效果，
+      一樣不連任何外部網站。因為圖形是實體 SVG、不是 JS 當場算出來的，
+      貼在 <code>display:none</code> 的隱藏分頁裡也不會出現畫不出來的狀況——
+      最壞情況只是 script 沒跑，圖還在。
+    </p>
+    <p>
+      兩者都不需要改報告的 <code>&lt;head&gt;</code>。同一篇報告貼多張互動圖也不會互相干擾，
+      每段嵌入代碼都有自己的隨機 id。
+    </p>
+  </div>
+</div>
+</body>
+</html>

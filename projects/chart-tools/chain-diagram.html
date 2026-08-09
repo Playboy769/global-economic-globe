@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分層關係圖／產業鏈圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .panel .json-wrap { position: relative; }
+  #jsonText { width: 100%; height: 380px; }
+  .json-err {
+    display: none; margin-top: 6px; font-size: 11.5px; color: #c33; line-height: 1.6;
+    background: #fdf1f1; border: 1px solid #f3c9c9; border-radius: 6px; padding: 7px 9px;
+  }
+  .json-err.show { display: block; }
+  .schema-hint {
+    font-size: 11px; color: var(--sub); line-height: 1.7; margin-top: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: #f5f5f5; border-radius: 6px; padding: 8px 9px; white-space: pre-wrap; word-break: break-word;
+  }
+  .kbd-hint { font-size: 11px; color: var(--sub); margin-top: 6px; }
+  .kbd-hint kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10.5px;
+    background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 0 4px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Layered Relationship / Chain</span>
+    <h1>分層關係圖／產業鏈圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與圖說</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 半導體與 AI 伺服器供應鏈全景">
+      <label>圖說（選填，顯示在圖下方）</label>
+      <input type="text" id="caption" placeholder="例如 資料來源：六份 Investment Thesis，未新增查證">
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optStage" checked><label for="optStage">左側顯示分層標籤</label></div>
+      <div class="check-row"><input type="checkbox" id="optLegend" checked><label for="optLegend">底部顯示分支圖例</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">結構資料（JSON）</div>
+      <div class="json-wrap">
+        <textarea id="jsonText" spellcheck="false"></textarea>
+      </div>
+      <div class="json-err" id="jsonErr"></div>
+      <div class="btn-row">
+        <button class="btn small" id="applyJson">套用 JSON</button>
+        <button class="btn small ghost" id="seedBtn">載入範例</button>
+      </div>
+      <div class="kbd-hint"><kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> 在文字框內也能直接套用</div>
+      <div class="schema-hint">{
+  title, caption,
+  stages: [string, ...]                        // 由上而下的層級名稱
+  branches: { key: {label, color, dashed?} }    // 關係線的分色定義
+  nodes: [{ id, stage(層索引,從0起算), title,
+            sub?, note?, branch?, emphasis?, span? }]
+  edges: [{ from, to, label?, branch?, side? }] // side: 'left'|'right'
+          // ↑ 只影響「跨層」或「同層」連結繞去哪一側，
+          //   相鄰層(stage 剛好+1)一律走中間的階梯狀走線
+}</div>
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+
+    <div class="hint-text">
+      節點在同一層裡的左右順序＝JSON <code>nodes</code> 陣列裡的排列順序，工具不做自動排序最佳化；
+      要調整順序，直接調整陣列裡的先後即可。<code>span:true</code> 讓節點撐滿整層寬度，適合放「匯聚點／終端」。
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el;
+  var $ = function (id) { return document.getElementById(id); };
+  var DRAFT_KEY = 'chart-tools:chain';
+
+  /* ============================================================================
+   * 版面常數
+   *
+   * 這個工具跟同系列其他四個（折線／甘特／圓餅／瀑布）最大的不同：資料形狀是
+   * 「分層節點 + 帶標籤關係線」，不是數列或項目清單，所以編輯介面是 JSON
+   * 文字框而不是逐列表單——欄位太多種（節點、連結、分支色、層級名稱），做成
+   * 表單反而比 JSON 更難操作。詳見 chart-tools/index.html 的說明。
+   * ==========================================================================*/
+  var VB_W_MIN = 640;
+  var MARGIN_L = 60, MARGIN_R = 40;
+  var NODE_GAP_X = 34;
+  var STAGE_GAP_Y = 116;      // 相鄰層之間的垂直間距，要夠放階梯走線＋標籤
+  var NODE_MIN_W = 128, NODE_MAX_W = 236, NODE_MAX_W_SPAN = 900;
+  var NODE_PAD_X = 16;        // 單側內距
+  var NODE_MIN_H = 56;
+  var TITLE_FS = 13.5, SUB_FS = 11, NOTE_FS = 10;
+  var TITLE_LINE = 19, SUB_LINE = 15, NOTE_LINE = 14;
+  var NODE_PAD_Y = 13;
+  var RADIUS = 9, RADIUS_SPAN = 12;
+  var BYPASS_GAP = 40, BYPASS_LANE_W = 46;
+  var LEGEND_GAP = 30, LEGEND_H = 22;
+
+  var INK = '#15181a', SUB_C = '#5a6167', LINE_C = '#cfd3d1', LABEL_BG = '#ffffff';
+  var DEFAULT_BRANCH_COLOR = '#7a8085';
+  var EMPH_FILL = '#15181a', EMPH_TEXT = '#f5f6f5', EMPH_SUBTEXT = '#c9cdce';
+
+  /* ---------- 色彩：由分支主色自動算出淺色底 ---------- */
+  function hexToRgb(hex) {
+    hex = String(hex || '').replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+    var n = parseInt(hex, 16);
+    if (isNaN(n)) return { r: 122, g: 128, b: 133 };
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+  function softTint(hex, amt) {
+    var c = hexToRgb(hex);
+    var r = Math.round(c.r + (255 - c.r) * amt);
+    var g = Math.round(c.g + (255 - c.g) * amt);
+    var b = Math.round(c.b + (255 - c.b) * amt);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  /* ================= state ================= */
+  var state = null;
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== 'object') throw new Error('不是有效的 JSON 物件');
+    var stages = Array.isArray(raw.stages) ? raw.stages.map(String) : [];
+    if (!stages.length) throw new Error('缺少 stages 陣列（至少要有 1 層）');
+
+    var branches = {};
+    if (raw.branches && typeof raw.branches === 'object') {
+      Object.keys(raw.branches).forEach(function (k) {
+        var b = raw.branches[k] || {};
+        branches[k] = { label: b.label || k, color: b.color || DEFAULT_BRANCH_COLOR, dashed: !!b.dashed };
+      });
+    }
+
+    var seenIds = {};
+    var nodes = (Array.isArray(raw.nodes) ? raw.nodes : []).map(function (n, i) {
+      var id = n.id != null ? String(n.id) : ('n' + i);
+      if (seenIds[id]) id = id + '_' + i;   // 重複 id 靜默改名，避免整張圖畫不出來
+      seenIds[id] = true;
+      var stageIdx = Math.max(0, Math.min(stages.length - 1, Number(n.stage) || 0));
+      return {
+        id: id, stage: stageIdx,
+        title: n.title != null ? String(n.title) : id,
+        sub: n.sub ? String(n.sub) : '', note: n.note ? String(n.note) : '',
+        branch: n.branch ? String(n.branch) : '',
+        emphasis: !!n.emphasis, span: !!n.span
+      };
+    });
+
+    var idSet = {};
+    nodes.forEach(function (n) { idSet[n.id] = true; });
+
+    var edges = (Array.isArray(raw.edges) ? raw.edges : [])
+      .filter(function (e) { return e && idSet[e.from] && idSet[e.to]; })
+      .map(function (e) {
+        return {
+          from: String(e.from), to: String(e.to),
+          label: e.label ? String(e.label) : '',
+          branch: e.branch ? String(e.branch) : '',
+          side: e.side === 'left' ? 'left' : (e.side === 'right' ? 'right' : '')
+        };
+      });
+
+    var opts = raw.options || {};
+    return {
+      title: raw.title ? String(raw.title) : '',
+      caption: raw.caption ? String(raw.caption) : '',
+      stages: stages, branches: branches, nodes: nodes, edges: edges,
+      options: {
+        showStageLabels: opts.showStageLabels !== false,
+        showLegend: opts.showLegend !== false
+      }
+    };
+  }
+
+  function branchColor(key) {
+    return (state.branches[key] && state.branches[key].color) || DEFAULT_BRANCH_COLOR;
+  }
+  function branchDashed(key) {
+    return !!(state.branches[key] && state.branches[key].dashed);
+  }
+
+  /* ================= 版面計算 =================
+   * 三種連結分類，決定走線方式：
+   *   lateral  同層（source.stage === target.stage）── 直接橫線
+   *   adjacent 剛好下一層（target.stage === source.stage+1）── 走中間階梯線，
+   *            同一個「層間縫」裡的多條線用 laneY 依序錯開，避免疊在一起
+   *   bypass   其餘所有情況（跨兩層以上、或指向同層以外任意方向）── 繞到畫布
+   *            外側的專屬走道，保證不會穿過任何節點；多條線共用同一個來源
+   *            或目的節點時，進出點依節點中心對稱錯開
+   * ============================================================================ */
+  function layout() {
+    var byStage = state.stages.map(function () { return []; });
+    state.nodes.forEach(function (n) { byStage[n.stage].push(n); });
+
+    // 1) 每個節點的自然尺寸（先不管 span）
+    state.nodes.forEach(function (n) {
+      var lines = [{ t: n.title, fs: TITLE_FS }];
+      if (n.sub) lines.push({ t: n.sub, fs: SUB_FS });
+      if (n.note) lines.push({ t: n.note, fs: NOTE_FS });
+      var maxTextW = lines.reduce(function (m, l) { return Math.max(m, CT.textWidth(l.t, l.fs)); }, 0);
+      var maxW = n.span ? NODE_MAX_W_SPAN : NODE_MAX_W;
+      n.w = Math.max(NODE_MIN_W, Math.min(maxW, maxTextW + NODE_PAD_X * 2));
+      var h = NODE_PAD_Y * 2 + TITLE_LINE + (n.sub ? SUB_LINE : 0) + (n.note ? NOTE_LINE : 0);
+      n.h = Math.max(NODE_MIN_H, h);
+      n._lines = lines;
+    });
+
+    // 2) 內容寬度 = 非 span 列裡最寬的那一列；span 節點自己的自然寬度也納入下限
+    var contentW = 0;
+    byStage.forEach(function (row) {
+      var spanNode = row.filter(function (n) { return n.span; })[0];
+      if (spanNode && row.length === 1) { contentW = Math.max(contentW, spanNode.w); return; }
+      var w = row.reduce(function (a, n) { return a + n.w; }, 0) + NODE_GAP_X * Math.max(0, row.length - 1);
+      contentW = Math.max(contentW, w);
+    });
+    contentW = Math.max(contentW, 480);
+
+    // span 節點寬度撐到 contentW
+    byStage.forEach(function (row) {
+      if (row.length === 1 && row[0].span) row[0].w = contentW;
+    });
+
+    // 3) x：同層置中排列
+    byStage.forEach(function (row) {
+      if (!row.length) return;
+      var rowW = row.reduce(function (a, n) { return a + n.w; }, 0) + NODE_GAP_X * (row.length - 1);
+      var cursor = MARGIN_L + (contentW - rowW) / 2;
+      row.forEach(function (n) { n.x = cursor; cursor += n.w + NODE_GAP_X; });
+    });
+
+    // 4) y：逐層往下疊，層高＝該層最高節點；節點在層內垂直置中
+    var titleH = state.title ? 46 : 20;
+    var cursorY = titleH;
+    var stageY = [], stageH = [];
+    byStage.forEach(function (row) {
+      var h = row.reduce(function (m, n) { return Math.max(m, n.h); }, NODE_MIN_H);
+      stageY.push(cursorY); stageH.push(h);
+      row.forEach(function (n) { n.y = cursorY + (h - n.h) / 2; });
+      cursorY += h + STAGE_GAP_Y;
+    });
+    var contentBottom = cursorY - STAGE_GAP_Y;
+
+    // 5) 連結分類——只有三種：
+    //    lateral  同層（b.stage === a.stage）── 直接橫線
+    //    adjacent 剛好下一層（b.stage === a.stage+1）── 中間只隔一條「縫」，
+    //             直接在縫裡走階梯線，不會穿過任何列
+    //    detour   其餘所有情況（跨兩層以上的順向連結、或指向更前面層級的
+    //             逆向連結）── 一律先退到列的「安全高度」（該列所有節點裡
+    //             最下緣／最上緣，不是自己節點的邊緣，避免擦過同列較高的
+    //             鄰居），再繞到畫布外側的專屬走道垂直穿過中間所有列，最後
+    //             從安全的縫隙轉回節點的頂／底邊——這樣無論跳過幾層，路線
+    //             一定不會壓到任何節點
+    var nodeById = {}; state.nodes.forEach(function (n) { nodeById[n.id] = n; });
+    var lateral = [], adjacent = [], detour = [];
+    state.edges.forEach(function (e) {
+      var a = nodeById[e.from], b = nodeById[e.to];
+      if (!a || !b) return;
+      if (b.stage === a.stage) lateral.push(e);
+      else if (b.stage === a.stage + 1) adjacent.push(e);
+      else detour.push(e);
+    });
+
+    // top-entry / bottom-entry 落點：adjacent 與「順向 detour」共用同一組
+    // target 分組（都是從上方進節點頂邊）；「逆向 detour」另外分組（從下方
+    // 進節點底邊）。同一組裡有多條線落在同一個節點時，落點依節點寬度對稱錯開。
+    var topEntryGroup = {}, bottomEntryGroup = {};
+    adjacent.forEach(function (e) { (topEntryGroup[e.to] = topEntryGroup[e.to] || []).push(e); });
+    detour.forEach(function (e) {
+      var a = nodeById[e.from], b = nodeById[e.to];
+      (b.stage > a.stage ? topEntryGroup : bottomEntryGroup)[e.to] =
+        ((b.stage > a.stage ? topEntryGroup : bottomEntryGroup)[e.to] || []).concat([e]);
+    });
+    function landXFor(group, e, node, fallbackX) {
+      var sibs = group[e.to];
+      if (sibs.length > 1) {
+        var pos = sibs.indexOf(e), usable = node.w - 24;
+        return node.x + 12 + (usable * pos) / (sibs.length - 1);
+      }
+      return Math.max(node.x + 12, Math.min(node.x + node.w - 12, fallbackX));
+    }
+
+    // 層間縫的鉛直車道：key 用「縫的索引」＝抵達層的 stage-1，adjacent 與
+    // 順向 detour 共用同一組計數器，才不會兩條線疊在同一個高度上
+    var gapLaneCounter = {};
+    function nextLaneY(gapIdx) {
+      var idx = gapLaneCounter[gapIdx] || 0; gapLaneCounter[gapIdx] = idx + 1;
+      var gapTop = stageY[gapIdx] + stageH[gapIdx], gapBot = stageY[gapIdx + 1];
+      return Math.min(gapBot - 14, gapTop + 18 + idx * 22);
+    }
+
+    // 6) adjacent：單一縫隙內的階梯線
+    adjacent.forEach(function (e) {
+      var a = nodeById[e.from], b = nodeById[e.to];
+      var laneY = nextLaneY(a.stage);
+      var landX = landXFor(topEntryGroup, e, b, a.x + a.w / 2);
+      e._pts = [[a.x + a.w / 2, a.y + a.h], [a.x + a.w / 2, laneY], [landX, laneY], [landX, b.y]];
+      e._labelPt = [(a.x + a.w / 2 + landX) / 2, laneY];
+    });
+
+    // 7) lateral：同層節點間直接橫線。標籤若寬過中間縫隙，改放到兩節點
+    //    上方，避免疊到節點本體（縫隙窄是常態——同層節點本來就緊鄰排列）
+    lateral.forEach(function (e) {
+      var a = nodeById[e.from], b = nodeById[e.to];
+      var left = a.x <= b.x ? a : b, right = a.x <= b.x ? b : a;
+      var sy = left.y + left.h / 2, ty = right.y + right.h / 2;
+      e._pts = [[left.x + left.w, sy], [right.x, ty]];
+      var gapW = right.x - (left.x + left.w);
+      var labelW = e.label ? CT.textWidth(e.label, 11) + 12 : 0;
+      if (labelW && labelW > gapW - 6) {
+        e._labelPt = [(left.x + left.w + right.x) / 2, Math.min(left.y, right.y) - 12];
+      } else {
+        e._labelPt = [(left.x + left.w + right.x) / 2, (sy + ty) / 2];
+      }
+    });
+
+    // 8) detour：先退到列的安全高度，繞到左／右外側走道，再從安全高度轉回
+    //    目標節點的頂／底邊。走道 x 依「這一側」已用掉幾條依序外推；同一個
+    //    來源／目的節點被多條 detour 線共用時，進出點依節點中心對稱錯開。
+    function spreadOffset(list, e, span) {
+      if (list.length <= 1) return 0;
+      var idx = list.indexOf(e);
+      return (idx - (list.length - 1) / 2) * span;
+    }
+    var bySource = {};
+    detour.forEach(function (e) { (bySource[e.from] = bySource[e.from] || []).push(e); });
+    var laneCounter = { left: 0, right: 0 };
+    detour.forEach(function (e) {
+      var a = nodeById[e.from], b = nodeById[e.to];
+      var forward = b.stage > a.stage;
+      var side = e.side || (laneCounter.left <= laneCounter.right ? 'left' : 'right');
+      var laneIdx = laneCounter[side]++;
+      var laneX = side === 'right'
+        ? (MARGIN_L + contentW + BYPASS_GAP + laneIdx * BYPASS_LANE_W)
+        : (MARGIN_L - BYPASS_GAP - laneIdx * BYPASS_LANE_W);
+
+      var sOff = spreadOffset(bySource[e.from], e, 18);
+      var srcSafeY = forward ? (stageY[a.stage] + stageH[a.stage]) : stageY[a.stage];
+      var sx = a.x + a.w / 2 + sOff;
+      var sEdgeY = forward ? a.y + a.h : a.y;
+
+      var group = forward ? topEntryGroup : bottomEntryGroup;
+      var landX = landXFor(group, e, b, sx);
+      var arrivalGap = forward ? (b.stage - 1) : b.stage;
+      var laneY = nextLaneY(arrivalGap);
+      var tEdgeY = forward ? b.y : b.y + b.h;
+
+      e._pts = [
+        [sx, sEdgeY], [sx, srcSafeY], [laneX, srcSafeY],
+        [laneX, laneY], [landX, laneY], [landX, tEdgeY]
+      ];
+      e._labelPt = [(laneX + landX) / 2, laneY];
+      e._side = side;
+    });
+
+    // 9) 畫布尺寸
+    var leftExtra = laneCounter.left ? (BYPASS_GAP + laneCounter.left * BYPASS_LANE_W) : 0;
+    var rightExtra = laneCounter.right ? (BYPASS_GAP + laneCounter.right * BYPASS_LANE_W) : 0;
+    var vbW = Math.max(VB_W_MIN, MARGIN_L + contentW + MARGIN_R + leftExtra + rightExtra);
+    var xShift = leftExtra;   // 有左側走道時，整張圖要整體右移，留出空間
+    state.nodes.forEach(function (n) { n.x += xShift; });
+    [].concat(lateral, adjacent, detour).forEach(function (e) {
+      e._pts = e._pts.map(function (p) { return [p[0] + xShift, p[1]]; });
+      e._labelPt = [e._labelPt[0] + xShift, e._labelPt[1]];
+    });
+
+    var legendY = contentBottom + (state.options.showLegend ? LEGEND_GAP : 8);
+    var vbH = legendY + (state.options.showLegend ? LEGEND_H : 0) + 16;
+
+    return {
+      vbW: vbW, vbH: vbH, contentW: contentW, xShift: xShift,
+      stageY: stageY, stageH: stageH, titleH: titleH,
+      lateral: lateral, adjacent: adjacent, bypass: detour, legendY: legendY
+    };
+  }
+
+  /* ================= 繪圖 ================= */
+  var svg = $('chart');
+
+  function drawArrowDefs(used) {
+    var defs = el('defs', {});
+    Object.keys(used).forEach(function (color) {
+      var id = 'arr-' + color.replace(/[^a-zA-Z0-9]/g, '');
+      var m = el('marker', {
+        id: id, viewBox: '0 0 10 10', refX: 8, refY: 5,
+        markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'
+      });
+      m.appendChild(el('path', { d: 'M0,0 L10,5 L0,10 Z', fill: color }));
+      defs.appendChild(m);
+      used[color] = id;
+    });
+    svg.appendChild(defs);
+    return used;
+  }
+
+  function edgeColor(e) { return e.branch ? branchColor(e.branch) : DEFAULT_BRANCH_COLOR; }
+
+  function drawEdge(e, interactive) {
+    var color = edgeColor(e);
+    var dashed = e.branch ? branchDashed(e.branch) : false;
+    var pts = e._pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' ');
+    var markerId = drawEdge._markers[color];
+    var attrs = {
+      points: pts, fill: 'none', stroke: color, 'stroke-width': 1.6,
+      'marker-end': 'url(#' + markerId + ')'
+    };
+    if (dashed) attrs['stroke-dasharray'] = '6 5';
+    svg.appendChild(el('polyline', attrs));
+
+    if (interactive) {
+      var a = e.from, b = e.to;
+      svg.appendChild(el('polyline', {
+        points: pts, fill: 'none', stroke: 'transparent', 'stroke-width': 14,
+        'data-hit': '1',
+        'data-tip-html': '<b>' + CT.escapeHtml(e.label || (a + ' → ' + b)) + '</b>' +
+          '<br>' + CT.escapeHtml(a) + ' → ' + CT.escapeHtml(b),
+        style: 'cursor:pointer;'
+      }));
+    }
+
+    if (e.label) {
+      var fs = 11;
+      var w = CT.textWidth(e.label, fs) + 12;
+      var lx = e._labelPt[0], ly = e._labelPt[1];
+      svg.appendChild(el('rect', {
+        x: lx - w / 2, y: ly - 9, width: w, height: 18, rx: 3, fill: LABEL_BG
+      }));
+      svg.appendChild(el('text', {
+        x: lx, y: ly + 4, 'text-anchor': 'middle', 'font-size': fs, fill: SUB_C,
+        'font-family': 'ui-monospace,Consolas,Menlo,monospace'
+      }, e.label));
+    }
+  }
+
+  function drawNode(n, interactive) {
+    var g = el('g', {});
+    var isEmph = n.emphasis;
+    var fill = isEmph ? EMPH_FILL : (n.branch ? softTint(branchColor(n.branch), 0.86) : '#ffffff');
+    var stroke = isEmph ? EMPH_FILL : (n.branch ? branchColor(n.branch) : LINE_C);
+    g.appendChild(el('rect', {
+      x: n.x, y: n.y, width: n.w, height: n.h, rx: isEmph || n.span ? RADIUS_SPAN : RADIUS,
+      fill: fill, stroke: stroke, 'stroke-width': 1.4
+    }));
+
+    var cx = n.x + n.w / 2;
+    var titleColor = isEmph ? EMPH_TEXT : INK;
+    var subColor = isEmph ? EMPH_SUBTEXT : SUB_C;
+    var lineYs = [];
+    var totalLines = n._lines.length;
+    var blockH = TITLE_LINE + (n.sub ? SUB_LINE : 0) + (n.note ? NOTE_LINE : 0);
+    var top = n.y + (n.h - blockH) / 2;
+    var cursorY = top + TITLE_LINE * 0.72;
+    lineYs.push(cursorY); cursorY += (n.sub ? SUB_LINE : 0);
+    if (n.sub) { lineYs.push(cursorY); cursorY += (n.note ? NOTE_LINE : 0); }
+    if (n.note) lineYs.push(cursorY);
+
+    n._lines.forEach(function (l, i) {
+      var shown = CT.truncateToWidth(l.t, l.fs, n.w - NODE_PAD_X * 2);
+      g.appendChild(el('text', {
+        x: cx, y: lineYs[i], 'text-anchor': 'middle', 'font-size': l.fs,
+        'font-weight': i === 0 ? 700 : 400,
+        fill: i === 0 ? titleColor : subColor,
+        'font-family': i === 0 ? 'sans-serif' : 'ui-monospace,Consolas,Menlo,monospace',
+        opacity: i === 2 ? 0.82 : 1
+      }, shown));
+    });
+
+    if (interactive) {
+      var tip = '<b>' + CT.escapeHtml(n.title) + '</b>' +
+        (n.sub ? '<br>' + CT.escapeHtml(n.sub) : '') + (n.note ? '<br>' + CT.escapeHtml(n.note) : '');
+      g.appendChild(el('rect', {
+        x: n.x, y: n.y, width: n.w, height: n.h, fill: 'transparent',
+        'data-hit': '1', 'data-tip-html': tip, style: 'cursor:pointer;'
+      }));
+    }
+    svg.appendChild(g);
+  }
+
+  function render(interactive) {
+    CT.clear(svg);
+    if (!state || !state.nodes.length) {
+      svg.setAttribute('viewBox', '0 0 900 220');
+      svg.appendChild(el('rect', { x: 0, y: 0, width: 900, height: 220, fill: '#ffffff' }));
+      svg.appendChild(el('text', {
+        x: 450, y: 110, 'text-anchor': 'middle', 'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '貼上包含 stages／nodes／edges 的 JSON 後按「套用 JSON」'));
+      writeOutput();
+      return;
+    }
+
+    var L = layout();
+    svg.setAttribute('viewBox', '0 0 ' + L.vbW + ' ' + L.vbH);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: L.vbW, height: L.vbH, fill: '#ffffff' }));
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: L.vbW / 2, y: 26, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700,
+        fill: INK, 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (state.options.showStageLabels) {
+      state.stages.forEach(function (label, i) {
+        var cy = L.stageY[i] + L.stageH[i] / 2;
+        svg.appendChild(el('text', {
+          x: 16, y: 0, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#9a9fa2',
+          'letter-spacing': '.04em', 'font-family': 'ui-monospace,Consolas,Menlo,monospace',
+          transform: 'translate(16,' + cy + ') rotate(-90)'
+        }, label));
+      });
+    }
+
+    // 收集所有實際用到的顏色，先建好箭頭 marker
+    var usedColors = {};
+    [].concat(L.lateral, L.adjacent, L.bypass).forEach(function (e) { usedColors[edgeColor(e)] = true; });
+    drawEdge._markers = drawArrowDefs(usedColors);
+
+    // 邊線先畫（在節點下方），標籤隨邊線一起畫
+    [].concat(L.adjacent, L.lateral, L.bypass).forEach(function (e) { drawEdge(e, interactive); });
+    // 節點蓋在邊線之上
+    state.nodes.forEach(function (n) { drawNode(n, interactive); });
+
+    if (state.options.showLegend) {
+      var items = Object.keys(state.branches);
+      if (items.length) {
+        var totalW = items.reduce(function (a, k) {
+          return a + 26 + CT.textWidth(state.branches[k].label, 11) + 22;
+        }, 0);
+        var lx = (L.vbW - totalW) / 2;
+        items.forEach(function (k) {
+          var b = state.branches[k];
+          if (b.dashed) {
+            svg.appendChild(el('line', {
+              x1: lx, y1: L.legendY, x2: lx + 22, y2: L.legendY,
+              stroke: b.color, 'stroke-width': 2, 'stroke-dasharray': '5 4'
+            }));
+          } else {
+            svg.appendChild(el('rect', { x: lx, y: L.legendY - 1, width: 22, height: 2.4, fill: b.color }));
+          }
+          svg.appendChild(el('text', {
+            x: lx + 30, y: L.legendY + 4, 'font-size': 11, fill: SUB_C, 'font-family': 'sans-serif'
+          }, b.label));
+          lx += 26 + CT.textWidth(b.label, 11) + 22;
+        });
+      }
+    }
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, rawFromState());
+  }
+
+  /* ================= JSON 面板 ================= */
+  function rawFromState() {
+    return {
+      title: state.title, caption: state.caption, stages: state.stages,
+      branches: state.branches, nodes: state.nodes.map(function (n) {
+        return { id: n.id, stage: n.stage, title: n.title, sub: n.sub || undefined,
+          note: n.note || undefined, branch: n.branch || undefined,
+          emphasis: n.emphasis || undefined, span: n.span || undefined };
+      }),
+      edges: state.edges.map(function (e) {
+        return { from: e.from, to: e.to, label: e.label || undefined,
+          branch: e.branch || undefined, side: e.side || undefined };
+      }),
+      options: state.options
+    };
+  }
+
+  function showJsonError(msg) {
+    var box = $('jsonErr');
+    if (!msg) { box.classList.remove('show'); box.textContent = ''; return; }
+    box.textContent = msg; box.classList.add('show');
+  }
+
+  function applyJsonText() {
+    var raw;
+    try { raw = JSON.parse($('jsonText').value); }
+    catch (e) { showJsonError('JSON 格式錯誤：' + e.message); return false; }
+    try { state = normalize(raw); }
+    catch (e) { showJsonError(e.message); return false; }
+    showJsonError('');
+    syncTopInputs();
+    $('jsonText').value = JSON.stringify(rawFromState(), null, 2);
+    render(currentOut() === 'interactive');
+    return true;
+  }
+
+  function syncTopInputs() {
+    $('title').value = state.title; $('caption').value = state.caption;
+    $('optStage').checked = state.options.showStageLabels;
+    $('optLegend').checked = state.options.showLegend;
+  }
+
+  ['title', 'caption'].forEach(function (id) {
+    $(id).addEventListener('input', function () {
+      if (!state) return;
+      state[id] = this.value;
+      $('jsonText').value = JSON.stringify(rawFromState(), null, 2);
+      render(currentOut() === 'interactive');
+    });
+  });
+  [['optStage', 'showStageLabels'], ['optLegend', 'showLegend']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () {
+      if (!state) return;
+      state.options[p[1]] = this.checked;
+      $('jsonText').value = JSON.stringify(rawFromState(), null, 2);
+      render(currentOut() === 'interactive');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    if (applyJsonText()) CT.toast('已套用 JSON');
+  });
+  $('jsonText').addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); if (applyJsonText()) CT.toast('已套用 JSON'); }
+  });
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  function currentOut() { return outMode; }
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 或任何 HTML 裡即可，離線與列印都正常，也能貼進有嚴格 CSP 的頁面（例如 Artifact）。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到節點或連結上會顯示完整說明文字（標籤太長被截斷時特別有用）。'
+  };
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    if (!state || !state.nodes.length) { $('outText').value = ''; return; }
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+  }
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      render(outMode === 'interactive');
+    });
+  });
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) { CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取'); });
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'chain-diagram.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+  $('clearBtn').addEventListener('click', function () {
+    $('jsonText').value = JSON.stringify({
+      title: '', caption: '', stages: ['層級一', '層級二'],
+      branches: { a: { label: '關係一', color: '#0d6e73' } },
+      nodes: [], edges: [], options: { showStageLabels: true, showLegend: true }
+    }, null, 2);
+    applyJsonText();
+    CT.toast('已清空');
+  });
+
+  /* ================= 範例：半導體與 AI 伺服器供應鏈全景 =================
+   * 取材自「產業鏈情狀」整理任務的真實成果（六份 Investment Thesis 交叉比對），
+   * 直接拿來當種子資料，順便驗證這個工具能不能重現當初手刻 SVG 的那張圖。 */
+  function seed() {
+    var data = {
+      title: '半導體與 AI 伺服器供應鏈全景',
+      caption: '資料來源：六份公司 Investment Thesis（2059、3711、8046、HWM、TSMC、XINTEC），未新增查證',
+      stages: ['上游原料', '核心製造', '封裝／測試／載板', '系統整合／終端'],
+      branches: {
+        chip: { label: '晶片路徑', color: '#0d6e73' },
+        mech: { label: '機構件路徑（獨立物料流）', color: '#8a6d3d' },
+        hwm: { label: '需求面外溢連結（非組件供應）', color: '#9c4a35', dashed: true }
+      },
+      nodes: [
+        { id: 'a1', stage: 0, title: 'NEG／SCHOTT', sub: '薄型玻璃供應商（日／德商）', branch: 'chip' },
+        { id: 'a2', stage: 0, title: '銅箔基板／增層膜', sub: '供應商群（分散採購）', branch: 'chip' },
+        { id: 'a3', stage: 0, title: '南亞塑膠', sub: '南電母公司（材料＋持股66.97%）', branch: 'chip' },
+        { id: 'e1', stage: 0, title: '中鋼體系', sub: '鋼捲原料（中鋼＋子公司）', branch: 'mech' },
+        { id: 'hwm', stage: 0, title: 'Howmet Aerospace', sub: 'HWM・航太／工業燃氣渦輪', branch: 'hwm' },
+        { id: 'b', stage: 1, title: '台積電 TSMC', sub: '晶圓製造＋內部先進封裝（CoWoS／SoIC）', branch: 'chip' },
+        { id: 'e2', stage: 1, title: '川湖／川益', sub: '2059・伺服器機架導軌', branch: 'mech' },
+        { id: 'c1', stage: 2, title: '精材 XINTEC', sub: '3374・晶圓測試＋WLCSP', branch: 'chip' },
+        { id: 'c2', stage: 2, title: '南亞電路板', sub: '8046・IC載板（ABF／PP）', branch: 'chip' },
+        { id: 'c3', stage: 2, title: '日月光投控／矽品', sub: '3711・OSAT先進封裝（LEAP）', branch: 'chip' },
+        { id: 'f', stage: 3, title: '雲端／AI 資料中心', sub: '系統整合＋資本支出超級週期',
+          note: '整條產業鏈的需求源頭與匯聚點', branch: 'chip', emphasis: true, span: true }
+      ],
+      edges: [
+        { from: 'a1', to: 'c1', label: '玻璃 26%集中', branch: 'chip' },
+        { from: 'a2', to: 'c2', label: '基板材料・分散採購', branch: 'chip' },
+        { from: 'a3', to: 'c2', label: '母公司材料 14.85%', branch: 'chip' },
+        { from: 'e1', to: 'e2', label: '鋼捲 46.4%集中', branch: 'mech' },
+        { from: 'b', to: 'c1', label: '測試代工外包・一年一簽', branch: 'chip' },
+        { from: 'b', to: 'c3', label: 'CoWoS外包 24–27萬片/年', branch: 'chip' },
+        { from: 'c2', to: 'c3', label: 'IC載板', branch: 'chip' },
+        { from: 'c1', to: 'f', label: '測試良品／CIS封裝', branch: 'chip' },
+        { from: 'c3', to: 'f', label: '先進封裝良品', branch: 'chip' },
+        { from: 'e2', to: 'f', label: '伺服器機架導軌', branch: 'mech' },
+        { from: 'hwm', to: 'f', label: 'IGT電力設備（需求外溢）', branch: 'hwm' }
+      ],
+      options: { showStageLabels: true, showLegend: true }
+    };
+    $('jsonText').value = JSON.stringify(data, null, 2);
+    applyJsonText();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 啟動 ================= */
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.nodes) && draft.nodes.length) {
+    $('jsonText').value = JSON.stringify(draft, null, 2);
+    if (applyJsonText()) CT.toast('已還原上次編輯的資料');
+    else seed();
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

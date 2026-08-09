@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>散點／氣泡圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-row { grid-template-columns: 28px 1fr 56px 56px 56px 22px; }
+  .hdr { display: grid; grid-template-columns: 28px 1fr 56px 56px 56px 22px; gap: 5px;
+         font-size: 10px; color: var(--sub); margin-bottom: 4px; text-align: center; }
+  .hdr span:nth-child(2) { text-align: left; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Scatter / Bubble</span>
+    <h1>散點／氣泡圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與軸</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 同業估值 vs 成長率">
+      <div class="row" style="margin-top:10px;">
+        <div class="col">
+          <label style="margin-top:0;">X 軸名稱</label>
+          <input type="text" id="xName" value="營收成長率 (%)">
+        </div>
+        <div class="col">
+          <label style="margin-top:0;">Y 軸名稱</label>
+          <input type="text" id="yName" value="本益比 (x)">
+        </div>
+      </div>
+      <div class="check-row"><input type="checkbox" id="optXZero"><label for="optXZero">X 軸從 0 起算</label></div>
+      <div class="check-row"><input type="checkbox" id="optYZero"><label for="optYZero">Y 軸從 0 起算</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">資料點</div>
+      <div class="hdr"><span>色</span><span>名稱</span><span>X</span><span>Y</span><span>大小</span><span></span></div>
+      <div class="item-list" id="ptList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無資料點</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addPt">＋ 新增資料點</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="hint-text">
+        「大小」欄留空＝一般散點（等大圓）。填了數值就變氣泡圖，圓面積正比於該值——
+        用面積而不是半徑，否則 4 倍的值看起來會像 16 倍。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">參考線</div>
+      <label style="margin-top:0;">分割方式</label>
+      <select id="refMode">
+        <option value="none">不畫</option>
+        <option value="median">用中位數分四象限</option>
+        <option value="mean">用平均數分四象限</option>
+        <option value="custom">自訂數值</option>
+      </select>
+      <div class="row" id="customRef" style="margin-top:10px;display:none;">
+        <div class="col"><label style="margin-top:0;">X 參考值</label><input type="number" id="refX" step="any" value="0"></div>
+        <div class="col"><label style="margin-top:0;">Y 參考值</label><input type="number" id="refY" step="any" value="0"></div>
+      </div>
+      <div class="hint-text">象限分割適合「便宜且成長快 vs 貴又不成長」這類同業比較。</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optLabels" checked><label for="optLabels">顯示點名稱</label></div>
+      <div class="check-row"><input type="checkbox" id="optGrid" checked><label for="optGrid">格線</label></div>
+      <div class="check-row"><input type="checkbox" id="optTrend"><label for="optTrend">最小平方趨勢線</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：各公司最新 10-Q，股價為 2026-08-08 收盤">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900, VB_H = 520;
+  var PAD_T = 46, PAD_B = 62, PAD_L = 76, PAD_R = 40;
+  var DRAFT_KEY = 'chart-tools:scatter';
+
+  var state = {
+    title: '', caption: '', xName: '', yName: '',
+    refMode: 'none', refX: 0, refY: 0,
+    points: [],
+    opts: { labels: true, grid: true, trend: false, xZero: false, yZero: false }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ================= 清單 ================= */
+  function renderList() {
+    var list = $('ptList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.points.length ? 'none' : 'block';
+
+    state.points.forEach(function (p, idx) {
+      var row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML =
+        '<input type="color" value="' + p.color + '">' +
+        '<input type="text" value="' + CT.escapeHtml(p.name) + '" placeholder="名稱">' +
+        '<input type="number" step="any" value="' + p.x + '">' +
+        '<input type="number" step="any" value="' + p.y + '">' +
+        '<input type="number" step="any" value="' + (p.size === null ? '' : p.size) + '" placeholder="—">' +
+        '<button class="item-del" title="刪除">×</button>';
+      var i = row.querySelectorAll('input');
+      i[0].addEventListener('input', function () { p.color = this.value; render(); });
+      i[1].addEventListener('input', function () { p.name = this.value; render(); });
+      i[2].addEventListener('input', function () { p.x = num(this.value, 0); render(); });
+      i[3].addEventListener('input', function () { p.y = num(this.value, 0); render(); });
+      i[4].addEventListener('input', function () {
+        var t = this.value.trim();
+        p.size = t === '' ? null : num(t, null);
+        render();
+      });
+      row.querySelector('.item-del').addEventListener('click', function () {
+        state.points.splice(idx, 1); renderList(); render();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function num(v, dflt) { var n = parseFloat(v); return isFinite(n) ? n : dflt; }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    var pts = state.points.filter(function (p) {
+      return isFinite(p.x) && isFinite(p.y);
+    });
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 26, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (!pts.length) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '新增至少一個資料點後即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    var plotL = PAD_L, plotR = VB_W - PAD_R, plotT = PAD_T, plotB = VB_H - PAD_B;
+    var plotW = plotR - plotL, plotH = plotB - plotT;
+
+    var xAx = CT.axisScale(pts.map(function (p) { return p.x; }), 6, state.opts.xZero);
+    var yAx = CT.axisScale(pts.map(function (p) { return p.y; }), 5, state.opts.yZero);
+
+    function X(v) { return plotL + ((v - xAx.min) / (xAx.max - xAx.min)) * plotW; }
+    function Y(v) { return plotB - ((v - yAx.min) / (yAx.max - yAx.min)) * plotH; }
+
+    /* --- 格線與刻度 --- */
+    yAx.ticks.forEach(function (t) {
+      var y = Y(t);
+      if (state.opts.grid) {
+        svg.appendChild(el('line', { x1: plotL, y1: y, x2: plotR, y2: y, stroke: '#eeeeee', 'stroke-width': 1 }));
+      }
+      svg.appendChild(el('text', {
+        x: plotL - 10, y: y + 4, 'text-anchor': 'end',
+        'font-size': 11, fill: '#555555', 'font-family': 'sans-serif'
+      }, fmt(t)));
+    });
+    xAx.ticks.forEach(function (t) {
+      var x = X(t);
+      if (state.opts.grid) {
+        svg.appendChild(el('line', { x1: x, y1: plotT, x2: x, y2: plotB, stroke: '#eeeeee', 'stroke-width': 1 }));
+      }
+      svg.appendChild(el('text', {
+        x: x, y: plotB + 17, 'text-anchor': 'middle',
+        'font-size': 11, fill: '#555555', 'font-family': 'sans-serif'
+      }, fmt(t)));
+    });
+
+    svg.appendChild(el('line', { x1: plotL, y1: plotT, x2: plotL, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 }));
+    svg.appendChild(el('line', { x1: plotL, y1: plotB, x2: plotR, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 }));
+
+    /* --- 軸名稱 --- */
+    if (state.xName) {
+      svg.appendChild(el('text', {
+        x: (plotL + plotR) / 2, y: plotB + 40, 'text-anchor': 'middle',
+        'font-size': 12, fill: '#444444', 'font-family': 'sans-serif'
+      }, state.xName));
+    }
+    if (state.yName) {
+      var yl = el('text', {
+        x: 18, y: (plotT + plotB) / 2, 'text-anchor': 'middle',
+        'font-size': 12, fill: '#444444', 'font-family': 'sans-serif'
+      }, state.yName);
+      yl.setAttribute('transform', 'rotate(-90 18 ' + ((plotT + plotB) / 2) + ')');
+      svg.appendChild(yl);
+    }
+
+    /* --- 象限參考線 --- */
+    var rx = null, ry = null;
+    if (state.refMode === 'custom') { rx = state.refX; ry = state.refY; }
+    else if (state.refMode === 'median') { rx = median(pts.map(function (p) { return p.x; })); ry = median(pts.map(function (p) { return p.y; })); }
+    else if (state.refMode === 'mean') { rx = mean(pts.map(function (p) { return p.x; })); ry = mean(pts.map(function (p) { return p.y; })); }
+
+    if (rx !== null && isFinite(rx) && rx >= xAx.min && rx <= xAx.max) {
+      svg.appendChild(el('line', {
+        x1: X(rx), y1: plotT, x2: X(rx), y2: plotB,
+        stroke: '#999999', 'stroke-width': 1.2, 'stroke-dasharray': '5 4'
+      }));
+      svg.appendChild(el('text', {
+        x: X(rx) + 4, y: plotT + 12, 'font-size': 10, fill: '#888888', 'font-family': 'sans-serif'
+      }, refLabel() + ' ' + fmt(rx)));
+    }
+    if (ry !== null && isFinite(ry) && ry >= yAx.min && ry <= yAx.max) {
+      svg.appendChild(el('line', {
+        x1: plotL, y1: Y(ry), x2: plotR, y2: Y(ry),
+        stroke: '#999999', 'stroke-width': 1.2, 'stroke-dasharray': '5 4'
+      }));
+      svg.appendChild(el('text', {
+        x: plotR - 4, y: Y(ry) - 5, 'text-anchor': 'end',
+        'font-size': 10, fill: '#888888', 'font-family': 'sans-serif'
+      }, refLabel() + ' ' + fmt(ry)));
+    }
+    function refLabel() {
+      return state.refMode === 'median' ? '中位數' : state.refMode === 'mean' ? '平均' : '';
+    }
+
+    /* --- 趨勢線（最小平方法） --- */
+    if (state.opts.trend && pts.length >= 2) {
+      var n = pts.length;
+      var sx = 0, sy = 0, sxy = 0, sxx = 0;
+      pts.forEach(function (p) { sx += p.x; sy += p.y; sxy += p.x * p.y; sxx += p.x * p.x; });
+      var denom = n * sxx - sx * sx;
+      if (Math.abs(denom) > 1e-9) {   // 所有 x 相同時斜率無定義，直接不畫
+        var slope = (n * sxy - sx * sy) / denom;
+        var intercept = (sy - slope * sx) / n;
+        // 只畫在座標範圍內的線段，並把 y 夾在軸範圍內免得衝出畫布
+        var x1 = xAx.min, x2 = xAx.max;
+        var y1 = slope * x1 + intercept, y2 = slope * x2 + intercept;
+        var c1 = clampSeg(x1, y1, x2, y2, yAx.min, yAx.max, slope, intercept);
+        if (c1) {
+          svg.appendChild(el('line', {
+            x1: X(c1.x1), y1: Y(c1.y1), x2: X(c1.x2), y2: Y(c1.y2),
+            stroke: '#111111', 'stroke-width': 1.4, 'stroke-dasharray': '7 4', 'stroke-opacity': 0.55
+          }));
+        }
+      }
+    }
+
+    /* --- 氣泡大小：面積正比於數值，不是半徑 --- */
+    var sizes = pts.map(function (p) { return (typeof p.size === 'number' && isFinite(p.size) && p.size > 0) ? p.size : null; });
+    var hasSize = sizes.some(function (s) { return s !== null; });
+    var maxSize = hasSize ? Math.max.apply(null, sizes.filter(function (s) { return s !== null; })) : 1;
+    var R_MAX = 26;
+    function radius(sz) {
+      if (!hasSize || sz === null || maxSize <= 0) return 6.5;
+      // 面積正比於數值 ⇒ 半徑正比於平方根，而且必須從 0 起算。
+      // 早期版本寫成 R_MIN + (R_MAX-R_MIN)*sqrt(...)，那個底線會破壞比例：
+      // 100 vs 400（4 倍）畫出來只有 2.81 倍面積，等於默默壓縮了差距。
+      // 這裡只保留 2.5px 的下限避免極小值變成看不見的點——那只在數值低於
+      // 最大值 0.9% 時才會作用，對比例的影響可以忽略。
+      return Math.max(2.5, R_MAX * Math.sqrt(sz / maxSize));
+    }
+
+    /* --- 點（大的先畫，避免小點被蓋住） --- */
+    var drawOrder = pts.map(function (p, i) { return { p: p, r: radius(sizes[i]) }; })
+                       .sort(function (a, b) { return b.r - a.r; });
+
+    drawOrder.forEach(function (d) {
+      var p = d.p;
+      svg.appendChild(el('circle', {
+        cx: X(p.x), cy: Y(p.y), r: d.r,
+        fill: p.color, 'fill-opacity': hasSize ? 0.55 : 0.85,
+        stroke: p.color, 'stroke-width': 1.5
+      }));
+    });
+
+    if (state.opts.labels) {
+      drawOrder.forEach(function (d) {
+        var p = d.p;
+        svg.appendChild(el('text', {
+          x: X(p.x), y: Y(p.y) - d.r - 5, 'text-anchor': 'middle',
+          'font-size': 10.5, fill: '#333333', 'font-weight': 500, 'font-family': 'sans-serif'
+        }, p.name || ''));
+      });
+    }
+
+    /* --- hover 熱區 --- */
+    drawOrder.forEach(function (d) {
+      var p = d.p;
+      var tip = '<b>' + CT.escapeHtml(p.name || '(未命名)') + '</b><br>' +
+        CT.escapeHtml(state.xName || 'X') + '：' + fmt(p.x) + '<br>' +
+        CT.escapeHtml(state.yName || 'Y') + '：' + fmt(p.y) +
+        (typeof p.size === 'number' && isFinite(p.size) ? '<br>大小：' + fmt(p.size) : '');
+      svg.appendChild(el('circle', {
+        cx: X(p.x), cy: Y(p.y), r: Math.max(d.r, 9), fill: 'transparent',
+        'data-hit': '1', 'data-tip-html': tip, style: 'cursor:pointer;'
+      }));
+    });
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+  }
+
+  /* 把趨勢線段夾進 y 軸範圍：超出範圍的部分改用邊界反推 x，線才不會衝出繪圖區 */
+  function clampSeg(x1, y1, x2, y2, yMin, yMax, slope, intercept) {
+    function fix(x, y) {
+      if (y < yMin) return { x: (yMin - intercept) / slope, y: yMin };
+      if (y > yMax) return { x: (yMax - intercept) / slope, y: yMax };
+      return { x: x, y: y };
+    }
+    if (Math.abs(slope) < 1e-12) {
+      if (y1 < yMin || y1 > yMax) return null;
+      return { x1: x1, y1: y1, x2: x2, y2: y2 };
+    }
+    var a = fix(x1, y1), b = fix(x2, y2);
+    if (!isFinite(a.x) || !isFinite(b.x)) return null;
+    return { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+  }
+
+  function median(a) {
+    var s = a.slice().sort(function (x, y) { return x - y; });
+    var m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+  function mean(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到點會顯示完整座標。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.points)) { CT.toast('JSON 缺少 points 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '',
+      xName: o.xName || '', yName: o.yName || '',
+      refMode: ['none', 'median', 'mean', 'custom'].indexOf(o.refMode) >= 0 ? o.refMode : 'none',
+      refX: num(o.refX, 0), refY: num(o.refY, 0),
+      points: [], opts: {}
+    };
+    var d = { labels: true, grid: true, trend: false, xZero: false, yZero: false };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.points || []).forEach(function (p, i) {
+      var sz = (p.size === null || p.size === undefined || p.size === '') ? null : num(p.size, null);
+      s.points.push({
+        name: p.name || ('點' + (i + 1)),
+        x: num(p.x, 0), y: num(p.y, 0), size: sz,
+        color: p.color || CT.paletteAt(i)
+      });
+    });
+    return s;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title; $('caption').value = state.caption;
+    $('xName').value = state.xName; $('yName').value = state.yName;
+    $('refMode').value = state.refMode; $('refX').value = state.refX; $('refY').value = state.refY;
+    $('customRef').style.display = state.refMode === 'custom' ? '' : 'none';
+    $('optLabels').checked = state.opts.labels; $('optGrid').checked = state.opts.grid;
+    $('optTrend').checked = state.opts.trend;
+    $('optXZero').checked = state.opts.xZero; $('optYZero').checked = state.opts.yZero;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'caption', 'xName', 'yName'].forEach(function (id) {
+    $(id).addEventListener('input', function () { state[id] = this.value; render(); });
+  });
+  $('refMode').addEventListener('change', function () {
+    state.refMode = this.value;
+    $('customRef').style.display = state.refMode === 'custom' ? '' : 'none';
+    render();
+  });
+  $('refX').addEventListener('input', function () { state.refX = num(this.value, 0); render(); });
+  $('refY').addEventListener('input', function () { state.refY = num(this.value, 0); render(); });
+  [['optLabels', 'labels'], ['optGrid', 'grid'], ['optTrend', 'trend'],
+   ['optXZero', 'xZero'], ['optYZero', 'yZero']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { state.opts[p[1]] = this.checked; render(); });
+  });
+
+  $('addPt').addEventListener('click', function () {
+    state.points.push({ name: '點' + (state.points.length + 1), x: 0, y: 0, size: null,
+                        color: CT.paletteAt(state.points.length) });
+    renderList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.points = []; renderList(); render(); CT.toast('已清空');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'scatter-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  document.addEventListener('wheel', function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'number') a.blur();
+  }, { passive: true });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '同業估值 vs 成長率（示意）',
+      caption: '氣泡大小＝市值。資料來源：各公司最新 10-Q（示意數字）',
+      xName: '營收成長率 (%)', yName: '本益比 (x)',
+      refMode: 'median',
+      opts: { labels: true, grid: true, trend: false, xZero: false, yZero: false },
+      points: [
+        { name: 'A 公司', x: 32, y: 28, size: 820, color: '#2563eb' },
+        { name: 'B 公司', x: 18, y: 22, size: 410, color: '#dc2626' },
+        { name: 'C 公司', x: 45, y: 41, size: 1250, color: '#16a34a' },
+        { name: 'D 公司', x: 8, y: 14, size: 190, color: '#d97706' },
+        { name: 'E 公司', x: 26, y: 17, size: 300, color: '#7c3aed' },
+        { name: 'F 公司', x: 12, y: 33, size: 240, color: '#0891b2' }
+      ]
+    });
+    syncToInputs(); renderList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.points) && draft.points.length) {
+    state = normalize(draft);
+    syncToInputs(); renderList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

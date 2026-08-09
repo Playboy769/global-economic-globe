@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>瀑布圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-row { grid-template-columns: 1fr 74px 76px 22px; }
+  .item-row select { padding: 5px 3px; }
+  .sw-row { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: center; margin-top: 8px; }
+  .sw-row span { font-size: 11.5px; color: var(--sub); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Waterfall</span>
+    <h1>瀑布圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與單位</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 營業利益 QoQ 橋接">
+      <label>數值單位（選填）</label>
+      <input type="text" id="unit" placeholder="例如 百萬美元">
+    </div>
+
+    <div class="section">
+      <div class="section-title">橋接項目</div>
+      <div class="item-list" id="itemList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無項目，按下方「新增項目」</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addItem">＋ 增減項</button>
+        <button class="btn ghost small" id="addSubtotal">＋ 小計</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+        <button class="btn ghost small" id="clearBtn">清空</button>
+      </div>
+      <div class="hint-text">
+        <b>起點／小計／結束</b>的數值欄位會被忽略——它們一律顯示到當下為止的累計，
+        自己填的數字若跟累計對不上反而會造成誤讀。只有<b>增減項</b>要填值，負數就打負號。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色</div>
+      <div class="sw-row"><input type="color" id="cUp" value="#16a34a"><span>增加項</span></div>
+      <div class="sw-row"><input type="color" id="cDown" value="#dc2626"><span>減少項</span></div>
+      <div class="sw-row"><input type="color" id="cBase" value="#334155"><span>起點／小計／結束</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optValues" checked><label for="optValues">標示數值</label></div>
+      <div class="check-row"><input type="checkbox" id="optConn" checked><label for="optConn">階梯連接線</label></div>
+      <div class="check-row"><input type="checkbox" id="optGrid" checked><label for="optGrid">水平格線</label></div>
+      <div class="check-row"><input type="checkbox" id="optCum"><label for="optCum">同時標示累計值</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：FY26Q3 10-Q 管理層討論">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900, VB_H = 500;
+  var PAD_T = 52, PAD_B = 76, PAD_L = 78, PAD_R = 30;
+  var DRAFT_KEY = 'chart-tools:waterfall';
+
+  var TYPES = { start: '起點', delta: '增減項', subtotal: '小計', end: '結束' };
+
+  var state = {
+    title: '', caption: '', unit: '',
+    colors: { up: '#16a34a', down: '#dc2626', base: '#334155' },
+    items: [],
+    opts: { values: true, conn: true, grid: true, cum: false }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ================= 項目清單 ================= */
+  function renderItemList() {
+    var list = $('itemList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.items.length ? 'none' : 'block';
+
+    state.items.forEach(function (it, idx) {
+      var row = document.createElement('div');
+      row.className = 'item-row';
+      var opts = Object.keys(TYPES).map(function (k) {
+        return '<option value="' + k + '"' + (it.type === k ? ' selected' : '') + '>' + TYPES[k] + '</option>';
+      }).join('');
+      var isAuto = it.type !== 'delta';
+      row.innerHTML =
+        '<input type="text" value="' + CT.escapeHtml(it.name) + '" placeholder="名稱">' +
+        '<input type="number" step="any" value="' + it.value + '"' +
+          (isAuto ? ' disabled title="自動＝當下累計"' : '') + '>' +
+        '<select>' + opts + '</select>' +
+        '<button class="item-del" title="刪除">×</button>';
+
+      var nameI = row.querySelector('input[type=text]');
+      var valI = row.querySelector('input[type=number]');
+      var typeS = row.querySelector('select');
+
+      nameI.addEventListener('input', function () { it.name = this.value; render(); });
+      valI.addEventListener('input', function () {
+        var v = parseFloat(this.value);
+        it.value = isFinite(v) ? v : 0;
+        render();
+      });
+      typeS.addEventListener('change', function () {
+        it.type = this.value;
+        renderItemList();   // 數值欄要跟著 enable/disable
+        render();
+      });
+      row.querySelector('.item-del').addEventListener('click', function () {
+        state.items.splice(idx, 1); renderItemList(); render();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  /* ================= 版面計算 =================
+   * 先跑一遍累計，算出每根長條的起訖值。起點以外的第一根若是 delta，
+   * 就從 0 開始堆，不會因為缺「起點」項而整張圖畫不出來。 */
+  function layout() {
+    var run = 0;
+    return state.items.map(function (it) {
+      var v = isFinite(it.value) ? it.value : 0;
+      var lo, hi, shown, delta;
+      if (it.type === 'start') {
+        lo = 0; hi = v; run = v; shown = v; delta = null;
+      } else if (it.type === 'delta') {
+        lo = run; run += v; hi = run; shown = v; delta = v;
+      } else { // subtotal / end：一律顯示累計，忽略自填值
+        lo = 0; hi = run; shown = run; delta = null;
+      }
+      return {
+        item: it, lo: Math.min(lo, hi), hi: Math.max(lo, hi),
+        shown: shown, delta: delta, cum: run
+      };
+    });
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 28, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    var bars = layout();
+    if (!bars.length) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '新增至少一個項目後即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    var plotL = PAD_L, plotR = VB_W - PAD_R, plotT = PAD_T, plotB = VB_H - PAD_B;
+    var plotW = plotR - plotL, plotH = plotB - plotT;
+
+    // 瀑布圖一定要含 0，否則階梯的相對高度會失真
+    var vals = [0];
+    bars.forEach(function (b) { vals.push(b.lo, b.hi); });
+    var ax = CT.axisScale(vals, 5, true);
+
+    function yAt(v) { return plotB - ((v - ax.min) / (ax.max - ax.min)) * plotH; }
+
+    /* --- 格線與刻度 --- */
+    ax.ticks.forEach(function (t) {
+      var y = yAt(t);
+      if (state.opts.grid) {
+        svg.appendChild(el('line', {
+          x1: plotL, y1: y, x2: plotR, y2: y,
+          stroke: Math.abs(t) < 1e-9 ? '#bbbbbb' : '#eeeeee', 'stroke-width': 1
+        }));
+      }
+      svg.appendChild(el('text', {
+        x: plotL - 10, y: y + 4, 'text-anchor': 'end',
+        'font-size': 11, fill: '#555555', 'font-family': 'sans-serif'
+      }, fmt(t)));
+    });
+    if (state.unit) {
+      svg.appendChild(el('text', {
+        x: plotL - 10, y: plotT - 12, 'text-anchor': 'end',
+        'font-size': 11, fill: '#777777', 'font-family': 'sans-serif'
+      }, state.unit));
+    }
+
+    svg.appendChild(el('line', { x1: plotL, y1: plotT, x2: plotL, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 }));
+    svg.appendChild(el('line', { x1: plotL, y1: yAt(0), x2: plotR, y2: yAt(0), stroke: '#111111', 'stroke-width': 1.2 }));
+
+    var band = plotW / bars.length;
+    var barW = Math.min(64, band * 0.62);
+
+    /* --- 連接線（畫在長條之下） --- */
+    if (state.opts.conn) {
+      for (var i = 0; i < bars.length - 1; i++) {
+        var cx1 = plotL + band * i + band / 2 + barW / 2;
+        var cx2 = plotL + band * (i + 1) + band / 2 - barW / 2;
+        var cy = yAt(bars[i].cum);
+        svg.appendChild(el('line', {
+          x1: cx1, y1: cy, x2: cx2, y2: cy,
+          stroke: '#999999', 'stroke-width': 1, 'stroke-dasharray': '3 3'
+        }));
+      }
+    }
+
+    /* --- 長條 --- */
+    bars.forEach(function (b, i) {
+      var cx = plotL + band * i + band / 2;
+      var x = cx - barW / 2;
+      var yTop = yAt(b.hi), yBot = yAt(b.lo);
+      var h = Math.max(1.5, yBot - yTop);   // 值為 0 時仍留一條可見的細線
+
+      var color = b.item.type === 'delta'
+        ? (b.delta >= 0 ? state.colors.up : state.colors.down)
+        : state.colors.base;
+
+      svg.appendChild(el('rect', {
+        x: x, y: yTop, width: barW, height: h, fill: color, 'fill-opacity': 0.9, rx: 2
+      }));
+
+      /* 數值標籤：正增減標在長條上方，負增減標在下方，
+         避免負值標籤跟下一根的連接線疊在一起 */
+      if (state.opts.values) {
+        var txt = (b.item.type === 'delta' && b.delta > 0 ? '+' : '') + fmt(b.shown);
+        var below = b.item.type === 'delta' && b.delta < 0;
+        svg.appendChild(el('text', {
+          x: cx, y: below ? yBot + 15 : yTop - 7, 'text-anchor': 'middle',
+          'font-size': 11.5, 'font-weight': 600,
+          fill: b.item.type === 'delta' ? color : '#111111', 'font-family': 'sans-serif'
+        }, txt));
+      }
+      if (state.opts.cum && b.item.type === 'delta') {
+        svg.appendChild(el('text', {
+          x: cx, y: yAt(b.cum) + (b.delta < 0 ? -6 : 0) - 20, 'text-anchor': 'middle',
+          'font-size': 10, fill: '#888888', 'font-family': 'sans-serif'
+        }, '(' + fmt(b.cum) + ')'));
+      }
+
+      /* X 軸名稱：長名稱轉 30 度 */
+      var nm = b.item.name || '(未命名)';
+      var rotate = nm.length * 12 > band;
+      var t = el('text', {
+        x: cx, y: plotB + (rotate ? 14 : 20),
+        'text-anchor': rotate ? 'end' : 'middle',
+        'font-size': 11, fill: '#333333',
+        'font-weight': b.item.type === 'delta' ? 400 : 600,
+        'font-family': 'sans-serif'
+      }, nm);
+      if (rotate) t.setAttribute('transform', 'rotate(-30 ' + cx + ' ' + (plotB + 14) + ')');
+      svg.appendChild(t);
+
+      /* hover 熱區 */
+      var tip = '<b>' + CT.escapeHtml(nm) + '</b><br>' + TYPES[b.item.type] + '：' +
+        (b.item.type === 'delta' && b.delta > 0 ? '+' : '') + fmt(b.shown) +
+        (state.unit ? ' ' + CT.escapeHtml(state.unit) : '');
+      if (b.item.type === 'delta') tip += '<br>累計至此：' + fmt(b.cum);
+      /* 熱區只包住長條本身。之前是從長條一路延伸到 0 軸，浮空的增減項因此
+         有一大片空白也會觸發提示（「匯率」那種薄長條熱區高達本體的 38 倍）。
+         薄長條給一個最小可點高度，避免 8px 的條難以指到。 */
+      var hitH = Math.max(h + 8, 22);
+      svg.appendChild(el('rect', {
+        x: x, y: yTop + h / 2 - hitH / 2, width: barW, height: hitH,
+        fill: 'transparent', 'data-hit': '1', 'data-tip-html': tip, style: 'cursor:pointer;'
+      }));
+    });
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+  }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到長條會顯示該項貢獻與累計。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.items)) { CT.toast('JSON 缺少 items 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderItemList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      colors: {
+        up: (o.colors && o.colors.up) || '#16a34a',
+        down: (o.colors && o.colors.down) || '#dc2626',
+        base: (o.colors && o.colors.base) || '#334155'
+      },
+      items: [], opts: {}
+    };
+    var d = { values: true, conn: true, grid: true, cum: false };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.items || []).forEach(function (x, i) {
+      var v = typeof x.value === 'number' ? x.value : parseFloat(x.value);
+      s.items.push({
+        name: x.name || ('項目' + (i + 1)),
+        value: isFinite(v) ? v : 0,
+        type: TYPES[x.type] ? x.type : 'delta'
+      });
+    });
+    return s;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title; $('caption').value = state.caption; $('unit').value = state.unit;
+    $('cUp').value = state.colors.up; $('cDown').value = state.colors.down; $('cBase').value = state.colors.base;
+    $('optValues').checked = state.opts.values; $('optConn').checked = state.opts.conn;
+    $('optGrid').checked = state.opts.grid; $('optCum').checked = state.opts.cum;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'caption', 'unit'].forEach(function (id) {
+    $(id).addEventListener('input', function () { state[id] = this.value; render(); });
+  });
+  [['cUp', 'up'], ['cDown', 'down'], ['cBase', 'base']].forEach(function (p) {
+    $(p[0]).addEventListener('input', function () { state.colors[p[1]] = this.value; render(); });
+  });
+  [['optValues', 'values'], ['optConn', 'conn'], ['optGrid', 'grid'], ['optCum', 'cum']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { state.opts[p[1]] = this.checked; render(); });
+  });
+
+  $('addItem').addEventListener('click', function () {
+    state.items.push({ name: '項目' + (state.items.length + 1), value: 100, type: 'delta' });
+    renderItemList(); render();
+  });
+  $('addSubtotal').addEventListener('click', function () {
+    state.items.push({ name: '小計', value: 0, type: 'subtotal' });
+    renderItemList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.items = []; renderItemList(); render(); CT.toast('已清空');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'waterfall-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  document.addEventListener('wheel', function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'number') a.blur();
+  }, { passive: true });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '營業利益 QoQ 橋接（示意）',
+      caption: '資料來源：管理層討論＋10-Q（示意數字）',
+      unit: '百萬美元',
+      opts: { values: true, conn: true, grid: true, cum: false },
+      items: [
+        { name: 'FY26Q2 營業利益', value: 1820, type: 'start' },
+        { name: '出貨量成長', value: 340, type: 'delta' },
+        { name: 'ASP 下滑', value: -180, type: 'delta' },
+        { name: '匯率', value: 55, type: 'delta' },
+        { name: '毛利小計', value: 0, type: 'subtotal' },
+        { name: '研發費用', value: -210, type: 'delta' },
+        { name: '一次性訴訟費用', value: -95, type: 'delta' },
+        { name: 'FY26Q3 營業利益', value: 0, type: 'end' }
+      ]
+    });
+    syncToInputs(); renderItemList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.items) && draft.items.length) {
+    state = normalize(draft);
+    syncToInputs(); renderItemList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

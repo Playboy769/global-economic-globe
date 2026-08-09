@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圓餅／甜甜圈圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-row { grid-template-columns: 28px 1fr 74px 22px; }
+  .range-row { display: flex; align-items: center; gap: 8px; }
+  .range-row input[type=range] { flex: 1; accent-color: var(--ink); }
+  .range-row .val { font-size: 11px; color: var(--sub); width: 34px; text-align: right; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Pie / Donut</span>
+    <h1>圓餅／甜甜圈圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與單位</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 FY26Q3 營收結構">
+      <label>數值單位（選填）</label>
+      <input type="text" id="unit" placeholder="例如 百萬美元">
+    </div>
+
+    <div class="section">
+      <div class="section-title">切片</div>
+      <div class="item-list" id="sliceList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無切片，按下方「新增切片」</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addSlice">＋ 新增切片</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="hint-text">
+        百分比由工具依數值自動換算，直接填原始金額即可，不需要自己先算成 %。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">造型</div>
+      <label>中空比例（0 = 實心圓餅）</label>
+      <div class="range-row">
+        <input type="range" id="inner" min="0" max="80" step="5" value="0">
+        <span class="val" id="innerVal">0%</span>
+      </div>
+      <label>起始角度</label>
+      <div class="range-row">
+        <input type="range" id="startAngle" min="0" max="350" step="10" value="0">
+        <span class="val" id="startVal">0°</span>
+      </div>
+      <label>排序</label>
+      <select id="sort">
+        <option value="desc">由大到小</option>
+        <option value="none">保持輸入順序</option>
+      </select>
+      <label>中央文字（僅甜甜圈可見）</label>
+      <input type="text" id="centerText" placeholder="留白＝自動顯示合計">
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optPct" checked><label for="optPct">切片內標示百分比</label></div>
+      <div class="check-row"><input type="checkbox" id="optLegendVal" checked><label for="optLegendVal">圖例顯示數值</label></div>
+      <div class="check-row"><input type="checkbox" id="optSep" checked><label for="optSep">切片間白色分隔線</label></div>
+      <div class="hint-text">
+        小於 6% 的切片不會在圓內標字（會壓到隔壁），改由右側圖例讀數。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：FY26Q3 10-Q Note 12">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900, VB_H_MIN = 460;
+  var CX = 260, R = 150;
+  var LEG_X = 490, LEG_ROW_H = 26;
+  var DRAFT_KEY = 'chart-tools:pie';
+
+  var state = {
+    title: '', caption: '', unit: '', centerText: '',
+    inner: 0, startAngle: 0, sort: 'desc',
+    slices: [],
+    opts: { pct: true, legendVal: true, sep: true }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ================= 切片清單 ================= */
+  function renderSliceList() {
+    var list = $('sliceList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.slices.length ? 'none' : 'block';
+
+    state.slices.forEach(function (s, idx) {
+      var row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML =
+        '<input type="color" value="' + s.color + '">' +
+        '<input type="text" value="' + CT.escapeHtml(s.name) + '" placeholder="名稱">' +
+        '<input type="number" step="any" value="' + s.value + '">' +
+        '<button class="item-del" title="刪除">×</button>';
+      var inputs = row.querySelectorAll('input');
+      inputs[0].addEventListener('input', function () { s.color = this.value; render(); });
+      inputs[1].addEventListener('input', function () { s.name = this.value; render(); });
+      inputs[2].addEventListener('input', function () {
+        var v = parseFloat(this.value);
+        s.value = isFinite(v) ? v : 0;
+        render();
+      });
+      row.querySelector('.item-del').addEventListener('click', function () {
+        state.slices.splice(idx, 1); renderSliceList(); render();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  /* ================= 幾何 ================= */
+  function polar(cx, cy, r, deg) {
+    var rad = (deg - 90) * Math.PI / 180;   // -90 讓 0° 落在 12 點鐘方向
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  /* 環形扇區路徑。ri=0 時退化成一般圓餅（從圓心畫） */
+  function arcPath(cx, cy, ro, ri, a0, a1) {
+    var large = (a1 - a0) > 180 ? 1 : 0;
+    var p0 = polar(cx, cy, ro, a0), p1 = polar(cx, cy, ro, a1);
+    if (ri <= 0) {
+      return 'M' + cx + ',' + cy + ' L' + p0.x + ',' + p0.y +
+             ' A' + ro + ',' + ro + ' 0 ' + large + ' 1 ' + p1.x + ',' + p1.y + ' Z';
+    }
+    var q1 = polar(cx, cy, ri, a1), q0 = polar(cx, cy, ri, a0);
+    return 'M' + p0.x + ',' + p0.y +
+           ' A' + ro + ',' + ro + ' 0 ' + large + ' 1 ' + p1.x + ',' + p1.y +
+           ' L' + q1.x + ',' + q1.y +
+           ' A' + ri + ',' + ri + ' 0 ' + large + ' 0 ' + q0.x + ',' + q0.y + ' Z';
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+
+    // 負值在圓餅圖沒有意義（無法佔一塊面積），直接濾掉而不是取絕對值——
+    // 取絕對值會讓「虧損部門」看起來像有貢獻，是會誤導的處理方式。
+    var slices = state.slices.filter(function (s) { return isFinite(s.value) && s.value > 0; });
+    if (state.sort === 'desc') {
+      slices = slices.slice().sort(function (a, b) { return b.value - a.value; });
+    }
+    var total = slices.reduce(function (a, s) { return a + s.value; }, 0);
+
+    /* 切片一多，圖例會比圓還高。固定 460 高的話後面幾列會掉到畫布外面，
+       所以畫布高度取「圓」與「圖例」的較高者動態決定，圓再置中於其中。 */
+    var legendH = slices.length * LEG_ROW_H;
+    var topPad = state.title ? 52 : 26;
+    var contentH = Math.max(R * 2 + 20, legendH);
+    var VB_H = Math.max(VB_H_MIN, topPad + contentH + 26);
+    var CY = topPad + contentH / 2;
+    svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 30, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (!slices.length || total <= 0) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '新增至少一個正值切片後即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    var ri = R * (state.inner / 100);
+    var ang = state.startAngle;
+
+    /* --- 扇形 --- */
+    slices.forEach(function (s) {
+      var frac = s.value / total;
+      var sweep = frac * 360;
+      var a0 = ang, a1 = ang + sweep;
+      ang = a1;
+
+      // 單一切片佔 100% 時，a1-a0 = 360，起訖點重合會讓 arc 整個消失，
+      // 改畫整圓（甜甜圈則用 stroke 畫環）
+      var node;
+      if (sweep >= 359.999) {
+        if (ri > 0) {
+          node = el('circle', {
+            cx: CX, cy: CY, r: (R + ri) / 2, fill: 'none',
+            stroke: s.color, 'stroke-width': R - ri
+          });
+        } else {
+          node = el('circle', { cx: CX, cy: CY, r: R, fill: s.color });
+        }
+      } else {
+        node = el('path', {
+          d: arcPath(CX, CY, R, ri, a0, a1),
+          fill: s.color,
+          stroke: state.opts.sep ? '#ffffff' : 'none',
+          'stroke-width': state.opts.sep ? 2 : 0
+        });
+      }
+      node.setAttribute('data-dim', s.name);
+      svg.appendChild(node);
+
+      // 切片內百分比：太窄就不標，交給圖例
+      if (state.opts.pct && frac >= 0.06) {
+        var mid = (a0 + a1) / 2;
+        var lr = ri > 0 ? (ri + R) / 2 : R * 0.62;
+        var p = polar(CX, CY, lr, mid);
+        var tx = el('text', {
+          x: p.x, y: p.y + 4, 'text-anchor': 'middle',
+          'font-size': 12, 'font-weight': 600, fill: '#ffffff', 'font-family': 'sans-serif'
+        }, (frac * 100).toFixed(1) + '%');
+        tx.setAttribute('data-dim', s.name);
+        svg.appendChild(tx);
+      }
+    });
+
+    /* --- 甜甜圈中央文字 --- */
+    if (ri > 0) {
+      var ct = state.centerText || fmt(total);
+      var sub = state.centerText ? '' : (state.unit || '合計');
+      svg.appendChild(el('text', {
+        x: CX, y: CY + (sub ? -2 : 6), 'text-anchor': 'middle',
+        'font-size': Math.min(24, Math.max(13, ri / 2.6)), 'font-weight': 600,
+        fill: '#111111', 'font-family': 'sans-serif'
+      }, ct));
+      if (sub) {
+        svg.appendChild(el('text', {
+          x: CX, y: CY + 16, 'text-anchor': 'middle',
+          'font-size': 11, fill: '#777777', 'font-family': 'sans-serif'
+        }, sub));
+      }
+    }
+
+    /* --- 圖例 --- */
+    var ly = CY - legendH / 2 + 17;
+    var nameX = LEG_X + 20;
+    slices.forEach(function (s) {
+      var frac = s.value / total;
+      var right = (frac * 100).toFixed(1) + '%';
+      if (state.opts.legendVal) right = fmt(s.value) + (state.unit ? ' ' + state.unit : '') + '　' + right;
+
+      // 名稱欄的可用寬度＝到右側數值欄起點為止，超過就截斷，
+      // 否則長部門名會直接壓在數值上變成一團看不懂的字
+      var rightW = CT.textWidth(right, 12);
+      var nameMaxW = (VB_W - 30 - rightW - 12) - nameX;
+      var name = CT.truncateToWidth(s.name || '(未命名)', 12.5, Math.max(40, nameMaxW));
+
+      var g = el('g', { 'data-dim': s.name });
+      g.appendChild(el('rect', { x: LEG_X, y: ly - 9, width: 12, height: 12, rx: 2, fill: s.color }));
+      g.appendChild(el('text', {
+        x: nameX, y: ly, 'font-size': 12.5, fill: '#222222', 'font-family': 'sans-serif'
+      }, name));
+      g.appendChild(el('text', {
+        x: VB_W - 30, y: ly, 'text-anchor': 'end',
+        'font-size': 12, fill: '#555555', 'font-family': 'sans-serif'
+      }, right));
+      svg.appendChild(g);
+      ly += LEG_ROW_H;
+    });
+
+    /* --- hover 熱區：疊在扇形上的同形狀透明路徑 --- */
+    ang = state.startAngle;
+    slices.forEach(function (s) {
+      var frac = s.value / total;
+      var a0 = ang, a1 = ang + frac * 360;
+      ang = a1;
+      var hit;
+      if (frac >= 0.999999) {
+        hit = el('circle', { cx: CX, cy: CY, r: R, fill: 'transparent' });
+      } else {
+        hit = el('path', { d: arcPath(CX, CY, R, ri, a0, a1), fill: 'transparent' });
+      }
+      hit.setAttribute('data-hit', '1');
+      hit.setAttribute('data-dim', s.name);
+      hit.setAttribute('style', 'cursor:pointer;');
+      hit.setAttribute('data-tip-html',
+        '<b>' + CT.escapeHtml(s.name || '(未命名)') + '</b><br>' +
+        fmt(s.value) + (state.unit ? ' ' + CT.escapeHtml(state.unit) : '') +
+        '　' + (frac * 100).toFixed(1) + '%');
+      svg.appendChild(hit);
+    });
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+  }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到切片會同時淡化其他切片並顯示數值。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.slices)) { CT.toast('JSON 缺少 slices 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderSliceList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      centerText: o.centerText || '',
+      inner: isFinite(+o.inner) ? Math.max(0, Math.min(80, +o.inner)) : 0,
+      startAngle: isFinite(+o.startAngle) ? ((+o.startAngle % 360) + 360) % 360 : 0,
+      sort: o.sort === 'none' ? 'none' : 'desc',
+      slices: [], opts: {}
+    };
+    var d = { pct: true, legendVal: true, sep: true };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.slices || []).forEach(function (x, i) {
+      var v = typeof x.value === 'number' ? x.value : parseFloat(x.value);
+      s.slices.push({
+        name: x.name || ('項目' + (i + 1)),
+        value: isFinite(v) ? v : 0,
+        color: x.color || CT.paletteAt(i)
+      });
+    });
+    return s;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title; $('caption').value = state.caption;
+    $('unit').value = state.unit; $('centerText').value = state.centerText;
+    $('inner').value = state.inner; $('innerVal').textContent = state.inner + '%';
+    $('startAngle').value = state.startAngle; $('startVal').textContent = state.startAngle + '°';
+    $('sort').value = state.sort;
+    $('optPct').checked = state.opts.pct;
+    $('optLegendVal').checked = state.opts.legendVal;
+    $('optSep').checked = state.opts.sep;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'caption', 'unit', 'centerText'].forEach(function (id) {
+    $(id).addEventListener('input', function () { state[id] = this.value; render(); });
+  });
+  $('inner').addEventListener('input', function () {
+    state.inner = +this.value; $('innerVal').textContent = state.inner + '%'; render();
+  });
+  $('startAngle').addEventListener('input', function () {
+    state.startAngle = +this.value; $('startVal').textContent = state.startAngle + '°'; render();
+  });
+  $('sort').addEventListener('change', function () { state.sort = this.value; render(); });
+  [['optPct', 'pct'], ['optLegendVal', 'legendVal'], ['optSep', 'sep']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { state.opts[p[1]] = this.checked; render(); });
+  });
+
+  $('addSlice').addEventListener('click', function () {
+    state.slices.push({
+      name: '項目' + (state.slices.length + 1),
+      value: 100,
+      color: CT.paletteAt(state.slices.length)
+    });
+    renderSliceList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.slices = []; renderSliceList(); render(); CT.toast('已清空');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'pie-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  document.addEventListener('wheel', function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'number') a.blur();
+  }, { passive: true });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: 'FY26Q3 營收結構（示意）',
+      caption: '資料來源：公司 10-Q 部門附註（示意數字）',
+      unit: '百萬美元',
+      inner: 55, startAngle: 0, sort: 'desc',
+      opts: { pct: true, legendVal: true, sep: true },
+      slices: [
+        { name: '資料中心', value: 5820, color: '#2563eb' },
+        { name: '行動裝置', value: 2140, color: '#dc2626' },
+        { name: '車用與工業', value: 1180, color: '#16a34a' },
+        { name: '消費性電子', value: 720, color: '#d97706' },
+        { name: '其他', value: 240, color: '#7c3aed' }
+      ]
+    });
+    syncToInputs(); renderSliceList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.slices) && draft.slices.length) {
+    state = normalize(draft);
+    syncToInputs(); renderSliceList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

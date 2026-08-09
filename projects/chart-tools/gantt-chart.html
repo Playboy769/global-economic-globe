@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甘特圖／時程區間工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-block { border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: #fff; }
+  .item-list { gap: 8px; max-height: 360px; }
+  .g-row1 { display: grid; grid-template-columns: 28px 1fr 22px; gap: 5px; align-items: center; }
+  .g-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px; }
+  .g-row3 { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 6px; align-items: center; }
+  .g-row2 input, .g-row3 input { padding: 5px 6px; font-size: 11px; }
+  .mini-label { font-size: 10px; color: var(--sub); display: block; margin: 0 0 2px; }
+  .mk-row { display: grid; grid-template-columns: 28px 1fr 92px 22px; gap: 5px; align-items: center; margin-bottom: 6px; }
+  .mk-row input { padding: 5px 6px; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Gantt / Timeline</span>
+    <h1>甘特圖／時程區間工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與時間軸</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 產能開出與長約履約時程">
+      <div class="row" style="margin-top:10px;">
+        <div class="col">
+          <label style="margin-top:0;">刻度單位</label>
+          <select id="scale">
+            <option value="quarter">季</option>
+            <option value="year">年</option>
+            <option value="month">月</option>
+          </select>
+        </div>
+        <div class="col">
+          <label style="margin-top:0;">列高</label>
+          <select id="rowH">
+            <option value="26">緊湊</option>
+            <option value="32" selected>標準</option>
+            <option value="40">寬鬆</option>
+          </select>
+        </div>
+      </div>
+      <div class="hint-text">
+        日期可寫 <code>2026</code>、<code>2026-Q3</code>、<code>2026-08</code> 或 <code>2026-08-09</code>，
+        四種混用也沒問題。時間軸範圍會自動涵蓋所有項目。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">時程項目</div>
+      <div class="item-list" id="itemList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無項目，按下方「新增項目」</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addItem">＋ 新增項目</button>
+        <button class="btn ghost small" id="addMilestone">＋ 里程碑</button>
+      </div>
+      <div class="hint-text">
+        「里程碑」是單一時間點（畫成菱形），適合認證通過、專利到期、財報日這類沒有工期的事件；
+        結束日期欄位會被忽略。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">垂直參考線</div>
+      <div id="markerList"></div>
+      <button class="btn ghost small" id="addMarker" style="width:100%;">＋ 新增參考線</button>
+      <div class="hint-text">用來標「今天」、「長約起算日」、「下次財報」等跨所有列的時間點。</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optGrid" checked><label for="optGrid">垂直格線</label></div>
+      <div class="check-row"><input type="checkbox" id="optAlt" checked><label for="optAlt">交替列底色</label></div>
+      <div class="check-row"><input type="checkbox" id="optDur"><label for="optDur">在長條上標示工期</label></div>
+      <div class="check-row"><input type="checkbox" id="optGroup" checked><label for="optGroup">顯示分組標題</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：FY26Q3 法說會＋10-K Item 1">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="seedBtn">載入範例</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el;
+
+  var VB_W = 900;
+  var LABEL_W = 210;          // 左側項目名稱欄
+  var PAD_L = 14, PAD_R = 24;
+  var DRAFT_KEY = 'chart-tools:gantt';
+
+  var state = {
+    title: '', caption: '', scale: 'quarter', rowH: 32,
+    items: [], markers: [],
+    opts: { grid: true, alt: true, dur: false, group: true }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ================= 日期解析 =================
+   * 統一換算成「小數月份」= year*12 + (month-1) + (day-1)/當月天數。
+   * 用月份而不是毫秒時間戳，是因為財報時程的顆粒度就是季/月，
+   * 而且能避開時區把 2026-01-01 解讀成前一年 12/31 的老問題。 */
+  function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); } // m 為 1-12
+
+  function parseDate(s) {
+    if (s === null || s === undefined) return null;
+    s = String(s).trim();
+    if (!s) return null;
+    var m;
+    if ((m = s.match(/^(\d{4})-?Q([1-4])$/i))) {
+      return (+m[1]) * 12 + (+m[2] - 1) * 3;
+    }
+    if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) {
+      var y = +m[1], mo = +m[2], d = +m[3];
+      if (mo < 1 || mo > 12) return null;
+      return y * 12 + (mo - 1) + (d - 1) / daysInMonth(y, mo);
+    }
+    if ((m = s.match(/^(\d{4})-(\d{1,2})$/))) {
+      if (+m[2] < 1 || +m[2] > 12) return null;
+      return (+m[1]) * 12 + (+m[2] - 1);
+    }
+    if ((m = s.match(/^(\d{4})$/))) return (+m[1]) * 12;
+    return null;
+  }
+
+  function labelFor(t, scale) {
+    var y = Math.floor(t / 12);
+    var mo = Math.round(t - y * 12);       // 刻度一定落在整月邊界
+    if (scale === 'year') return String(y);
+    if (scale === 'quarter') return y + ' Q' + (Math.floor(mo / 3) + 1);
+    return y + '/' + String(mo + 1).padStart(2, '0');
+  }
+
+  function stepMonths(scale) { return scale === 'year' ? 12 : scale === 'quarter' ? 3 : 1; }
+
+  /* 工期文字：>= 12 個月用「x 年」，否則用「x 個月」 */
+  function durText(a, b) {
+    var months = b - a;
+    if (months <= 0) return '';
+    if (months >= 12) {
+      var yv = months / 12;
+      return (Math.abs(yv - Math.round(yv)) < 0.05 ? Math.round(yv) : yv.toFixed(1)) + ' 年';
+    }
+    return (months < 1 ? months.toFixed(1) : Math.round(months)) + ' 個月';
+  }
+
+  /* ================= 編輯清單 ================= */
+  function renderItemList() {
+    var list = $('itemList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.items.length ? 'none' : 'block';
+
+    state.items.forEach(function (it, idx) {
+      var block = document.createElement('div');
+      block.className = 'item-block';
+      block.innerHTML =
+        '<div class="g-row1">' +
+          '<input type="color" value="' + it.color + '">' +
+          '<input type="text" value="' + CT.escapeHtml(it.name) + '" placeholder="項目名稱">' +
+          '<button class="item-del" title="刪除">×</button>' +
+        '</div>' +
+        '<div class="g-row2">' +
+          '<div><span class="mini-label">開始</span><input type="text" data-f="start" value="' +
+            CT.escapeHtml(it.start || '') + '" placeholder="2026-Q3"></div>' +
+          '<div><span class="mini-label">' + (it.milestone ? '（里程碑不用）' : '結束') + '</span>' +
+            '<input type="text" data-f="end" value="' + CT.escapeHtml(it.end || '') +
+            '" placeholder="2027-Q2"' + (it.milestone ? ' disabled' : '') + '></div>' +
+        '</div>' +
+        '<div class="g-row3">' +
+          '<div><span class="mini-label">分組（選填）</span><input type="text" data-f="group" value="' +
+            CT.escapeHtml(it.group || '') + '" placeholder="例如 先進封裝"></div>' +
+          '<label style="display:flex;align-items:center;gap:5px;font-size:11px;margin:14px 0 0;white-space:nowrap;">' +
+            '<input type="checkbox" data-f="milestone"' + (it.milestone ? ' checked' : '') + '>里程碑</label>' +
+        '</div>';
+
+      block.querySelector('input[type=color]').addEventListener('input', function () {
+        it.color = this.value; render();
+      });
+      block.querySelector('.g-row1 input[type=text]').addEventListener('input', function () {
+        it.name = this.value; render();
+      });
+      ['start', 'end', 'group'].forEach(function (f) {
+        var input = block.querySelector('[data-f="' + f + '"]');
+        input.addEventListener('input', function () { it[f] = this.value; render(); });
+      });
+      block.querySelector('[data-f="milestone"]').addEventListener('change', function () {
+        it.milestone = this.checked;
+        renderItemList();   // 結束欄位要跟著 enable/disable
+        render();
+      });
+      block.querySelector('.item-del').addEventListener('click', function () {
+        state.items.splice(idx, 1); renderItemList(); render();
+      });
+
+      list.appendChild(block);
+    });
+  }
+
+  function renderMarkerList() {
+    var box = $('markerList');
+    box.innerHTML = '';
+    state.markers.forEach(function (mk, idx) {
+      var row = document.createElement('div');
+      row.className = 'mk-row';
+      row.innerHTML =
+        '<input type="color" value="' + mk.color + '">' +
+        '<input type="text" value="' + CT.escapeHtml(mk.label) + '" placeholder="標籤">' +
+        '<input type="text" value="' + CT.escapeHtml(mk.date) + '" placeholder="2026-Q4">' +
+        '<button class="item-del" title="刪除">×</button>';
+      var inputs = row.querySelectorAll('input');
+      inputs[0].addEventListener('input', function () { mk.color = this.value; render(); });
+      inputs[1].addEventListener('input', function () { mk.label = this.value; render(); });
+      inputs[2].addEventListener('input', function () { mk.date = this.value; render(); });
+      row.querySelector('.item-del').addEventListener('click', function () {
+        state.markers.splice(idx, 1); renderMarkerList(); render();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+
+    var rowH = state.rowH;
+    var scale = state.scale;
+
+    // 先算出實際要畫的列（含分組標題列），才知道 SVG 要多高
+    var rows = [];
+    var lastGroup = null;
+    state.items.forEach(function (it) {
+      var g = (it.group || '').trim();
+      if (state.opts.group && g && g !== lastGroup) {
+        rows.push({ type: 'group', name: g });
+        lastGroup = g;
+      }
+      if (!g) lastGroup = null;
+      rows.push({ type: 'item', item: it });
+    });
+
+    var GROUP_H = 24;
+    var headH = (state.title ? 34 : 8) + 30;       // 標題 + 時間軸刻度列
+    var bodyH = rows.reduce(function (a, r) { return a + (r.type === 'group' ? GROUP_H : rowH); }, 0);
+    var footH = state.markers.length ? 26 : 14;    // 參考線標籤放在底部
+    var VB_H = Math.max(160, headH + bodyH + footH);
+    svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H);
+
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    var plotL = PAD_L + LABEL_W, plotR = VB_W - PAD_R;
+    var plotW = plotR - plotL;
+    var axisY = (state.title ? 34 : 8) + 20;
+    var bodyT = headH;
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 24, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    // 收集所有時間點決定軸範圍
+    var times = [];
+    state.items.forEach(function (it) {
+      var a = parseDate(it.start), b = parseDate(it.end);
+      if (a !== null) times.push(a);
+      if (!it.milestone && b !== null) times.push(b);
+    });
+    state.markers.forEach(function (mk) {
+      var t = parseDate(mk.date);
+      if (t !== null) times.push(t);
+    });
+
+    if (!rows.length || !times.length) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '新增至少一個帶有效日期的項目後即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    var step = stepMonths(scale);
+    var tMin = Math.floor(Math.min.apply(null, times) / step) * step;
+    var tMax = Math.ceil(Math.max.apply(null, times) / step) * step;
+    if (tMax === tMin) tMax = tMin + step;   // 全部同一天時避免除以 0
+
+    // 刻度太密就抽稀，免得標籤糊成一團
+    var tickCount = (tMax - tMin) / step;
+    var tickEvery = Math.max(1, Math.ceil(tickCount / 14));
+
+    function xAt(t) { return plotL + ((t - tMin) / (tMax - tMin)) * plotW; }
+
+    /* --- 時間軸刻度 --- */
+    for (var t = tMin, k = 0; t <= tMax + 1e-9; t += step, k++) {
+      var x = xAt(t);
+      if (state.opts.grid) {
+        svg.appendChild(el('line', {
+          x1: x, y1: bodyT - 6, x2: x, y2: bodyT + bodyH,
+          stroke: '#eeeeee', 'stroke-width': 1
+        }));
+      }
+      if (k % tickEvery === 0) {
+        svg.appendChild(el('text', {
+          x: x, y: axisY, 'text-anchor': 'middle',
+          'font-size': 10.5, fill: '#555555', 'font-family': 'sans-serif'
+        }, labelFor(t, scale)));
+      }
+    }
+    svg.appendChild(el('line', {
+      x1: plotL, y1: bodyT - 6, x2: plotR, y2: bodyT - 6, stroke: '#111111', 'stroke-width': 1.2
+    }));
+
+    /* --- 列 --- */
+    var y = bodyT;
+    var itemIdx = 0;
+    rows.forEach(function (r) {
+      if (r.type === 'group') {
+        svg.appendChild(el('text', {
+          x: PAD_L, y: y + GROUP_H - 8, 'font-size': 11, 'font-weight': 600,
+          fill: '#111111', 'letter-spacing': '.04em', 'font-family': 'sans-serif'
+        }, r.name));
+        svg.appendChild(el('line', {
+          x1: PAD_L, y1: y + GROUP_H - 3, x2: plotR, y2: y + GROUP_H - 3,
+          stroke: '#dddddd', 'stroke-width': 1
+        }));
+        y += GROUP_H;
+        return;
+      }
+
+      var it = r.item;
+      // 這一列的高度先結清，之後所有提早 return 的分支（里程碑、日期無效）
+      // 才不會漏掉列推進而讓下一列疊上來
+      var top = y;
+      y += rowH;
+
+      if (state.opts.alt && itemIdx % 2 === 1) {
+        svg.appendChild(el('rect', {
+          x: PAD_L, y: top, width: plotR - PAD_L, height: rowH, fill: '#fafafa'
+        }));
+      }
+      itemIdx++;
+
+      // 名稱欄（過長就截斷，SVG 沒有自動省略號）。用寬度估算而不是字數，
+      // 否則英文名會被當成中文一樣寬而提早砍掉——"Advanced packaging fab"
+      // 實際只佔 140px 卻曾被截成 16 字。
+      var nm = it.name || '(未命名)';
+      var indent = (it.group && state.opts.group ? 10 : 0);
+      var shown = CT.truncateToWidth(nm, 11.5, LABEL_W - 12 - indent);
+      svg.appendChild(el('text', {
+        x: PAD_L + indent, y: top + rowH / 2 + 4,
+        'font-size': 11.5, fill: '#222222', 'font-family': 'sans-serif'
+      }, shown));
+
+      var a = parseDate(it.start);
+      var b = it.milestone ? a : parseDate(it.end);
+      if (a === null) return;
+
+      var cy = top + rowH / 2;
+      var tipBase = '<b>' + CT.escapeHtml(nm) + '</b>' +
+        (it.group ? '<br>分組：' + CT.escapeHtml(it.group) : '');
+
+      if (it.milestone) {
+        var mx = xAt(a), s = 6.5;
+        svg.appendChild(el('path', {
+          d: 'M' + mx + ',' + (cy - s) + ' L' + (mx + s) + ',' + cy +
+             ' L' + mx + ',' + (cy + s) + ' L' + (mx - s) + ',' + cy + ' Z',
+          fill: it.color, stroke: '#ffffff', 'stroke-width': 1.5
+        }));
+        svg.appendChild(el('rect', {
+          x: mx - 12, y: top, width: 24, height: rowH, fill: 'transparent', 'data-hit': '1',
+          'data-tip-html': tipBase + '<br>時間點：' + CT.escapeHtml(it.start),
+          style: 'cursor:pointer;'
+        }));
+        return;
+      }
+
+      if (b === null || b < a) {
+        // 結束早於開始通常是打錯字。畫成紅色細線提示，而不是靜默不畫。
+        svg.appendChild(el('text', {
+          x: xAt(a), y: cy + 4, 'font-size': 10, fill: '#c33', 'font-family': 'sans-serif'
+        }, '⚠ 結束日期無效'));
+        return;
+      }
+
+      var bx = xAt(a), bw = Math.max(3, xAt(b) - bx);
+      var barH = Math.min(16, rowH - 12);
+      svg.appendChild(el('rect', {
+        x: bx, y: cy - barH / 2, width: bw, height: barH, rx: 3,
+        fill: it.color, 'fill-opacity': 0.85
+      }));
+
+      if (state.opts.dur) {
+        var dt = durText(a, b);
+        // 條夠寬就寫在條內（白字），太窄就寫在右側（深字），避免壓字
+        if (bw > dt.length * 8 + 14) {
+          svg.appendChild(el('text', {
+            x: bx + bw / 2, y: cy + 3.5, 'text-anchor': 'middle',
+            'font-size': 10, fill: '#ffffff', 'font-weight': 600, 'font-family': 'sans-serif'
+          }, dt));
+        } else {
+          svg.appendChild(el('text', {
+            x: bx + bw + 5, y: cy + 3.5, 'font-size': 10, fill: '#555555', 'font-family': 'sans-serif'
+          }, dt));
+        }
+      }
+
+      svg.appendChild(el('rect', {
+        x: bx, y: cy - barH / 2, width: bw, height: barH, fill: 'transparent', 'data-hit': '1',
+        'data-tip-html': tipBase + '<br>' + CT.escapeHtml(it.start) + ' → ' + CT.escapeHtml(it.end) +
+          '<br>工期：' + durText(a, b),
+        style: 'cursor:pointer;'
+      }));
+    });
+
+    /* --- 垂直參考線（畫在最後，壓在長條之上） --- */
+    var mkY = bodyT + bodyH + 16;
+    state.markers.forEach(function (mk) {
+      var t = parseDate(mk.date);
+      if (t === null || t < tMin || t > tMax) return;
+      var x = xAt(t);
+      svg.appendChild(el('line', {
+        x1: x, y1: bodyT - 6, x2: x, y2: bodyT + bodyH,
+        stroke: mk.color, 'stroke-width': 1.6, 'stroke-dasharray': '5 3'
+      }));
+      // 標籤靠邊時翻向另一側，避免超出畫布
+      var anchor = x > plotR - 70 ? 'end' : 'start';
+      svg.appendChild(el('text', {
+        x: x + (anchor === 'end' ? -5 : 5), y: mkY, 'text-anchor': anchor,
+        'font-size': 10.5, fill: mk.color, 'font-weight': 600, 'font-family': 'sans-serif'
+      }, mk.label));
+    });
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+  }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到長條上會顯示起訖與工期。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.items)) { CT.toast('JSON 缺少 items 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderItemList(); renderMarkerList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '',
+      scale: ['quarter', 'year', 'month'].indexOf(o.scale) >= 0 ? o.scale : 'quarter',
+      rowH: [26, 32, 40].indexOf(+o.rowH) >= 0 ? +o.rowH : 32,
+      items: [], markers: [], opts: {}
+    };
+    var d = { grid: true, alt: true, dur: false, group: true };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.items || []).forEach(function (x, i) {
+      s.items.push({
+        name: x.name || ('項目' + (i + 1)),
+        start: x.start || '', end: x.end || '',
+        group: x.group || '', milestone: !!x.milestone,
+        color: x.color || CT.paletteAt(i)
+      });
+    });
+    (o.markers || []).forEach(function (x, i) {
+      s.markers.push({ label: x.label || '參考線', date: x.date || '', color: x.color || '#111111' });
+    });
+    return s;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title; $('caption').value = state.caption;
+    $('scale').value = state.scale; $('rowH').value = String(state.rowH);
+    $('optGrid').checked = state.opts.grid; $('optAlt').checked = state.opts.alt;
+    $('optDur').checked = state.opts.dur; $('optGroup').checked = state.opts.group;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'caption'].forEach(function (id) {
+    $(id).addEventListener('input', function () { state[id] = this.value; render(); });
+  });
+  $('scale').addEventListener('change', function () { state.scale = this.value; render(); });
+  $('rowH').addEventListener('change', function () { state.rowH = +this.value; render(); });
+  [['optGrid', 'grid'], ['optAlt', 'alt'], ['optDur', 'dur'], ['optGroup', 'group']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { state.opts[p[1]] = this.checked; render(); });
+  });
+
+  $('addItem').addEventListener('click', function () {
+    state.items.push({
+      name: '項目' + (state.items.length + 1),
+      start: '2026-Q1', end: '2026-Q4', group: '', milestone: false,
+      color: CT.paletteAt(state.items.length)
+    });
+    renderItemList(); render();
+  });
+  $('addMilestone').addEventListener('click', function () {
+    state.items.push({
+      name: '里程碑' + (state.items.length + 1),
+      start: '2026-Q3', end: '', group: '', milestone: true,
+      color: CT.paletteAt(state.items.length)
+    });
+    renderItemList(); render();
+  });
+  $('addMarker').addEventListener('click', function () {
+    state.markers.push({ label: '今天', date: '2026-Q3', color: '#111111' });
+    renderMarkerList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.items = []; state.markers = [];
+    renderItemList(); renderMarkerList(); render();
+    CT.toast('已清空');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'gantt-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '先進封裝產能與長約時程（示意）',
+      caption: '資料來源：法說會逐字稿＋10-K Item 1／Item 1A（示意數字）',
+      scale: 'quarter', rowH: 32,
+      opts: { grid: true, alt: true, dur: true, group: true },
+      items: [
+        { name: 'AP7 廠房興建', start: '2026-Q1', end: '2027-Q2', group: '產能開出', color: '#2563eb' },
+        { name: 'AP7 設備搬入與試產', start: '2027-Q1', end: '2027-Q4', group: '產能開出', color: '#0891b2' },
+        { name: 'AP7 量產', start: '2027-Q4', end: '2029-Q4', group: '產能開出', color: '#16a34a' },
+        { name: '客戶 A 認證通過', start: '2027-Q2', end: '', group: '客戶認證', milestone: true, color: '#7c3aed' },
+        { name: '客戶 B 認證窗口', start: '2027-Q3', end: '2028-Q2', group: '客戶認證', color: '#d97706' },
+        { name: '長約供貨期間', start: '2027-Q1', end: '2030-Q4', group: '合約', color: '#dc2626' },
+        { name: '核心專利到期', start: '2029-Q2', end: '', group: '合約', milestone: true, color: '#db2777' }
+      ],
+      markers: [
+        { label: '今天', date: '2026-Q3', color: '#111111' },
+        { label: '押金認列起點', date: '2027-Q1', color: '#6b6b6b' }
+      ]
+    });
+    syncToInputs(); renderItemList(); renderMarkerList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.items) && draft.items.length) {
+    state = normalize(draft);
+    syncToInputs(); renderItemList(); renderMarkerList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

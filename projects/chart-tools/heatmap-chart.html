@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熱力圖／矩陣工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  #matrix { height: 190px; }
+  .swatches { display: flex; gap: 4px; margin-top: 8px; }
+  .swatches div { flex: 1; height: 14px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Heatmap / Matrix</span>
+    <h1>熱力圖／矩陣工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與單位</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 各部門逐季毛利率">
+      <label>數值單位（選填）</label>
+      <input type="text" id="unit" placeholder="例如 %">
+    </div>
+
+    <div class="section">
+      <div class="section-title">資料表</div>
+      <label style="margin-top:0;">直接貼上表格</label>
+      <textarea id="matrix" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn ghost small" id="applyMatrix">套用表格</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="hint-text">
+        可以直接從 Excel／Google Sheets 複製整塊貼進來（Tab 分隔），也接受逗號分隔。
+        <b>第一列＝欄標題，第一格留空，第一欄＝列標題。</b>
+        空格或 <code>-</code> 代表無資料，該格會留白而不是當成 0。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">色階</div>
+      <select id="scale">
+        <option value="blue">單色藍（值越大越深）</option>
+        <option value="greenred">綠→紅（大＝紅，適合風險/成本）</option>
+        <option value="redgreen">紅→綠（大＝綠，適合成長/獲利）</option>
+        <option value="diverging">發散（以中點為界，兩側不同色）</option>
+      </select>
+      <div class="swatches" id="swatches"></div>
+      <div id="midWrap" style="display:none;">
+        <label>中點數值</label>
+        <input type="number" id="mid" step="any" value="0">
+        <div class="hint-text">低於中點偏紅、高於中點偏綠。用在 QoQ 變動率這種有正負意義的矩陣。</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optValues" checked><label for="optValues">格內標示數值</label></div>
+      <div class="check-row"><input type="checkbox" id="optLegend" checked><label for="optLegend">顯示色階圖例</label></div>
+      <div class="check-row"><input type="checkbox" id="optBorder" checked><label for="optBorder">格線分隔</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：近 6 季 10-Q 部門附註">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900;
+  var ROW_LABEL_W = 160, CELL_H = 34, PAD_L = 16, PAD_R = 24;
+  var DRAFT_KEY = 'chart-tools:heatmap';
+
+  var state = {
+    title: '', caption: '', unit: '',
+    rows: [], cols: [], values: [],
+    scale: 'blue', mid: 0,
+    opts: { values: true, legend: true, border: true }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ================= 色階 =================
+   * 全部落在「白底上仍可讀」的範圍：最淺不到看不見，最深不到吃掉白字。 */
+  var SCALES = {
+    blue:      { from: [239, 246, 255], to: [30, 64, 175] },
+    greenred:  { from: [22, 163, 74], to: [220, 38, 38] },
+    redgreen:  { from: [220, 38, 38], to: [22, 163, 74] },
+    diverging: { neg: [220, 38, 38], zero: [248, 250, 252], pos: [22, 163, 74] }
+  };
+
+  function lerp(a, b, t) { return Math.round(a + (b - a) * t); }
+  function rgb(c) { return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+
+  function colorFor(v, min, max, mid) {
+    if (v === null) return '#ffffff';
+    var sc = SCALES[state.scale];
+    if (state.scale === 'diverging') {
+      // 兩側各自正規化，否則單邊範圍大的那側會把另一側壓成幾乎沒有顏色
+      if (v >= mid) {
+        var up = max > mid ? (v - mid) / (max - mid) : 0;
+        return rgb([lerp(sc.zero[0], sc.pos[0], up), lerp(sc.zero[1], sc.pos[1], up), lerp(sc.zero[2], sc.pos[2], up)]);
+      }
+      var dn = mid > min ? (mid - v) / (mid - min) : 0;
+      return rgb([lerp(sc.zero[0], sc.neg[0], dn), lerp(sc.zero[1], sc.neg[1], dn), lerp(sc.zero[2], sc.neg[2], dn)]);
+    }
+    var t = max > min ? (v - min) / (max - min) : 0.5;
+    return rgb([lerp(sc.from[0], sc.to[0], t), lerp(sc.from[1], sc.to[1], t), lerp(sc.from[2], sc.to[2], t)]);
+  }
+
+  /* 依背景亮度決定字色。深底配白字、淺底配深字——
+     這是報告視覺鐵則「禁止在飽和彩色底上放低對比文字」的機械化版本。 */
+  function textOn(bg) {
+    var m = /rgb\((\d+),(\d+),(\d+)\)/.exec(bg);
+    if (!m) return '#111111';
+    var lum = (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) / 255;
+    return lum > 0.62 ? '#111111' : '#ffffff';
+  }
+
+  function renderSwatches() {
+    var box = $('swatches');
+    box.innerHTML = '';
+    for (var i = 0; i <= 6; i++) {
+      var d = document.createElement('div');
+      d.style.background = state.scale === 'diverging'
+        ? colorFor(i - 3, -3, 3, 0)
+        : colorFor(i, 0, 6, 0);
+      box.appendChild(d);
+    }
+  }
+
+  /* ================= 表格解析 ================= */
+  function parseMatrix(text) {
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+    if (lines.length < 2) return null;
+    function split(l) { return l.indexOf('\t') >= 0 ? l.split('\t') : l.split(','); }
+
+    var header = split(lines[0]).map(function (s) { return s.trim(); });
+    var cols = header.slice(1);
+    var rows = [], values = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cells = split(lines[i]);
+      rows.push((cells[0] || '').trim());
+      var vs = [];
+      for (var j = 1; j <= cols.length; j++) {
+        var raw = (cells[j] === undefined ? '' : String(cells[j])).trim();
+        // 容忍從報表複製過來的千分位、百分比與貨幣符號
+        var cleaned = raw.replace(/[,%$＄\s]/g, '');
+        if (cleaned === '' || cleaned === '-' || cleaned === '—' || cleaned === 'N/A') { vs.push(null); continue; }
+        var n = parseFloat(cleaned);
+        vs.push(isFinite(n) ? n : null);
+      }
+      values.push(vs);
+    }
+    return { rows: rows, cols: cols, values: values };
+  }
+
+  function matrixToText() {
+    var out = [['', ].concat(state.cols).join('\t')];
+    state.rows.forEach(function (r, i) {
+      out.push([r].concat((state.values[i] || []).map(function (v) {
+        return v === null ? '' : v;
+      })).join('\t'));
+    });
+    return out.join('\n');
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+
+    var rows = state.rows, cols = state.cols;
+    var nR = rows.length, nC = cols.length;
+
+    var titleH = state.title ? 34 : 8;
+    var colHdrH = 26;
+    var legendH = state.opts.legend ? 42 : 12;
+    var VB_H = Math.max(200, titleH + colHdrH + Math.max(1, nR) * CELL_H + legendH + 16);
+    svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 24, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (!nR || !nC) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '貼上一份表格後按「套用表格」即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    var gridL = PAD_L + ROW_LABEL_W;
+    var gridW = VB_W - PAD_R - gridL;
+    var cellW = gridW / nC;
+    var gridT = titleH + colHdrH;
+
+    /* 值域 */
+    var flat = [];
+    state.values.forEach(function (r) {
+      (r || []).forEach(function (v) { if (v !== null && isFinite(v)) flat.push(v); });
+    });
+    var min = flat.length ? Math.min.apply(null, flat) : 0;
+    var max = flat.length ? Math.max.apply(null, flat) : 1;
+    var mid = state.scale === 'diverging' ? state.mid : 0;
+
+    /* 欄標題 */
+    cols.forEach(function (c, j) {
+      var cx = gridL + cellW * j + cellW / 2;
+      var fits = CT.textWidth(c, 11) <= cellW - 6;
+      var t = el('text', {
+        x: cx, y: gridT - (fits ? 8 : 6), 'text-anchor': fits ? 'middle' : 'start',
+        'font-size': 11, fill: '#333333', 'font-weight': 600, 'font-family': 'sans-serif'
+      }, fits ? c : CT.truncateToWidth(c, 11, 90));
+      // 欄名放不下就轉 40 度，不要硬塞成互相重疊
+      if (!fits) t.setAttribute('transform', 'rotate(-40 ' + cx + ' ' + (gridT - 6) + ')');
+      svg.appendChild(t);
+    });
+
+    /* 格子 */
+    rows.forEach(function (rname, i) {
+      var y = gridT + CELL_H * i;
+      svg.appendChild(el('text', {
+        x: gridL - 10, y: y + CELL_H / 2 + 4, 'text-anchor': 'end',
+        'font-size': 11.5, fill: '#333333', 'font-family': 'sans-serif'
+      }, CT.truncateToWidth(rname, 11.5, ROW_LABEL_W - 6)));
+
+      cols.forEach(function (cname, j) {
+        var v = (state.values[i] || [])[j];
+        if (v === undefined) v = null;
+        var x = gridL + cellW * j;
+        var bg = colorFor(v, min, max, mid);
+
+        svg.appendChild(el('rect', {
+          x: x, y: y, width: cellW, height: CELL_H, fill: bg,
+          stroke: state.opts.border ? '#ffffff' : 'none',
+          'stroke-width': state.opts.border ? 1.5 : 0
+        }));
+
+        if (v === null) {
+          // 無資料的格子畫一條淡斜線，跟「值剛好等於最小值」的淺色格子區分開
+          svg.appendChild(el('line', {
+            x1: x + cellW * 0.38, y1: y + CELL_H * 0.62,
+            x2: x + cellW * 0.62, y2: y + CELL_H * 0.38,
+            stroke: '#cccccc', 'stroke-width': 1.2
+          }));
+        } else if (state.opts.values) {
+          var label = fmt(v) + (state.unit || '');
+          if (CT.textWidth(label, 11) <= cellW - 8) {
+            svg.appendChild(el('text', {
+              x: x + cellW / 2, y: y + CELL_H / 2 + 4, 'text-anchor': 'middle',
+              'font-size': 11, fill: textOn(bg), 'font-weight': 500, 'font-family': 'sans-serif'
+            }, label));
+          }
+        }
+
+        svg.appendChild(el('rect', {
+          x: x, y: y, width: cellW, height: CELL_H, fill: 'transparent',
+          'data-hit': '1', style: 'cursor:pointer;',
+          'data-tip-html': '<b>' + CT.escapeHtml(rname) + '</b> × ' + CT.escapeHtml(cname) +
+            '<br>' + (v === null ? '無資料' : fmt(v) + (state.unit ? ' ' + CT.escapeHtml(state.unit) : ''))
+        }));
+      });
+    });
+
+    /* 色階圖例 */
+    if (state.opts.legend && flat.length) {
+      var ly = gridT + nR * CELL_H + 24;
+      var lw = 200, lx = gridL;
+      var STEPS = 24;
+      for (var k = 0; k < STEPS; k++) {
+        var frac = k / (STEPS - 1);
+        var v = min + (max - min) * frac;
+        svg.appendChild(el('rect', {
+          x: lx + (lw / STEPS) * k, y: ly - 10, width: lw / STEPS + 0.5, height: 12,
+          fill: colorFor(v, min, max, mid)
+        }));
+      }
+      svg.appendChild(el('text', {
+        x: lx - 6, y: ly, 'text-anchor': 'end', 'font-size': 10.5,
+        fill: '#666666', 'font-family': 'sans-serif'
+      }, fmt(min) + (state.unit || '')));
+      svg.appendChild(el('text', {
+        x: lx + lw + 6, y: ly, 'font-size': 10.5, fill: '#666666', 'font-family': 'sans-serif'
+      }, fmt(max) + (state.unit || '')));
+    }
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+  }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到格子會顯示列×欄與數值。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.values)) { CT.toast('JSON 缺少 values 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      rows: (o.rows || []).map(String), cols: (o.cols || []).map(String),
+      values: (o.values || []).map(function (r) {
+        return (r || []).map(function (v) {
+          if (v === null || v === '' || v === undefined) return null;
+          var n = typeof v === 'number' ? v : parseFloat(v);
+          return isFinite(n) ? n : null;
+        });
+      }),
+      scale: SCALES[o.scale] ? o.scale : 'blue',
+      mid: isFinite(+o.mid) ? +o.mid : 0,
+      opts: {}
+    };
+    var d = { values: true, legend: true, border: true };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    return s;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title; $('caption').value = state.caption; $('unit').value = state.unit;
+    $('scale').value = state.scale; $('mid').value = state.mid;
+    $('midWrap').style.display = state.scale === 'diverging' ? '' : 'none';
+    $('optValues').checked = state.opts.values;
+    $('optLegend').checked = state.opts.legend;
+    $('optBorder').checked = state.opts.border;
+    $('matrix').value = matrixToText();
+    renderSwatches();
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'caption', 'unit'].forEach(function (id) {
+    $(id).addEventListener('input', function () { state[id] = this.value; render(); });
+  });
+  $('scale').addEventListener('change', function () {
+    state.scale = this.value;
+    $('midWrap').style.display = state.scale === 'diverging' ? '' : 'none';
+    renderSwatches(); render();
+  });
+  $('mid').addEventListener('input', function () {
+    state.mid = parseFloat(this.value) || 0; renderSwatches(); render();
+  });
+  [['optValues', 'values'], ['optLegend', 'legend'], ['optBorder', 'border']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { state.opts[p[1]] = this.checked; render(); });
+  });
+
+  $('applyMatrix').addEventListener('click', function () {
+    var m = parseMatrix($('matrix').value);
+    if (!m || !m.cols.length || !m.rows.length) { CT.toast('表格至少要有一列標題＋一列資料'); return; }
+    state.rows = m.rows; state.cols = m.cols; state.values = m.values;
+    render();
+    CT.toast('已套用 ' + m.rows.length + ' 列 × ' + m.cols.length + ' 欄');
+  });
+
+  $('clearBtn').addEventListener('click', function () {
+    state.rows = []; state.cols = []; state.values = [];
+    $('matrix').value = ''; render(); CT.toast('已清空');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'heatmap-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '各部門逐季毛利率（示意）',
+      caption: '資料來源：近 6 季 10-Q 部門附註（示意數字）',
+      unit: '%',
+      scale: 'blue', mid: 0,
+      opts: { values: true, legend: true, border: true },
+      cols: ['FY25Q2', 'FY25Q3', 'FY25Q4', 'FY26Q1', 'FY26Q2', 'FY26Q3'],
+      rows: ['資料中心', '行動裝置', '車用與工業', '消費性電子'],
+      values: [
+        [41.2, 43.8, 46.1, 48.0, 49.5, 51.2],
+        [28.4, 27.9, 29.1, 28.2, 27.4, 26.8],
+        [33.0, 33.6, 34.2, 35.1, 35.8, 36.0],
+        [19.8, 18.2, 20.4, null, 17.9, 16.5]
+      ]
+    });
+    syncToInputs(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.values) && draft.values.length) {
+    state = normalize(draft);
+    syncToInputs(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

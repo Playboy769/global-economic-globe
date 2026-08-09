@@ -1,0 +1,126 @@
+/* ============================================================================
+ * chart-tools 共用外觀
+ *
+ * 沿用 quadrant-chart-demo/v1-minimal.html 的極簡風（純白底、深色字、單一強調色），
+ * 因為這批圖表的目的地是 research 報告，而報告有「一律純白底＋高對比深色字」的
+ * 視覺鐵則。工具頁長得跟目的地一致，所見即所得，不會發生在深色工具裡調好看的
+ * 配色貼進白底報告就糊掉的狀況。
+ *
+ * ⚠️ 這份 CSS 只服務工具頁面。圖形本身的樣式一律寫在 SVG 的 presentation
+ * attribute 上（見 _shared.js 的說明），否則嵌入代碼到了報告端會失去樣式。
+ * ==========================================================================*/
+
+:root {
+  --ink: #111111;
+  --sub: #6b6b6b;
+  --line: #e4e4e4;
+  --bg: #ffffff;
+  --panel: #fafafa;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+.app { display: grid; grid-template-columns: 340px 1fr; min-height: 100vh; }
+
+.panel {
+  background: var(--panel); border-right: 1px solid var(--line);
+  padding: 26px 22px; overflow-y: auto; max-height: 100vh;
+}
+.panel h1 { font-size: 15px; font-weight: 600; letter-spacing: .02em; margin: 0 0 4px; }
+.panel .tag {
+  font-size: 11px; color: var(--sub); letter-spacing: .08em;
+  text-transform: uppercase; margin-bottom: 22px; display: block;
+}
+.back-link { font-size: 11.5px; color: var(--sub); text-decoration: none; display: inline-block; margin-bottom: 14px; }
+.back-link:hover { color: var(--ink); }
+
+.section { margin-bottom: 24px; }
+.section-title {
+  font-size: 11px; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--sub); margin-bottom: 10px;
+}
+
+label { display: block; font-size: 12px; color: var(--sub); margin-bottom: 4px; margin-top: 10px; }
+label:first-child { margin-top: 0; }
+
+input[type=text], input[type=number], select, textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
+  font-size: 13px; background: #fff; color: var(--ink); font-family: inherit;
+}
+textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.5; resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ink); }
+input[type=color] {
+  width: 32px; height: 28px; border: 1px solid var(--line); border-radius: 6px;
+  padding: 2px; background: #fff; cursor: pointer; flex: 0 0 auto;
+}
+input[type=checkbox] { accent-color: var(--ink); width: 14px; height: 14px; }
+
+.row { display: flex; gap: 8px; align-items: center; }
+.row > input[type=text] { flex: 1; }
+.col { flex: 1; min-width: 0; }
+
+.btn {
+  width: 100%; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--ink);
+  background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; letter-spacing: .02em; transition: opacity .15s;
+}
+.btn:hover { opacity: .8; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.ghost:hover { background: var(--ink); color: #fff; opacity: 1; }
+.btn.small { width: auto; padding: 6px 10px; font-size: 11.5px; }
+.btn-row { display: flex; gap: 8px; margin-top: 8px; }
+.btn-row .btn { flex: 1; }
+
+.check-row {
+  display: flex; align-items: center; gap: 7px; font-size: 12.5px;
+  color: var(--ink); margin-top: 8px; cursor: pointer; user-select: none;
+}
+.check-row label { margin: 0; color: inherit; font-size: inherit; cursor: pointer; }
+
+/* 可編輯的資料列清單（各工具的欄位數不同，grid-template-columns 由各自覆寫） */
+.item-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 2px; }
+.item-row { display: grid; gap: 5px; align-items: center; }
+.item-row input[type=text] { padding: 5px 6px; font-size: 11.5px; }
+.item-row input[type=number] { padding: 5px 4px; font-size: 11px; }
+.item-row select { padding: 5px 4px; font-size: 11px; }
+.item-del {
+  cursor: pointer; color: var(--sub); font-size: 15px; text-align: center;
+  line-height: 1; background: none; border: none; padding: 0;
+}
+.item-del:hover { color: #c33; }
+.empty-hint { font-size: 12px; color: var(--sub); font-style: italic; }
+.hint-text { font-size: 11.5px; color: var(--sub); line-height: 1.6; margin-top: 8px; }
+.hint-text code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+
+/* 主畫布 */
+.main { padding: 32px 36px; overflow: auto; }
+.chart-wrap { max-width: 960px; margin: 0 auto; }
+.chart-wrap svg { width: 100%; height: auto; display: block; background: #fff; }
+
+.out-tabs { display: flex; gap: 6px; margin: 26px auto 0; max-width: 960px; }
+.out-tab {
+  padding: 6px 12px; font-size: 12px; border: 1px solid var(--line);
+  border-radius: 6px; background: #fff; cursor: pointer; color: var(--sub);
+}
+.out-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.out-body { max-width: 960px; margin: 10px auto 0; }
+.out-body textarea { height: 190px; }
+
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--ink); color: #fff; padding: 9px 18px; border-radius: 20px;
+  font-size: 12.5px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 99;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .panel { max-height: none; border-right: none; border-bottom: 1px solid var(--line); }
+}
