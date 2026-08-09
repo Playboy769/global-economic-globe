@@ -456,6 +456,18 @@
         "research/aaoi-analysis-2026q2/AAOI_FY2026Q2_Analysis"
       ],
       "port": 8161
+    },
+    {
+      "name": "axti-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8162",
+        "--directory",
+        "research/axti-analysis-2026q2/AXTI_FY26Q2_Analysis"
+      ],
+      "port": 8162
     }
   ]
 }
