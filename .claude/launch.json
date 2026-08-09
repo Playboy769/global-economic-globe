@@ -420,6 +420,42 @@
         "research/ati-analysis-2026q2/ATI_FY26Q2_Analysis"
       ],
       "port": 8157
+    },
+    {
+      "name": "chart-tools",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8158",
+        "--directory",
+        "projects/chart-tools"
+      ],
+      "port": 8158
+    },
+    {
+      "name": "quadrant-chart-demo",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8160",
+        "--directory",
+        "projects/quadrant-chart-demo"
+      ],
+      "port": 8160
+    },
+    {
+      "name": "aaoi-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8161",
+        "--directory",
+        "research/aaoi-analysis-2026q2/AAOI_FY2026Q2_Analysis"
+      ],
+      "port": 8161
     }
   ]
 }
