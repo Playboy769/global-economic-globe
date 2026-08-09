@@ -3,74 +3,416 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>象限圖工具 · 三版選擇</title>
+<title>象限圖工具</title>
 <style>
+  :root{
+    --ink:#111111;
+    --sub:#6b6b6b;
+    --line:#e4e4e4;
+    --accent:#111111;
+    --bg:#ffffff;
+    --panel:#fafafa;
+  }
   *{box-sizing:border-box;}
-  body{margin:0;padding:48px 24px;background:#fff;color:#111;
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;}
-  .wrap{max-width:1000px;margin:0 auto;}
-  h1{font-size:22px;margin:0 0 6px;}
-  p.sub{color:#666;font-size:14px;margin:0 0 40px;}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-  .card{border:1px solid #e5e5e5;border-radius:12px;padding:22px;text-decoration:none;color:inherit;
-    transition:box-shadow .15s, transform .15s;display:block;}
-  .card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-2px);}
-  .card .thumb{height:120px;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;letter-spacing:.05em;}
-  .thumb1{background:#fafafa;border:1px solid #eee;}
-  .thumb2{background:linear-gradient(135deg,#eef2ff,#fff);border:1px solid #e5e7eb;}
-  .thumb3{background:#fff;border:1px solid #e4e4e7;background-image:linear-gradient(#f0f0f2 1px,transparent 1px),linear-gradient(90deg,#f0f0f2 1px,transparent 1px);background-size:16px 16px;}
-  .card h2{font-size:15px;margin:0 0 6px;}
-  .card .desc{font-size:12.5px;color:#666;line-height:1.6;margin:0 0 12px;}
-  .card ul{margin:0;padding-left:16px;font-size:12px;color:#555;line-height:1.8;}
-  .open{display:inline-block;margin-top:14px;font-size:12px;font-weight:600;color:#111;}
-  .open::after{content:' →';}
-  .note{margin-top:40px;font-size:12.5px;color:#888;line-height:1.8;border-top:1px solid #eee;padding-top:20px;}
+  .app{display:grid;grid-template-columns:320px 1fr;min-height:100vh;}
+  .panel{background:var(--panel);border-right:1px solid var(--line);padding:28px 24px;overflow-y:auto;max-height:100vh;}
+  .panel h1{font-size:15px;font-weight:600;letter-spacing:.02em;margin:0 0 4px;}
+  .panel .tag{font-size:11px;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;margin-bottom:24px;display:block;}
+  .section{margin-bottom:26px;}
+  .section-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:10px;}
+  label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;margin-top:10px;}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=number]{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    font-size:13px;background:#fff;color:var(--ink);font-family:inherit;
+  }
+  input[type=text]:focus,input[type=number]:focus{outline:none;border-color:var(--ink);}
+  input[type=color]{width:32px;height:28px;border:1px solid var(--line);border-radius:6px;padding:2px;background:#fff;cursor:pointer;}
+  .quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .row{display:flex;gap:8px;align-items:center;}
+  .row > input[type=text]{flex:1;}
+  .btn{
+    width:100%;padding:9px 12px;border-radius:6px;border:1px solid var(--ink);
+    background:var(--ink);color:#fff;font-size:12.5px;font-weight:500;cursor:pointer;
+    letter-spacing:.02em;transition:opacity .15s;
+  }
+  .btn:hover{opacity:.8;}
+  .btn.ghost{background:transparent;color:var(--ink);}
+  .btn.ghost:hover{background:var(--ink);color:#fff;opacity:1;}
+  .btn.small{width:auto;padding:6px 10px;font-size:11.5px;}
+  .btn-row{display:flex;gap:8px;margin-top:8px;}
+  .btn-row .btn{flex:1;}
+  .toggle{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 10px;border:1px solid var(--line);border-radius:6px;cursor:pointer;
+    font-size:12.5px;user-select:none;
+  }
+  .toggle.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--sub);}
+  .toggle.active .dot{background:#fff;}
+  .range-row{display:flex;align-items:center;gap:6px;}
+  .range-row input{width:60px;}
+  .range-row span{color:var(--sub);font-size:12px;}
+
+  .pt-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+  .pt-item{display:grid;grid-template-columns:20px 1fr 46px 46px 22px;gap:6px;align-items:center;}
+  .pt-item input[type=text]{padding:5px 6px;font-size:11.5px;}
+  .pt-item input[type=number]{padding:5px 4px;font-size:11px;}
+  .pt-del{cursor:pointer;color:var(--sub);font-size:15px;text-align:center;line-height:1;background:none;border:none;padding:0;}
+  .pt-del:hover{color:#c33;}
+  .empty-hint{font-size:12px;color:var(--sub);font-style:italic;}
+
+  .main{display:flex;align-items:center;justify-content:center;padding:40px;position:relative;}
+  .chart-wrap{width:min(80vh,720px);aspect-ratio:1/1;position:relative;}
+  svg{width:100%;height:100%;display:block;cursor:default;}
+  svg.addmode{cursor:crosshair;}
+  .qlabel{font-size:13px;font-weight:600;fill:#9a9a9a;letter-spacing:.03em;}
+  .axislabel{font-size:12px;fill:#444;font-weight:500;}
+  .pt-label{font-size:11px;fill:#333;font-weight:500;pointer-events:none;}
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:var(--ink);color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;
+    opacity:0;pointer-events:none;transition:all .25s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .hint-badge{position:absolute;top:14px;left:14px;font-size:11px;color:var(--sub);background:#fff;
+    border:1px solid var(--line);padding:5px 10px;border-radius:20px;pointer-events:none;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>象限圖工具 — 三個設計版本</h1>
-  <p class="sub">黑色 XY 軸、白底、可自訂象限與軸名稱皆已具備。點卡片開啟該版本試用，確定要用哪個再回來告訴我。</p>
-  <div class="grid">
-    <a class="card" href="v1-minimal.html">
-      <div class="thumb thumb1">MINIMAL</div>
-      <h2>v1 · 極簡風</h2>
-      <p class="desc">大量留白、細線條、低彩度，象限名稱以灰階小字呈現，適合放進報告或簡報。</p>
-      <ul>
-        <li>單色主視覺，介面乾淨</li>
-        <li>點擊新增 + 表單新增</li>
-        <li>拖曳移動 / 顏色自訂</li>
-      </ul>
-      <span class="open">開啟試用</span>
-    </a>
-    <a class="card" href="v2-dashboard.html">
-      <div class="thumb thumb2">DASHBOARD</div>
-      <h2>v2 · 儀表板風</h2>
-      <p class="desc">卡片式版面、象限淺色底色可自訂，資訊層次分明，適合當作分析儀表板的一個模組。</p>
-      <ul>
-        <li>四象限各自可配色（含底色）</li>
-        <li>清單計數 / 分區編號引導</li>
-        <li>拖曳移動 / 顏色自訂</li>
-      </ul>
-      <span class="open">開啟試用</span>
-    </a>
-    <a class="card" href="v3-techviz.html">
-      <div class="thumb thumb3">TECH / DATA-VIZ</div>
-      <h2>v3 · 科技資料視覺化風</h2>
-      <p class="desc">等寬字體、細格線與座標刻度、即時游標座標讀出，偏向分析工具 / 終端機質感。</p>
-      <ul>
-        <li>格線與刻度可切換顯示</li>
-        <li>即時滑鼠座標讀出</li>
-        <li>拖曳移動 / 顏色自訂</li>
-      </ul>
-      <span class="open">開啟試用</span>
-    </a>
+<div class="app">
+  <div class="panel">
+    <span class="tag">Quadrant Chart</span>
+    <h1>象限圖工具</h1>
+
+    <div class="section" style="margin-top:22px;">
+      <div class="section-title">軸名稱</div>
+      <label>X 軸（水平）</label>
+      <input type="text" id="xName" value="市場成長率">
+      <label>Y 軸（垂直）</label>
+      <input type="text" id="yName" value="相對市佔率">
+      <label>軸範圍（± 幾）</label>
+      <div class="range-row"><input type="number" id="axisRange" value="10" min="1" max="1000"><span>從 −N 到 +N</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">象限名稱</div>
+      <div class="quad-grid">
+        <input type="text" id="qTR" value="明星" placeholder="右上">
+        <input type="text" id="qTL" value="問題" placeholder="左上">
+        <input type="text" id="qBL" value="瘦狗" placeholder="左下">
+        <input type="text" id="qBR" value="金牛" placeholder="右下">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">新增資料點</div>
+      <div class="toggle" id="addModeToggle"><span>點擊畫布新增</span><span class="dot"></span></div>
+      <label>名稱</label>
+      <input type="text" id="newName" placeholder="例如 台積電">
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <label style="margin-top:0;">X</label>
+          <input type="number" id="newX" value="0" step="0.1">
+        </div>
+        <div style="flex:1;">
+          <label style="margin-top:0;">Y</label>
+          <input type="number" id="newY" value="0" step="0.1">
+        </div>
+        <div>
+          <label style="margin-top:0;">顏色</label>
+          <input type="color" id="newColor" value="#2563eb">
+        </div>
+      </div>
+      <button class="btn" id="addBtn" style="margin-top:12px;">加入資料點</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">資料點清單</div>
+      <div class="pt-list" id="ptList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無資料點，點擊畫布或用上方表單新增</div>
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn ghost small" id="clearBtn">清空全部</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn small" id="exportPng">匯出 PNG</button>
+        <button class="btn small" id="exportEmbed">複製嵌入代碼</button>
+      </div>
+    </div>
   </div>
-  <div class="note">
-    三版共通功能：可自訂 X/Y 軸名稱、4 個象限名稱、軸範圍（±N）、黑色 XY 軸＋白底、點擊畫布或表單新增資料點、
-    資料點可拖曳/改色/改名/刪除、匯出 PNG、複製可嵌入的 SVG 代碼。設計參考了 BCG 成長占有率矩陣、Gartner
-    Magic Quadrant、風險機率-衝擊矩陣等常見象限圖範例的版面配置邏輯。
+
+  <div class="main">
+    <div class="chart-wrap">
+      <div class="hint-badge" id="hintBadge" style="display:none;">點擊畫布放置新資料點</div>
+      <svg id="chart" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
   </div>
 </div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const VB = 700, PAD = 76, HALF = (VB - PAD*2) / 2, CX = VB/2, CY = VB/2;
+  const palette = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
+  let range = 10;
+  let points = [];
+  let idSeq = 1;
+  let addMode = false;
+  let dragId = null;
+
+  const svg = document.getElementById('chart');
+  const els = {
+    xName: document.getElementById('xName'),
+    yName: document.getElementById('yName'),
+    axisRange: document.getElementById('axisRange'),
+    qTR: document.getElementById('qTR'), qTL: document.getElementById('qTL'),
+    qBL: document.getElementById('qBL'), qBR: document.getElementById('qBR'),
+    addModeToggle: document.getElementById('addModeToggle'),
+    newName: document.getElementById('newName'), newX: document.getElementById('newX'),
+    newY: document.getElementById('newY'), newColor: document.getElementById('newColor'),
+    addBtn: document.getElementById('addBtn'),
+    ptList: document.getElementById('ptList'), emptyHint: document.getElementById('emptyHint'),
+    clearBtn: document.getElementById('clearBtn'), seedBtn: document.getElementById('seedBtn'),
+    exportPng: document.getElementById('exportPng'), exportEmbed: document.getElementById('exportEmbed'),
+    hintBadge: document.getElementById('hintBadge'), toast: document.getElementById('toast')
+  };
+
+  function el(tag, attrs, text){
+    const e = document.createElementNS(SVGNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function dataToSvg(x, y){
+    return { x: CX + (x/range)*HALF, y: CY - (y/range)*HALF };
+  }
+  function svgToData(sx, sy){
+    let x = ((sx - CX)/HALF) * range;
+    let y = ((CY - sy)/HALF) * range;
+    x = Math.max(-range, Math.min(range, x));
+    y = Math.max(-range, Math.min(range, y));
+    return { x: Math.round(x*100)/100, y: Math.round(y*100)/100 };
+  }
+  function clientToSvg(evt){
+    const rect = svg.getBoundingClientRect();
+    const sx = (evt.clientX - rect.left) * (VB/rect.width);
+    const sy = (evt.clientY - rect.top) * (VB/rect.height);
+    return { sx, sy };
+  }
+
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>els.toast.classList.remove('show'), 1600);
+  }
+
+  function render(){
+    svg.innerHTML = '';
+    svg.classList.toggle('addmode', addMode);
+
+    // defs: arrowhead marker
+    const defs = el('defs', {});
+    const marker = el('marker', {id:'arrow', markerWidth:'10', markerHeight:'10', refX:'6', refY:'3', orient:'auto'});
+    marker.appendChild(el('path', {d:'M0,0 L6,3 L0,6 Z', fill:'#111111'}));
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    // background click-catcher
+    const bg = el('rect', {x:0,y:0,width:VB,height:VB,fill:'#ffffff'});
+    bg.addEventListener('click', onBgClick);
+    svg.appendChild(bg);
+
+    // quadrant labels (behind axes)
+    const qPos = [
+      {x: CX+HALF-14, y: CY-HALF+30, anchor:'end', text: els.qTR.value},
+      {x: CX-HALF+14, y: CY-HALF+30, anchor:'start', text: els.qTL.value},
+      {x: CX-HALF+14, y: CY+HALF-16, anchor:'start', text: els.qBL.value},
+      {x: CX+HALF-14, y: CY+HALF-16, anchor:'end', text: els.qBR.value}
+    ];
+    qPos.forEach(q=>{
+      svg.appendChild(el('text', {x:q.x, y:q.y, 'text-anchor':q.anchor, class:'qlabel'}, q.text || ''));
+    });
+
+    // axis lines (through center), black
+    const xAxis = el('line', {x1:CX-HALF, y1:CY, x2:CX+HALF, y2:CY, stroke:'#111111', 'stroke-width':2, 'marker-end':'url(#arrow)'});
+    const yAxis = el('line', {x1:CX, y1:CY+HALF, x2:CX, y2:CY-HALF, stroke:'#111111', 'stroke-width':2, 'marker-end':'url(#arrow)'});
+    svg.appendChild(xAxis);
+    svg.appendChild(yAxis);
+
+    // axis name labels
+    svg.appendChild(el('text', {x:CX+HALF-4, y:CY+22, 'text-anchor':'end', class:'axislabel'}, els.xName.value || 'X'));
+    const yLabel = el('text', {x:CX-14, y:CY-HALF+8, 'text-anchor':'end', class:'axislabel'}, els.yName.value || 'Y');
+    svg.appendChild(yLabel);
+
+    // border box (subtle)
+    svg.appendChild(el('rect', {x:CX-HALF, y:CY-HALF, width:HALF*2, height:HALF*2, fill:'none', stroke:'#eeeeee', 'stroke-width':1}));
+
+    // points
+    points.forEach(p=>{
+      const pos = dataToSvg(p.x, p.y);
+      const g = el('g', {});
+      const label = el('text', {x:pos.x, y:pos.y-12, 'text-anchor':'middle', class:'pt-label'}, p.name);
+      const circle = el('circle', {cx:pos.x, cy:pos.y, r:7, fill:p.color, stroke:'#ffffff', 'stroke-width':2, style:'cursor:grab;'});
+      circle.addEventListener('pointerdown', (e)=>startDrag(e, p.id));
+      g.appendChild(circle);
+      g.appendChild(label);
+      svg.appendChild(g);
+    });
+
+    renderList();
+  }
+
+  function startDrag(evt, id){
+    evt.stopPropagation();
+    const target = evt.currentTarget;
+    target.setPointerCapture(evt.pointerId);
+    dragId = id;
+    target.style.cursor = 'grabbing';
+    const move = (e)=>{
+      const {sx, sy} = clientToSvg(e);
+      const d = svgToData(sx, sy);
+      const p = points.find(pp=>pp.id===dragId);
+      if(p){ p.x = d.x; p.y = d.y; render();
+        const nc = svg.querySelector(`circle[data-id]`); }
+      // re-bind after re-render since node was replaced
+    };
+    const up = (e)=>{
+      target.releasePointerCapture(evt.pointerId);
+      dragId = null;
+      target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', up);
+    };
+    target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', up);
+  }
+
+  function onBgClick(evt){
+    if(!addMode) return;
+    const {sx, sy} = clientToSvg(evt);
+    const d = svgToData(sx, sy);
+    addPoint(`P${idSeq}`, d.x, d.y, palette[(idSeq-1) % palette.length]);
+  }
+
+  function addPoint(name, x, y, color){
+    const id = idSeq++;
+    points.push({id, name, x, y, color});
+    render();
+    // focus the new row's name field for quick rename
+    requestAnimationFrame(()=>{
+      const row = els.ptList.querySelector(`[data-row="${id}"] input[type=text]`);
+      if(row){ row.focus(); row.select(); }
+    });
+  }
+
+  function renderList(){
+    els.ptList.innerHTML = '';
+    els.emptyHint.style.display = points.length ? 'none' : 'block';
+    points.forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'pt-item';
+      row.dataset.row = p.id;
+      row.innerHTML = `
+        <input type="color" value="${p.color}">
+        <input type="text" value="${escapeAttr(p.name)}">
+        <input type="number" step="0.1" value="${p.x}">
+        <input type="number" step="0.1" value="${p.y}">
+        <button class="pt-del" title="刪除">×</button>
+      `;
+      const [colorI, nameI, xI, yI] = row.querySelectorAll('input');
+      colorI.addEventListener('input', ()=>{ p.color = colorI.value; render(); });
+      nameI.addEventListener('input', ()=>{ p.name = nameI.value; render(); });
+      xI.addEventListener('input', ()=>{ p.x = clamp(parseFloat(xI.value)||0); render(); });
+      yI.addEventListener('input', ()=>{ p.y = clamp(parseFloat(yI.value)||0); render(); });
+      row.querySelector('.pt-del').addEventListener('click', ()=>{
+        points = points.filter(pp=>pp.id!==p.id);
+        render();
+      });
+      els.ptList.appendChild(row);
+    });
+  }
+
+  function clamp(v){ return Math.max(-range, Math.min(range, v)); }
+  function escapeAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  // --- controls ---
+  [els.xName, els.yName, els.qTR, els.qTL, els.qBL, els.qBR].forEach(i=>i.addEventListener('input', render));
+  els.axisRange.addEventListener('input', ()=>{
+    range = Math.max(0.01, parseFloat(els.axisRange.value) || 10);
+    render();
+  });
+  els.addModeToggle.addEventListener('click', ()=>{
+    addMode = !addMode;
+    els.addModeToggle.classList.toggle('active', addMode);
+    els.hintBadge.style.display = addMode ? 'block' : 'none';
+    render();
+  });
+  els.addBtn.addEventListener('click', ()=>{
+    const name = els.newName.value.trim() || `P${idSeq}`;
+    const x = clamp(parseFloat(els.newX.value) || 0);
+    const y = clamp(parseFloat(els.newY.value) || 0);
+    addPoint(name, x, y, els.newColor.value);
+    els.newName.value = '';
+  });
+  els.clearBtn.addEventListener('click', ()=>{ points = []; render(); });
+  els.seedBtn.addEventListener('click', seed);
+
+  els.exportPng.addEventListener('click', ()=>{
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    const xml = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([xml], {type:'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = VB*scale; canvas.height = VB*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob=>{
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'quadrant-chart.png';
+        a.click();
+        showToast('已匯出 PNG');
+      });
+    };
+    img.src = url;
+  });
+
+  els.exportEmbed.addEventListener('click', ()=>{
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', SVGNS);
+    clone.removeAttribute('class');
+    const xml = new XMLSerializer().serializeToString(clone);
+    const code = `<div style="max-width:640px;margin:0 auto;">\n${xml}\n</div>`;
+    navigator.clipboard.writeText(code).then(()=>showToast('嵌入代碼已複製到剪貼簿'));
+  });
+
+  function seed(){
+    points = [];
+    idSeq = 1;
+    addPoint('台積電', 7.5, 8.2, palette[0]);
+    addPoint('聯發科', 5.1, 4.8, palette[1]);
+    addPoint('某新創A', 6.8, -3.2, palette[2]);
+    addPoint('某夕陽業務', -6.5, -6.9, palette[3]);
+  }
+
+  seed();
+  render();
+})();
+</script>
 </body>
 </html>

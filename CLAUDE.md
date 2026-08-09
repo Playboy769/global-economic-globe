@@ -164,7 +164,7 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 | 科技估值篩選 | `projects/tech-value-screener/` | — |
 | 食物熱量查詢 | `projects/food-calorie-lookup/` | `food-calorie-lookup` :8131 |
 | **報告用圖表產生器**（折線／長條／甘特／圓餅／瀑布／散點／熱力圖／分層關係）| `projects/chart-tools/` | `chart-tools` :8158 |
-| 象限圖產生器（2×2 散點）| `projects/quadrant-chart-demo/`（`index.html` 為三版選擇頁）| — |
+| 象限圖產生器（2×2 散點）| `projects/quadrant-chart-demo/`（單一 `index.html`）| `quadrant-chart-demo` :8160 |
 | Earnings 分析（範本源 MU）| `research/mu-analysis-2026q3/`；各 ticker 一資料夾 | panw :8133 / sumco :8134 / dell :8135 / tsmc :8138 / ms :8139 / lrcx :8140 |
 | SEC 抓取工具（VBA）| `SEC-Filing-Fetcher/`（`.bas`+`.xlsm`）| — |
 | 產業結構圖 | `industry frame/`（PNG+SVG）| — |
