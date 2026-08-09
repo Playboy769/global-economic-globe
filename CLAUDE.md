@@ -163,6 +163,8 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 | 股票分析器 | `projects/stock-analyzer/` | — |
 | 科技估值篩選 | `projects/tech-value-screener/` | — |
 | 食物熱量查詢 | `projects/food-calorie-lookup/` | `food-calorie-lookup` :8131 |
+| **報告用圖表產生器**（折線／長條／甘特／圓餅／瀑布／散點／熱力圖／分層關係）| `projects/chart-tools/` | `chart-tools` :8158 |
+| 象限圖產生器（2×2 散點）| `projects/quadrant-chart-demo/`（`index.html` 為三版選擇頁）| — |
 | Earnings 分析（範本源 MU）| `research/mu-analysis-2026q3/`；各 ticker 一資料夾 | panw :8133 / sumco :8134 / dell :8135 / tsmc :8138 / ms :8139 / lrcx :8140 |
 | SEC 抓取工具（VBA）| `SEC-Filing-Fetcher/`（`.bas`+`.xlsm`）| — |
 | 產業結構圖 | `industry frame/`（PNG+SVG）| — |
@@ -348,9 +350,15 @@ block pushes.
      `sankey-diagram-demo`（launch.json 設定名稱同名，port 8137）的 JSON 分頁貼上/套用，
      檢查關係與顏色無誤；③ 在 JSON 分頁按「產生嵌入代碼」，複製產出的唯讀
      `<div>+<script>` 區塊；④ 貼進該公司 `Analysis.html` 的「供應鏈」tab，包在 `.card`
-     裡即可 —— 這段嵌入代碼是自包含的，會自動偵測並注入 GoJS，不需要另外修改
-     `Analysis.html` 的 `<head>`。每個節點/連結的數字來源仍要在旁邊文字註記出處
-     （哪份 filing 哪個 Item），圖本身不取代那條「每表必註記」規則。
+     裡即可 —— 這段嵌入代碼是自包含的，會自動偵測並注入 **D3（`d3@7` ＋
+     `d3-sankey@0.12.3`，走 jsdelivr CDN）**，不需要另外修改 `Analysis.html` 的 `<head>`。
+     每個節點/連結的數字來源仍要在旁邊文字註記出處（哪份 filing 哪個 Item），圖本身
+     不取代那條「每表必註記」規則。
+     > ⚠️ 這個工具早期版本是 GoJS，2026-08 前的說明都寫 GoJS，**已經不對**。目前
+     > 只剩兩處殘留：匯入時仍相容 GoJS 慣用的 `key/text/from/to/width` 欄位名，以及
+     > 範例資料來源的註解。上面那組 JSON schema 本身沒變，照流程操作不受影響。
+     > 另外要留意 Sankey 是這批工具裡**唯一**依賴外部 CDN 的，離線或 CDN 掛掉時
+     > 圖會是空白；下面 chart-tools 那八種則完全零外部依賴。
 5. **風險矩陣**（收尾必備）— 高/中/低色彩徽章＋論證段落；至少一條是**獨創前瞻風險**
    （從分散答覆拼湊出的時間點/條款重疊，非管理層直接承認）；納入 Form 4 內部人
    交易訊號（若有）。
@@ -364,6 +372,39 @@ block pushes.
 
 **圖表輔助偏好**：損益表 tab 的逐季/逐年趨勢數字，盡量搭配折線圖輔助閱讀，不要只
 放純表格；占比類數據（如營收結構、成本結構、客戶集中度等分布）盡量搭配圓餅圖。
+
+**這些圖一律用 `projects/chart-tools/` 的產生器做，不要手刻 SVG 或 CSS 長條。**
+（本地 `chart-tools` :8158，入口頁列出全部八種。手刻是這條偏好長期沒被落實的原因——
+製表當下 46 篇報告裡只有 3 篇真的畫了折線圖。）
+
+| 要畫什麼 | 用哪個工具 | 典型用途 |
+|---|---|---|
+| 逐季/逐年趨勢 | `chart-tools/line-chart.html` | 損益表 tab、10 季趨勢圖；金額走左軸、比率走右軸（右軸系列自動改虛線） |
+| 類別比較 | `chart-tools/bar-chart.html` | BU 營收 QoQ、量價拆分、成本結構；並排／堆疊／百分比堆疊 × 直向／橫向 |
+| 時程/區間重疊 | `chart-tools/gantt-chart.html` | 產能開出、客戶認證、長約履約期、專利到期；單一時間點用「里程碑」畫成菱形 |
+| 占比分布 | `chart-tools/pie-chart.html` | 營收結構、成本結構、客戶集中度；中空比例可調 |
+| 變動橋接 | `chart-tools/waterfall-chart.html` | 營業利益橋接、FCF 橋接、毛利率變動拆解 |
+| 兩變數定位 | `chart-tools/scatter-chart.html` | 估值觀察 tab 的同業比較（P/E vs 成長率）；可自動用中位數分四象限，氣泡面積正比於第三變數 |
+| 矩陣／密度 | `chart-tools/heatmap-chart.html` | 部門×季度矩陣、風險矩陣、供應商集中度；**可直接從 Excel 複製整塊貼上** |
+| 分層關係 | `chart-tools/chain-diagram.html` | 供應鏈上下游、產業鏈情狀、組織架構、因果鏈 |
+
+> `.bar-row`／`.bar-fill` 這組手刻橫條在既有報告裡出現過 223 次，是最該改用 `bar-chart.html`
+> 的一項；`.kpi-row` 四宮格則維持手刻（那是版面元件不是圖表，沒有做成工具）。
+
+操作流程與 Sankey 一致：左側填資料 → 右側即時預覽 → 下方選輸出分頁 → 複製 → 貼進
+`Analysis.html` 對應 tab 的 `.card` 裡。**兩種輸出擇一**：
+
+- **靜態 SVG**：純 SVG，零 script、零外部連線。列印/PDF/離線都正常，預設用這個。
+- **互動版**：同一張 SVG ＋ 一小段只做 hover 提示的 vanilla script，一樣零外部依賴。
+  想讓讀者滑過去看逐點數值時才用。
+
+兩者都不必改 `Analysis.html` 的 `<head>`，同一篇貼多張也不會互相干擾（每段嵌入代碼
+帶自己的隨機 id）。因為圖形是實體 SVG 而不是 JS 當場算出來的，貼在還沒被點開的
+`display:none` 分頁裡也不會有畫不出來的問題——這點跟 Sankey 不同，Sankey 是 JS 依
+容器寬度重畫，才需要那套 observer/輪詢的保險。
+
+⚠️ 圖本身**不取代**「每表必註記」規則：每張圖旁邊仍要有一條 ⚑ 人工解讀，並註明
+數字出處（哪份 filing 哪個 Item）。
 
 ### 分析手法要求
 
