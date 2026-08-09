@@ -408,6 +408,18 @@
       ],
       "port": 8080,
       "cwd": "globe-invest"
+    },
+    {
+      "name": "ati-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8157",
+        "--directory",
+        "research/ati-analysis-2026q2/ATI_FY26Q2_Analysis"
+      ],
+      "port": 8157
     }
   ]
 }
