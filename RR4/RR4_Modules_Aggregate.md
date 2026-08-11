@@ -5624,7 +5624,7 @@ End Function
 ' short position cannot paint % CHG and PNL in opposite colours.
 Private Function PnLColorMuted(v As Double) As Long
     If v < 0 Then
-        PnLColorMuted = RGB(230, 150, 150)
+        PnLColorMuted = RGB(255, 130, 130)
     Else
         PnLColorMuted = RGB(200, 200, 200)
     End If
