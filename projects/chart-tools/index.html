@@ -163,6 +163,50 @@
       <p>可直接從 Excel 複製整塊貼上（千分位、%、破折號都吃）。深色格自動改白字，無資料畫斜線而不是留白造成混淆。</p>
       <span class="use">部門×季度矩陣、風險矩陣、供應商集中度</span>
     </a>
+
+    <a class="card" href="area-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <path d="M2,28 L2,22 L15,20 L28,15 L40,11 L50,6 L50,28 Z" fill="#2563eb" fill-opacity=".8"/>
+        <path d="M2,22 L15,20 L28,15 L40,11 L50,6" stroke="#fff" stroke-width="1.2" fill="none"/>
+        <path d="M2,28 L2,26 L15,25 L28,23 L40,22 L50,20 L50,28 Z" fill="#16a34a" fill-opacity=".85"/>
+        <path d="M2,26 L15,25 L28,23 L40,22 L50,20" stroke="#fff" stroke-width="1.2" fill="none"/>
+        <line x1="0" y1="28.5" x2="52" y2="28.5" stroke="#111" stroke-width="1"/>
+      </svg>
+      <h3>堆疊面積圖</h3>
+      <p>堆疊／百分比堆疊／重疊三種模式。系列名稱直接標在自己最寬的那一段裡，不必來回對圖例；缺值與負值以 0 計入時會在圖上標明筆數。</p>
+      <span class="use">營收結構逐季轉移、現金流組成、產品組合變化</span>
+    </a>
+
+    <a class="card" href="radar-chart.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <polygon points="26,2 39,9 39,21 26,28 13,21 13,9" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+        <polygon points="26,9 32.5,12.5 32.5,19.5 26,23 19.5,19.5 19.5,12.5" fill="none" stroke="#eee" stroke-width="1"/>
+        <polygon points="26,4 37,10 36,20 26,24 15,19 16,11" fill="#2563eb" fill-opacity=".18" stroke="#2563eb" stroke-width="1.8"/>
+        <polygon points="26,11 34,13 33,22 26,20 18,22 19,13" fill="#dc2626" fill-opacity=".18" stroke="#dc2626" stroke-width="1.8"/>
+      </svg>
+      <h3>雷達圖</h3>
+      <p>多維度同時比較。可選共用尺度或各軸各自正規化——後者會在每個軸標出「滿格＝多少」，避免讀者把相對位置當成絕對值。</p>
+      <span class="use">同業競爭力多維度對比、風險面向評分、ESG 評分</span>
+    </a>
+
+    <a class="card" href="box-plot.html">
+      <svg class="ico" width="52" height="30" viewBox="0 0 52 30" fill="none" aria-hidden="true">
+        <line x1="13" y1="3" x2="13" y2="26" stroke="#2563eb" stroke-width="1.3"/>
+        <line x1="9" y1="3" x2="17" y2="3" stroke="#2563eb" stroke-width="1.3"/>
+        <line x1="9" y1="26" x2="17" y2="26" stroke="#2563eb" stroke-width="1.3"/>
+        <rect x="6" y="8" width="14" height="13" fill="#2563eb" fill-opacity=".22" stroke="#2563eb" stroke-width="1.4" rx="1.5"/>
+        <line x1="6" y1="15" x2="20" y2="15" stroke="#2563eb" stroke-width="2.6"/>
+        <line x1="37" y1="7" x2="37" y2="24" stroke="#dc2626" stroke-width="1.3"/>
+        <line x1="33" y1="7" x2="41" y2="7" stroke="#dc2626" stroke-width="1.3"/>
+        <line x1="33" y1="24" x2="41" y2="24" stroke="#dc2626" stroke-width="1.3"/>
+        <rect x="30" y="11" width="14" height="9" fill="#dc2626" fill-opacity=".22" stroke="#dc2626" stroke-width="1.4" rx="1.5"/>
+        <line x1="30" y1="16" x2="44" y2="16" stroke="#dc2626" stroke-width="2.6"/>
+        <circle cx="37" cy="2.5" r="2" fill="#fff" stroke="#dc2626" stroke-width="1.2"/>
+      </svg>
+      <h3>箱型圖</h3>
+      <p>四分位數用線性內插（等同 Excel <code>QUARTILE.INC</code>），鬍鬚走 1.5×IQR 圍籬、界外點單獨畫出。也可只填五數摘要。</p>
+      <span class="use">同業估值倍數分布、毛利率離散度、薪酬區間</span>
+    </a>
   </div>
 
   <h2>同系列的其他工具（各自獨立的資料夾與 port）</h2>
@@ -188,7 +232,8 @@
   <div class="note">
     <h3>共通功能：貼上表格、跨圖配色一致、列印檢查</h3>
     <p>
-      <strong>貼上表格</strong>：七個工具都能直接從 Excel／Google Sheets／10-Q 表格整塊貼上，
+      <strong>貼上表格</strong>：除了分層關係圖（走 JSON），其餘十個工具都能直接從
+      Excel／Google Sheets／10-Q 表格整塊貼上，
       不必一格一格重打。解析器認得千分位、<code>%</code>、貨幣符號，以及財報慣用的
       <code>(1,234)</code> 括號負數——最後這項若沒處理，整份損益表的費用項會全部變成正的。
       <code>—</code> 與空白視為缺值，折線圖會斷線而不是補 0。

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>箱型圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-row { grid-template-columns: 28px 1fr 22px; }
+  .grp-values { grid-column: 1 / -1; }
+  .grp-values input { width: 100%; padding: 5px 6px; font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .five { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .five input { width: 100%; padding: 5px 4px; font-size: 11px; }
+  .five-hdr { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+              font-size: 9.5px; color: var(--sub); text-align: center; margin-bottom: 3px; }
+  .item-block { border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: #fff; }
+  .item-list { gap: 8px; max-height: 340px; }
+  .stat-note { font-size: 10.5px; color: var(--sub); margin-top: 5px; line-height: 1.5;
+               font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Box Plot</span>
+    <h1>箱型圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與軸</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 同業本益比分布">
+      <label>數值軸名稱／單位</label>
+      <input type="text" id="unit" value="本益比 (x)">
+      <div class="check-row"><input type="checkbox" id="optHoriz"><label for="optHoriz">橫向排列</label></div>
+      <div class="check-row"><input type="checkbox" id="optZero"><label for="optZero">數值軸從 0 起算</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">輸入方式</div>
+      <select id="inputMode">
+        <option value="raw">原始數值（自動算四分位數與離群值）</option>
+        <option value="summary">五數摘要（直接填 Min / Q1 / 中位數 / Q3 / Max）</option>
+      </select>
+      <div class="hint-text" id="modeHint"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">分組</div>
+      <div class="item-list" id="grpList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無分組，按下方「新增分組」</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addGrp">＋ 新增分組</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="hint-text">
+        原始數值模式下，每組底下會顯示實際算出的 n／Q1／中位數／Q3，可以直接跟 Excel 的
+        <code>QUARTILE.INC</code> 對答案。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optOutliers" checked><label for="optOutliers">畫出離群值（1.5×IQR 之外）</label></div>
+      <div class="check-row"><input type="checkbox" id="optMean" checked><label for="optMean">平均數菱形標記</label></div>
+      <div class="check-row"><input type="checkbox" id="optPoints"><label for="optPoints">疊上所有原始點</label></div>
+      <div class="check-row"><input type="checkbox" id="optValues"><label for="optValues">標示中位數數值</label></div>
+      <div class="check-row"><input type="checkbox" id="optN" checked><label for="optN">組名下標示樣本數 n</label></div>
+      <div class="check-row"><input type="checkbox" id="optGrid" checked><label for="optGrid">格線</label></div>
+      <div class="hint-text">
+        「離群值」關掉時鬍鬚會直接拉到最小／最大值，圖上會註明——不然讀者會以為
+        這組資料本來就沒有極端值。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：各公司最新 10-Q，股價為 2026-08-08 收盤">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900;
+  var DRAFT_KEY = 'chart-tools:box';
+
+  var state = {
+    title: '', caption: '', unit: '',
+    inputMode: 'raw',
+    groups: [],
+    opts: { horiz: false, zero: false, outliers: true, mean: true, points: false,
+            values: false, showN: true, grid: true }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  var MODE_HINTS = {
+    raw: '把該組的每一筆觀測值都填進去（逗號分隔），四分位數由工具計算。' +
+         '用的是<b>線性內插法</b>（等同 Excel 的 <code>QUARTILE.INC</code>、R 的 type 7），' +
+         '所以算出來的 Q1／Q3 會跟試算表對得上。',
+    summary: '只填五個數字。適合資料來源本身就只給摘要（例如券商報告寫「同業本益比 12–28 倍，' +
+             '中位數 18」）的情況。這個模式<b>不會有離群值</b>——鬍鬚端點就是你填的 Min／Max。'
+  };
+
+  /* ================= 統計 =================
+   * 四分位數用線性內插（R type 7 / Excel QUARTILE.INC）。刻意不用「排除中位數的
+   * 兩半各取中位數」那種算法（type 6 / QUARTILE.EXC）——後者在小樣本下會給出比較寬的箱子，
+   * 跟使用者拿去對照的 Excel 值對不上，會被當成工具算錯。 */
+  function quantile(sorted, p) {
+    var n = sorted.length;
+    if (!n) return null;
+    if (n === 1) return sorted[0];
+    var h = (n - 1) * p;
+    var lo = Math.floor(h), frac = h - lo;
+    if (lo + 1 >= n) return sorted[n - 1];
+    return sorted[lo] + frac * (sorted[lo + 1] - sorted[lo]);
+  }
+
+  function summarize(g) {
+    if (state.inputMode === 'summary') {
+      var s = g.summary || {};
+      var f = ['min', 'q1', 'med', 'q3', 'max'].map(function (k) {
+        var v = s[k];
+        return (typeof v === 'number' && isFinite(v)) ? v : null;
+      });
+      if (f.some(function (v) { return v === null; })) return null;
+      // 使用者可能把 Q1／Q3 填反，排序過再用，不要畫出高度為負的箱子
+      f.sort(function (a, b) { return a - b; });
+      return { n: null, min: f[0], q1: f[1], med: f[2], q3: f[3], max: f[4],
+               mean: null, outliers: [], raw: [], lowCap: f[0], highCap: f[4] };
+    }
+
+    var vals = (g.values || []).filter(function (v) { return typeof v === 'number' && isFinite(v); });
+    if (!vals.length) return null;
+    var sorted = vals.slice().sort(function (a, b) { return a - b; });
+    var q1 = quantile(sorted, 0.25), med = quantile(sorted, 0.5), q3 = quantile(sorted, 0.75);
+    var iqr = q3 - q1;
+    var loFence = q1 - 1.5 * iqr, hiFence = q3 + 1.5 * iqr;
+
+    var inner = state.opts.outliers
+      ? sorted.filter(function (v) { return v >= loFence && v <= hiFence; })
+      : sorted;
+    // 全部都在圍籬外（理論上不會，但 IQR=0 時可能發生）就退回用全體極值，
+    // 否則鬍鬚會找不到端點而畫成 NaN
+    if (!inner.length) inner = sorted;
+
+    var outliers = state.opts.outliers
+      ? sorted.filter(function (v) { return v < loFence || v > hiFence; })
+      : [];
+
+    var mean = sorted.reduce(function (a, b) { return a + b; }, 0) / sorted.length;
+
+    return {
+      n: sorted.length, min: sorted[0], max: sorted[sorted.length - 1],
+      q1: q1, med: med, q3: q3, mean: mean,
+      lowCap: inner[0], highCap: inner[inner.length - 1],
+      outliers: outliers, raw: sorted
+    };
+  }
+
+  /* ================= 分組編輯清單 ================= */
+  function renderGrpList() {
+    var list = $('grpList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.groups.length ? 'none' : 'block';
+
+    state.groups.forEach(function (g, idx) {
+      var block = document.createElement('div');
+      block.className = 'item-block';
+
+      var body = state.inputMode === 'raw'
+        ? '<div class="grp-values" style="margin-top:6px;">' +
+            '<input type="text" data-raw placeholder="觀測值，逗號分隔">' +
+          '</div>' +
+          '<div class="stat-note" data-stat></div>'
+        : '<div class="five-hdr" style="margin-top:6px;">' +
+            '<span>Min</span><span>Q1</span><span>中位</span><span>Q3</span><span>Max</span>' +
+          '</div>' +
+          '<div class="five">' +
+            '<input type="number" step="any" data-k="min">' +
+            '<input type="number" step="any" data-k="q1">' +
+            '<input type="number" step="any" data-k="med">' +
+            '<input type="number" step="any" data-k="q3">' +
+            '<input type="number" step="any" data-k="max">' +
+          '</div>';
+
+      block.innerHTML =
+        '<div class="item-row">' +
+          '<input type="color" value="' + g.color + '">' +
+          '<input type="text" value="' + CT.escapeHtml(g.name) + '" placeholder="組名">' +
+          '<button class="item-del" title="刪除">×</button>' +
+        '</div>' + body;
+
+      var colorI = block.querySelector('input[type=color]');
+      var nameI = block.querySelector('.item-row input[type=text]');
+
+      colorI.addEventListener('input', function () {
+        g.color = colorI.value;
+        CT.rememberColor(g.name, g.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
+      nameI.addEventListener('input', function () { g.name = nameI.value; render(); });
+      block.querySelector('.item-del').addEventListener('click', function () {
+        state.groups.splice(idx, 1); renderGrpList(); render();
+      });
+
+      if (state.inputMode === 'raw') {
+        var rawI = block.querySelector('[data-raw]');
+        rawI.value = (g.values || []).join(',');
+        rawI.addEventListener('input', function () {
+          g.values = rawI.value.split(',').map(function (t) {
+            return CT.parseNumber(t);
+          }).filter(function (v) { return v !== null; });
+          updateStat(block, g);
+          render();
+        });
+        updateStat(block, g);
+      } else {
+        g.summary = g.summary || {};
+        Array.prototype.forEach.call(block.querySelectorAll('[data-k]'), function (inp) {
+          var k = inp.dataset.k;
+          var v = g.summary[k];
+          inp.value = (typeof v === 'number' && isFinite(v)) ? v : '';
+          inp.addEventListener('input', function () {
+            var t = inp.value.trim();
+            g.summary[k] = t === '' ? null : CT.parseNumber(t);
+            render();
+          });
+        });
+      }
+
+      list.appendChild(block);
+    });
+  }
+
+  function updateStat(block, g) {
+    var box = block.querySelector('[data-stat]');
+    if (!box) return;
+    var s = summarize(g);
+    if (!s) { box.textContent = ''; return; }
+    box.textContent = 'n=' + s.n + '  Q1=' + fmt(s.q1) + '  中位=' + fmt(s.med) +
+      '  Q3=' + fmt(s.q3) + (s.outliers.length ? '  離群 ' + s.outliers.length + ' 筆' : '');
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+
+    var horiz = state.opts.horiz;
+    var groups = state.groups.map(function (g) {
+      return { g: g, s: summarize(g) };
+    }).filter(function (x) { return x.s !== null; });
+
+    var titleH = state.title ? 34 : 0;
+    var headH = titleH + 18;
+
+    // 橫向時每組一條帶，畫布高度隨組數長高；直向固定 520
+    var BAND_H = 54;
+    var VB_H = horiz
+      ? Math.max(300, headH + Math.max(1, groups.length) * BAND_H + 64)
+      : 520;
+    svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 26, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (!groups.length) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, state.inputMode === 'raw' ? '每組至少填一筆觀測值後即可預覽' : '五個數字都填齊後即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    var catLabelW = horiz ? 150 : 0;
+    var plotL = horiz ? 20 + catLabelW : 82;
+    var plotR = VB_W - (horiz ? 46 : 30);
+    var plotT = headH;
+    var plotB = VB_H - (horiz ? 44 : 68);
+    var plotW = plotR - plotL, plotH = plotB - plotT;
+
+    /* --- 值域：要含鬍鬚端點與所有離群值，否則點會畫到繪圖區外 --- */
+    var vals = [];
+    groups.forEach(function (x) {
+      vals.push(x.s.lowCap, x.s.highCap, x.s.q1, x.s.q3, x.s.med);
+      x.s.outliers.forEach(function (v) { vals.push(v); });
+      if (state.opts.points) x.s.raw.forEach(function (v) { vals.push(v); });
+      if (state.opts.mean && x.s.mean !== null) vals.push(x.s.mean);
+    });
+    var ax = CT.axisScale(vals, 6, state.opts.zero);
+
+    function vPos(v) {
+      var f = (v - ax.min) / (ax.max - ax.min);
+      return horiz ? plotL + f * plotW : plotB - f * plotH;
+    }
+
+    /* --- 格線與刻度 --- */
+    ax.ticks.forEach(function (t) {
+      var p = vPos(t);
+      if (state.opts.grid) {
+        svg.appendChild(horiz
+          ? el('line', { x1: p, y1: plotT, x2: p, y2: plotB, stroke: '#eeeeee', 'stroke-width': 1 })
+          : el('line', { x1: plotL, y1: p, x2: plotR, y2: p, stroke: '#eeeeee', 'stroke-width': 1 }));
+      }
+      svg.appendChild(horiz
+        ? el('text', { x: p, y: plotB + 16, 'text-anchor': 'middle', 'font-size': 11, fill: '#555555', 'font-family': 'sans-serif' }, fmt(t))
+        : el('text', { x: plotL - 10, y: p + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#555555', 'font-family': 'sans-serif' }, fmt(t)));
+    });
+
+    if (state.unit) {
+      svg.appendChild(horiz
+        ? el('text', { x: plotR, y: plotT - 8, 'text-anchor': 'end', 'font-size': 11, fill: '#777777', 'font-family': 'sans-serif' }, state.unit)
+        : el('text', { x: plotL - 10, y: plotT - 8, 'text-anchor': 'end', 'font-size': 11, fill: '#777777', 'font-family': 'sans-serif' }, state.unit));
+    }
+
+    svg.appendChild(horiz
+      ? el('line', { x1: plotL, y1: plotT, x2: plotL, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 })
+      : el('line', { x1: plotL, y1: plotB, x2: plotR, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 }));
+
+    /* --- 每一組 --- */
+    var band = (horiz ? plotH : plotW) / groups.length;
+    var boxW = Math.min(58, band * 0.5);
+
+    groups.forEach(function (x, gi) {
+      var g = x.g, s = x.s;
+      var mid = (horiz ? plotT : plotL) + band * (gi + 0.5);
+      var half = boxW / 2;
+
+      var pLow = vPos(s.lowCap), pHigh = vPos(s.highCap);
+      var pQ1 = vPos(s.q1), pQ3 = vPos(s.q3), pMed = vPos(s.med);
+
+      /* 鬍鬚：主幹 + 兩端橫槓 */
+      var CAP = boxW * 0.42;
+      if (horiz) {
+        svg.appendChild(tag(el('line', { x1: pLow, y1: mid, x2: pQ1, y2: mid, stroke: g.color, 'stroke-width': 1.4 }), g));
+        svg.appendChild(tag(el('line', { x1: pQ3, y1: mid, x2: pHigh, y2: mid, stroke: g.color, 'stroke-width': 1.4 }), g));
+        svg.appendChild(tag(el('line', { x1: pLow, y1: mid - CAP, x2: pLow, y2: mid + CAP, stroke: g.color, 'stroke-width': 1.4 }), g));
+        svg.appendChild(tag(el('line', { x1: pHigh, y1: mid - CAP, x2: pHigh, y2: mid + CAP, stroke: g.color, 'stroke-width': 1.4 }), g));
+      } else {
+        svg.appendChild(tag(el('line', { x1: mid, y1: pLow, x2: mid, y2: pQ1, stroke: g.color, 'stroke-width': 1.4 }), g));
+        svg.appendChild(tag(el('line', { x1: mid, y1: pQ3, x2: mid, y2: pHigh, stroke: g.color, 'stroke-width': 1.4 }), g));
+        svg.appendChild(tag(el('line', { x1: mid - CAP, y1: pLow, x2: mid + CAP, y2: pLow, stroke: g.color, 'stroke-width': 1.4 }), g));
+        svg.appendChild(tag(el('line', { x1: mid - CAP, y1: pHigh, x2: mid + CAP, y2: pHigh, stroke: g.color, 'stroke-width': 1.4 }), g));
+      }
+
+      /* 箱子：Q1–Q3。IQR=0 時給 2px 的最小厚度，否則整個箱子會消失 */
+      var bLo = Math.min(pQ1, pQ3), bLen = Math.max(2, Math.abs(pQ3 - pQ1));
+      svg.appendChild(tag(horiz
+        ? el('rect', { x: bLo, y: mid - half, width: bLen, height: boxW, fill: g.color, 'fill-opacity': 0.22, stroke: g.color, 'stroke-width': 1.6, rx: 2 })
+        : el('rect', { x: mid - half, y: bLo, width: boxW, height: bLen, fill: g.color, 'fill-opacity': 0.22, stroke: g.color, 'stroke-width': 1.6, rx: 2 }), g));
+
+      /* 中位數：粗線，是這張圖最重要的一條 */
+      svg.appendChild(tag(horiz
+        ? el('line', { x1: pMed, y1: mid - half, x2: pMed, y2: mid + half, stroke: g.color, 'stroke-width': 3 })
+        : el('line', { x1: mid - half, y1: pMed, x2: mid + half, y2: pMed, stroke: g.color, 'stroke-width': 3 }), g));
+
+      /* 原始點（抖動散開，避免同值疊成一點看不出密度） */
+      if (state.opts.points && s.raw.length) {
+        s.raw.forEach(function (v, k) {
+          // 決定性的偽隨機偏移：用索引算，不用 Math.random，否則每次 render 點都在跳
+          var jitter = ((k * 37) % 11 - 5) / 5 * (half * 0.55);
+          var p = vPos(v);
+          svg.appendChild(tag(horiz
+            ? el('circle', { cx: p, cy: mid + jitter, r: 2.4, fill: g.color, 'fill-opacity': 0.45 })
+            : el('circle', { cx: mid + jitter, cy: p, r: 2.4, fill: g.color, 'fill-opacity': 0.45 }), g));
+        });
+      }
+
+      /* 平均數菱形 —— 中位數是線、平均是菱形，形狀不同才不會看錯 */
+      if (state.opts.mean && s.mean !== null) {
+        var mp = vPos(s.mean);
+        // path 的 d 是字串拼出來的，不會經過 el() 的屬性四捨五入——不先收斂精度，
+        // 平均值算出來的 298.51111111111106 會原封不動寫進嵌入代碼裡
+        var mx = CT.round(horiz ? mp : mid, 2), my = CT.round(horiz ? mid : mp, 2), r = 4.6;
+        svg.appendChild(tag(el('path', {
+          d: 'M' + mx + ',' + CT.round(my - r, 2) + ' L' + CT.round(mx + r, 2) + ',' + my +
+             ' L' + mx + ',' + CT.round(my + r, 2) + ' L' + CT.round(mx - r, 2) + ',' + my + ' Z',
+          fill: '#ffffff', stroke: g.color, 'stroke-width': 1.8
+        }), g));
+      }
+
+      /* 離群值 */
+      s.outliers.forEach(function (v) {
+        var p = vPos(v);
+        svg.appendChild(tag(horiz
+          ? el('circle', { cx: p, cy: mid, r: 3.2, fill: '#ffffff', stroke: g.color, 'stroke-width': 1.5 })
+          : el('circle', { cx: mid, cy: p, r: 3.2, fill: '#ffffff', stroke: g.color, 'stroke-width': 1.5 }), g));
+      });
+
+      /* 中位數數值標籤 */
+      if (state.opts.values) {
+        svg.appendChild(tag(horiz
+          ? el('text', { x: pMed, y: mid - half - 6, 'text-anchor': 'middle', 'font-size': 10, fill: g.color, 'font-weight': 600, 'font-family': 'sans-serif' }, fmt(s.med))
+          : el('text', { x: mid + half + 6, y: pMed + 3.5, 'text-anchor': 'start', 'font-size': 10, fill: g.color, 'font-weight': 600, 'font-family': 'sans-serif' }, fmt(s.med)), g));
+      }
+
+      /* 組名 */
+      var nm = g.name || '(未命名)';
+      var nLabel = (state.opts.showN && s.n !== null) ? 'n=' + s.n : '';
+      if (horiz) {
+        svg.appendChild(el('text', {
+          x: plotL - 10, y: mid + (nLabel ? -1 : 4), 'text-anchor': 'end',
+          'font-size': 11.5, fill: '#333333', 'font-family': 'sans-serif'
+        }, CT.truncateToWidth(nm, 11.5, catLabelW - 4)));
+        if (nLabel) {
+          svg.appendChild(el('text', {
+            x: plotL - 10, y: mid + 12, 'text-anchor': 'end',
+            'font-size': 9.5, fill: '#999999', 'font-family': 'sans-serif'
+          }, nLabel));
+        }
+      } else {
+        var rotate = CT.textWidth(nm, 11.5) > band - 6;
+        var t = el('text', {
+          x: mid, y: plotB + (rotate ? 14 : 18), 'text-anchor': rotate ? 'end' : 'middle',
+          'font-size': 11.5, fill: '#333333', 'font-family': 'sans-serif'
+        }, rotate ? CT.truncateToWidth(nm, 11.5, 92) : nm);
+        if (rotate) t.setAttribute('transform', 'rotate(-30 ' + mid + ' ' + (plotB + 14) + ')');
+        svg.appendChild(t);
+        if (nLabel && !rotate) {
+          svg.appendChild(el('text', {
+            x: mid, y: plotB + 31, 'text-anchor': 'middle',
+            'font-size': 9.5, fill: '#999999', 'font-family': 'sans-serif'
+          }, nLabel));
+        }
+      }
+
+      /* hover 熱區：整條帶，不必精準指到箱子上 */
+      var rows = [
+        ['最大' + (s.outliers.length ? '（含離群）' : ''), fmt(s.max !== undefined ? s.max : s.highCap)],
+        ['Q3', fmt(s.q3)],
+        ['中位數', fmt(s.med)],
+        ['Q1', fmt(s.q1)],
+        ['最小' + (s.outliers.length ? '（含離群）' : ''), fmt(s.min !== undefined ? s.min : s.lowCap)]
+      ];
+      if (s.mean !== null) rows.splice(3, 0, ['平均', fmt(s.mean)]);
+      if (s.n !== null) rows.push(['樣本數', String(s.n)]);
+      if (s.outliers.length) rows.push(['離群值', s.outliers.map(function (v) { return fmt(v); }).join(', ')]);
+
+      var tip = '<b>' + CT.escapeHtml(nm) + '</b><br>' +
+        rows.map(function (r) { return CT.escapeHtml(r[0]) + '：<b>' + CT.escapeHtml(r[1]) + '</b>'; }).join('<br>');
+
+      var hit = horiz
+        ? el('rect', { x: plotL, y: mid - band / 2, width: plotW, height: band, fill: 'transparent' })
+        : el('rect', { x: mid - band / 2, y: plotT, width: band, height: plotH, fill: 'transparent' });
+      hit.setAttribute('data-hit', '1');
+      hit.setAttribute('data-dim', g.name);
+      hit.setAttribute('data-tip-html', tip);
+      hit.setAttribute('style', 'cursor:pointer;');
+      svg.appendChild(hit);
+    });
+
+    /* 關掉離群值＝鬍鬚定義換了一套，必須講明白 */
+    if (!state.opts.outliers && state.inputMode === 'raw') {
+      svg.appendChild(el('text', {
+        x: VB_W - 30, y: VB_H - 8, 'text-anchor': 'end',
+        'font-size': 10, fill: '#b45309', 'font-family': 'sans-serif'
+      }, '⚠ 已關閉離群值：鬍鬚端點為最小／最大值，非 1.5×IQR 圍籬'));
+    }
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
+  }
+
+  /* 統一補上 data-dim，讓互動版 hover 時能淡化其他組 */
+  function tag(node, g) { node.setAttribute('data-dim', g.name); return node; }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到任一組會列出完整五數摘要與離群值。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.groups)) { CT.toast('JSON 缺少 groups 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderGrpList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      inputMode: o.inputMode === 'summary' ? 'summary' : 'raw',
+      groups: [], opts: {}
+    };
+    var d = { horiz: false, zero: false, outliers: true, mean: true, points: false,
+              values: false, showN: true, grid: true };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.groups || []).forEach(function (g, i) {
+      var sum = null;
+      if (g.summary) {
+        sum = {};
+        ['min', 'q1', 'med', 'q3', 'max'].forEach(function (k2) {
+          var v = g.summary[k2];
+          var nn = typeof v === 'number' ? v : parseFloat(v);
+          sum[k2] = isFinite(nn) ? nn : null;
+        });
+      }
+      s.groups.push({
+        name: g.name || ('組' + (i + 1)),
+        color: g.color || CT.paletteAt(i),
+        values: (Array.isArray(g.values) ? g.values : []).map(function (v) {
+          var nn = typeof v === 'number' ? v : parseFloat(v);
+          return isFinite(nn) ? nn : null;
+        }).filter(function (v) { return v !== null; }),
+        summary: sum
+      });
+    });
+    return s;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title; $('caption').value = state.caption; $('unit').value = state.unit;
+    $('inputMode').value = state.inputMode;
+    $('modeHint').innerHTML = MODE_HINTS[state.inputMode];
+    $('optHoriz').checked = state.opts.horiz; $('optZero').checked = state.opts.zero;
+    $('optOutliers').checked = state.opts.outliers; $('optMean').checked = state.opts.mean;
+    $('optPoints').checked = state.opts.points; $('optValues').checked = state.opts.values;
+    $('optN').checked = state.opts.showN; $('optGrid').checked = state.opts.grid;
+    // 五數摘要模式沒有原始點與離群值可畫，開著只會誤導
+    var sm = state.inputMode === 'summary';
+    $('optOutliers').disabled = sm; $('optPoints').disabled = sm; $('optN').disabled = sm;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'caption', 'unit'].forEach(function (id) {
+    $(id).addEventListener('input', function () { state[id] = this.value; render(); });
+  });
+  $('inputMode').addEventListener('change', function () {
+    state.inputMode = this.value;
+    syncToInputs(); renderGrpList(); render();
+  });
+  [['optHoriz', 'horiz'], ['optZero', 'zero'], ['optOutliers', 'outliers'], ['optMean', 'mean'],
+   ['optPoints', 'points'], ['optValues', 'values'], ['optN', 'showN'], ['optGrid', 'grid']]
+  .forEach(function (p) {
+    $(p[0]).addEventListener('change', function () {
+      state.opts[p[1]] = this.checked;
+      if (p[1] === 'outliers') renderGrpList();   // 統計摘要那行的離群筆數會跟著變
+      render();
+    });
+  });
+
+  $('addGrp').addEventListener('click', function () {
+    state.groups.push({
+      name: '組' + (state.groups.length + 1),
+      color: CT.paletteAt(state.groups.length),
+      values: [], summary: { min: null, q1: null, med: null, q3: null, max: null }
+    });
+    renderGrpList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.groups = []; renderGrpList(); render(); CT.toast('已清空');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'box-plot.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  document.addEventListener('wheel', function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'number') a.blur();
+  }, { passive: true });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '各次產業本益比分布（示意）',
+      caption: '每組為該次產業成分股的 forward P/E。資料來源：各公司最新 10-Q（示意數字）',
+      unit: '本益比 (x)',
+      inputMode: 'raw',
+      opts: { horiz: false, zero: false, outliers: true, mean: true, points: false,
+              values: false, showN: true, grid: true },
+      groups: [
+        { name: '光通訊', color: '#2563eb', values: [18, 21, 23, 25, 26, 28, 31, 34, 62] },
+        { name: '記憶體', color: '#dc2626', values: [8, 9, 11, 12, 13, 15, 16, 19] },
+        { name: '晶圓代工', color: '#16a34a', values: [14, 16, 17, 18, 20, 22, 23, 24, 27] },
+        { name: 'IC 設計', color: '#d97706', values: [22, 26, 29, 31, 33, 35, 38, 41, 45, 78] }
+      ]
+    });
+    syncToInputs(); renderGrpList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 兩種模式吃的形狀不同，提示文字跟著切換，否則使用者會照著錯的欄序貼。 */
+  var pastePanel = CT.mountPastePanel($('pasteBox'), {
+    placeholder: '光通訊\t18\t21\t23\t25\t28\n記憶體\t8\t9\t11\t12\t15',
+    hint: '第一欄＝組名，其餘欄位＝該組的觀測值（原始數值模式，欄數可以每組不同）；' +
+          '切到五數摘要模式時改成 <code>組名, Min, Q1, 中位數, Q3, Max</code> 六欄。' +
+          '支援千分位、<code>%</code>、貨幣符號與 <code>(1,234)</code> 括號負數。',
+    headerDefault: false,
+    onApply: function (parsed) {
+      var kept = [];
+      parsed.rows.forEach(function (r, i) {
+        var name = r.label || ('組' + (i + 1));
+        var nums = r.values.filter(function (v) { return v !== null; });
+        if (!nums.length) return;
+        if (state.inputMode === 'summary') {
+          if (nums.length < 5) return;
+          kept.push({
+            name: name, color: CT.colorFor(name, kept.length),
+            values: [],
+            summary: { min: nums[0], q1: nums[1], med: nums[2], q3: nums[3], max: nums[4] }
+          });
+        } else {
+          kept.push({ name: name, color: CT.colorFor(name, kept.length), values: nums, summary: null });
+        }
+      });
+      if (!kept.length) {
+        return { error: state.inputMode === 'summary'
+          ? '每一列要有 5 個數字（Min / Q1 / 中位數 / Q3 / Max）'
+          : '沒有任何一列含可解析的數值' };
+      }
+      state.groups = kept;
+      renderGrpList(); render();
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.groups.map(function (g) { return { name: g.name || '(未命名)', color: g.color }; });
+    },
+    onApplyPrint: function () {
+      state.groups.forEach(function (g, i) {
+        g.color = CT.palettePrintAt(i);
+        CT.rememberColor(g.name, g.color);
+      });
+      renderGrpList(); render();
+    },
+    onReset: function () {
+      state.groups.forEach(function (g, i) { g.color = CT.colorFor(g.name, i); });
+      renderGrpList(); render();
+    }
+  });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.groups) && draft.groups.length) {
+    state = normalize(draft);
+    syncToInputs(); renderGrpList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雷達圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-row { grid-template-columns: 28px 1fr 22px; }
+  .series-values { grid-column: 1 / -1; }
+  .series-values input { width: 100%; padding: 5px 6px; font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .item-block { border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: #fff; }
+  .item-list { gap: 8px; max-height: 340px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Radar Chart</span>
+    <h1>雷達圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與維度</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 同業競爭力多維度對比">
+      <label>維度名稱（逗號分隔，至少 3 個）</label>
+      <input type="text" id="axes" value="營收成長,毛利率,研發強度,現金轉換,客戶集中度,產能彈性">
+      <label>數值單位（可留白）</label>
+      <input type="text" id="unit" placeholder="例如 分（1–10）">
+    </div>
+
+    <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">資料系列</div>
+      <div class="item-list" id="seriesList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無系列，按下方「新增系列」</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addSeries">＋ 新增系列</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="hint-text">
+        數值用逗號分隔，個數要跟維度一致。缺值留空，多邊形會直接跨過那個軸——
+        不補 0，因為 0 在雷達圖上是「這維度最差」的實質主張，不是「沒資料」。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">尺度</div>
+      <label style="margin-top:0;">刻度方式</label>
+      <select id="scaleMode">
+        <option value="shared">共用尺度（所有維度同一把尺）</option>
+        <option value="per">各維度各自正規化（每軸最大值＝100%）</option>
+      </select>
+      <div class="hint-text" id="scaleHint"></div>
+      <div id="maxWrap" style="margin-top:10px;">
+        <label style="margin-top:0;">軸上限（留空＝自動）</label>
+        <input type="number" id="maxVal" step="any" placeholder="自動">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optRings" checked><label for="optRings">同心格線</label></div>
+      <div class="check-row"><input type="checkbox" id="optPolyGrid" checked><label for="optPolyGrid">格線用多邊形（取消＝畫成同心圓）</label></div>
+      <div class="check-row"><input type="checkbox" id="optFill" checked><label for="optFill">多邊形填色</label></div>
+      <div class="check-row"><input type="checkbox" id="optMarkers" checked><label for="optMarkers">頂點圓標</label></div>
+      <div class="check-row"><input type="checkbox" id="optValues"><label for="optValues">直接標示數值</label></div>
+      <div class="check-row"><input type="checkbox" id="optTickLabels" checked><label for="optTickLabels">環刻度數字</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：各公司最新 10-K，評分為作者換算">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900, VB_H = 560;
+  var DRAFT_KEY = 'chart-tools:radar';
+
+  var state = {
+    title: '', caption: '', unit: '',
+    axes: [],
+    scaleMode: 'shared',
+    maxVal: null,
+    series: [],
+    opts: { rings: true, polyGrid: true, fill: true, markers: true, values: false, tickLabels: true }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  var SCALE_HINTS = {
+    shared: '所有維度共用一把尺，形狀可以直接比大小。前提是各維度<b>單位相同</b>' +
+            '（例如全部換算成 1–10 分）；營收 9,300 與毛利率 41.2 混在同一張圖，' +
+            '毛利率會被壓成一個看不見的點。',
+    per: '每個維度各自以該維度的最大值為 100%。適合單位不同的原始數字，但代價是' +
+         '<b>面積與形狀不再有跨維度的意義</b>——某軸滿格只代表「這組裡最高」，' +
+         'hover 仍會顯示原始值。圖說務必註明是正規化後的相對位置。'
+  };
+
+  /* ================= 控制項 ↔ state ================= */
+  function syncFromInputs() {
+    state.title = $('title').value;
+    state.caption = $('caption').value;
+    state.unit = $('unit').value;
+    state.axes = $('axes').value.split(',').map(function (s) { return s.trim(); })
+      .filter(function (s) { return s !== ''; });
+    var mv = $('maxVal').value.trim();
+    state.maxVal = mv === '' ? null : (isFinite(parseFloat(mv)) ? parseFloat(mv) : null);
+    state.opts.rings = $('optRings').checked;
+    state.opts.polyGrid = $('optPolyGrid').checked;
+    state.opts.fill = $('optFill').checked;
+    state.opts.markers = $('optMarkers').checked;
+    state.opts.values = $('optValues').checked;
+    state.opts.tickLabels = $('optTickLabels').checked;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title || '';
+    $('caption').value = state.caption || '';
+    $('unit').value = state.unit || '';
+    $('axes').value = (state.axes || []).join(',');
+    $('scaleMode').value = state.scaleMode;
+    $('maxVal').value = state.maxVal === null ? '' : state.maxVal;
+    $('optRings').checked = !!state.opts.rings;
+    $('optPolyGrid').checked = !!state.opts.polyGrid;
+    $('optFill').checked = !!state.opts.fill;
+    $('optMarkers').checked = !!state.opts.markers;
+    $('optValues').checked = !!state.opts.values;
+    $('optTickLabels').checked = !!state.opts.tickLabels;
+    refreshScaleUi();
+  }
+
+  function refreshScaleUi() {
+    $('scaleHint').innerHTML = SCALE_HINTS[state.scaleMode];
+    // 各軸正規化時「軸上限」沒有意義，藏起來免得使用者以為填了會有作用
+    $('maxWrap').style.display = state.scaleMode === 'per' ? 'none' : '';
+  }
+
+  /* ================= 系列編輯清單 ================= */
+  function renderSeriesList() {
+    var list = $('seriesList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.series.length ? 'none' : 'block';
+
+    state.series.forEach(function (s, idx) {
+      var block = document.createElement('div');
+      block.className = 'item-block';
+      block.innerHTML =
+        '<div class="item-row">' +
+          '<input type="color" value="' + s.color + '">' +
+          '<input type="text" value="' + CT.escapeHtml(s.name) + '" placeholder="系列名稱">' +
+          '<button class="item-del" title="刪除">×</button>' +
+        '</div>' +
+        '<div class="series-values" style="margin-top:6px;">' +
+          '<input type="text" placeholder="數值，逗號分隔">' +
+        '</div>';
+
+      var colorI = block.querySelector('input[type=color]');
+      var nameI = block.querySelector('.item-row input[type=text]');
+      var valsI = block.querySelector('.series-values input');
+
+      valsI.value = s.values.map(function (v) {
+        return (v === null || v === undefined || v !== v) ? '' : v;
+      }).join(',');
+
+      colorI.addEventListener('input', function () {
+        s.color = colorI.value;
+        CT.rememberColor(s.name, s.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
+      nameI.addEventListener('input', function () { s.name = nameI.value; render(); });
+      valsI.addEventListener('input', function () {
+        s.values = valsI.value.split(',').map(function (t) {
+          t = t.trim().replace(/,/g, '');
+          if (t === '') return null;
+          var n = parseFloat(t);
+          return isFinite(n) ? n : null;
+        });
+        render();
+      });
+      block.querySelector('.item-del').addEventListener('click', function () {
+        state.series.splice(idx, 1); renderSeriesList(); render();
+      });
+
+      list.appendChild(block);
+    });
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    var axes = state.axes;
+    var series = state.series.filter(function (s) { return s.values && s.values.length; });
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 26, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (axes.length < 3 || !series.length) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, axes.length < 3 ? '雷達圖至少需要 3 個維度' : '新增至少一個資料系列後即可預覽'));
+      writeOutput();
+      return;
+    }
+
+    /* --- 圖例先排版：行數會把圓心往下推，先畫圖再補圖例會蓋到頂部維度標籤 --- */
+    var LEG_FS = 11.5, LEG_SWATCH = 22, LEG_GAP = 22, LEG_LINE_H = 16;
+    var legendMaxW = VB_W - 60;
+    var legendRows = [];
+    (function () {
+      var row = [], w = 0;
+      series.forEach(function (s) {
+        var name = CT.truncateToWidth(s.name || '(未命名)', LEG_FS, legendMaxW - LEG_SWATCH - LEG_GAP);
+        var iw = LEG_SWATCH + CT.textWidth(name, LEG_FS) + LEG_GAP;
+        if (row.length && w + iw > legendMaxW) { legendRows.push({ cells: row, w: w }); row = []; w = 0; }
+        row.push({ name: name, color: s.color, w: iw });
+        w += iw;
+      });
+      if (row.length) legendRows.push({ cells: row, w: w });
+    })();
+
+    var titleH = state.title ? 34 : 0;
+    var legendY = titleH + 16;
+    legendRows.forEach(function (r) {
+      var lx = Math.max(30, (VB_W - r.w) / 2);
+      r.cells.forEach(function (c) {
+        svg.appendChild(el('rect', { x: lx, y: legendY - 9, width: 12, height: 12, rx: 2, fill: c.color }));
+        svg.appendChild(el('text', {
+          x: lx + LEG_SWATCH, y: legendY, 'font-size': LEG_FS, fill: '#333333', 'font-family': 'sans-serif'
+        }, c.name));
+        lx += c.w;
+      });
+      legendY += LEG_LINE_H;
+    });
+
+    var headH = titleH + legendRows.length * LEG_LINE_H + 18;
+    var avail = VB_H - headH - 26;
+    var cx = VB_W / 2, cy = headH + avail / 2;
+    // 26px 留給維度標籤那一圈；R 上限 190 是為了讓左右兩側的長標籤有位置可放
+    var R = Math.max(70, Math.min(avail / 2 - 26, 190));
+
+    var n = axes.length;
+    function angleAt(i) { return -Math.PI / 2 + (i * 2 * Math.PI) / n; }
+    function ptAt(i, frac) {
+      var a = angleAt(i);
+      return { x: cx + Math.cos(a) * R * frac, y: cy + Math.sin(a) * R * frac };
+    }
+
+    /* --- 尺度：共用一把尺 vs 各軸正規化 --- */
+    var perAxis = state.scaleMode === 'per';
+    var axisMax = [], axisMin = [], sharedAx = null;
+
+    if (perAxis) {
+      for (var i = 0; i < n; i++) {
+        var vals = [];
+        series.forEach(function (s) {
+          var v = s.values[i];
+          if (typeof v === 'number' && isFinite(v)) vals.push(v);
+        });
+        // 從 0 起算：正規化的分母若用「該軸最小值」會讓最差的那家永遠貼在圓心，
+        // 看起來像 0 分，但它可能只是比第一名低一點。
+        var hi = vals.length ? Math.max.apply(null, vals) : 1;
+        var lo = vals.length ? Math.min.apply(null, vals) : 0;
+        axisMin.push(Math.min(0, lo));
+        axisMax.push(hi > axisMin[i] ? hi : axisMin[i] + 1);
+      }
+    } else {
+      var all = [];
+      series.forEach(function (s) {
+        s.values.forEach(function (v, i) {
+          if (i < n && typeof v === 'number' && isFinite(v)) all.push(v);
+        });
+      });
+      sharedAx = CT.axisScale(all, 4, true);
+      if (state.maxVal !== null && isFinite(state.maxVal) && state.maxVal > sharedAx.min) {
+        var step = CT.niceStep((state.maxVal - sharedAx.min) / 4);
+        sharedAx = { min: sharedAx.min, max: state.maxVal, step: step, ticks: [] };
+        for (var k = 0; k <= 4; k++) {
+          sharedAx.ticks.push(CT.round(sharedAx.min + ((sharedAx.max - sharedAx.min) * k) / 4, 6));
+        }
+      }
+    }
+
+    function frac(v, i) {
+      if (typeof v !== 'number' || !isFinite(v)) return null;
+      if (perAxis) {
+        var span = axisMax[i] - axisMin[i];
+        return span > 0 ? clamp01((v - axisMin[i]) / span) : 0;
+      }
+      var s2 = sharedAx.max - sharedAx.min;
+      return s2 > 0 ? clamp01((v - sharedAx.min) / s2) : 0;
+    }
+    function clamp01(x) { return x < 0 ? 0 : (x > 1 ? 1 : x); }
+
+    /* --- 格線環 --- */
+    var RING_FRACS = perAxis ? [0.25, 0.5, 0.75, 1]
+      : sharedAx.ticks.filter(function (t) { return t > sharedAx.min - 1e-9; })
+          .map(function (t) { return (t - sharedAx.min) / (sharedAx.max - sharedAx.min); })
+          .filter(function (f) { return f > 0.001; });
+
+    if (state.opts.rings) {
+      RING_FRACS.forEach(function (f) {
+        if (state.opts.polyGrid) {
+          var pts = [];
+          for (var i = 0; i < n; i++) { var p = ptAt(i, f); pts.push(CT.round(p.x, 2) + ',' + CT.round(p.y, 2)); }
+          svg.appendChild(el('polygon', {
+            points: pts.join(' '), fill: 'none',
+            stroke: (Math.abs(f - 1) < 1e-9 ? '#c9c9c9' : '#eeeeee'), 'stroke-width': 1
+          }));
+        } else {
+          svg.appendChild(el('circle', {
+            cx: cx, cy: cy, r: R * f, fill: 'none',
+            stroke: (Math.abs(f - 1) < 1e-9 ? '#c9c9c9' : '#eeeeee'), 'stroke-width': 1
+          }));
+        }
+      });
+    }
+
+    /* --- 軸線與維度標籤 --- */
+    for (var i2 = 0; i2 < n; i2++) {
+      var pOut = ptAt(i2, 1);
+      svg.appendChild(el('line', {
+        x1: cx, y1: cy, x2: pOut.x, y2: pOut.y, stroke: '#dddddd', 'stroke-width': 1
+      }));
+
+      var a2 = angleAt(i2);
+      var lx2 = cx + Math.cos(a2) * (R + 16);
+      var ly2 = cy + Math.sin(a2) * (R + 16);
+      // 標籤錨點依角度切換：正上/正下用 middle，左右兩側各自靠邊，
+      // 否則長標籤會往圓心方向倒回來壓到多邊形。
+      var cosA = Math.cos(a2);
+      var anchor = Math.abs(cosA) < 0.12 ? 'middle' : (cosA > 0 ? 'start' : 'end');
+      var dy = Math.sin(a2) > 0.85 ? 12 : (Math.sin(a2) < -0.85 ? -4 : 4);
+      var label = CT.truncateToWidth(axes[i2], 12, anchor === 'middle' ? 150 : (VB_W / 2 - R - 22));
+      svg.appendChild(el('text', {
+        x: lx2, y: ly2 + dy, 'text-anchor': anchor,
+        'font-size': 12, fill: '#333333', 'font-family': 'sans-serif'
+      }, label));
+
+      // 各軸正規化時，把該軸的最大值標在標籤下方——不然讀者無從得知滿格代表多少
+      if (perAxis) {
+        svg.appendChild(el('text', {
+          x: lx2, y: ly2 + dy + 13, 'text-anchor': anchor,
+          'font-size': 9.5, fill: '#999999', 'font-family': 'sans-serif'
+        }, '滿格 ' + fmt(axisMax[i2])));
+      }
+    }
+
+    /* --- 環刻度數字：沿正上方那條軸標，不佔其他方位 --- */
+    if (state.opts.tickLabels) {
+      RING_FRACS.forEach(function (f) {
+        var v = perAxis ? Math.round(f * 100) + '%'
+                        : fmt(sharedAx.min + (sharedAx.max - sharedAx.min) * f);
+        svg.appendChild(el('text', {
+          x: cx + 5, y: cy - R * f + 3.5, 'text-anchor': 'start',
+          'font-size': 9.5, fill: '#aaaaaa', 'font-family': 'sans-serif'
+        }, v));
+      });
+    }
+
+    /* --- 資料多邊形 --- */
+    var missing = 0;
+    series.forEach(function (s) {
+      var pts = [];
+      for (var i = 0; i < n; i++) {
+        var f = frac(s.values[i], i);
+        if (f === null) { missing++; continue; }   // 缺值：多邊形直接跨過該軸
+        var p = ptAt(i, f);
+        pts.push({ x: CT.round(p.x, 2), y: CT.round(p.y, 2), v: s.values[i], i: i });
+      }
+      if (!pts.length) return;
+
+      var poly = pts.map(function (p) { return p.x + ',' + p.y; }).join(' ');
+      if (pts.length >= 3) {
+        var shape = el('polygon', {
+          points: poly,
+          fill: state.opts.fill ? s.color : 'none',
+          'fill-opacity': state.opts.fill ? 0.14 : 0,
+          stroke: s.color, 'stroke-width': 2.2, 'stroke-linejoin': 'round'
+        });
+        shape.setAttribute('data-dim', s.name);
+        svg.appendChild(shape);
+      } else {
+        var lineEl = el('polyline', {
+          points: poly, fill: 'none', stroke: s.color, 'stroke-width': 2.2, 'stroke-linejoin': 'round'
+        });
+        lineEl.setAttribute('data-dim', s.name);
+        svg.appendChild(lineEl);
+      }
+
+      if (state.opts.markers) {
+        pts.forEach(function (p) {
+          var c = el('circle', { cx: p.x, cy: p.y, r: 3.6, fill: '#ffffff', stroke: s.color, 'stroke-width': 2 });
+          c.setAttribute('data-dim', s.name);
+          svg.appendChild(c);
+        });
+      }
+
+      if (state.opts.values) {
+        pts.forEach(function (p) {
+          var a = angleAt(p.i);
+          var t = el('text', {
+            x: p.x + Math.cos(a) * 11, y: p.y + Math.sin(a) * 11 + 3.5,
+            'text-anchor': 'middle', 'font-size': 10, fill: s.color,
+            'font-weight': 600, 'font-family': 'sans-serif'
+          }, fmt(p.v));
+          t.setAttribute('data-dim', s.name);
+          svg.appendChild(t);
+        });
+      }
+    });
+
+    /* --- hover 熱區：每個系列在每個軸上一個點 --- */
+    series.forEach(function (s) {
+      for (var i = 0; i < n; i++) {
+        var v = s.values[i];
+        var f = frac(v, i);
+        if (f === null) continue;
+        var p = ptAt(i, f);
+        var tip = '<b>' + CT.escapeHtml(axes[i]) + '</b><br>' +
+          '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' +
+          s.color + ';margin-right:6px;"></span>' + CT.escapeHtml(s.name || '(未命名)') +
+          '：<b>' + fmt(v) + (state.unit ? ' ' + CT.escapeHtml(state.unit) : '') + '</b>' +
+          (perAxis ? '　(該軸 ' + Math.round(f * 100) + '%)' : '');
+        var hit = el('circle', { cx: p.x, cy: p.y, r: 11, fill: 'transparent' });
+        hit.setAttribute('data-hit', '1');
+        hit.setAttribute('data-dim', s.name);
+        hit.setAttribute('data-tip-html', tip);
+        hit.setAttribute('style', 'cursor:pointer;');
+        svg.appendChild(hit);
+      }
+    });
+
+    /* 缺值不能靜默吞掉——多邊形少一個角，形狀會小一塊，讀者看不出是資料缺 */
+    if (missing > 0) {
+      svg.appendChild(el('text', {
+        x: VB_W - 30, y: VB_H - 8, 'text-anchor': 'end',
+        'font-size': 10, fill: '#c33', 'font-family': 'sans-serif'
+      }, '⚠ 有 ' + missing + ' 個缺值，多邊形已跨過該軸'));
+    }
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
+  }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到頂點會淡化其他系列並顯示原始值。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.series)) { CT.toast('JSON 缺少 series 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderSeriesList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      axes: Array.isArray(o.axes) ? o.axes.map(String) : [],
+      scaleMode: o.scaleMode === 'per' ? 'per' : 'shared',
+      maxVal: (o.maxVal === null || o.maxVal === undefined || o.maxVal === '') ? null
+              : (isFinite(parseFloat(o.maxVal)) ? parseFloat(o.maxVal) : null),
+      series: [], opts: {}
+    };
+    var d = { rings: true, polyGrid: true, fill: true, markers: true, values: false, tickLabels: true };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.series || []).forEach(function (x, i) {
+      s.series.push({
+        name: x.name || ('系列' + (i + 1)),
+        color: x.color || CT.paletteAt(i),
+        values: (Array.isArray(x.values) ? x.values : []).map(function (v) {
+          var nn = typeof v === 'number' ? v : parseFloat(v);
+          return isFinite(nn) ? nn : null;
+        })
+      });
+    });
+    return s;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'axes', 'unit', 'caption'].forEach(function (id) {
+    $(id).addEventListener('input', function () { syncFromInputs(); render(); });
+  });
+  $('maxVal').addEventListener('input', function () { syncFromInputs(); render(); });
+  $('scaleMode').addEventListener('change', function () {
+    state.scaleMode = this.value; refreshScaleUi(); render();
+  });
+  ['optRings', 'optPolyGrid', 'optFill', 'optMarkers', 'optValues', 'optTickLabels'].forEach(function (id) {
+    $(id).addEventListener('change', function () { syncFromInputs(); render(); });
+  });
+
+  $('addSeries').addEventListener('click', function () {
+    state.series.push({
+      name: '系列' + (state.series.length + 1),
+      color: CT.paletteAt(state.series.length),
+      values: state.axes.map(function () { return null; })
+    });
+    renderSeriesList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.series = []; renderSeriesList(); render(); CT.toast('已清空系列');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'radar-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  document.addEventListener('wheel', function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'number') a.blur();
+  }, { passive: true });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '同業競爭力多維度對比（示意）',
+      caption: '各項為 1–10 分換算。資料來源：各公司最新 10-K Item 1／Item 7（示意數字）',
+      unit: '分',
+      axes: ['營收成長', '毛利率', '研發強度', '現金轉換', '客戶分散度', '產能彈性'],
+      scaleMode: 'shared',
+      opts: { rings: true, polyGrid: true, fill: true, markers: true, values: false, tickLabels: true },
+      series: [
+        { name: 'A 公司', color: '#2563eb', values: [8, 7, 9, 6, 4, 7] },
+        { name: 'B 公司', color: '#dc2626', values: [5, 9, 6, 8, 7, 5] },
+        { name: '產業中位數', color: '#16a34a', values: [6, 6, 5, 6, 6, 6] }
+      ]
+    });
+    syncToInputs(); renderSeriesList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 版型與折線圖一致：第一列＝維度標題，第一欄＝系列名稱。同業比較表從 Excel
+   * 整塊複製過來通常就是這個形狀（欄＝評分項目、列＝公司）。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '\t營收成長\t毛利率\t研發強度\nA 公司\t8\t7\t9\nB 公司\t5\t9\t6',
+    hint: '第一列＝維度名稱（第一格留空），第一欄＝系列名稱。支援千分位、<code>%</code>、' +
+          '貨幣符號與 <code>(1,234)</code> 括號負數；空格與 <code>—</code> 視為缺值。' +
+          '各欄單位不同時，套用後把「刻度方式」改成「各維度各自正規化」。',
+    onApply: function (parsed) {
+      if (!parsed.header || parsed.header.length < 4) {
+        return { error: '第一列要放至少 3 個維度名稱（第一格留空）' };
+      }
+      state.axes = parsed.header.slice(1).filter(function (s) { return s !== ''; });
+      state.series = parsed.rows.map(function (r, i) {
+        var name = r.label || ('系列' + (i + 1));
+        return {
+          name: name,
+          color: CT.colorFor(name, i),      // 同名系列在其他圖沿用同一個顏色
+          values: r.values.slice(0, state.axes.length)
+        };
+      });
+      syncToInputs(); renderSeriesList(); render();
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.series.map(function (s) { return { name: s.name || '(未命名)', color: s.color }; });
+    },
+    onApplyPrint: function () {
+      state.series.forEach(function (s, i) {
+        s.color = CT.palettePrintAt(i);
+        CT.rememberColor(s.name, s.color);
+      });
+      renderSeriesList(); render();
+    },
+    onReset: function () {
+      state.series.forEach(function (s, i) { s.color = CT.colorFor(s.name, i); });
+      renderSeriesList(); render();
+    }
+  });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.series) && draft.series.length) {
+    state = normalize(draft);
+    syncToInputs(); renderSeriesList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>堆疊面積圖工具 · chart-tools</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  .item-row { grid-template-columns: 28px 1fr 22px; }
+  .series-values { grid-column: 1 / -1; }
+  .series-values input { width: 100%; padding: 5px 6px; font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .item-block { border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: #fff; }
+  .item-list { gap: 8px; max-height: 340px; }
+  .ord-btn { cursor: pointer; color: var(--sub); font-size: 12px; background: none;
+             border: none; padding: 0 2px; line-height: 1; }
+  .ord-btn:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel">
+    <a class="back-link" href="index.html">← chart-tools</a>
+    <span class="tag">Stacked Area</span>
+    <h1>堆疊面積圖工具</h1>
+
+    <div class="section" style="margin-top:20px;">
+      <div class="section-title">標題與軸</div>
+      <label>圖表標題（可留白）</label>
+      <input type="text" id="title" placeholder="例如 營收結構逐季變化">
+      <label>X 軸期別（逗號分隔）</label>
+      <input type="text" id="cats" value="FY25Q2,FY25Q3,FY25Q4,FY26Q1,FY26Q2,FY26Q3">
+      <label>數值單位（可留白）</label>
+      <input type="text" id="unit" value="百萬美元">
+    </div>
+
+    <div class="section">
+      <div class="section-title">堆疊方式</div>
+      <select id="mode">
+        <option value="stacked">堆疊（看絕對金額與總量）</option>
+        <option value="percent">百分比堆疊（看結構占比，總和恆為 100%）</option>
+        <option value="overlap">重疊（各系列各自從 0 起算，半透明疊放）</option>
+      </select>
+      <div class="hint-text" id="modeHint"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">貼上表格</div>
+      <div id="pasteBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配色檢查</div>
+      <div id="colorBox"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">資料系列</div>
+      <div class="item-list" id="seriesList"></div>
+      <div class="empty-hint" id="emptyHint" style="display:none;">尚無系列，按下方「新增系列」</div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="addSeries">＋ 新增系列</button>
+        <button class="btn ghost small" id="seedBtn">載入範例</button>
+      </div>
+      <div class="hint-text">
+        清單由下往上堆：<b>第一個系列畫在最底層</b>。用 ↑↓ 調整順序——把波動最小的放底層，
+        上層的形狀才看得出自己的變化，而不是被下面的抖動帶著跑。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">顯示選項</div>
+      <div class="check-row"><input type="checkbox" id="optGrid" checked><label for="optGrid">水平格線</label></div>
+      <div class="check-row"><input type="checkbox" id="optBounds" checked><label for="optBounds">帶與帶之間畫分界線</label></div>
+      <div class="check-row"><input type="checkbox" id="optMarkers"><label for="optMarkers">分界點圓標</label></div>
+      <div class="check-row"><input type="checkbox" id="optBandLabels" checked><label for="optBandLabels">在最寬處標系列名稱</label></div>
+      <div class="check-row"><input type="checkbox" id="optTotals"><label for="optTotals">在頂端標各期總計</label></div>
+      <div class="check-row"><input type="checkbox" id="optZero" checked><label for="optZero">數值軸從 0 起算</label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">圖說（選填）</div>
+      <input type="text" id="caption" placeholder="例如 資料來源：公司 10-Q 分部資訊（Segment Information）">
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn small ghost" id="exportPng">匯出 PNG</button>
+        <button class="btn small ghost" id="clearBtn">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="out-tabs">
+      <button class="out-tab active" data-out="static">靜態 SVG（零依賴）</button>
+      <button class="out-tab" data-out="interactive">互動版（含 hover）</button>
+      <button class="out-tab" data-out="json">JSON 資料</button>
+    </div>
+    <div class="out-body">
+      <div id="outHint" class="hint-text" style="margin-top:0;"></div>
+      <textarea id="outText" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn small" id="copyBtn">複製</button>
+        <button class="btn small ghost" id="applyJson" style="display:none;">套用 JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_shared.js"></script>
+<script>
+(function () {
+  'use strict';
+  var el = CT.el, fmt = CT.fmt;
+
+  var VB_W = 900, VB_H = 520;
+  var PAD_B = 64, PAD_L = 78, PAD_R = 34;
+  var DRAFT_KEY = 'chart-tools:area';
+
+  var state = {
+    title: '', caption: '', unit: '',
+    categories: [],
+    mode: 'stacked',
+    series: [],
+    opts: { grid: true, bounds: true, markers: false, bandLabels: true, totals: false, zero: true }
+  };
+
+  var svg = document.getElementById('chart');
+  var $ = function (id) { return document.getElementById(id); };
+
+  var MODE_HINTS = {
+    stacked: '各系列由下往上疊，最上緣＝總量。同時看得到「總量在長」與「誰在長」，' +
+             '代價是<b>只有最底層那一條的形狀是真的</b>——上層的起伏都疊了下面的波動。',
+    percent: '每一期先算總和再換成百分比，總和恆為 100%。適合講結構轉移' +
+             '（「資料中心從 32% 變成 61%」），但<b>會完全隱藏總量變化</b>——' +
+             '營收腰斬也可能畫出一模一樣的圖，所以通常要跟堆疊版或折線圖並排放。',
+    overlap: '各系列都從 0 起算、半透明疊放，不累加。適合比較幾條量級相近的曲線，' +
+             '面積只是視覺輔助；系列超過 3 條就會糊成一片，改用折線圖。'
+  };
+
+  /* ================= 控制項 ↔ state ================= */
+  function syncFromInputs() {
+    state.title = $('title').value;
+    state.caption = $('caption').value;
+    state.unit = $('unit').value;
+    state.categories = $('cats').value.split(',').map(function (s) { return s.trim(); })
+      .filter(function (s) { return s !== ''; });
+    state.opts.grid = $('optGrid').checked;
+    state.opts.bounds = $('optBounds').checked;
+    state.opts.markers = $('optMarkers').checked;
+    state.opts.bandLabels = $('optBandLabels').checked;
+    state.opts.totals = $('optTotals').checked;
+    state.opts.zero = $('optZero').checked;
+  }
+
+  function syncToInputs() {
+    $('title').value = state.title || '';
+    $('caption').value = state.caption || '';
+    $('unit').value = state.unit || '';
+    $('cats').value = (state.categories || []).join(',');
+    $('mode').value = state.mode;
+    $('modeHint').innerHTML = MODE_HINTS[state.mode];
+    $('optGrid').checked = !!state.opts.grid;
+    $('optBounds').checked = !!state.opts.bounds;
+    $('optMarkers').checked = !!state.opts.markers;
+    $('optBandLabels').checked = !!state.opts.bandLabels;
+    $('optTotals').checked = !!state.opts.totals;
+    $('optZero').checked = !!state.opts.zero;
+    // 百分比模式的軸恆為 0–100，「從 0 起算」沒有東西可切；重疊模式沒有總計可標
+    $('optZero').disabled = state.mode === 'percent';
+    $('optTotals').disabled = state.mode === 'overlap';
+    $('optBandLabels').disabled = state.mode === 'overlap';
+  }
+
+  /* ================= 系列編輯清單 ================= */
+  function renderSeriesList() {
+    var list = $('seriesList');
+    list.innerHTML = '';
+    $('emptyHint').style.display = state.series.length ? 'none' : 'block';
+
+    state.series.forEach(function (s, idx) {
+      var block = document.createElement('div');
+      block.className = 'item-block';
+      block.innerHTML =
+        '<div class="item-row">' +
+          '<input type="color" value="' + s.color + '">' +
+          '<input type="text" value="' + CT.escapeHtml(s.name) + '" placeholder="系列名稱">' +
+          '<button class="item-del" title="刪除">×</button>' +
+        '</div>' +
+        '<div class="series-values" style="margin-top:6px;">' +
+          '<input type="text" placeholder="數值，逗號分隔">' +
+        '</div>' +
+        '<div style="margin-top:5px;display:flex;align-items:center;gap:4px;">' +
+          '<button class="ord-btn" data-up title="往下層移">↓ 下層</button>' +
+          '<button class="ord-btn" data-down title="往上層移">↑ 上層</button>' +
+          '<span style="font-size:10px;color:var(--sub);margin-left:auto;">第 ' + (idx + 1) + ' 層</span>' +
+        '</div>';
+
+      var colorI = block.querySelector('input[type=color]');
+      var nameI = block.querySelector('.item-row input[type=text]');
+      var valsI = block.querySelector('.series-values input');
+
+      valsI.value = s.values.map(function (v) {
+        return (v === null || v === undefined || v !== v) ? '' : v;
+      }).join(',');
+
+      colorI.addEventListener('input', function () {
+        s.color = colorI.value;
+        CT.rememberColor(s.name, s.color);   // 手動改色也要讓其他圖跟著一致
+        render();
+      });
+      nameI.addEventListener('input', function () { s.name = nameI.value; render(); });
+      valsI.addEventListener('input', function () {
+        s.values = valsI.value.split(',').map(function (t) {
+          return CT.parseNumber(t);
+        });
+        render();
+      });
+      block.querySelector('.item-del').addEventListener('click', function () {
+        state.series.splice(idx, 1); renderSeriesList(); render();
+      });
+      block.querySelector('[data-up]').addEventListener('click', function () {
+        if (idx === 0) return;
+        var t = state.series[idx - 1]; state.series[idx - 1] = state.series[idx]; state.series[idx] = t;
+        renderSeriesList(); render();
+      });
+      block.querySelector('[data-down]').addEventListener('click', function () {
+        if (idx >= state.series.length - 1) return;
+        var t = state.series[idx + 1]; state.series[idx + 1] = state.series[idx]; state.series[idx] = t;
+        renderSeriesList(); render();
+      });
+
+      list.appendChild(block);
+    });
+  }
+
+  /* ================= 繪圖 ================= */
+  function render() {
+    CT.clear(svg);
+    svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+
+    var cats = state.categories;
+    var series = state.series.filter(function (s) { return s.values && s.values.length; });
+    var pct = state.mode === 'percent';
+    var overlap = state.mode === 'overlap';
+
+    if (state.title) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: 26, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+      }, state.title));
+    }
+
+    if (!cats.length || !series.length) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '輸入期別與至少一個資料系列後即可預覽'));
+      writeOutput();
+      return;
+    }
+    if (cats.length < 2) {
+      svg.appendChild(el('text', {
+        x: VB_W / 2, y: VB_H / 2, 'text-anchor': 'middle',
+        'font-size': 14, fill: '#9a9a9a', 'font-family': 'sans-serif'
+      }, '面積圖至少需要 2 個期別（單一期別請改用長條圖）'));
+      writeOutput();
+      return;
+    }
+
+    /* --- 圖例先排版：行數會把繪圖區上緣往下推 --- */
+    var LEG_FS = 11.5, LEG_SWATCH = 22, LEG_GAP = 22, LEG_LINE_H = 16;
+    var legendMaxW = VB_W - 60;
+    var legendRows = [];
+    (function () {
+      var row = [], w = 0;
+      // 圖例照「上層在前」列，跟圖上由上往下的視覺順序一致
+      series.slice().reverse().forEach(function (s) {
+        var name = CT.truncateToWidth(s.name || '(未命名)', LEG_FS, legendMaxW - LEG_SWATCH - LEG_GAP);
+        var iw = LEG_SWATCH + CT.textWidth(name, LEG_FS) + LEG_GAP;
+        if (row.length && w + iw > legendMaxW) { legendRows.push({ cells: row, w: w }); row = []; w = 0; }
+        row.push({ name: name, color: s.color, w: iw });
+        w += iw;
+      });
+      if (row.length) legendRows.push({ cells: row, w: w });
+    })();
+
+    var titleH = state.title ? 34 : 0;
+    var legendY = titleH + 16;
+    legendRows.forEach(function (r) {
+      var lx = Math.max(30, (VB_W - r.w) / 2);
+      r.cells.forEach(function (c) {
+        svg.appendChild(el('rect', { x: lx, y: legendY - 9, width: 12, height: 12, rx: 2, fill: c.color }));
+        svg.appendChild(el('text', {
+          x: lx + LEG_SWATCH, y: legendY, 'font-size': LEG_FS, fill: '#333333', 'font-family': 'sans-serif'
+        }, c.name));
+        lx += c.w;
+      });
+      legendY += LEG_LINE_H;
+    });
+
+    var plotL = PAD_L, plotR = VB_W - PAD_R;
+    var plotT = titleH + legendRows.length * LEG_LINE_H + 18;
+    var plotB = VB_H - PAD_B;
+    var plotW = plotR - plotL, plotH = plotB - plotT;
+
+    /* --- 取值：面積圖不能斷帶，缺值一律當 0 並計數；負值在堆疊模式同樣當 0。
+           兩者都會在圖上明講，不靜默吞掉。 --- */
+    var missing = 0, droppedNeg = 0;
+    function valAt(s, i) {
+      var v = s.values[i];
+      if (typeof v !== 'number' || !isFinite(v)) { missing++; return 0; }
+      if (!overlap && v < 0) { droppedNeg++; return 0; }
+      return v;
+    }
+
+    // 先把整張表算出來（一次就好，後面畫圖與 hover 共用）
+    var grid = series.map(function (s) {
+      return cats.map(function (c, i) { return valAt(s, i); });
+    });
+
+    var totals = cats.map(function (c, i) {
+      var t = 0;
+      grid.forEach(function (row) { t += row[i]; });
+      return t;
+    });
+
+    // 實際畫上去的值：百分比模式先換算
+    var plotted = grid.map(function (row) {
+      return row.map(function (v, i) {
+        if (!pct) return v;
+        return totals[i] > 0 ? (v / totals[i]) * 100 : 0;
+      });
+    });
+
+    /* --- 值域 --- */
+    var ax;
+    if (pct) {
+      ax = { min: 0, max: 100, ticks: [0, 20, 40, 60, 80, 100] };
+    } else if (overlap) {
+      var flat = [];
+      plotted.forEach(function (row) { row.forEach(function (v) { flat.push(v); }); });
+      ax = CT.axisScale(flat, 5, state.opts.zero);
+    } else {
+      ax = CT.axisScale(totals.concat([0]), 5, true);
+    }
+
+    function xAt(i) { return plotL + (i * plotW) / (cats.length - 1); }
+    function yAt(v) { return plotB - ((v - ax.min) / (ax.max - ax.min)) * plotH; }
+
+    /* --- 格線與刻度 --- */
+    ax.ticks.forEach(function (t) {
+      var y = yAt(t);
+      if (state.opts.grid) {
+        svg.appendChild(el('line', {
+          x1: plotL, y1: y, x2: plotR, y2: y,
+          stroke: (Math.abs(t) < 1e-9 ? '#c9c9c9' : '#eeeeee'), 'stroke-width': 1
+        }));
+      }
+      svg.appendChild(el('text', {
+        x: plotL - 10, y: y + 4, 'text-anchor': 'end',
+        'font-size': 11, fill: '#555555', 'font-family': 'sans-serif'
+      }, fmt(t) + (pct ? '%' : '')));
+    });
+
+    if (state.unit && !pct) {
+      svg.appendChild(el('text', {
+        x: plotL - 10, y: plotT - 8, 'text-anchor': 'end',
+        'font-size': 11, fill: '#777777', 'font-family': 'sans-serif'
+      }, state.unit));
+    }
+
+    svg.appendChild(el('line', { x1: plotL, y1: plotT, x2: plotL, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 }));
+    svg.appendChild(el('line', { x1: plotL, y1: plotB, x2: plotR, y2: plotB, stroke: '#111111', 'stroke-width': 1.2 }));
+
+    /* --- X 軸標籤 --- */
+    var maxLen = cats.reduce(function (m, c) { return Math.max(m, CT.textWidth(c, 11)); }, 0);
+    var rotate = maxLen * cats.length > plotW * 0.85;
+    cats.forEach(function (c, i) {
+      var x = xAt(i);
+      svg.appendChild(el('line', { x1: x, y1: plotB, x2: x, y2: plotB + 4, stroke: '#999999', 'stroke-width': 1 }));
+      var t = el('text', {
+        x: x, y: plotB + (rotate ? 16 : 19), 'text-anchor': rotate ? 'end' : 'middle',
+        'font-size': 11, fill: '#444444', 'font-family': 'sans-serif'
+      }, c);
+      if (rotate) t.setAttribute('transform', 'rotate(-35 ' + x + ' ' + (plotB + 16) + ')');
+      svg.appendChild(t);
+    });
+
+    /* --- 面積帶 --- */
+    // baselines[si][i] = 第 si 個系列在第 i 期的下緣值
+    var baselines = [];
+    var running = cats.map(function () { return 0; });
+    series.forEach(function (s, si) {
+      baselines.push(running.slice());
+      if (!overlap) {
+        running = running.map(function (v, i) { return v + plotted[si][i]; });
+      }
+    });
+
+    series.forEach(function (s, si) {
+      var upper = [], lower = [];
+      cats.forEach(function (c, i) {
+        var lo = overlap ? ax.min : baselines[si][i];
+        var hi = overlap ? plotted[si][i] : baselines[si][i] + plotted[si][i];
+        upper.push({ x: CT.round(xAt(i), 2), y: CT.round(yAt(hi), 2), v: plotted[si][i], raw: grid[si][i], i: i });
+        lower.push({ x: CT.round(xAt(i), 2), y: CT.round(yAt(lo), 2) });
+      });
+
+      var d = 'M' + upper.map(function (p) { return p.x + ',' + p.y; }).join(' L') +
+              ' L' + lower.slice().reverse().map(function (p) { return p.x + ',' + p.y; }).join(' L') + ' Z';
+
+      var band = el('path', {
+        d: d, fill: s.color, 'fill-opacity': overlap ? 0.30 : 0.78, stroke: 'none'
+      });
+      band.setAttribute('data-dim', s.name);
+      svg.appendChild(band);
+
+      /* 上緣線：堆疊時是帶與帶的分界，重疊時是這條系列本身的曲線 */
+      if (state.opts.bounds || overlap) {
+        var line = el('polyline', {
+          points: upper.map(function (p) { return p.x + ',' + p.y; }).join(' '),
+          fill: 'none', stroke: overlap ? s.color : '#ffffff',
+          'stroke-width': overlap ? 2.2 : 1.4,
+          'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+        });
+        line.setAttribute('data-dim', s.name);
+        svg.appendChild(line);
+      }
+
+      if (state.opts.markers) {
+        upper.forEach(function (p) {
+          var c = el('circle', { cx: p.x, cy: p.y, r: 3, fill: '#ffffff', stroke: s.color, 'stroke-width': 1.8 });
+          c.setAttribute('data-dim', s.name);
+          svg.appendChild(c);
+        });
+      }
+
+      /* 系列名稱放在自己最寬的那一段裡——堆疊圖的圖例對照很費眼，
+         能直接標在帶上就少一次來回查找。放不下就跳過，不硬塞。 */
+      if (state.opts.bandLabels && !overlap) {
+        var best = -1, bestH = 0;
+        cats.forEach(function (c, i) {
+          var h = Math.abs(yAt(baselines[si][i]) - yAt(baselines[si][i] + plotted[si][i]));
+          if (h > bestH) { bestH = h; best = i; }
+        });
+        var nm = s.name || '';
+        if (best >= 0 && bestH >= 15 && nm) {
+          var lw = CT.textWidth(nm, 11);
+          var lx = xAt(best);
+          // 靠邊的期別要把標籤往內縮，否則會被畫布切掉
+          if (lx - lw / 2 < plotL + 4) lx = plotL + 4 + lw / 2;
+          if (lx + lw / 2 > plotR - 4) lx = plotR - 4 - lw / 2;
+          var ly = (yAt(baselines[si][best]) + yAt(baselines[si][best] + plotted[si][best])) / 2;
+          var txt = el('text', {
+            x: lx, y: ly + 4, 'text-anchor': 'middle', 'font-size': 11,
+            fill: CT.luminance(s.color) > 150 ? '#333333' : '#ffffff',
+            'font-weight': 600, 'font-family': 'sans-serif'
+          }, nm);
+          txt.setAttribute('data-dim', s.name);
+          svg.appendChild(txt);
+        }
+      }
+    });
+
+    /* --- 各期總計 --- */
+    if (state.opts.totals && !overlap) {
+      cats.forEach(function (c, i) {
+        var y = pct ? yAt(100) : yAt(totals[i]);
+        svg.appendChild(el('text', {
+          x: xAt(i), y: y - 7, 'text-anchor': 'middle',
+          'font-size': 10, fill: '#333333', 'font-weight': 600, 'font-family': 'sans-serif'
+        }, pct ? '100%' : fmt(totals[i])));
+      });
+    }
+
+    /* --- hover：垂直參考線（初始隱藏，由互動版 script 切換） --- */
+    cats.forEach(function (c, i) {
+      var g = el('g', { 'data-reveal': 'c' + i, opacity: 0, style: 'transition:opacity .1s;' });
+      g.appendChild(el('line', {
+        x1: xAt(i), y1: plotT, x2: xAt(i), y2: plotB, stroke: '#111111',
+        'stroke-width': 1, 'stroke-dasharray': '3 3', 'stroke-opacity': 0.5
+      }));
+      svg.appendChild(g);
+    });
+
+    /* --- hover 熱區：整條垂直帶 --- */
+    var bandW = plotW / (cats.length - 1);
+    cats.forEach(function (c, i) {
+      var hx = Math.max(plotL, xAt(i) - bandW / 2);
+      var hw = Math.min(plotR, xAt(i) + bandW / 2) - hx;
+      // 由上往下列，跟圖上的堆疊順序一致
+      var rows = series.map(function (s, si) {
+        var raw = grid[si][i];
+        var share = totals[i] > 0 ? (raw / totals[i]) * 100 : 0;
+        return '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' +
+          s.color + ';margin-right:6px;"></span>' + CT.escapeHtml(s.name || '(未命名)') +
+          '：<b>' + fmt(raw) + '</b>' +
+          (overlap ? '' : '　(' + share.toFixed(1) + '%)');
+      }).reverse().join('<br>');
+      var totalRow = overlap ? '' :
+        '<br><span style="opacity:.7;">合計：<b>' + fmt(totals[i]) +
+        (state.unit ? ' ' + CT.escapeHtml(state.unit) : '') + '</b></span>';
+
+      svg.appendChild(el('rect', {
+        x: hx, y: plotT, width: hw, height: plotH,
+        fill: 'transparent', 'data-hit': '1', 'data-show': 'c' + i,
+        'data-tip-html': '<b>' + CT.escapeHtml(c) + '</b><br>' + rows + totalRow,
+        style: 'cursor:crosshair;'
+      }));
+    });
+
+    /* 缺值與被歸零的負值都要講清楚 */
+    var warn = [];
+    if (missing > 0) warn.push('有 ' + missing + ' 個缺值以 0 計入');
+    if (droppedNeg > 0) warn.push('有 ' + droppedNeg + ' 筆負值以 0 計入');
+    if (warn.length) {
+      svg.appendChild(el('text', {
+        x: VB_W - PAD_R, y: VB_H - 8, 'text-anchor': 'end',
+        'font-size': 10, fill: '#c33', 'font-family': 'sans-serif'
+      }, '⚠ ' + warn.join('；')));
+    }
+
+    writeOutput();
+    CT.saveDraft(DRAFT_KEY, state);
+    if (colorPanel) colorPanel.refresh();   // colorPanel 在下方才建立，防呆
+  }
+
+  /* ================= 輸出分頁 ================= */
+  var outMode = 'static';
+  var HINTS = {
+    static: '純 SVG，沒有任何 script 與外部連線。貼進報告的 <code>.card</code> 裡即可，離線與列印都正常。',
+    interactive: '同一張 SVG ＋ 一段只做 hover 提示的 vanilla script，一樣零外部依賴。滑到任一期會列出各系列金額、占比與合計。',
+    json: '目前的資料。可以複製留存，或貼上別份 JSON 後按「套用 JSON」。'
+  };
+
+  function writeOutput() {
+    $('outHint').innerHTML = HINTS[outMode];
+    $('applyJson').style.display = outMode === 'json' ? '' : 'none';
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    else $('outText').value = JSON.stringify(state, null, 2);
+  }
+
+  document.querySelectorAll('.out-tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.out-tab').forEach(function (o) { o.classList.remove('active'); });
+      b.classList.add('active');
+      outMode = b.dataset.out;
+      writeOutput();
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function () {
+    CT.copyText($('outText').value, function (ok) {
+      CT.toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+    });
+  });
+
+  $('applyJson').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse($('outText').value); }
+    catch (e) { CT.toast('JSON 格式錯誤：' + e.message); return; }
+    if (!parsed || !Array.isArray(parsed.series)) { CT.toast('JSON 缺少 series 陣列'); return; }
+    state = normalize(parsed);
+    syncToInputs(); renderSeriesList(); render();
+    CT.toast('已套用 JSON');
+  });
+
+  function normalize(o) {
+    var s = {
+      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      categories: Array.isArray(o.categories) ? o.categories.map(String) : [],
+      mode: ['stacked', 'percent', 'overlap'].indexOf(o.mode) >= 0 ? o.mode : 'stacked',
+      series: [], opts: {}
+    };
+    var d = { grid: true, bounds: true, markers: false, bandLabels: true, totals: false, zero: true };
+    for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
+    (o.series || []).forEach(function (x, i) {
+      s.series.push({
+        name: x.name || ('系列' + (i + 1)),
+        color: x.color || CT.paletteAt(i),
+        values: (Array.isArray(x.values) ? x.values : []).map(function (v) {
+          var nn = typeof v === 'number' ? v : parseFloat(v);
+          return isFinite(nn) ? nn : null;
+        })
+      });
+    });
+    return s;
+  }
+
+  /* ================= 綁定 ================= */
+  ['title', 'cats', 'unit', 'caption'].forEach(function (id) {
+    $(id).addEventListener('input', function () { syncFromInputs(); render(); });
+  });
+  $('mode').addEventListener('change', function () {
+    state.mode = this.value; syncToInputs(); render();
+  });
+  ['optGrid', 'optBounds', 'optMarkers', 'optBandLabels', 'optTotals', 'optZero'].forEach(function (id) {
+    $(id).addEventListener('change', function () { syncFromInputs(); render(); });
+  });
+
+  $('addSeries').addEventListener('click', function () {
+    state.series.push({
+      name: '系列' + (state.series.length + 1),
+      color: CT.paletteAt(state.series.length),
+      values: state.categories.map(function () { return null; })
+    });
+    renderSeriesList(); render();
+  });
+  $('clearBtn').addEventListener('click', function () {
+    state.series = []; renderSeriesList(); render(); CT.toast('已清空系列');
+  });
+  $('exportPng').addEventListener('click', function () {
+    CT.exportPng(svg, 'area-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
+  });
+
+  document.addEventListener('wheel', function () {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.type === 'number') a.blur();
+  }, { passive: true });
+
+  /* ================= 範例 ================= */
+  function seed() {
+    state = normalize({
+      title: '營收結構逐季變化（示意）',
+      caption: '資料來源：公司 10-Q 分部資訊（Segment Information）（示意數字）',
+      unit: '百萬美元',
+      categories: ['FY25Q2', 'FY25Q3', 'FY25Q4', 'FY26Q1', 'FY26Q2', 'FY26Q3'],
+      mode: 'stacked',
+      opts: { grid: true, bounds: true, markers: false, bandLabels: true, totals: false, zero: true },
+      series: [
+        { name: '消費性', color: '#0891b2', values: [1820, 1760, 1690, 1610, 1540, 1480] },
+        { name: '車用工控', color: '#16a34a', values: [980, 1020, 1080, 1150, 1210, 1260] },
+        { name: '資料中心', color: '#2563eb', values: [2180, 2610, 3420, 4180, 4980, 6010] }
+      ]
+    });
+    syncToInputs(); renderSeriesList(); render();
+  }
+  $('seedBtn').addEventListener('click', function () { seed(); CT.toast('已載入範例'); });
+
+  /* ================= 貼上表格 =================
+   * 版型與折線圖一致：第一列＝期別標題，第一欄＝系列名稱。 */
+  CT.mountPastePanel($('pasteBox'), {
+    placeholder: '\tFY25Q4\tFY26Q1\tFY26Q2\n資料中心\t3,420\t4,180\t4,980\n消費性\t1,690\t1,610\t1,540',
+    hint: '第一列＝期別（第一格留空），第一欄＝系列名稱。支援千分位、<code>%</code>、貨幣符號' +
+          '與 <code>(1,234)</code> 括號負數。<b>貼上的第一列會排在最底層</b>，' +
+          '套用後可用 ↑↓ 調整堆疊順序。',
+    onApply: function (parsed) {
+      if (!parsed.header || parsed.header.length < 3) {
+        return { error: '第一列要放至少 2 個期別標題（第一格留空）' };
+      }
+      state.categories = parsed.header.slice(1).filter(function (s) { return s !== ''; });
+      state.series = parsed.rows.map(function (r, i) {
+        var name = r.label || ('系列' + (i + 1));
+        return {
+          name: name,
+          color: CT.colorFor(name, i),      // 同名系列在其他圖沿用同一個顏色
+          values: r.values.slice(0, state.categories.length)
+        };
+      });
+      syncToInputs(); renderSeriesList(); render();
+    }
+  });
+
+  /* ================= 配色檢查 ================= */
+  var colorPanel = CT.mountColorPanel($('colorBox'), {
+    getItems: function () {
+      return state.series.map(function (s) { return { name: s.name || '(未命名)', color: s.color }; });
+    },
+    onApplyPrint: function () {
+      state.series.forEach(function (s, i) {
+        s.color = CT.palettePrintAt(i);
+        CT.rememberColor(s.name, s.color);
+      });
+      renderSeriesList(); render();
+    },
+    onReset: function () {
+      state.series.forEach(function (s, i) { s.color = CT.colorFor(s.name, i); });
+      renderSeriesList(); render();
+    }
+  });
+
+  var draft = CT.loadDraft(DRAFT_KEY);
+  if (draft && Array.isArray(draft.series) && draft.series.length) {
+    state = normalize(draft);
+    syncToInputs(); renderSeriesList(); render();
+    CT.toast('已還原上次編輯的資料');
+  } else {
+    seed();
+  }
+})();
+</script>
+</body>
+</html>
