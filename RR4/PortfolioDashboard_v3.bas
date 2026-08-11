@@ -907,57 +907,6 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     ws.cells(r, 1).Font.Color = RGB(255, 192, 0)
     ws.cells(r, 1).Font.Italic = True
     ws.cells(r, 1).HorizontalAlignment = xlLeft
-    
-    r = r + 2
-    On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
-    On Error GoTo 0
-    ws.cells(r, 1).Value = "Expected to DO 1 => USA = Some tickers in hand can be replace => "
-    ws.cells(r, 1).Font.Color = RGB(255, 255, 255)
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
-    ws.cells(r, 1).Font.Bold = True
-    
-    
-     r = r + 1
-    On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
-    On Error GoTo 0
-    ws.cells(r, 1).Value = "Expected to DO 2 => TWII = Some tickers in hand can be replace => MLCC:2327國巨/3026禾伸堂/3090/6173 , ProbeCard: 2360/6223/6515 , 先進封裝：3711/3481/6239 , "
-    ws.cells(r, 1).Font.Color = RGB(255, 255, 255)
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
-    ws.cells(r, 1).Font.Bold = True
-    
-     r = r + 1
-    On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
-    On Error GoTo 0
-    ws.cells(r, 1).Value = "Expected to DO 3 =>  ready to be assign"
-    ws.cells(r, 1).Font.Color = RGB(255, 255, 255)
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
-    ws.cells(r, 1).Font.Bold = True
-    
-     r = r + 2
-    On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
-    On Error GoTo 0
-    ws.cells(r, 1).Value = "Note => TWII focus on PCB/TGV/MLCC/Probe , USA focus on CHIP/SSD+HBM/"
-    ws.cells(r, 1).Font.Color = RGB(255, 255, 255)
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
-    ws.cells(r, 1).Font.Bold = True
-    
-    r = r + 1
-    On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
-    On Error GoTo 0
-    ws.cells(r, 1).Value = "Note => 3026 處置到 0702 , 7828 處置到 0702"
-    ws.cells(r, 1).Font.Color = RGB(255, 255, 255)
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
-    ws.cells(r, 1).Font.Bold = True
 End Sub
 
 Private Sub CalcPositions(positions As Object, exRate As Double, _
@@ -1281,14 +1230,14 @@ Private Function GetInceptionDate(ws As Worksheet) As Date
     On Error Resume Next
     GetInceptionDate = CDate(ws.Range("InceptionDate").Value)
     On Error GoTo 0
-    If GetInceptionDate <= DateSerial(2000, 1, 1) Then GetInceptionDate = DateSerial(2025, 12, 21)
+    If GetInceptionDate <= DateSerial(2000, 1, 1) Then GetInceptionDate = DateSerial(2026, 8, 1)
 End Function
 
 Private Function GetStartingCapital(ws As Worksheet) As Double
     On Error Resume Next
     GetStartingCapital = val(ws.Range("StartingCapital").Value)
     On Error GoTo 0
-    If GetStartingCapital <= 0 Then GetStartingCapital = 550000
+    If GetStartingCapital <= 0 Then GetStartingCapital = 600000
 End Function
 
 ' ================================================================
@@ -1299,11 +1248,11 @@ Sub SetupPortfolioConfig()
     Set ws = ThisWorkbook.Sheets(SH_PORT)
 
     Dim inDate As String
-    inDate = InputBox("Inception Date (yyyy/m/d):", "Config", "2025/12/27")
+    inDate = InputBox("Inception Date (yyyy/m/d):", "Config", "2026/8/1")
     If Not IsDate(inDate) Then MsgBox "Invalid date format.": Exit Sub
 
     Dim startCap As String
-    startCap = InputBox("Starting Capital (TWD, e.g. 70000):", "Config", "70000")
+    startCap = InputBox("Starting Capital (TWD, e.g. 600000):", "Config", "600000")
     If Not IsNumeric(startCap) Then MsgBox "Invalid number.": Exit Sub
 
     On Error Resume Next
