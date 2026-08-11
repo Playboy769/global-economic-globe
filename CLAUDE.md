@@ -7,10 +7,12 @@ but has an active deployment behind it.
 ## Mandatory pre-task clarification
 
 Before starting **any** task in this repo — regardless of how clear the request seems — first
-ask the user at least 4 clarifying questions in a single `AskUserQuestion` call (that tool's
-per-call max is 4, so this means using the full 4 slots) and wait for answers before doing any
-work. This applies even when the request looks unambiguous. This overrides the general
-"Auto Mode" bias toward proceeding without confirmation for this repo specifically.
+**re-read this entire CLAUDE.md file** (even if its content was already loaded into context
+earlier in the session — read it again from disk every single time), then ask the user at least
+10 clarifying questions and wait for answers before doing any work. `AskUserQuestion`'s per-call
+max is 4 questions, so reaching 10 means multiple back-to-back calls (e.g. 4 + 4 + 2) — do not
+stop at one call. This applies even when the request looks unambiguous. This overrides the
+general "Auto Mode" bias toward proceeding without confirmation for this repo specifically.
 
 ## 功能位置對照表（改東西前先查這張表）
 
@@ -172,6 +174,22 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 | 交易/VBA 專案 | `RR4/`、`RR5/`、`EMA Bias Model/` | — |
 | FinceptTerminal（空巢狀 repo，疑廢棄）| `FinceptTerminal/` | — |
 | 舊版留存 | `archive/` | — |
+
+#### SEC-Filing-Fetcher 慣例（2026-08-11 起）
+
+- **Dashboard 只放快照表與圖表物件；任何圖表的來源資料一律寫到 `RawData` 工作表。** 每個
+  系列佔相鄰兩欄（第 1 項 A:B、第 2 項 C:D…），第 1 列項目名、第 2 列欄名、第 3 列起資料，
+  順序是股價 → EPS → 各指標的年度緊接季度。圖表用 `SeriesCollection.NewSeries` 指向那些
+  範圍，**不要**把數字硬寫進 series（那樣資料不存在於任何格子、無法覆核），也不要把資料表
+  搬回 Dashboard——那張 1250 列的日股價表曾把趨勢圖擠到幾千像素之下。
+- **數值軸一律用 `modTheme.FitValueAxis` 依當次資料算範圍**，不要退回 Excel 自動縮放：
+  自動縮放幾乎一律把軸錨在 0，實測 AXTI 那次 47 張圖有 29 張的資料用不到軸高 60%（股東權益
+  179M–275M 畫在 0–300M 軸上就是一條平線）。它會在 4/5/6 格裡挑最貼合的取整刻度；雙軸的圖
+  （股價 vs EPS）兩軸取相同格數，格線才會重合。全為零的序列（無股利、無長期負債）刻意不套用。
+- **`build.ps1` 只注入不編譯**，印出 SUCCESS 不代表 VBA 跑得起來。驗證要用 Excel COM 開檔
+  （`$excel.AutomationSecurity = 1`）設 `Input!A1` 觸發 `Worksheet_Change` 實跑一次（約 90 秒），
+  再讀格子與 `SeriesCollection.Formula`／軸刻度。`Chart.Export` 在自動化模式下只會寫出 0 位元組
+  PNG，別花時間截圖。
 
 ## Deployment topology (this is the part that bites)
 
