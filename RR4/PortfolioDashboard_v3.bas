@@ -849,12 +849,12 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     ws.cells(r, 11).Value = chgPct
     ws.cells(r, 11).NumberFormat = "0.00%"
     ws.cells(r, 11).Font.Bold = True
-    ws.cells(r, 11).Font.Color = PnLColor(chgPct)
+    ws.cells(r, 11).Font.Color = PnLColorMuted(Round(unrlPnl, 0))
 
     ws.cells(r, 12).Value = unrlPnl
     ws.cells(r, 12).NumberFormat = "$#,##0;-$#,##0"
     ws.cells(r, 12).Font.Bold = True
-    ws.cells(r, 12).Font.Color = PnLColor(Round(unrlPnl, 0))
+    ws.cells(r, 12).Font.Color = PnLColorMuted(Round(unrlPnl, 0))
 
     ws.cells(r, 13).Value = wtPct
     ws.cells(r, 13).NumberFormat = "0.00%"
@@ -1255,6 +1255,18 @@ Private Function PnLColor(v As Double) As Long
         PnLColor = RGB(0, 210, 100)
     Else
         PnLColor = RGB(200, 200, 200)
+    End If
+End Function
+
+' Muted variant used ONLY by the RR4 holdings rows (columns K/L).
+' Profit and flat share one grey; losses get a soft red so the eye lands
+' on what is bleeding. Feed it the UNRL PNL value for BOTH columns so a
+' short position cannot paint % CHG and PNL in opposite colours.
+Private Function PnLColorMuted(v As Double) As Long
+    If v < 0 Then
+        PnLColorMuted = RGB(230, 150, 150)
+    Else
+        PnLColorMuted = RGB(200, 200, 200)
     End If
 End Function
 
