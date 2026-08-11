@@ -58,6 +58,7 @@ Public Sub FetchSECFilings()
     Dim mapLongTermDebt As Object, mapStockholdersEquity As Object, mapEffectiveTaxRate As Object, mapCapEx As Object
     Dim mapCash As Object, mapDA As Object
     Dim mapCOGS As Object, mapInterestExpense As Object
+    Dim mapShortTermDebt As Object
 
     Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
     Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
@@ -83,6 +84,11 @@ Public Sub FetchSECFilings()
     Set mapDA = BuildConceptMap(usgaapRaw, Array("DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"), "USD")
     Set mapCOGS = BuildConceptMap(usgaapRaw, Array("CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"), "USD")
     Set mapInterestExpense = BuildConceptMap(usgaapRaw, Array("InterestExpense", "InterestExpenseDebt"), "USD")
+    ' Current portion of debt -- previously missing entirely, which made
+    ' Enterprise Value understate true debt (only LongTermDebt(Noncurrent) was
+    ' counted). Absence of this tag is treated as "no short-term debt" (0) by
+    ' BuildSnapshotTableInto's EV formula, not as "unknown".
+    Set mapShortTermDebt = BuildConceptMap(usgaapRaw, Array("ShortTermBorrowings", "DebtCurrent", "LongTermDebtCurrent"), "USD")
 
     SetStatus wsIn, "寫入工作表中..."
     ' Snapshot the accession-number -> segment-note-URL mapping already on the
@@ -150,7 +156,7 @@ Public Sub FetchSECFilings()
     Call BuildDashboard(ThisWorkbook, ticker, entityName, filings10K, filings10Q, mapEps, priceHistory, _
         mapRevenue, mapShares, allMaps, mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, _
         mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
-        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, wsOut)
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, wsOut)
 
     SetStatus wsIn, "完成：" & entityName & "（CIK " & cik & "）10-K " & filings10K.Count & " 筆、10-Q " & filings10Q.Count & " 筆、8-K " & filings8K.Count & " 筆、Form4 " & filingsForm4.Count & " 筆，於 " & Format$(Now, "yyyy-mm-dd hh:nn:ss")
 
@@ -160,7 +166,12 @@ CleanExit:
     Exit Sub
 
 ErrHandler:
-    SetStatus wsIn, "發生錯誤：" & Err.Description
+    ' B1 still holds whatever SetStatus last wrote before the error, since
+    ' this line hasn't overwritten it yet -- surfacing that phase name turns
+    ' "型態不符合" into something actually actionable instead of a dead end.
+    Dim lastPhase As String
+    lastPhase = CStr(wsIn.Range("B1").Value)
+    SetStatus wsIn, "發生錯誤（上一步：" & lastPhase & "）：" & Err.Description & " [來源: " & Err.Source & "]"
     Resume CleanExit
 End Sub
 
@@ -963,4 +974,209 @@ Private Function RegexEscape(ByVal s As String) As String
         End If
     Next i
     RegexEscape = result
+End Function
+
+' ---------- Watchlist (peer / multi-ticker comparison) ----------
+
+' Triggered by the Watchlist sheet's own Worksheet_Change (see
+' SheetWatchlist_Code.txt) when a single ticker cell in the list changes.
+' Deliberately lightweight compared to FetchSECFilings: only the latest 10-K's
+' figures are pulled (no multi-year history, no per-filing document links, no
+' charts), and only the one changed row is touched -- entering ticker #16 in a
+' 15-ticker watchlist doesn't re-fetch the other 15.
+Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tickerInput As String)
+    On Error GoTo ErrHandler3
+    Application.EnableEvents = False
+    Application.ScreenUpdating = False
+    ws.Cells(r, 2).Value = "更新中..."
+    ws.Range(ws.Cells(r, 3), ws.Cells(r, 11)).ClearContents
+
+    Dim cik As String, tickerTitle As String, ticker As String
+    If Not ResolveCIK(tickerInput, cik, tickerTitle, ticker) Then
+        ws.Cells(r, 2).Value = "找不到公司"
+        ws.Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+        GoTo CleanExit3
+    End If
+
+    Dim filings10K As Collection, filings10Q As Collection, filings8K As Collection, filingsForm4 As Collection
+    Call GetFilings(cik, 1, 0, 0, 0, filings10K, filings10Q, filings8K, filingsForm4)
+    If filings10K.Count = 0 Then
+        ws.Cells(r, 2).Value = "無 10-K 資料"
+        ws.Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+        GoTo CleanExit3
+    End If
+
+    Dim f As Object
+    Set f = filings10K(1)
+    Dim accn As String, reportDate As String, form As String
+    accn = f("accn"): reportDate = f("reportDate"): form = f("form")
+
+    Dim companyFactsJson As String
+    companyFactsJson = HttpGet("https://data.sec.gov/api/xbrl/companyfacts/CIK" & cik & ".json")
+    Dim entityName As String
+    entityName = ExtractJsonString(companyFactsJson, "entityName")
+    If entityName = "" Then entityName = tickerTitle
+
+    Dim factsRaw As String, usgaapRaw As String
+    factsRaw = ExtractJsonValueRaw(companyFactsJson, "facts")
+    usgaapRaw = ExtractJsonValueRaw(factsRaw, "us-gaap")
+
+    Dim mapRevenue As Object, mapNetIncome As Object, mapEps As Object, mapShares As Object
+    Dim mapStockholdersEquity As Object, mapLongTermDebt As Object, mapShortTermDebt As Object
+    Dim mapCash As Object, mapOperatingIncome As Object, mapDA As Object, mapDividends As Object
+    Dim mapCurrentAssets As Object, mapCurrentLiabilities As Object
+
+    Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
+    Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
+    Set mapEps = BuildConceptMap(usgaapRaw, Array("EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted"), "USD/shares")
+    Set mapShares = BuildConceptMap(usgaapRaw, Array("CommonStockSharesOutstanding"), "shares")
+    Set mapStockholdersEquity = BuildConceptMap(usgaapRaw, Array("StockholdersEquity"), "USD")
+    Set mapLongTermDebt = BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD")
+    Set mapShortTermDebt = BuildConceptMap(usgaapRaw, Array("ShortTermBorrowings", "DebtCurrent", "LongTermDebtCurrent"), "USD")
+    Set mapCash = BuildConceptMap(usgaapRaw, Array("CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"), "USD")
+    Set mapOperatingIncome = BuildConceptMap(usgaapRaw, Array("OperatingIncomeLoss"), "USD")
+    Set mapDA = BuildConceptMap(usgaapRaw, Array("DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"), "USD")
+    Set mapDividends = BuildConceptMap(usgaapRaw, Array("CommonStockDividendsPerShareDeclared", "CommonStockDividendsPerShareCashPaid"), "USD/shares")
+    Set mapCurrentAssets = BuildConceptMap(usgaapRaw, Array("AssetsCurrent"), "USD")
+    Set mapCurrentLiabilities = BuildConceptMap(usgaapRaw, Array("LiabilitiesCurrent"), "USD")
+
+    Dim revV As Variant, netIncV As Variant, epsV As Variant, sharesV As Variant
+    Dim equityV As Variant, ltDebtV As Variant, stDebtV As Variant, cashV As Variant
+    Dim opIncV As Variant, daV As Variant, dpsV As Variant, curAssetsV As Variant, curLiabV As Variant
+    revV = LookupConceptValue(mapRevenue, accn, reportDate, form)
+    netIncV = LookupConceptValue(mapNetIncome, accn, reportDate, form)
+    epsV = LookupConceptValue(mapEps, accn, reportDate, form)
+    sharesV = LookupConceptValue(mapShares, accn, reportDate, form)
+    equityV = LookupConceptValue(mapStockholdersEquity, accn, reportDate, form)
+    ltDebtV = LookupConceptValue(mapLongTermDebt, accn, reportDate, form)
+    stDebtV = LookupConceptValue(mapShortTermDebt, accn, reportDate, form)
+    cashV = LookupConceptValue(mapCash, accn, reportDate, form)
+    opIncV = LookupConceptValue(mapOperatingIncome, accn, reportDate, form)
+    daV = LookupConceptValue(mapDA, accn, reportDate, form)
+    dpsV = LookupConceptValue(mapDividends, accn, reportDate, form)
+    curAssetsV = LookupConceptValue(mapCurrentAssets, accn, reportDate, form)
+    curLiabV = LookupConceptValue(mapCurrentLiabilities, accn, reportDate, form)
+
+    Dim revGrowth As Variant
+    revGrowth = PriorYearGrowth(mapRevenue, accn, reportDate)
+
+    Dim priceV As Variant
+    priceV = LatestPrice(ticker)
+
+    Dim mktCapV As Variant, evV As Variant, ebitdaV As Variant
+    mktCapV = SafeMultiply(priceV, sharesV)
+
+    Dim debtForEV As Double
+    debtForEV = 0
+    If IsNumeric(ltDebtV) And CStr(ltDebtV) <> "" Then debtForEV = debtForEV + CDbl(ltDebtV)
+    If IsNumeric(stDebtV) And CStr(stDebtV) <> "" Then debtForEV = debtForEV + CDbl(stDebtV)
+    If IsNumeric(mktCapV) And CStr(mktCapV) <> "" And IsNumeric(cashV) And CStr(cashV) <> "" Then
+        evV = CDbl(mktCapV) + debtForEV - CDbl(cashV)
+    Else
+        evV = ""
+    End If
+
+    If IsNumeric(opIncV) And CStr(opIncV) <> "" And IsNumeric(daV) And CStr(daV) <> "" Then
+        ebitdaV = CDbl(opIncV) + CDbl(daV)
+    Else
+        ebitdaV = ""
+    End If
+
+    With ws
+        .Cells(r, 1).Value = ticker
+        .Cells(r, 2).Value = entityName
+        .Cells(r, 3).Value = SafeNumber(priceV)
+        .Cells(r, 4).Value = SafeNumber(mktCapV)
+        .Cells(r, 5).Value = revGrowth
+        .Cells(r, 6).Value = SafeRatio(priceV, epsV)
+        .Cells(r, 7).Value = SafeRatio(mktCapV, revV)
+        .Cells(r, 8).Value = SafeRatio(evV, ebitdaV)
+        .Cells(r, 9).Value = SafeRatio(netIncV, equityV)
+        .Cells(r, 10).Value = SafeRatio(dpsV, priceV)
+        .Cells(r, 11).Value = SafeRatio(curAssetsV, curLiabV)
+        .Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+    End With
+
+    ws.Cells(r, 3).NumberFormat = "#,##0.00"
+    ws.Cells(r, 4).NumberFormat = "#,##0,,""M"""
+    ws.Cells(r, 5).NumberFormat = "0.00%"
+    ws.Range(ws.Cells(r, 6), ws.Cells(r, 8)).NumberFormat = "0.00"
+    ws.Cells(r, 9).NumberFormat = "0.00%"
+    ws.Cells(r, 10).NumberFormat = "0.00%"
+    ws.Cells(r, 11).NumberFormat = "0.00"
+
+CleanExit3:
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    Exit Sub
+
+ErrHandler3:
+    ws.Cells(r, 2).Value = "錯誤：" & Err.Description
+    ws.Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+    Resume CleanExit3
+End Sub
+
+' Clears a Watchlist row's fetched columns (B:L) when the user deletes the
+' ticker in column A, so a blanked-out ticker doesn't leave stale data behind.
+Public Sub ClearWatchlistRow(ByVal ws As Worksheet, ByVal r As Long)
+    ws.Range(ws.Cells(r, 2), ws.Cells(r, 12)).ClearContents
+End Sub
+
+' A 10-K's XBRL facts report multiple fiscal years of comparatives under the
+' SAME accession number (accn) -- e.g. the current year (end=reportDate) plus
+' 1-2 prior years' income-statement figures, all filed together. This finds
+' the entry roughly one year before reportDate (300-400 days, allowing for
+' 52/53-week fiscal calendars shifting the exact date) within that same accn
+' and returns (current/prior - 1), or "" if either side is missing.
+Private Function PriorYearGrowth(ByVal map As Object, ByVal accn As String, ByVal reportDate As String) As Variant
+    PriorYearGrowth = ""
+    If map Is Nothing Then Exit Function
+    If Not map.Exists(accn) Then Exit Function
+    If Not IsDate(reportDate) Then Exit Function
+
+    Dim col As Collection
+    Set col = map(accn)
+
+    Dim curVal As Double, curFound As Boolean
+    Dim bestPriorVal As Double, bestPriorDiff As Long, priorFound As Boolean
+    curFound = False
+    priorFound = False
+
+    Dim e As Variant
+    For Each e In col
+        Dim endD As String, valRaw As String
+        endD = ExtractJsonString(CStr(e), "end")
+        If endD = reportDate Then
+            valRaw = ExtractJsonValueRaw(CStr(e), "val")
+            If IsNumeric(valRaw) Then
+                curVal = CDbl(valRaw)
+                curFound = True
+            End If
+        ElseIf IsDate(endD) Then
+            Dim diffDays As Long
+            diffDays = DateDiff("d", CDate(endD), CDate(reportDate))
+            If diffDays >= 300 And diffDays <= 400 Then
+                valRaw = ExtractJsonValueRaw(CStr(e), "val")
+                If IsNumeric(valRaw) Then
+                    If Not priorFound Or Abs(diffDays - 365) < bestPriorDiff Then
+                        bestPriorVal = CDbl(valRaw)
+                        bestPriorDiff = Abs(diffDays - 365)
+                        priorFound = True
+                    End If
+                End If
+            End If
+        End If
+    Next e
+
+    If curFound And priorFound And bestPriorVal <> 0 Then
+        PriorYearGrowth = curVal / bestPriorVal - 1
+    End If
+End Function
+
+Private Function SafeMultiply(ByVal a As Variant, ByVal b As Variant) As Variant
+    If IsNumeric(a) And CStr(a) <> "" And IsNumeric(b) And CStr(b) <> "" Then
+        SafeMultiply = CDbl(a) * CDbl(b)
+    Else
+        SafeMultiply = ""
+    End If
 End Function

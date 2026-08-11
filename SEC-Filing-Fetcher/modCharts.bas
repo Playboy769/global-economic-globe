@@ -36,51 +36,268 @@ Private Sub ClearSheetForRebuild(ByVal ws As Worksheet)
     ws.Cells.Clear
 End Sub
 
+' ---------- RawData sheet (every chart's source data, one series per column pair) ----------
+
+' Dashboard holds only the snapshot table and the chart objects; the numbers
+' behind those charts all live on the "RawData" sheet instead, laid out as
+' adjacent 2-column blocks -- item 1 in columns A:B, item 2 in C:D, item 3 in
+' E:F, and so on. Row 1 is the item name, row 2 the two column headers, rows 3+
+' the data.
+'
+' Each pair carries its OWN key column (date / period label) rather than sharing
+' one key column across the sheet: blocks have wildly different lengths (~1250
+' daily price rows next to 7 annual values), and a self-contained rectangle per
+' item is what lets each chart point at one contiguous range.
+'
+' col is advanced by 2 on success so callers can keep passing the same running
+' variable; it is left alone when there's nothing to write, so a metric with no
+' data doesn't leave an empty column pair mid-sheet. keyRange/valRange come back
+' Nothing in that case -- callers must not chart from them.
+Private Sub WriteRawBlock(ByVal wsRaw As Worksheet, ByRef col As Long, ByVal title As String, _
+    ByVal keyHeader As String, ByVal valHeader As String, _
+    ByVal keys As Variant, ByVal vals As Variant, ByVal cnt As Long, _
+    ByVal keyFormat As String, ByVal valFormat As String, _
+    ByRef keyRange As Range, ByRef valRange As Range)
+
+    Set keyRange = Nothing
+    Set valRange = Nothing
+    If cnt <= 0 Then Exit Sub
+
+    wsRaw.Cells(1, col).Value = title
+    wsRaw.Cells(2, col).Value = keyHeader
+    wsRaw.Cells(2, col + 1).Value = valHeader
+
+    Set keyRange = wsRaw.Range(wsRaw.Cells(3, col), wsRaw.Cells(cnt + 2, col))
+    Set valRange = wsRaw.Range(wsRaw.Cells(3, col + 1), wsRaw.Cells(cnt + 2, col + 1))
+
+    ' Number formats are applied BEFORE the values land, not after: the period
+    ' labels ("2025", "2026Q1") must be typed as text, and formatting a cell as
+    ' text after a bare "2025" has already been written no longer un-numbers it.
+    If keyFormat <> "" Then keyRange.NumberFormat = keyFormat
+    If valFormat <> "" Then valRange.NumberFormat = valFormat
+
+    Dim outArr() As Variant
+    ReDim outArr(1 To cnt, 1 To 2)
+    Dim i As Long
+    For i = 1 To cnt
+        outArr(i, 1) = keys(i)
+        outArr(i, 2) = vals(i)
+    Next i
+    wsRaw.Range(wsRaw.Cells(3, col), wsRaw.Cells(cnt + 2, col + 1)).Value = outArr
+
+    Dim blockRange As Range
+    Set blockRange = wsRaw.Range(wsRaw.Cells(1, col), wsRaw.Cells(cnt + 2, col + 1))
+    blockRange.Font.Color = RGB(255, 255, 255)
+    blockRange.Font.Name = "Yu Gothic"
+    Call ApplyGridBorder(blockRange)
+
+    With wsRaw.Range(wsRaw.Cells(1, col), wsRaw.Cells(2, col + 1))
+        .Font.Bold = True
+        .Font.Color = RGB(255, 165, 0)
+    End With
+
+    ' Orange right edge marks where this item ends. The pairs sit flush against
+    ' each other with no spacer column, so without a visible divider ~100
+    ' columns of numbers read as one undifferentiated block.
+    With blockRange.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .Weight = xlMedium
+        .Color = RGB(255, 165, 0)
+    End With
+
+    col = col + 2
+End Sub
+
+' Blanket black background well past the last used cell (both directions), so
+' scrolling right across ~100 columns or down past the longest block doesn't hit
+' a white cutoff -- same treatment every other sheet gets, just sized to a sheet
+' that is far wider than it is deep.
+Private Sub FinishRawDataSheet(ByVal wsRaw As Worksheet, ByVal nextFreeCol As Long)
+    Dim usedRows As Long
+    usedRows = wsRaw.UsedRange.Row + wsRaw.UsedRange.Rows.Count - 1
+
+    Dim paintRows As Long, paintCols As Long
+    paintRows = usedRows + 200
+    If paintRows < 500 Then paintRows = 500
+    paintCols = nextFreeCol + 10
+    If paintCols < 60 Then paintCols = 60
+
+    wsRaw.Range(wsRaw.Cells(1, 1), wsRaw.Cells(paintRows, paintCols)).Interior.Color = RGB(0, 0, 0)
+    wsRaw.Columns.AutoFit
+End Sub
+
+' A freshly added ChartObject can arrive with Excel's own guess at a source
+' range already plotted (it picks up whatever contiguous block the active cell
+' happens to sit in). Every series below is added explicitly, so drop anything
+' that came for free first -- otherwise a stray auto-series would ride along
+' with its own color and legend entry.
+Private Sub ClearAutoSeries(ByVal ch As Chart)
+    Do While ch.SeriesCollection.Count > 0
+        ch.SeriesCollection(1).Delete
+    Loop
+End Sub
+
+' Writes a section-title row's text and records its row number into
+' bannerRows; does NOT set colors here. Colors are applied in one final pass
+' (see StyleBannerRows) after the table's blanket black-background paint runs
+' -- applying them here would just get overwritten by that later paint, since
+' this is called before the table's full extent (and hence its paint range)
+' is known. Deliberately NOT paired with Freeze Panes (Dashboard is long, but
+' the user wants visual landmarks to scroll/search for, not a locked header)
+' -- don't add FreezePanes here.
+Private Sub WriteSectionBanner(ByVal ws As Worksheet, ByRef curRow As Long, ByVal title As String, ByVal totalCols As Long, ByRef bannerRows As Collection)
+    ws.Cells(curRow, 1).Value = title
+    bannerRows.Add curRow
+    curRow = curRow + 1
+End Sub
+
+' Applies the bold orange-on-dark-gray banner look to every row recorded by
+' WriteSectionBanner, across columns A..totalCols. Called after the table's
+' blanket black-background paint so the banner styling is what's left visible.
+Private Sub StyleBannerRows(ByVal ws As Worksheet, ByVal bannerRows As Collection, ByVal totalCols As Long)
+    Dim r As Variant
+    For Each r In bannerRows
+        With ws.Range(ws.Cells(CLng(r), 1), ws.Cells(CLng(r), totalCols))
+            .Font.Bold = True
+            .Font.Color = RGB(255, 165, 0)
+            .Interior.Color = RGB(45, 45, 45)
+        End With
+    Next r
+End Sub
+
+' Writes one metric's label (col A) and its n per-fiscal-year values (cols
+' B..n+1), formatted per fmt ("money" in millions / "price" 2dp / "ratio" 2dp /
+' "pct" italic %), then advances curRow. Centralizes row bookkeeping so no
+' caller has to hardcode row numbers in NumberFormat ranges.
+Private Sub WriteMetricRow(ByVal ws As Worksheet, ByRef curRow As Long, ByVal label As String, ByVal dataArr As Variant, ByVal n As Long, ByVal fmt As String)
+    ws.Cells(curRow, 1).Value = label
+    Dim i As Long
+    For i = 1 To n
+        ws.Cells(curRow, i + 1).Value = dataArr(i)
+    Next i
+
+    Dim rng As Range
+    Set rng = ws.Range(ws.Cells(curRow, 2), ws.Cells(curRow, n + 1))
+    Select Case fmt
+        Case "money"
+            rng.NumberFormat = "#,##0,,""M"""
+        Case "price"
+            rng.NumberFormat = "#,##0.00"
+        Case "ratio"
+            rng.NumberFormat = "0.00"
+        Case "pct"
+            rng.NumberFormat = "0.00%"
+            rng.Font.Italic = True
+    End Select
+
+    curRow = curRow + 1
+End Sub
+
 ' ---------- Dashboard orchestrator ----------
 
 ' Owns the single "Dashboard" sheet: clears it once, then stacks the snapshot
 ' table, the price/EPS chart, and the financial trend chart grid vertically
 ' (table width varies with how many fiscal years were fetched, so vertical
-' stacking sidesteps needing a dynamic side-by-side width calculation).
+' stacking sidesteps needing a dynamic side-by-side width calculation). A
+' banner row marks the start of each of the latter two blocks so a reader can
+' visually locate them while scrolling a now much taller sheet.
+'
+' Dashboard deliberately carries NO chart source data: every series behind those
+' charts is written to the separate "RawData" sheet (see WriteRawBlock) and the
+' charts reference it from there. The ~1250-row daily price table used to sit
+' between the snapshot table and the chart grid on this sheet, which pushed the
+' trend charts thousands of pixels down and made the sheet unreadable by scroll.
+' Both sheets are cleared here, once, before any builder writes to them.
 Public Sub BuildDashboard(ByVal wb As Workbook, ByVal ticker As String, ByVal entityName As String, _
     ByVal filings10K As Collection, ByVal filings10Q As Collection, ByVal mapEps As Object, ByVal prices As Object, _
     ByVal mapRevenue As Object, ByVal mapShares As Object, ByVal allMaps As Variant, _
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
     ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
+    ByVal mapShortTermDebt As Object, _
     ByVal wsFilings As Worksheet)
 
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet(wb, "Dashboard")
     Call ClearSheetForRebuild(ws)
 
+    Dim wsRaw As Worksheet
+    Set wsRaw = GetOrCreateSheet(wb, "RawData")
+    Call ClearSheetForRebuild(wsRaw)
+
+    ' Running left edge of the next free column pair on RawData. Order is fixed:
+    ' price, then EPS, then each Filings metric with its annual block
+    ' immediately followed by its quarterly one.
+    Dim rawCol As Long
+    rawCol = 1
+
     Dim tableLastRow As Long, tableLastCol As Long
     Call BuildSnapshotTableInto(ws, entityName, ticker, filings10K, mapRevenue, mapEps, mapShares, allMaps, prices, _
         mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
-        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, tableLastRow, tableLastCol)
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, tableLastRow, tableLastCol)
+
+    ' Both banners are styled at the very end, after every chart builder has
+    ' returned -- BuildFinancialChartsInto does a blanket black-background
+    ' repaint starting from row 1, which silently wipes out gray banner styling
+    ' applied any earlier than that (it used to eat the price banner's, which is
+    ' why that one rendered as bare orange-on-black rather than on gray).
+    Dim priceBannerRow As Long
+    priceBannerRow = tableLastRow + 2
+    ws.Cells(priceBannerRow, 1).Value = "═══ 股價走勢 Price History（原始資料：RawData 工作表）═══"
 
     Dim priceChartTop As Double, priceChartBottom As Double
-    priceChartTop = ws.Cells(tableLastRow + 3, 1).Top
+    priceChartTop = ws.Cells(priceBannerRow + 1, 1).Top
     Dim priceChartBottomOut As Double
-    Call BuildPriceChartInto(ws, ticker, filings10K, filings10Q, mapEps, prices, tableLastRow + 3, 300, priceChartTop, priceChartBottomOut)
+    Call BuildPriceChartInto(ws, wsRaw, rawCol, ticker, filings10K, filings10Q, mapEps, prices, priceBannerRow + 1, 300, priceChartTop, priceChartBottomOut)
     priceChartBottom = priceChartBottomOut
 
-    Call BuildFinancialChartsInto(ws, wsFilings, 10, priceChartBottom + 20)
+    ' The financial-charts grid is placed by pixel Top/Left, not by row, so its
+    ' banner's row is only an estimate (default ~15pt row height) -- close
+    ' enough to sit visually just above the grid, not pixel-exact.
+    Dim chartsBannerRow As Long
+    chartsBannerRow = CLng((priceChartBottom + 10) / 15)
+    ws.Cells(chartsBannerRow, 1).Value = "═══ 財務趨勢圖 Financial Trend Charts（原始資料：RawData 工作表）═══"
+
+    Call BuildFinancialChartsInto(ws, wsFilings, wsRaw, rawCol, 10, priceChartBottom + 30)
+
+    Call StyleOneBannerRow(ws, priceBannerRow, tableLastCol)
+    Call StyleOneBannerRow(ws, chartsBannerRow, tableLastCol)
 
     ws.Columns.AutoFit
+    Call FinishRawDataSheet(wsRaw, rawCol)
 End Sub
 
-' Chart 1: last ~5 months of daily closing price (Stooq) plotted against each
-' filing's reported diluted EPS, held flat until the next filing supersedes it
-' (a step function), so the reader can see price movement against what was
-' actually known/reported at each point in time. No Forward P/E series.
-' startRow: the row the small date/EPS/price data table (chart's data source)
-' begins at. chartLeft/chartTop: pixel position of the floating chart object
-' itself (independent of the data table's row/column position). chartBottomOut
-' reports the chart's pixel bottom edge so the caller can stack the next block
-' below it.
-Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal ticker As String, ByVal filings10K As Collection, ByVal filings10Q As Collection, _
-    ByVal mapEps As Object, ByVal prices As Object, ByVal startRow As Long, ByVal chartLeft As Double, ByVal chartTop As Double, ByRef chartBottomOut As Double)
+' "Nothing to chart here" message, in place of the chart that would have been.
+' Explicitly white-on-black: the surrounding sheet is painted black, so a cell
+' written afterwards with default font color is black text on black.
+Private Sub WriteDashboardNote(ByVal ws As Worksheet, ByVal r As Long, ByVal msg As String)
+    With ws.Cells(r, 1)
+        .Value = msg
+        .Font.Color = RGB(255, 255, 255)
+        .Font.Name = "Yu Gothic"
+    End With
+End Sub
+
+Private Sub StyleOneBannerRow(ByVal ws As Worksheet, ByVal r As Long, ByVal totalCols As Long)
+    With ws.Range(ws.Cells(r, 1), ws.Cells(r, totalCols))
+        .Font.Bold = True
+        .Font.Color = RGB(255, 165, 0)
+        .Interior.Color = RGB(45, 45, 45)
+    End With
+End Sub
+
+' Chart 1: last ~5 years of daily closing price plotted against each filing's
+' reported diluted EPS, held flat until the next filing supersedes it (a step
+' function), so the reader can see price movement against what was actually
+' known/reported at each point in time. No Forward P/E series.
+' The two series are written to RawData as two column pairs (date+price, then
+' date+EPS) starting at rawCol, which is advanced past them. noteRow is only
+' used to place a "no data" message on the Dashboard when there's nothing to
+' chart. chartLeft/chartTop: pixel position of the floating chart object on the
+' Dashboard. chartBottomOut reports the chart's pixel bottom edge so the caller
+' can stack the next block below it.
+Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal wsRaw As Worksheet, ByRef rawCol As Long, ByVal ticker As String, ByVal filings10K As Collection, ByVal filings10Q As Collection, _
+    ByVal mapEps As Object, ByVal prices As Object, ByVal noteRow As Long, ByVal chartLeft As Double, ByVal chartTop As Double, ByRef chartBottomOut As Double)
 
     chartBottomOut = chartTop
 
@@ -132,14 +349,9 @@ Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal ticker As String, B
     todayD = Date
 
     If prices.Count = 0 Then
-        ws.Cells(startRow, 1).Value = "找不到 " & ticker & " 的股價資料（Stooq 無資料，可能不是美股代號）"
+        Call WriteDashboardNote(ws, noteRow, "找不到 " & ticker & " 的股價資料（Yahoo Finance 無資料，可能不是美股代號）")
         Exit Sub
     End If
-
-    ws.Cells(startRow, 1).Value = "日期"
-    ws.Cells(startRow, 2).Value = "Diluted EPS (as reported)"
-    ws.Cells(startRow, 3).Value = ticker & " 股價"
-    ws.Range(ws.Cells(startRow, 1), ws.Cells(startRow, 3)).Font.Bold = True
 
     Dim dateKeys() As String
     ReDim dateKeys(1 To prices.Count)
@@ -165,8 +377,13 @@ Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal ticker As String, B
     Dim windowStartStr As String
     windowStartStr = Format$(DateAdd("yyyy", -5, todayD), "yyyy-mm-dd")
 
-    Dim rowOut As Long
-    rowOut = startRow + 1
+    Dim dateArr() As Variant, priceArr() As Variant, epsArr() As Variant
+    ReDim dateArr(1 To prices.Count)
+    ReDim priceArr(1 To prices.Count)
+    ReDim epsArr(1 To prices.Count)
+
+    Dim cnt As Long
+    cnt = 0
     For kk = 1 To UBound(dateKeys)
         If dateKeys(kk) >= windowStartStr Then
             Dim curDateStr As String
@@ -180,35 +397,52 @@ Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal ticker As String, B
                 End If
             Next i
 
-            ws.Cells(rowOut, 1).Value = CDate(curDateStr)
-            If HasVal(stepEps) Then ws.Cells(rowOut, 2).Value = stepEps
-            ws.Cells(rowOut, 3).Value = prices(curDateStr)
-            rowOut = rowOut + 1
+            cnt = cnt + 1
+            dateArr(cnt) = CDate(curDateStr)
+            priceArr(cnt) = prices(curDateStr)
+            ' Empty, not 0 or "": dates before the first filing with an EPS must
+            ' land in genuinely blank cells so the area series starts where the
+            ' data does instead of hugging zero for the first stretch.
+            If HasVal(stepEps) Then epsArr(cnt) = CDbl(stepEps) Else epsArr(cnt) = Empty
         End If
     Next kk
 
-    If rowOut = startRow + 1 Then
-        ws.Cells(startRow + 1, 1).Value = "近5年無股價資料"
+    If cnt = 0 Then
+        Call WriteDashboardNote(ws, noteRow, "近5年無股價資料")
         Exit Sub
     End If
 
-    ws.Range(ws.Cells(startRow + 1, 1), ws.Cells(rowOut - 1, 1)).NumberFormat = "yyyy-mm-dd"
-    Call ApplyDarkTheme(ws, ws.Range(ws.Cells(startRow, 1), ws.Cells(rowOut - 1, 3)), startRow)
+    Dim priceKeyRng As Range, priceValRng As Range
+    Dim epsKeyRng As Range, epsValRng As Range
+    Call WriteRawBlock(wsRaw, rawCol, ticker & " 股價（近5年日收盤）", "日期", ticker & " 股價", _
+        dateArr, priceArr, cnt, "yyyy-mm-dd", "#,##0.00", priceKeyRng, priceValRng)
+    Call WriteRawBlock(wsRaw, rawCol, "Diluted EPS (as reported)（申報後步進值）", "日期", "Diluted EPS", _
+        dateArr, epsArr, cnt, "yyyy-mm-dd", "0.00", epsKeyRng, epsValRng)
 
     Dim co As ChartObject
     Set co = ws.ChartObjects.Add(Left:=chartLeft, Top:=chartTop, Width:=750, Height:=400)
     Dim ch As Chart
     Set ch = co.Chart
-    ch.SetSourceData Source:=ws.Range(ws.Cells(startRow, 1), ws.Cells(rowOut - 1, 3))
+    Call ClearAutoSeries(ch)
     ch.ChartType = xlLine
 
-    ch.SeriesCollection(1).ChartType = xlArea
-    ch.SeriesCollection(1).Name = "Diluted EPS (as reported)"
+    ' Added EPS-first so it stays SeriesCollection(1) -- the area series has to
+    ' be drawn behind the price line, and ApplyDarkThemeToChart colors series by
+    ' index (dark orange fill, bright orange line).
+    Dim serEps As Series, serPrice As Series
+    Set serEps = ch.SeriesCollection.NewSeries
+    serEps.Values = epsValRng
+    serEps.XValues = epsKeyRng
+    serEps.Name = "Diluted EPS (as reported)"
+    serEps.ChartType = xlArea
 
-    ch.SeriesCollection(2).ChartType = xlLine
-    ch.SeriesCollection(2).Name = ticker & " Price"
-    ch.SeriesCollection(2).AxisGroup = xlSecondary
-    ch.SeriesCollection(2).Format.Line.Weight = 0.5
+    Set serPrice = ch.SeriesCollection.NewSeries
+    serPrice.Values = priceValRng
+    serPrice.XValues = priceKeyRng
+    serPrice.Name = ticker & " Price"
+    serPrice.ChartType = xlLine
+    serPrice.AxisGroup = xlSecondary
+    serPrice.Format.Line.Weight = 0.5
 
     ch.HasTitle = True
     ch.ChartTitle.Text = ticker & " — 近5年股價 vs. 已申報每股盈餘"
@@ -233,16 +467,24 @@ End Sub
 
 ' Table: actual historical fiscal-year snapshot (Stock Price / Market Cap /
 ' Revenue / EPS / P-E / P-S / growth rates / valuation & return ratios) across
-' the 10-Ks already fetched, plus a trailing P/E and P/S percentile band.
-' Forecast years are intentionally excluded -- SEC filings only report what has
-' actually happened. tableLastRow/tableLastCol report the bottom-right cell
-' actually used so the caller can stack the next block below it.
+' the 10-Ks already fetched, grouped into labeled sections (market data / income
+' / valuation multiples / profitability & returns / working capital / capital
+' structure / cash flow / dividends), plus a trailing P/E and P/S percentile
+' band. Forecast years are intentionally excluded -- SEC filings only report
+' what has actually happened. tableLastRow/tableLastCol report the bottom-right
+' cell actually used so the caller can stack the next block below it.
 Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As String, ByVal ticker As String, ByVal filings10K As Collection, _
     ByVal mapRevenue As Object, ByVal mapEps As Object, ByVal mapShares As Object, ByVal allMaps As Variant, ByVal prices As Object, _
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
     ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
+    ByVal mapShortTermDebt As Object, _
     ByRef tableLastRow As Long, ByRef tableLastCol As Long)
+
+    On Error GoTo BSTIErr
+
+    Dim accn As String, reportDate As String, form As String
+    Dim i As Long
 
     tableLastRow = 1
     tableLastCol = 1
@@ -257,7 +499,6 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     n = filings10K.Count
     Dim ordered() As Object
     ReDim ordered(1 To n)
-    Dim i As Long
     i = 0
     Dim f As Variant
     For Each f In filings10K
@@ -268,21 +509,11 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     ws.Range("A1").Value = entityName & " (" & ticker & ")"
     ws.Range("A1").Font.Bold = True
 
-    Dim labels As Variant
-    labels = Array("", "Stock Price", "Market Cap", "Common Shares", "Revenue (M)", "Sales Growth %", "EPS (GAAP)", "EPS Growth %", "P/E", "P/S", "Sales per Share", _
-        "Inventory (M)", "Accounts Receivable (M)", "Current Assets (M)", "Current Liabilities (M)", "Current Ratio", _
-        "LT Debt (M)", "Stockholders Equity (M)", "Book Value/Share", "Effective Tax Rate", "CapEx (M)", "Free Cash Flow (M)", _
-        "Cash (M)", "Operating Income (M)", "D&A (M)", "Enterprise Value (M)", "EBITDA (M)", "EV/EBITDA", "EV/Sales", _
-        "ROE", "ROIC", "Dividend Yield", "Payout Ratio", "PEG Ratio")
-    For i = 1 To UBound(labels)
-        ws.Cells(i + 1, 1).Value = labels(i)
-    Next i
-
     Dim priceRow() As Variant, mktCapRow() As Variant, sharesRow() As Variant, revRow() As Variant
     Dim epsRow() As Variant, salesGrowthRow() As Variant, epsGrowthRow() As Variant
     Dim peRow() As Variant, psRow() As Variant, spsRow() As Variant
     Dim invRow() As Variant, arRow() As Variant, curAssetsRow() As Variant, curLiabRow() As Variant, curRatioRow() As Variant
-    Dim ltDebtRow() As Variant, equityRow() As Variant, bookValRow() As Variant, taxRateRow() As Variant, capexRow() As Variant, fcfRow() As Variant
+    Dim ltDebtRow() As Variant, stDebtRow() As Variant, equityRow() As Variant, bookValRow() As Variant, taxRateRow() As Variant, capexRow() As Variant, fcfRow() As Variant
     Dim cashRow() As Variant, opIncRow() As Variant, daRow() As Variant, evRow() As Variant, ebitdaRow() As Variant
     Dim evEbitdaRow() As Variant, evSalesRow() As Variant, roeRow() As Variant, roicRow() As Variant
     Dim dpsRow() As Variant, netIncRow() As Variant, divYieldRow() As Variant, payoutRow() As Variant, pegRow() As Variant
@@ -290,13 +521,12 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     ReDim epsRow(1 To n): ReDim salesGrowthRow(1 To n): ReDim epsGrowthRow(1 To n)
     ReDim peRow(1 To n): ReDim psRow(1 To n): ReDim spsRow(1 To n)
     ReDim invRow(1 To n): ReDim arRow(1 To n): ReDim curAssetsRow(1 To n): ReDim curLiabRow(1 To n): ReDim curRatioRow(1 To n)
-    ReDim ltDebtRow(1 To n): ReDim equityRow(1 To n): ReDim bookValRow(1 To n): ReDim taxRateRow(1 To n): ReDim capexRow(1 To n): ReDim fcfRow(1 To n)
+    ReDim ltDebtRow(1 To n): ReDim stDebtRow(1 To n): ReDim equityRow(1 To n): ReDim bookValRow(1 To n): ReDim taxRateRow(1 To n): ReDim capexRow(1 To n): ReDim fcfRow(1 To n)
     ReDim cashRow(1 To n): ReDim opIncRow(1 To n): ReDim daRow(1 To n): ReDim evRow(1 To n): ReDim ebitdaRow(1 To n)
     ReDim evEbitdaRow(1 To n): ReDim evSalesRow(1 To n): ReDim roeRow(1 To n): ReDim roicRow(1 To n)
     ReDim dpsRow(1 To n): ReDim netIncRow(1 To n): ReDim divYieldRow(1 To n): ReDim payoutRow(1 To n): ReDim pegRow(1 To n)
 
     For i = 1 To n
-        Dim accn As String, reportDate As String, form As String
         accn = ordered(i)("accn")
         reportDate = ordered(i)("reportDate")
         form = ordered(i)("form")
@@ -364,12 +594,13 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         End If
 
         Dim invV As Variant, arV As Variant, curAssetsV As Variant, curLiabV As Variant
-        Dim ltDebtV As Variant, equityV As Variant, taxRateV As Variant, capexV As Variant, cfoV As Variant
+        Dim ltDebtV As Variant, stDebtV As Variant, equityV As Variant, taxRateV As Variant, capexV As Variant, cfoV As Variant
         invV = LookupConceptValue(mapInventory, accn, reportDate, form)
         arV = LookupConceptValue(mapAR, accn, reportDate, form)
         curAssetsV = LookupConceptValue(mapCurrentAssets, accn, reportDate, form)
         curLiabV = LookupConceptValue(mapCurrentLiabilities, accn, reportDate, form)
         ltDebtV = LookupConceptValue(mapLongTermDebt, accn, reportDate, form)
+        stDebtV = LookupConceptValue(mapShortTermDebt, accn, reportDate, form)
         equityV = LookupConceptValue(mapStockholdersEquity, accn, reportDate, form)
         taxRateV = LookupConceptValue(mapEffectiveTaxRate, accn, reportDate, form)
         capexV = LookupConceptValue(mapCapEx, accn, reportDate, form)
@@ -380,6 +611,7 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         If HasVal(curAssetsV) Then curAssetsRow(i) = CDbl(curAssetsV) Else curAssetsRow(i) = ""
         If HasVal(curLiabV) Then curLiabRow(i) = CDbl(curLiabV) Else curLiabRow(i) = ""
         If HasVal(ltDebtV) Then ltDebtRow(i) = CDbl(ltDebtV) Else ltDebtRow(i) = ""
+        If HasVal(stDebtV) Then stDebtRow(i) = CDbl(stDebtV) Else stDebtRow(i) = ""
         If HasVal(equityV) Then equityRow(i) = CDbl(equityV) Else equityRow(i) = ""
         If HasVal(taxRateV) Then taxRateRow(i) = CDbl(taxRateV) Else taxRateRow(i) = ""
         If HasVal(capexV) Then capexRow(i) = CDbl(capexV) Else capexRow(i) = ""
@@ -402,7 +634,7 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
             fcfRow(i) = ""
         End If
 
-        ' ---- Valuation & return ratios (new) ----
+        ' ---- Valuation & return ratios ----
         Dim cashV As Variant, opIncV As Variant, daV As Variant, dpsV As Variant, netIncV As Variant
         cashV = LookupConceptValue(mapCash, accn, reportDate, form)
         opIncV = LookupConceptValue(mapOperatingIncome, accn, reportDate, form)
@@ -416,11 +648,20 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         If HasVal(dpsV) Then dpsRow(i) = CDbl(dpsV) Else dpsRow(i) = ""
         If HasVal(netIncV) Then netIncRow(i) = CDbl(netIncV) Else netIncRow(i) = ""
 
-        ' Approximation: no short-term/current-debt concept is fetched anywhere
-        ' in this workbook (only LongTermDebt(Noncurrent)), so EV omits the
-        ' current portion of debt and will run slightly low.
-        If HasVal(mktCapRow(i)) And HasVal(ltDebtRow(i)) And HasVal(cashRow(i)) Then
-            evRow(i) = mktCapRow(i) + ltDebtRow(i) - cashRow(i)
+        ' Total debt = LT debt + short-term/current debt. A missing short-term
+        ' figure is treated as 0 (not "unknown") -- most filers without the tag
+        ' genuinely carry no short-term borrowings; LT debt missing still blanks
+        ' the whole EV, since that's the dominant term for most companies.
+        Dim totalDebtForEV As Variant
+        If HasVal(ltDebtRow(i)) Then
+            totalDebtForEV = ltDebtRow(i)
+            If HasVal(stDebtRow(i)) Then totalDebtForEV = totalDebtForEV + stDebtRow(i)
+        Else
+            totalDebtForEV = ""
+        End If
+
+        If HasVal(mktCapRow(i)) And HasVal(totalDebtForEV) And HasVal(cashRow(i)) Then
+            evRow(i) = mktCapRow(i) + totalDebtForEV - cashRow(i)
         Else
             evRow(i) = ""
         End If
@@ -451,10 +692,28 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
 
         ' NOPAT / invested capital; missing tax rate is approximated as 0
         ' (i.e. treated as pre-tax operating income) rather than blanking ROIC.
+        ' Invested capital here still uses LT debt only (not +short-term) to
+        ' match the metric's usual "permanent capital" convention.
         Dim taxForRoic As Double
         If HasVal(taxRateRow(i)) Then taxForRoic = taxRateRow(i) Else taxForRoic = 0
-        If HasVal(opIncRow(i)) And HasVal(equityRow(i)) And HasVal(ltDebtRow(i)) And (equityRow(i) + ltDebtRow(i)) <> 0 Then
-            roicRow(i) = (opIncRow(i) * (1 - taxForRoic)) / (equityRow(i) + ltDebtRow(i))
+
+        ' Computed into a guarded variable BEFORE the If, not inline inside its
+        ' condition: VBA's "+" throws Type Mismatch when adding a Variant
+        ' holding "" to a number, and -- because VBA's "And" does not
+        ' short-circuit -- that addition still runs even when an earlier
+        ' HasVal(...) in the same condition has already evaluated to False.
+        ' (Confirmed empirically: this is exactly what crashed on FTC Solar's
+        ' FY2022 column, which has no LongTermDebt tag at all -- ltDebtRow(i)
+        ' = "".)
+        Dim investedCapital As Variant
+        If HasVal(equityRow(i)) And HasVal(ltDebtRow(i)) Then
+            investedCapital = equityRow(i) + ltDebtRow(i)
+        Else
+            investedCapital = ""
+        End If
+
+        If HasVal(opIncRow(i)) And HasVal(investedCapital) And investedCapital <> 0 Then
+            roicRow(i) = (opIncRow(i) * (1 - taxForRoic)) / investedCapital
         Else
             roicRow(i) = ""
         End If
@@ -480,91 +739,81 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         Else
             pegRow(i) = ""
         End If
-
-        ws.Cells(2, i + 1).Value = priceRow(i)
-        ws.Cells(3, i + 1).Value = mktCapRow(i)
-        ws.Cells(4, i + 1).Value = sharesRow(i)
-        ws.Cells(5, i + 1).Value = revRow(i)
-        ws.Cells(6, i + 1).Value = salesGrowthRow(i)
-        ws.Cells(7, i + 1).Value = epsRow(i)
-        ws.Cells(8, i + 1).Value = epsGrowthRow(i)
-        ws.Cells(9, i + 1).Value = peRow(i)
-        ws.Cells(10, i + 1).Value = psRow(i)
-        ws.Cells(11, i + 1).Value = spsRow(i)
-        ws.Cells(12, i + 1).Value = invRow(i)
-        ws.Cells(13, i + 1).Value = arRow(i)
-        ws.Cells(14, i + 1).Value = curAssetsRow(i)
-        ws.Cells(15, i + 1).Value = curLiabRow(i)
-        ws.Cells(16, i + 1).Value = curRatioRow(i)
-        ws.Cells(17, i + 1).Value = ltDebtRow(i)
-        ws.Cells(18, i + 1).Value = equityRow(i)
-        ws.Cells(19, i + 1).Value = bookValRow(i)
-        ws.Cells(20, i + 1).Value = taxRateRow(i)
-        ws.Cells(21, i + 1).Value = capexRow(i)
-        ws.Cells(22, i + 1).Value = fcfRow(i)
-        ws.Cells(23, i + 1).Value = cashRow(i)
-        ws.Cells(24, i + 1).Value = opIncRow(i)
-        ws.Cells(25, i + 1).Value = daRow(i)
-        ws.Cells(26, i + 1).Value = evRow(i)
-        ws.Cells(27, i + 1).Value = ebitdaRow(i)
-        ws.Cells(28, i + 1).Value = evEbitdaRow(i)
-        ws.Cells(29, i + 1).Value = evSalesRow(i)
-        ws.Cells(30, i + 1).Value = roeRow(i)
-        ws.Cells(31, i + 1).Value = roicRow(i)
-        ws.Cells(32, i + 1).Value = divYieldRow(i)
-        ws.Cells(33, i + 1).Value = payoutRow(i)
-        ws.Cells(34, i + 1).Value = pegRow(i)
     Next i
 
-    ws.Range(ws.Cells(2, 2), ws.Cells(2, n + 1)).NumberFormat = "#,##0.00"
-    ws.Range(ws.Cells(3, 2), ws.Cells(3, n + 1)).NumberFormat = "#,##0,,""M"""
-    ws.Range(ws.Cells(4, 2), ws.Cells(4, n + 1)).NumberFormat = "#,##0,,""M"""
-    ws.Range(ws.Cells(5, 2), ws.Cells(5, n + 1)).NumberFormat = "#,##0,,""M"""
-    With ws.Range(ws.Cells(6, 2), ws.Cells(6, n + 1))
-        .NumberFormat = "0.00%"
-        .Font.Italic = True
-    End With
-    ws.Range(ws.Cells(7, 2), ws.Cells(7, n + 1)).NumberFormat = "0.00"
-    With ws.Range(ws.Cells(8, 2), ws.Cells(8, n + 1))
-        .NumberFormat = "0.00%"
-        .Font.Italic = True
-    End With
-    ws.Range(ws.Cells(9, 2), ws.Cells(9, n + 1)).NumberFormat = "0.00"
-    ws.Range(ws.Cells(10, 2), ws.Cells(10, n + 1)).NumberFormat = "0.00"
-    ws.Range(ws.Cells(11, 2), ws.Cells(11, n + 1)).NumberFormat = "#,##0.00"
-    ws.Range(ws.Cells(12, 2), ws.Cells(15, n + 1)).NumberFormat = "#,##0,,""M"""
-    ws.Range(ws.Cells(16, 2), ws.Cells(16, n + 1)).NumberFormat = "0.00"
-    ws.Range(ws.Cells(17, 2), ws.Cells(18, n + 1)).NumberFormat = "#,##0,,""M"""
-    ws.Range(ws.Cells(19, 2), ws.Cells(19, n + 1)).NumberFormat = "#,##0.00"
-    ws.Range(ws.Cells(20, 2), ws.Cells(20, n + 1)).NumberFormat = "0.00%"
-    ws.Range(ws.Cells(21, 2), ws.Cells(22, n + 1)).NumberFormat = "#,##0,,""M"""
-    ws.Range(ws.Cells(23, 2), ws.Cells(27, n + 1)).NumberFormat = "#,##0,,""M"""
-    ws.Range(ws.Cells(28, 2), ws.Cells(29, n + 1)).NumberFormat = "0.00"
-    With ws.Range(ws.Cells(30, 2), ws.Cells(30, n + 1))
-        .NumberFormat = "0.00%"
-        .Font.Italic = True
-    End With
-    With ws.Range(ws.Cells(31, 2), ws.Cells(31, n + 1))
-        .NumberFormat = "0.00%"
-        .Font.Italic = True
-    End With
-    With ws.Range(ws.Cells(32, 2), ws.Cells(32, n + 1))
-        .NumberFormat = "0.00%"
-        .Font.Italic = True
-    End With
-    With ws.Range(ws.Cells(33, 2), ws.Cells(33, n + 1))
-        .NumberFormat = "0.00%"
-        .Font.Italic = True
-    End With
-    ws.Range(ws.Cells(34, 2), ws.Cells(34, n + 1)).NumberFormat = "0.00"
+    ' ---- Write the table, grouped into labeled sections instead of one flat
+    ' list -- 34 rows in a single block was hard to scan once the valuation
+    ' ratios were added. curRow is threaded through by reference so row numbers
+    ' are never hardcoded (unlike the old fixed "row 22" style, which had to be
+    ' hand-updated every time a row was added). ----
+    Dim curRow As Long
+    curRow = 2
+    Dim bannerRows As Collection
+    Set bannerRows = New Collection
 
-    With ws.Range(ws.Cells(1, 1), ws.Cells(34, n + 1))
+    Call WriteSectionBanner(ws, curRow, "市場數據 Market Data", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "Stock Price", priceRow, n, "price")
+    Call WriteMetricRow(ws, curRow, "Market Cap (M)", mktCapRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Common Shares (M)", sharesRow, n, "money")
+
+    Call WriteSectionBanner(ws, curRow, "損益 Income Statement", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "Revenue (M)", revRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Sales Growth %", salesGrowthRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "EPS (GAAP)", epsRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "EPS Growth %", epsGrowthRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "Operating Income (M)", opIncRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "EBITDA (M)", ebitdaRow, n, "money")
+
+    Call WriteSectionBanner(ws, curRow, "估值倍數 Valuation Multiples", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "P/E", peRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "P/S", psRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "Sales per Share", spsRow, n, "price")
+    Call WriteMetricRow(ws, curRow, "EV/EBITDA", evEbitdaRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "EV/Sales", evSalesRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "PEG Ratio", pegRow, n, "ratio")
+
+    Call WriteSectionBanner(ws, curRow, "獲利能力與資本回報 Profitability & Returns", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "ROE", roeRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "ROIC", roicRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "Effective Tax Rate", taxRateRow, n, "pct")
+
+    Call WriteSectionBanner(ws, curRow, "營運資金 Working Capital", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "Inventory (M)", invRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Accounts Receivable (M)", arRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Current Assets (M)", curAssetsRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Current Liabilities (M)", curLiabRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Current Ratio", curRatioRow, n, "ratio")
+
+    Call WriteSectionBanner(ws, curRow, "資本結構 Capital Structure", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "Cash (M)", cashRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "LT Debt (M)", ltDebtRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Short-Term Debt (M)", stDebtRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Stockholders Equity (M)", equityRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Book Value/Share", bookValRow, n, "price")
+    Call WriteMetricRow(ws, curRow, "Enterprise Value (M)", evRow, n, "money")
+
+    Call WriteSectionBanner(ws, curRow, "現金流 Cash Flow", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "CapEx (M)", capexRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "D&A (M)", daRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Free Cash Flow (M)", fcfRow, n, "money")
+
+    Call WriteSectionBanner(ws, curRow, "股利 Dividends", n + 1, bannerRows)
+    Call WriteMetricRow(ws, curRow, "Dividend Yield", divYieldRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "Payout Ratio", payoutRow, n, "pct")
+
+    Dim lastRow As Long
+    lastRow = curRow - 1
+
+    With ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, n + 1))
         .Interior.Color = RGB(0, 0, 0)
         .Font.Color = RGB(255, 255, 255)
         .Font.Name = "Yu Gothic"
     End With
     ws.Range(ws.Cells(1, 1), ws.Cells(1, n + 1)).Font.Color = RGB(255, 165, 0)
-    Call ApplyGridBorder(ws.Range(ws.Cells(1, 1), ws.Cells(34, n + 1)))
+    Call ApplyGridBorder(ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, n + 1)))
+    ' Section banners must be styled AFTER the blanket black-paint above, or
+    ' this paint would immediately overwrite their gray background.
+    Call StyleBannerRows(ws, bannerRows, n + 1)
 
     ' ---- P/E and P/S percentile band across all fetched fiscal years ----
     ' Not pinned to "5 years" -- uses whatever window was actually fetched
@@ -608,12 +857,20 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     ' window doesn't hit a white cutoff, matching every other sheet
     ws.Range("A1:AN500").Interior.Color = RGB(0, 0, 0)
 
-    tableLastRow = 34
+    tableLastRow = lastRow
     If bandCol + 3 > n + 1 Then
         tableLastCol = bandCol + 3
     Else
         tableLastCol = n + 1
     End If
+    Exit Sub
+
+BSTIErr:
+    ' Re-raise with the fiscal-year column and filing identifiers that were
+    ' being processed when it failed -- "Type mismatch" alone gives no way to
+    ' tell which of the n columns (or which concept lookup) is the culprit.
+    Err.Raise Err.Number, "BuildSnapshotTableInto", _
+        "column i=" & i & " accn=" & accn & " reportDate=" & reportDate & ": " & Err.Description
 End Sub
 
 ' Returns a plain 1-based Double() array containing only the HasVal entries of
@@ -651,10 +908,13 @@ End Function
 ' draws a small line chart per metric, per period type (10-K rows = annual,
 ' 10-Q rows = quarterly). Filings sheet rows are 10-K block then 10-Q block,
 ' each in newest-first order (as fetched from SEC) -- charts read them in
-' reverse so the trend runs oldest-to-newest, left-to-right. startLeft/startTop
-' set where the 2-column chart grid begins (so it can be stacked below other
-' Dashboard content instead of always starting at the sheet's top-left).
-Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As Worksheet, ByVal startLeft As Double, ByVal startTop As Double)
+' reverse so the trend runs oldest-to-newest, left-to-right, and that
+' oldest-to-newest series is what gets written to RawData (starting at rawCol,
+' each metric's annual block immediately followed by its quarterly one) for the
+' chart to reference. startLeft/startTop set where the 2-column chart grid
+' begins (so it can be stacked below other Dashboard content instead of always
+' starting at the sheet's top-left).
+Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As Worksheet, ByVal wsRaw As Worksheet, ByRef rawCol As Long, ByVal startLeft As Double, ByVal startTop As Double)
     Dim lastRow As Long
     lastRow = wsFilings.Cells(wsFilings.Rows.Count, 1).End(xlUp).Row
     If lastRow < 2 Then Exit Sub
@@ -684,13 +944,13 @@ Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As W
         metricName = CStr(wsFilings.Cells(1, CLng(mc)).Value)
         If metricName <> "" Then
             If kRows > 0 Then
-                Call BuildOneMetricChart(ws, wsFilings, 2, 1 + kRows, CLng(mc), metricName & "（年度 Annual）", CDbl(leftPositions(posIdx)), topPos, chartIdx)
+                Call BuildOneMetricChart(ws, wsFilings, wsRaw, rawCol, 2, 1 + kRows, CLng(mc), metricName & "（年度 Annual）", CDbl(leftPositions(posIdx)), topPos, chartIdx)
                 chartIdx = chartIdx + 1
                 posIdx = (posIdx + 1) Mod 2
                 If posIdx = 0 Then topPos = topPos + 230
             End If
             If lastRow >= 2 + kRows Then
-                Call BuildOneMetricChart(ws, wsFilings, 2 + kRows, lastRow, CLng(mc), metricName & "（季度 Quarterly）", CDbl(leftPositions(posIdx)), topPos, chartIdx)
+                Call BuildOneMetricChart(ws, wsFilings, wsRaw, rawCol, 2 + kRows, lastRow, CLng(mc), metricName & "（季度 Quarterly）", CDbl(leftPositions(posIdx)), topPos, chartIdx)
                 chartIdx = chartIdx + 1
                 posIdx = (posIdx + 1) Mod 2
                 If posIdx = 0 Then topPos = topPos + 230
@@ -698,22 +958,24 @@ Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As W
         End If
     Next mc
 
-    ' Safety-net background paint sized to this grid's own pixel depth (default
-    ' row height ~15pt), in case the price chart above it didn't already reach
-    ' this far down (e.g. a ticker with no Stooq price data skips that paint).
+    ' Background paint sized to this grid's own pixel depth (default row height
+    ' ~15pt). This is now the only paint that reaches below the snapshot table's
+    ' own A1:AN500 -- the price-history data table that used to paint this
+    ' region on its way past has moved to the RawData sheet. 60 columns wide to
+    ' match what that table's ApplyDarkTheme call used to cover.
     Dim estRows As Long
     estRows = CLng(topPos / 15) + 200
     If estRows < 500 Then estRows = 500
-    ws.Range(ws.Cells(1, 1), ws.Cells(estRows, 40)).Interior.Color = RGB(0, 0, 0)
+    ws.Range(ws.Cells(1, 1), ws.Cells(estRows, 60)).Interior.Color = RGB(0, 0, 0)
 End Sub
 
-Private Sub BuildOneMetricChart(ByVal ws As Worksheet, ByVal wsFilings As Worksheet, ByVal firstRow As Long, ByVal lastRow As Long, ByVal metricCol As Long, ByVal chartTitle As String, ByVal leftPos As Double, ByVal topPos As Double, ByVal paletteIdx As Long)
+Private Sub BuildOneMetricChart(ByVal ws As Worksheet, ByVal wsFilings As Worksheet, ByVal wsRaw As Worksheet, ByRef rawCol As Long, ByVal firstRow As Long, ByVal lastRow As Long, ByVal metricCol As Long, ByVal chartTitle As String, ByVal leftPos As Double, ByVal topPos As Double, ByVal paletteIdx As Long)
     Dim n As Long
     n = lastRow - firstRow + 1
     If n <= 0 Then Exit Sub
 
-    Dim vals() As Double
-    Dim labels() As String
+    Dim vals() As Variant
+    Dim labels() As Variant
     ReDim vals(1 To n)
     ReDim labels(1 To n)
 
@@ -735,16 +997,25 @@ Private Sub BuildOneMetricChart(ByVal ws As Worksheet, ByVal wsFilings As Worksh
         End If
     Next r
 
+    ' Carry the Filings column's own number format across so a margin stays a
+    ' percentage and a revenue stays a thousands-separated integer on RawData
+    ' too, instead of every metric landing as a bare General number.
+    Dim keyRng As Range, valRng As Range
+    Call WriteRawBlock(wsRaw, rawCol, chartTitle, "期間 Period", CStr(wsFilings.Cells(1, metricCol).Value), _
+        labels, vals, n, "@", CStr(wsFilings.Cells(firstRow, metricCol).NumberFormat), keyRng, valRng)
+    If valRng Is Nothing Then Exit Sub
+
     Dim co As ChartObject
     Set co = ws.ChartObjects.Add(Left:=leftPos, Top:=topPos, Width:=380, Height:=210)
     Dim ch As Chart
     Set ch = co.Chart
+    Call ClearAutoSeries(ch)
     ch.ChartType = xlLine
 
     Dim ser As Series
     Set ser = ch.SeriesCollection.NewSeries
-    ser.Values = vals
-    ser.XValues = labels
+    ser.Values = valRng
+    ser.XValues = keyRng
     ser.Name = chartTitle
 
     ch.HasTitle = True

@@ -79,6 +79,26 @@ Public Function FetchDailyPrices(ByVal ticker As String, ByVal fromDate As Date,
     Set FetchDailyPrices = dict
 End Function
 
+' Most recent available close (any of the last ~10 calendar days), for
+' contexts that just want "the current price" cheaply -- e.g. Watchlist row
+' refreshes, where fetching a multi-year history per ticker would be wasteful.
+' Returns "" if nothing came back (bad ticker, market holiday streak, etc.).
+Public Function LatestPrice(ByVal ticker As String) As Variant
+    Dim prices As Object
+    Set prices = FetchDailyPrices(ticker, DateAdd("d", -10, Date), Date)
+    If prices.Count = 0 Then
+        LatestPrice = ""
+        Exit Function
+    End If
+
+    Dim bestKey As String
+    Dim k As Variant
+    For Each k In prices.Keys
+        If bestKey = "" Or CStr(k) > bestKey Then bestKey = CStr(k)
+    Next k
+    LatestPrice = prices(bestKey)
+End Function
+
 ' Latest available close on or before targetDateStr ("yyyy-mm-dd"). Returns "" if
 ' no price exists at or before that date (e.g. IPO'd after that year).
 Public Function NearestPriceOnOrBefore(ByVal prices As Object, ByVal targetDateStr As String) As Variant

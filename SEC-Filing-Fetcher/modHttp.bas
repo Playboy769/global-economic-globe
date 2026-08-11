@@ -7,6 +7,18 @@ Public Const SEC_USER_AGENT As String = "Ryan Personal Research Tool ryan929929@
 
 Private Const HTTP_MAX_ATTEMPTS As Long = 3
 
+' WinHttpRequest timeouts, in milliseconds: (resolve, connect, send, receive).
+' Without these, a single stalled request (dead connection, SEC hanging under
+' load) blocks Excel indefinitely with no way to recover short of killing the
+' process -- especially risky now that HttpGet retries up to 3x. Receive is
+' the generous one since a large company's companyfacts JSON can be several
+' MB on a slow connection; resolve/connect/send failing that slowly would mean
+' something is genuinely wrong, not just "slow server".
+Private Const HTTP_TIMEOUT_RESOLVE_MS As Long = 10000
+Private Const HTTP_TIMEOUT_CONNECT_MS As Long = 10000
+Private Const HTTP_TIMEOUT_SEND_MS As Long = 15000
+Private Const HTTP_TIMEOUT_RECEIVE_MS As Long = 60000
+
 ' Performs a GET request and returns the response body as text.
 ' Retries on rate-limiting (429), server errors (5xx), and network-level
 ' failures (timeout/DNS/connection reset), with a short linear backoff (1s,
@@ -19,6 +31,7 @@ Public Function HttpGet(ByVal url As String) As String
     For attempt = 1 To HTTP_MAX_ATTEMPTS
         Dim http As Object
         Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
+        http.SetTimeouts HTTP_TIMEOUT_RESOLVE_MS, HTTP_TIMEOUT_CONNECT_MS, HTTP_TIMEOUT_SEND_MS, HTTP_TIMEOUT_RECEIVE_MS
 
         Dim comErrNum As Long, comErrDesc As String
         On Error Resume Next

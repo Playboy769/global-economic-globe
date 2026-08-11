@@ -9,18 +9,20 @@ $excel.DisplayAlerts = $false
 try {
     $wb = $excel.Workbooks.Add()
 
-    while ($wb.Worksheets.Count -lt 2) {
+    while ($wb.Worksheets.Count -lt 3) {
         $wb.Worksheets.Add() | Out-Null
     }
-    while ($wb.Worksheets.Count -gt 2) {
+    while ($wb.Worksheets.Count -gt 3) {
         $wb.Worksheets.Item($wb.Worksheets.Count).Delete()
     }
 
     $wsInput = $wb.Worksheets.Item(1)
     $wsFilings = $wb.Worksheets.Item(2)
+    $wsWatchlist = $wb.Worksheets.Item(3)
 
     $wsInput.Name = "Input"
     $wsFilings.Name = "Filings"
+    $wsWatchlist.Name = "Watchlist"
 
     $wsInput.Range("A2").Value2 = "在 A1 輸入美股股票代號 (例如 AAPL)，按 Enter 後自動抓取 10-K/10-Q/8-K/Form 4"
     $wsInput.Range("A1").Font.Bold = $true
@@ -71,6 +73,39 @@ try {
     $headerRange.Font.Name = "Yu Gothic"
     $headerRange.Interior.Color = 0
 
+    # Watchlist: user types tickers into A3:A22 (20 rows), Worksheet_Change
+    # (injected below) fills B:L per row. Pre-created here (rather than
+    # lazily via GetOrCreateSheet like Dashboard/OtherFilings) because it
+    # needs its own event code-behind, which can only be injected into a
+    # sheet's CodeName at build time -- a sheet created at runtime by a
+    # running macro has no such hook available to it.
+    $wsWatchlist.Range("A1").Value2 = "Watchlist — 同業比較 Peer Comparison"
+    $wsWatchlist.Range("A1").Font.Bold = $true
+    $wsWatchlist.Range("A2").Value2 = "在下方 A 欄輸入股票代號並按 Enter，自動抓取最新一期 10-K 關鍵指標橫向比較（最多 20 檔，逐列增量更新，不會重算其他列）"
+    $wlHeaders = @("代號 Ticker","公司名稱","股價","市值(M)","營收成長% YoY","P/E","P/S","EV/EBITDA","ROE","股利殖利率","流動比率","更新時間")
+    for ($i = 0; $i -lt $wlHeaders.Count; $i++) {
+        $wsWatchlist.Cells.Item(2, $i + 1).Value2 = $wlHeaders[$i]
+    }
+    $wlHeaderRange = $wsWatchlist.Range($wsWatchlist.Cells.Item(2,1), $wsWatchlist.Cells.Item(2, $wlHeaders.Count))
+    $wlHeaderRange.Font.Bold = $true
+    $wlHeaderRange.Font.Color = 42495
+    $wlHeaderRange.Font.Name = "Yu Gothic"
+
+    $wlAllRange = $wsWatchlist.Range("A1:L22")
+    $wlAllRange.Interior.Color = 0
+    $wlAllRange.Font.Color = 16777215
+    $wlAllRange.Font.Name = "Yu Gothic"
+    $wsWatchlist.Range("A1:AN500").Interior.Color = 0
+    $wsWatchlist.Range("A1").Interior.Color = 23220              # dark orange, RGB(180,90,0)
+    $wsWatchlist.Range("A1").Font.Color = 16777215
+
+    $wlBorderRange = $wsWatchlist.Range($wsWatchlist.Cells.Item(2,1), $wsWatchlist.Cells.Item(22, $wlHeaders.Count))
+    $wlBorderRange.Borders.LineStyle = 1
+    $wlBorderRange.Borders.Weight = 2
+    $wlBorderRange.Borders.Color = 5263440
+    $wsWatchlist.Columns.Item(1).ColumnWidth = 10
+    $wsWatchlist.Columns.Item(2).ColumnWidth = 24
+
     Write-Output "STEP: about to access VBProject"
     $vbProj = $wb.VBProject
     Write-Output "STEP: got VBProject, type = $($vbProj.GetType().Name)"
@@ -89,6 +124,11 @@ try {
     $comp = $vbProj.VBComponents.Item($inputCodeName)
     $code = Get-Content "$base\SheetInput_Code.txt" -Raw -Encoding UTF8
     $comp.CodeModule.AddFromString($code)
+
+    $watchlistCodeName = $wsWatchlist.CodeName
+    $wlComp = $vbProj.VBComponents.Item($watchlistCodeName)
+    $wlCode = Get-Content "$base\SheetWatchlist_Code.txt" -Raw -Encoding UTF8
+    $wlComp.CodeModule.AddFromString($wlCode)
 
     $savePath = "C:\Users\ryan9\OneDrive\桌面\SECFilingFetcher.xlsm"
     $wb.SaveAs($savePath, $xlOpenXMLWorkbookMacroEnabled)
