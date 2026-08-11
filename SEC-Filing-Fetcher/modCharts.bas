@@ -11,6 +11,32 @@ Private Function HasVal(ByVal v As Variant) As Boolean
     HasVal = (Not IsNull(v)) And (CStr(v) <> "") And IsNumeric(v)
 End Function
 
+' Min/max across the numeric entries of arr(1..cnt), for fitting a chart's value
+' axis to what it actually plots. Returns False when there's nothing numeric in
+' there at all, in which case lo/hi are left alone.
+Private Function ArrayMinMax(ByVal arr As Variant, ByVal cnt As Long, ByRef lo As Double, ByRef hi As Double) As Boolean
+    Dim found As Boolean
+    found = False
+
+    Dim i As Long
+    For i = 1 To cnt
+        If HasVal(arr(i)) Then
+            Dim d As Double
+            d = CDbl(arr(i))
+            If Not found Then
+                lo = d
+                hi = d
+                found = True
+            Else
+                If d < lo Then lo = d
+                If d > hi Then hi = d
+            End If
+        End If
+    Next i
+
+    ArrayMinMax = found
+End Function
+
 ' Finds or creates the sheet but never clears it -- callers that need a clean
 ' slate must call ClearSheetForRebuild themselves, once, before writing. This
 ' split exists so multiple builders can safely share one sheet (Dashboard):
@@ -461,6 +487,24 @@ Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal wsRaw As Worksheet,
     axDate.MajorUnitScale = xlYears
 
     Call ApplyDarkThemeToChart(ch, Array(RGB(180, 90, 0), RGB(255, 180, 60)))
+
+    ' Fit both value axes to their own series, after the theme pass (which reads
+    ' back whatever Excel auto-picked), then re-fit whichever ended up with
+    ' fewer major units so the two axes are divided the same number of times and
+    ' their gridlines land on the same horizontal lines.
+    Dim epsLo As Double, epsHi As Double, priceLo As Double, priceHi As Double
+    Dim epsUnits As Long, priceUnits As Long
+    epsUnits = 0
+    priceUnits = 0
+    If ArrayMinMax(epsArr, cnt, epsLo, epsHi) Then epsUnits = FitValueAxis(ch.Axes(xlValue, xlPrimary), epsLo, epsHi)
+    If ArrayMinMax(priceArr, cnt, priceLo, priceHi) Then priceUnits = FitValueAxis(ch.Axes(xlValue, xlSecondary), priceLo, priceHi)
+    If epsUnits > 0 And priceUnits > 0 And epsUnits <> priceUnits Then
+        If epsUnits < priceUnits Then
+            Call FitValueAxis(ch.Axes(xlValue, xlPrimary), epsLo, epsHi, priceUnits)
+        Else
+            Call FitValueAxis(ch.Axes(xlValue, xlSecondary), priceLo, priceHi, epsUnits)
+        End If
+    End If
 
     chartBottomOut = co.Top + co.Height
 End Sub
@@ -1023,4 +1067,11 @@ Private Sub BuildOneMetricChart(ByVal ws As Worksheet, ByVal wsFilings As Worksh
     ch.HasLegend = False
 
     Call ApplyDarkThemeToChart(ch, Array(OrangePalette(paletteIdx)))
+
+    ' Same fit as the price chart: these are trend lines, and Excel's zero-based
+    ' auto-scale flattens most of them (股東權益 179M-275M on a 0-300M axis).
+    ' A non-zero baseline is the right call for a trend line specifically -- it
+    ' would be misleading on a bar chart, which none of these are.
+    Dim axLo As Double, axHi As Double
+    If ArrayMinMax(vals, n, axLo, axHi) Then Call FitValueAxis(ch.Axes(xlValue), axLo, axHi)
 End Sub
