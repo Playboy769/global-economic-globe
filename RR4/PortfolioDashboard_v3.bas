@@ -1684,7 +1684,9 @@ Private Sub CorrGetCommonDates(priceData() As Object, tickerCount As Long, _
     Next a
 
     ' ------------------------------------------------------------
-    Dim wantPx As Long: wantPx = 15
+    ' 180 trading-day window: 181 price points yield 180 log returns.
+    ' Short-history tickers fall back to whatever common days exist.
+    Dim wantPx As Long: wantPx = 181
     Dim startIdx As Long: startIdx = IIf(dateCount > wantPx, dateCount - wantPx, 0)
     usedCount = dateCount - startIdx
 
