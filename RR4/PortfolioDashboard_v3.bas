@@ -755,32 +755,15 @@ Private Sub DrawBrokerHeader(ws As Worksheet, r As Long, brokerName As String)
 End Sub
 
 ' ------------------------------------------------------------
+' 2026-08-13: per-broker Subtotal row display removed for all groups (the
+' "Subtotal <broker>" label + market-value/UNRL sums used to be written to
+' row r here). WritePositionRows still accumulates brokerMkt/brokerUnrl and
+' still reserves this row (r advances the same as before), so the layout
+' keeps its blank separator row between groups instead of collapsing - this
+' sub is just left as a deliberate no-op rather than removing the call
+' sites, so the row-spacing math in WritePositionRows didn't need to change.
 Private Sub DrawBrokerSubtotal(ws As Worksheet, r As Long, brokerName As String, _
                                 brokerMkt As Double, brokerUnrl As Double)
-    ws.Rows(r).RowHeight = 18
-    With ws.Range(ws.cells(r, 1), ws.cells(r, 17))
-        .Interior.Color = RGB(25, 18, 0)
-    End With
-    With ws.cells(r, 1)
-        .Value = "  Subtotal  " & brokerName
-        .Font.Color = RGB(200, 160, 0)
-        .Font.Bold = True
-        .Font.Name = "Consolas"
-        .Font.Size = 9
-        .HorizontalAlignment = xlLeft
-    End With
-    With ws.cells(r, 7)
-        .Value = brokerMkt
-        .NumberFormat = "$#,##0"
-        .Font.Color = RGB(200, 160, 0)
-        .Font.Bold = True
-    End With
-    With ws.cells(r, 12)
-        .Value = brokerUnrl
-        .NumberFormat = "$#,##0;-$#,##0"
-        .Font.Color = PnLColor(Round(brokerUnrl, 0))
-        .Font.Bold = True
-    End With
 End Sub
 
 ' ------------------------------------------------------------
