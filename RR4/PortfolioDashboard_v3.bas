@@ -307,17 +307,17 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, totalCost As Double,
     ws.cells(2, 5).Font.Color = RGB(221, 221, 221)
     ws.cells(2, 5).NumberFormat = "#,##0"
 
-    ws.cells(1, 9).Value = "PORT.BETA"
-    ws.cells(1, 9).Font.Color = RGB(150, 150, 150)
-    ws.cells(1, 10).Value = portBeta
-    ws.cells(1, 10).NumberFormat = "0.00"
-    ws.cells(1, 10).Font.Color = RGB(255, 192, 0)
-    ws.cells(1, 10).Font.Bold = True
-
-    ws.cells(1, 11).Value = "POSITIONS"
-    ws.cells(1, 11).Font.Color = RGB(150, 150, 150)
-    ws.cells(1, 12).Value = posCount
-    ws.cells(1, 12).Font.Color = RGB(221, 221, 221)
+    ' 2026-08-13: PORT.BETA / POSITIONS moved down to row 2 (see below, where
+    ' UNRL PNL%/UNRL PNL used to display) - this row is left intentionally
+    ' blank so the widget keeps its original two-row height.
+    ws.cells(1, 9).Value = ""
+    ws.cells(1, 9).NumberFormat = "General"
+    ws.cells(1, 10).Value = ""
+    ws.cells(1, 10).NumberFormat = "General"
+    ws.cells(1, 11).Value = ""
+    ws.cells(1, 11).NumberFormat = "General"
+    ws.cells(1, 12).Value = ""
+    ws.cells(1, 12).NumberFormat = "General"
 
     ws.cells(2, 13).Value = "RL PNL"
     ws.cells(2, 13).Font.Color = RGB(150, 150, 150)
@@ -342,18 +342,22 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, totalCost As Double,
     ws.cells(2, 2).NumberFormat = "0.00"
     ws.cells(2, 2).Font.Color = RGB(221, 221, 221)
 
-    ws.cells(2, 9).Value = "UNRL PNL%"
+    ' UNRL PNL%/UNRL PNL calc (unrlPct above, totalUnrl param) intentionally
+    ' kept for LogHistory/DrawDeepAnalysis - just no longer displayed here.
+    ' POSITIONS and PORT.BETA now occupy this row instead (order swapped:
+    ' Positions left, Beta right), same styling as their old row-1 spot.
+    ws.cells(2, 9).Value = "POSITIONS"
     ws.cells(2, 9).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 10).Value = unrlPct
-    ws.cells(2, 10).NumberFormat = "0.00%"
-    ws.cells(2, 10).Font.Color = PnLColor(unrlPct)
-    ws.cells(2, 10).Font.Bold = True
+    ws.cells(2, 10).Value = posCount
+    ws.cells(2, 10).NumberFormat = "General"
+    ws.cells(2, 10).Font.Color = RGB(221, 221, 221)
+    ws.cells(2, 10).Font.Bold = False
 
-    ws.cells(2, 11).Value = "UNRL PNL"
+    ws.cells(2, 11).Value = "PORT.BETA"
     ws.cells(2, 11).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 12).Value = totalUnrl
-    ws.cells(2, 12).NumberFormat = "$#,##0"
-    ws.cells(2, 12).Font.Color = PnLColor(totalUnrl)
+    ws.cells(2, 12).Value = portBeta
+    ws.cells(2, 12).NumberFormat = "0.00"
+    ws.cells(2, 12).Font.Color = RGB(255, 192, 0)
     ws.cells(2, 12).Font.Bold = True
 
     With ws.Range(ws.cells(3, 1), ws.cells(3, 16))
