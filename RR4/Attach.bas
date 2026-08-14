@@ -520,10 +520,11 @@ Sub CalculateRealizedPnL()
     ' shifted one column right - PNL(TWD) is now H and BROKER is now J. Callers
     ' that read this sheet by column letter had to move with it:
     '   PortfolioDashboard_v3.RebuildPortfolioDashboard  Sum(Columns "G" -> "H")
-    '   FilterRealizedData / ClearRealizedFilter / InitFilterInterface (below)
     ' The hand-maintained columns on this sheet (Caption / LOAN Distribution /
-    ' Rolled Medium) sit to the right of the written range and must be moved
-    ' one column right by hand to line up again.
+    ' Rolled Medium) used to start on J, which BROKER now occupies - run
+    ' MigrateRealizedLayout once to shift them to K:M before the first UPDATE
+    ' on the new layout. The old J1:L6 date-filter panel was removed with the
+    ' same change; see the comment on MigrateRealizedLayout.
     Dim hdrs As Variant
     hdrs = Array("TICKER", "RET%", "PNL", "SHARES", "AVG COST", "NET AMT", _
                  "STRATEGY", "PNL(TWD)", "DATE", "BROKER")
@@ -750,85 +751,70 @@ Sub OpenDeleteForm()
 End Sub
 
 ' ================================================================
-' Realized Sheet Filter UI
+' Realized sheet layout migration
+' ----------------------------------------------------------------
+' 2026-08-14: CalculateRealizedPnL gained a RET% column at B, so its written
+' range grew from A:I to A:J and BROKER landed on J - which is where the
+' hand-maintained Caption / LOAN Distribution / Rolled Medium columns live.
+' This sub inserts one column at J so that block shifts to K:L:M, out of the
+' way. Run it ONCE from the VBE before the next dashboard UPDATE; running the
+' new CalculateRealizedPnL first would overwrite Caption with BROKER.
+'
+' Whole-column Insert is used deliberately (not a range copy) so values,
+' cell formatting and column widths all travel with the block, exactly as if
+' the column had been inserted by hand in Excel.
+'
+' The date-range filter panel that used to sit on J1:L6 (InitFilterInterface /
+' FilterRealizedData / ClearRealizedFilter) was removed in the same change -
+' those columns had been taken over by hand-kept data long ago, so the panel
+' could not have been in use. Any leftover buttons wired to the three deleted
+' subs are removed here too, otherwise they would raise "macro not found".
 ' ================================================================
-Sub InitFilterInterface()
-    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("Realized")
+Sub MigrateRealizedLayout()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets("Realized")
+    On Error GoTo 0
+    If ws Is Nothing Then MsgBox "Realized sheet not found", vbExclamation: Exit Sub
+
+    ' Re-run guard: J1 holds "Caption" only while the sheet is still on the old
+    ' layout. Once migrated it is blank, and after the next UPDATE it says
+    ' BROKER - either way there is nothing left to shift.
+    Dim j1 As String: j1 = Trim(CStr(ws.Cells(1, 10).Value))
+    If j1 = "" Or UCase(j1) = "BROKER" Then
+        MsgBox "Realized sheet already migrated - column J is '" & j1 & "', " & _
+               "not the old Caption column. Nothing to do.", vbInformation
+        Exit Sub
+    End If
+
+    Application.ScreenUpdating = False
     On Error Resume Next: ws.Unprotect: On Error GoTo 0
     ws.AutoFilterMode = False
-    With ws.Cells
-        .Interior.Color = RGB(0, 0, 0)
-        .Font.Color = RGB(255, 255, 255)
-        .Font.Name = "Calibri"
-        .Font.Size = 12
-    End With
-    ' Panel shifted J:L -> K:M when RET% was inserted as column B, otherwise it
-    ' would sit on top of the BROKER column (now J).
-    With ws.Range("K1:M20")
-        .UnMerge: .ClearContents: .ColumnWidth = 12
-    End With
-    With ws
-        .Range("K1:M6").Interior.Color = RGB(30, 30, 30)
-        .Range("K1:M1").Merge
-        .Range("K1").HorizontalAlignment = xlCenter
-        .Range("K1").Font.Bold = True
-        .Range("K1").Font.Color = RGB(255, 215, 0)
-        .Range("K2").Value = "Start Date:"
-        .Range("K3").Value = "End Date:"
-        .Range("L2").Value = DateSerial(Year(Date), 1, 1)
-        .Range("L3").Value = Date
-        With .Range("L2:L3")
-            .NumberFormat = "yyyy/m/d"
-            .Interior.Color = RGB(60, 60, 60)
-            .Borders.LineStyle = xlContinuous
-            .Font.Color = RGB(255, 255, 255)
-            .Font.Bold = True
-        End With
-        .Range("K5").Value = "Period P&L:"
-        .Range("K5").Font.Bold = True
-        .Range("L5").NumberFormat = "$#,##0"
-        .Range("L5").Font.Size = 14
-        .Range("L5").Font.Bold = True
-        .Range("M2").Value = "(e.g. 2025/1/1)"
-        .Range("M2").Font.Color = RGB(150, 150, 150)
-        .Range("M2").Font.Size = 10
-    End With
-End Sub
 
-Sub FilterRealizedData()
-    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("Realized")
-    Dim LR As Long: LR = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
-    If LR < 2 Then MsgBox "No data to filter", vbInformation: Exit Sub
+    ' Drop buttons left over from the removed filter panel
+    Dim shp As Shape, oa As String, killed As Long
+    Dim si As Long
+    For si = ws.Shapes.Count To 1 Step -1
+        Set shp = ws.Shapes(si)
+        oa = ""
+        On Error Resume Next: oa = shp.OnAction: On Error GoTo 0
+        oa = Replace(Replace(oa, "'", ""), "!", "")
+        If InStr(oa, "InitFilterInterface") > 0 _
+           Or InStr(oa, "FilterRealizedData") > 0 _
+           Or InStr(oa, "ClearRealizedFilter") > 0 Then
+            shp.Delete
+            killed = killed + 1
+        End If
+    Next si
 
-    Dim sd As Date, ed As Date
-    On Error Resume Next
-    If IsDate(ws.Range("L2").Value) Then sd = CDate(ws.Range("L2").Value)
-    If IsDate(ws.Range("L3").Value) Then ed = CDate(ws.Range("L3").Value)
-    On Error GoTo 0
-    If sd = 0 Or ed = 0 Then MsgBox "Enter valid dates in L2 and L3", vbExclamation: Exit Sub
+    ws.Columns("J").Insert Shift:=xlToRight, CopyOrigin:=xlFormatFromLeftOrAbove
 
-    ' DATE is field 9 and PNL(TWD) is column H since RET% became column B.
-    ws.AutoFilterMode = False
-    ws.Range("A1:J" & LR).AutoFilter Field:=9, Criteria1:=">=" & sd, Operator:=xlAnd, Criteria2:="<=" & ed
-
-    Dim PnL As Double
-    On Error Resume Next
-    PnL = Application.WorksheetFunction.Subtotal(109, ws.Range("H2:H" & LR))
-    On Error GoTo 0
-
-    ws.Range("L5").Value = PnL
-    ws.Range("L5").Font.Color = IIf(PnL < 0, RGB(255, 80, 80), RGB(200, 200, 200))
-    MsgBox "Filter applied!", vbInformation
-End Sub
-
-Sub ClearRealizedFilter()
-    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("Realized")
-    ws.AutoFilterMode = False
-    Dim LR As Long: LR = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
-    Dim total As Double
-    If LR >= 2 Then total = Application.WorksheetFunction.Sum(ws.Range("H2:H" & LR))
-    ws.Range("L5").Value = total
-    ws.Range("L5").Font.Color = IIf(total < 0, RGB(255, 80, 80), RGB(200, 200, 200))
+    Application.ScreenUpdating = True
+    MsgBox "Realized layout migrated." & vbLf & _
+           "Caption / LOAN Distribution / Rolled Medium moved J:L -> K:M." & vbLf & _
+           killed & " obsolete filter button(s) removed." & vbLf & vbLf & _
+           "Run the dashboard UPDATE next - BROKER now writes to column J.", _
+           vbInformation
 End Sub
 
 ' ================================================================
