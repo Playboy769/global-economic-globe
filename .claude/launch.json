@@ -468,6 +468,42 @@
         "research/axti-analysis-2026q2/AXTI_FY26Q2_Analysis"
       ],
       "port": 8162
+    },
+    {
+      "name": "avc-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8164",
+        "--directory",
+        "research/auras-analysis-2026q2/AVC_FY2026Q2_Analysis"
+      ],
+      "port": 8164
+    },
+    {
+      "name": "gaoye-exam-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8163",
+        "--directory",
+        "高業考古/高業考古題-高頻觀念分析"
+      ],
+      "port": 8163
+    },
+    {
+      "name": "8046-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8165",
+        "--directory",
+        "research/8046-analysis-2026q1/8046_FY2026Q2_Analysis"
+      ],
+      "port": 8165
     }
   ]
 }
