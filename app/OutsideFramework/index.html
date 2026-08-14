@@ -815,6 +815,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <div class="works-filter" id="works-filter">
       <div class="wf-pill active" data-cat="finance" onclick="filterCat('finance',this)">Finance &amp; Markets</div>
       <div class="wf-pill" data-cat="earnings" onclick="filterCat('earnings',this)">Earnings Call</div>
+      <!--GATE--><div class="wf-pill" data-cat="public-data" onclick="filterCat('public-data',this)">Public Data</div><!--/GATE-->
       <!--GATE--><div class="wf-pill" data-cat="network" onclick="filterCat('network',this)">Network Analysis</div>
       <div class="wf-pill" data-cat="causal" onclick="filterCat('causal',this)">Causal Logic</div>
       <div class="wf-pill" data-cat="knowledge" onclick="filterCat('knowledge',this)">Knowledge</div><!--/GATE-->
@@ -1083,13 +1084,14 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <div data-published="2026-08-08" class="wk-card reveal" data-cat="earnings" tabindex="0" role="button" aria-label="話術偵測 Earnings Quiz — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/earnings-quiz')">
         <div class="wk-info"><div class="wk-name">話術偵測 Earnings Quiz</div><div class="wk-type">四選一小遊戲 &middot; 從 439 則法說會 Q&amp;A 判讀出題 &middot; 猜猜真正的邏輯缺口是哪一個</div></div>
       </div>
-      <!--GATE--><div data-published="2026-08-09" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="台灣油價歷史 Fuel Price History — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/fuelprice')">
+      <!--GATE--><div class="wk-group-title">即時資料工具 &middot; Live Data Tools</div>
+      <div data-published="2026-08-09" class="wk-card reveal" data-cat="public-data" tabindex="0" role="button" aria-label="台灣油價歷史 Fuel Price History — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/fuelprice')">
         <div class="wk-info"><div class="wk-name">台灣油價歷史 Fuel Price History</div><div class="wk-type">中油 620 次調價紀錄 &middot; 從 800KB 的 ASPX 網頁裡解析出來 &middot; 公開不等於可用</div></div>
-      </div><!--/GATE-->
-      <!--GATE--><div data-published="2026-08-09" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="台電電網記錄器 Grid Recorder — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/powergrid')">
+      </div>
+      <div data-published="2026-08-09" class="wk-card reveal" data-cat="public-data" tabindex="0" role="button" aria-label="台電電網記錄器 Grid Recorder — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/powergrid')">
         <div class="wk-info"><div class="wk-name">台電電網記錄器 Grid Recorder</div><div class="wk-type">每 10 分鐘持續記錄全台 204 部機組 &middot; 檢修與友善降載統計 &middot; 只有留下帶子才答得出來的問題</div></div>
-      </div><!--/GATE-->
-      <!--GATE--><div data-published="2026-08-09" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="隱含波動率曲面 Volatility Surface — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/volsurface/')">
+      </div>
+      <div data-published="2026-08-09" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="隱含波動率曲面 Volatility Surface — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/volsurface/')">
         <div class="wk-info"><div class="wk-name">隱含波動率曲面 Volatility Surface</div><div class="wk-type">即時選擇權鏈 &middot; 3D 波動率曲面 &middot; 微笑偏斜 &amp; 期限結構 &middot; 二維局部迴歸擬合</div></div>
       </div><!--/GATE-->
       <div data-published="2026-08-08" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="市場天氣 Market Weather — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/market-weather')">
@@ -1123,7 +1125,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
         <div class="wk-info"><div class="wk-name">Server Rack · 全鏈解剖</div><div class="wk-type">晶片設計 &rarr; 製造封裝 &rarr; 機櫃 &rarr; 資料中心 &middot; 12 環節 &middot; AI／x86 對照</div></div>
       </div>
       <div data-published="2026-07-28" class="wk-card reveal" data-cat="tech-notes" data-tags="ai-accelerator,ai-capex,power-infrastructure" tabindex="0" role="button" aria-label="AMD Helios 對照 Nvidia Vera Rubin — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_AMD_Helios_vs_Vera_Rubin.html')">
-        <div class="wk-info"><div class="wk-name">Helios · 對照 Vera Rubin</div><div class="wk-type">組裝 &rarr; 晶粒拓樸 &rarr; 供電 &rarr; 定價 &rarr; 生態系 &middot; 7 環節 &middot; 機櫃級對照</div></div>
+        <div class="wk-info"><div class="wk-name">Helios · 對照 Vera Rubin</div><div class="wk-type">組裝 &rarr; 晶粒拓樸 &rarr; 供電 &rarr; 定價 &rarr; 商業模式 &rarr; 軟體護城河 &middot; 12 環節 &middot; 機櫃級對照</div></div>
       </div>
 
     </div>
@@ -2345,7 +2347,7 @@ function filterCat(cat, pillEl) {
    (not moved/cloned - see the big comment above #page-timeline in the HTML) and renders an
    independent reverse-chronological list. Runs once at load since every .wk-card already
    exists statically in the DOM regardless of which page is currently visible. */
-var CAT_LABEL = { finance: 'Finance & Markets', earnings: 'Earnings Call', network: 'Network Analysis', causal: 'Causal Logic', knowledge: 'Knowledge', 'tech-notes': 'Tech Notes' };
+var CAT_LABEL = { finance: 'Finance & Markets', earnings: 'Earnings Call', network: 'Network Analysis', causal: 'Causal Logic', knowledge: 'Knowledge', 'tech-notes': 'Tech Notes', 'public-data': 'Public Data' };
 var MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 var MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
