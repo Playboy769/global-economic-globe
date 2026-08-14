@@ -63,7 +63,8 @@ Sub RebuildPortfolioDashboard()
 
     Dim realPnL As Double
     On Error Resume Next
-    realPnL = Application.WorksheetFunction.Sum(wsR.Columns("G"))
+    ' PNL(TWD) moved G -> H when RET% was inserted as column B (Attach.bas)
+    realPnL = Application.WorksheetFunction.Sum(wsR.Columns("H"))
     On Error GoTo 0
 
     Dim portBeta As Double

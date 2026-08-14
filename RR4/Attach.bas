@@ -513,15 +513,37 @@ Sub CalculateRealizedPnL()
     Set wsReal = ThisWorkbook.Sheets("Realized")
     Set wsPort = ThisWorkbook.Sheets("RR4")
     Application.ScreenUpdating = False
-    wsReal.Range("A2:I10000").ClearContents
+    wsReal.Range("A2:J10000").ClearContents
 
+    ' 2026-08-14: RET% inserted as column B (realized return on the FIFO cost
+    ' basis of the shares sold), so everything from the old column B rightwards
+    ' shifted one column right - PNL(TWD) is now H and BROKER is now J. Callers
+    ' that read this sheet by column letter had to move with it:
+    '   PortfolioDashboard_v3.RebuildPortfolioDashboard  Sum(Columns "G" -> "H")
+    '   FilterRealizedData / ClearRealizedFilter / InitFilterInterface (below)
+    ' The hand-maintained columns on this sheet (Caption / LOAN Distribution /
+    ' Rolled Medium) sit to the right of the written range and must be moved
+    ' one column right by hand to line up again.
     Dim hdrs As Variant
-    hdrs = Array("TICKER", "PNL", "SHARES", "AVG COST", "NET AMT", "STRATEGY", "PNL(TWD)", "DATE", "BROKER")
+    hdrs = Array("TICKER", "RET%", "PNL", "SHARES", "AVG COST", "NET AMT", _
+                 "STRATEGY", "PNL(TWD)", "DATE", "BROKER")
     Dim hc As Integer
-    For hc = 0 To 8
-        wsReal.Cells(1, hc + 1).Value = hdrs(hc)
-        wsReal.Cells(1, hc + 1).Font.Bold = True
+    For hc = 0 To 9
+        With wsReal.Cells(1, hc + 1)
+            .Value = hdrs(hc)
+            .Font.Color = RGB(255, 192, 0)
+            .Font.Bold = True
+            .Font.Size = 9
+            .Font.Name = "Consolas"
+            .Interior.Color = RGB(10, 10, 10)
+            .HorizontalAlignment = xlCenter
+        End With
     Next hc
+    With wsReal.Range(wsReal.Cells(1, 1), wsReal.Cells(1, 10)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RGB(255, 192, 0)
+        .Weight = xlThin
+    End With
 
     Dim dictLots As Object: Set dictLots = CreateObject("Scripting.Dictionary")
 
@@ -623,21 +645,36 @@ Sub CalculateRealizedPnL()
 
                 With wsReal
                     .Cells(writeRow, 1) = Ticker
-                    .Cells(writeRow, 2) = rlPnl: .Cells(writeRow, 2).NumberFormat = "#,##0.00"
-                    .Cells(writeRow, 3) = shares
-                    .Cells(writeRow, 4) = fifoAvgC
-                    .Cells(writeRow, 5) = NetAmount
-                    .Cells(writeRow, 6) = strat
-                    .Cells(writeRow, 7) = rlTWD: .Cells(writeRow, 7).NumberFormat = "#,##0"
-                    .Cells(writeRow, 8) = finalDate: .Cells(writeRow, 8).NumberFormat = "yyyy/m/d"
-                    .Cells(writeRow, 9) = broker
-                    If rlTWD > 0 Then
-                        .Cells(writeRow, 2).Font.Color = RGB(255, 100, 100)
-                        .Cells(writeRow, 7).Font.Color = RGB(255, 100, 100)
+                    ' RET% = realized PnL / FIFO cost basis of the shares sold.
+                    ' A zero cost basis (free shares, incomplete history) would
+                    ' divide by zero, so those rows show "-" instead.
+                    If totalCostBasis > 0.00001 Then
+                        .Cells(writeRow, 2) = rlPnl / totalCostBasis
+                        .Cells(writeRow, 2).NumberFormat = "0.00%"
                     Else
-                        .Cells(writeRow, 2).Font.Color = RGB(0, 255, 100)
-                        .Cells(writeRow, 7).Font.Color = RGB(0, 255, 100)
+                        .Cells(writeRow, 2) = "-"
+                        .Cells(writeRow, 2).NumberFormat = "General"
                     End If
+                    .Cells(writeRow, 2).HorizontalAlignment = xlRight
+                    .Cells(writeRow, 3) = rlPnl: .Cells(writeRow, 3).NumberFormat = "#,##0.00"
+                    .Cells(writeRow, 4) = shares
+                    .Cells(writeRow, 5) = fifoAvgC
+                    .Cells(writeRow, 6) = NetAmount
+                    .Cells(writeRow, 7) = strat
+                    .Cells(writeRow, 8) = rlTWD: .Cells(writeRow, 8).NumberFormat = "#,##0"
+                    .Cells(writeRow, 9) = finalDate: .Cells(writeRow, 9).NumberFormat = "yyyy/m/d"
+                    .Cells(writeRow, 10) = broker
+                    ' Gains (and flat trades) grey, losses red - RET% / PNL /
+                    ' PNL(TWD) only, the descriptive columns keep sheet default.
+                    Dim pnlClr As Long
+                    If rlTWD < 0 Then
+                        pnlClr = RGB(255, 80, 80)
+                    Else
+                        pnlClr = RGB(200, 200, 200)
+                    End If
+                    .Cells(writeRow, 2).Font.Color = pnlClr
+                    .Cells(writeRow, 3).Font.Color = pnlClr
+                    .Cells(writeRow, 8).Font.Color = pnlClr
                 End With
                 writeRow = writeRow + 1
 
@@ -668,7 +705,7 @@ Sub CalculateRealizedPnL()
         End If
     Next pr
 
-    wsReal.Columns("A:I").AutoFit
+    wsReal.Columns("A:J").AutoFit
     Application.ScreenUpdating = True
 End Sub
 
@@ -690,11 +727,12 @@ Sub ClearAllData()
     End If
     If Not wsReal Is Nothing Then
         LR = wsReal.Cells(wsReal.Rows.Count, "A").End(xlUp).Row
-        If LR > 1 Then wsReal.Range("A2:I" & LR).ClearContents
+        If LR > 1 Then wsReal.Range("A2:J" & LR).ClearContents
     End If
     If Not wsHist Is Nothing Then
+        ' Layout v2 runs A:M; P1:R6 (YTD baselines) and Z3 (token) stay put
         LR = wsHist.Cells(wsHist.Rows.Count, "A").End(xlUp).Row
-        If LR > 1 Then wsHist.Range("A2:G" & LR).ClearContents
+        If LR > 1 Then wsHist.Range("A2:M" & LR).ClearContents
     End If
 
     MsgBox "All data cleared.", vbInformation
@@ -724,34 +762,36 @@ Sub InitFilterInterface()
         .Font.Name = "Calibri"
         .Font.Size = 12
     End With
-    With ws.Range("J1:L20")
+    ' Panel shifted J:L -> K:M when RET% was inserted as column B, otherwise it
+    ' would sit on top of the BROKER column (now J).
+    With ws.Range("K1:M20")
         .UnMerge: .ClearContents: .ColumnWidth = 12
     End With
     With ws
-        .Range("J1:L6").Interior.Color = RGB(30, 30, 30)
-        .Range("J1:L1").Merge
-        .Range("J1").HorizontalAlignment = xlCenter
-        .Range("J1").Font.Bold = True
-        .Range("J1").Font.Color = RGB(255, 215, 0)
-        .Range("J2").Value = "Start Date:"
-        .Range("J3").Value = "End Date:"
-        .Range("K2").Value = DateSerial(Year(Date), 1, 1)
-        .Range("K3").Value = Date
-        With .Range("K2:K3")
+        .Range("K1:M6").Interior.Color = RGB(30, 30, 30)
+        .Range("K1:M1").Merge
+        .Range("K1").HorizontalAlignment = xlCenter
+        .Range("K1").Font.Bold = True
+        .Range("K1").Font.Color = RGB(255, 215, 0)
+        .Range("K2").Value = "Start Date:"
+        .Range("K3").Value = "End Date:"
+        .Range("L2").Value = DateSerial(Year(Date), 1, 1)
+        .Range("L3").Value = Date
+        With .Range("L2:L3")
             .NumberFormat = "yyyy/m/d"
             .Interior.Color = RGB(60, 60, 60)
             .Borders.LineStyle = xlContinuous
             .Font.Color = RGB(255, 255, 255)
             .Font.Bold = True
         End With
-        .Range("J5").Value = "Period P&L:"
-        .Range("J5").Font.Bold = True
-        .Range("K5").NumberFormat = "$#,##0"
-        .Range("K5").Font.Size = 14
+        .Range("K5").Value = "Period P&L:"
         .Range("K5").Font.Bold = True
-        .Range("L2").Value = "(e.g. 2025/1/1)"
-        .Range("L2").Font.Color = RGB(150, 150, 150)
-        .Range("L2").Font.Size = 10
+        .Range("L5").NumberFormat = "$#,##0"
+        .Range("L5").Font.Size = 14
+        .Range("L5").Font.Bold = True
+        .Range("M2").Value = "(e.g. 2025/1/1)"
+        .Range("M2").Font.Color = RGB(150, 150, 150)
+        .Range("M2").Font.Size = 10
     End With
 End Sub
 
@@ -762,21 +802,22 @@ Sub FilterRealizedData()
 
     Dim sd As Date, ed As Date
     On Error Resume Next
-    If IsDate(ws.Range("K2").Value) Then sd = CDate(ws.Range("K2").Value)
-    If IsDate(ws.Range("K3").Value) Then ed = CDate(ws.Range("K3").Value)
+    If IsDate(ws.Range("L2").Value) Then sd = CDate(ws.Range("L2").Value)
+    If IsDate(ws.Range("L3").Value) Then ed = CDate(ws.Range("L3").Value)
     On Error GoTo 0
-    If sd = 0 Or ed = 0 Then MsgBox "Enter valid dates in K2 and K3", vbExclamation: Exit Sub
+    If sd = 0 Or ed = 0 Then MsgBox "Enter valid dates in L2 and L3", vbExclamation: Exit Sub
 
+    ' DATE is field 9 and PNL(TWD) is column H since RET% became column B.
     ws.AutoFilterMode = False
-    ws.Range("A1:I" & LR).AutoFilter Field:=8, Criteria1:=">=" & sd, Operator:=xlAnd, Criteria2:="<=" & ed
+    ws.Range("A1:J" & LR).AutoFilter Field:=9, Criteria1:=">=" & sd, Operator:=xlAnd, Criteria2:="<=" & ed
 
     Dim PnL As Double
     On Error Resume Next
-    PnL = Application.WorksheetFunction.Subtotal(109, ws.Range("G2:G" & LR))
+    PnL = Application.WorksheetFunction.Subtotal(109, ws.Range("H2:H" & LR))
     On Error GoTo 0
 
-    ws.Range("K5").Value = PnL
-    ws.Range("K5").Font.Color = IIf(PnL >= 0, RGB(255, 100, 100), RGB(0, 255, 100))
+    ws.Range("L5").Value = PnL
+    ws.Range("L5").Font.Color = IIf(PnL < 0, RGB(255, 80, 80), RGB(200, 200, 200))
     MsgBox "Filter applied!", vbInformation
 End Sub
 
@@ -785,9 +826,9 @@ Sub ClearRealizedFilter()
     ws.AutoFilterMode = False
     Dim LR As Long: LR = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
     Dim total As Double
-    If LR >= 2 Then total = Application.WorksheetFunction.Sum(ws.Range("G2:G" & LR))
-    ws.Range("K5").Value = total
-    ws.Range("K5").Font.Color = IIf(total >= 0, RGB(255, 100, 100), RGB(0, 255, 100))
+    If LR >= 2 Then total = Application.WorksheetFunction.Sum(ws.Range("H2:H" & LR))
+    ws.Range("L5").Value = total
+    ws.Range("L5").Font.Color = IIf(total < 0, RGB(255, 80, 80), RGB(200, 200, 200))
 End Sub
 
 ' ================================================================
