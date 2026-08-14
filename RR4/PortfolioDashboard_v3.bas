@@ -708,6 +708,7 @@ Private Function WritePositionRows(ws As Worksheet, posData() As Variant, _
     On Error GoTo 0
 
     Dim i As Long, r As Long: r = 5
+    Dim lastPosRow As Long: lastPosRow = 0
     Dim currentBroker As String: currentBroker = ""
     Dim brokerMkt As Double: brokerMkt = 0
     Dim brokerUnrl As Double: brokerUnrl = 0
@@ -727,6 +728,7 @@ Private Function WritePositionRows(ws As Worksheet, posData() As Variant, _
         End If
 
         Call WriteOnePositionRow(ws, r, i, posData, totalMkt, swingRiskMap)
+        lastPosRow = r
         brokerMkt = brokerMkt + posData(i, 8)
         brokerUnrl = brokerUnrl + posData(i, 13)
         r = r + 1
@@ -735,6 +737,18 @@ Private Function WritePositionRows(ws As Worksheet, posData() As Variant, _
     If currentBroker <> "" Then
         Call DrawBrokerSubtotal(ws, r, currentBroker, brokerMkt, brokerUnrl)
         r = r + 1
+    End If
+
+    ' Gold rule under the LAST ticker row, mirroring the header rule drawn in
+    ' DrawColumnHeaders - closes the table off visually. It is anchored to
+    ' lastPosRow (the final real position) rather than r - 1, because r - 1 is
+    ' the blank row reserved by the no-op DrawBrokerSubtotal.
+    If lastPosRow >= 5 Then
+        With ws.Range(ws.cells(lastPosRow, 1), ws.cells(lastPosRow, 17)).Borders(xlEdgeBottom)
+            .LineStyle = xlContinuous
+            .Color = RGB(255, 192, 0)
+            .Weight = xlThin
+        End With
     End If
 
     WritePositionRows = r - 1
