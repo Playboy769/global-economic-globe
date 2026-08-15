@@ -549,7 +549,7 @@
         "http.server",
         "8169",
         "--directory",
-        "research/liteon-analysis-2026q2/LITEON_2026Q2_Analysis"
+        "research/liteon-analysis-2026q2/2301_FY2026Q2_Analysis"
       ],
       "port": 8169
     }
