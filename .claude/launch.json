@@ -504,6 +504,18 @@
         "research/8046-analysis-2026q1/8046_FY2026Q2_Analysis"
       ],
       "port": 8165
+    },
+    {
+      "name": "2059-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8166",
+        "--directory",
+        "research/2059-analysis-2026q1/2059_FY2026Q2_Analysis"
+      ],
+      "port": 8166
     }
   ]
 }
