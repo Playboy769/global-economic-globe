@@ -516,6 +516,18 @@
         "research/2059-analysis-2026q1/2059_FY2026Q2_Analysis"
       ],
       "port": 8166
+    },
+    {
+      "name": "taiyen-6274",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8167",
+        "--directory",
+        "research/taiyen-6274-analysis-2026q2/6274_FY2026Q2_Analysis"
+      ],
+      "port": 8167
     }
   ]
 }
