@@ -10,8 +10,12 @@ Private Const SH_TRANS As String = "Transactions"
 Private Const SH_REAL  As String = "Realized"
 Private Const SH_HIST  As String = "HistoryLog"
 
-Public g_AutoOn   As Boolean
-Public g_NextTime As Date
+' Raw-data sheet holding the YTD baselines (see HISTORYLOG LAYOUT v2 below).
+' Kept off HistoryLog on purpose: the first version parked the baselines in
+' P1:R6, right next to the leftovers of the old layout, and the two blocks
+' were impossible to tell apart on screen.
+Private Const SH_HRAW     As String = "HistoryRaw"
+Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 
 ' ================================================================
 '  MAIN ENTRY
@@ -83,51 +87,258 @@ Sub RebuildPortfolioDashboard()
     MsgBox "Dashboard updated!", vbInformation
 End Sub
 
+' ================================================================
+'  HISTORYLOG LAYOUT v2 (2026-08-13) - every index return is YTD
+' ----------------------------------------------------------------
+'    A  Date                    B  TotalMarketValue
+'    C  TotalCumulativePnL      D  Realized PnL
+'    E  Realized PnL Daily Chg%
+'    F  Price (SPY)             G  YTD Ret% (SPY)
+'    H  Price (QQQ)             I  YTD Ret% (QQQ)
+'    J  Price (TWII)            K  YTD Ret% (TWII)
+'    L  Price (SOX)             M  YTD Ret% (SOX)
+'    N onwards  unused - keep empty
+'    Z3         GitHub token (Attach.bas) - never write to column Z
+'
+'  RAW DATA lives on its own sheet, "HistoryRaw":
+'    A  Ticker | B  Baseline date | C  Baseline close | D  Fetched at
+'    rows 3-6 = SPY / QQQ / ^TWII / ^SOX, rebuilt when the year rolls over.
+'  Every Ret% cell divides by HistoryRaw!$C$n, so each index is measured
+'  against its OWN first-trading-day close and the raw inputs stay visible.
+'
+'  Ret% = (price - close of the FIRST TRADING DAY of the current year)
+'         / that close.  It is NOT relative to row 2 any more.
+'  ^TWOII (OTC index) was dropped - it never returned data from Yahoo.
+'  A price that fails to download is left BLANK, never written as 0
+'  (a 0 used to turn into a -100% return and wreck the charts).
+'
+'  To rebuild existing rows (wrong columns / stale prices): RepairHistoryLog.
+' ================================================================
+Private Function HistTickers() As Variant
+    HistTickers = Array("SPY", "QQQ", "^TWII", "^SOX")
+End Function
+
+Private Function HistPriceCols() As Variant
+    HistPriceCols = Array("F", "H", "J", "L")
+End Function
+
+Private Function HistRetCols() As Variant
+    HistRetCols = Array("G", "I", "K", "M")
+End Function
+
 Private Sub LogHistory(totalMkt As Double, totalPnL As Double, realPnL As Double)
     Dim wsH As Worksheet
     On Error Resume Next
     Set wsH = ThisWorkbook.Sheets(SH_HIST)
     On Error GoTo 0
     If wsH Is Nothing Then Exit Sub
-    
+
+    Call EnsureHistoryHeaders(wsH)
+    Call EnsureYTDBaselines(False)
+
     Dim nr As Long: nr = wsH.cells(wsH.Rows.count, "A").End(xlUp).row + 1
     If nr > 2 Then
         If Int(CDate(wsH.cells(nr - 1, 1).Value)) = Date Then nr = nr - 1
     End If
-    
-    Dim priceSPY As Double, priceQQQ As Double, priceTWII As Double
-    Dim priceSOX As Double, priceTWOII As Double
-    
-    priceSPY = GetStockPrice("SPY")
-    priceQQQ = GetStockPrice("QQQ")
-    priceTWII = GetStockPrice("^TWII")
-    priceSOX = GetStockPrice("^SOX")
-    priceTWOII = GetStockPrice("^TWOII")
-    
+
     With wsH
         .cells(nr, "A").Value = Now
         .cells(nr, "B").Value = totalMkt
         .cells(nr, "C").Value = totalPnL
-        .cells(nr, "D").Value = priceSPY
-        .cells(nr, "E").Value = priceQQQ
-        .cells(nr, "F").Value = priceTWII
-        .cells(nr, "G").Value = realPnL
-        .cells(nr, "N").Value = priceSOX
-        .cells(nr, "O").Value = priceTWOII
-        
-        .cells(nr, "P").Formula = "=(N" & nr & "-$N$2)/$N$2"
-        .cells(nr, "Q").Formula = "=(O" & nr & "-$O$2)/$O$2"
-        
+        .cells(nr, "D").Value = realPnL
+
         .cells(nr, "A").NumberFormat = "yyyy/m/d h:mm:ss"
-        .Range("B" & nr & ":C" & nr).NumberFormat = "#,##0"
-        .Range("D" & nr & ":F" & nr).NumberFormat = "#,##0.00"
-        .cells(nr, "G").NumberFormat = "#,##0"
-        .cells(nr, "N").NumberFormat = "#,##0.00"
-        .cells(nr, "O").NumberFormat = "#,##0.00"
-        .cells(nr, "P").NumberFormat = "0.00%"
-        .cells(nr, "Q").NumberFormat = "0.00%"
+        .Range("B" & nr & ":D" & nr).NumberFormat = "#,##0"
     End With
+
+    Dim tickers As Variant, priceCols As Variant
+    tickers = HistTickers()
+    priceCols = HistPriceCols()
+
+    Dim i As Long, px As Double
+    For i = LBound(tickers) To UBound(tickers)
+        px = 0
+        On Error Resume Next
+        px = GetStockPrice(CStr(tickers(i)))
+        On Error GoTo 0
+        If px > 0 Then
+            wsH.cells(nr, priceCols(i)).Value = px
+        Else
+            ' download failed - leave the cell blank instead of logging a 0
+            wsH.cells(nr, priceCols(i)).ClearContents
+        End If
+        wsH.cells(nr, priceCols(i)).NumberFormat = "#,##0.00"
+    Next i
+
+    Call WriteHistoryRowFormulas(wsH, nr)
 End Sub
+
+' Header row - rewritten every run so the layout stays self-describing.
+' Only A1:M1 plus the P1:R6 baseline block are touched; column Z is left alone.
+Private Sub EnsureHistoryHeaders(wsH As Worksheet)
+    Dim hdr As Variant
+    hdr = Array("Date", "TotalMarketValue", "TotalCumulativePnL", _
+                "Realized PnL", "Realized PnL Daily Chg%", _
+                "Price (SPY)", "YTD Ret% (SPY)", _
+                "Price (QQQ)", "YTD Ret% (QQQ)", _
+                "Price (TWII)", "YTD Ret% (TWII)", _
+                "Price (SOX)", "YTD Ret% (SOX)")
+    Dim i As Long
+    For i = LBound(hdr) To UBound(hdr)
+        If CStr(wsH.cells(1, i + 1).Value) <> CStr(hdr(i)) Then
+            wsH.cells(1, i + 1).Value = hdr(i)
+        End If
+    Next i
+End Sub
+
+' The HistoryRaw sheet, created on first use.
+Private Function GetRawSheet() As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(SH_HRAW)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count))
+        ws.Name = SH_HRAW
+    End If
+    Set GetRawSheet = ws
+End Function
+
+' YTD baselines on HistoryRaw - close of the first trading day of the year.
+' Rebuilt when the year rolls over, when a baseline is missing, or on demand.
+Private Sub EnsureYTDBaselines(forceRefresh As Boolean)
+    Dim wsR As Worksheet: Set wsR = GetRawSheet()
+    Dim yr As Long: yr = Year(Date)
+    Dim tickers As Variant: tickers = HistTickers()
+
+    Dim needBuild As Boolean: needBuild = forceRefresh
+    If CStr(wsR.Range("B1").Value) <> CStr(yr) Then needBuild = True
+
+    Dim i As Long
+    If Not needBuild Then
+        For i = LBound(tickers) To UBound(tickers)
+            Dim bv As Variant
+            bv = wsR.cells(HL_BASE_ROW + i, "C").Value
+            ' IsNumeric(Empty) is True in VBA, so test emptiness separately
+            If IsEmpty(bv) Then
+                needBuild = True
+            ElseIf Not IsNumeric(bv) Then
+                needBuild = True
+            End If
+        Next i
+    End If
+    If Not needBuild Then Exit Sub
+
+    wsR.Range("A1").Value = "YTD BASELINE YEAR"
+    wsR.Range("B1").Value = yr
+    wsR.Range("B1").NumberFormat = "0"
+    wsR.Range("A2").Value = "Ticker"
+    wsR.Range("B2").Value = "Baseline date"
+    wsR.Range("C2").Value = "First trading day close"
+    wsR.Range("D2").Value = "Fetched at"
+
+    Dim px As Double, bd As Date
+    For i = LBound(tickers) To UBound(tickers)
+        Dim rr As Long: rr = HL_BASE_ROW + i
+        wsR.cells(rr, "A").Value = tickers(i)
+        px = GetFirstTradingDayClose(CStr(tickers(i)), yr, bd)
+        If px > 0 Then
+            If bd > 0 Then
+                wsR.cells(rr, "B").Value = bd
+                wsR.cells(rr, "B").NumberFormat = "yyyy/m/d"
+            End If
+            wsR.cells(rr, "C").Value = px
+            wsR.cells(rr, "C").NumberFormat = "#,##0.00"
+            wsR.cells(rr, "D").Value = Now
+            wsR.cells(rr, "D").NumberFormat = "yyyy/m/d h:mm"
+        End If
+    Next i
+
+    wsR.Range("A:D").EntireColumn.AutoFit
+End Sub
+
+' Ret% formulas + realized-PnL daily change for one row.
+Private Sub WriteHistoryRowFormulas(wsH As Worksheet, r As Long)
+    Dim priceCols As Variant, retCols As Variant
+    priceCols = HistPriceCols()
+    retCols = HistRetCols()
+
+    Dim i As Long, pc As String, rc As String, bc As String
+    For i = LBound(retCols) To UBound(retCols)
+        pc = priceCols(i) & r
+        rc = retCols(i)
+        ' each index divides by its OWN baseline on the raw-data sheet
+        bc = SH_HRAW & "!$C$" & (HL_BASE_ROW + i)
+        wsH.cells(r, rc).Formula = "=IFERROR(IF(" & pc & "="""","""",(" & pc & "-" & bc & ")/" & bc & "),"""")"
+        wsH.cells(r, rc).NumberFormat = "0.00%"
+    Next i
+
+    ' Realized PnL daily change - "-" instead of #DIV/0! while realized PnL is 0
+    If r > 2 Then
+        wsH.cells(r, "E").Formula = "=IFERROR((D" & r & "-D" & (r - 1) & ")/ABS(D" & (r - 1) & "),""-"")"
+    Else
+        wsH.cells(r, "E").Formula = "=""-"""
+    End If
+    wsH.cells(r, "E").NumberFormat = "0.00%"
+End Sub
+
+' Close of the first trading day of `yr` for one ticker.
+' Yahoo is asked for Jan 1 - Feb 15 and the first non-null close is taken,
+' so New Year holidays / market closures do not matter.
+Public Function GetFirstTradingDayClose(Ticker As String, yr As Long, ByRef outDate As Date) As Double
+    GetFirstTradingDayClose = 0
+    outDate = 0
+
+    On Error GoTo ErrHandler
+    Dim http As Object
+    Set http = CreateObject("MSXML2.XMLHTTP")
+
+    Dim p1 As Long, p2 As Long
+    p1 = DateDiff("s", #1/1/1970#, DateSerial(yr, 1, 1)) - 8 * 3600
+    p2 = DateDiff("s", #1/1/1970#, DateSerial(yr, 2, 15))
+
+    Dim safeTicker As String
+    safeTicker = Replace(Ticker, "^", "%5E")
+
+    Dim url As String
+    url = "https://query2.finance.yahoo.com/v8/finance/chart/" & safeTicker & _
+          "?period1=" & p1 & "&period2=" & p2 & "&interval=1d"
+
+    http.Open "GET", url, False
+    http.setRequestHeader "User-Agent", "Mozilla/5.0"
+    http.send
+
+    Dim resp As String: resp = http.responseText
+
+    Dim tsArr() As String, clArr() As String
+    tsArr = Split(ExtractJsonArray(resp, """timestamp"":["), ",")
+    clArr = Split(ExtractJsonArray(resp, """close"":["), ",")
+
+    Dim i As Long, v As String
+    For i = LBound(clArr) To UBound(clArr)
+        v = Trim(clArr(i))
+        If Len(v) > 0 And InStr(v, "null") = 0 And IsNumeric(v) Then
+            GetFirstTradingDayClose = CDbl(v)
+            If i <= UBound(tsArr) Then
+                If IsNumeric(Trim(tsArr(i))) Then
+                    outDate = DateAdd("s", CLng(Trim(tsArr(i))) + 8 * 3600, #1/1/1970#)
+                End If
+            End If
+            Exit Function
+        End If
+    Next i
+
+ErrHandler:
+End Function
+
+Private Function ExtractJsonArray(resp As String, key As String) As String
+    Dim pos As Long: pos = InStr(resp, key)
+    If pos = 0 Then Exit Function
+    pos = pos + Len(key)
+    Dim endPos As Long: endPos = InStr(pos, resp, "]")
+    If endPos = 0 Then Exit Function
+    ExtractJsonArray = Mid(resp, pos, endPos - pos)
+End Function
 Function GetHistoricalPrice(Ticker As String, targetDate As Date) As Double
     Dim http As Object
     Set http = CreateObject("MSXML2.XMLHTTP")
@@ -167,68 +378,163 @@ Function GetHistoricalPrice(Ticker As String, targetDate As Date) As Double
 ErrHandler:
     GetHistoricalPrice = 0
 End Function
+' Fill in any missing index price on existing rows (all four indices) and
+' rewrite every Ret% / daily-change formula against the YTD baseline.
+' Cells that already hold a price are left untouched.
 Sub BackfillHistory()
     Dim wsH As Worksheet
     On Error Resume Next
     Set wsH = ThisWorkbook.Sheets(SH_HIST)
     On Error GoTo 0
     If wsH Is Nothing Then MsgBox "History sheet not found": Exit Sub
-    
+
     Dim lastRow As Long
     lastRow = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
     If lastRow < 2 Then MsgBox "No data to backfill": Exit Sub
-    
+
+    Call EnsureHistoryHeaders(wsH)
+    Call EnsureYTDBaselines(False)
+
     Application.ScreenUpdating = False
-    
-    Dim i As Long, countSOX As Long, countOTC As Long
+
+    Dim tickers As Variant, priceCols As Variant
+    tickers = HistTickers()
+    priceCols = HistPriceCols()
+
+    Dim filled() As Long
+    ReDim filled(LBound(tickers) To UBound(tickers))
+
+    Dim i As Long, k As Long
     For i = 2 To lastRow
         If wsH.cells(i, "A").Value = "" Then GoTo NextRow
-        
-        ' H: refill SPY Ret%
-        wsH.cells(i, "H").Formula = "=(D" & i & "-$D$2)/$D$2"
-        wsH.cells(i, "H").NumberFormat = "0.00%"
-        
-        ' ------------------------------------------------------------
+
         Dim targetDate As Date
+        targetDate = 0
         On Error Resume Next
         targetDate = CDate(Int(CDbl(wsH.cells(i, "A").Value)))
         On Error GoTo 0
         If targetDate = 0 Then GoTo NextRow
-        
-        Dim price As Double
-        
-        ' N -- G -- ^ -- ^SOX -- v -- L --
-        price = GetHistoricalPrice("^SOX", targetDate)
-        If price > 0 Then
-            wsH.cells(i, "N").Value = price
-            wsH.cells(i, "N").NumberFormat = "#,##0.00"
-            wsH.cells(i, "P").Formula = "=(N" & i & "-$N$2)/$N$2"
-            wsH.cells(i, "P").NumberFormat = "0.00%"
-            countSOX = countSOX + 1
-        End If
-        
-        ' O -- G -- ^ -- ^TWOII -- v -- L --
-        price = GetHistoricalPrice("^TWOII", targetDate)
-        If price > 0 Then
-            wsH.cells(i, "O").Value = price
-            wsH.cells(i, "O").NumberFormat = "#,##0.00"
-            wsH.cells(i, "Q").Formula = "=(O" & i & "-$O$2)/$O$2"
-            wsH.cells(i, "Q").NumberFormat = "0.00%"
-            countOTC = countOTC + 1
-        End If
-        
-        Application.StatusBar = "Backfilling row " & i & "/" & lastRow & _
-                                 "  SOX:" & countSOX & "  OTC:" & countOTC
+
+        For k = LBound(tickers) To UBound(tickers)
+            If wsH.cells(i, priceCols(k)).Value = "" Then
+                Dim price As Double
+                price = GetHistoricalPrice(CStr(tickers(k)), targetDate)
+                If price > 0 Then
+                    wsH.cells(i, priceCols(k)).Value = price
+                    filled(k) = filled(k) + 1
+                End If
+            End If
+            wsH.cells(i, priceCols(k)).NumberFormat = "#,##0.00"
+        Next k
+
+        Call WriteHistoryRowFormulas(wsH, i)
+
+        Application.StatusBar = "Backfilling row " & i & "/" & lastRow
 NextRow:
     Next i
-    
+
     Application.ScreenUpdating = True
     Application.StatusBar = False
-    MsgBox "Backfill complete!" & vbLf & _
-           "H = SPY Ret%: refilled (total " & lastRow - 1 & " rows)" & vbLf & _
-           "N = ^SOX: updated " & countSOX & " rows" & vbLf & _
-           "O = ^TWOII: updated " & countOTC & " rows" & vbLf & _
-           "Existing / blank rows skipped automatically"
+
+    Dim msg As String
+    msg = "Backfill complete!" & vbLf & _
+          "Ret% formulas rebuilt on YTD basis (" & lastRow - 1 & " rows)" & vbLf
+    For k = LBound(tickers) To UBound(tickers)
+        msg = msg & tickers(k) & " (col " & priceCols(k) & "): filled " & filled(k) & " gaps" & vbLf
+    Next k
+    msg = msg & "Prices that could not be downloaded were left blank."
+    MsgBox msg
+End Sub
+
+' ================================================================
+'  REPAIR: rebuild every index price column from Yahoo history
+' ----------------------------------------------------------------
+'  The first attempt at a migration never ran.  LogHistory rewrites the
+'  header row on every update, so the sheet ended up showing layout-v2
+'  headers over data that was still in the OLD columns (F was labelled
+'  "Price (SPY)" but held TWII - that is where 6109% came from), and the
+'  migration then refused to start because the header already looked done.
+'
+'  So this no longer tries to work out which old column held what.  It keeps
+'  A (date), B (market value) and C (cumulative PnL) - the three columns the
+'  broken run never overwrote - and re-downloads all four index closes for
+'  every logged date, which is the authoritative source anyway.
+'
+'  Realized PnL (D) cannot be recovered on old rows (the old column G was
+'  overwritten by a formula); it was 0 on every row, so it is set to 0.
+'  N:S is wiped - the old layout and the first baseline block left junk
+'  there.  Column Z (GitHub token) is never touched.
+' ================================================================
+Sub RepairHistoryLog()
+    Dim wsH As Worksheet
+    On Error Resume Next
+    Set wsH = ThisWorkbook.Sheets(SH_HIST)
+    On Error GoTo 0
+    If wsH Is Nothing Then MsgBox "History sheet not found": Exit Sub
+
+    Dim lastRow As Long
+    lastRow = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
+    Dim n As Long: n = lastRow - 1
+    If n < 1 Then MsgBox "No data rows to repair.", vbInformation: Exit Sub
+
+    If MsgBox("Rebuild HistoryLog index prices from Yahoo history?" & vbLf & vbLf & _
+              n & " rows: date / market value / cumulative PnL are kept," & vbLf & _
+              "all four index prices are re-downloaded per date," & vbLf & _
+              "columns N:S are cleared and Ret% switched to YTD." & vbLf & vbLf & _
+              "Realized PnL (col D) is RESET TO 0 on every row - the broken" & vbLf & _
+              "run overwrote it, so do not re-run this once real realized" & vbLf & _
+              "PnL has been logged." & vbLf & vbLf & _
+              "Save a copy of the workbook first.", _
+              vbYesNo + vbExclamation + vbDefaultButton2) = vbNo Then Exit Sub
+
+    Application.ScreenUpdating = False
+
+    wsH.Range("N1:S" & lastRow).ClearContents
+
+    Call EnsureHistoryHeaders(wsH)
+    Call EnsureYTDBaselines(True)
+
+    Dim tickers As Variant, priceCols As Variant
+    tickers = HistTickers()
+    priceCols = HistPriceCols()
+
+    Dim missing As Long, r As Long, k As Long
+    For r = 2 To lastRow
+        Dim targetDate As Date
+        targetDate = 0
+        On Error Resume Next
+        targetDate = CDate(Int(CDbl(wsH.cells(r, "A").Value)))
+        On Error GoTo 0
+
+        ' D currently holds whatever the broken run left there (old SPY
+        ' prices on the pre-repair rows), and the real values are gone.
+        wsH.cells(r, "D").Value = 0
+        wsH.Range("B" & r & ":D" & r).NumberFormat = "#,##0"
+
+        For k = LBound(tickers) To UBound(tickers)
+            Dim price As Double: price = 0
+            If targetDate > 0 Then price = GetHistoricalPrice(CStr(tickers(k)), targetDate)
+            If price > 0 Then
+                wsH.cells(r, priceCols(k)).Value = price
+            Else
+                wsH.cells(r, priceCols(k)).ClearContents
+                missing = missing + 1
+            End If
+            wsH.cells(r, priceCols(k)).NumberFormat = "#,##0.00"
+        Next k
+
+        Call WriteHistoryRowFormulas(wsH, r)
+        Application.StatusBar = "Repairing row " & r & "/" & lastRow
+    Next r
+
+    wsH.Range("A:M").EntireColumn.AutoFit
+    Application.ScreenUpdating = True
+    Application.StatusBar = False
+
+    MsgBox "Repair done - " & n & " rows rebuilt." & vbLf & _
+           missing & " index prices could not be downloaded (left blank)." & vbLf & vbLf & _
+           "Baselines live on the " & SH_HRAW & " sheet; every Ret% divides" & vbLf & _
+           "by its own index's first-trading-day close.", vbInformation
 End Sub
 
 ' ================================================================
@@ -390,7 +696,7 @@ Sub DrawDeepAnalysis(wsP As Worksheet, posData() As Variant, _
         .Interior.Color = RGB(0, 0, 0)
         .Font.Color = RGB(221, 221, 221)
         .Font.Name = "Consolas"
-        .Font.Size = 36
+        .Font.Size = 10
     End With
     wsA.Activate
     ActiveWindow.DisplayGridlines = False
@@ -589,9 +895,8 @@ Sub RebuildActiveXButtons()
         Array("ADD TRANSACTION", 430, topPos, 160, 20, RGB(20, 15, 0), RGB(255, 192, 0)), _
         Array("HOLDINGS CORR", 600, topPos, 140, 20, RGB(15, 0, 30), RGB(180, 100, 255)), _
         Array("DRAWDOWN", 750, topPos, 110, 20, RGB(30, 5, 0), RGB(255, 120, 60)), _
-        Array("AUTO ON", 870, topPos, 100, 20, RGB(0, 40, 0), RGB(0, 255, 136)), _
-        Array("AUTO OFF", 980, topPos, 100, 20, RGB(40, 0, 0), RGB(255, 80, 80)), _
-        Array("DEBUG", 1090, topPos, 80, 20, RGB(0, 10, 30), RGB(100, 160, 255)) _
+        Array("DEBUG", 870, topPos, 80, 20, RGB(0, 10, 30), RGB(100, 160, 255)), _
+        Array("VOLATILITY", 960, topPos, 110, 20, RGB(0, 20, 30), RGB(80, 200, 255)) _
     )
     
     Dim i As Integer
@@ -1270,33 +1575,6 @@ Sub SetupPortfolioConfig()
 
     MsgBox "Config saved!" & vbCr & "Inception: " & inDate & vbCr & "Capital: " & startCap, vbInformation
 End Sub
-
-' ================================================================
-'  Auto-refresh
-' ================================================================
-Sub StartAutoRefresh()
-    g_AutoOn = True
-    Call RebuildPortfolioDashboard
-    g_NextTime = Now + TimeSerial(0, 1, 0)
-    Application.OnTime g_NextTime, "AutoRefreshLoop"
-    MsgBox "Auto-refresh started (every 60 sec)", vbInformation
-End Sub
-
-Sub AutoRefreshLoop()
-    If Not g_AutoOn Then Exit Sub
-    Call RebuildPortfolioDashboard
-    g_NextTime = Now + TimeSerial(0, 1, 0)
-    Application.OnTime g_NextTime, "AutoRefreshLoop"
-End Sub
-
-Sub StopAutoRefresh()
-    g_AutoOn = False
-    On Error Resume Next
-    Application.OnTime g_NextTime, "AutoRefreshLoop", , False
-    On Error GoTo 0
-    Application.StatusBar = False
-    MsgBox "Auto-refresh stopped.", vbInformation
-End Sub
 Private Sub WriteKV(ws As Worksheet, r As Long, label As String, _
                     val As Double, fmt As String, colorPnL As Boolean)
     ws.cells(r, 1).Value = label
@@ -1856,6 +2134,326 @@ Private Sub CorrRenderSheet(tickers() As String, tickerCount As Long, _
     Next col
 
     wsC.Activate
+End Sub
+
+' ================================================================
+'  180D VOLATILITY - per-stock std dev + market-value-weighted
+'  portfolio std dev
+' ----------------------------------------------------------------
+'  Button: "VOLATILITY" (RebuildActiveXButtons). Not run automatically
+'  from RebuildPortfolioDashboard - each holding needs its own ~1y
+'  Yahoo history call, too slow to fire on every dashboard refresh.
+'
+'  Per-stock std dev: last 180 trading days of SIMPLE daily returns,
+'  each ticker on its OWN most-recent window (independent of the other
+'  holdings). Annualized by * SQR(252). Tickers with fewer than 180
+'  days of history just use whatever is available - the days-used
+'  column shows the real count instead of erroring out.
+'
+'  Portfolio std dev: reuses CorrGetCommonDates - the same date-
+'  alignment routine BuildHoldingsCorrelation (HOLDINGS CORR button)
+'  already uses - to find the trading days common to ALL current
+'  holdings (the shortest-history holding caps the window, same as
+'  HOLDINGS CORR). Each holding's SIMPLE daily return on those shared
+'  dates is weighted by its CURRENT market value (TWD) and summed per
+'  day; the std dev of that weighted-sum series, annualized, equals
+'  SQR(w' * Cov * w) without ever building or storing an explicit
+'  covariance matrix. SIMPLE returns are used here (not the log
+'  returns HOLDINGS CORR uses for its own, unrelated correlation
+'  matrix) because a portfolio's simple return really does equal the
+'  weighted sum of its holdings' simple returns - that identity does
+'  not hold for log returns.
+' ================================================================
+Sub UpdatePortfolioVolatility()
+    Dim wsTr As Worksheet
+    Set wsTr = ThisWorkbook.Sheets(SH_TRANS)
+
+    Dim positions As Object
+    Set positions = BuildPositions(wsTr)
+
+    Dim exRate As Double
+    exRate = GetExRate(ThisWorkbook.Sheets(SH_PORT))
+
+    Dim posData() As Variant
+    Dim totalMktTWD As Double, totalCostTWD As Double, totalUnrlTWD As Double
+    Dim posCount As Long
+    Call CalcPositions(positions, exRate, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, posCount)
+
+    If Not IsArray(posData) Then MsgBox "No positions found.", vbExclamation: Exit Sub
+    Dim n As Long
+    On Error Resume Next
+    n = UBound(posData, 1)
+    If Err.Number <> 0 Or n < 1 Then MsgBox "No positions found.", vbExclamation: Exit Sub
+    On Error GoTo 0
+
+    Application.ScreenUpdating = False
+
+    ' ---- 1. Fetch each holding's price history once, reuse for both steps ----
+    Dim tickers() As String, mktVals() As Double, priceData() As Object
+    ReDim tickers(0 To n - 1)
+    ReDim mktVals(0 To n - 1)
+    ReDim priceData(0 To n - 1)
+
+    Dim i As Long
+    For i = 0 To n - 1
+        tickers(i) = CStr(posData(i + 1, 1))
+        mktVals(i) = posData(i + 1, 8)
+        Application.StatusBar = "Fetching [" & (i + 1) & "/" & n & "] " & tickers(i)
+        DoEvents
+        Set priceData(i) = GetHistoryPrices(tickers(i))
+    Next i
+
+    ' ---- 2. Per-stock 180D std dev, each on its own most-recent window ----
+    Dim stockAnnVol() As Double, stockDaysUsed() As Long
+    ReDim stockAnnVol(0 To n - 1)
+    ReDim stockDaysUsed(0 To n - 1)
+
+    Dim wantPx As Long: wantPx = 181   ' 181 closes -> 180 daily returns
+    For i = 0 To n - 1
+        Dim ownDates() As Date
+        ownDates = VolSortedDateKeys(priceData(i))
+        Dim ownCount As Long: ownCount = UBound(ownDates) - LBound(ownDates) + 1
+        Dim useN As Long: useN = IIf(ownCount > wantPx, wantPx, ownCount)
+
+        If useN >= 2 Then
+            Dim pr() As Double
+            ReDim pr(0 To useN - 1)
+            Dim startIdx As Long: startIdx = ownCount - useN
+            Dim k As Long
+            For k = 0 To useN - 1
+                pr(k) = priceData(i)(ownDates(startIdx + k))
+            Next k
+            Dim rtn() As Double
+            rtn = VolDailyReturns(pr)
+            stockDaysUsed(i) = UBound(rtn) - LBound(rtn) + 1
+            If stockDaysUsed(i) >= 2 Then
+                On Error Resume Next
+                stockAnnVol(i) = Application.WorksheetFunction.StDev_S(rtn) * Sqr(252)
+                On Error GoTo 0
+            End If
+        End If
+    Next i
+
+    ' ---- 3. Portfolio market-value-weighted std dev over the COMMON window ----
+    Dim commonDates() As Date, usedCount As Long
+    Call CorrGetCommonDates(priceData, n, commonDates, usedCount)
+
+    Dim portAnnVol As Double, portDaysUsed As Long
+    Dim retCount As Long: retCount = usedCount - 1
+    If retCount >= 2 Then
+        Dim portRet() As Double
+        ReDim portRet(0 To retCount - 1)
+
+        Dim j As Long
+        For j = 0 To retCount - 1
+            Dim wsum As Double: wsum = 0
+            For i = 0 To n - 1
+                Dim p0 As Double: p0 = 0
+                Dim p1 As Double: p1 = 0
+                On Error Resume Next
+                p0 = priceData(i)(commonDates(j))
+                p1 = priceData(i)(commonDates(j + 1))
+                On Error GoTo 0
+                If p0 > 0 And totalMktTWD > 0 Then
+                    wsum = wsum + (mktVals(i) / totalMktTWD) * (p1 - p0) / p0
+                End If
+            Next i
+            portRet(j) = wsum
+        Next j
+
+        portDaysUsed = retCount
+        On Error Resume Next
+        portAnnVol = Application.WorksheetFunction.StDev_S(portRet) * Sqr(252)
+        On Error GoTo 0
+    End If
+
+    ' ---- 4. Render ----
+    Call VolRenderSheet(tickers, mktVals, totalMktTWD, n, stockAnnVol, stockDaysUsed, _
+                         portAnnVol, portDaysUsed, commonDates, usedCount)
+
+    Application.ScreenUpdating = True
+    Application.StatusBar = "Volatility updated: " & Format(Now, "hh:mm:ss")
+    MsgBox "180D volatility analysis updated!", vbInformation
+End Sub
+
+' ------------------------------------------------------------
+Private Function VolSortedDateKeys(dict As Object) As Date()
+    Dim arr() As Date
+    Dim cnt As Long: cnt = dict.Count
+    If cnt <= 0 Then
+        ReDim arr(0 To -1)
+        VolSortedDateKeys = arr
+        Exit Function
+    End If
+
+    Dim keys As Variant: keys = dict.Keys
+    ReDim arr(0 To cnt - 1)
+    Dim i As Long
+    For i = 0 To cnt - 1
+        arr(i) = CDate(keys(i))
+    Next i
+
+    Dim a As Long, b As Long, tmp As Date
+    For a = 0 To cnt - 2
+        For b = a + 1 To cnt - 1
+            If arr(b) < arr(a) Then
+                tmp = arr(a): arr(a) = arr(b): arr(b) = tmp
+            End If
+        Next b
+    Next a
+    VolSortedDateKeys = arr
+End Function
+
+' ------------------------------------------------------------
+' Simple (arithmetic) daily returns - NOT log returns, see the comment
+' above UpdatePortfolioVolatility for why simple returns are required
+' for the market-value-weighted portfolio step.
+Private Function VolDailyReturns(prices() As Double) As Double()
+    Dim result() As Double
+    Dim lo As Long: lo = LBound(prices)
+    Dim n As Long: n = UBound(prices) - lo + 1
+    If n < 2 Then
+        ReDim result(0 To -1)
+        VolDailyReturns = result
+        Exit Function
+    End If
+
+    ReDim result(0 To n - 2)
+    Dim i As Long
+    For i = lo + 1 To UBound(prices)
+        If prices(i - 1) > 0 Then
+            result(i - 1 - lo) = (prices(i) - prices(i - 1)) / prices(i - 1)
+        End If
+    Next i
+    VolDailyReturns = result
+End Function
+
+' ------------------------------------------------------------
+Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD As Double, _
+                            n As Long, stockAnnVol() As Double, stockDaysUsed() As Long, _
+                            portAnnVol As Double, portDaysUsed As Long, _
+                            commonDates() As Date, usedCount As Long)
+    Dim wsV As Worksheet
+    On Error Resume Next
+    Set wsV = ThisWorkbook.Sheets("Volatility180D")
+    On Error GoTo 0
+    If wsV Is Nothing Then
+        Set wsV = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        wsV.Name = "Volatility180D"
+    End If
+
+    wsV.Cells.Clear
+    With wsV.Cells
+        .Interior.Color = RGB(0, 0, 0)
+        .Font.Color = RGB(221, 221, 221)
+        .Font.Name = "Consolas"
+        .Font.Size = 10
+    End With
+    wsV.Activate
+    ActiveWindow.DisplayGridlines = False
+
+    With wsV.Cells(1, 1)
+        .Value = "PORTFOLIO 180D VOLATILITY  |  Updated: " & Format(Now, "yyyy/mm/dd hh:mm:ss")
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+        .Font.Size = 14
+    End With
+    With wsV.Range(wsV.Cells(2, 1), wsV.Cells(2, 6))
+        .Interior.Color = RGB(255, 192, 0)
+        .RowHeight = 3
+    End With
+
+    Dim r As Long: r = 4
+    wsV.Cells(r, 1).Value = "PORTFOLIO (MARKET-VALUE WEIGHTED)"
+    wsV.Cells(r, 1).Font.Color = RGB(255, 192, 0)
+    wsV.Cells(r, 1).Font.Bold = True
+    r = r + 1
+
+    Call WriteKV(wsV, r, "Annualized Std Dev", portAnnVol, "0.00%", False): r = r + 1
+    Dim portDailyVol As Double: If portAnnVol > 0 Then portDailyVol = portAnnVol / Sqr(252)
+    Call WriteKV(wsV, r, "Daily Std Dev", portDailyVol, "0.00%", False): r = r + 1
+
+    wsV.Cells(r, 1).Value = "Trading Days Used"
+    wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
+    wsV.Cells(r, 2).Value = portDaysUsed & " / 180"
+    wsV.Cells(r, 2).Font.Color = IIf(portDaysUsed < 180, RGB(255, 192, 0), RGB(221, 221, 221))
+    wsV.Cells(r, 2).Font.Bold = True
+    r = r + 1
+
+    If usedCount >= 2 Then
+        wsV.Cells(r, 1).Value = "Common Date Range"
+        wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
+        wsV.Cells(r, 2).Value = Format(commonDates(0), "yyyy/m/d") & "  ~  " & _
+                                 Format(commonDates(usedCount - 1), "yyyy/m/d")
+        wsV.Cells(r, 2).Font.Color = RGB(221, 221, 221)
+        r = r + 1
+    End If
+
+    If portDaysUsed > 0 And portDaysUsed < 180 Then
+        wsV.Cells(r, 1).Value = "* shortest-history holding capped the common window below 180 days"
+        wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
+        wsV.Cells(r, 1).Font.Italic = True
+        r = r + 1
+    End If
+
+    r = r + 2
+    wsV.Cells(r, 1).Value = "PER-STOCK 180D STANDARD DEVIATION"
+    wsV.Cells(r, 1).Font.Color = RGB(255, 192, 0)
+    wsV.Cells(r, 1).Font.Bold = True
+    r = r + 1
+
+    Dim hdrs As Variant
+    hdrs = Array("TICKER", "WEIGHT%", "DAYS USED", "DAILY STDEV", "ANNUALIZED STDEV")
+    Dim c As Long
+    For c = 0 To UBound(hdrs)
+        With wsV.Cells(r, c + 1)
+            .Value = hdrs(c)
+            .Font.Color = RGB(255, 192, 0)
+            .Font.Bold = True
+            .Interior.Color = RGB(10, 10, 10)
+            .HorizontalAlignment = xlCenter
+        End With
+    Next c
+    r = r + 1
+
+    Dim i As Long
+    For i = 0 To n - 1
+        Dim rowBg As Long: rowBg = IIf(i Mod 2 = 0, RGB(15, 15, 15), RGB(22, 22, 22))
+        With wsV.Range(wsV.Cells(r, 1), wsV.Cells(r, 5))
+            .Interior.Color = rowBg
+            .HorizontalAlignment = xlCenter
+        End With
+
+        wsV.Cells(r, 1).Value = tickers(i)
+        wsV.Cells(r, 1).Font.Color = RGB(255, 192, 0)
+        wsV.Cells(r, 1).Font.Bold = True
+
+        If totalMktTWD > 0 Then
+            wsV.Cells(r, 2).Value = mktVals(i) / totalMktTWD
+            wsV.Cells(r, 2).NumberFormat = "0.00%"
+        End If
+
+        wsV.Cells(r, 3).Value = stockDaysUsed(i) & IIf(stockDaysUsed(i) < 180, "*", "")
+        wsV.Cells(r, 3).Font.Color = IIf(stockDaysUsed(i) < 180, RGB(255, 192, 0), RGB(200, 200, 200))
+
+        Dim dailyVol As Double: If stockAnnVol(i) > 0 Then dailyVol = stockAnnVol(i) / Sqr(252)
+        wsV.Cells(r, 4).Value = dailyVol
+        wsV.Cells(r, 4).NumberFormat = "0.00%"
+
+        wsV.Cells(r, 5).Value = stockAnnVol(i)
+        wsV.Cells(r, 5).NumberFormat = "0.00%"
+        wsV.Cells(r, 5).Font.Bold = True
+
+        r = r + 1
+    Next i
+
+    r = r + 1
+    wsV.Cells(r, 1).Value = "* fewer than 180 trading days of history available - used actual days shown"
+    wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
+    wsV.Cells(r, 1).Font.Italic = True
+
+    wsV.Columns("A:E").AutoFit
+    ThisWorkbook.Sheets(SH_PORT).Activate
 End Sub
 
 
