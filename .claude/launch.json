@@ -528,6 +528,30 @@
         "research/taiyen-6274-analysis-2026q2/6274_FY2026Q2_Analysis"
       ],
       "port": 8167
+    },
+    {
+      "name": "delta-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8168",
+        "--directory",
+        "research/delta-analysis-2026q2/DELTA_2026Q2_Analysis"
+      ],
+      "port": 8168
+    },
+    {
+      "name": "liteon-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8169",
+        "--directory",
+        "research/liteon-analysis-2026q2/LITEON_2026Q2_Analysis"
+      ],
+      "port": 8169
     }
   ]
 }
