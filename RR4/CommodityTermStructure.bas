@@ -2,6 +2,12 @@ Attribute VB_Name = "CommodityTermStructure"
 Option Explicit
 
 ' ================================================================
+'  ** DISABLED (2026-08-15) — no longer in active use, kept for
+'  reference. Not wired to any button or event; only reachable by
+'  manually running a macro from the VBE. **
+' ================================================================
+
+' ================================================================
 '  COMMODITY TERM STRUCTURE — Bloomberg-Style Dashboard
 '  v3.0  |  Dark Theme  |  Section 1: Curve Signal  |  Section 2: Spread Matrix
 ' ================================================================
