@@ -552,6 +552,18 @@
         "research/liteon-analysis-2026q2/2301_FY2026Q2_Analysis"
       ],
       "port": 8169
+    },
+    {
+      "name": "dy-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8170",
+        "--directory",
+        "research/dy-analysis-2027q1"
+      ],
+      "port": 8170
     }
   ]
 }
