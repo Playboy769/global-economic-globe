@@ -576,6 +576,18 @@
         "research/rvmd-analysis-2026q2"
       ],
       "port": 8171
+    },
+    {
+      "name": "glw-q2-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8172",
+        "--directory",
+        "research/glw-analysis-2026q2/GLW_FY26Q2_Analysis"
+      ],
+      "port": 8172
     }
   ]
 }
