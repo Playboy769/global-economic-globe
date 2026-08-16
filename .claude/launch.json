@@ -564,6 +564,18 @@
         "research/dy-analysis-2027q1"
       ],
       "port": 8170
+    },
+    {
+      "name": "rvmd-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8171",
+        "--directory",
+        "research/rvmd-analysis-2026q2"
+      ],
+      "port": 8171
     }
   ]
 }
