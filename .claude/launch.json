@@ -588,6 +588,18 @@
         "research/glw-analysis-2026q2/GLW_FY26Q2_Analysis"
       ],
       "port": 8172
+    },
+    {
+      "name": "mounjaro-magazine",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8173",
+        "--directory",
+        "projects/mounjaro-magazine"
+      ],
+      "port": 8173
     }
   ]
 }
