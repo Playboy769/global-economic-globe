@@ -1404,6 +1404,30 @@ Private Sub CalcPositions(positions As Object, exRate As Double, _
 NextSi:
     Next si
 End Sub
+' ================================================================
+'  Position builder - FIFO cost basis (2026-08-19)
+' ----------------------------------------------------------------
+'  Was weighted-average cost: SELL reduced the running total d(2) by
+'  avg*shares where avg = d(2)/d(0). That let this dashboard's ENTRY PX /
+'  UNRL PNL diverge from the Realized sheet (Attach.CalculateRealizedPnL)
+'  and Ticker Insight (TickerInsight.BuildFIFOHistory) - both already walk
+'  the same Transactions data FIFO, so the same ticker with two BUY lots
+'  at different prices could show three different cost bases across the
+'  workbook. This now keeps an explicit FIFO lot queue per Ticker|Broker
+'  key (oldest lot consumed first on SELL), with ADJUSTCOST allocated
+'  proportionally across open lots by share count - mirroring
+'  Attach.CalculateRealizedPnL's own lot handling so the two agree.
+'
+'  Return shape is unchanged: still Ticker|Broker -> the same 11-element
+'  Array CalcPositions already reads by position. d(0)/d(2) are still the
+'  aggregate remaining shares/cost (now the FIFO sum, not a weighted
+'  running total); d(5) is now the OLDEST still-open lot's date instead
+'  of "first BUY ever, reset to 0 on full close" - same value while a
+'  position stays open continuously, but correct again after a position
+'  is closed and reopened with a later lot. d(11) is new: the raw FIFO
+'  lot Collection (date, shares, cost/share), exposed for any future
+'  caller that needs true per-lot detail instead of the aggregate.
+' ================================================================
 Private Function BuildPositions(wsTr As Worksheet) As Object
     Dim dict As Object
     Set dict = CreateObject("Scripting.Dictionary")
@@ -1413,7 +1437,7 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
     If lastRow < 2 Then Set BuildPositions = dict: Exit Function
 
     Dim data As Variant
-    data = wsTr.Range("B2:N" & lastRow).Value   ' -- M -- N
+    data = wsTr.Range("B2:N" & lastRow).Value   ' B..N
 
     Dim i As Long
     For i = 1 To UBound(data, 1)
@@ -1434,7 +1458,7 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
         If Ticker <> "" Then
             Dim posKey As String: posKey = Ticker & "|" & broker
             If Not dict.Exists(posKey) Then
-                dict.Add posKey, Array(0#, 0#, 0#, 0#, 0#, 0#, "", 0#, "", 0#, broker)
+                dict.Add posKey, Array(0#, 0#, 0#, 0#, 0#, 0#, "", 0#, "", 0#, broker, New Collection)
             End If
             Dim d As Variant: d = dict(posKey)
             If pTgt > 0 Then d(7) = pTgt
@@ -1443,20 +1467,70 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
             If Sector <> "" Then d(6) = Sector
             d(10) = broker
 
+            Dim lots As Collection: Set lots = d(11)
+            Dim tDate As Variant: tDate = data(i, 1)
+
             Select Case UCase(Action)
                 Case "BUY"
-                d(0) = d(0) + shares
-                d(2) = d(2) + netAmt          ' --  -- ٭ -- G -- Shares
-                If d(5) = 0 Then d(5) = CLng(CDate(data(i, 1)))
+                    Dim cps As Double: If shares > 0 Then cps = netAmt / shares Else cps = 0
+                    Dim lotDateSer As Long: lotDateSer = IIf(IsDate(tDate), CLng(CDate(tDate)), 0)
+                    lots.Add Array(lotDateSer, shares, cps)
+
                 Case "SELL"
-                    Dim avg As Double
-                    If d(0) > 0 Then avg = d(2) / d(0) Else avg = 0
-                    d(0) = d(0) - shares
-                    d(2) = d(2) - avg * shares
-                    If d(0) <= 0.0001 Then d(0) = 0: d(2) = 0: d(5) = 0
+                    Dim remaining As Double: remaining = shares
+                    Do While remaining > 0.0001 And lots.count > 0
+                        Dim frontLot As Variant: frontLot = lots(1)
+                        Dim lotSh As Double: lotSh = frontLot(1)
+                        Dim lotCps As Double: lotCps = frontLot(2)
+                        If lotSh <= remaining + 0.0001 Then
+                            remaining = remaining - lotSh
+                            lots.Remove 1
+                        Else
+                            lots.Add Array(frontLot(0), lotSh - remaining, lotCps), Before:=1
+                            lots.Remove 2
+                            remaining = 0
+                        End If
+                    Loop
+
                 Case "ADJUSTCOST"
-                    d(2) = d(2) + netAmt
+                    ' Spread proportionally across open lots by share count,
+                    ' matching Attach.CalculateRealizedPnL's ADJUSTCOST rule.
+                    Dim totSh As Double: totSh = 0
+                    Dim li As Long
+                    For li = 1 To lots.count: totSh = totSh + lots(li)(1): Next li
+                    If totSh > 0 Then
+                        Dim adjPerSh As Double: adjPerSh = netAmt / totSh
+                        For li = 1 To lots.count
+                            Dim lotArr As Variant: lotArr = lots(li)
+                            lotArr(2) = lotArr(2) + adjPerSh
+                            If li < lots.count Then
+                                lots.Add lotArr, Before:=li + 1
+                                lots.Remove li
+                            Else
+                                lots.Add lotArr
+                                lots.Remove li
+                            End If
+                        Next li
+                    End If
             End Select
+
+            ' Recompute the aggregate shares / cost / oldest-lot date from
+            ' the queue so d(0)/d(2)/d(5) - the fields CalcPositions already
+            ' reads - stay in sync with whatever the FIFO queue now holds.
+            Dim aggShares As Double, aggCost As Double, oldestDate As Long
+            aggShares = 0: aggCost = 0: oldestDate = 0
+            Dim lj As Long
+            For lj = 1 To lots.count
+                aggShares = aggShares + lots(lj)(1)
+                aggCost = aggCost + lots(lj)(1) * lots(lj)(2)
+                Dim ld As Long: ld = lots(lj)(0)
+                If ld > 0 And (oldestDate = 0 Or ld < oldestDate) Then oldestDate = ld
+            Next lj
+            d(0) = aggShares
+            d(2) = aggCost
+            d(5) = oldestDate
+            d(11) = lots
+
             dict(posKey) = d
         End If
     Next i
