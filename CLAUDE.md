@@ -146,6 +146,7 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 | Research 報告 | `research/<ticker>-…/*.html` | `globe-invest/app/research/*.html` | `/research/<FILE>.html` |
 | Warning 舊 dev | `projects/market-warning-radar/`（本地 :8130）| `globe-invest/app/warning/` | `/warning` |
 | 猛健樂完全解析（藥物專題雜誌）| `projects/mounjaro-magazine/index.html`（本地 `mounjaro-magazine` :8173）| `globe-invest/app/mounjaro/index.html` | `/mounjaro`（route 於 `globe-invest/server.js` 手動註冊，非資料夾自動對應）|
+| Agentic AI 完全解析（技術專題雜誌）| `projects/agentic-ai-magazine/index.html`（本地 `agentic-ai-magazine` :8174）| `globe-invest/app/agentic-ai/index.html` | `/agentic-ai`（route 於 `globe-invest/server.js` 手動註冊，非資料夾自動對應）|
 
 > ⚠️ `warning` 與 `research` 兩側已**實質分歧**（非落後幾個 commit），`sankey`/`options`/
 > `brownian` 製表當下一致但同樣不在 sync script。同步前務必先 diff，勿盲 copy 覆蓋。
