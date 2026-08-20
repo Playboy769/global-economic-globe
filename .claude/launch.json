@@ -600,6 +600,18 @@
         "projects/mounjaro-magazine"
       ],
       "port": 8173
+    },
+    {
+      "name": "agentic-ai-magazine",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8174",
+        "--directory",
+        "projects/agentic-ai-magazine"
+      ],
+      "port": 8174
     }
   ]
 }
