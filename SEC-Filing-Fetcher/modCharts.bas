@@ -11,10 +11,28 @@ Private Function HasVal(ByVal v As Variant) As Boolean
     HasVal = (Not IsNull(v)) And (CStr(v) <> "") And IsNumeric(v)
 End Function
 
+' Compound annual growth rate between two same-unit values n periods apart,
+' e.g. (end/start)^(1/years) - 1. Blank unless both endpoints have a value AND
+' are strictly positive -- a negative-to-positive (or negative-to-negative)
+' span has no meaningful compound growth rate, and a fractional power of a
+' negative base would just produce a nonsensical/complex result. Written as
+' three separate early-exit checks rather than one "HasVal(x) And CDbl(x)>0"
+' condition -- VBA's And does not short-circuit, so a combined condition would
+' still evaluate CDbl on an empty-string sentinel and throw Type Mismatch
+' (see the investedCapital comment further down this file for the same trap).
+Private Function SafeCagr(ByVal startVal As Variant, ByVal endVal As Variant, ByVal years As Double) As Variant
+    SafeCagr = ""
+    If Not HasVal(startVal) Then Exit Function
+    If Not HasVal(endVal) Then Exit Function
+    If CDbl(startVal) <= 0 Then Exit Function
+    If CDbl(endVal) <= 0 Then Exit Function
+    SafeCagr = (CDbl(endVal) / CDbl(startVal)) ^ (1# / years) - 1
+End Function
+
 ' Min/max across the numeric entries of arr(1..cnt), for fitting a chart's value
 ' axis to what it actually plots. Returns False when there's nothing numeric in
 ' there at all, in which case lo/hi are left alone.
-Private Function ArrayMinMax(ByVal arr As Variant, ByVal cnt As Long, ByRef lo As Double, ByRef hi As Double) As Boolean
+Public Function ArrayMinMax(ByVal arr As Variant, ByVal cnt As Long, ByRef lo As Double, ByRef hi As Double) As Boolean
     Dim found As Boolean
     found = False
 
@@ -42,7 +60,7 @@ End Function
 ' split exists so multiple builders can safely share one sheet (Dashboard):
 ' each GetOrCreateSheet call used to wipe the whole sheet unconditionally,
 ' which would destroy an earlier builder's content on a shared sheet.
-Private Function GetOrCreateSheet(ByVal wb As Workbook, ByVal sheetName As String) As Worksheet
+Public Function GetOrCreateSheet(ByVal wb As Workbook, ByVal sheetName As String) As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
     Set ws = wb.Sheets(sheetName)
@@ -79,7 +97,7 @@ End Sub
 ' variable; it is left alone when there's nothing to write, so a metric with no
 ' data doesn't leave an empty column pair mid-sheet. keyRange/valRange come back
 ' Nothing in that case -- callers must not chart from them.
-Private Sub WriteRawBlock(ByVal wsRaw As Worksheet, ByRef col As Long, ByVal title As String, _
+Public Sub WriteRawBlock(ByVal wsRaw As Worksheet, ByRef col As Long, ByVal title As String, _
     ByVal keyHeader As String, ByVal valHeader As String, _
     ByVal keys As Variant, ByVal vals As Variant, ByVal cnt As Long, _
     ByVal keyFormat As String, ByVal valFormat As String, _
@@ -138,7 +156,7 @@ End Sub
 ' scrolling right across ~100 columns or down past the longest block doesn't hit
 ' a white cutoff -- same treatment every other sheet gets, just sized to a sheet
 ' that is far wider than it is deep.
-Private Sub FinishRawDataSheet(ByVal wsRaw As Worksheet, ByVal nextFreeCol As Long)
+Public Sub FinishRawDataSheet(ByVal wsRaw As Worksheet, ByVal nextFreeCol As Long)
     Dim usedRows As Long
     usedRows = wsRaw.UsedRange.Row + wsRaw.UsedRange.Rows.Count - 1
 
@@ -157,7 +175,7 @@ End Sub
 ' happens to sit in). Every series below is added explicitly, so drop anything
 ' that came for free first -- otherwise a stray auto-series would ride along
 ' with its own color and legend entry.
-Private Sub ClearAutoSeries(ByVal ch As Chart)
+Public Sub ClearAutoSeries(ByVal ch As Chart)
     Do While ch.SeriesCollection.Count > 0
         ch.SeriesCollection(1).Delete
     Loop
@@ -240,15 +258,17 @@ Public Sub BuildDashboard(ByVal wb As Workbook, ByVal ticker As String, ByVal en
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
     ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
-    ByVal mapShortTermDebt As Object, _
-    ByVal wsFilings As Worksheet)
+    ByVal mapShortTermDebt As Object, ByVal mapCOGS As Object, ByVal mapAccountsPayable As Object, ByVal mapAssets As Object, ByVal filingsLastRow As Long, _
+    ByVal wsFilings As Worksheet, _
+    Optional ByVal dashboardSheetName As String = "Dashboard", Optional ByVal rawDataSheetName As String = "RawData", _
+    Optional ByVal annualFormMarker As String = "10-K")
 
     Dim ws As Worksheet
-    Set ws = GetOrCreateSheet(wb, "Dashboard")
+    Set ws = GetOrCreateSheet(wb, dashboardSheetName)
     Call ClearSheetForRebuild(ws)
 
     Dim wsRaw As Worksheet
-    Set wsRaw = GetOrCreateSheet(wb, "RawData")
+    Set wsRaw = GetOrCreateSheet(wb, rawDataSheetName)
     Call ClearSheetForRebuild(wsRaw)
 
     ' Running left edge of the next free column pair on RawData. Order is fixed:
@@ -260,7 +280,7 @@ Public Sub BuildDashboard(ByVal wb As Workbook, ByVal ticker As String, ByVal en
     Dim tableLastRow As Long, tableLastCol As Long
     Call BuildSnapshotTableInto(ws, entityName, ticker, filings10K, mapRevenue, mapEps, mapShares, allMaps, prices, _
         mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
-        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, tableLastRow, tableLastCol)
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, False, tableLastRow, tableLastCol)
 
     ' Both banners are styled at the very end, after every chart builder has
     ' returned -- BuildFinancialChartsInto does a blanket black-background
@@ -284,13 +304,39 @@ Public Sub BuildDashboard(ByVal wb As Workbook, ByVal ticker As String, ByVal en
     chartsBannerRow = CLng((priceChartBottom + 10) / 15)
     ws.Cells(chartsBannerRow, 1).Value = "═══ 財務趨勢圖 Financial Trend Charts（原始資料：RawData 工作表）═══"
 
-    Call BuildFinancialChartsInto(ws, wsFilings, wsRaw, rawCol, 10, priceChartBottom + 30)
+    Call BuildFinancialChartsInto(ws, wsFilings, filingsLastRow, wsRaw, rawCol, 10, priceChartBottom + 30, annualFormMarker)
 
     Call StyleOneBannerRow(ws, priceBannerRow, tableLastCol)
     Call StyleOneBannerRow(ws, chartsBannerRow, tableLastCol)
 
     ws.Columns.AutoFit
     Call FinishRawDataSheet(wsRaw, rawCol)
+End Sub
+
+' Owns the single "QuarterlySnapshot" sheet: the same snapshot-table layout as
+' Dashboard's annual table (same sections, same metrics, same formulas -- see
+' BuildSnapshotTableInto), just fed filings10Q instead of filings10K so every
+' column is a fiscal quarter instead of a fiscal year. No charts here and no
+' RawData writes -- the quarterly trend charts already live on Dashboard
+' (BuildFinancialChartsInto's "季度 Quarterly" series), this sheet is purely
+' the tabular quarter-by-quarter read.
+Public Sub BuildQuarterlyDashboard(ByVal wb As Workbook, ByVal ticker As String, ByVal entityName As String, _
+    ByVal filings10Q As Collection, ByVal mapRevenue As Object, ByVal mapEps As Object, ByVal mapShares As Object, ByVal allMaps As Variant, ByVal prices As Object, _
+    ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
+    ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
+    ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
+    ByVal mapShortTermDebt As Object, ByVal mapCOGS As Object, ByVal mapAccountsPayable As Object, ByVal mapAssets As Object, Optional ByVal sheetName As String = "QuarterlySnapshot")
+
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet(wb, sheetName)
+    Call ClearSheetForRebuild(ws)
+
+    Dim tableLastRow As Long, tableLastCol As Long
+    Call BuildSnapshotTableInto(ws, entityName, ticker, filings10Q, mapRevenue, mapEps, mapShares, allMaps, prices, _
+        mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, True, tableLastRow, tableLastCol)
+
+    ws.Columns.AutoFit
 End Sub
 
 ' "Nothing to chart here" message, in place of the chart that would have been.
@@ -517,12 +563,16 @@ End Sub
 ' band. Forecast years are intentionally excluded -- SEC filings only report
 ' what has actually happened. tableLastRow/tableLastCol report the bottom-right
 ' cell actually used so the caller can stack the next block below it.
+' isQuarterly only changes cosmetics (column-header format, the percentile
+' band's "近N年/季" label) -- the metric computation itself is period-agnostic,
+' it just uses whatever accn/reportDate/form each passed-in filing carries, so
+' the same code serves both the annual (10-K) and quarterly (10-Q) callers.
 Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As String, ByVal ticker As String, ByVal filings10K As Collection, _
     ByVal mapRevenue As Object, ByVal mapEps As Object, ByVal mapShares As Object, ByVal allMaps As Variant, ByVal prices As Object, _
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
     ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
-    ByVal mapShortTermDebt As Object, _
+    ByVal mapShortTermDebt As Object, ByVal mapCOGS As Object, ByVal mapAccountsPayable As Object, ByVal mapAssets As Object, ByVal isQuarterly As Boolean, _
     ByRef tableLastRow As Long, ByRef tableLastCol As Long)
 
     On Error GoTo BSTIErr
@@ -561,6 +611,14 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     Dim cashRow() As Variant, opIncRow() As Variant, daRow() As Variant, evRow() As Variant, ebitdaRow() As Variant
     Dim evEbitdaRow() As Variant, evSalesRow() As Variant, roeRow() As Variant, roicRow() As Variant
     Dim dpsRow() As Variant, netIncRow() As Variant, divYieldRow() As Variant, payoutRow() As Variant, pegRow() As Variant
+    ' ---- DuPont / CCC / FCF ratios / CAGR (added for the fundamental-analysis
+    ' expansion) -- see the computation block after the per-period loop below.
+    Dim cogsRow() As Variant, apRow() As Variant, assetsRow() As Variant
+    Dim netMarginRow() As Variant, assetTurnoverRow() As Variant, equityMultiplierRow() As Variant
+    Dim dioRow() As Variant, dsoRow() As Variant, dpoRow() As Variant, cccRow() As Variant
+    Dim fcfConversionRow() As Variant, fcfYieldRow() As Variant
+    Dim revCagr3Row() As Variant, epsCagr3Row() As Variant, fcfCagr3Row() As Variant
+    Dim revCagr5Row() As Variant, epsCagr5Row() As Variant, fcfCagr5Row() As Variant
     ReDim priceRow(1 To n): ReDim mktCapRow(1 To n): ReDim sharesRow(1 To n): ReDim revRow(1 To n)
     ReDim epsRow(1 To n): ReDim salesGrowthRow(1 To n): ReDim epsGrowthRow(1 To n)
     ReDim peRow(1 To n): ReDim psRow(1 To n): ReDim spsRow(1 To n)
@@ -569,6 +627,12 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     ReDim cashRow(1 To n): ReDim opIncRow(1 To n): ReDim daRow(1 To n): ReDim evRow(1 To n): ReDim ebitdaRow(1 To n)
     ReDim evEbitdaRow(1 To n): ReDim evSalesRow(1 To n): ReDim roeRow(1 To n): ReDim roicRow(1 To n)
     ReDim dpsRow(1 To n): ReDim netIncRow(1 To n): ReDim divYieldRow(1 To n): ReDim payoutRow(1 To n): ReDim pegRow(1 To n)
+    ReDim cogsRow(1 To n): ReDim apRow(1 To n): ReDim assetsRow(1 To n)
+    ReDim netMarginRow(1 To n): ReDim assetTurnoverRow(1 To n): ReDim equityMultiplierRow(1 To n)
+    ReDim dioRow(1 To n): ReDim dsoRow(1 To n): ReDim dpoRow(1 To n): ReDim cccRow(1 To n)
+    ReDim fcfConversionRow(1 To n): ReDim fcfYieldRow(1 To n)
+    ReDim revCagr3Row(1 To n): ReDim epsCagr3Row(1 To n): ReDim fcfCagr3Row(1 To n)
+    ReDim revCagr5Row(1 To n): ReDim epsCagr5Row(1 To n): ReDim fcfCagr5Row(1 To n)
 
     For i = 1 To n
         accn = ordered(i)("accn")
@@ -579,7 +643,13 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         fyfp = LookupFyFp(allMaps, accn, reportDate, form)
         parts = Split(fyfp, "|")
         If parts(0) <> "" Then
-            colHeader = "FY" & parts(0)
+            If isQuarterly And parts(1) <> "" Then
+                colHeader = "FY" & parts(0) & parts(1)
+            Else
+                colHeader = "FY" & parts(0)
+            End If
+        ElseIf isQuarterly Then
+            colHeader = Format$(CDate(reportDate), "yyyy-mm")
         Else
             colHeader = Format$(CDate(reportDate), "yyyy")
         End If
@@ -649,6 +719,14 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         taxRateV = LookupConceptValue(mapEffectiveTaxRate, accn, reportDate, form)
         capexV = LookupConceptValue(mapCapEx, accn, reportDate, form)
         cfoV = LookupConceptValue(mapCFO, accn, reportDate, form)
+
+        Dim cogsV2 As Variant, apV As Variant, assetsV2 As Variant
+        cogsV2 = LookupConceptValue(mapCOGS, accn, reportDate, form)
+        apV = LookupConceptValue(mapAccountsPayable, accn, reportDate, form)
+        assetsV2 = LookupConceptValue(mapAssets, accn, reportDate, form)
+        If HasVal(cogsV2) Then cogsRow(i) = CDbl(cogsV2) Else cogsRow(i) = ""
+        If HasVal(apV) Then apRow(i) = CDbl(apV) Else apRow(i) = ""
+        If HasVal(assetsV2) Then assetsRow(i) = CDbl(assetsV2) Else assetsRow(i) = ""
 
         If HasVal(invV) Then invRow(i) = CDbl(invV) Else invRow(i) = ""
         If HasVal(arV) Then arRow(i) = CDbl(arV) Else arRow(i) = ""
@@ -783,6 +861,78 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         Else
             pegRow(i) = ""
         End If
+
+        ' ---- DuPont ROE decomposition: ROE = Net Margin x Asset Turnover x Equity Multiplier ----
+        If HasVal(netIncRow(i)) And HasVal(revRow(i)) And revRow(i) <> 0 Then
+            netMarginRow(i) = netIncRow(i) / revRow(i)
+        Else
+            netMarginRow(i) = ""
+        End If
+        If HasVal(revRow(i)) And HasVal(assetsRow(i)) And assetsRow(i) <> 0 Then
+            assetTurnoverRow(i) = revRow(i) / assetsRow(i)
+        Else
+            assetTurnoverRow(i) = ""
+        End If
+        If HasVal(assetsRow(i)) And HasVal(equityRow(i)) And equityRow(i) <> 0 Then
+            equityMultiplierRow(i) = assetsRow(i) / equityRow(i)
+        Else
+            equityMultiplierRow(i) = ""
+        End If
+
+        ' ---- Cash Conversion Cycle: DIO + DSO - DPO, in days ----
+        Dim daysInPeriod As Double
+        If isQuarterly Then daysInPeriod = 91 Else daysInPeriod = 365
+
+        If HasVal(invRow(i)) And HasVal(cogsRow(i)) And cogsRow(i) <> 0 Then
+            dioRow(i) = invRow(i) / cogsRow(i) * daysInPeriod
+        Else
+            dioRow(i) = ""
+        End If
+        If HasVal(arRow(i)) And HasVal(revRow(i)) And revRow(i) <> 0 Then
+            dsoRow(i) = arRow(i) / revRow(i) * daysInPeriod
+        Else
+            dsoRow(i) = ""
+        End If
+        If HasVal(apRow(i)) And HasVal(cogsRow(i)) And cogsRow(i) <> 0 Then
+            dpoRow(i) = apRow(i) / cogsRow(i) * daysInPeriod
+        Else
+            dpoRow(i) = ""
+        End If
+        If HasVal(dioRow(i)) And HasVal(dsoRow(i)) And HasVal(dpoRow(i)) Then
+            cccRow(i) = dioRow(i) + dsoRow(i) - dpoRow(i)
+        Else
+            cccRow(i) = ""
+        End If
+
+        ' ---- FCF conversion & yield ----
+        If HasVal(fcfRow(i)) And HasVal(netIncRow(i)) And netIncRow(i) <> 0 Then
+            fcfConversionRow(i) = fcfRow(i) / netIncRow(i)
+        Else
+            fcfConversionRow(i) = ""
+        End If
+        If HasVal(fcfRow(i)) And HasVal(mktCapRow(i)) And mktCapRow(i) <> 0 Then
+            fcfYieldRow(i) = fcfRow(i) / mktCapRow(i)
+        Else
+            fcfYieldRow(i) = ""
+        End If
+
+        ' ---- Multi-year CAGR (Revenue/EPS/FCF, 3Y and 5Y) -- annual table only.
+        ' For the quarterly table, i-3/i-5 would look back 3/5 QUARTERS, not
+        ' years, which would silently mislabel the metric -- left blank there.
+        If Not isQuarterly And i > 3 Then
+            revCagr3Row(i) = SafeCagr(revRow(i - 3), revRow(i), 3)
+            epsCagr3Row(i) = SafeCagr(epsRow(i - 3), epsRow(i), 3)
+            fcfCagr3Row(i) = SafeCagr(fcfRow(i - 3), fcfRow(i), 3)
+        Else
+            revCagr3Row(i) = "": epsCagr3Row(i) = "": fcfCagr3Row(i) = ""
+        End If
+        If Not isQuarterly And i > 5 Then
+            revCagr5Row(i) = SafeCagr(revRow(i - 5), revRow(i), 5)
+            epsCagr5Row(i) = SafeCagr(epsRow(i - 5), epsRow(i), 5)
+            fcfCagr5Row(i) = SafeCagr(fcfRow(i - 5), fcfRow(i), 5)
+        Else
+            revCagr5Row(i) = "": epsCagr5Row(i) = "": fcfCagr5Row(i) = ""
+        End If
     Next i
 
     ' ---- Write the table, grouped into labeled sections instead of one flat
@@ -803,8 +953,12 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     Call WriteSectionBanner(ws, curRow, "損益 Income Statement", n + 1, bannerRows)
     Call WriteMetricRow(ws, curRow, "Revenue (M)", revRow, n, "money")
     Call WriteMetricRow(ws, curRow, "Sales Growth %", salesGrowthRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "Revenue CAGR 3Y", revCagr3Row, n, "pct")
+    Call WriteMetricRow(ws, curRow, "Revenue CAGR 5Y", revCagr5Row, n, "pct")
     Call WriteMetricRow(ws, curRow, "EPS (GAAP)", epsRow, n, "ratio")
     Call WriteMetricRow(ws, curRow, "EPS Growth %", epsGrowthRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "EPS CAGR 3Y", epsCagr3Row, n, "pct")
+    Call WriteMetricRow(ws, curRow, "EPS CAGR 5Y", epsCagr5Row, n, "pct")
     Call WriteMetricRow(ws, curRow, "Operating Income (M)", opIncRow, n, "money")
     Call WriteMetricRow(ws, curRow, "EBITDA (M)", ebitdaRow, n, "money")
 
@@ -818,15 +972,23 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
 
     Call WriteSectionBanner(ws, curRow, "獲利能力與資本回報 Profitability & Returns", n + 1, bannerRows)
     Call WriteMetricRow(ws, curRow, "ROE", roeRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "  Net Margin (DuPont)", netMarginRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "  Asset Turnover (DuPont)", assetTurnoverRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "  Equity Multiplier (DuPont)", equityMultiplierRow, n, "ratio")
     Call WriteMetricRow(ws, curRow, "ROIC", roicRow, n, "pct")
     Call WriteMetricRow(ws, curRow, "Effective Tax Rate", taxRateRow, n, "pct")
 
     Call WriteSectionBanner(ws, curRow, "營運資金 Working Capital", n + 1, bannerRows)
     Call WriteMetricRow(ws, curRow, "Inventory (M)", invRow, n, "money")
     Call WriteMetricRow(ws, curRow, "Accounts Receivable (M)", arRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "Accounts Payable (M)", apRow, n, "money")
     Call WriteMetricRow(ws, curRow, "Current Assets (M)", curAssetsRow, n, "money")
     Call WriteMetricRow(ws, curRow, "Current Liabilities (M)", curLiabRow, n, "money")
     Call WriteMetricRow(ws, curRow, "Current Ratio", curRatioRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "Days Inventory Outstanding", dioRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "Days Sales Outstanding", dsoRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "Days Payable Outstanding", dpoRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "Cash Conversion Cycle (days)", cccRow, n, "ratio")
 
     Call WriteSectionBanner(ws, curRow, "資本結構 Capital Structure", n + 1, bannerRows)
     Call WriteMetricRow(ws, curRow, "Cash (M)", cashRow, n, "money")
@@ -840,6 +1002,10 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     Call WriteMetricRow(ws, curRow, "CapEx (M)", capexRow, n, "money")
     Call WriteMetricRow(ws, curRow, "D&A (M)", daRow, n, "money")
     Call WriteMetricRow(ws, curRow, "Free Cash Flow (M)", fcfRow, n, "money")
+    Call WriteMetricRow(ws, curRow, "FCF Conversion (FCF/NI)", fcfConversionRow, n, "ratio")
+    Call WriteMetricRow(ws, curRow, "FCF Yield", fcfYieldRow, n, "pct")
+    Call WriteMetricRow(ws, curRow, "FCF CAGR 3Y", fcfCagr3Row, n, "pct")
+    Call WriteMetricRow(ws, curRow, "FCF CAGR 5Y", fcfCagr5Row, n, "pct")
 
     Call WriteSectionBanner(ws, curRow, "股利 Dividends", n + 1, bannerRows)
     Call WriteMetricRow(ws, curRow, "Dividend Yield", divYieldRow, n, "pct")
@@ -865,7 +1031,7 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     ' consistent with whatever the Input sheet's "10-K 年數" setting is.
     Dim bandCol As Long
     bandCol = n + 3
-    ws.Cells(1, bandCol).Value = "分位數（近" & n & "年）"
+    ws.Cells(1, bandCol).Value = "分位數（近" & n & IIf(isQuarterly, "季", "年") & "）"
     ws.Cells(1, bandCol).Font.Bold = True
     ws.Cells(2, bandCol).Value = "P/E"
     ws.Cells(3, bandCol).Value = "P/S"
@@ -958,16 +1124,21 @@ End Function
 ' chart to reference. startLeft/startTop set where the 2-column chart grid
 ' begins (so it can be stacked below other Dashboard content instead of always
 ' starting at the sheet's top-left).
-Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As Worksheet, ByVal wsRaw As Worksheet, ByRef rawCol As Long, ByVal startLeft As Double, ByVal startTop As Double)
+' filingsLastRow is the 10-K/10-Q block's own last row on wsFilings, passed in
+' explicitly rather than scanned via .End(xlUp) -- the Filings sheet now has
+' 8-K/Form 4 rows (and a section banner) appended below that block, and
+' scanning to the sheet's actual last used row would misread those as more
+' quarterly financial data.
+Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As Worksheet, ByVal filingsLastRow As Long, ByVal wsRaw As Worksheet, ByRef rawCol As Long, ByVal startLeft As Double, ByVal startTop As Double, Optional ByVal annualFormMarker As String = "10-K")
     Dim lastRow As Long
-    lastRow = wsFilings.Cells(wsFilings.Rows.Count, 1).End(xlUp).Row
+    lastRow = filingsLastRow
     If lastRow < 2 Then Exit Sub
 
     Dim kRows As Long
     kRows = 0
     Dim r As Long
     For r = 2 To lastRow
-        If InStr(1, CStr(wsFilings.Cells(r, 3).Value), "10-K", vbTextCompare) > 0 Then kRows = kRows + 1
+        If InStr(1, CStr(wsFilings.Cells(r, 3).Value), annualFormMarker, vbTextCompare) > 0 Then kRows = kRows + 1
     Next r
 
     Dim metricCols As Variant

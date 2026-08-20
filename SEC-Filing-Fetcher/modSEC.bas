@@ -25,7 +25,7 @@ Public Sub FetchSECFilings()
 
     Dim wantK As Long, wantQ As Long, want8K As Long, want4 As Long
     wantK = GetSetting(wsIn, "B4", 7)
-    wantQ = GetSetting(wsIn, "B5", 8)
+    wantQ = GetSetting(wsIn, "B5", 10)
     want8K = GetSetting(wsIn, "B6", 10)
     want4 = GetSetting(wsIn, "B7", 10)
 
@@ -59,6 +59,7 @@ Public Sub FetchSECFilings()
     Dim mapCash As Object, mapDA As Object
     Dim mapCOGS As Object, mapInterestExpense As Object
     Dim mapShortTermDebt As Object
+    Dim mapAccountsPayable As Object
 
     Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
     Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
@@ -89,6 +90,9 @@ Public Sub FetchSECFilings()
     ' counted). Absence of this tag is treated as "no short-term debt" (0) by
     ' BuildSnapshotTableInto's EV formula, not as "unknown".
     Set mapShortTermDebt = BuildConceptMap(usgaapRaw, Array("ShortTermBorrowings", "DebtCurrent", "LongTermDebtCurrent"), "USD")
+    ' Accounts Payable -- only needed for the Cash Conversion Cycle's DPO leg;
+    ' every other existing metric already had what it needed without this tag.
+    Set mapAccountsPayable = BuildConceptMap(usgaapRaw, Array("AccountsPayableCurrent", "AccountsPayableTradeCurrent"), "USD")
 
     SetStatus wsIn, "寫入工作表中..."
     ' Snapshot the accession-number -> segment-note-URL mapping already on the
@@ -141,11 +145,39 @@ Public Sub FetchSECFilings()
         wsOut.Range(wsOut.Cells(2, 47), wsOut.Cells(rowIdx - 1, 47)).NumberFormat = "0.00"
     End If
 
-    Call ApplyDarkTheme(wsOut, wsOut.UsedRange, 1)
-    wsOut.Columns.AutoFit
+    ' The 10-K/10-Q block ends here -- record its boundary BEFORE appending
+    ' 8-K/Form 4 below, so BuildDashboard's financial trend charts (which read
+    ' "how many of the top rows are 10-K vs 10-Q" from this sheet) don't
+    ' mistake the banner/8-K/Form4 rows for more quarterly data.
+    Dim filingsBlockLastRow As Long
+    filingsBlockLastRow = rowIdx - 1
 
     SetStatus wsIn, "寫入其他申報 (8-K/Form 4) 中..."
-    Call BuildOtherFilingsSheet(ThisWorkbook, entityName, cik, filings8K, filingsForm4)
+    Dim otherBannerRow As Long
+    otherBannerRow = rowIdx
+    wsOut.Cells(otherBannerRow, 1).Value = "═══ 其他申報 8-K / Form 4 Other Filings ═══"
+    rowIdx = rowIdx + 1
+
+    Dim fo As Variant
+    For Each fo In filings8K
+        rowIdx = WriteOtherFilingRowInto(wsOut, rowIdx, entityName, cik, fo)
+    Next fo
+    For Each fo In filingsForm4
+        rowIdx = WriteOtherFilingRowInto(wsOut, rowIdx, entityName, cik, fo)
+    Next fo
+    If rowIdx > otherBannerRow + 1 Then
+        wsOut.Range(wsOut.Cells(otherBannerRow + 1, 7), wsOut.Cells(rowIdx - 1, 7)).NumberFormat = "yyyy-mm-dd"
+    End If
+
+    Call ApplyDarkTheme(wsOut, wsOut.UsedRange, 1)
+    wsOut.Columns.AutoFit
+    ' Banner styling must come AFTER ApplyDarkTheme, which blanket-paints the
+    ' whole UsedRange black -- doing this any earlier would just get wiped.
+    With wsOut.Range(wsOut.Cells(otherBannerRow, 1), wsOut.Cells(otherBannerRow, 48))
+        .Font.Bold = True
+        .Font.Color = RGB(255, 165, 0)
+        .Interior.Color = RGB(45, 45, 45)
+    End With
 
     SetStatus wsIn, "繪製 Dashboard（股價圖、財務快照、趨勢圖）中，稍候..."
     Dim priceHistory As Object
@@ -156,7 +188,12 @@ Public Sub FetchSECFilings()
     Call BuildDashboard(ThisWorkbook, ticker, entityName, filings10K, filings10Q, mapEps, priceHistory, _
         mapRevenue, mapShares, allMaps, mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, _
         mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
-        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, wsOut)
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, filingsBlockLastRow, wsOut)
+
+    SetStatus wsIn, "繪製季度快照分頁中..."
+    Call BuildQuarterlyDashboard(ThisWorkbook, ticker, entityName, filings10Q, mapRevenue, mapEps, mapShares, allMaps, priceHistory, _
+        mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets)
 
     SetStatus wsIn, "完成：" & entityName & "（CIK " & cik & "）10-K " & filings10K.Count & " 筆、10-Q " & filings10Q.Count & " 筆、8-K " & filings8K.Count & " 筆、Form4 " & filingsForm4.Count & " 筆，於 " & Format$(Now, "yyyy-mm-dd hh:nn:ss")
 
@@ -218,17 +255,19 @@ Public Sub CheckForNewFilings()
     Set forms = SplitJsonArrayElements(formsRaw)
     Set fdates = SplitJsonArrayElements(filingDateRaw)
 
-    Dim wsFilings As Worksheet, wsOther As Worksheet
+    ' 8-K/Form 4 rows now live in the same "Filings" sheet as 10-K/10-Q
+    ' (appended below, past a section banner) rather than a separate
+    ' "OtherFilings" sheet, so all four categories read the same sheet/columns.
+    Dim wsFilings As Worksheet
     On Error Resume Next
     Set wsFilings = ThisWorkbook.Sheets("Filings")
-    Set wsOther = ThisWorkbook.Sheets("OtherFilings")
     On Error GoTo 0
 
     Dim max10K As String, max10Q As String, max8K As String, max4 As String
     max10K = MaxDateForForms(wsFilings, 3, 7, "|10-K|10-K/A|")
     max10Q = MaxDateForForms(wsFilings, 3, 7, "|10-Q|10-Q/A|")
-    max8K = MaxDateForForms(wsOther, 3, 4, "|8-K|")
-    max4 = MaxDateForForms(wsOther, 3, 4, "|4|")
+    max8K = MaxDateForForms(wsFilings, 3, 7, "|8-K|")
+    max4 = MaxDateForForms(wsFilings, 3, 7, "|4|")
 
     Dim newList As String
     Dim i As Long
@@ -495,7 +534,17 @@ Private Function BuildConceptMap(ByRef usgaapRaw As String, ByVal tagCandidates 
                     accn = ExtractJsonString(CStr(e), "accn")
                     If accn <> "" Then
                         If Not map.Exists(accn) Then
-                            Dim col As New Collection
+                            ' "Dim col As New Collection" here is the classic VBA trap:
+                            ' As-New only auto-instantiates when the variable is
+                            ' currently Nothing, and Dim inside a loop is hoisted to
+                            ' one procedure-scoped variable -- so after the FIRST accn
+                            ' creates a Collection, every SUBSEQUENT distinct accn would
+                            ' silently reuse that same live reference instead of getting
+                            ' its own, merging every accn's facts into one shared
+                            ' Collection. Set col = New Collection forces a genuinely
+                            ' fresh instance every time this branch runs.
+                            Dim col As Collection
+                            Set col = New Collection
                             map.Add accn, col
                         End If
                         map(accn).Add CStr(e)
@@ -760,46 +809,16 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
     WriteFilingRow = rowIdx + 1
 End Function
 
-' ---------- Output sheet: OtherFilings (8-K / Form 4) ----------
+' ---------- 8-K / Form 4 rows (appended onto the Filings sheet) ----------
 
-Public Sub BuildOtherFilingsSheet(ByVal wb As Workbook, ByVal entityName As String, ByVal cik As String, ByVal filings8K As Collection, ByVal filingsForm4 As Collection)
-    Dim ws As Worksheet
-    On Error Resume Next
-    Set ws = wb.Sheets("OtherFilings")
-    On Error GoTo 0
-    If ws Is Nothing Then
-        Set ws = wb.Sheets.Add(After:=wb.Sheets(wb.Sheets.Count))
-        ws.Name = "OtherFilings"
-    Else
-        ws.Cells.Clear
-    End If
-
-    Dim headers As Variant
-    headers = Array("公司名稱", "CIK", "表單類別", "申報日期", "事件代碼/說明", "文件連結", "申報索引頁", "Accession Number")
-    Dim i As Long
-    For i = 0 To UBound(headers)
-        ws.Cells(1, i + 1).Value = headers(i)
-    Next i
-
-    Dim rowIdx As Long
-    rowIdx = 2
-    Dim f As Variant
-    For Each f In filings8K
-        rowIdx = WriteOtherFilingRow(ws, rowIdx, entityName, cik, f)
-    Next f
-    For Each f In filingsForm4
-        rowIdx = WriteOtherFilingRow(ws, rowIdx, entityName, cik, f)
-    Next f
-
-    If rowIdx > 2 Then
-        ws.Range(ws.Cells(2, 4), ws.Cells(rowIdx - 1, 4)).NumberFormat = "yyyy-mm-dd"
-    End If
-
-    Call ApplyDarkTheme(ws, ws.UsedRange, 1)
-    ws.Columns.AutoFit
-End Sub
-
-Private Function WriteOtherFilingRow(ByVal ws As Worksheet, ByVal rowIdx As Long, ByVal entityName As String, ByVal cik As String, ByVal f As Object) As Long
+' Writes one 8-K/Form 4 row into the SAME column layout as WriteFilingRow
+' (Filings sheet, appended below the 10-K/10-Q block past a section banner --
+' see FetchSECFilings) rather than a separate "OtherFilings" sheet. Only the
+' columns that make sense for these forms are populated (公司名稱/CIK/表單
+' 類別/申報日期/文件連結/Accession Number/申報索引頁/事件代碼說明); the
+' financial-figure columns (10-49) simply stay blank, same as they would on
+' any row with no XBRL data.
+Private Function WriteOtherFilingRowInto(ByVal ws As Worksheet, ByVal rowIdx As Long, ByVal entityName As String, ByVal cik As String, ByVal f As Object) As Long
     Dim form As String, accn As String, filingDate As String, primDoc As String, itemsStr As String
     form = f("form")
     accn = f("accn")
@@ -811,13 +830,13 @@ Private Function WriteOtherFilingRow(ByVal ws As Worksheet, ByVal rowIdx As Long
         .Cells(rowIdx, 1).Value = entityName
         .Cells(rowIdx, 2).Value = cik
         .Cells(rowIdx, 3).Value = form
-        .Cells(rowIdx, 4).Value = filingDate
-        .Cells(rowIdx, 5).Value = itemsStr
-        .Cells(rowIdx, 6).Value = BuildDocUrl(cik, accn, primDoc)
-        .Cells(rowIdx, 7).Value = BuildIndexUrl(cik, accn)
+        .Cells(rowIdx, 7).Value = filingDate
         .Cells(rowIdx, 8).Value = accn
+        .Cells(rowIdx, 9).Value = BuildDocUrl(cik, accn, primDoc)
+        .Cells(rowIdx, 23).Value = BuildIndexUrl(cik, accn)
+        .Cells(rowIdx, 48).Value = itemsStr
     End With
-    WriteOtherFilingRow = rowIdx + 1
+    WriteOtherFilingRowInto = rowIdx + 1
 End Function
 
 ' ---------- URL builders ----------
@@ -945,7 +964,8 @@ Private Sub WriteHeaders(ByVal wsOut As Worksheet)
         "長期負債 LT Debt", "股東權益 Equity", "每股淨值 Book Value/Share", "有效稅率 Tax Rate", "資本支出 CapEx", "自由現金流 FCF", _
         "淨利率 Net Margin", "股東權益報酬率 ROE", "資產報酬率 ROA", "存貨週轉率 Inventory Turnover", "應收帳款週轉率 AR Turnover", _
         "總資產週轉率 Asset Turnover", "現金週轉率 Cash Turnover", "速動比率 Quick Ratio", "負債權益比 Debt/Equity", "權益乘數 Equity Multiplier", _
-        "利息費用 Interest Expense", "利息保障倍數 Interest Coverage")
+        "利息費用 Interest Expense", "利息保障倍數 Interest Coverage", _
+        "事件代碼/說明 Items")
     Dim i As Long
     For i = 0 To UBound(headers)
         wsOut.Cells(1, i + 1).Value = headers(i)
@@ -989,12 +1009,12 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     Application.EnableEvents = False
     Application.ScreenUpdating = False
     ws.Cells(r, 2).Value = "更新中..."
-    ws.Range(ws.Cells(r, 3), ws.Cells(r, 11)).ClearContents
+    ws.Range(ws.Cells(r, 3), ws.Cells(r, 16)).ClearContents
 
     Dim cik As String, tickerTitle As String, ticker As String
     If Not ResolveCIK(tickerInput, cik, tickerTitle, ticker) Then
         ws.Cells(r, 2).Value = "找不到公司"
-        ws.Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+        ws.Cells(r, 17).Value = Format$(Now, "hh:nn:ss")
         GoTo CleanExit3
     End If
 
@@ -1002,7 +1022,7 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     Call GetFilings(cik, 1, 0, 0, 0, filings10K, filings10Q, filings8K, filingsForm4)
     If filings10K.Count = 0 Then
         ws.Cells(r, 2).Value = "無 10-K 資料"
-        ws.Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+        ws.Cells(r, 17).Value = Format$(Now, "hh:nn:ss")
         GoTo CleanExit3
     End If
 
@@ -1025,6 +1045,11 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     Dim mapStockholdersEquity As Object, mapLongTermDebt As Object, mapShortTermDebt As Object
     Dim mapCash As Object, mapOperatingIncome As Object, mapDA As Object, mapDividends As Object
     Dim mapCurrentAssets As Object, mapCurrentLiabilities As Object
+    ' Added for the fundamental-analysis expansion (DuPont / CCC / FCF Yield) --
+    ' all pulled from the SAME already-downloaded companyfacts JSON, so this
+    ' costs zero extra HTTP round-trips, just a few more BuildConceptMap scans.
+    Dim mapAssets As Object, mapCFO As Object, mapCapEx As Object
+    Dim mapInventory As Object, mapAR As Object, mapCOGS As Object, mapAccountsPayable As Object
 
     Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
     Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
@@ -1039,10 +1064,19 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     Set mapDividends = BuildConceptMap(usgaapRaw, Array("CommonStockDividendsPerShareDeclared", "CommonStockDividendsPerShareCashPaid"), "USD/shares")
     Set mapCurrentAssets = BuildConceptMap(usgaapRaw, Array("AssetsCurrent"), "USD")
     Set mapCurrentLiabilities = BuildConceptMap(usgaapRaw, Array("LiabilitiesCurrent"), "USD")
+    Set mapAssets = BuildConceptMap(usgaapRaw, Array("Assets"), "USD")
+    Set mapCFO = BuildConceptMap(usgaapRaw, Array("NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"), "USD")
+    Set mapCapEx = BuildConceptMap(usgaapRaw, Array("PaymentsToAcquirePropertyPlantAndEquipment"), "USD")
+    Set mapInventory = BuildConceptMap(usgaapRaw, Array("InventoryNet"), "USD")
+    Set mapAR = BuildConceptMap(usgaapRaw, Array("AccountsReceivableNetCurrent"), "USD")
+    Set mapCOGS = BuildConceptMap(usgaapRaw, Array("CostOfGoodsAndServicesSold", "CostOfRevenue", "CostOfGoodsSold"), "USD")
+    Set mapAccountsPayable = BuildConceptMap(usgaapRaw, Array("AccountsPayableCurrent", "AccountsPayableTradeCurrent"), "USD")
 
     Dim revV As Variant, netIncV As Variant, epsV As Variant, sharesV As Variant
     Dim equityV As Variant, ltDebtV As Variant, stDebtV As Variant, cashV As Variant
     Dim opIncV As Variant, daV As Variant, dpsV As Variant, curAssetsV As Variant, curLiabV As Variant
+    Dim assetsV As Variant, cfoV As Variant, capexV As Variant
+    Dim invV As Variant, arV As Variant, cogsV As Variant, apV As Variant
     revV = LookupConceptValue(mapRevenue, accn, reportDate, form)
     netIncV = LookupConceptValue(mapNetIncome, accn, reportDate, form)
     epsV = LookupConceptValue(mapEps, accn, reportDate, form)
@@ -1056,6 +1090,13 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     dpsV = LookupConceptValue(mapDividends, accn, reportDate, form)
     curAssetsV = LookupConceptValue(mapCurrentAssets, accn, reportDate, form)
     curLiabV = LookupConceptValue(mapCurrentLiabilities, accn, reportDate, form)
+    assetsV = LookupConceptValue(mapAssets, accn, reportDate, form)
+    cfoV = LookupConceptValue(mapCFO, accn, reportDate, form)
+    capexV = LookupConceptValue(mapCapEx, accn, reportDate, form)
+    invV = LookupConceptValue(mapInventory, accn, reportDate, form)
+    arV = LookupConceptValue(mapAR, accn, reportDate, form)
+    cogsV = LookupConceptValue(mapCOGS, accn, reportDate, form)
+    apV = LookupConceptValue(mapAccountsPayable, accn, reportDate, form)
 
     Dim revGrowth As Variant
     revGrowth = PriorYearGrowth(mapRevenue, accn, reportDate)
@@ -1082,6 +1123,26 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
         ebitdaV = ""
     End If
 
+    ' ---- DuPont / CCC / FCF Yield (fundamental-analysis expansion) ----
+    Dim fcfV As Variant
+    fcfV = SafeSubtract(cfoV, capexV)
+
+    Dim dioV As Variant, dsoV As Variant, dpoV As Variant, cccV As Variant
+    dioV = SafeDaysRatio(invV, cogsV, 365)
+    dsoV = SafeDaysRatio(arV, revV, 365)
+    dpoV = SafeDaysRatio(apV, cogsV, 365)
+    If IsNumeric(dioV) And IsNumeric(dsoV) And IsNumeric(dpoV) Then
+        cccV = CDbl(dioV) + CDbl(dsoV) - CDbl(dpoV)
+    Else
+        cccV = ""
+    End If
+
+    Dim netMarginV As Variant, assetTurnoverV As Variant, equityMultiplierV As Variant, fcfYieldV As Variant
+    netMarginV = SafeRatio(netIncV, revV)
+    assetTurnoverV = SafeRatio(revV, assetsV)
+    equityMultiplierV = SafeRatio(assetsV, equityV)
+    fcfYieldV = SafeRatio(fcfV, mktCapV)
+
     With ws
         .Cells(r, 1).Value = ticker
         .Cells(r, 2).Value = entityName
@@ -1094,7 +1155,12 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
         .Cells(r, 9).Value = SafeRatio(netIncV, equityV)
         .Cells(r, 10).Value = SafeRatio(dpsV, priceV)
         .Cells(r, 11).Value = SafeRatio(curAssetsV, curLiabV)
-        .Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+        .Cells(r, 12).Value = netMarginV
+        .Cells(r, 13).Value = assetTurnoverV
+        .Cells(r, 14).Value = equityMultiplierV
+        .Cells(r, 15).Value = cccV
+        .Cells(r, 16).Value = fcfYieldV
+        .Cells(r, 17).Value = Format$(Now, "hh:nn:ss")
     End With
 
     ws.Cells(r, 3).NumberFormat = "#,##0.00"
@@ -1104,6 +1170,10 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     ws.Cells(r, 9).NumberFormat = "0.00%"
     ws.Cells(r, 10).NumberFormat = "0.00%"
     ws.Cells(r, 11).NumberFormat = "0.00"
+    ws.Cells(r, 12).NumberFormat = "0.00%"
+    ws.Range(ws.Cells(r, 13), ws.Cells(r, 14)).NumberFormat = "0.00"
+    ws.Cells(r, 15).NumberFormat = "0.0"
+    ws.Cells(r, 16).NumberFormat = "0.00%"
 
 CleanExit3:
     Application.ScreenUpdating = True
@@ -1112,15 +1182,26 @@ CleanExit3:
 
 ErrHandler3:
     ws.Cells(r, 2).Value = "錯誤：" & Err.Description
-    ws.Cells(r, 12).Value = Format$(Now, "hh:nn:ss")
+    ws.Cells(r, 17).Value = Format$(Now, "hh:nn:ss")
     Resume CleanExit3
 End Sub
 
-' Clears a Watchlist row's fetched columns (B:L) when the user deletes the
+' Clears a Watchlist row's fetched columns (B:Q) when the user deletes the
 ' ticker in column A, so a blanked-out ticker doesn't leave stale data behind.
 Public Sub ClearWatchlistRow(ByVal ws As Worksheet, ByVal r As Long)
-    ws.Range(ws.Cells(r, 2), ws.Cells(r, 12)).ClearContents
+    ws.Range(ws.Cells(r, 2), ws.Cells(r, 17)).ClearContents
 End Sub
+
+' SafeRatio scaled by a day-count, for turnover-day metrics (DIO/DSO/DPO).
+Private Function SafeDaysRatio(ByVal numerator As Variant, ByVal denominator As Variant, ByVal days As Double) As Variant
+    Dim ratio As Variant
+    ratio = SafeRatio(numerator, denominator)
+    If IsNumeric(ratio) Then
+        SafeDaysRatio = CDbl(ratio) * days
+    Else
+        SafeDaysRatio = ""
+    End If
+End Function
 
 ' A 10-K's XBRL facts report multiple fiscal years of comparatives under the
 ' SAME accession number (accn) -- e.g. the current year (end=reportDate) plus

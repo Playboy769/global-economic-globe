@@ -1,0 +1,19 @@
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim watchRange As Range
+    Set watchRange = Me.Range("A3:A22")
+
+    Dim affected As Range
+    Set affected = Intersect(Target, watchRange)
+    If affected Is Nothing Then Exit Sub
+
+    Dim cell As Range
+    For Each cell In affected
+        Dim tk As String
+        tk = Trim$(CStr(cell.Value))
+        If tk = "" Then
+            Call modMOPS.ClearTWWatchlistRow(Me, cell.Row)
+        Else
+            Call modMOPS.RefreshTWWatchlistRow(Me, cell.Row, tk)
+        End If
+    Next cell
+End Sub

@@ -9,20 +9,22 @@ $excel.DisplayAlerts = $false
 try {
     $wb = $excel.Workbooks.Add()
 
-    while ($wb.Worksheets.Count -lt 3) {
+    while ($wb.Worksheets.Count -lt 4) {
         $wb.Worksheets.Add() | Out-Null
     }
-    while ($wb.Worksheets.Count -gt 3) {
+    while ($wb.Worksheets.Count -gt 4) {
         $wb.Worksheets.Item($wb.Worksheets.Count).Delete()
     }
 
     $wsInput = $wb.Worksheets.Item(1)
     $wsFilings = $wb.Worksheets.Item(2)
     $wsWatchlist = $wb.Worksheets.Item(3)
+    $wsTWWatchlist = $wb.Worksheets.Item(4)
 
     $wsInput.Name = "Input"
     $wsFilings.Name = "Filings"
     $wsWatchlist.Name = "Watchlist"
+    $wsTWWatchlist.Name = "TW_Watchlist"
 
     $wsInput.Range("A2").Value2 = "在 A1 輸入美股股票代號 (例如 AAPL)，按 Enter 後自動抓取 10-K/10-Q/8-K/Form 4"
     $wsInput.Range("A1").Font.Bold = $true
@@ -35,27 +37,38 @@ try {
     $wsInput.Range("A4").Value2 = "10-K 年數"
     $wsInput.Range("B4").Value2 = 7
     $wsInput.Range("A5").Value2 = "10-Q 季數"
-    $wsInput.Range("B5").Value2 = 8
+    $wsInput.Range("B5").Value2 = 10
     $wsInput.Range("A6").Value2 = "8-K 篇數"
     $wsInput.Range("B6").Value2 = 10
     $wsInput.Range("A7").Value2 = "Form 4 篇數"
     $wsInput.Range("B7").Value2 = 10
 
+    # Taiwan MOPS section (modMOPS.FetchMOPSFilings, triggered by SheetInput's
+    # Worksheet_Change on B9). Independent of the US section above -- B9 blank
+    # means "don't fetch a TW ticker", same convention as A1 for the US side.
+    $wsInput.Range("A8").Value2 = "台股 MOPS（可留白，輸入代號後自動抓取）"
+    $wsInput.Range("A8").Font.Bold = $true
+    $wsInput.Range("A9").Value2 = "台股代號 CO_ID"
+    $wsInput.Range("A10").Value2 = "MOPS 季數"
+    $wsInput.Range("B10").Value2 = 10
+
     # Black/orange dark theme, Yu Gothic throughout, applied once here since the
     # Input sheet's static cells (unlike Filings/OtherFilings/etc.) are never
     # cleared or rewritten by the macros, so this persists across runs.
-    $inputRange = $wsInput.Range("A1:B7")
+    $inputRange = $wsInput.Range("A1:B10")
     $inputRange.Interior.Color = 0
     $inputRange.Font.Color = 16777215
     $inputRange.Font.Name = "Yu Gothic"
     $wsInput.Range("A1:AN500").Interior.Color = 0
     $wsInput.Range("A3").Font.Color = 42495
     $wsInput.Range("A4:A7").Font.Color = 42495
+    $wsInput.Range("A8").Font.Color = 42495
+    $wsInput.Range("A9:A10").Font.Color = 42495
     $wsInput.Range("A1").Interior.Color = 23220               # dark orange, RGB(180,90,0)
     $wsInput.Range("A1").Font.Color = 16777215
     $wsInput.Range("B1").Font.Color = 16777215
 
-    $borderRange = $wsInput.Range("A1:B7")
+    $borderRange = $wsInput.Range("A1:B10")
     $borderRange.Borders.LineStyle = 1   # xlContinuous
     $borderRange.Borders.Weight = 2      # xlThin
     $borderRange.Borders.Color = 5263440 # dark gray, RGB(80,80,80)
@@ -82,7 +95,8 @@ try {
     $wsWatchlist.Range("A1").Value2 = "Watchlist — 同業比較 Peer Comparison"
     $wsWatchlist.Range("A1").Font.Bold = $true
     $wsWatchlist.Range("A2").Value2 = "在下方 A 欄輸入股票代號並按 Enter，自動抓取最新一期 10-K 關鍵指標橫向比較（最多 20 檔，逐列增量更新，不會重算其他列）"
-    $wlHeaders = @("代號 Ticker","公司名稱","股價","市值(M)","營收成長% YoY","P/E","P/S","EV/EBITDA","ROE","股利殖利率","流動比率","更新時間")
+    $wlHeaders = @("代號 Ticker","公司名稱","股價","市值(M)","營收成長% YoY","P/E","P/S","EV/EBITDA","ROE","股利殖利率","流動比率",`
+        "Net Margin","Asset Turnover","Equity Multiplier","CCC(天)","FCF Yield","更新時間")
     for ($i = 0; $i -lt $wlHeaders.Count; $i++) {
         $wsWatchlist.Cells.Item(2, $i + 1).Value2 = $wlHeaders[$i]
     }
@@ -91,7 +105,7 @@ try {
     $wlHeaderRange.Font.Color = 42495
     $wlHeaderRange.Font.Name = "Yu Gothic"
 
-    $wlAllRange = $wsWatchlist.Range("A1:L22")
+    $wlAllRange = $wsWatchlist.Range("A1:Q22")
     $wlAllRange.Interior.Color = 0
     $wlAllRange.Font.Color = 16777215
     $wlAllRange.Font.Name = "Yu Gothic"
@@ -106,12 +120,43 @@ try {
     $wsWatchlist.Columns.Item(1).ColumnWidth = 10
     $wsWatchlist.Columns.Item(2).ColumnWidth = 24
 
+    # TW_Watchlist: same design as Watchlist above, CO_ID instead of ticker,
+    # no dividend-yield column (no reliable per-share dividend tag in the
+    # MOPS feed -- see modMOPS.bas's ExtractTWMetrics comment).
+    $wsTWWatchlist.Range("A1").Value2 = "TW_Watchlist — 台股同業比較 Peer Comparison"
+    $wsTWWatchlist.Range("A1").Font.Bold = $true
+    $wsTWWatchlist.Range("A2").Value2 = "在下方 A 欄輸入台股代號並按 Enter，自動抓取最近一期 MOPS 財報關鍵指標橫向比較（最多 20 檔，逐列增量更新，不會重算其他列）"
+    $twwlHeaders = @("代號 CO_ID","公司名稱","股價","市值(M)","營收成長% YoY","P/E","P/S","EV/EBITDA","ROE","流動比率",`
+        "Net Margin","Asset Turnover","Equity Multiplier","CCC(天)","FCF Yield","更新時間")
+    for ($i = 0; $i -lt $twwlHeaders.Count; $i++) {
+        $wsTWWatchlist.Cells.Item(2, $i + 1).Value2 = $twwlHeaders[$i]
+    }
+    $twwlHeaderRange = $wsTWWatchlist.Range($wsTWWatchlist.Cells.Item(2,1), $wsTWWatchlist.Cells.Item(2, $twwlHeaders.Count))
+    $twwlHeaderRange.Font.Bold = $true
+    $twwlHeaderRange.Font.Color = 42495
+    $twwlHeaderRange.Font.Name = "Yu Gothic"
+
+    $twwlAllRange = $wsTWWatchlist.Range("A1:P22")
+    $twwlAllRange.Interior.Color = 0
+    $twwlAllRange.Font.Color = 16777215
+    $twwlAllRange.Font.Name = "Yu Gothic"
+    $wsTWWatchlist.Range("A1:AN500").Interior.Color = 0
+    $wsTWWatchlist.Range("A1").Interior.Color = 23220              # dark orange, RGB(180,90,0)
+    $wsTWWatchlist.Range("A1").Font.Color = 16777215
+
+    $twwlBorderRange = $wsTWWatchlist.Range($wsTWWatchlist.Cells.Item(2,1), $wsTWWatchlist.Cells.Item(22, $twwlHeaders.Count))
+    $twwlBorderRange.Borders.LineStyle = 1
+    $twwlBorderRange.Borders.Weight = 2
+    $twwlBorderRange.Borders.Color = 5263440
+    $wsTWWatchlist.Columns.Item(1).ColumnWidth = 10
+    $wsTWWatchlist.Columns.Item(2).ColumnWidth = 24
+
     Write-Output "STEP: about to access VBProject"
     $vbProj = $wb.VBProject
     Write-Output "STEP: got VBProject, type = $($vbProj.GetType().Name)"
 
     $vbext_ct_StdModule = 1
-    foreach ($modName in @("modJsonUtil","modHttp","modPrices","modTheme","modSEC","modCharts")) {
+    foreach ($modName in @("modJsonUtil","modHttp","modPrices","modTheme","modSEC","modCharts","modMOPS")) {
         $modComp = $vbProj.VBComponents.Add($vbext_ct_StdModule)
         $modComp.Name = $modName
         $raw = Get-Content "$base\$modName.bas" -Raw -Encoding UTF8
@@ -129,6 +174,11 @@ try {
     $wlComp = $vbProj.VBComponents.Item($watchlistCodeName)
     $wlCode = Get-Content "$base\SheetWatchlist_Code.txt" -Raw -Encoding UTF8
     $wlComp.CodeModule.AddFromString($wlCode)
+
+    $twWatchlistCodeName = $wsTWWatchlist.CodeName
+    $twwlComp = $vbProj.VBComponents.Item($twWatchlistCodeName)
+    $twwlCode = Get-Content "$base\SheetTWWatchlist_Code.txt" -Raw -Encoding UTF8
+    $twwlComp.CodeModule.AddFromString($twwlCode)
 
     $savePath = "C:\Users\ryan9\OneDrive\桌面\SECFilingFetcher.xlsm"
     $wb.SaveAs($savePath, $xlOpenXMLWorkbookMacroEnabled)

@@ -4,4 +4,9 @@ Private Sub Worksheet_Change(ByVal Target As Range)
             Call modSEC.FetchSECFilings
         End If
     End If
+    If Not Intersect(Target, Me.Range("B9")) Is Nothing Then
+        If Me.Range("B9").Value <> "" Then
+            Call modMOPS.FetchMOPSFilings
+        End If
+    End If
 End Sub
