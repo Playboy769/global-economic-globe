@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高業模擬測驗 · 115 年第 2、3 次＋筆記練習</title>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#1a1a1a;
+ font:16px/1.75 "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:26px 20px 90px}
+h1{font-size:25px;font-weight:600;margin:0 0 8px;letter-spacing:.02em}
+.sub{color:#555;font-size:14px;margin-bottom:18px}
+.note{border-left:3px solid #666;background:#fafafa;padding:12px 16px;
+ font-size:14px;color:#333;margin-bottom:20px;border-radius:0 4px 4px 0}
+.note b{color:#111}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{padding:9px 16px;border:1px solid #ccc;border-radius:5px;background:#fff;
+ cursor:pointer;font-size:15px;font-family:inherit;color:#333}
+.tab:hover{background:#f5f5f5}
+.tab.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:600}
+.stabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.stab{padding:7px 14px;border:1px solid #ddd;border-radius:20px;background:#fff;
+ cursor:pointer;font-size:14px;font-family:inherit;color:#444}
+.stab:hover{background:#f5f5f5}
+.stab.on{border-color:#1a1a1a;font-weight:600;color:#111}
+.stab .mini{color:#888;font-weight:400;margin-left:5px;font-size:12px}
+.bar{position:sticky;top:0;z-index:9;background:#fff;border-bottom:1px solid #ddd;
+ padding:11px 0;margin-bottom:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.clock{font-variant-numeric:tabular-nums;font-weight:600;font-size:18px}
+.clock.warn{color:#b45309}
+.clock.over{color:#b91c1c}
+.prog{color:#555;font-size:14px}
+.btn{padding:8px 18px;border:1px solid #1a1a1a;background:#1a1a1a;color:#fff;
+ border-radius:5px;cursor:pointer;font-size:15px;font-family:inherit}
+.btn:hover{opacity:.86}
+.btn.ghost{background:#fff;color:#1a1a1a}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.q{border:1px solid #e2e2e2;border-radius:6px;padding:14px 16px;margin-bottom:18px}
+.q.locked{background:#fafafa}
+.qh{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.qn{flex:0 0 auto;font-weight:600;color:#444;font-variant-numeric:tabular-nums}
+.qt{flex:1 1 auto}
+.tagline{font-size:12px;color:#777;margin-top:2px}
+.opt{display:block;padding:7px 10px;border-radius:4px;cursor:pointer;margin-bottom:2px}
+.opt:hover{background:#f4f4f4}
+.opt input{margin-right:9px}
+.opt .L{font-weight:600;color:#444;margin-right:5px}
+.q.right{border-left:4px solid #15803d}
+.q.wrong{border-left:4px solid #b91c1c}
+.q.blank{border-left:4px solid #a16207}
+.opt.ans{background:#f0f7f1}
+.opt.you{background:#fdf1f1}
+.badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:11px;
+ border:1px solid #bbb;color:#444;margin-left:8px;vertical-align:middle}
+.badge.ok{border-color:#15803d;color:#15803d}
+.badge.ng{border-color:#b91c1c;color:#b91c1c}
+.src{font-size:13px;color:#666;margin-top:9px;padding-top:9px;border-top:1px dashed #ddd}
+.card{border:1px solid #e2e2e2;border-radius:6px;padding:18px 20px;margin-bottom:18px}
+.res-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.res{flex:1 1 190px;border:1px solid #e2e2e2;border-radius:6px;padding:14px 16px}
+.res .nm{font-size:14px;color:#555}
+.res .sc{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.res .vd{font-size:13px}
+.pass{color:#15803d}
+.fail{color:#b91c1c}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid #eee;padding:7px 8px;text-align:left}
+th{color:#555;font-weight:600;border-bottom:2px solid #ddd}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wk{color:#b91c1c}
+.foot{margin-top:34px;padding-top:14px;border-top:1px solid #eee;color:#777;font-size:13px}
+.start{text-align:center;padding:40px 22px}
+.start .stitle{font-size:21px;font-weight:600;margin-bottom:10px}
+.start .sinfo{color:#555;font-size:14px;margin-bottom:8px}
+.start .btn{margin-top:14px;padding:11px 34px;font-size:16px}
+.rv h2{font-size:19px;font-weight:600;margin:26px 0 12px;padding-bottom:7px;
+ border-bottom:2px solid #1a1a1a}
+.rv .empty{color:#777;font-size:14px;padding:22px 0}
+.chart{overflow-x:auto;padding:4px 0}
+.sync{font-size:13px;color:#666;margin-left:4px}
+.sync.bad{color:#b45309}
+.wq{border:1px solid #e2e2e2;border-left:4px solid #b91c1c;border-radius:6px;
+ padding:12px 15px;margin-bottom:16px}
+.wq .wh{font-size:15px;margin-bottom:5px}
+.wq .wm{font-size:13px;color:#666}
+.pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:11px;
+ border:1px solid #b91c1c;color:#b91c1c;margin-right:7px}
+.ex{margin-top:9px;padding:10px 13px;background:#fafafa;border-left:3px solid #15803d;
+ border-radius:0 4px 4px 0;font-size:14px;line-height:1.7;color:#222}
+.ex b{color:#15803d;margin-right:6px}
+.hide{display:none}
+@media print{.bar,.tabs,.stabs,.btn{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>高業模擬測驗 · 115 年第 2、3 次＋筆記練習</h1>
+  <div class="sub">證券商高級業務員　｜　每題 2 分；作答時間依科目基準（投資學 50／法規 60／財務分析 90 分鐘），筆記練習題數超過 50 題時再依比例放大；及格標準為各科不低於 50 分，且三科總分高於 210 分</div>
+  <div class="note" id="paperNote"></div>
+
+  <div class="tabs" id="paperTabs"></div>
+  <div class="stabs" id="subjTabs"></div>
+
+  <div class="bar">
+    <span class="clock" id="clock">60:00</span>
+    <span class="prog" id="prog"></span>
+    <span class="sync" id="sync"></span>
+    <span style="flex:1"></span>
+    <button class="btn ghost" id="btnShuffle" type="button">重新洗題</button>
+    <button class="btn" id="btnSubmit" type="button">交卷</button>
+  </div>
+
+  <div id="quiz"></div>
+  <div id="result" class="hide"></div>
+  <div id="review" class="rv hide"></div>
+
+  <div class="foot">
+    題庫來自 105–115 年考古題。115 年第 2 次為官方原卷；115 年第 3 次尚未舉行，
+    為依重現機率抽樣產生的模擬卷。法規門檻數字以考古題當時答案為準，實際應試請核對最新法條。
+    本頁僅供練習參考。
+  </div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+// 真題／模擬卷固定 50 題／科，時間依科目基準（投資學 50／法規 60／財務分析 90 分鐘）；
+// 筆記練習題庫依科目合併、題數不固定（可能遠大於 50），時間額度依同一基準等比放大。
+const SUBJ_BASE_SEC = {'投資學': 50 * 60, '法規': 60 * 60, '財務分析': 90 * 60};
+function baseSecOf(s) { return SUBJ_BASE_SEC[s] || 60 * 60; }
+function secBudget(p, s) {
+  const base = baseSecOf(s);
+  const n = qsOf(p, s).length;
+  return Math.max(base, Math.ceil(n / 50) * base);
+}
+
+const S = {
+  paper: DATA.papers[0].id,
+  subj: DATA.subjects[0],
+  order: {},
+  ans: {},
+  left: {},
+  started: {},
+  done: {},
+  view: 'exam'
+};
+const key = (p, s) => p + '|' + s;
+const paperOf = id => DATA.papers.find(p => p.id === id);
+const qsOf = (p, s) => paperOf(p).subjects[s];
+// 錯題本用：跨考卷依 qid 找到題目本體（拿解析用，不受目前 S.paper 影響）。
+function findQuestion(qid) {
+  for (const p of DATA.papers) {
+    for (const s of DATA.subjects) {
+      const hit = qsOf(p.id, s).find(function (q) { return q.id === qid; });
+      if (hit) { return hit; }
+    }
+  }
+  return null;
+}
+
+function initState() {
+  for (const p of DATA.papers) {
+    for (const s of DATA.subjects) {
+      const k = key(p.id, s);
+      S.ans[k] = {};
+      S.left[k] = secBudget(p.id, s);
+      S.started[k] = false;
+      shuffleSubject(p.id, s);
+    }
+  }
+}
+
+function shuffleSubject(p, s) {
+  const n = qsOf(p, s).length;
+  const a = Array.from({length: n}, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  S.order[key(p, s)] = a;
+}
+
+function esc(t) {
+  return String(t).replace(/[&<>"]/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c];
+  });
+}
+
+function mmss(sec) {
+  sec = Math.max(0, sec);
+  return String(Math.floor(sec / 60)).padStart(2, '0') + ':' +
+         String(sec % 60).padStart(2, '0');
+}
+
+function renderTabs() {
+  document.getElementById('paperTabs').innerHTML = DATA.papers.map(function (p) {
+    return '<button class="tab' + (S.view === 'exam' && p.id === S.paper ? ' on' : '') +
+           '" data-p="' + p.id + '" type="button">' + esc(p.name) + '</button>';
+  }).join('') +
+    '<button class="tab' + (S.view === 'review' ? ' on' : '') +
+    '" data-view="review" type="button">錯題本</button>';
+
+  const examMode = S.view === 'exam';
+  document.getElementById('subjTabs').classList.toggle('hide', !examMode);
+  document.querySelector('.bar').classList.toggle('hide', !examMode);
+  document.getElementById('review').classList.toggle('hide', examMode);
+  if (!examMode) {
+    document.getElementById('quiz').classList.add('hide');
+    document.getElementById('result').classList.add('hide');
+    return;
+  }
+
+  document.getElementById('subjTabs').innerHTML = DATA.subjects.map(function (s) {
+    const k = key(S.paper, s);
+    const done = Object.keys(S.ans[k]).length;
+    const tot = qsOf(S.paper, s).length;
+    const r = S.done[k];
+    return '<button class="stab' + (s === S.subj ? ' on' : '') +
+           '" data-s="' + esc(s) + '" type="button">' + esc(s) +
+           '<span class="mini">' + (r ? '已交卷 ' + r.score + ' 分' : done + '/' + tot) +
+           '</span></button>';
+  }).join('');
+
+  document.getElementById('paperNote').innerHTML =
+    '<b>' + esc(paperOf(S.paper).name) + '</b>　' + esc(paperOf(S.paper).note);
+}
+
+function renderQuiz() {
+  if (S.done[key(S.paper, S.subj)]) { renderResult(); return; }
+  document.getElementById('result').classList.add('hide');
+  document.getElementById('quiz').classList.remove('hide');
+
+  const k = key(S.paper, S.subj);
+  const qs = qsOf(S.paper, S.subj);
+  const ord = S.order[k];
+  const locked = S.left[k] <= 0;
+
+  if (!S.started[k]) {
+    document.getElementById('quiz').innerHTML =
+      '<div class="card start"><div class="stitle">' + esc(S.subj) + '</div>' +
+      '<div class="sinfo">' + qs.length + ' 題　｜　作答時間 ' +
+      Math.round(secBudget(S.paper, S.subj) / 60) + ' 分鐘　｜　每題 2 分</div>' +
+      '<div class="sinfo">各科可獨立開始與交卷，互不影響；按下開始後計時才啟動，切換到其他科目時本科計時會暫停。</div>' +
+      '<button class="btn" id="btnStart" type="button">開始作答</button></div>';
+    updateProg();
+    return;
+  }
+
+  document.getElementById('quiz').innerHTML = ord.map(function (qi, pos) {
+    const q = qs[qi];
+    const picked = S.ans[k][qi];
+    const opts = q.opts.map(function (o) {
+      return '<label class="opt"><input type="radio" name="q' + qi + '" value="' + o[0] + '"' +
+             (picked === o[0] ? ' checked' : '') + (locked ? ' disabled' : '') +
+             ' data-qi="' + qi + '"><span class="L">(' + o[0] + ')</span>' + esc(o[1]) + '</label>';
+    }).join('');
+    return '<div class="q' + (locked ? ' locked' : '') + '">' +
+           '<div class="qh"><span class="qn">' + (pos + 1) + '.</span>' +
+           '<span class="qt">' + esc(q.head) +
+           '<div class="tagline">' + esc(q.tag) + '</div></span></div>' + opts + '</div>';
+  }).join('');
+  updateProg();
+}
+
+function updateProg() {
+  const k = key(S.paper, S.subj);
+  const done = Object.keys(S.ans[k]).length;
+  const tot = qsOf(S.paper, S.subj).length;
+  let all = 0, allTot = 0;
+  for (const s of DATA.subjects) {
+    all += Object.keys(S.ans[key(S.paper, s)]).length;
+    allTot += qsOf(S.paper, s).length;
+  }
+  document.getElementById('prog').textContent =
+    '本科 ' + done + '/' + tot + '　全卷 ' + all + '/' + allTot +
+    (S.done[k] ? '　（本科已交卷）'
+      : !S.started[k] ? '　（本科尚未開始）'
+      : S.left[k] <= 0 ? '　（本科時間已到，已鎖定）' : '');
+
+  const c = document.getElementById('clock');
+  c.textContent = mmss(S.left[k]);
+  c.className = 'clock' + (S.left[k] <= 0 ? ' over' : (S.left[k] <= 300 ? ' warn' : ''));
+}
+
+function grade(subject) {
+  const k = key(S.paper, subject);
+  const qs = qsOf(S.paper, subject);
+  const byTag = {};
+  let right = 0, blank = 0;
+  qs.forEach(function (q, qi) {
+    const a = S.ans[k][qi];
+    const ok = a === q.ans;
+    if (!a) { blank++; } else if (ok) { right++; }
+    const t = byTag[q.tag] || (byTag[q.tag] = {name: q.tag, right: 0, tot: 0});
+    t.tot++;
+    if (ok) { t.right++; }
+  });
+  const res = {right: right, blank: blank, tot: qs.length,
+               score: qs.length ? Math.round(right / qs.length * 100) : null,
+               byTag: byTag};
+  S.done[k] = res;
+  postAttempt(subject, res);
+  return res;
+}
+
+// ---------- 紀錄上傳（離線先排隊，下次連線補傳）----------
+const QKEY = 'gaoye_pending_attempts';
+
+function loadQueue() {
+  try { return JSON.parse(localStorage.getItem(QKEY) || '[]'); } catch (e) { return []; }
+}
+function saveQueue(q) {
+  try { localStorage.setItem(QKEY, JSON.stringify(q)); } catch (e) {}
+}
+function setSync(msg, bad) {
+  const el = document.getElementById('sync');
+  if (el) { el.textContent = msg; el.className = 'sync' + (bad ? ' bad' : ''); }
+}
+
+function buildPayload(subject, res) {
+  const p = paperOf(S.paper);
+  const k = key(S.paper, subject);
+  const answers = [];
+  const subjects = {};
+  if (res.tot) {   // 重練卷可能某科 0 題，別送假的 0 分上去
+    subjects[subject] = {score: res.score, right: res.right, blank: res.blank, tot: res.tot,
+                         secs: secBudget(S.paper, subject) - S.left[k]};
+    qsOf(S.paper, subject).forEach(function (q, qi) {
+      const a = S.ans[k][qi] || null;
+      answers.push({subject: subject, qid: q.id, head: q.head, tag: q.tag,
+                    chosen: a, correct: q.ans, ok: a === q.ans});
+    });
+  }
+  return {paper: S.paper, paperName: p.name, subjects: subjects, answers: answers};
+}
+
+function send(payload) {
+  return fetch('api/attempt', {
+    method: 'POST',
+    headers: {'content-type': 'application/json'},
+    body: JSON.stringify(payload)
+  }).then(function (r) {
+    if (!r.ok) { throw new Error('HTTP ' + r.status); }
+    return r.json();
+  });
+}
+
+function postAttempt(subject, res) {
+  const payload = buildPayload(subject, res);
+  setSync('紀錄上傳中…');
+  send(payload).then(function () {
+    setSync('紀錄已儲存');
+    flushQueue();
+  }).catch(function () {
+    const q = loadQueue();
+    q.push(payload);
+    saveQueue(q);
+    setSync('離線：已暫存本機，連線後自動補傳（待傳 ' + q.length + ' 份）', true);
+  });
+}
+
+function flushQueue() {
+  const q = loadQueue();
+  if (!q.length) { return Promise.resolve(); }
+  return send(q[0]).then(function () {
+    const rest = loadQueue().slice(1);
+    saveQueue(rest);
+    if (rest.length) { return flushQueue(); }
+    setSync('離線暫存的紀錄已補傳完成');
+  }).catch(function () {});
+}
+
+function renderResult() {
+  const k0 = key(S.paper, S.subj);
+  const res = S.done[k0];
+  document.getElementById('quiz').classList.add('hide');
+  const box = document.getElementById('result');
+  box.classList.remove('hide');
+
+  let anySubj = false, allGraded = true, total = 0, allPass = true;
+  const cards = DATA.subjects.map(function (s) {
+    const qs = qsOf(S.paper, s);
+    if (!qs.length) {
+      return '<div class="res"><div class="nm">' + esc(s) + '</div>' +
+             '<div class="sc" style="color:#aaa">—</div>' +
+             '<div class="vd">本卷無此科題目</div></div>';
+    }
+    anySubj = true;
+    const r = S.done[key(S.paper, s)];
+    if (!r) {
+      allGraded = false;
+      return '<div class="res"><div class="nm">' + esc(s) + '</div>' +
+             '<div class="sc" style="color:#aaa">—</div>' +
+             '<div class="vd">尚未交卷</div></div>';
+    }
+    total += r.score;
+    const pass = r.score >= 50;
+    if (!pass) { allPass = false; }
+    return '<div class="res"><div class="nm">' + esc(s) + '</div>' +
+           '<div class="sc ' + (pass ? 'pass' : 'fail') + '">' + r.score + '</div>' +
+           '<div class="vd">答對 ' + r.right + '／' + r.tot + '　未作答 ' + r.blank +
+           '<span class="badge ' + (pass ? 'ok' : 'ng') + '">' +
+           (pass ? '單科達標' : '單科未達標') + '</span></div></div>';
+  }).join('');
+
+  const overall = !anySubj ? '' :
+    '<div class="card"><b>整份成績</b>　三科總分 ' + total +
+    (allGraded
+      ? ('　<span class="badge ' + ((allPass && total > 210) ? 'ok' : 'ng') + '">' +
+         ((allPass && total > 210) ? '及格' : '不及格') + '</span>')
+      : '　（尚有科目未交卷，暫無法判定整體及格）') +
+    '<div style="margin-top:6px;font-size:13px;color:#666">' +
+    '及格標準：各科不低於 50 分，且三科總分高於 210 分。</div></div>';
+
+  const tags = Object.keys((res && res.byTag) || {}).map(function (t) { return res.byTag[t]; })
+    .sort(function (a, b) {
+      return (a.right / a.tot) - (b.right / b.tot) || b.tot - a.tot;
+    });
+
+  const tagRows = tags.map(function (v) {
+    const pct = Math.round(v.right / v.tot * 100);
+    return '<tr><td' + (pct < 60 ? ' class="wk"' : '') + '>' + esc(v.name) + '</td>' +
+           '<td class="n">' + v.right + '/' + v.tot + '</td>' +
+           '<td class="n' + (pct < 60 ? ' wk' : '') + '">' + pct + '%</td></tr>';
+  }).join('');
+
+  const k = key(S.paper, S.subj);
+  const qs = qsOf(S.paper, S.subj);
+  const ord = S.order[k];
+  const review = ord.map(function (qi, pos) {
+    const q = qs[qi];
+    const a = S.ans[k][qi];
+    const cls = !a ? 'blank' : (a === q.ans ? 'right' : 'wrong');
+    const badge = !a ? '<span class="badge">未作答</span>'
+      : (a === q.ans ? '<span class="badge ok">答對</span>'
+                     : '<span class="badge ng">答錯</span>');
+    const opts = q.opts.map(function (o) {
+      let c = 'opt';
+      if (o[0] === q.ans) { c += ' ans'; } else if (o[0] === a) { c += ' you'; }
+      return '<div class="' + c + '"><span class="L">(' + o[0] + ')</span>' + esc(o[1]) + '</div>';
+    }).join('');
+    // 解析只在答錯或未作答時出現 —— 答對就不佔版面。
+    const ex = (cls !== 'right' && q.ex)
+      ? '<div class="ex"><b>解析</b>' + esc(q.ex) + '</div>' : '';
+    return '<div class="q ' + cls + '">' +
+           '<div class="qh"><span class="qn">' + (pos + 1) + '.</span>' +
+           '<span class="qt">' + esc(q.head) + badge +
+           '<div class="tagline">' + esc(q.tag) + '</div></span></div>' + opts +
+           '<div class="src">正解 (' + q.ans + ')　｜　' + esc(q.srcTxt) + '</div>' +
+           ex + '</div>';
+  }).join('');
+
+  box.innerHTML = '<div class="res-row">' + cards + '</div>' + overall +
+    '<div class="card"><b>' + esc(S.subj) + '</b> 各觀念得分（正確率低於 60% 以紅字標示）' +
+    '<table style="margin-top:12px"><thead><tr><th>觀念</th>' +
+    '<th class="n">答對/題數</th><th class="n">正確率</th></tr></thead><tbody>' +
+    tagRows + '</tbody></table>' +
+    '<div style="margin-top:12px;font-size:13px;color:#666">' +
+    '切換上方科目分頁可看另外兩科的作答狀態；已交卷的科目會顯示分數與逐題檢討。</div></div>' +
+    '<h2 style="font-size:19px;margin:26px 0 14px">' + esc(S.subj) + ' 逐題檢討</h2>' + review;
+
+  document.getElementById('prog').textContent = '本科已交卷';
+  document.getElementById('btnSubmit').disabled = true;
+}
+
+document.getElementById('paperTabs').onclick = function (e) {
+  if (e.target.closest('[data-view]')) {
+    S.view = 'review';
+    renderTabs();
+    renderReview();
+    return;
+  }
+  const b = e.target.closest('[data-p]');
+  if (!b) { return; }
+  S.view = 'exam';
+  S.paper = b.dataset.p;
+  S.subj = DATA.subjects[0];
+  document.getElementById('btnSubmit').disabled = !!S.done[key(S.paper, S.subj)];
+  renderTabs(); renderQuiz(); updateProg();
+};
+
+document.getElementById('subjTabs').onclick = function (e) {
+  const b = e.target.closest('[data-s]');
+  if (!b) { return; }
+  S.subj = b.dataset.s;
+  document.getElementById('btnSubmit').disabled = !!S.done[key(S.paper, S.subj)];
+  renderTabs(); renderQuiz(); updateProg();
+};
+
+document.getElementById('quiz').onclick = function (e) {
+  if (!e.target.closest('#btnStart')) { return; }
+  S.started[key(S.paper, S.subj)] = true;
+  renderQuiz();
+};
+
+document.getElementById('quiz').onchange = function (e) {
+  const inp = e.target.closest('input[type=radio]');
+  if (!inp) { return; }
+  S.ans[key(S.paper, S.subj)][inp.dataset.qi] = inp.value;
+  renderTabs(); updateProg();
+};
+
+document.getElementById('btnShuffle').onclick = function () {
+  const k = key(S.paper, S.subj);
+  if (S.done[k]) { return; }
+  if (Object.keys(S.ans[k]).length &&
+      !confirm('重新洗題會清掉本科已作答的答案，確定嗎？')) { return; }
+  S.ans[k] = {};
+  shuffleSubject(S.paper, S.subj);
+  renderTabs(); renderQuiz(); updateProg();
+};
+
+document.getElementById('btnSubmit').onclick = function () {
+  const s = S.subj;
+  const k = key(S.paper, s);
+  const blank = qsOf(S.paper, s).length - Object.keys(S.ans[k]).length;
+  if (blank && !confirm(s + ' 還有 ' + blank + ' 題未作答，確定要交卷嗎？')) { return; }
+  grade(s); renderTabs(); renderResult();
+};
+
+setInterval(function () {
+  const k = key(S.paper, S.subj);
+  if (S.done[k]) { return; }
+  if (S.started[k] && S.left[k] > 0) {
+    S.left[k]--;
+    if (S.left[k] === 0) { renderQuiz(); }
+    updateProg();
+  }
+}, 1000);
+
+// ---------- 錯題本 ----------
+function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
+
+function lineChart(rows) {
+  // 進步曲線：零依賴的內嵌 SVG。x = 第幾次交卷，y = 分數 0-100，三科各一條線。
+  if (!rows.length) { return '<div class="empty">還沒有任何交卷紀錄。</div>'; }
+  const byTs = {};
+  rows.forEach(function (r) { (byTs[r.ts] = byTs[r.ts] || {})[r.subject] = r; });
+  const stamps = Object.keys(byTs).sort();
+  const W = Math.max(560, 90 + stamps.length * 66), H = 260;
+  const L = 46, R = 16, T = 16, B = 46;
+  const x = function (i) {
+    return L + (stamps.length < 2 ? 0 : i * (W - L - R) / (stamps.length - 1));
+  };
+  const y = function (v) { return T + (100 - v) * (H - T - B) / 100; };
+  const colors = {'投資學': '#1d4ed8', '財務分析': '#15803d', '法規': '#b45309'};
+  let g = '';
+  for (let v = 0; v <= 100; v += 25) {
+    g += '<line x1="' + L + '" y1="' + y(v) + '" x2="' + (W - R) + '" y2="' + y(v) +
+         '" stroke="' + (v === 50 ? '#b91c1c' : '#eee') + '"' +
+         (v === 50 ? ' stroke-dasharray="4 3"' : '') + '/>' +
+         '<text x="' + (L - 8) + '" y="' + (y(v) + 4) +
+         '" font-size="11" fill="#888" text-anchor="end">' + v + '</text>';
+  }
+  DATA.subjects.forEach(function (s) {
+    const pts = [];
+    stamps.forEach(function (t, i) {
+      const r = byTs[t][s];
+      if (r) { pts.push([x(i), y(r.score)]); }
+    });
+    if (!pts.length) { return; }
+    g += '<polyline fill="none" stroke="' + colors[s] + '" stroke-width="2" points="' +
+         pts.map(function (q) { return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ') + '"/>';
+    g += pts.map(function (q) {
+      return '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) +
+             '" r="3.2" fill="' + colors[s] + '"/>';
+    }).join('');
+  });
+  stamps.forEach(function (t, i) {
+    const d = new Date(t);
+    g += '<text x="' + x(i) + '" y="' + (H - B + 18) +
+         '" font-size="10" fill="#888" text-anchor="middle">' +
+         (d.getMonth() + 1) + '/' + d.getDate() + '</text>';
+  });
+  const legend = DATA.subjects.map(function (s) {
+    return '<span style="margin-right:16px;font-size:13px">' +
+           '<span style="display:inline-block;width:11px;height:3px;background:' + colors[s] +
+           ';vertical-align:middle;margin-right:5px"></span>' + esc(s) + '</span>';
+  }).join('') + '<span style="font-size:13px;color:#b91c1c">— — 50 分（單科最低門檻，另需三科合計逾 210 分）</span>';
+  return '<div class="chart"><svg width="' + W + '" height="' + H + '" role="img">' + g +
+         '</svg></div><div style="margin-top:6px">' + legend + '</div>';
+}
+
+function renderReview() {
+  const box = document.getElementById('review');
+  box.innerHTML = '<div class="empty">載入紀錄中…</div>';
+  const get = function (u) {
+    return fetch(u).then(function (r) { return r.json(); })
+                   .catch(function () { return {items: []}; });
+  };
+  Promise.all([get('api/history'), get('api/stats'), get('api/wrong?limit=200')])
+    .then(function (out) {
+      const hist = out[0].items || [], stats = out[1].items || [], wrong = out[2].items || [];
+      const pend = loadQueue().length;
+
+      const statRows = stats.map(function (v) {
+        const p = pct(v.nright, v.nanswered);
+        return '<tr><td>' + esc(v.subject) + '</td><td' + (p < 60 ? ' class="wk"' : '') + '>' +
+               esc(v.tag) + '</td><td class="n">' + v.nright + '/' + v.nanswered +
+               '</td><td class="n' + (p < 60 ? ' wk' : '') + '">' + p + '%</td></tr>';
+      }).join('');
+
+      const wrongCards = wrong.map(function (w) {
+        const q = findQuestion(w.qid);
+        const ex = (q && q.ex)
+          ? '<div class="ex"><b>解析</b>' + esc(q.ex) + '</div>' : '';
+        return '<div class="wq"><div class="wh">' + esc(w.head) + '</div>' +
+               '<div class="wm"><span class="pill">錯 ' + w.nwrong + ' 次</span>' +
+               esc(w.subject) + '｜' + esc(w.tag) + '｜作答 ' + w.nseen + ' 次' +
+               (w.wrongPicks ? '｜錯選 ' + esc(w.wrongPicks) : '') + '</div>' +
+               ex + '</div>';
+      }).join('');
+
+      box.innerHTML =
+        (pend ? '<div class="note">尚有 <b>' + pend +
+                '</b> 份離線紀錄待補傳，連上線後會自動送出。</div>' : '') +
+        '<h2>進步曲線</h2>' + lineChart(hist) +
+        '<h2>觀念弱點（正確率低於 60% 標紅）</h2>' +
+        (stats.length
+          ? '<div class="card"><table><thead><tr><th>科目</th><th>觀念</th>' +
+            '<th class="n">答對/作答</th><th class="n">正確率</th></tr></thead><tbody>' +
+            statRows + '</tbody></table></div>'
+          : '<div class="empty">還沒有作答紀錄。</div>') +
+        '<h2>錯題清單（' + wrong.length + ' 題）' +
+        (wrong.length
+          ? ' <button class="btn" id="btnRetry" type="button" ' +
+            'style="font-size:14px;padding:6px 14px;margin-left:8px">用這些題組一份重練卷</button>'
+          : '') +
+        '</h2>' + (wrong.length ? wrongCards : '<div class="empty">目前沒有錯題。</div>');
+
+      const rb = document.getElementById('btnRetry');
+      if (rb) { rb.onclick = function () { buildRetry(wrong); }; }
+    });
+}
+
+// 用錯題組重練卷：題目本來就內嵌在本頁，依 qid 撈回來即可，不必再跟伺服器要題目。
+function buildRetry(wrong) {
+  const want = {};
+  wrong.forEach(function (w) { want[w.qid] = true; });
+  const seen = {}, subjects = {};
+  DATA.papers.forEach(function (p) {
+    if (p.id === 'retry') { return; }
+    DATA.subjects.forEach(function (s) {
+      (p.subjects[s] || []).forEach(function (q) {
+        if (want[q.id] && !seen[q.id]) {
+          seen[q.id] = true;
+          (subjects[s] = subjects[s] || []).push(q);
+        }
+      });
+    });
+  });
+  DATA.subjects.forEach(function (s) { subjects[s] = subjects[s] || []; });
+  const n = DATA.subjects.reduce(function (a, s) { return a + subjects[s].length; }, 0);
+  if (!n) { alert('這些錯題不在目前這兩份卷裡，無法組卷。'); return; }
+
+  const paper = {id: 'retry', name: '錯題重練卷', subjects: subjects,
+                 note: '由歷次答錯的題目組成，共 ' + n + ' 題。每次重組都會依最新錯題名單產生。'};
+  const at = DATA.papers.findIndex(function (p) { return p.id === 'retry'; });
+  if (at >= 0) { DATA.papers.splice(at, 1, paper); } else { DATA.papers.push(paper); }
+
+  DATA.subjects.forEach(function (s) {
+    const k = key('retry', s);
+    S.ans[k] = {};
+    S.left[k] = secBudget('retry', s);
+    S.started[k] = false;
+    delete S.done[k];
+    shuffleSubject('retry', s);
+  });
+  S.view = 'exam';
+  S.paper = 'retry';
+  S.subj = DATA.subjects.find(function (s) { return subjects[s].length; }) || DATA.subjects[0];
+  document.getElementById('btnSubmit').disabled = false;
+  renderTabs(); renderQuiz(); updateProg();
+}
+
+flushQueue();
+initState();
+renderTabs();
+renderQuiz();
+updateProg();
+</script>
+</body>
+</html>
