@@ -16,6 +16,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, 'out')
 DEST = os.path.abspath(os.path.join(HERE, '..', '..', '..',
                                     'projects', 'gaoye-mock-exam', 'index.html'))
+EXPLAIN_PATH = os.path.join(HERE, 'explanations.json')
+EXPLAIN = (json.load(open(EXPLAIN_PATH, encoding='utf-8'))
+           if os.path.exists(EXPLAIN_PATH) else {})
 
 # ---------------------------------------------------------------- 觀念分類
 # 有序規則，先命中者勝。標籤與 高業考古題_高頻觀念統整.md 的頻率表一致。
@@ -159,12 +162,15 @@ def build_real(recs, exam='115-2'):
               and q['opts'] and len(q['opts']) == 4
               and q['ans'] and len(q['ans']) == 1 and q['ans'] in 'ABCD']
         qs.sort(key=lambda q: q['qno'])
-        out[s] = [{
-            'id': qid(s, q['head'], q['opts']),
-            'head': q['head'], 'opts': q['opts'], 'ans': q['ans'],
-            'tag': tag(s, q['raw']),
-            'srcTxt': f"{exam.replace('-', '年第')}次 第{q['qno']}題（本屆原題）",
-        } for q in qs]
+        out[s] = []
+        for q in qs:
+            i = qid(s, q['head'], q['opts'])
+            out[s].append({
+                'id': i, 'head': q['head'], 'opts': q['opts'], 'ans': q['ans'],
+                'tag': tag(s, q['raw']),
+                'srcTxt': f"{exam.replace('-', '年第')}次 第{q['qno']}題（本屆原題）",
+                'ex': EXPLAIN.get(i, ''),
+            })
     return out
 
 
@@ -204,14 +210,17 @@ def build_mock():
     out = {}
     for s in SUBJECTS:
         picked = cap['paper'][s]
-        out[s] = [{
-            'id': qid(s, c['head'], c['opts']),
-            'head': c['head'], 'opts': c['opts'], 'ans': c['ans'],
-            'tag': tag(s, c['head'] + ' ' + ' '.join(b for _, b in c['opts'])),
-            'srcTxt': (f"曾出現 {c['k']} 次：{'、'.join(c['exams'])}"
-                       f"　｜　本卷採用 {c['from']} 版本"
-                       + ("　｜　⚠ 選項曾被改寫" if c['variants'] > 1 else "")),
-        } for c in picked]
+        out[s] = []
+        for c in picked:
+            i = qid(s, c['head'], c['opts'])
+            out[s].append({
+                'id': i, 'head': c['head'], 'opts': c['opts'], 'ans': c['ans'],
+                'tag': tag(s, c['head'] + ' ' + ' '.join(b for _, b in c['opts'])),
+                'srcTxt': (f"曾出現 {c['k']} 次：{'、'.join(c['exams'])}"
+                           f"　｜　本卷採用 {c['from']} 版本"
+                           + ("　｜　⚠ 選項曾被改寫" if c['variants'] > 1 else "")),
+                'ex': EXPLAIN.get(i, ''),
+            })
     return out, cap['stats']
 
 
