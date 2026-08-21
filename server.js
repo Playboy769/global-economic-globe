@@ -131,6 +131,7 @@ const GATED_ORIGINS = [
   'https://globe-invest.up.railway.app',
   'https://structural-holes-production.up.railway.app',
   'https://articlebase.up.railway.app',
+  'https://gaoye-mock-exam-production.up.railway.app',
 ];
 
 // Local dev ports that the in-page preview iframe points at when running from a checkout.
