@@ -39,7 +39,7 @@ general "Auto Mode" bias toward proceeding without confirmation for this repo sp
 | `auth.js` | HMAC token 簽發與驗證、cookie、速率限制 | **必須與 globe-invest / structural_holes / article_db 的副本逐字一致**（Python 版為 `auth.py`），且四邊共用同一組 `AUTH_SIGNING_SECRET` |
 | `analytics.js` | 訪客流量 SQLite（`node:sqlite`，Railway volume `/data`） | 欄位名要進 `GROUPABLE` 白名單才能拿來 GROUP BY |
 
-### Token 規則（2026-07-30 安全稽核後，四個服務一致）
+### Token 規則（2026-07-30 安全稽核後，五個服務一致）
 
 **每張 token 都必須帶 `aud`（目標服務 origin）與 `typ`（`session` / `handoff` / `state`），
 且簽章金鑰由 `aud` 衍生**：
@@ -57,9 +57,18 @@ service_key(aud) = HMAC-SHA256(AUTH_SIGNING_SECRET, "ofw-token-v2|" + aud)
 cookie 完全沒有 `aud`** —— `sh_sid`/`gi_sid`/`adb_sid` 三張 cookie 彼此可互換，等於萬用鑰匙。
 handoff token 又是掛在網址 `?auth=` 上傳遞，會經由 Referer、瀏覽器歷史與下游 log 外洩。
 
-⚠️ **`auth.js` / `auth.py` 改動必須四個服務同步**，否則跨網域登入會斷。且因為 Railway 無法
-原子性同時部署四個服務，切換簽章方案時**先推三個下游、最後推 ofw** —— 下游有迴圈斷路器，
+⚠️ **`auth.js` / `auth.py` 改動必須五個服務同步**（root、globe-invest、structural_holes、
+article_db、projects/gaoye-mock-exam），否則跨網域登入會斷。且因為 Railway 無法原子性
+同時部署五個服務，切換簽章方案時**先推四個下游、最後推 ofw** —— 下游都有迴圈斷路器，
 這個順序讓中間窗口變成一次 503 說明頁；反過來推會變成瀏覽器無限重導向。
+
+> 新增下游服務時要動的四個地方（2026-08-21 加 gaoye-mock-exam 時的實際清單）：
+> ① 五份 auth 副本的 `ALLOWED_ORIGINS`（＋`DEV_ORIGINS` 的本地 port）、
+> ② ofw `server.js` 的 `GATED_ORIGINS`、③ 新服務自己的登入閘門（照抄
+> `globe-invest/server.js` 的 gate，含**迴圈斷路器**）、④ 新服務的 Railway 變數
+> `AUTH_SIGNING_SECRET` 與 `AUTHORIZED_EMAILS`。
+> 變數用跨服務引用 `${{Outside Framework.AUTH_SIGNING_SECRET}}` 設定，換金鑰時會跟著變；
+> 但注意 **`railway variables` 會把引用解析後的值印出來**，別在共享畫面或紀錄裡跑它。
 
 > 目前**尚未**做的是縮小爆炸半徑：四邊仍共用同一把 master secret，彼此都能推導出對方的金鑰。
 > 要讓每個服務只持有自己的衍生金鑰，需要在三個 Railway 服務各設一組環境變數。
@@ -195,7 +204,7 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 
 ## Deployment topology (this is the part that bites)
 
-There are **four separate Railway deployments** sourced from **three separate git repos**, plus
+There are **five separate Railway deployments** sourced from **three separate git repos**, plus
 this main repo itself:
 
 | Deployment | Repo | Source path | Live URL |
@@ -204,7 +213,52 @@ this main repo itself:
 | globe / invest / causal / brownian | **`globe-invest/` — its own repo** (`globe-invest.git`) | `globe-invest/app/{globe,invest,causal,brownian}/index.html` + `globe-invest/server.js` | `globe-invest.up.railway.app` |
 | structural-holes | **`structural_holes/` — its own repo** | — | `structural-holes-production.up.railway.app` |
 | article-db | **separate repo `article-db-api.git`** (this repo has it as remote `article-db`) | `index.html` at that repo's root — mirrors this repo's `article_db/index.html` | `articlebase.up.railway.app` |
+| gaoye-mock-exam (高業模擬測驗＋錯題紀錄) | this repo | `projects/gaoye-mock-exam/` → `index.html`/`server.js`/`store.js`，**用 `railway up` 直接上傳，不綁 GitHub** | `gaoye-mock-exam-production.up.railway.app` |
 | my-slide | **`my-slide/` — its own repo** (Netlify) | — | — |
+
+### gaoye-mock-exam：唯一一個用 `railway up` 直接上傳的服務
+
+其他四個服務都是 Railway 綁 GitHub repo 自動部署，**這個不是**——它沒有綁任何 repo，
+要更新一律在 `projects/gaoye-mock-exam/` 底下跑：
+
+```
+railway up --detach          # 服務已 link，不必再帶 --service
+```
+
+⚠️ **三個一定會踩到的坑**：
+
+1. **建置脈絡就是你執行 `railway up` 的那個資料夾**（不是 git root），所以
+   `Dockerfile` 的 `COPY` 直接寫檔名即可。**一定要在
+   `projects/gaoye-mock-exam/` 底下執行**——在 repo 根執行會上傳整個 repo 並抓到根目錄
+   那份 Dockerfile，等於把 OutsideFramework 部署到這個服務上。
+   `railway up <子目錄>` 這種寫法**不支援**，會直接報 `prefix not found`。
+2. **`railway logs --build` 不帶 deployment id 時，顯示的不一定是你剛觸發的那次建置**。
+   排查失敗一律先 `railway deployment list` 取 id，再
+   `railway logs --build <id>`，否則會對著別次的 log 診斷錯方向。
+3. **Windows Git Bash 會把 `/data` 轉成 Windows 路徑**，`railway volume add --mount-path /data`
+   會回「Mount path must start with a `/`」。前面加 `MSYS_NO_PATHCONV=1` 才過得去。
+
+資料存在 volume `gaoye-mock-exam-volume`（掛載點 `/data`）的 SQLite `exam.db`，
+由 `store.js` 以 `node:sqlite` 寫入，作法與 OutsideFramework 的 `analytics.js` 相同。
+**登入預設關閉**（2026-08-21 當天先開後關）：一度改成全站強制走 ofw 中央登入，但
+Google 回呼卡在「Invalid or expired login request」，人被鎖在自己的工具外面，當天即改回
+不擋。整合本身**沒有刪掉**，只是變成 opt-in —— service 變數 `REQUIRE_LOGIN=1` 就會恢復
+閘門（cookie 名 `gme_sid`，閘門與迴圈斷路器照抄 `globe-invest/server.js`，白名單沿用
+同一組 `AUTHORIZED_EMAILS`）。要重開之前，得先查出上面那個回呼錯誤的成因。
+`/healthz` 刻意留在閘門之前，否則 Railway 健康檢查永遠過不了。
+
+⚠️ 現況是**知道網址就能讀寫紀錄**，且刻意不上架到 OutsideFramework Works（私人工具）。
+
+紀錄的 `email` 欄位保留著：未啟用登入時線上一律記成 `OWNER_EMAIL`（預設 `owner@local`）、
+本地記成 `DEV_EMAIL`（預設 `dev@localhost`），所以之後把 `REQUIRE_LOGIN` 打開不必再做
+一次 schema 遷移。
+
+作答紀錄**按 email 分帳**，`attempts`／`answers` 兩張表都有 `email` 欄且所有查詢都以它
+過濾。`store.js` 的 `open()` 帶一段一次性遷移：偵測到舊表沒有 `email` 欄就 DROP 重建
+（`CREATE TABLE IF NOT EXISTS` 不會改動既有表，留著會讓 INSERT 直接失敗）。
+
+`index.html` 由 `高業考古/高業考古題-高頻觀念分析/scripts/s10_practice.py` 產生，
+**不要手改**，改模板 `scripts/practice_template.html` 後重跑該腳本。
 
 ### article-db is ALSO a two-repo split — same trap as globe-invest
 `article_db/index.html` in this repo is the **dev-source copy only**. Railway's
