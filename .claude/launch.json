@@ -612,6 +612,30 @@
         "projects/agentic-ai-magazine"
       ],
       "port": 8174
+    },
+    {
+      "name": "gaoye-mock-exam",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "projects/gaoye-mock-exam/server.js"
+      ],
+      "port": 8175,
+      "env": {
+        "PORT": "8175",
+        "EXAM_DATA_DIR": "projects/gaoye-mock-exam/.localdata"
+      }
+    },
+    {
+      "name": "dram-nand-technote",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8176",
+        "--directory",
+        "research/dram-nand-moat-export-controls"
+      ],
+      "port": 8176
     }
   ]
 }
