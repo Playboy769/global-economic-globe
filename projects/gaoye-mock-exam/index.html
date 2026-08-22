@@ -704,49 +704,86 @@ function renderReview() {
       const hist = out[0].items || [], stats = out[1].items || [], wrong = out[2].items || [];
       const pend = loadQueue().length;
 
-      const statRows = stats.map(function (v) {
-        const p = pct(v.nright, v.nanswered);
-        return '<tr><td>' + esc(v.subject) + '</td><td' + (p < 60 ? ' class="wk"' : '') + '>' +
-               esc(v.tag) + '</td><td class="n">' + v.nright + '/' + v.nanswered +
-               '</td><td class="n' + (p < 60 ? ' wk' : '') + '">' + p + '%</td></tr>';
-      }).join('');
+      // 錯題清單的科目篩選：只影響「觀念弱點」表與「錯題清單」本身，
+      // 進步曲線刻意不跟著篩選（那張圖本來就是看整體趨勢用的）。
+      function paint(selSubj) {
+        const fStats = selSubj ? stats.filter(function (v) { return v.subject === selSubj; }) : stats;
+        const fWrong = selSubj ? wrong.filter(function (w) { return w.subject === selSubj; }) : wrong;
 
-      const wrongCards = wrong.map(function (w) {
-        const q = findQuestion(w.qid);
-        const picks = (w.wrongPicks || '').split(',').map(function (s) { return s.trim(); });
-        const opts = (q && q.opts) ? q.opts.map(function (o) {
-          let c = 'opt';
-          if (o[0] === q.ans) { c += ' ans'; } else if (picks.indexOf(o[0]) !== -1) { c += ' you'; }
-          return '<div class="' + c + '"><span class="L">(' + o[0] + ')</span>' + esc(o[1]) + '</div>';
-        }).join('') : '';
-        const ex = (q && q.ex)
-          ? '<div class="ex"><b>解析</b>' + esc(q.ex) + '</div>' : '';
-        return '<div class="wq"><div class="wh">' + esc(w.head) + '</div>' +
-               '<div class="wm"><span class="pill">錯 ' + w.nwrong + ' 次</span>' +
-               esc(w.subject) + '｜' + esc(w.tag) + '｜作答 ' + w.nseen + ' 次' +
-               (w.wrongPicks ? '｜錯選 ' + esc(w.wrongPicks) : '') + '</div>' +
-               opts + ex + '</div>';
-      }).join('');
+        const statRows = fStats.map(function (v) {
+          const p = pct(v.nright, v.nanswered);
+          return '<tr><td>' + esc(v.subject) + '</td><td' + (p < 60 ? ' class="wk"' : '') + '>' +
+                 esc(v.tag) + '</td><td class="n">' + v.nright + '/' + v.nanswered +
+                 '</td><td class="n' + (p < 60 ? ' wk' : '') + '">' + p + '%</td></tr>';
+        }).join('');
 
-      box.innerHTML =
-        (pend ? '<div class="note">尚有 <b>' + pend +
-                '</b> 份離線紀錄待補傳，連上線後會自動送出。</div>' : '') +
-        '<h2>進步曲線</h2>' + lineChart(hist) +
-        '<h2>觀念弱點（正確率低於 60% 標紅）</h2>' +
-        (stats.length
-          ? '<div class="card"><table><thead><tr><th>科目</th><th>觀念</th>' +
-            '<th class="n">答對/作答</th><th class="n">正確率</th></tr></thead><tbody>' +
-            statRows + '</tbody></table></div>'
-          : '<div class="empty">還沒有作答紀錄。</div>') +
-        '<h2>錯題清單（' + wrong.length + ' 題）' +
-        (wrong.length
-          ? ' <button class="btn" id="btnRetry" type="button" ' +
-            'style="font-size:14px;padding:6px 14px;margin-left:8px">用這些題組一份重練卷</button>'
-          : '') +
-        '</h2>' + (wrong.length ? wrongCards : '<div class="empty">目前沒有錯題。</div>');
+        const wrongCards = fWrong.map(function (w) {
+          const q = findQuestion(w.qid);
+          const picks = (w.wrongPicks || '').split(',').map(function (s) { return s.trim(); });
+          const opts = (q && q.opts) ? q.opts.map(function (o) {
+            let c = 'opt';
+            if (o[0] === q.ans) { c += ' ans'; } else if (picks.indexOf(o[0]) !== -1) { c += ' you'; }
+            return '<div class="' + c + '"><span class="L">(' + o[0] + ')</span>' + esc(o[1]) + '</div>';
+          }).join('') : '';
+          const ex = (q && q.ex)
+            ? '<div class="ex"><b>解析</b>' + esc(q.ex) + '</div>' : '';
+          return '<div class="wq"><div class="wh">' + esc(w.head) + '</div>' +
+                 '<div class="wm"><span class="pill">錯 ' + w.nwrong + ' 次</span>' +
+                 esc(w.subject) + '｜' + esc(w.tag) + '｜作答 ' + w.nseen + ' 次' +
+                 (w.wrongPicks ? '｜錯選 ' + esc(w.wrongPicks) : '') + '</div>' +
+                 opts + ex + '</div>';
+        }).join('');
 
-      const rb = document.getElementById('btnRetry');
-      if (rb) { rb.onclick = function () { buildRetry(wrong); }; }
+        // 下拉選項的題數一律照「全部錯題」算，不受目前篩選影響，
+        // 不然切到法規之後，投資學／財務分析選項就會一直顯示 0。
+        const subjCounts = {};
+        DATA.subjects.forEach(function (s) { subjCounts[s] = 0; });
+        wrong.forEach(function (w) { subjCounts[w.subject] = (subjCounts[w.subject] || 0) + 1; });
+        const selectHtml =
+          '<select id="wrongSubjSel" style="font-size:14px;padding:5px 8px;margin-left:10px;' +
+          'border:1px solid var(--border-input);border-radius:5px;background:var(--bg);' +
+          'color:var(--fg);font-family:inherit">' +
+          '<option value=""' + (!selSubj ? ' selected' : '') + '>全部 (' + wrong.length + ')</option>' +
+          DATA.subjects.map(function (s) {
+            return '<option value="' + esc(s) + '"' + (selSubj === s ? ' selected' : '') + '>' +
+                   esc(s) + ' (' + subjCounts[s] + ')</option>';
+          }).join('') + '</select>';
+
+        box.innerHTML =
+          (pend ? '<div class="note">尚有 <b>' + pend +
+                  '</b> 份離線紀錄待補傳，連上線後會自動送出。</div>' : '') +
+          '<h2>進步曲線</h2>' + lineChart(hist) +
+          '<h2>觀念弱點（正確率低於 60% 標紅）</h2>' +
+          (fStats.length
+            ? '<div class="card"><table><thead><tr><th>科目</th><th>觀念</th>' +
+              '<th class="n">答對/作答</th><th class="n">正確率</th></tr></thead><tbody>' +
+              statRows + '</tbody></table></div>'
+            : '<div class="empty">還沒有作答紀錄。</div>') +
+          '<h2>錯題清單（' + fWrong.length + ' 題）' + selectHtml +
+          (fWrong.length
+            ? ' <button class="btn" id="btnRetry" type="button" ' +
+              'style="font-size:14px;padding:6px 14px;margin-left:8px">用這些題組一份重練卷</button>'
+            : '') +
+          '</h2>' + (fWrong.length ? wrongCards : '<div class="empty">目前沒有錯題。</div>');
+
+        const sel = document.getElementById('wrongSubjSel');
+        if (sel) {
+          sel.onchange = function () {
+            const v = sel.value;
+            try { localStorage.setItem('gme_wrong_subj', v); } catch (e) {}
+            paint(v);
+          };
+        }
+        const rb = document.getElementById('btnRetry');
+        if (rb) { rb.onclick = function () { buildRetry(fWrong); }; }
+      }
+
+      let initSubj = '';
+      try { initSubj = localStorage.getItem('gme_wrong_subj') || ''; } catch (e) {}
+      // 記住的科目如果目前沒有任何錯題（例如剛好練完清空了），退回全部，
+      // 不然畫面會停在一個空清單、使用者還得自己想到要切回全部。
+      if (initSubj && !wrong.some(function (w) { return w.subject === initSubj; })) { initSubj = ''; }
+      paint(initSubj);
     });
 }
 
