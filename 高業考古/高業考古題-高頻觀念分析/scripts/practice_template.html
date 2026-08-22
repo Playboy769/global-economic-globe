@@ -85,6 +85,8 @@ td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
  padding:12px 15px;margin-bottom:16px}
 .wq .wh{font-size:15px;margin-bottom:5px}
 .wq .wm{font-size:13px;color:#666}
+.wq .opt{margin-top:8px}
+.wq .opt:first-of-type{margin-top:10px}
 .pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:11px;
  border:1px solid #b91c1c;color:#b91c1c;margin-right:7px}
 .ex{margin-top:9px;padding:10px 13px;background:#fafafa;border-left:3px solid #15803d;
@@ -603,13 +605,19 @@ function renderReview() {
 
       const wrongCards = wrong.map(function (w) {
         const q = findQuestion(w.qid);
+        const picks = (w.wrongPicks || '').split(',').map(function (s) { return s.trim(); });
+        const opts = (q && q.opts) ? q.opts.map(function (o) {
+          let c = 'opt';
+          if (o[0] === q.ans) { c += ' ans'; } else if (picks.indexOf(o[0]) !== -1) { c += ' you'; }
+          return '<div class="' + c + '"><span class="L">(' + o[0] + ')</span>' + esc(o[1]) + '</div>';
+        }).join('') : '';
         const ex = (q && q.ex)
           ? '<div class="ex"><b>解析</b>' + esc(q.ex) + '</div>' : '';
         return '<div class="wq"><div class="wh">' + esc(w.head) + '</div>' +
                '<div class="wm"><span class="pill">錯 ' + w.nwrong + ' 次</span>' +
                esc(w.subject) + '｜' + esc(w.tag) + '｜作答 ' + w.nseen + ' 次' +
                (w.wrongPicks ? '｜錯選 ' + esc(w.wrongPicks) : '') + '</div>' +
-               ex + '</div>';
+               opts + ex + '</div>';
       }).join('');
 
       box.innerHTML =
