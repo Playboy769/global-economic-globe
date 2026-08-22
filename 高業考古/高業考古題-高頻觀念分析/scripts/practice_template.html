@@ -4,99 +4,161 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>高業模擬測驗 · 115 年第 2、3 次＋筆記練習</title>
+<script>
+// 在畫面繪製前先套用已記住的主題，避免先閃一下亮色再跳暗色。
+// 預設為亮色（使用者選擇：不跟隨系統設定），只有明確存過 'dark' 才會套用。
+try {
+  if (localStorage.getItem('gme_theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+} catch (e) {}
+</script>
 <style>
-:root{color-scheme:light}
+:root{
+  color-scheme:light;
+  --bg:#fff; --bg-alt:#fafafa; --bg-card:#fff;
+  --fg:#1a1a1a; --fg-muted:#555; --fg-soft:#666; --fg-faint:#777; --fg-faint2:#888;
+  --border:#e2e2e2; --border-soft:#ddd; --border-strong:#1a1a1a; --border-input:#ccc;
+  --hover-bg:#f5f5f5; --hover-bg2:#f4f4f4;
+  --accent:#1a1a1a; --accent-fg:#fff;
+  --pass:#15803d; --fail:#b91c1c; --warn:#b45309;
+  --ans-bg:#f0f7f1; --you-bg:#fdf1f1;
+  --table-border:#eee;
+  --shadow:rgba(0,0,0,.12);
+  --chart-1:#1d4ed8; --chart-2:#15803d; --chart-3:#b45309;
+  --chart-grid:#eee; --chart-axis:#888;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0a0a0a; --bg-alt:#161616; --bg-card:#111;
+  --fg:#e8e8e8; --fg-muted:#a8a8a8; --fg-soft:#999; --fg-faint:#888; --fg-faint2:#888;
+  --border:#2a2a2a; --border-soft:#333; --border-strong:#e8e8e8; --border-input:#3a3a3a;
+  --hover-bg:#1f1f1f; --hover-bg2:#1c1c1c;
+  --accent:#e8e8e8; --accent-fg:#0a0a0a;
+  --pass:#4ade80; --fail:#f87171; --warn:#fbbf24;
+  --ans-bg:rgba(74,222,128,.14); --you-bg:rgba(248,113,113,.14);
+  --table-border:#262626;
+  --shadow:rgba(0,0,0,.5);
+  --chart-1:#60a5fa; --chart-2:#4ade80; --chart-3:#fbbf24;
+  --chart-grid:#262626; --chart-axis:#999;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#fff;color:#1a1a1a;
+body{margin:0;background:var(--bg);color:var(--fg);
  font:16px/1.75 "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
 .wrap{max-width:920px;margin:0 auto;padding:26px 20px 90px}
 h1{font-size:25px;font-weight:600;margin:0 0 8px;letter-spacing:.02em}
-.sub{color:#555;font-size:14px;margin-bottom:18px}
-.note{border-left:3px solid #666;background:#fafafa;padding:12px 16px;
- font-size:14px;color:#333;margin-bottom:20px;border-radius:0 4px 4px 0}
-.note b{color:#111}
+.sub{color:var(--fg-muted);font-size:14px;margin-bottom:18px}
+.note{border-left:3px solid var(--fg-soft);background:var(--bg-alt);padding:12px 16px;
+ font-size:14px;color:var(--fg-muted);margin-bottom:20px;border-radius:0 4px 4px 0}
+.note b{color:var(--fg)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.tab{padding:9px 16px;border:1px solid #ccc;border-radius:5px;background:#fff;
- cursor:pointer;font-size:15px;font-family:inherit;color:#333}
-.tab:hover{background:#f5f5f5}
-.tab.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:600}
+.tab{padding:9px 16px;border:1px solid var(--border-input);border-radius:5px;background:var(--bg);
+ cursor:pointer;font-size:15px;font-family:inherit;color:var(--fg-muted)}
+.tab:hover{background:var(--hover-bg)}
+.tab.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
 .stabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.stab{padding:7px 14px;border:1px solid #ddd;border-radius:20px;background:#fff;
- cursor:pointer;font-size:14px;font-family:inherit;color:#444}
-.stab:hover{background:#f5f5f5}
-.stab.on{border-color:#1a1a1a;font-weight:600;color:#111}
-.stab .mini{color:#888;font-weight:400;margin-left:5px;font-size:12px}
-.bar{position:sticky;top:0;z-index:9;background:#fff;border-bottom:1px solid #ddd;
+.stab{padding:7px 14px;border:1px solid var(--border-soft);border-radius:20px;background:var(--bg);
+ cursor:pointer;font-size:14px;font-family:inherit;color:var(--fg-muted)}
+.stab:hover{background:var(--hover-bg)}
+.stab.on{border-color:var(--border-strong);font-weight:600;color:var(--fg)}
+.stab .mini{color:var(--fg-faint2);font-weight:400;margin-left:5px;font-size:12px}
+.bar{position:sticky;top:0;z-index:9;background:var(--bg);border-bottom:1px solid var(--border-soft);
  padding:11px 0;margin-bottom:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .clock{font-variant-numeric:tabular-nums;font-weight:600;font-size:18px}
-.clock.warn{color:#b45309}
-.clock.over{color:#b91c1c}
-.prog{color:#555;font-size:14px}
-.btn{padding:8px 18px;border:1px solid #1a1a1a;background:#1a1a1a;color:#fff;
+.clock.warn{color:var(--warn)}
+.clock.over{color:var(--fail)}
+.prog{color:var(--fg-muted);font-size:14px}
+.btn{padding:8px 18px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);
  border-radius:5px;cursor:pointer;font-size:15px;font-family:inherit}
 .btn:hover{opacity:.86}
-.btn.ghost{background:#fff;color:#1a1a1a}
+.btn.ghost{background:var(--bg);color:var(--fg)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.q{border:1px solid #e2e2e2;border-radius:6px;padding:14px 16px;margin-bottom:18px}
-.q.locked{background:#fafafa}
+.theme-toggle{position:fixed;top:14px;right:16px;z-index:20;width:38px;height:38px;
+ border-radius:50%;border:1px solid var(--border-soft);background:var(--bg-card);
+ color:var(--fg);font-size:16px;line-height:1;cursor:pointer;
+ display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px var(--shadow)}
+.theme-toggle:hover{background:var(--hover-bg)}
+@media (max-width:480px){
+  /* 窄螢幕時 h1 會換成多行，右上角固定的切換鈕會蓋到第一行文字，
+     幫標題預留右側空間閃開。 */
+  h1{padding-right:52px}
+}
+.q{border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:18px}
+.q.locked{background:var(--bg-alt)}
 .qh{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
-.qn{flex:0 0 auto;font-weight:600;color:#444;font-variant-numeric:tabular-nums}
+.qn{flex:0 0 auto;font-weight:600;color:var(--fg-muted);font-variant-numeric:tabular-nums}
 .qt{flex:1 1 auto}
-.tagline{font-size:12px;color:#777;margin-top:2px}
+.tagline{font-size:12px;color:var(--fg-faint);margin-top:2px}
 .opt{display:block;padding:7px 10px;border-radius:4px;cursor:pointer;margin-bottom:2px}
-.opt:hover{background:#f4f4f4}
+.opt:hover{background:var(--hover-bg2)}
 .opt input{margin-right:9px}
-.opt .L{font-weight:600;color:#444;margin-right:5px}
-.q.right{border-left:4px solid #15803d}
-.q.wrong{border-left:4px solid #b91c1c}
-.q.blank{border-left:4px solid #a16207}
-.opt.ans{background:#f0f7f1}
-.opt.you{background:#fdf1f1}
+.opt .L{font-weight:600;color:var(--fg-muted);margin-right:5px}
+.q.right{border-left:4px solid var(--pass)}
+.q.wrong{border-left:4px solid var(--fail)}
+.q.blank{border-left:4px solid var(--warn)}
+.opt.ans{background:var(--ans-bg)}
+.opt.you{background:var(--you-bg)}
 .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:11px;
- border:1px solid #bbb;color:#444;margin-left:8px;vertical-align:middle}
-.badge.ok{border-color:#15803d;color:#15803d}
-.badge.ng{border-color:#b91c1c;color:#b91c1c}
-.src{font-size:13px;color:#666;margin-top:9px;padding-top:9px;border-top:1px dashed #ddd}
-.card{border:1px solid #e2e2e2;border-radius:6px;padding:18px 20px;margin-bottom:18px}
+ border:1px solid var(--border-soft);color:var(--fg-muted);margin-left:8px;vertical-align:middle}
+.badge.ok{border-color:var(--pass);color:var(--pass)}
+.badge.ng{border-color:var(--fail);color:var(--fail)}
+.src{font-size:13px;color:var(--fg-soft);margin-top:9px;padding-top:9px;border-top:1px dashed var(--border-soft)}
+.card{border:1px solid var(--border);border-radius:6px;padding:18px 20px;margin-bottom:18px}
 .res-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
-.res{flex:1 1 190px;border:1px solid #e2e2e2;border-radius:6px;padding:14px 16px}
-.res .nm{font-size:14px;color:#555}
+.res{flex:1 1 190px;border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.res .nm{font-size:14px;color:var(--fg-muted)}
 .res .sc{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
 .res .vd{font-size:13px}
-.pass{color:#15803d}
-.fail{color:#b91c1c}
+.pass{color:var(--pass)}
+.fail{color:var(--fail)}
 table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{border-bottom:1px solid #eee;padding:7px 8px;text-align:left}
-th{color:#555;font-weight:600;border-bottom:2px solid #ddd}
+th,td{border-bottom:1px solid var(--table-border);padding:7px 8px;text-align:left}
+th{color:var(--fg-muted);font-weight:600;border-bottom:2px solid var(--border-soft)}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.wk{color:#b91c1c}
-.foot{margin-top:34px;padding-top:14px;border-top:1px solid #eee;color:#777;font-size:13px}
+.wk{color:var(--fail)}
+.foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--table-border);color:var(--fg-faint);font-size:13px}
 .start{text-align:center;padding:40px 22px}
 .start .stitle{font-size:21px;font-weight:600;margin-bottom:10px}
-.start .sinfo{color:#555;font-size:14px;margin-bottom:8px}
+.start .sinfo{color:var(--fg-muted);font-size:14px;margin-bottom:8px}
 .start .btn{margin-top:14px;padding:11px 34px;font-size:16px}
 .rv h2{font-size:19px;font-weight:600;margin:26px 0 12px;padding-bottom:7px;
- border-bottom:2px solid #1a1a1a}
-.rv .empty{color:#777;font-size:14px;padding:22px 0}
+ border-bottom:2px solid var(--border-strong)}
+.rv .empty{color:var(--fg-faint);font-size:14px;padding:22px 0}
 .chart{overflow-x:auto;padding:4px 0}
-.sync{font-size:13px;color:#666;margin-left:4px}
-.sync.bad{color:#b45309}
-.wq{border:1px solid #e2e2e2;border-left:4px solid #b91c1c;border-radius:6px;
+.sync{font-size:13px;color:var(--fg-soft);margin-left:4px}
+.sync.bad{color:var(--warn)}
+.wq{border:1px solid var(--border);border-left:4px solid var(--fail);border-radius:6px;
  padding:12px 15px;margin-bottom:16px}
 .wq .wh{font-size:15px;margin-bottom:5px}
-.wq .wm{font-size:13px;color:#666}
+.wq .wm{font-size:13px;color:var(--fg-soft)}
 .wq .opt{margin-top:8px}
 .wq .opt:first-of-type{margin-top:10px}
 .pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:11px;
- border:1px solid #b91c1c;color:#b91c1c;margin-right:7px}
-.ex{margin-top:9px;padding:10px 13px;background:#fafafa;border-left:3px solid #15803d;
- border-radius:0 4px 4px 0;font-size:14px;line-height:1.7;color:#222}
-.ex b{color:#15803d;margin-right:6px}
+ border:1px solid var(--fail);color:var(--fail);margin-right:7px}
+.ex{margin-top:9px;padding:10px 13px;background:var(--bg-alt);border-left:3px solid var(--pass);
+ border-radius:0 4px 4px 0;font-size:14px;line-height:1.7;color:var(--fg)}
+.ex b{color:var(--pass);margin-right:6px}
 .hide{display:none}
-@media print{.bar,.tabs,.stabs,.btn{display:none}}
+@media print{
+  .bar,.tabs,.stabs,.btn,.theme-toggle{display:none}
+  /* 列印一律亮色，不管螢幕上選的是哪個模式。 */
+  :root,:root[data-theme="dark"]{
+    color-scheme:light;
+    --bg:#fff; --bg-alt:#fafafa; --bg-card:#fff;
+    --fg:#1a1a1a; --fg-muted:#555; --fg-soft:#666; --fg-faint:#777; --fg-faint2:#888;
+    --border:#e2e2e2; --border-soft:#ddd; --border-strong:#1a1a1a; --border-input:#ccc;
+    --accent:#1a1a1a; --accent-fg:#fff;
+    --pass:#15803d; --fail:#b91c1c; --warn:#b45309;
+    --ans-bg:#f0f7f1; --you-bg:#fdf1f1;
+    --table-border:#eee;
+    --chart-1:#1d4ed8; --chart-2:#15803d; --chart-3:#b45309;
+    --chart-grid:#eee; --chart-axis:#888;
+  }
+}
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="btnTheme" type="button" aria-label="切換深色模式" title="切換深色模式">🌙</button>
 <div class="wrap">
   <h1>高業模擬測驗 · 115 年第 2、3 次＋筆記練習</h1>
   <div class="sub">證券商高級業務員　｜　每題 2 分；作答時間依科目基準（投資學 50／法規 60／財務分析 90 分鐘），筆記練習題數超過 50 題時再依比例放大；及格標準為各科不低於 50 分，且三科總分高於 210 分</div>
@@ -194,6 +256,32 @@ function mmss(sec) {
   return String(Math.floor(sec / 60)).padStart(2, '0') + ':' +
          String(sec % 60).padStart(2, '0');
 }
+
+// 深色模式：純手動切換，預設亮色，不跟隨系統設定；選擇存 localStorage，
+// 下次開啟直接沿用。<head> 裡已有一段先行腳本在畫面繪製前套用過一次，
+// 這裡的 applyTheme() 負責之後切換時同步更新圖示與 aria 文字。
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const btn = document.getElementById('btnTheme');
+  if (btn) {
+    btn.textContent = dark ? '☀️' : '🌙';
+    const label = dark ? '切換為亮色模式' : '切換為深色模式';
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+  }
+}
+
+function initTheme() {
+  let dark = false;
+  try { dark = localStorage.getItem('gme_theme') === 'dark'; } catch (e) {}
+  applyTheme(dark);
+}
+
+document.getElementById('btnTheme').onclick = function () {
+  const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+  applyTheme(dark);
+  try { localStorage.setItem('gme_theme', dark ? 'dark' : 'light'); } catch (e) {}
+};
 
 function renderTabs() {
   document.getElementById('paperTabs').innerHTML = DATA.papers.map(function (p) {
@@ -546,14 +634,14 @@ function lineChart(rows) {
     return L + (stamps.length < 2 ? 0 : i * (W - L - R) / (stamps.length - 1));
   };
   const y = function (v) { return T + (100 - v) * (H - T - B) / 100; };
-  const colors = {'投資學': '#1d4ed8', '財務分析': '#15803d', '法規': '#b45309'};
+  const colors = {'投資學': 'var(--chart-1)', '財務分析': 'var(--chart-2)', '法規': 'var(--chart-3)'};
   let g = '';
   for (let v = 0; v <= 100; v += 25) {
     g += '<line x1="' + L + '" y1="' + y(v) + '" x2="' + (W - R) + '" y2="' + y(v) +
-         '" stroke="' + (v === 50 ? '#b91c1c' : '#eee') + '"' +
+         '" stroke="' + (v === 50 ? 'var(--fail)' : 'var(--chart-grid)') + '"' +
          (v === 50 ? ' stroke-dasharray="4 3"' : '') + '/>' +
          '<text x="' + (L - 8) + '" y="' + (y(v) + 4) +
-         '" font-size="11" fill="#888" text-anchor="end">' + v + '</text>';
+         '" font-size="11" fill="var(--chart-axis)" text-anchor="end">' + v + '</text>';
   }
   DATA.subjects.forEach(function (s) {
     const pts = [];
@@ -572,7 +660,7 @@ function lineChart(rows) {
   stamps.forEach(function (t, i) {
     const d = new Date(t);
     g += '<text x="' + x(i) + '" y="' + (H - B + 18) +
-         '" font-size="10" fill="#888" text-anchor="middle">' +
+         '" font-size="10" fill="var(--chart-axis)" text-anchor="middle">' +
          (d.getMonth() + 1) + '/' + d.getDate() + '</text>';
   });
   const legend = DATA.subjects.map(function (s) {
@@ -683,6 +771,7 @@ function buildRetry(wrong) {
 }
 
 flushQueue();
+initTheme();
 initState();
 renderTabs();
 renderQuiz();
