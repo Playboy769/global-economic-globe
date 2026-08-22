@@ -189,11 +189,27 @@ td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 <script>
 const DATA = /*__DATA__*/;
-// 真題／模擬卷固定 50 題／科，時間依科目基準（投資學 50／法規 60／財務分析 90 分鐘）；
-// 筆記練習題庫依科目合併、題數不固定（可能遠大於 50），時間額度依同一基準等比放大。
+// 真題／模擬卷固定 50 題／科，時間依科目基準（投資學 50／法規 60／財務分析 90 分鐘）。
 const SUBJ_BASE_SEC = {'投資學': 50 * 60, '法規': 60 * 60, '財務分析': 90 * 60};
 function baseSecOf(s) { return SUBJ_BASE_SEC[s] || 60 * 60; }
+
+// 筆記練習題庫：不是整包題庫直接考，而是每次進入該科目時從全部題庫隨機抽 10 題，
+// 優先抽伺服器記錄裡還沒抽過的，題庫都抽過一輪就重置重新開始。時間額度比照 10 題
+// 的合理作答時間（不是套用整份 50 題的科目基準）。
+const NOTES_PAPER_ID = 'p_notes';
+const NOTES_DRAW_N = 10;
+const NOTES_SEC = {'投資學': 15 * 60, '法規': 18 * 60, '財務分析': 20 * 60};
+// DATA 裡 p_notes 一開始放的是全部題目——存一份不會被覆寫的完整題庫當抽題來源，
+// 之後 notesPaper.subjects[s] 會被換成「這次抽到的 10 題」，不能拿它當母體用。
+const NOTES_FULL = {};
+(function () {
+  const np = DATA.papers.find(function (p) { return p.id === NOTES_PAPER_ID; });
+  if (!np) { return; }
+  DATA.subjects.forEach(function (s) { NOTES_FULL[s] = (np.subjects[s] || []).slice(); });
+})();
+
 function secBudget(p, s) {
+  if (p === NOTES_PAPER_ID) { return NOTES_SEC[s] || 15 * 60; }
   const base = baseSecOf(s);
   const n = qsOf(p, s).length;
   return Math.max(base, Math.ceil(n / 50) * base);
@@ -243,6 +259,61 @@ function shuffleSubject(p, s) {
     const t = a[i]; a[i] = a[j]; a[j] = t;
   }
   S.order[key(p, s)] = a;
+}
+
+// 原地打亂一個普通陣列（Fisher–Yates），供筆記練習題庫抽題用。
+function shuffleArr(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+// 向伺服器要「這個科目已經抽過哪些題」，優先從沒抽過的裡面抽 10 題；
+// 沒抽過的不夠 10 題就從抽過的裡面隨機補；整個題庫都抽完一輪（沒抽過的是 0 題）
+// 就重置重新開始下一輪。回傳 Promise<抽到的題目陣列>。
+function drawNotes(subject) {
+  const pool = NOTES_FULL[subject] || [];
+  if (!pool.length) { return Promise.resolve([]); }
+  return fetch('api/notes-drawn?subject=' + encodeURIComponent(subject))
+    .then(function (r) { return r.json(); })
+    .catch(function () { return {qids: []}; })
+    .then(function (d) {
+      const drawnSet = {};
+      (d.qids || []).forEach(function (q) { drawnSet[q] = true; });
+      let undrawn = pool.filter(function (q) { return !drawnSet[q.id]; });
+      const reset = !undrawn.length;
+      if (reset) { undrawn = pool.slice(); }
+      shuffleArr(undrawn);
+      let picked = undrawn.slice(0, NOTES_DRAW_N);
+      if (picked.length < NOTES_DRAW_N && !reset) {
+        const drawnPool = shuffleArr(pool.filter(function (q) { return drawnSet[q.id]; }));
+        picked = picked.concat(drawnPool.slice(0, NOTES_DRAW_N - picked.length));
+      }
+      const qids = picked.map(function (q) { return q.id; });
+      return fetch('api/notes-draw', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({subject: subject, qids: qids, reset: reset}),
+      }).catch(function () {}).then(function () { return picked; });
+    });
+}
+
+// 進入筆記練習題庫的某一科：重新抽題、清掉舊的作答狀態、重新算時間額度。
+function enterNotesSubject(subject) {
+  const k = key(NOTES_PAPER_ID, subject);
+  document.getElementById('quiz').innerHTML = '<div class="empty">抽題中…</div>';
+  drawNotes(subject).then(function (picked) {
+    const notesPaper = DATA.papers.find(function (p) { return p.id === NOTES_PAPER_ID; });
+    notesPaper.subjects[subject] = picked;
+    S.ans[k] = {};
+    S.left[k] = secBudget(NOTES_PAPER_ID, subject);
+    S.started[k] = false;
+    delete S.done[k];
+    shuffleSubject(NOTES_PAPER_ID, subject);
+    renderTabs(); renderQuiz(); updateProg();
+  });
 }
 
 function esc(t) {
@@ -567,6 +638,8 @@ document.getElementById('paperTabs').onclick = function (e) {
   S.paper = b.dataset.p;
   S.subj = DATA.subjects[0];
   document.getElementById('btnSubmit').disabled = !!S.done[key(S.paper, S.subj)];
+  // 筆記練習題庫每次進入都重新抽題（含首次點進這個分頁），不走一般的洗題邏輯。
+  if (S.paper === NOTES_PAPER_ID) { enterNotesSubject(S.subj); return; }
   renderTabs(); renderQuiz(); updateProg();
 };
 
@@ -575,6 +648,7 @@ document.getElementById('subjTabs').onclick = function (e) {
   if (!b) { return; }
   S.subj = b.dataset.s;
   document.getElementById('btnSubmit').disabled = !!S.done[key(S.paper, S.subj)];
+  if (S.paper === NOTES_PAPER_ID) { enterNotesSubject(S.subj); return; }
   renderTabs(); renderQuiz(); updateProg();
 };
 
@@ -596,6 +670,8 @@ document.getElementById('btnShuffle').onclick = function () {
   if (S.done[k]) { return; }
   if (Object.keys(S.ans[k]).length &&
       !confirm('重新洗題會清掉本科已作答的答案，確定嗎？')) { return; }
+  // 筆記練習題庫的「重新洗題」＝重新抽 10 題，不是只打亂現有題目的順序。
+  if (S.paper === NOTES_PAPER_ID) { enterNotesSubject(S.subj); return; }
   S.ans[k] = {};
   shuffleSubject(S.paper, S.subj);
   renderTabs(); renderQuiz(); updateProg();

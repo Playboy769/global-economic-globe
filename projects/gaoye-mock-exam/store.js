@@ -75,6 +75,14 @@ function open() {
     CREATE INDEX IF NOT EXISTS ix_ans_tag ON answers(email, subject, tag);
     CREATE INDEX IF NOT EXISTS ix_ans_ok  ON answers(email, ok);
     CREATE INDEX IF NOT EXISTS ix_att_ts  ON attempts(email, ts);
+    CREATE TABLE IF NOT EXISTS notes_draws (
+      id      INTEGER PRIMARY KEY AUTOINCREMENT,
+      email   TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      qid     TEXT NOT NULL,
+      ts      TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS ix_draws_es ON notes_draws(email, subject);
   `);
   return db;
 }
@@ -157,6 +165,33 @@ function history(email) {
     + ' FROM attempts WHERE email = ? ORDER BY ts ASC, subject ASC').all(email);
 }
 
+// 筆記練習題庫抽題用：這個 email／科目已經被抽過（不論有沒交卷）哪些 qid。
+function drawnQids(email, subject) {
+  return open().prepare(
+    'SELECT DISTINCT qid FROM notes_draws WHERE email = ? AND subject = ?'
+  ).all(email, subject).map(function (r) { return r.qid; });
+}
+
+// 記一批新抽到的題目。reset=true 時先清掉這個 email／科目原本的抽題紀錄再寫入——
+// 用在整個題庫都被抽過一輪、需要重新開始下一輪的情況。
+function recordDraws(email, subject, qids, reset) {
+  const d = open();
+  const ts = new Date().toISOString();
+  const ins = d.prepare('INSERT INTO notes_draws (email,subject,qid,ts) VALUES (?,?,?,?)');
+  d.exec('BEGIN');
+  try {
+    if (reset) {
+      d.prepare('DELETE FROM notes_draws WHERE email = ? AND subject = ?').run(email, subject);
+    }
+    for (const q of qids) { ins.run(email, subject, String(q), ts); }
+    d.exec('COMMIT');
+    return { ok: true, recorded: qids.length, reset: !!reset };
+  } catch (e) {
+    d.exec('ROLLBACK');
+    throw e;
+  }
+}
+
 function summary(email) {
   const d = open();
   const a = d.prepare('SELECT COUNT(*) n FROM attempts WHERE email = ?').get(email);
@@ -170,4 +205,7 @@ function summary(email) {
   };
 }
 
-module.exports = { saveAttempt, wrongList, tagStats, history, summary, DB_PATH };
+module.exports = {
+  saveAttempt, wrongList, tagStats, history, summary,
+  drawnQids, recordDraws, DB_PATH,
+};

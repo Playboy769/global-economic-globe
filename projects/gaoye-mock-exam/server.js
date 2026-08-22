@@ -273,6 +273,25 @@ const server = http.createServer((req, res) => {
         }
       });
     }
+    // 筆記練習題庫抽題：GET 查這個科目已經抽過哪些題（優先抽沒抽過的用），
+    // POST 記一批新抽到的題目——只要抽到就算，不管有沒有交卷。
+    if (pathname === '/api/notes-drawn' && req.method === 'GET') {
+      const subject = new URL(req.url, 'http://x').searchParams.get('subject') || '';
+      if (!subject) return sendJSON(res, 400, { error: 'subject required' });
+      return sendJSON(res, 200, { qids: store.drawnQids(email, subject) });
+    }
+    if (pathname === '/api/notes-draw' && req.method === 'POST') {
+      return readBody(req, (err, body) => {
+        if (err || !body || !body.subject || !Array.isArray(body.qids)) {
+          return sendJSON(res, 400, { error: 'bad payload' });
+        }
+        try { sendJSON(res, 200, store.recordDraws(email, body.subject, body.qids, !!body.reset)); }
+        catch (e) {
+          console.error('[api] recordDraws 失敗:', e && e.message);
+          sendJSON(res, 500, { error: 'save failed' });
+        }
+      });
+    }
     return sendJSON(res, 404, { error: 'no such endpoint' });
   } catch (e) {
     console.error('[api] 未預期錯誤:', e && e.stack);
