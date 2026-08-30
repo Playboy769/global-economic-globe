@@ -291,29 +291,47 @@
 function lineChartSVG(seriesList, opts) {
   opts = opts || {};
   const w = opts.width || 640, h = opts.height || 180;
-  const padL = 42, padR = 14, padT = 14, padB = 24;
+  // 有右軸系列（s.axis === 'right'）時才留右側刻度空間；沒有就退回單軸版面。
+  const hasRight = seriesList.some(s => s.axis === 'right');
+  const padL = 42, padR = hasRight ? 40 : 14, padT = 14, padB = 24;
   const allPoints = seriesList.flatMap(s => s.points);
   if (!allPoints.length) return '<div style="font-size:12px;color:#999;">暫無資料</div>';
 
   const dates = [...new Set(allPoints.map(p => p.date))].sort();
   const xIdx = new Map(dates.map((d, i) => [d, i]));
-  const values = allPoints.map(p => p.value).filter(v => v != null && isFinite(v));
-  let minV = Math.min(...values), maxV = Math.max(...values);
-  if (minV === maxV) { minV -= 1; maxV += 1; }
-  const pad = (maxV - minV) * 0.1;
-  minV -= pad; maxV += pad;
+
+  function computeRange(list) {
+    const values = list.flatMap(s => s.points).map(p => p.value).filter(v => v != null && isFinite(v));
+    let min = Math.min(...values), max = Math.max(...values);
+    if (min === max) { min -= 1; max += 1; }
+    const pad = (max - min) * 0.1;
+    return { min: min - pad, max: max + pad };
+  }
+
+  const leftSeries = seriesList.filter(s => s.axis !== 'right');
+  const rightSeries = seriesList.filter(s => s.axis === 'right');
+  const leftRange = leftSeries.length ? computeRange(leftSeries) : computeRange(seriesList);
+  const rightRange = rightSeries.length ? computeRange(rightSeries) : null;
 
   const xScale = i => padL + (dates.length <= 1 ? 0 : (i / (dates.length - 1)) * (w - padL - padR));
-  const yScale = v => padT + (1 - (v - minV) / (maxV - minV)) * (h - padT - padB);
+  const yScaleLeft = v => padT + (1 - (v - leftRange.min) / (leftRange.max - leftRange.min)) * (h - padT - padB);
+  const yScaleRight = rightRange
+    ? v => padT + (1 - (v - rightRange.min) / (rightRange.max - rightRange.min)) * (h - padT - padB)
+    : null;
+  const yScaleFor = s => (s.axis === 'right' && yScaleRight) ? yScaleRight : yScaleLeft;
 
   let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">`;
-  // 格線 + y 軸標籤
+  // 格線 + 左軸標籤（格線位置以左軸為準；有右軸時另外畫右軸自己的刻度標籤，兩軸各自的數值範圍不同）
   const gridN = 4;
   for (let i = 0; i <= gridN; i++) {
-    const v = minV + (maxV - minV) * (i / gridN);
-    const y = yScale(v);
+    const vLeft = leftRange.min + (leftRange.max - leftRange.min) * (i / gridN);
+    const y = yScaleLeft(vLeft);
     svg += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="#eee" stroke-width="1"/>`;
-    svg += `<text x="${padL - 6}" y="${y + 3}" font-size="9" fill="#999" text-anchor="end">${v.toFixed(1)}</text>`;
+    svg += `<text x="${padL - 6}" y="${y + 3}" font-size="9" fill="#999" text-anchor="end">${vLeft.toFixed(1)}</text>`;
+    if (rightRange) {
+      const vRight = rightRange.min + (rightRange.max - rightRange.min) * (i / gridN);
+      svg += `<text x="${w - padR + 6}" y="${y + 3}" font-size="9" fill="#b06" text-anchor="start">${vRight.toFixed(1)}</text>`;
+    }
   }
   // x 軸首尾日期
   svg += `<text x="${padL}" y="${h - 6}" font-size="9" fill="#999">${dates[0]}</text>`;
@@ -329,8 +347,10 @@ function lineChartSVG(seriesList, opts) {
   seriesList.forEach(s => {
     const pts = s.points.filter(p => p.value != null && isFinite(p.value) && xIdx.has(p.date));
     if (!pts.length) return;
+    const yScale = yScaleFor(s);
     const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(xIdx.get(p.date)).toFixed(1)} ${yScale(p.value).toFixed(1)}`).join(' ');
-    svg += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+    const dash = s.axis === 'right' ? ' stroke-dasharray="5,3"' : '';
+    svg += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2"${dash}/>`;
   });
 
   svg += '</svg>';
@@ -338,7 +358,10 @@ function lineChartSVG(seriesList, opts) {
 }
 
 function legendHTML(seriesList) {
-  return seriesList.map(s => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join('');
+  return seriesList.map(s => {
+    const rightTag = s.axis === 'right' ? '（右軸，虛線）' : '';
+    return `<span><i style="background:${s.color}"></i>${s.label}${rightTag}</span>`;
+  }).join('');
 }
 
 function fmtNum(n, digits) {
@@ -375,11 +398,13 @@ async function loadCpi() {
       statBox('OER YoY', latest('oer'), '%') +
       statBox('能源 CPI YoY', latest('energy'), '%') +
       statBox('平均時薪 YoY', latest('wages'), '%');
+    // 能源 CPI YoY% 波動遠大於核心/OER/薪資（可到 +20% 以上），跟其他三條擠在同一軸
+    // 會把彼此都壓平看不出走勢，所以能源這條改配右軸，其餘三條留左軸。
     const seriesList = [
       { points: s.core, color: '#1a56db', label: '核心 CPI YoY%' },
       { points: s.oer, color: '#c2410c', label: 'OER YoY%' },
-      { points: s.energy, color: '#0f9d58', label: '能源 CPI YoY%' },
       { points: s.wages, color: '#8e24aa', label: '平均時薪 YoY%' },
+      { points: s.energy, color: '#0f9d58', label: '能源 CPI YoY%', axis: 'right' },
     ];
     el.innerHTML = lineChartSVG(seriesList);
     document.getElementById('cpi-legend').innerHTML = legendHTML(seriesList);
