@@ -288,13 +288,22 @@
     <div class="chart-wrap" id="debt-chart"></div>
     <div class="source-note">國債側資料來源：US Treasury Debt to Penny（每日未償還公債總額，自動抓取）。</div>
     <div class="manual-block">
-      <label>本期科技巨頭公司債發行規模（手動輸入，單位自訂並註明）</label>
-      <input type="text" id="corpbond-value" placeholder="例：$50B（MSFT/META/AMZN/GOOGL 本季合計，資料源：SIFMA 或財經媒體彙整）">
-      <div class="manual-hint">無免金鑰的即時彙整 API，可參考 <a href="https://www.sifma.org/resources/research/us-corporate-bonds-statistics/" target="_blank" rel="noopener">SIFMA US Corporate Bond Statistics</a>。</div>
+      <label>本期科技巨頭公司債發行規模 / AI 資本支出（手動輸入，單位自訂並註明）</label>
+      <input type="text" id="corpbond-value" placeholder="例：$50B 公司債（MSFT/META/AMZN/GOOGL 本季合計）；資本支出另註金額，資料源：SIFMA 或財報/法說會揭露">
+      <div class="manual-hint">公司債規模無免金鑰即時彙整 API，可參考 <a href="https://www.sifma.org/resources/research/us-corporate-bonds-statistics/" target="_blank" rel="noopener">SIFMA US Corporate Bond Statistics</a>；AI 資本支出無公開統計，需從各公司季報/法說會逐家蒐集。</div>
       <label>觀察備註</label>
-      <textarea id="corpbond-note" placeholder="相對國債淨發行的量級對比、排擠效應是否顯著..."></textarea>
+      <textarea id="corpbond-note" placeholder="相對國債淨發行的量級對比、排擠效應是否顯著；AI 投資是否讓需求維持韌性..."></textarea>
       <button class="btn" onclick="saveManual('corpbond')">儲存</button>
       <span class="saved-tag" id="corpbond-saved">已儲存</span>
+    </div>
+
+    <div class="sub-block">
+      <h3>信用利差（金融情勢是否仍寬鬆）</h3>
+      <div class="stat-row" id="spread-stats"></div>
+      <div class="chart-wrap" id="spread-chart"></div>
+      <div class="legend" id="spread-legend"></div>
+      <div class="flag-box">⚑ 若 AI 資本支出持續讓需求保持韌性，但信用利差沒有明顯放寬（維持在低檔），代表金融情勢仍偏寬鬆，通膨下行速度可能不夠快——這種環境對股票與高槓桿企業的估值都不算輕鬆。利差顯著走闊才是金融情勢真正收緊、風險偏好轉向的訊號。</div>
+      <div class="source-note">資料來源：FRED BAMLH0A0HYM2（ICE BofA 美國高收益債 OAS）、BAMLC0A0CM（ICE BofA 美國投資級公司債 OAS），日頻。</div>
     </div>
   </div>
 
@@ -711,6 +720,28 @@ async function loadDebt() {
     el.innerHTML = `<div class="err-msg">國債發行資料載入失敗：${e.message}</div>`;
   }
 }
+
+// ───────────────────────── 指標 4 輔助：信用利差 ─────────────────────────
+async function loadCreditSpreads() {
+  const el = document.getElementById('spread-chart');
+  try {
+    const data = await fetchJSON('/api/credit-spreads');
+    const latestHy = data.hy[data.hy.length - 1];
+    const latestIg = data.ig[data.ig.length - 1];
+    document.getElementById('spread-stats').innerHTML =
+      statBox('高收益債 OAS', latestHy ? latestHy.value : null, '%') +
+      statBox('投資級 OAS', latestIg ? latestIg.value : null, '%');
+    const seriesList = [
+      { points: data.hy, color: '#c2410c', label: '高收益債 OAS%' },
+      { points: data.ig, color: '#1a56db', label: '投資級 OAS%' },
+    ];
+    renderChart(el, seriesList);
+    document.getElementById('spread-legend').innerHTML = legendHTML(seriesList);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">信用利差資料載入失敗：${e.message}</div>`;
+  }
+}
+
 function addDays(dateStr, days) {
   const d = new Date(dateStr + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() + days);
@@ -803,7 +834,7 @@ async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.textContent = '載入中…';
-  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
+  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadYield(), loadDebt(), loadCreditSpreads(), loadFomc(), loadFiscal()]);
   btn.disabled = false;
   btn.textContent = '重新整理資料';
   document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');

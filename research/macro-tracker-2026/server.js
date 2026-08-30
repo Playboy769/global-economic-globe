@@ -16,6 +16,7 @@
 // 掛在指標 1 底下的輔助訊號（不算獨立的第 7 項，避免打亂原本 6 項框架）：
 //   勞動市場鬆緊度   -> /api/jobless-claims (FRED ICSA 週度初請＋IC4WSA 4週移動平均，需 FRED_API_KEY)
 //   PCE 通膨廣度     -> /api/pce-breadth    (BEA NIUnderlyingDetail Table 2.4.4U，需 BEA_API_KEY)
+//   信用利差（掛指標4）-> /api/credit-spreads (FRED BAMLH0A0HYM2 高收益債＋BAMLC0A0CM 投資級 OAS，需 FRED_API_KEY)
 //
 // 沒有使用者資料、沒有登入閘門——純唯讀公開資料代理，手動輸入的部分留在前端 localStorage。
 //
@@ -271,6 +272,31 @@ async function fetchPceBreadth() {
   };
 }
 
+// ── 指標 4 輔助：信用利差（HY／IG OAS）——AI 資本支出撐住需求時，金融情勢是否仍寬鬆 ──
+async function fetchCreditSpreads() {
+  if (!FRED_API_KEY) {
+    const err = new Error('FRED_API_KEY 未設定');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const [hyR, igR] = await Promise.all([
+    fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=BAMLH0A0HYM2&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=2024-06-01`),
+    fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=BAMLC0A0CM&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=2024-06-01`),
+  ]);
+  if (!hyR.ok) throw new Error('FRED BAMLH0A0HYM2 HTTP ' + hyR.status);
+  if (!igR.ok) throw new Error('FRED BAMLC0A0CM HTTP ' + igR.status);
+  const hyJ = await hyR.json();
+  const igJ = await igR.json();
+  const toPts = j => (j.observations || [])
+    .map(o => ({ date: o.date, value: Number(o.value) }))
+    .filter(o => Number.isFinite(o.value));
+  return {
+    asOf: new Date().toISOString(),
+    hy: toPts(hyJ).slice(-260),
+    ig: toPts(igJ).slice(-260),
+  };
+}
+
 // ── ② FRED PCEC96：實質消費支出（月頻，Chained 2017 Dollars, SAAR）──
 async function fetchRealPce() {
   if (!FRED_API_KEY) {
@@ -419,6 +445,7 @@ const ENDPOINTS = {
   '/api/real-pce': () => cached('pce', fetchRealPce),
   '/api/jobless-claims': () => cached('jobless', fetchJoblessClaims),
   '/api/pce-breadth': () => cached('breadth', fetchPceBreadth),
+  '/api/credit-spreads': () => cached('spreads', fetchCreditSpreads),
   '/api/treasury-yield': () => cached('yield', fetchTreasuryYield),
   '/api/debt-issuance': () => cached('debt', fetchDebtIssuance),
   '/api/fiscal-ratio': () => cached('fiscal', fetchFiscalRatio),
