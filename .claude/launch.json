@@ -638,6 +638,18 @@
       "port": 8176
     },
     {
+      "name": "nvda-q2-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8180",
+        "--directory",
+        "research/nvda-analysis-fy27q2/NVDA_FY27Q2_Analysis"
+      ],
+      "port": 8180
+    },
+    {
       "name": "macro-tracker",
       "runtimeExecutable": "node",
       "runtimeArgs": [
