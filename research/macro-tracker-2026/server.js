@@ -14,13 +14,14 @@
 //   ⑥ 利息支出/稅收比率 -> /api/fiscal-ratio  (Treasury interest_expense + MTS Table 4 receipts)
 //
 // 掛在指標 1 底下的輔助訊號（不算獨立的第 7 項，避免打亂原本 6 項框架）：
-//   勞動市場鬆緊度 -> /api/jobless-claims (FRED ICSA 週度初請＋IC4WSA 4週移動平均，需 FRED_API_KEY)
+//   勞動市場鬆緊度   -> /api/jobless-claims (FRED ICSA 週度初請＋IC4WSA 4週移動平均，需 FRED_API_KEY)
+//   PCE 通膨廣度     -> /api/pce-breadth    (BEA NIUnderlyingDetail Table 2.4.4U，需 BEA_API_KEY)
 //
 // 沒有使用者資料、沒有登入閘門——純唯讀公開資料代理，手動輸入的部分留在前端 localStorage。
 //
-// FRED_API_KEY 為必要環境變數才能啟用 ② 的自動抓取（免費申請，無 CORS，啟用即時生效）。
-// BEA_API_KEY 目前先存著備用——BEA 的 key 申請後啟用有延遲，先以 FRED PCEC96 為主要來源；
-// 之後 BEA 啟用了可以拿來做交叉驗證，但不是這裡的必要條件。
+// FRED_API_KEY 為必要環境變數才能啟用 ② 與勞動市場鬆緊度的自動抓取。
+// BEA_API_KEY 啟用後改用來抓 PCE 通膨廣度（Table 2.4.4U 逐項價格指數），這是 FRED 沒有
+// 對應細項序列的資料——FRED 只到「財貨/服務/耐久財」這種大分類，BEA 才有近 400 項細項。
 
 const http = require('http');
 const fs = require('fs');
@@ -29,6 +30,7 @@ const path = require('path');
 const PORT = Number(process.env.PORT) || 8080;
 const ROOT = __dirname;
 const FRED_API_KEY = process.env.FRED_API_KEY || '';
+const BEA_API_KEY = process.env.BEA_API_KEY || '';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -169,6 +171,103 @@ async function fetchJoblessClaims() {
     asOf: new Date().toISOString(),
     weekly: toPts(weeklyJ).slice(-52),
     ma4: toPts(ma4J).slice(-52),
+  };
+}
+
+function monthsBefore(dateStr, n) {
+  const [y, m] = dateStr.split('-').map(Number);
+  const idx = (y * 12 + (m - 1)) - n;
+  const ny = Math.floor(idx / 12);
+  const nm = (idx % 12) + 1;
+  return `${ny}-${String(nm).padStart(2, '0')}-01`;
+}
+
+// ── PCE 通膨廣度：一籃子商品裡有多少比例仍在漲，用來判斷通膨壓力是集中還是普遍 ──
+// 資料來源 BEA NIUnderlyingDetail Table 2.4.4U（Price Indexes for PCE by Type of Product），
+// 一次 GetData 回傳全表所有具名項目 × 全部月份，不必逐項個別呼叫。
+//
+// ⚠️ 方法論限制（老實寫在這裡）：BEA API 沒有回傳這張表的階層/縮排資訊，程式無法區分
+// 「大分類加總列」跟「真正的細項列」。這裡只排除唯一的總計列（Line 1「Personal
+// consumption expenditures」）與整組「Market-based PCE ...」（換一種統計基礎重算同一批
+// 項目，算進來會重複計算），其餘全部具名項目（含各層級的中間加總，如「Durable goods」
+// 本身也會被算成一項）都納入計算——這代表這裡的廣度百分比不是特定研究機構「199項」
+// 定義的逐項覆現，兩者會有落差，但排除規則整個攤在這裡，可自行覆核調整門檻或排除清單。
+const BEA_PCE_TABLE = 'U20404';
+const BEA_BREADTH_THRESHOLD = 3; // % YoY，常見的廣度分析參考門檻，非官方目標值
+
+async function fetchPceBreadth() {
+  if (!BEA_API_KEY) {
+    const err = new Error('BEA_API_KEY 未設定或尚未啟用');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const thisYear = new Date().getUTCFullYear();
+  const years = [thisYear - 2, thisYear - 1, thisYear].join(',');
+  const url = `https://apps.bea.gov/api/data/?UserID=${BEA_API_KEY}&method=GetData&datasetname=NIUnderlyingDetail&TableName=${BEA_PCE_TABLE}&Frequency=M&Year=${years}&ResultFormat=JSON`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('BEA API HTTP ' + r.status);
+  const j = await r.json();
+  const results = j.BEAAPI && j.BEAAPI.Results;
+  if (!results || results.Error) {
+    throw new Error('BEA API: ' + (results && results.Error && results.Error.APIErrorDescription || 'unknown error'));
+  }
+  const rows = results.Data || [];
+
+  // 按 LineNumber 分組：每組是一個具名項目的完整月度序列，byDate 供 O(1) 查值。
+  const byLine = new Map();
+  for (const row of rows) {
+    const desc = row.LineDescription || '';
+    if (row.LineNumber === '1' || desc.startsWith('Market-based PCE')) continue;
+    const m = /^(\d{4})M(\d{2})$/.exec(row.TimePeriod);
+    const value = Number(row.DataValue);
+    if (!m || !Number.isFinite(value)) continue;
+    const date = `${m[1]}-${m[2]}-01`;
+    if (!byLine.has(row.LineNumber)) byLine.set(row.LineNumber, { description: desc, byDate: new Map() });
+    byLine.get(row.LineNumber).byDate.set(date, value);
+  }
+
+  const allDates = [...new Set(rows.map(r => {
+    const m = /^(\d{4})M(\d{2})$/.exec(r.TimePeriod);
+    return m ? `${m[1]}-${m[2]}-01` : null;
+  }).filter(Boolean))].sort();
+  const latestDate = allDates[allDates.length - 1];
+
+  const items = [];
+  for (const entry of byLine.values()) {
+    const cur = entry.byDate.get(latestDate);
+    const prior12 = entry.byDate.get(monthsBefore(latestDate, 12));
+    const prior6 = entry.byDate.get(monthsBefore(latestDate, 6));
+    const yoy12 = (cur != null && prior12 != null) ? Number((((cur / prior12) - 1) * 100).toFixed(2)) : null;
+    const ann6 = (cur != null && prior6 != null && prior6 > 0)
+      ? Number(((Math.pow(cur / prior6, 2) - 1) * 100).toFixed(2))
+      : null;
+    if (yoy12 != null || ann6 != null) items.push({ description: entry.description, yoy12, ann6 });
+  }
+
+  function breadthSeriesFor(monthsBack, exponent) {
+    const out = [];
+    for (const date of allDates) {
+      const priorDate = monthsBefore(date, monthsBack);
+      let above = 0, total = 0;
+      for (const entry of byLine.values()) {
+        const cur = entry.byDate.get(date);
+        const prior = entry.byDate.get(priorDate);
+        if (cur == null || prior == null || prior <= 0) continue;
+        total++;
+        if ((Math.pow(cur / prior, exponent) - 1) * 100 > BEA_BREADTH_THRESHOLD) above++;
+      }
+      if (total > 0) out.push({ date, value: Number(((above / total) * 100).toFixed(1)) });
+    }
+    return out;
+  }
+
+  return {
+    asOf: new Date().toISOString(),
+    threshold: BEA_BREADTH_THRESHOLD,
+    itemCount: items.length,
+    breadth12: breadthSeriesFor(12, 1),
+    breadth6: breadthSeriesFor(6, 2),
+    items: items.sort((a, b) => (b.yoy12 ?? -999) - (a.yoy12 ?? -999)),
   };
 }
 
@@ -319,6 +418,7 @@ const ENDPOINTS = {
   '/api/cpi-stickiness': () => cached('cpi', fetchCpiStickiness),
   '/api/real-pce': () => cached('pce', fetchRealPce),
   '/api/jobless-claims': () => cached('jobless', fetchJoblessClaims),
+  '/api/pce-breadth': () => cached('breadth', fetchPceBreadth),
   '/api/treasury-yield': () => cached('yield', fetchTreasuryYield),
   '/api/debt-issuance': () => cached('debt', fetchDebtIssuance),
   '/api/fiscal-ratio': () => cached('fiscal', fetchFiscalRatio),

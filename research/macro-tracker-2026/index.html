@@ -163,6 +163,19 @@
   .saved-tag { font-size: 11px; color: #2a9d5c; display: none; }
   .sub-block { margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 14px; }
   .sub-block h3 { font-size: 13.5px; margin: 0 0 10px; color: #333; font-weight: 700; }
+  .breadth-table-wrap {
+    max-height: 360px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  .breadth-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .breadth-table th, .breadth-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+  .breadth-table th { position: sticky; top: 0; background: #fafafa; color: #666; font-weight: 600; cursor: pointer; user-select: none; }
+  .breadth-table th:hover { color: var(--accent); }
+  .breadth-table td.num, .breadth-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .breadth-table tbody tr:hover { background: #f7f9fc; }
   .fomc-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
   .fomc-list li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
   .fomc-list li:last-child { border-bottom: none; }
@@ -212,6 +225,21 @@
       <div class="legend" id="jobless-legend"></div>
       <div class="flag-box">⚑ 移動平均比單週數字更能捕捉邊際變化：初請失業金是勞動市場鬆緊度的領先指標，4 週移動平均（FRED 官方序列，非自行計算）若止跌回升，是薪資／服務業黏性可能鬆動的早期線索。</div>
       <div class="source-note">資料來源：FRED ICSA（週度初請失業金，季調）、IC4WSA（4 週移動平均）。</div>
+    </div>
+
+    <div class="sub-block">
+      <h3>PCE 通膨廣度（一籃子商品漲跌分布）</h3>
+      <div class="stat-row" id="breadth-stats"></div>
+      <div class="chart-wrap" id="breadth-chart"></div>
+      <div class="legend" id="breadth-legend"></div>
+      <div class="flag-box">⚑ Inflation Breadth（通膨廣度）：壓力集中在少數項目 vs. 普遍滲入多數商品服務，後者更容易讓家庭／企業形成「持續調價」的心理預期，比單看headline數字更能判斷黏性是否成立。12個月廣度用 YoY% 判斷長期分布，6個月年化廣度（滾動 6 個月年化）更快反映最近動能轉向。<br><br>⚠️ 方法論：門檻取 YoY／6個月年化 &gt; 3%；因 BEA API 未提供表格階層資訊，涵蓋的是 Table 2.4.4U 全部具名項目（含中間層級加總，非單一機構「199項」定義的逐項覆現），已排除總計列與 Market-based PCE 重複計算的整組替代口徑。</div>
+      <div class="source-note">資料來源：BEA NIUnderlyingDetail Table 2.4.4U（Price Indexes for Personal Consumption Expenditures by Type of Product）。</div>
+      <div class="breadth-table-wrap">
+        <table class="breadth-table" id="breadth-table">
+          <thead><tr><th>項目</th><th class="num">YoY%</th><th class="num">6個月年化%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -566,6 +594,68 @@ async function loadJoblessClaims() {
   }
 }
 
+// ───────────────────────── 指標 1 輔助：PCE 通膨廣度 ─────────────────────────
+let breadthItemsCache = [];
+let breadthSortState = { key: 'yoy12', dir: 'desc' };
+
+async function loadBreadth() {
+  const el = document.getElementById('breadth-chart');
+  try {
+    const data = await fetchJSON('/api/pce-breadth');
+    const latest12 = data.breadth12[data.breadth12.length - 1];
+    const latest6 = data.breadth6[data.breadth6.length - 1];
+    document.getElementById('breadth-stats').innerHTML =
+      statBox(`12個月廣度（>${data.threshold}%）`, latest12 ? latest12.value : null, '%') +
+      statBox(`6個月年化廣度（>${data.threshold}%）`, latest6 ? latest6.value : null, '%') +
+      statBox('涵蓋項目數', data.itemCount, '');
+    const seriesList = [
+      { points: data.breadth12, color: '#1a56db', label: '12個月廣度%' },
+      { points: data.breadth6, color: '#c2410c', label: '6個月年化廣度%' },
+    ];
+    renderChart(el, seriesList);
+    document.getElementById('breadth-legend').innerHTML = legendHTML(seriesList);
+
+    breadthItemsCache = data.items || [];
+    renderBreadthTable();
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">PCE 通膨廣度資料載入失敗：${e.message}</div>`;
+  }
+}
+
+function renderBreadthTable() {
+  const tbody = document.querySelector('#breadth-table tbody');
+  if (!tbody) return;
+  const { key, dir } = breadthSortState;
+  const sorted = [...breadthItemsCache].sort((a, b) => {
+    const av = a[key], bv = b[key];
+    if (key === 'description') {
+      return dir === 'desc' ? (bv || '').localeCompare(av || '') : (av || '').localeCompare(bv || '');
+    }
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return dir === 'desc' ? bv - av : av - bv;
+  });
+  tbody.innerHTML = sorted.map(it => `<tr>
+    <td>${it.description}</td>
+    <td class="num">${it.yoy12 != null ? fmtNum(it.yoy12) : '—'}</td>
+    <td class="num">${it.ann6 != null ? fmtNum(it.ann6) : '—'}</td>
+  </tr>`).join('');
+}
+
+(function initBreadthTableSort() {
+  const keys = ['description', 'yoy12', 'ann6'];
+  document.querySelectorAll('#breadth-table th').forEach((th, i) => {
+    th.addEventListener('click', () => {
+      const key = keys[i];
+      breadthSortState = breadthSortState.key === key
+        ? { key, dir: breadthSortState.dir === 'desc' ? 'asc' : 'desc' }
+        : { key, dir: key === 'description' ? 'asc' : 'desc' };
+      renderBreadthTable();
+    });
+  });
+})();
+
 // ───────────────────────── 指標 3：長債殖利率 ─────────────────────────
 async function loadYield() {
   const el = document.getElementById('yield-chart');
@@ -713,7 +803,7 @@ async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.textContent = '載入中…';
-  await Promise.all([loadCpi(), loadJoblessClaims(), loadPce(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
+  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
   btn.disabled = false;
   btn.textContent = '重新整理資料';
   document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');
