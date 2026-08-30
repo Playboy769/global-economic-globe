@@ -115,8 +115,23 @@
   .stat-box .label { font-size: 11px; color: #888; margin-bottom: 4px; }
   .stat-box .value { font-size: 20px; font-weight: 700; color: #111; }
   .stat-box .value.na { font-size: 13px; color: #aaa; font-weight: 400; }
-  .chart-wrap { margin: 14px 0; }
+  .chart-wrap { margin: 14px 0; position: relative; }
   .chart-wrap svg { width: 100%; height: auto; display: block; }
+  .chart-tooltip {
+    position: absolute;
+    display: none;
+    background: #222;
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 6px 9px;
+    border-radius: 5px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .chart-tooltip .tt-date { font-weight: 700; color: #ddd; margin-bottom: 2px; }
+  .chart-tooltip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--text-dim); margin-top: 6px; }
   .legend span { display: inline-flex; align-items: center; gap: 4px; }
   .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
@@ -288,15 +303,12 @@
 
 <script>
 // ───────────────────────── 工具：inline SVG 折線圖（零外部依賴）─────────────────────────
-function lineChartSVG(seriesList, opts) {
-  opts = opts || {};
-  const w = opts.width || 640, h = opts.height || 180;
-  // 有右軸系列（s.axis === 'right'）時才留右側刻度空間；沒有就退回單軸版面。
+// 座標計算獨立成 buildChartScales，讓靜態 SVG 繪製（lineChartSVG）跟 hover 命中測試
+// （attachChartHover）共用同一套換算，不會兩邊各自算一次而互相對不齊。
+function buildChartScales(seriesList, w, h) {
   const hasRight = seriesList.some(s => s.axis === 'right');
   const padL = 42, padR = hasRight ? 40 : 14, padT = 14, padB = 24;
   const allPoints = seriesList.flatMap(s => s.points);
-  if (!allPoints.length) return '<div style="font-size:12px;color:#999;">暫無資料</div>';
-
   const dates = [...new Set(allPoints.map(p => p.date))].sort();
   const xIdx = new Map(dates.map((d, i) => [d, i]));
 
@@ -319,6 +331,18 @@ function lineChartSVG(seriesList, opts) {
     ? v => padT + (1 - (v - rightRange.min) / (rightRange.max - rightRange.min)) * (h - padT - padB)
     : null;
   const yScaleFor = s => (s.axis === 'right' && yScaleRight) ? yScaleRight : yScaleLeft;
+
+  return { padL, padR, padT, padB, dates, xIdx, leftRange, rightRange, xScale, yScaleLeft, yScaleRight, yScaleFor };
+}
+
+function lineChartSVG(seriesList, opts) {
+  opts = opts || {};
+  const w = opts.width || 640, h = opts.height || 180;
+  const allPoints = seriesList.flatMap(s => s.points);
+  if (!allPoints.length) return '<div style="font-size:12px;color:#999;">暫無資料</div>';
+
+  const { padL, padR, padT, padB, dates, xIdx, leftRange, rightRange, xScale, yScaleLeft, yScaleFor } =
+    buildChartScales(seriesList, w, h);
 
   let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">`;
   // 格線 + 左軸標籤（格線位置以左軸為準；有右軸時另外畫右軸自己的刻度標籤，兩軸各自的數值範圍不同）
@@ -355,6 +379,99 @@ function lineChartSVG(seriesList, opts) {
 
   svg += '</svg>';
   return svg;
+}
+
+// 畫圖＋掛上 hover 互動：滑到圖上出現十字準線＋各系列在該日期的數值提示框，
+// 離開圖表就整組收起來。互動層是額外疊加在同一張 SVG 上的動態元素（十字線／
+// 圓點／浮動 tooltip div），不影響上面 lineChartSVG 輸出的靜態內容本身。
+function renderChart(el, seriesList, opts) {
+  opts = opts || {};
+  const w = opts.width || 640, h = opts.height || 180;
+  el.innerHTML = lineChartSVG(seriesList, opts);
+  const svg = el.querySelector('svg');
+  if (!svg) return; // 暫無資料時 lineChartSVG 只回傳文字，沒有 svg 可掛互動
+
+  const { padL, padR, padT, padB, dates, xScale, yScaleFor } = buildChartScales(seriesList, w, h);
+  if (dates.length < 1) return;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const crosshair = document.createElementNS(NS, 'line');
+  crosshair.setAttribute('y1', padT);
+  crosshair.setAttribute('y2', h - padB);
+  crosshair.setAttribute('stroke', '#999');
+  crosshair.setAttribute('stroke-width', '1');
+  crosshair.setAttribute('visibility', 'hidden');
+  svg.appendChild(crosshair);
+
+  const dots = seriesList.map(s => {
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('r', '3');
+    c.setAttribute('fill', s.color);
+    c.setAttribute('visibility', 'hidden');
+    svg.appendChild(c);
+    return c;
+  });
+
+  let tooltip = el.querySelector('.chart-tooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.className = 'chart-tooltip';
+    el.appendChild(tooltip);
+  }
+
+  const capture = document.createElementNS(NS, 'rect');
+  capture.setAttribute('x', padL);
+  capture.setAttribute('y', padT);
+  capture.setAttribute('width', Math.max(0, w - padL - padR));
+  capture.setAttribute('height', Math.max(0, h - padT - padB));
+  capture.setAttribute('fill', 'transparent');
+  capture.style.cursor = 'crosshair';
+  svg.appendChild(capture);
+
+  function hide() {
+    crosshair.setAttribute('visibility', 'hidden');
+    dots.forEach(d => d.setAttribute('visibility', 'hidden'));
+    tooltip.style.display = 'none';
+  }
+
+  capture.addEventListener('mousemove', e => {
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width) return;
+    const svgX = (e.clientX - rect.left) / rect.width * w;
+    const ratio = dates.length <= 1 ? 0 : (svgX - padL) / (w - padL - padR);
+    const idx = Math.max(0, Math.min(dates.length - 1, Math.round(ratio * (dates.length - 1))));
+    const date = dates[idx];
+    const x = xScale(idx);
+
+    crosshair.setAttribute('x1', x);
+    crosshair.setAttribute('x2', x);
+    crosshair.setAttribute('visibility', 'visible');
+
+    const lines = [`<div class="tt-date">${date}</div>`];
+    seriesList.forEach((s, i) => {
+      const pt = s.points.find(p => p.date === date);
+      if (pt && pt.value != null && isFinite(pt.value)) {
+        const y = yScaleFor(s)(pt.value);
+        dots[i].setAttribute('cx', x);
+        dots[i].setAttribute('cy', y);
+        dots[i].setAttribute('visibility', 'visible');
+        lines.push(`<div><i style="background:${s.color}"></i>${s.label}: ${fmtNum(pt.value)}</div>`);
+      } else {
+        dots[i].setAttribute('visibility', 'hidden');
+      }
+    });
+
+    tooltip.innerHTML = lines.join('');
+    tooltip.style.display = 'block';
+    const elRect = el.getBoundingClientRect();
+    let left = e.clientX - elRect.left + 12;
+    const top = e.clientY - elRect.top - 12;
+    if (left + tooltip.offsetWidth > elRect.width) left = e.clientX - elRect.left - tooltip.offsetWidth - 12;
+    tooltip.style.left = Math.max(0, left) + 'px';
+    tooltip.style.top = Math.max(0, top) + 'px';
+  });
+
+  capture.addEventListener('mouseleave', hide);
 }
 
 function legendHTML(seriesList) {
@@ -406,7 +523,7 @@ async function loadCpi() {
       { points: s.wages, color: '#8e24aa', label: '平均時薪 YoY%' },
       { points: s.energy, color: '#0f9d58', label: '能源 CPI YoY%', axis: 'right' },
     ];
-    el.innerHTML = lineChartSVG(seriesList);
+    renderChart(el, seriesList);
     document.getElementById('cpi-legend').innerHTML = legendHTML(seriesList);
   } catch (e) {
     el.innerHTML = `<div class="err-msg">CPI 資料載入失敗：${e.message}</div>`;
@@ -438,7 +555,7 @@ async function loadYield() {
       { points: s.y20, color: '#0f9d58', label: '20Y' },
       { points: s.y30, color: '#b3261e', label: '30Y' },
     ];
-    el.innerHTML = lineChartSVG(seriesList, { markers: (data.auctions || []).map(a => ({ date: a.auctionDate })) });
+    renderChart(el, seriesList, { markers: (data.auctions || []).map(a => ({ date: a.auctionDate })) });
     document.getElementById('yield-legend').innerHTML = legendHTML(seriesList) +
       '<span><i style="background:#bbb"></i>灰色虛線＝10Y 標售日</span>';
   } catch (e) {
@@ -463,7 +580,7 @@ async function loadDebt() {
       statBox('最新未償國債總額', latest ? latest.value / 1e12 : null, ' 兆美元') +
       statBox('近 30 日淨發行', netIssuance != null ? netIssuance / 1e9 : null, ' B美元');
     const seriesList = [{ points: series.map(p => ({ date: p.date, value: p.value / 1e12 })), color: '#1a56db', label: '未償國債總額（兆美元）' }];
-    el.innerHTML = lineChartSVG(seriesList);
+    renderChart(el, seriesList);
   } catch (e) {
     el.innerHTML = `<div class="err-msg">國債發行資料載入失敗：${e.message}</div>`;
   }
@@ -498,7 +615,7 @@ async function loadFiscal() {
       statBox('最新月稅收', latest ? latest.receipts / 1e9 : null, ' B美元') +
       statBox('利息／稅收比', latest ? latest.ratio : null, '%');
     const seriesList = [{ points: series.map(p => ({ date: p.date, value: p.ratio })), color: '#c2410c', label: '利息支出／稅收比 %' }];
-    el.innerHTML = lineChartSVG(seriesList);
+    renderChart(el, seriesList);
   } catch (e) {
     el.innerHTML = `<div class="err-msg">財政比率資料載入失敗：${e.message}</div>`;
   }
@@ -519,7 +636,7 @@ async function loadPce() {
       { points: data.mom, color: '#1a56db', label: 'Real PCE MoM%' },
       { points: data.yoy, color: '#0f9d58', label: 'Real PCE YoY%' },
     ];
-    el.innerHTML = lineChartSVG(seriesList);
+    renderChart(el, seriesList);
     document.getElementById('pce-legend').innerHTML = legendHTML(seriesList);
   } catch (e) {
     el.innerHTML = `<div class="err-msg">Real PCE 資料載入失敗：${e.message}</div>`;
