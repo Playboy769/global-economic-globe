@@ -162,23 +162,32 @@ async function fetchRealPce() {
   };
 }
 
-// ── ③ Treasury 每日殖利率曲線（10Y）＋ 近期標售結果 ──
+// ── ③ Treasury 每日殖利率曲線（2Y/5Y/10Y/20Y/30Y 比較）＋ 近期標售結果 ──
+const YIELD_TENORS = { y2: 'BC_2YEAR', y5: 'BC_5YEAR', y10: 'BC_10YEAR', y20: 'BC_20YEAR', y30: 'BC_30YEAR' };
+
 async function fetchTreasuryYield() {
   const year = new Date().getUTCFullYear();
   const years = [year, year - 1];
-  const points = [];
+  const byTenor = {}; // { y2: [{date,value}], y5: [...], ... }
+  for (const key of Object.keys(YIELD_TENORS)) byTenor[key] = [];
+
   for (const y of years) {
     const r = await fetch(`https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value=${y}`);
     if (!r.ok) continue;
     const xml = await r.text();
     const dates = [...xml.matchAll(/<d:NEW_DATE[^>]*>([^<]+)<\/d:NEW_DATE>/g)].map(m => m[1].slice(0, 10));
-    const y10s = [...xml.matchAll(/<d:BC_10YEAR[^>]*>([^<]*)<\/d:BC_10YEAR>/g)].map(m => m[1]);
-    for (let i = 0; i < dates.length; i++) {
-      if (y10s[i]) points.push({ date: dates[i], value: Number(y10s[i]) });
+    for (const [key, field] of Object.entries(YIELD_TENORS)) {
+      const re = new RegExp(`<d:${field}[^>]*>([^<]*)<\\/d:${field}>`, 'g');
+      const vals = [...xml.matchAll(re)].map(m => m[1]);
+      for (let i = 0; i < dates.length; i++) {
+        if (vals[i]) byTenor[key].push({ date: dates[i], value: Number(vals[i]) });
+      }
     }
   }
-  points.sort((a, b) => a.date.localeCompare(b.date));
-
+  const series = {};
+  for (const key of Object.keys(YIELD_TENORS)) {
+    series[key] = byTenor[key].sort((a, b) => a.date.localeCompare(b.date)).slice(-120);
+  }
   let auctions = [];
   try {
     const ar = await fetch('https://www.treasurydirect.gov/TA_WS/securities/search?type=Note&term=10-Year&status=Auctioned&pagesize=6&format=json');
@@ -194,7 +203,7 @@ async function fetchTreasuryYield() {
     }
   } catch (e) { /* 標售資料非必要，取不到就留空 */ }
 
-  return { series: points.slice(-120), auctions };
+  return { series, auctions };
 }
 
 // ── ④ Treasury Debt to Penny：國債存量日序列（可反推淨發行）──

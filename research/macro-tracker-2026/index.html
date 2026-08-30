@@ -212,15 +212,15 @@
   <!-- 3. 長債殖利率韌性 -->
   <div class="card">
     <span class="card-num">指標 3</span>
-    <h2>長債殖利率回落韌性（10Y 公債殖利率）</h2>
+    <h2>長債殖利率回落韌性（2Y／5Y／10Y／20Y／30Y 比較）</h2>
     <div class="criterion">
       ⟹ 判準：下一次回購／標售後，長債殖利率的回落能否撐過一天以上，用來判斷預期心理是否鬆動、Treasury 的工具是否恢復效力。
     </div>
     <div class="stat-row" id="yield-stats"></div>
     <div class="chart-wrap" id="yield-chart"></div>
     <div class="legend" id="yield-legend"></div>
-    <div class="flag-box">⚑ 灰色標記為近期 10Y 公債標售日；對照標售日前後殖利率是否「當天跌、隔天彈回」（撐不過一天）或「連續數日維持低檔」（撐過一天以上）。</div>
-    <div class="source-note">資料來源：US Treasury 每日殖利率曲線（daily_treasury_yield_curve XML）、TreasuryDirect 10-Year Note 標售結果。</div>
+    <div class="flag-box">⚑ 灰色標記為近期 10Y 公債標售日；對照標售日前後殖利率是否「當天跌、隔天彈回」（撐不過一天）或「連續數日維持低檔」（撐過一天以上）。五條天期同時比較可以看出殖利率曲線是整體平移還是特定天期（例如長天期）獨自變動；10Y-2Y 利差轉負是常見的景氣衰退前兆訊號，順帶一起追蹤。</div>
+    <div class="source-note">資料來源：US Treasury 每日殖利率曲線（daily_treasury_yield_curve XML，涵蓋 2Y/5Y/10Y/20Y/30Y）、TreasuryDirect 10-Year Note 標售結果。</div>
   </div>
 
   <!-- 4. 公司債 vs 國債淨發行 -->
@@ -418,14 +418,26 @@ async function loadYield() {
   const el = document.getElementById('yield-chart');
   try {
     const data = await fetchJSON('/api/treasury-yield');
-    const series = data.series;
-    const latest = series[series.length - 1];
-    const prev = series[series.length - 2];
+    const s = data.series; // { y2, y5, y10, y20, y30 }
+    const y10 = s.y10 || [];
+    const y2 = s.y2 || [];
+    const latest10 = y10[y10.length - 1];
+    const prev10 = y10[y10.length - 2];
+    const latest2 = y2[y2.length - 1];
+    const spread = (latest10 && latest2) ? latest10.value - latest2.value : null;
     document.getElementById('yield-stats').innerHTML =
-      statBox('最新 10Y 殖利率', latest ? latest.value : null, '%') +
-      statBox('較前一日', latest && prev ? latest.value - prev.value : null, ' pp') +
+      statBox('最新 10Y 殖利率', latest10 ? latest10.value : null, '%') +
+      statBox('較前一日', latest10 && prev10 ? latest10.value - prev10.value : null, ' pp') +
+      statBox('10Y - 2Y 利差', spread, ' pp') +
       statBox('近期標售場次', data.auctions ? data.auctions.length : null, '');
-    const seriesList = [{ points: series, color: '#1a56db', label: '10Y 公債殖利率 %' }];
+    // 五個天期比較：範圍都在同一個量級（殖利率 %），共用左軸即可，不需要雙軸。
+    const seriesList = [
+      { points: s.y2, color: '#8e24aa', label: '2Y' },
+      { points: s.y5, color: '#c2410c', label: '5Y' },
+      { points: s.y10, color: '#1a56db', label: '10Y' },
+      { points: s.y20, color: '#0f9d58', label: '20Y' },
+      { points: s.y30, color: '#b3261e', label: '30Y' },
+    ];
     el.innerHTML = lineChartSVG(seriesList, { markers: (data.auctions || []).map(a => ({ date: a.auctionDate })) });
     document.getElementById('yield-legend').innerHTML = legendHTML(seriesList) +
       '<span><i style="background:#bbb"></i>灰色虛線＝10Y 標售日</span>';
