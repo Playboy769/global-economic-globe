@@ -3,3 +3,7 @@
 !auth.js
 !analytics.js
 !app
+# macro-tracker-2026 是第三個用 railway up 直接上傳的服務（比照 gaoye-mock-exam 的模式），
+# 一樣靠 repo 根為建置脈絡 + 自己的 Dockerfile（由該服務的 RAILWAY_DOCKERFILE_PATH 指定），
+# COPY 路徑相對 repo 根，所以這裡也要開例外，否則 COPY 會找不到檔案而建置失敗。
+!research/macro-tracker-2026

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>總經黏性追蹤儀表板</title>
+<style>
+  :root {
+    --bg: #fff;
+    --text: #222;
+    --text-dim: #555;
+    --border: #e2e2e2;
+    --accent: #1a56db;
+    --card-bg: #fff;
+    --flag-bg: #fef9e7;
+    --flag-border: #f0c419;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.6;
+  }
+  .page-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 16px;
+  }
+  .page-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #111;
+  }
+  .page-header p {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin: 4px 0;
+    max-width: 860px;
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .as-of { font-size: 12px; color: #888; }
+  .divider { height: 1px; background: var(--border); margin: 20px 0 22px; }
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+  .card-num {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #333;
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin-bottom: 8px;
+  }
+  .card h2 {
+    font-size: 17px;
+    margin: 0 0 10px;
+    color: #111;
+  }
+  .criterion {
+    font-size: 13px;
+    color: var(--text-dim);
+    background: #f7f7f8;
+    border-left: 3px solid #888;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .stat-row {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    flex: 1;
+    min-width: 110px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-box .label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .stat-box .value { font-size: 20px; font-weight: 700; color: #111; }
+  .stat-box .value.na { font-size: 13px; color: #aaa; font-weight: 400; }
+  .chart-wrap { margin: 14px 0; }
+  .chart-wrap svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .flag-box {
+    font-size: 12.5px;
+    background: var(--flag-bg);
+    border: 1px solid var(--flag-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 12px;
+  }
+  .source-note { font-size: 11px; color: #999; margin-top: 10px; }
+  .manual-block { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 14px; }
+  .manual-block label { display: block; font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; }
+  .manual-block input[type=text], .manual-block input[type=number], .manual-block textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    margin-bottom: 10px;
+    resize: vertical;
+  }
+  .manual-block textarea { min-height: 56px; }
+  .manual-hint { font-size: 11px; color: #999; margin: -4px 0 10px; }
+  .manual-hint a { color: var(--accent); }
+  .saved-tag { font-size: 11px; color: #2a9d5c; display: none; }
+  .fomc-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+  .fomc-list li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .fomc-list li:last-child { border-bottom: none; }
+  .fomc-list a { color: var(--accent); text-decoration: none; }
+  .fomc-list a:hover { text-decoration: underline; }
+  .fomc-list .date { font-size: 11px; color: #999; display: block; margin-top: 2px; }
+  .err-msg { font-size: 12.5px; color: #b3261e; background: #fdecea; border-radius: 6px; padding: 8px 12px; }
+  .footer { max-width: 1200px; margin: 0 auto; padding: 0 24px 40px; font-size: 11px; color: #aaa; }
+  @media (max-width: 540px) {
+    .grid { grid-template-columns: 1fr; }
+    .page-header { padding: 24px 16px 12px; }
+    .grid { padding: 0 16px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>總經黏性追蹤儀表板</h1>
+  <p>對應「Earnings Cycle 概念框架」步驟 6–7：CEO guidance 回頭形塑客戶意圖，但這一步本質上是未經驗證的假設。這裡追蹤六項可觀察指標，用來壓力測試「通膨黏性 / 財政壓力」這條總經論點是否還站得住——不自動下判準，數字擺出來，人工目測。</p>
+  <div class="toolbar">
+    <button class="btn" id="refresh-btn" onclick="refreshAll()">重新整理資料</button>
+    <span class="as-of" id="as-of">尚未載入</span>
+  </div>
+</div>
+<div class="divider" style="max-width:1200px;margin:20px auto 0;"></div>
+
+<div class="grid">
+
+  <!-- 1. 通膨黏性滲透 -->
+  <div class="card">
+    <span class="card-num">指標 1</span>
+    <h2>通膨黏性滲透（核心服務／OER vs 能源、薪資）</h2>
+    <div class="criterion">
+      ⟹ 判準：油價／能源分項的通膨是否已滲透進核心服務（supercore services、OER）與薪資，這才是「黏性」是否成立的判準；若僅停留在能源分項，FED 傳統上仍會視為 transitory，整條黏性推論需下修。
+    </div>
+    <div class="stat-row" id="cpi-stats"></div>
+    <div class="chart-wrap" id="cpi-chart"></div>
+    <div class="legend" id="cpi-legend"></div>
+    <div class="flag-box">⚑ 看核心 CPI／OER 的 YoY% 是否跟著能源 CPI 的 YoY% 同向變動；若能源已回落但核心服務／薪資 YoY% 仍高檔盤旋，即為滲透訊號。</div>
+    <div class="source-note">資料來源：BLS CPI API v2（CUSR0000SA0L1E 核心 CPI、CUSR0000SEHC OER、CUSR0000SA0E 能源 CPI、CES0500000003 平均時薪），皆為季調後 YoY%。</div>
+  </div>
+
+  <!-- 2. 實質消費支出 -->
+  <div class="card">
+    <span class="card-num">指標 2</span>
+    <h2>實質消費支出（扣通膨後）</h2>
+    <div class="criterion">
+      ⟹ 判準：實質消費支出（扣通膨後）能否止穩回升，或持續為 0／轉負，用來判斷「消費」這條腿是否真的在斷。
+    </div>
+    <div class="flag-box">⚑ 目前沒有免申請金鑰、可即時抓取的「Real PCE」公開端點（BEA API 與 FRED 都需要免費註冊金鑰）。請至 <a href="https://www.bea.gov/data/consumer-spending/main" target="_blank" rel="noopener">BEA Personal Income and Outlays 發布頁</a> 查最新一期 Real PCE MoM/QoQ %，手動記錄於下方，本頁會保留歷史記錄供比對走勢。</div>
+    <div class="manual-block">
+      <label>最新一期 Real PCE 變動率（%，MoM 或 QoQ，自行註明）</label>
+      <input type="text" id="pce-value" placeholder="例：QoQ +1.2%（2026Q2，資料源：BEA 2026-07-30 發布）">
+      <label>觀察備註</label>
+      <textarea id="pce-note" placeholder="止穩回升 / 持平 / 轉負，以及與管理層說法的對照..."></textarea>
+      <button class="btn" onclick="saveManual('pce')">儲存</button>
+      <span class="saved-tag" id="pce-saved">已儲存</span>
+      <div id="pce-history" style="margin-top:10px;font-size:12px;color:#888;"></div>
+    </div>
+  </div>
+
+  <!-- 3. 長債殖利率韌性 -->
+  <div class="card">
+    <span class="card-num">指標 3</span>
+    <h2>長債殖利率回落韌性（10Y 公債殖利率）</h2>
+    <div class="criterion">
+      ⟹ 判準：下一次回購／標售後，長債殖利率的回落能否撐過一天以上，用來判斷預期心理是否鬆動、Treasury 的工具是否恢復效力。
+    </div>
+    <div class="stat-row" id="yield-stats"></div>
+    <div class="chart-wrap" id="yield-chart"></div>
+    <div class="legend" id="yield-legend"></div>
+    <div class="flag-box">⚑ 灰色標記為近期 10Y 公債標售日；對照標售日前後殖利率是否「當天跌、隔天彈回」（撐不過一天）或「連續數日維持低檔」（撐過一天以上）。</div>
+    <div class="source-note">資料來源：US Treasury 每日殖利率曲線（daily_treasury_yield_curve XML）、TreasuryDirect 10-Year Note 標售結果。</div>
+  </div>
+
+  <!-- 4. 公司債 vs 國債淨發行 -->
+  <div class="card">
+    <span class="card-num">指標 4</span>
+    <h2>科技巨頭公司債 vs 國債淨發行量</h2>
+    <div class="criterion">
+      ⟹ 判準：科技巨頭公司債發行規模 vs 國債淨發行量的相對量級，用來判斷排擠效應是否計量顯著（與長債殖利率韌性指標的未驗證缺口共用）。
+    </div>
+    <div class="stat-row" id="debt-stats"></div>
+    <div class="chart-wrap" id="debt-chart"></div>
+    <div class="source-note">國債側資料來源：US Treasury Debt to Penny（每日未償還公債總額，自動抓取）。</div>
+    <div class="manual-block">
+      <label>本期科技巨頭公司債發行規模（手動輸入，單位自訂並註明）</label>
+      <input type="text" id="corpbond-value" placeholder="例：$50B（MSFT/META/AMZN/GOOGL 本季合計，資料源：SIFMA 或財經媒體彙整）">
+      <div class="manual-hint">無免金鑰的即時彙整 API，可參考 <a href="https://www.sifma.org/resources/research/us-corporate-bonds-statistics/" target="_blank" rel="noopener">SIFMA US Corporate Bond Statistics</a>。</div>
+      <label>觀察備註</label>
+      <textarea id="corpbond-note" placeholder="相對國債淨發行的量級對比、排擠效應是否顯著..."></textarea>
+      <button class="btn" onclick="saveManual('corpbond')">儲存</button>
+      <span class="saved-tag" id="corpbond-saved">已儲存</span>
+    </div>
+  </div>
+
+  <!-- 5. FOMC 決議與聲明措辭 -->
+  <div class="card">
+    <span class="card-num">指標 5</span>
+    <h2>FOMC 決議與聲明措辭</h2>
+    <div class="criterion">
+      ⟹ 判準：9 月 FOMC 實際決議與聲明措辭，是否仍維持「不給指引」的姿態，或開始把升息條件量化。
+    </div>
+    <ul class="fomc-list" id="fomc-list"></ul>
+    <div class="manual-block">
+      <label>本次判讀</label>
+      <textarea id="fomc-note" placeholder="仍不給指引 / 開始量化條件 / 觀察中，附關鍵措辭..."></textarea>
+      <button class="btn" onclick="saveManual('fomc')">儲存</button>
+      <span class="saved-tag" id="fomc-saved">已儲存</span>
+    </div>
+    <div class="source-note">資料來源：Federal Reserve 貨幣政策新聞稿 RSS（press_monetary.xml）；完整聲明全文請點連結至官網原文閱讀。</div>
+  </div>
+
+  <!-- 6. 利息支出/稅收比率＋回購規模 -->
+  <div class="card">
+    <span class="card-num">指標 6</span>
+    <h2>利息支出／稅收比率＋回購操作規模</h2>
+    <div class="criterion">
+      ⟹ 判準：利息支出／稅收比率、以及回購操作規模的變化，用來判斷財政端壓力是否已到必須有動作的程度。
+    </div>
+    <div class="stat-row" id="fiscal-stats"></div>
+    <div class="chart-wrap" id="fiscal-chart"></div>
+    <div class="source-note">資料來源：US Treasury interest_expense（月度利息支出，全類別加總）÷ MTS Table 4「Total -- Receipts」（月度稅收淨額）。</div>
+    <div class="manual-block">
+      <label>本期回購操作規模（手動輸入）</label>
+      <input type="text" id="buyback-value" placeholder="例：$10B（本次操作，資料源：TreasuryDirect buyback 結果）">
+      <div class="manual-hint">回購結果公告請見 <a href="https://www.treasurydirect.gov/auctions/buybacks/" target="_blank" rel="noopener">TreasuryDirect Buyback Operations</a>（無結構化 API，需人工查閱）。</div>
+      <label>觀察備註</label>
+      <textarea id="buyback-note" placeholder="回購規模是否放大、與利息支出/稅收比率趨勢的對照..."></textarea>
+      <button class="btn" onclick="saveManual('buyback')">儲存</button>
+      <span class="saved-tag" id="buyback-saved">已儲存</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">僅供資訊參考，非投資建議。資料多為政府公開來源，可能有發布延遲或版本修正，重大決策前請自行覆核原始來源。</div>
+
+<script>
+// ───────────────────────── 工具：inline SVG 折線圖（零外部依賴）─────────────────────────
+function lineChartSVG(seriesList, opts) {
+  opts = opts || {};
+  const w = opts.width || 640, h = opts.height || 180;
+  const padL = 42, padR = 14, padT = 14, padB = 24;
+  const allPoints = seriesList.flatMap(s => s.points);
+  if (!allPoints.length) return '<div style="font-size:12px;color:#999;">暫無資料</div>';
+
+  const dates = [...new Set(allPoints.map(p => p.date))].sort();
+  const xIdx = new Map(dates.map((d, i) => [d, i]));
+  const values = allPoints.map(p => p.value).filter(v => v != null && isFinite(v));
+  let minV = Math.min(...values), maxV = Math.max(...values);
+  if (minV === maxV) { minV -= 1; maxV += 1; }
+  const pad = (maxV - minV) * 0.1;
+  minV -= pad; maxV += pad;
+
+  const xScale = i => padL + (dates.length <= 1 ? 0 : (i / (dates.length - 1)) * (w - padL - padR));
+  const yScale = v => padT + (1 - (v - minV) / (maxV - minV)) * (h - padT - padB);
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">`;
+  // 格線 + y 軸標籤
+  const gridN = 4;
+  for (let i = 0; i <= gridN; i++) {
+    const v = minV + (maxV - minV) * (i / gridN);
+    const y = yScale(v);
+    svg += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="#eee" stroke-width="1"/>`;
+    svg += `<text x="${padL - 6}" y="${y + 3}" font-size="9" fill="#999" text-anchor="end">${v.toFixed(1)}</text>`;
+  }
+  // x 軸首尾日期
+  svg += `<text x="${padL}" y="${h - 6}" font-size="9" fill="#999">${dates[0]}</text>`;
+  svg += `<text x="${w - padR}" y="${h - 6}" font-size="9" fill="#999" text-anchor="end">${dates[dates.length - 1]}</text>`;
+
+  // 標售/事件標記（垂直虛線）
+  (opts.markers || []).forEach(m => {
+    if (!xIdx.has(m.date)) return;
+    const x = xScale(xIdx.get(m.date));
+    svg += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h - padB}" stroke="#bbb" stroke-width="1" stroke-dasharray="3,3"/>`;
+  });
+
+  seriesList.forEach(s => {
+    const pts = s.points.filter(p => p.value != null && isFinite(p.value) && xIdx.has(p.date));
+    if (!pts.length) return;
+    const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(xIdx.get(p.date)).toFixed(1)} ${yScale(p.value).toFixed(1)}`).join(' ');
+    svg += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
+function legendHTML(seriesList) {
+  return seriesList.map(s => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join('');
+}
+
+function fmtNum(n, digits) {
+  if (n == null || !isFinite(n)) return '—';
+  return Number(n).toLocaleString('zh-TW', { maximumFractionDigits: digits == null ? 2 : digits, minimumFractionDigits: 0 });
+}
+
+function statBox(label, value, unit) {
+  const na = value == null || !isFinite(value);
+  return `<div class="stat-box"><div class="label">${label}</div><div class="value${na ? ' na' : ''}">${na ? '無資料' : fmtNum(value) + (unit || '')}</div></div>`;
+}
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+
+// ───────────────────────── 指標 1：CPI 黏性 ─────────────────────────
+async function loadCpi() {
+  const el = document.getElementById('cpi-chart');
+  try {
+    const data = await fetchJSON('/api/cpi-stickiness');
+    const s = data.series;
+    const latest = k => (s[k] && s[k].length) ? s[k][s[k].length - 1].value : null;
+    document.getElementById('cpi-stats').innerHTML =
+      statBox('核心 CPI YoY', latest('core'), '%') +
+      statBox('OER YoY', latest('oer'), '%') +
+      statBox('能源 CPI YoY', latest('energy'), '%') +
+      statBox('平均時薪 YoY', latest('wages'), '%');
+    const seriesList = [
+      { points: s.core, color: '#1a56db', label: '核心 CPI YoY%' },
+      { points: s.oer, color: '#c2410c', label: 'OER YoY%' },
+      { points: s.energy, color: '#0f9d58', label: '能源 CPI YoY%' },
+      { points: s.wages, color: '#8e24aa', label: '平均時薪 YoY%' },
+    ];
+    el.innerHTML = lineChartSVG(seriesList);
+    document.getElementById('cpi-legend').innerHTML = legendHTML(seriesList);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">CPI 資料載入失敗：${e.message}</div>`;
+  }
+}
+
+// ───────────────────────── 指標 3：長債殖利率 ─────────────────────────
+async function loadYield() {
+  const el = document.getElementById('yield-chart');
+  try {
+    const data = await fetchJSON('/api/treasury-yield');
+    const series = data.series;
+    const latest = series[series.length - 1];
+    const prev = series[series.length - 2];
+    document.getElementById('yield-stats').innerHTML =
+      statBox('最新 10Y 殖利率', latest ? latest.value : null, '%') +
+      statBox('較前一日', latest && prev ? latest.value - prev.value : null, ' pp') +
+      statBox('近期標售場次', data.auctions ? data.auctions.length : null, '');
+    const seriesList = [{ points: series, color: '#1a56db', label: '10Y 公債殖利率 %' }];
+    el.innerHTML = lineChartSVG(seriesList, { markers: (data.auctions || []).map(a => ({ date: a.auctionDate })) });
+    document.getElementById('yield-legend').innerHTML = legendHTML(seriesList) +
+      '<span><i style="background:#bbb"></i>灰色虛線＝10Y 標售日</span>';
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">殖利率資料載入失敗：${e.message}</div>`;
+  }
+}
+
+// ───────────────────────── 指標 4：國債發行 ─────────────────────────
+async function loadDebt() {
+  const el = document.getElementById('debt-chart');
+  try {
+    const data = await fetchJSON('/api/debt-issuance');
+    const series = data.series;
+    const latest = series[series.length - 1];
+    // series 按日期遞增排序，要找「離 30 天前最近的那筆」須取符合條件裡最後一筆，
+    // 不能用 Array.find（那會從最舊的一筆開始比對，抓到的其實是查詢視窗最早一天）。
+    const targetDate = addDays(latest.date, -30);
+    const candidates = series.filter(p => p.date <= targetDate);
+    const monthAgo = candidates.length ? candidates[candidates.length - 1] : null;
+    const netIssuance = monthAgo ? latest.value - monthAgo.value : null;
+    document.getElementById('debt-stats').innerHTML =
+      statBox('最新未償國債總額', latest ? latest.value / 1e12 : null, ' 兆美元') +
+      statBox('近 30 日淨發行', netIssuance != null ? netIssuance / 1e9 : null, ' B美元');
+    const seriesList = [{ points: series.map(p => ({ date: p.date, value: p.value / 1e12 })), color: '#1a56db', label: '未償國債總額（兆美元）' }];
+    el.innerHTML = lineChartSVG(seriesList);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">國債發行資料載入失敗：${e.message}</div>`;
+  }
+}
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// ───────────────────────── 指標 5：FOMC 新聞稿 ─────────────────────────
+async function loadFomc() {
+  const el = document.getElementById('fomc-list');
+  try {
+    const data = await fetchJSON('/api/fomc-statements');
+    el.innerHTML = data.items.map(it => `<li><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a><span class="date">${it.pubDate}</span></li>`).join('') || '<li>暫無資料</li>';
+    document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');
+  } catch (e) {
+    el.innerHTML = `<li class="err-msg">FOMC 新聞稿載入失敗：${e.message}</li>`;
+  }
+}
+
+// ───────────────────────── 指標 6：財政比率 ─────────────────────────
+async function loadFiscal() {
+  const el = document.getElementById('fiscal-chart');
+  try {
+    const data = await fetchJSON('/api/fiscal-ratio');
+    const series = data.series;
+    const latest = series[series.length - 1];
+    document.getElementById('fiscal-stats').innerHTML =
+      statBox('最新月利息支出', latest ? latest.interestExpense / 1e9 : null, ' B美元') +
+      statBox('最新月稅收', latest ? latest.receipts / 1e9 : null, ' B美元') +
+      statBox('利息／稅收比', latest ? latest.ratio : null, '%');
+    const seriesList = [{ points: series.map(p => ({ date: p.date, value: p.ratio })), color: '#c2410c', label: '利息支出／稅收比 %' }];
+    el.innerHTML = lineChartSVG(seriesList);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">財政比率資料載入失敗：${e.message}</div>`;
+  }
+}
+
+// ───────────────────────── 手動輸入區塊（localStorage）─────────────────────────
+const MANUAL_KEYS = {
+  pce: ['pce-value', 'pce-note'],
+  corpbond: ['corpbond-value', 'corpbond-note'],
+  fomc: ['fomc-note'],
+  buyback: ['buyback-value', 'buyback-note'],
+};
+const LS_PREFIX = 'macro-tracker:';
+
+function saveManual(group) {
+  const fields = MANUAL_KEYS[group];
+  const record = { savedAt: new Date().toISOString() };
+  fields.forEach(id => { record[id] = document.getElementById(id).value; });
+
+  if (group === 'pce') {
+    const histKey = LS_PREFIX + 'pce-history';
+    const hist = JSON.parse(localStorage.getItem(histKey) || '[]');
+    hist.unshift(record);
+    localStorage.setItem(histKey, JSON.stringify(hist.slice(0, 12)));
+    renderPceHistory();
+  }
+
+  localStorage.setItem(LS_PREFIX + group, JSON.stringify(record));
+  const tag = document.getElementById(group + '-saved');
+  tag.style.display = 'inline';
+  setTimeout(() => { tag.style.display = 'none'; }, 2000);
+}
+
+function loadManual() {
+  Object.entries(MANUAL_KEYS).forEach(([group, fields]) => {
+    const raw = localStorage.getItem(LS_PREFIX + group);
+    if (!raw) return;
+    try {
+      const record = JSON.parse(raw);
+      fields.forEach(id => { if (record[id] != null) document.getElementById(id).value = record[id]; });
+    } catch (e) { /* 忽略壞掉的舊資料 */ }
+  });
+  renderPceHistory();
+}
+
+function renderPceHistory() {
+  const hist = JSON.parse(localStorage.getItem(LS_PREFIX + 'pce-history') || '[]');
+  const el = document.getElementById('pce-history');
+  if (!hist.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '歷史記錄：<br>' + hist.map(h =>
+    `${new Date(h.savedAt).toLocaleDateString('zh-TW')}　${h['pce-value'] || ''}`
+  ).join('<br>');
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '載入中…';
+  await Promise.all([loadCpi(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
+  btn.disabled = false;
+  btn.textContent = '重新整理資料';
+  document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');
+}
+
+loadManual();
+refreshAll();
+</script>
+</body>
+</html>

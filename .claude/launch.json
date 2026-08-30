@@ -636,6 +636,17 @@
         "research/dram-nand-moat-export-controls"
       ],
       "port": 8176
+    },
+    {
+      "name": "macro-tracker",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "research/macro-tracker-2026/server.js"
+      ],
+      "port": 8178,
+      "env": {
+        "PORT": "8178"
+      }
     }
   ]
 }
