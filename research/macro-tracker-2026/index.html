@@ -196,15 +196,16 @@
     <div class="criterion">
       ⟹ 判準：實質消費支出（扣通膨後）能否止穩回升，或持續為 0／轉負，用來判斷「消費」這條腿是否真的在斷。
     </div>
-    <div class="flag-box">⚑ 目前沒有免申請金鑰、可即時抓取的「Real PCE」公開端點（BEA API 與 FRED 都需要免費註冊金鑰）。請至 <a href="https://www.bea.gov/data/consumer-spending/main" target="_blank" rel="noopener">BEA Personal Income and Outlays 發布頁</a> 查最新一期 Real PCE MoM/QoQ %，手動記錄於下方，本頁會保留歷史記錄供比對走勢。</div>
+    <div class="stat-row" id="pce-stats"></div>
+    <div class="chart-wrap" id="pce-chart"></div>
+    <div class="legend" id="pce-legend"></div>
+    <div class="flag-box">⚑ 看 MoM% 是否連續轉正／回升（止穩回升），或持續貼近 0 甚至轉負（消費這條腿在斷）；YoY% 用來看趨勢是否還在正常範圍內，避免被單月雜訊誤導。</div>
+    <div class="source-note">資料來源：FRED PCEC96（Real Personal Consumption Expenditures，月頻，Chained 2017 Dollars，SAAR）。</div>
     <div class="manual-block">
-      <label>最新一期 Real PCE 變動率（%，MoM 或 QoQ，自行註明）</label>
-      <input type="text" id="pce-value" placeholder="例：QoQ +1.2%（2026Q2，資料源：BEA 2026-07-30 發布）">
       <label>觀察備註</label>
       <textarea id="pce-note" placeholder="止穩回升 / 持平 / 轉負，以及與管理層說法的對照..."></textarea>
       <button class="btn" onclick="saveManual('pce')">儲存</button>
       <span class="saved-tag" id="pce-saved">已儲存</span>
-      <div id="pce-history" style="margin-top:10px;font-size:12px;color:#888;"></div>
     </div>
   </div>
 
@@ -350,6 +351,11 @@ function statBox(label, value, unit) {
   return `<div class="stat-box"><div class="label">${label}</div><div class="value${na ? ' na' : ''}">${na ? '無資料' : fmtNum(value) + (unit || '')}</div></div>`;
 }
 
+function textStatBox(label, text) {
+  const na = !text;
+  return `<div class="stat-box"><div class="label">${label}</div><div class="value${na ? ' na' : ''}">${na ? '無資料' : text}</div></div>`;
+}
+
 async function fetchJSON(url) {
   const r = await fetch(url);
   const j = await r.json();
@@ -461,9 +467,31 @@ async function loadFiscal() {
   }
 }
 
+// ───────────────────────── 指標 2：實質消費支出 ─────────────────────────
+async function loadPce() {
+  const el = document.getElementById('pce-chart');
+  try {
+    const data = await fetchJSON('/api/real-pce');
+    const latestMom = data.mom[data.mom.length - 1];
+    const latestYoy = data.yoy[data.yoy.length - 1];
+    document.getElementById('pce-stats').innerHTML =
+      statBox('最新 MoM%', latestMom ? latestMom.value : null, '%') +
+      statBox('最新 YoY%', latestYoy ? latestYoy.value : null, '%') +
+      textStatBox('最新月份', latestMom ? latestMom.date : null);
+    const seriesList = [
+      { points: data.mom, color: '#1a56db', label: 'Real PCE MoM%' },
+      { points: data.yoy, color: '#0f9d58', label: 'Real PCE YoY%' },
+    ];
+    el.innerHTML = lineChartSVG(seriesList);
+    document.getElementById('pce-legend').innerHTML = legendHTML(seriesList);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">Real PCE 資料載入失敗：${e.message}</div>`;
+  }
+}
+
 // ───────────────────────── 手動輸入區塊（localStorage）─────────────────────────
 const MANUAL_KEYS = {
-  pce: ['pce-value', 'pce-note'],
+  pce: ['pce-note'],
   corpbond: ['corpbond-value', 'corpbond-note'],
   fomc: ['fomc-note'],
   buyback: ['buyback-value', 'buyback-note'],
@@ -474,15 +502,6 @@ function saveManual(group) {
   const fields = MANUAL_KEYS[group];
   const record = { savedAt: new Date().toISOString() };
   fields.forEach(id => { record[id] = document.getElementById(id).value; });
-
-  if (group === 'pce') {
-    const histKey = LS_PREFIX + 'pce-history';
-    const hist = JSON.parse(localStorage.getItem(histKey) || '[]');
-    hist.unshift(record);
-    localStorage.setItem(histKey, JSON.stringify(hist.slice(0, 12)));
-    renderPceHistory();
-  }
-
   localStorage.setItem(LS_PREFIX + group, JSON.stringify(record));
   const tag = document.getElementById(group + '-saved');
   tag.style.display = 'inline';
@@ -498,23 +517,13 @@ function loadManual() {
       fields.forEach(id => { if (record[id] != null) document.getElementById(id).value = record[id]; });
     } catch (e) { /* 忽略壞掉的舊資料 */ }
   });
-  renderPceHistory();
-}
-
-function renderPceHistory() {
-  const hist = JSON.parse(localStorage.getItem(LS_PREFIX + 'pce-history') || '[]');
-  const el = document.getElementById('pce-history');
-  if (!hist.length) { el.innerHTML = ''; return; }
-  el.innerHTML = '歷史記錄：<br>' + hist.map(h =>
-    `${new Date(h.savedAt).toLocaleDateString('zh-TW')}　${h['pce-value'] || ''}`
-  ).join('<br>');
 }
 
 async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.textContent = '載入中…';
-  await Promise.all([loadCpi(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
+  await Promise.all([loadCpi(), loadPce(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
   btn.disabled = false;
   btn.textContent = '重新整理資料';
   document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');

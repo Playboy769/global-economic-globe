@@ -7,13 +7,17 @@
 //
 // 六項指標對應：
 //   ① 通膨黏性滲透   -> /api/cpi-stickiness   (BLS CPI API v2，免金鑰)
-//   ② 實質消費支出   -> 前端手動輸入（無免金鑰的即時來源，見 index.html 內註記）
+//   ② 實質消費支出   -> /api/real-pce         (FRED PCEC96，需 FRED_API_KEY)
 //   ③ 長債殖利率韌性 -> /api/treasury-yield   (Treasury 每日殖利率曲線 XML + TreasuryDirect 標售結果)
 //   ④ 公司債 vs 國債發行 -> /api/debt-issuance (Treasury Debt to Penny，國債側自動；科技公司債側手動輸入)
 //   ⑤ FOMC 決議措辭   -> /api/fomc-statements (Fed 貨幣政策新聞稿 RSS)
 //   ⑥ 利息支出/稅收比率 -> /api/fiscal-ratio  (Treasury interest_expense + MTS Table 4 receipts)
 //
 // 沒有使用者資料、沒有登入閘門——純唯讀公開資料代理，手動輸入的部分留在前端 localStorage。
+//
+// FRED_API_KEY 為必要環境變數才能啟用 ② 的自動抓取（免費申請，無 CORS，啟用即時生效）。
+// BEA_API_KEY 目前先存著備用——BEA 的 key 申請後啟用有延遲，先以 FRED PCEC96 為主要來源；
+// 之後 BEA 啟用了可以拿來做交叉驗證，但不是這裡的必要條件。
 
 const http = require('http');
 const fs = require('fs');
@@ -21,6 +25,7 @@ const path = require('path');
 
 const PORT = Number(process.env.PORT) || 8080;
 const ROOT = __dirname;
+const FRED_API_KEY = process.env.FRED_API_KEY || '';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -122,6 +127,39 @@ async function fetchCpiStickiness() {
     out[key] = yoy.slice(-24);
   }
   return { asOf: new Date().toISOString(), series: out };
+}
+
+// ── ② FRED PCEC96：實質消費支出（月頻，Chained 2017 Dollars, SAAR）──
+async function fetchRealPce() {
+  if (!FRED_API_KEY) {
+    const err = new Error('FRED_API_KEY 未設定');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const r = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=PCEC96&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=2018-01-01`);
+  if (!r.ok) throw new Error('FRED API HTTP ' + r.status);
+  const j = await r.json();
+  const pts = (j.observations || [])
+    .map(o => ({ date: o.date, value: Number(o.value) }))
+    .filter(o => Number.isFinite(o.value));
+
+  const mom = pts.map((d, i) => {
+    const prior = pts[i - 1];
+    if (!prior) return null;
+    return { date: d.date, value: Number((((d.value / prior.value) - 1) * 100).toFixed(2)) };
+  }).filter(Boolean);
+  const yoy = pts.map((d, i) => {
+    const prior = pts[i - 12];
+    if (!prior) return null;
+    return { date: d.date, value: Number((((d.value / prior.value) - 1) * 100).toFixed(2)) };
+  }).filter(Boolean);
+
+  return {
+    asOf: new Date().toISOString(),
+    level: pts.slice(-24),
+    mom: mom.slice(-24),
+    yoy: yoy.slice(-24),
+  };
 }
 
 // ── ③ Treasury 每日殖利率曲線（10Y）＋ 近期標售結果 ──
@@ -227,6 +265,7 @@ async function fetchFomcStatements() {
 
 const ENDPOINTS = {
   '/api/cpi-stickiness': () => cached('cpi', fetchCpiStickiness),
+  '/api/real-pce': () => cached('pce', fetchRealPce),
   '/api/treasury-yield': () => cached('yield', fetchTreasuryYield),
   '/api/debt-issuance': () => cached('debt', fetchDebtIssuance),
   '/api/fiscal-ratio': () => cached('fiscal', fetchFiscalRatio),
