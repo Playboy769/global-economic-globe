@@ -13,6 +13,9 @@
 //   ⑤ FOMC 決議措辭   -> /api/fomc-statements (Fed 貨幣政策新聞稿 RSS)
 //   ⑥ 利息支出/稅收比率 -> /api/fiscal-ratio  (Treasury interest_expense + MTS Table 4 receipts)
 //
+// 掛在指標 1 底下的輔助訊號（不算獨立的第 7 項，避免打亂原本 6 項框架）：
+//   勞動市場鬆緊度 -> /api/jobless-claims (FRED ICSA 週度初請＋IC4WSA 4週移動平均，需 FRED_API_KEY)
+//
 // 沒有使用者資料、沒有登入閘門——純唯讀公開資料代理，手動輸入的部分留在前端 localStorage。
 //
 // FRED_API_KEY 為必要環境變數才能啟用 ② 的自動抓取（免費申請，無 CORS，啟用即時生效）。
@@ -125,8 +128,48 @@ async function fetchCpiStickiness() {
       return { date: d.date, value: Number((((d.value / prior.value) - 1) * 100).toFixed(2)) };
     }).filter(Boolean);
     out[key] = yoy.slice(-24);
+
+    if (key === 'core') {
+      // 3 個月年化（3mo/3mo SAAR）：比 YoY 更快反映最近動能，拿來跟單月讀數對照，
+      // 判斷「單月意外」是否代表底層趨勢真的轉向，還是雜訊——市場常用的 core CPI
+      // 3mo annualized 指標，不是自創算法。
+      const ann3 = pts.map((d, i) => {
+        const prior = pts[i - 3];
+        if (!prior || prior.value <= 0) return null;
+        const ratio = d.value / prior.value;
+        return { date: d.date, value: Number(((Math.pow(ratio, 4) - 1) * 100).toFixed(2)) };
+      }).filter(Boolean);
+      out.coreAnn3 = ann3.slice(-24);
+    }
   }
   return { asOf: new Date().toISOString(), series: out };
+}
+
+// ── 勞動市場鬆緊度輔助訊號：初請失業金週度數據＋FRED 內建 4 週移動平均 ──
+// 掛在指標 1 底下（不另開新卡片）：初請失業金是薪資/服務業黏性能否維持的領先指標，
+// 4 週移動平均由 FRED 官方序列直接提供（IC4WSA），不必自己滾動計算。
+async function fetchJoblessClaims() {
+  if (!FRED_API_KEY) {
+    const err = new Error('FRED_API_KEY 未設定');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const [weeklyR, ma4R] = await Promise.all([
+    fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=ICSA&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=2024-06-01`),
+    fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=IC4WSA&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=2024-06-01`),
+  ]);
+  if (!weeklyR.ok) throw new Error('FRED ICSA HTTP ' + weeklyR.status);
+  if (!ma4R.ok) throw new Error('FRED IC4WSA HTTP ' + ma4R.status);
+  const weeklyJ = await weeklyR.json();
+  const ma4J = await ma4R.json();
+  const toPts = j => (j.observations || [])
+    .map(o => ({ date: o.date, value: Number(o.value) }))
+    .filter(o => Number.isFinite(o.value));
+  return {
+    asOf: new Date().toISOString(),
+    weekly: toPts(weeklyJ).slice(-52),
+    ma4: toPts(ma4J).slice(-52),
+  };
 }
 
 // ── ② FRED PCEC96：實質消費支出（月頻，Chained 2017 Dollars, SAAR）──
@@ -275,6 +318,7 @@ async function fetchFomcStatements() {
 const ENDPOINTS = {
   '/api/cpi-stickiness': () => cached('cpi', fetchCpiStickiness),
   '/api/real-pce': () => cached('pce', fetchRealPce),
+  '/api/jobless-claims': () => cached('jobless', fetchJoblessClaims),
   '/api/treasury-yield': () => cached('yield', fetchTreasuryYield),
   '/api/debt-issuance': () => cached('debt', fetchDebtIssuance),
   '/api/fiscal-ratio': () => cached('fiscal', fetchFiscalRatio),

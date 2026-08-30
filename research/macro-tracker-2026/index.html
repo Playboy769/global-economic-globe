@@ -161,6 +161,8 @@
   .manual-hint { font-size: 11px; color: #999; margin: -4px 0 10px; }
   .manual-hint a { color: var(--accent); }
   .saved-tag { font-size: 11px; color: #2a9d5c; display: none; }
+  .sub-block { margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 14px; }
+  .sub-block h3 { font-size: 13.5px; margin: 0 0 10px; color: #333; font-weight: 700; }
   .fomc-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
   .fomc-list li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
   .fomc-list li:last-child { border-bottom: none; }
@@ -200,8 +202,17 @@
     <div class="stat-row" id="cpi-stats"></div>
     <div class="chart-wrap" id="cpi-chart"></div>
     <div class="legend" id="cpi-legend"></div>
-    <div class="flag-box">⚑ 看核心 CPI／OER 的 YoY% 是否跟著能源 CPI 的 YoY% 同向變動；若能源已回落但核心服務／薪資 YoY% 仍高檔盤旋，即為滲透訊號。</div>
-    <div class="source-note">資料來源：BLS CPI API v2（CUSR0000SA0L1E 核心 CPI、CUSR0000SEHC OER、CUSR0000SA0E 能源 CPI、CES0500000003 平均時薪），皆為季調後 YoY%。</div>
+    <div class="flag-box">⚑ 看核心 CPI／OER 的 YoY% 是否跟著能源 CPI 的 YoY% 同向變動；若能源已回落但核心服務／薪資 YoY% 仍高檔盤旋，即為滲透訊號。核心 CPI 3個月年化%（虛線）反映最近動能：若單月讀數高於預期、但 3 個月年化仍在下降，代表底層趨勢未必真的轉向，政策反應可能有限；若 3 個月年化停止改善，才是市場該重新調高利率尾端風險的訊號。</div>
+    <div class="source-note">資料來源：BLS CPI API v2（CUSR0000SA0L1E 核心 CPI、CUSR0000SEHC OER、CUSR0000SA0E 能源 CPI、CES0500000003 平均時薪），皆為季調後 YoY%；核心 CPI 3個月年化%為同一序列另外換算。</div>
+
+    <div class="sub-block">
+      <h3>勞動市場鬆緊度（輔助訊號）</h3>
+      <div class="stat-row" id="jobless-stats"></div>
+      <div class="chart-wrap" id="jobless-chart"></div>
+      <div class="legend" id="jobless-legend"></div>
+      <div class="flag-box">⚑ 移動平均比單週數字更能捕捉邊際變化：初請失業金是勞動市場鬆緊度的領先指標，4 週移動平均（FRED 官方序列，非自行計算）若止跌回升，是薪資／服務業黏性可能鬆動的早期線索。</div>
+      <div class="source-note">資料來源：FRED ICSA（週度初請失業金，季調）、IC4WSA（4 週移動平均）。</div>
+    </div>
   </div>
 
   <!-- 2. 實質消費支出 -->
@@ -373,7 +384,7 @@ function lineChartSVG(seriesList, opts) {
     if (!pts.length) return;
     const yScale = yScaleFor(s);
     const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(xIdx.get(p.date)).toFixed(1)} ${yScale(p.value).toFixed(1)}`).join(' ');
-    const dash = s.axis === 'right' ? ' stroke-dasharray="5,3"' : '';
+    const dash = (s.axis === 'right' || s.dashed) ? ' stroke-dasharray="5,3"' : '';
     svg += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2"${dash}/>`;
   });
 
@@ -476,8 +487,8 @@ function renderChart(el, seriesList, opts) {
 
 function legendHTML(seriesList) {
   return seriesList.map(s => {
-    const rightTag = s.axis === 'right' ? '（右軸，虛線）' : '';
-    return `<span><i style="background:${s.color}"></i>${s.label}${rightTag}</span>`;
+    const tag = s.axis === 'right' ? '（右軸，虛線）' : (s.dashed ? '（虛線）' : '');
+    return `<span><i style="background:${s.color}"></i>${s.label}${tag}</span>`;
   }).join('');
 }
 
@@ -512,13 +523,17 @@ async function loadCpi() {
     const latest = k => (s[k] && s[k].length) ? s[k][s[k].length - 1].value : null;
     document.getElementById('cpi-stats').innerHTML =
       statBox('核心 CPI YoY', latest('core'), '%') +
+      statBox('核心 CPI 3個月年化', latest('coreAnn3'), '%') +
       statBox('OER YoY', latest('oer'), '%') +
       statBox('能源 CPI YoY', latest('energy'), '%') +
       statBox('平均時薪 YoY', latest('wages'), '%');
     // 能源 CPI YoY% 波動遠大於核心/OER/薪資（可到 +20% 以上），跟其他三條擠在同一軸
     // 會把彼此都壓平看不出走勢，所以能源這條改配右軸，其餘三條留左軸。
+    // 核心 CPI 3個月年化%（同一軸、虛線）跟核心 CPI YoY% 疊在一起看，才看得出「單月意外
+    // vs 底層趨勢」是否一致。
     const seriesList = [
       { points: s.core, color: '#1a56db', label: '核心 CPI YoY%' },
+      { points: s.coreAnn3, color: '#1a56db', label: '核心 CPI 3個月年化%', dashed: true },
       { points: s.oer, color: '#c2410c', label: 'OER YoY%' },
       { points: s.wages, color: '#8e24aa', label: '平均時薪 YoY%' },
       { points: s.energy, color: '#0f9d58', label: '能源 CPI YoY%', axis: 'right' },
@@ -527,6 +542,27 @@ async function loadCpi() {
     document.getElementById('cpi-legend').innerHTML = legendHTML(seriesList);
   } catch (e) {
     el.innerHTML = `<div class="err-msg">CPI 資料載入失敗：${e.message}</div>`;
+  }
+}
+
+// ───────────────────────── 指標 1 輔助：勞動市場鬆緊度 ─────────────────────────
+async function loadJoblessClaims() {
+  const el = document.getElementById('jobless-chart');
+  try {
+    const data = await fetchJSON('/api/jobless-claims');
+    const latestWeekly = data.weekly[data.weekly.length - 1];
+    const latestMa4 = data.ma4[data.ma4.length - 1];
+    document.getElementById('jobless-stats').innerHTML =
+      statBox('最新單週初請', latestWeekly ? latestWeekly.value / 1000 : null, 'K') +
+      statBox('4週移動平均', latestMa4 ? latestMa4.value / 1000 : null, 'K');
+    const seriesList = [
+      { points: data.weekly.map(p => ({ date: p.date, value: p.value / 1000 })), color: '#c2410c', label: '單週初請（千人）' },
+      { points: data.ma4.map(p => ({ date: p.date, value: p.value / 1000 })), color: '#1a56db', label: '4週移動平均（千人）' },
+    ];
+    renderChart(el, seriesList);
+    document.getElementById('jobless-legend').innerHTML = legendHTML(seriesList);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">初請失業金資料載入失敗：${e.message}</div>`;
   }
 }
 
@@ -677,7 +713,7 @@ async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.textContent = '載入中…';
-  await Promise.all([loadCpi(), loadPce(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
+  await Promise.all([loadCpi(), loadJoblessClaims(), loadPce(), loadYield(), loadDebt(), loadFomc(), loadFiscal()]);
   btn.disabled = false;
   btn.textContent = '重新整理資料';
   document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');
