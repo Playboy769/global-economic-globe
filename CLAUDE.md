@@ -204,7 +204,7 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 
 ## Deployment topology (this is the part that bites)
 
-There are **five separate Railway deployments** sourced from **three separate git repos**, plus
+There are **six separate Railway deployments** sourced from **three separate git repos**, plus
 this main repo itself:
 
 | Deployment | Repo | Source path | Live URL |
@@ -214,28 +214,45 @@ this main repo itself:
 | structural-holes | **`structural_holes/` — its own repo** | — | `structural-holes-production.up.railway.app` |
 | article-db | **separate repo `article-db-api.git`** (this repo has it as remote `article-db`) | `index.html` at that repo's root — mirrors this repo's `article_db/index.html` | `articlebase.up.railway.app` |
 | gaoye-mock-exam (高業模擬測驗＋錯題紀錄) | this repo | `projects/gaoye-mock-exam/` → `index.html`/`server.js`/`store.js`，**用 `railway up` 直接上傳，不綁 GitHub** | `gaoye-mock-exam-production.up.railway.app` |
+| macro-tracker（總經黏性追蹤儀表板，2026-08-30 新增）| this repo | `research/macro-tracker-2026/` → `index.html`/`server.js`，**用 `railway up` 直接上傳，不綁 GitHub**；無登入、無資料庫，純唯讀代理政府公開 API（BLS/US Treasury），手動輸入的部分存前端 localStorage | `macro-tracker-production-f296.up.railway.app` |
 | my-slide | **`my-slide/` — its own repo** (Netlify) | — | — |
 
-### gaoye-mock-exam：唯一一個用 `railway up` 直接上傳的服務
+### gaoye-mock-exam、macro-tracker：用 `railway up` 直接上傳的服務
 
-其他四個服務都是 Railway 綁 GitHub repo 自動部署，**這個不是**——它沒有綁任何 repo，
-要更新一律在 `projects/gaoye-mock-exam/` 底下跑：
+其他服務（Outside Framework、globe-invest、Article Database、structural-holes）都是
+Railway 綁 GitHub repo 自動部署，**這兩個不是**——它們沒有綁任何 repo，都在同一個
+Railway 專案 `dependable-charm` 底下當獨立 service，要更新一律：
 
 ```
-railway up --detach          # 服務已 link，不必再帶 --service
+railway up --detach --service <service-name>
 ```
 
-⚠️ **三個一定會踩到的坑**：
+（`--service` 可省略，前提是 CLI 目前已 `railway service <name>` link 到正確的服務；
+這個專案底下有多個服務共用同一個 CLI link 狀態，省略前務必先 `railway status` 確認
+目前 link 的是哪一個，避免對著別的服務部署。）
 
-1. **建置脈絡就是你執行 `railway up` 的那個資料夾**（不是 git root），所以
-   `Dockerfile` 的 `COPY` 直接寫檔名即可。**一定要在
-   `projects/gaoye-mock-exam/` 底下執行**——在 repo 根執行會上傳整個 repo 並抓到根目錄
-   那份 Dockerfile，等於把 OutsideFramework 部署到這個服務上。
-   `railway up <子目錄>` 這種寫法**不支援**，會直接報 `prefix not found`。
-2. **`railway logs --build` 不帶 deployment id 時，顯示的不一定是你剛觸發的那次建置**。
+⚠️ **2026-08-30 更正**：本節先前寫「建置脈絡就是你執行 `railway up` 的那個資料夾（不是
+git root），一定要在子資料夾底下執行」，**這是錯的**——依 `.dockerignore` 與兩份
+`Dockerfile` 裡的實際註解、以及 macro-tracker 建立時的實測，真正的機制是：
+
+- **建置脈絡固定是 git root**，`railway up` 一律在 **repo 根目錄**執行（不是子資料夾）。
+- 每個服務用 service 變數 `RAILWAY_DOCKERFILE_PATH` 指到自己那份 `Dockerfile`
+  （例：`research/macro-tracker-2026/Dockerfile`），Railway 才知道該用哪一份。
+- 因為脈絡是 repo 根，根目錄的 `.dockerignore` 對所有服務生效（子資料夾自己的
+  `.dockerignore` 不會被讀到）——新增一個這樣的服務時，記得在根 `.dockerignore` 加
+  `!<該服務的資料夾路徑>` 例外，否則 `COPY` 會找不到檔案而建置失敗。
+  `Dockerfile` 裡的 `COPY` 路徑因此要寫**相對 repo 根**的完整路徑，不能只寫檔名。
+- 新增這類服務的完整流程：`railway add --service <name>` 建空服務 → `railway service
+  <name>` link 過去 → `railway variables --service <name> --set
+  "RAILWAY_DOCKERFILE_PATH=<path>/Dockerfile"` → 根 `.dockerignore` 開例外 →
+  在 **repo 根**跑 `railway up --detach --service <name>`。
+
+⚠️ **另外兩個一定會踩到的坑**：
+
+1. **`railway logs --build` 不帶 deployment id 時，顯示的不一定是你剛觸發的那次建置**。
    排查失敗一律先 `railway deployment list` 取 id，再
    `railway logs --build <id>`，否則會對著別次的 log 診斷錯方向。
-3. **Windows Git Bash 會把 `/data` 轉成 Windows 路徑**，`railway volume add --mount-path /data`
+2. **Windows Git Bash 會把 `/data` 轉成 Windows 路徑**，`railway volume add --mount-path /data`
    會回「Mount path must start with a `/`」。前面加 `MSYS_NO_PATHCONV=1` 才過得去。
 
 資料存在 volume `gaoye-mock-exam-volume`（掛載點 `/data`）的 SQLite `exam.db`，
