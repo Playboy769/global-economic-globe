@@ -918,20 +918,29 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
 
         ' ---- Multi-year CAGR (Revenue/EPS/FCF, 3Y and 5Y) -- annual table only.
         ' For the quarterly table, i-3/i-5 would look back 3/5 QUARTERS, not
-        ' years, which would silently mislabel the metric -- left blank there.
+        ' years, which would silently mislabel the metric; same reasoning
+        ' applies to the early annual columns of a still-young filer (e.g. only
+        ' 1 10-K on file), which structurally cannot have 3/5 years of history
+        ' yet regardless of ticker. Written as an explicit "N/A" (not a blank
+        ' cell) so a reader can tell "not enough history for this metric" apart
+        ' from "the fetch silently failed", which a truly empty cell would look
+        ' identical to. (SafeCagr can still return "" on its own -- e.g. an
+        ' endpoint that's zero/negative, where no CAGR is mathematically
+        ' meaningful -- that case is left as a blank, not N/A, since it's a
+        ' different situation: enough periods exist, just not a computable one.)
         If Not isQuarterly And i > 3 Then
             revCagr3Row(i) = SafeCagr(revRow(i - 3), revRow(i), 3)
             epsCagr3Row(i) = SafeCagr(epsRow(i - 3), epsRow(i), 3)
             fcfCagr3Row(i) = SafeCagr(fcfRow(i - 3), fcfRow(i), 3)
         Else
-            revCagr3Row(i) = "": epsCagr3Row(i) = "": fcfCagr3Row(i) = ""
+            revCagr3Row(i) = "N/A": epsCagr3Row(i) = "N/A": fcfCagr3Row(i) = "N/A"
         End If
         If Not isQuarterly And i > 5 Then
             revCagr5Row(i) = SafeCagr(revRow(i - 5), revRow(i), 5)
             epsCagr5Row(i) = SafeCagr(epsRow(i - 5), epsRow(i), 5)
             fcfCagr5Row(i) = SafeCagr(fcfRow(i - 5), fcfRow(i), 5)
         Else
-            revCagr5Row(i) = "": epsCagr5Row(i) = "": fcfCagr5Row(i) = ""
+            revCagr5Row(i) = "N/A": epsCagr5Row(i) = "N/A": fcfCagr5Row(i) = "N/A"
         End If
     Next i
 

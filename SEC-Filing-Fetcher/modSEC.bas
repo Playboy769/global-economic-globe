@@ -67,7 +67,36 @@ Public Sub FetchSECFilings()
     Set mapAssets = BuildConceptMap(usgaapRaw, Array("Assets"), "USD")
     Set mapLiabilities = BuildConceptMap(usgaapRaw, Array("Liabilities"), "USD")
     Set mapCFO = BuildConceptMap(usgaapRaw, Array("NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"), "USD")
-    Set mapShares = MergeConceptMaps(BuildConceptMap(deiRaw, Array("EntityCommonStockSharesOutstanding"), "shares"), BuildConceptMap(usgaapRaw, Array("CommonStockSharesOutstanding"), "shares"))
+    ' Point-in-time shares outstanding (dei/us-gaap instant tags) is the right
+    ' denominator for Market Cap / Sales-per-Share / EV -- but a multi-class-stock
+    ' filer (dual Class A/Class B common stock, e.g. CRWV) tags it PER CLASS with
+    ' a ClassOfStockAxis dimension, never as one undimensioned company-wide fact.
+    ' SEC's companyfacts/companyconcept API only exposes undimensioned (default-
+    ' context) facts, so for those filers BOTH tags below come back with ZERO
+    ' facts across every filing -- not an error, just silently absent -- which
+    ' cascades into Market Cap/P-S/Sales-per-Share/EV-EBITDA/EV-Sales all going
+    ' blank too (confirmed against CRWV's real companyfacts JSON, CIK 1769628:
+    ' dei has no EntityCommonStockSharesOutstanding at all, us-gaap has no
+    ' CommonStockSharesOutstanding either). As a last-resort fallback for that
+    ' case, fall through to the EPS-denominator weighted-average share count
+    ' (basic preferred -- closer to actual shares outstanding than diluted,
+    ' which inflates with not-yet-exercised options/RSUs; diluted as second
+    ' choice when basic itself is missing). This is a PERIOD AVERAGE, not a
+    ' period-END count, so for a fast-diluting company it understates the true
+    ' point-in-time share count, worst when a large issuance lands mid-quarter --
+    ' an approximation, not a fix that restores exact accuracy.
+    ' MergeConceptMapsFallback (not MergeConceptMaps) is required here: MergeConceptMaps
+    ' blends same-accn facts from both maps into ONE collection, and
+    ' LookupConceptValue's tie-break prefers whichever fact has the LATEST
+    ' "start" date -- but the real instant share-count fact has no "start" at
+    ' all (empty string, which always loses that comparison), so blending would
+    ' make the weighted-average fallback silently outrank a correct real count
+    ' on every filer where the primary tags DO work. MergeConceptMapsFallback
+    ' only donates an accn's facts from the fallback map when the primary map
+    ' has no entry for that accn whatsoever, so working filers are untouched.
+    Set mapShares = MergeConceptMapsFallback( _
+        MergeConceptMaps(BuildConceptMap(deiRaw, Array("EntityCommonStockSharesOutstanding"), "shares"), BuildConceptMap(usgaapRaw, Array("CommonStockSharesOutstanding"), "shares")), _
+        BuildConceptMap(usgaapRaw, Array("WeightedAverageNumberOfSharesOutstandingBasic", "WeightedAverageNumberOfDilutedSharesOutstanding"), "shares"))
     Set mapGrossProfit = BuildConceptMap(usgaapRaw, Array("GrossProfit"), "USD")
     Set mapOperatingIncome = BuildConceptMap(usgaapRaw, Array("OperatingIncomeLoss"), "USD")
     Set mapRD = BuildConceptMap(usgaapRaw, Array("ResearchAndDevelopmentExpense"), "USD")
@@ -77,7 +106,25 @@ Public Sub FetchSECFilings()
     Set mapAR = BuildConceptMap(usgaapRaw, Array("AccountsReceivableNetCurrent"), "USD")
     Set mapCurrentAssets = BuildConceptMap(usgaapRaw, Array("AssetsCurrent"), "USD")
     Set mapCurrentLiabilities = BuildConceptMap(usgaapRaw, Array("LiabilitiesCurrent"), "USD")
-    Set mapLongTermDebt = BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD")
+    ' Fallback tag for a filer that stops tagging the current/noncurrent split
+    ' entirely and reports one combined balance instead -- confirmed against
+    ' CRWV's own filing history: its FY2026Q1 10-Q still tagged
+    ' LongTermDebtNoncurrent+LongTermDebtCurrent, but its very next 10-Q
+    ' (FY2026Q2) tags neither, using only DebtInstrumentCarryingAmount ($35,551M,
+    ' a single current+noncurrent total) instead -- so EV silently went blank
+    ' for the newest quarter only. MergeConceptMapsFallback (gap-fill only, see
+    ' the mapShares comment above for why) means this never overrides the
+    ' primary split tags when they exist. One residual risk this doesn't fully
+    ' guard: if some OTHER filer reports DebtInstrumentCarryingAmount as its
+    ' total AND separately reports a genuine ShortTermBorrowings/DebtCurrent
+    ' figure (a different concept, e.g. a revolver), mapShortTermDebt would add
+    ' that on top of the already-total fallback and double-count -- not
+    ' observed in CRWV's data (its short-term debt tags are equally absent for
+    ' the same quarter this fallback fires for), but worth re-checking if EV
+    ' ever looks inflated for a filer using this fallback.
+    Set mapLongTermDebt = MergeConceptMapsFallback( _
+        BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD"), _
+        BuildConceptMap(usgaapRaw, Array("DebtInstrumentCarryingAmount"), "USD"))
     Set mapStockholdersEquity = BuildConceptMap(usgaapRaw, Array("StockholdersEquity"), "USD")
     Set mapEffectiveTaxRate = BuildConceptMap(usgaapRaw, Array("EffectiveIncomeTaxRateContinuingOperations"), "pure")
     Set mapCapEx = BuildConceptMap(usgaapRaw, Array("PaymentsToAcquirePropertyPlantAndEquipment"), "USD")
@@ -585,6 +632,30 @@ Private Function MergeConceptMaps(ByVal a As Object, ByVal b As Object) As Objec
     Set MergeConceptMaps = merged
 End Function
 
+' Like MergeConceptMaps, but for an accn already present in `primary`, the
+' fallback map's facts for that accn are discarded rather than blended in --
+' see the mapShares comment in FetchSECFilings for why blending would be unsafe
+' for a fallback tag of a different shape (duration vs instant). Only an accn
+' the primary map has NO entry for at all receives the fallback's facts.
+Private Function MergeConceptMapsFallback(ByVal primary As Object, ByVal fallback As Object) As Object
+    Dim merged As Object
+    Set merged = CreateObject("Scripting.Dictionary")
+
+    Dim k As Variant
+    If Not primary Is Nothing Then
+        For Each k In primary.Keys
+            Set merged(k) = primary(k)
+        Next k
+    End If
+    If Not fallback Is Nothing Then
+        For Each k In fallback.Keys
+            If Not merged.Exists(k) Then Set merged(k) = fallback(k)
+        Next k
+    End If
+
+    Set MergeConceptMapsFallback = merged
+End Function
+
 ' For flow concepts (revenue, net income, cash flow), 10-Qs commonly tag BOTH the
 ' standalone quarter AND the year-to-date cumulative figure under the same "end"
 ' date, distinguished only by "start". We want the quarter-only value, which is
@@ -1037,9 +1108,10 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     entityName = ExtractJsonString(companyFactsJson, "entityName")
     If entityName = "" Then entityName = tickerTitle
 
-    Dim factsRaw As String, usgaapRaw As String
+    Dim factsRaw As String, usgaapRaw As String, deiRaw As String
     factsRaw = ExtractJsonValueRaw(companyFactsJson, "facts")
     usgaapRaw = ExtractJsonValueRaw(factsRaw, "us-gaap")
+    deiRaw = ExtractJsonValueRaw(factsRaw, "dei")
 
     Dim mapRevenue As Object, mapNetIncome As Object, mapEps As Object, mapShares As Object
     Dim mapStockholdersEquity As Object, mapLongTermDebt As Object, mapShortTermDebt As Object
@@ -1054,9 +1126,21 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
     Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
     Set mapEps = BuildConceptMap(usgaapRaw, Array("EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted"), "USD/shares")
-    Set mapShares = BuildConceptMap(usgaapRaw, Array("CommonStockSharesOutstanding"), "shares")
+    ' Same dual-class-stock gap and same fallback as FetchSECFilings's mapShares
+    ' -- see the comment there for why the dei tag and the fallback tag order
+    ' matter. This path previously didn't even try the dei tag, so it was
+    ' strictly weaker than the main fetch's already-broken-for-CRWV version.
+    Set mapShares = MergeConceptMapsFallback( _
+        MergeConceptMaps(BuildConceptMap(deiRaw, Array("EntityCommonStockSharesOutstanding"), "shares"), BuildConceptMap(usgaapRaw, Array("CommonStockSharesOutstanding"), "shares")), _
+        BuildConceptMap(usgaapRaw, Array("WeightedAverageNumberOfSharesOutstandingBasic", "WeightedAverageNumberOfDilutedSharesOutstanding"), "shares"))
     Set mapStockholdersEquity = BuildConceptMap(usgaapRaw, Array("StockholdersEquity"), "USD")
-    Set mapLongTermDebt = BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD")
+    ' Same combined-tag fallback as FetchSECFilings's mapLongTermDebt -- see the
+    ' comment there for why (a filer can drop the current/noncurrent split
+    ' entirely in favor of one DebtInstrumentCarryingAmount total, as CRWV did
+    ' starting its FY2026Q2 10-Q).
+    Set mapLongTermDebt = MergeConceptMapsFallback( _
+        BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD"), _
+        BuildConceptMap(usgaapRaw, Array("DebtInstrumentCarryingAmount"), "USD"))
     Set mapShortTermDebt = BuildConceptMap(usgaapRaw, Array("ShortTermBorrowings", "DebtCurrent", "LongTermDebtCurrent"), "USD")
     Set mapCash = BuildConceptMap(usgaapRaw, Array("CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"), "USD")
     Set mapOperatingIncome = BuildConceptMap(usgaapRaw, Array("OperatingIncomeLoss"), "USD")
