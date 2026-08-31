@@ -1,6 +1,21 @@
 Attribute VB_Name = "modCharts"
 Option Explicit
 
+' Module-level declarations must all sit in this declarations section, before
+' any Sub/Function/Property -- VBA's parser rejects a Const/Dim placed after a
+' procedure has already been defined elsewhere in the file (a real compile
+' error the first version of this line hit, sitting right before
+' ExportTickerSnapshot further down: "只有註解可以放在 End Sub、End Function 或
+' End Property 後面" is VBA's message for exactly that misplacement, not
+' anything wrong with the Const statement itself).
+'
+' Hardcoded like build.ps1's own $savePath -- this repo's existing convention
+' for this tool is a fixed Desktop-relative path, not something derived from
+' ThisWorkbook.Path (which can come back as a https://d.docs.live.net/... URL
+' instead of a filesystem path when OneDrive sync is involved, so deriving the
+' export folder from it would be unreliable).
+Private Const EXPORT_FOLDER As String = "C:\Users\ryan9\OneDrive\桌面\Claudecode\SEC-Filing-Fetcher\exports\"
+
 ' "No value" is represented as a zero-length string sentinel inside Variant
 ' arrays here. LookupConceptValue always returns its result typed as a String
 ' subtype Variant (even numeric results), so checking VarType against vbString
@@ -79,6 +94,94 @@ Private Sub ClearSheetForRebuild(ByVal ws As Worksheet)
     Next co
     ws.Cells.Clear
 End Sub
+
+' ---------- Per-ticker snapshot export ----------
+
+' Called once a full fetch (US SEC or TW MOPS) finishes, so a single ticker's
+' result can be handed off/archived without the whole multi-ticker working
+' file. Saves a standalone, macro-free copy of just that ticker's
+' Dashboard/RawData/QuarterlySnapshot (or the TW_-prefixed equivalents) into
+' SEC-Filing-Fetcher/exports/, keeping only the newest export per ticker.
+'
+' wb.Sheets(Array(...)).Copy with NO destination argument is the deliberate
+' choice over Workbooks.Add + per-sheet .Copy: Excel creates a brand-new
+' workbook containing exactly those sheets, and because sheet NAMES are
+' preserved 1:1 in the copy, every chart's SeriesCollection formula (which
+' encodes a bare sheet name like "RawData!$A$3:$A$1252", not a workbook-
+' qualified reference) keeps resolving correctly with no relinking step of our
+' own. Copying sheets in one at a time risks a chart series left pointing back
+' at the original, still-open workbook instead. Since the new workbook is
+' built purely from worksheet copies, it never carries a VBProject at all --
+' saving it as plain .xlsx (FileFormat 51, not the macro-enabled 52) needs no
+' separate macro-stripping step, there's simply nothing to strip.
+'
+' On failure, shows its own MsgBox (the caller's existing ErrHandler only
+' narrates errors into the status cell, which would make an export failure
+' easy to miss) and then re-raises, so the failure aborts the whole fetch the
+' same way any other error in FetchSECFilings/FetchMOPSFilings already does.
+Public Sub ExportTickerSnapshot(ByVal wb As Workbook, ByVal ticker As String, _
+    ByVal dashboardSheetName As String, ByVal rawDataSheetName As String, ByVal quarterlySheetName As String)
+
+    Dim wasScreenUpdating As Boolean, wasDisplayAlerts As Boolean
+    wasScreenUpdating = Application.ScreenUpdating
+    wasDisplayAlerts = Application.DisplayAlerts
+
+    On Error GoTo ExportErr
+
+    If Dir(EXPORT_FOLDER, vbDirectory) = "" Then MkDir EXPORT_FOLDER
+
+    Dim safeTicker As String
+    safeTicker = SanitizeForFilename(ticker)
+
+    ' Keep only the newest export per ticker -- delete any earlier
+    ' <ticker>_*.xlsx before writing the new one rather than letting the
+    ' folder accumulate one file per fetch forever.
+    Dim oldFile As String
+    oldFile = Dir(EXPORT_FOLDER & safeTicker & "_*.xlsx")
+    Do While oldFile <> ""
+        Kill EXPORT_FOLDER & oldFile
+        oldFile = Dir()
+    Loop
+
+    Dim destPath As String
+    destPath = EXPORT_FOLDER & safeTicker & "_" & Format$(Now, "yyyymmdd_hhnnss") & ".xlsx"
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+
+    wb.Sheets(Array(dashboardSheetName, rawDataSheetName, quarterlySheetName)).Copy
+    Dim newWb As Workbook
+    Set newWb = ActiveWorkbook
+    newWb.SaveAs Filename:=destPath, FileFormat:=51   ' xlOpenXMLWorkbook (.xlsx, no macros)
+    newWb.Close SaveChanges:=False
+
+    Application.ScreenUpdating = wasScreenUpdating
+    Application.DisplayAlerts = wasDisplayAlerts
+
+    MsgBox "已匯出個股快照：" & destPath, vbInformation, "匯出完成"
+    Exit Sub
+
+ExportErr:
+    Application.ScreenUpdating = wasScreenUpdating
+    Application.DisplayAlerts = wasDisplayAlerts
+    MsgBox "個股快照匯出失敗（" & ticker & "）：" & Err.Description, vbCritical, "匯出失敗"
+    Err.Raise Err.Number, "ExportTickerSnapshot", Err.Description
+End Sub
+
+' Strips characters Windows filenames can't contain, so a ticker with an
+' unexpected character (unlikely, but neither the US ticker box nor the TW
+' CO_ID box validates input upstream) can't produce an invalid Dir/Kill/SaveAs
+' path.
+Private Function SanitizeForFilename(ByVal s As String) As String
+    Dim bad As String
+    bad = "\/:*?""<>|"
+    Dim i As Long, result As String
+    result = s
+    For i = 1 To Len(bad)
+        result = Replace(result, Mid$(bad, i, 1), "_")
+    Next i
+    SanitizeForFilename = result
+End Function
 
 ' ---------- RawData sheet (every chart's source data, one series per column pair) ----------
 

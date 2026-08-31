@@ -228,6 +228,9 @@ Public Sub FetchMOPSFilings()
     SetTWStatus wsIn, "抓取月營收中..."
     Call BuildMonthlyRevenue(wsIn, coId, entityName, wantQ * 3 + 6)
 
+    SetTWStatus wsIn, "匯出個股快照 (.xlsx) 中..."
+    Call modCharts.ExportTickerSnapshot(ThisWorkbook, coId, "TW_Dashboard", "TW_RawData", "TW_QuarterlySnapshot")
+
     SetTWStatus wsIn, "完成：" & entityName & "（" & coId & "）季報 " & filingsQuarterly.Count & " 筆、年報 " & filingsAnnual.Count & " 筆，於 " & Format$(Now, "yyyy-mm-dd hh:nn:ss")
 
 CleanExit:
