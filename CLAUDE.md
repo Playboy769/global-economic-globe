@@ -166,6 +166,7 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 | article-db | 本 repo dev + `article-db-api.git`（remote `article-db`）| `article_db/` | `index.html`(前端) + `app.py`(FastAPI) | `articlebase.up.railway.app` | `article-db` :8127 |
 | structural-holes | `structural-holes.git` | `structural_holes/` | `app.py`(uvicorn) + `graph.py` | `structural-holes-production.up.railway.app` | `structural-holes` :8129 |
 | sector-rotation-system | `sector-rotation-system.git`（GitHub `Playboy769/sector-rotation-system`，私有）| `sector-rotation-system/` | `Dockerfile`（Caddy 供 `output/` 靜態圖表＋`scheduler.py` 背景排程重繪）| `sector-rotation-system-production.up.railway.app` | 無 dev server，本機直接雙擊開 `dashboard.html`（RRG 2D/3D、台股 3D、資金流向、季節性熱力圖、族群輪動、機構持倉 13F 等分頁）|
+| twchips-report | `twchips-report.git`（GitHub `Playboy769/twchips-report`，私有）| `twchips-report/` | `app.py`(FastAPI，`Procfile`: `uvicorn app:app`) + `backfill.py`/`build.py` | `twchips-report-production.up.railway.app` | 無固定 dev server，本機 `uvicorn app:app --reload` |
 | my-slide | `my-slide.git` | `my-slide/` | — | Netlify | — |
 
 > **sector-rotation-system 補充**：Railway 綁 GitHub 自動部署（跟 article-db/structural-holes
@@ -178,6 +179,18 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 > 專案的程式碼要進 `sector-rotation-system/` 自己的 repo 走它自己的 git 流程（GitHub push
 > 觸發 Railway 重新部署），跟本 repo 的 commit 無關，不需要（也不能）用本 repo 的 sync
 > script 同步。
+
+> **twchips-report 補充**：三大法人籌碼透視站（現貨/期貨背離、自營商拆分、三方分歧、選擇權、
+> 融資融券查詢）。資料抓取靠**第三方套件** [`twchips`](https://github.com/catcat222222/twchips)
+> （`requirements.txt` 直接 `pip install git+https://github.com/catcat222222/twchips`，`app.py`
+> 裡 `from twchips import twse`）——這不是本 repo 或使用者自己的專案，`git remote` 指向
+> `catcat222222`，本機 `twchips/` 資料夾只是那個上游套件的唯讀參考副本（純讀原始碼/除錯用，
+> 沒有自己的 Railway 部署，**不要**把它跟 `twchips-report` 這個部署混為一談——2026-08-31
+> 曾一度誤會兩者是同一個已上架的東西，查 `railway list`／`railway status` 確認 Railway 上
+> 只有 `twchips-report` 這一個 service，沒有獨立的 `twchips` 部署）。Railway 綁 GitHub 自動
+> 部署（跟 article-db/structural-holes/sector-rotation-system 同模式）。已上架 OutsideFramework
+> Works（Finance & Markets 分類，見 `d87fa67` commit「上架 TW Chips Report 與 Sector Rotation
+> Dashboard」）。
 
 > **article-db 改法**：編 `article_db/index.html` → 本 repo commit → 跑
 > `scripts/sync-article-db.ps1` 推到 `article-db` remote，否則線上不更新（見下方專節）。
@@ -216,7 +229,7 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 
 ## Deployment topology (this is the part that bites)
 
-There are **seven separate Railway deployments** sourced from **four separate git repos**, plus
+There are **eight separate Railway deployments** sourced from **five separate git repos**, plus
 this main repo itself:
 
 | Deployment | Repo | Source path | Live URL |
@@ -226,6 +239,7 @@ this main repo itself:
 | structural-holes | **`structural_holes/` — its own repo** | — | `structural-holes-production.up.railway.app` |
 | article-db | **separate repo `article-db-api.git`** (this repo has it as remote `article-db`) | `index.html` at that repo's root — mirrors this repo's `article_db/index.html` | `articlebase.up.railway.app` |
 | sector-rotation-system（RRG 2D/3D 板塊輪動、資金流向、季節性、族群輪動、13F 機構持倉，2026-08-30 新增）| **`sector-rotation-system/` — 其自己的 repo**（GitHub `Playboy769/sector-rotation-system`，私有，Railway 綁 GitHub 自動部署）| 全部 `*.py` + `Caddyfile`/`Dockerfile`/`entrypoint.sh` → 容器內 Caddy 供靜態 `output/` 圖表，`scheduler.py` 背景每日 18:00 Asia/Taipei 重繪 | `sector-rotation-system-production.up.railway.app` |
+| twchips-report（三大法人籌碼透視，2026-08-30 新增）| **`twchips-report/` — 其自己的 repo**（GitHub `Playboy769/twchips-report`，私有，Railway 綁 GitHub 自動部署）| `app.py`(FastAPI/uvicorn) + `index.html`/`lookup.html` 靜態報告；資料抓取透過第三方套件 `twchips`（pip 依賴 `git+https://github.com/catcat222222/twchips`，**非**本 repo 專案，本機 `twchips/` 只是唯讀參考副本、無獨立部署）| `twchips-report-production.up.railway.app` |
 | gaoye-mock-exam (高業模擬測驗＋錯題紀錄) | this repo | `projects/gaoye-mock-exam/` → `index.html`/`server.js`/`store.js`，**用 `railway up` 直接上傳，不綁 GitHub** | `gaoye-mock-exam-production.up.railway.app` |
 | macro-tracker（總經黏性追蹤儀表板，2026-08-30 新增）| this repo | `research/macro-tracker-2026/` → `index.html`/`server.js`，**用 `railway up` 直接上傳，不綁 GitHub**；無登入、無資料庫，純唯讀代理政府公開 API（BLS/US Treasury），手動輸入的部分存前端 localStorage | `macro-tracker-production-f296.up.railway.app` |
 | my-slide | **`my-slide/` — its own repo** (Netlify) | — | — |
@@ -346,9 +360,14 @@ both repos.
 ## Directory map
 
 - `app/` — dev-source for the four "outside framework" apps (see table above)
-- `globe-invest/`, `my-slide/`, `structural_holes/`, `sector-rotation-system/` — **separate git
-  repos**, nested here for convenience. Never `git add` their contents into this repo; they
-  manage their own history.
+- `globe-invest/`, `my-slide/`, `structural_holes/`, `sector-rotation-system/`, `twchips-report/`
+  — **separate git repos**, nested here for convenience. Never `git add` their contents into
+  this repo; they manage their own history.
+- `twchips/` — **not this repo's or the user's project**: a read-only local reference clone of
+  the third-party library [catcat222222/twchips](https://github.com/catcat222222/twchips) that
+  `twchips-report/` depends on via pip (`requirements.txt`: `git+https://github.com/catcat222222/
+  twchips`). Kept purely for reading/debugging its source — never `git add` it, and there is no
+  Railway deployment tied to this folder (that's `twchips-report/`).
 - `article_db/` — tracked in this repo as dev-source, but deployed from the separate
   `article-db-api` repo (remote `article-db`) to `articlebase.up.railway.app` — see deployment
   topology section above, must be pushed to both
