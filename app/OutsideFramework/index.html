@@ -217,6 +217,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .wk-info{display:flex;flex-direction:column;gap:5px;padding:0}
 .wk-name{font-size:16px;font-weight:500;margin-bottom:0;letter-spacing:.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
 .wk-type{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;font-weight:400}
+/* Tools page reuses .wk-card as a plain <a> (opens the tool in a new tab, no preview overlay,
+   see #page-tools below) — neutralize link styling so it renders identically to the div-based
+   Works cards. */
+#page-tools .wk-card{text-decoration:none;color:inherit}
 .wk-next-earn{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:var(--c-accent);font-weight:600;letter-spacing:.02em}
 
 /* ── Works: Earnings Call sticky sidebar timeline (shown only under the "Earnings Call" filter) ──
@@ -654,6 +658,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     <button class="nav-btn" data-page="timeline"><span class="nb-en">Timeline</span><span class="nb-zh">時間軸</span></button>
     <button class="nav-btn" data-page="philosophy"><span class="nb-en">Philosophy</span><span class="nb-zh">哲學</span></button>
     <button class="nav-btn" data-page="quotes"><span class="nb-en">Quotes</span><span class="nb-zh">語錄</span></button>
+    <button class="nav-btn" data-page="tools"><span class="nb-en">Tools</span><span class="nb-zh">工具</span></button>
     <!--NAV_AUTH-->
   </div>
   <div class="nav-logo" onclick="switchPage('home')">Silas</div>
@@ -682,6 +687,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
   </button>
   <button class="nav-btn dock-item" data-page="quotes" aria-label="Quotes">
     <span class="dock-icon"><svg viewBox="0 0 24 24"><path d="M7.5 7.2h3.6v3.6c0 2-1.1 3.6-2.8 4.5l-.9-1.4c1-.5 1.7-1.3 1.9-2.3H7.5V7.2Z"/><path d="M14.4 7.2H18v3.6c0 2-1.1 3.6-2.8 4.5l-.9-1.4c1-.5 1.7-1.3 1.9-2.3h-1.8V7.2Z"/></svg></span>
+  </button>
+  <button class="nav-btn dock-item" data-page="tools" aria-label="Tools">
+    <span class="dock-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.3"/><rect x="13" y="4" width="7" height="7" rx="1.3"/><rect x="4" y="13" width="7" height="7" rx="1.3"/><rect x="13" y="13" width="7" height="7" rx="1.3"/></svg></span>
   </button>
 </nav>
 
@@ -1183,6 +1191,38 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       <a href="https://www.threads.net/@kchwuii_" target="_blank" rel="noopener noreferrer">Threads</a>
       <span class="fl-dot">·</span>
       <span>&copy; 2026 Outside FrameWork. All Rights Reserved.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOOLS ──
+     Picker page for the market-monitoring dashboards that live on their own separate
+     deployments — unlike Works, these cards are plain <a target="_blank"> links that open the
+     tool directly in a new tab, not previewWork()/openGatedWork() iframe overlays, so nothing
+     here needs the preview-overlay JS at all. Market Warning Radar links straight to
+     globe-invest's /warning (ungated as of the same change that added this page — see
+     globe-invest/server.js's auth gate). ── -->
+<div class="page" id="page-tools">
+  <div class="container">
+    <div class="works-head">
+      <div>
+        <div class="about-label reveal">Tools</div>
+        <h2 class="sec-heading reveal reveal-delay-1">Market <span class="stmt-accent">tools</span></h2>
+      </div>
+    </div>
+    <div class="works-grid">
+      <a href="https://macro-tracker-production-f296.up.railway.app" target="_blank" rel="noopener" class="wk-card reveal">
+        <div class="wk-info"><div class="wk-name">Macro Tracker</div><div class="wk-type">總經黏性追蹤 &middot; CPI &middot; PCE &middot; NFP &middot; 信用利差</div></div>
+      </a>
+      <a href="https://sector-rotation-system-production.up.railway.app" target="_blank" rel="noopener" class="wk-card reveal reveal-delay-1">
+        <div class="wk-info"><div class="wk-name">Sector Rotation Dashboard</div><div class="wk-type">產業輪動 &middot; RRG 2D／3D &middot; 資金流向 &middot; 季節性</div></div>
+      </a>
+      <a href="https://globe-invest.up.railway.app/warning" target="_blank" rel="noopener" class="wk-card reveal reveal-delay-2">
+        <div class="wk-info"><div class="wk-name">Market Warning Radar</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
+      </a>
+      <a href="https://twchips-report-production.up.railway.app" target="_blank" rel="noopener" class="wk-card reveal">
+        <div class="wk-info"><div class="wk-name">TW Chips Report</div><div class="wk-type">三大法人籌碼透視 &middot; 現貨vs期貨 &middot; 自營商拆分</div></div>
+      </a>
     </div>
   </div>
 </div>
@@ -2158,7 +2198,7 @@ let currentPage = 'home';
 // 'privacy' and 'terms' have no nav-bar button — reached only via footer links and direct
 // /#privacy or /#terms URLs — but still need to be here so initHashRoute()/popstate
 // recognize them.
-const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes', 'privacy', 'terms'];
+const VALID_PAGES = ['home', 'about', 'works', 'timeline', 'philosophy', 'quotes', 'tools', 'privacy', 'terms'];
 
 // Traffic beacon. The server records the initial HTML load itself; this only reports what
 // happens after, which on a single-page app is every subsequent navigation. keepalive lets
