@@ -360,6 +360,44 @@
     </div>
   </div>
 
+  <!-- 7. NFP 非農就業與勞動市場斷層（獨立卡片，非六項框架原生成員） -->
+  <div class="card">
+    <span class="card-num">指標 7</span>
+    <h2>非農就業與勞動市場斷層（NFP 產業分項／家戶調查／初值修訂追蹤）</h2>
+    <div class="criterion">
+      ⟹ 判準：headline 新增就業的「初值 vs 修訂後值」是否持續同向大幅下修（勞動市場實質轉弱的確認訊號，而非單月雜訊），以及新增就業是集中在少數產業還是普遍擴散（用官方擴散指數交叉驗證，避免被單一大產業的雜訊帶偏判讀）。
+    </div>
+    <div class="stat-row" id="nfp-stats"></div>
+    <div class="chart-wrap" id="nfp-chart"></div>
+    <div class="legend" id="nfp-legend"></div>
+    <div class="flag-box">⚑ NFP 最著名的特性是發布後會被連續修訂兩次：本月剛公布的是「初值」，之後兩次發布會各修一次。實線是「現值」（目前已知、通常已修過的水準），虛線是「初值」（該月第一次公布時的水準）——兩條線在最新一個月會重疊（還沒機會被修訂），差距只會出現在較早的月份；差距持續同向擴大（例如連續好幾個月初值都被大幅下修）比單一個月的 headline 數字本身更能反映勞動市場的真實方向。⚠️ 這裡的「初值」定義是用該月與上月「各自第一次公布時的水準」相減，跟財經媒體報導當下引用的口徑（上月用的是當時已知、可能已修一次的水準）略有差異，方向判讀不受影響但精確數字可能對不上。</div>
+    <div class="source-note">資料來源：FRED PAYEMS（Total Nonfarm Payrolls），同一序列分別以 output_type=1（現值）與 output_type=4（初次公布值）查詢後比對。</div>
+
+    <div class="sub-block">
+      <h3>12 個產業別新增就業（本月 MoM，千人）</h3>
+      <div class="chart-wrap" id="nfp-industry-chart"></div>
+      <div class="flag-box">⚑ 新增集中在 1-2 個產業、其餘普遍持平或收縮，跟普遍多數產業都同步增加，兩種情況即使 headline 數字相近，代表的勞動市場健康程度截然不同——這張圖用來判斷是哪一種，可與下方擴散指數互相印證。</div>
+      <div class="source-note">資料來源：BLS CES（Current Employment Statistics）各產業別 SA 就業人數，MoM 為本月與上月水準相減；「州及地方政府」為 BLS 州政府、地方政府兩條官方序列加總（BLS 本身無合併序列）。</div>
+    </div>
+
+    <div class="sub-block">
+      <h3>家戶調查：失業率／勞動參與率／U-6</h3>
+      <div class="stat-row" id="nfp-household-stats"></div>
+      <div class="chart-wrap" id="nfp-household-chart"></div>
+      <div class="legend" id="nfp-household-legend"></div>
+      <div class="flag-box">⚑ 家戶調查（誰有沒有工作）跟企業調查（NFP，企業增減聘了多少人）是兩份獨立抽樣，偶爾會出現方向不一致（例如 NFP 走弱但失業率不變），這種背離本身就是訊號，值得對照上面 headline 圖表一起看。U-6 涵蓋灰心失業者與非自願兼職者，比 U-3 更廣義，通常比 U-3 更早反映勞動市場鬆動。</div>
+      <div class="source-note">資料來源：BLS CPS（Current Population Survey）LNS14000000（失業率 U-3）、LNS11300000（勞動參與率）、LNS13327709（U-6）。</div>
+    </div>
+
+    <div class="sub-block">
+      <h3>擴散指數（1 個月，BLS 官方，Total Nonfarm）</h3>
+      <div class="stat-row" id="nfp-diffusion-stats"></div>
+      <div class="chart-wrap" id="nfp-diffusion-chart"></div>
+      <div class="flag-box">⚑ 50 為多空分界：高於 50 代表新增雇用的產業家數多於縮減的產業家數（擴散、普遍成長），低於 50 則相反（收縮已擴散到多數產業）。這是 BLS 官方依全部私部門細產業（4 位數 CES 產業碼）計算的原始擴散指數，不是本站依上面 12 個大類自行重算。</div>
+      <div class="source-note">資料來源：FRED SMS00000000000000021（Diffusion Indexes, 1-Month Span, Total Nonfarm），為 BLS 原始擴散指數的 FRED 鏡像。</div>
+    </div>
+  </div>
+
 </div>
 
 <div class="footer">僅供資訊參考，非投資建議。資料多為政府公開來源，可能有發布延遲或版本修正，重大決策前請自行覆核原始來源。</div>
@@ -535,6 +573,44 @@ function renderChart(el, seriesList, opts) {
   });
 
   capture.addEventListener('mouseleave', hide);
+}
+
+// 橫向長條圖：靜態 SVG，零外部依賴，供 NFP 產業別分項這種「單一快照分類比較」用
+// （跟上面 lineChartSVG 的時間序列走勢是不同用途，故獨立一支，不共用 buildChartScales）。
+function barChartSVG(items, opts) {
+  opts = opts || {};
+  const w = opts.width || 640;
+  const rowH = 22, padL = 132, padR = 56, padTop = 8, padBottom = 8;
+  const h = items.length * rowH + padTop + padBottom;
+  if (!items.length) return '<div style="font-size:12px;color:#999;">暫無資料</div>';
+
+  const values = items.map(it => it.value).filter(v => v != null && isFinite(v));
+  const maxAbs = Math.max(1, ...values.map(v => Math.abs(v)));
+  const midX = padL + (w - padL - padR) / 2;
+  const halfW = (w - padL - padR) / 2;
+  const xForValue = v => midX + (v / maxAbs) * halfW;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">`;
+  svg += `<line x1="${midX}" y1="${padTop}" x2="${midX}" y2="${h - padBottom}" stroke="#ccc" stroke-width="1"/>`;
+  items.forEach((it, i) => {
+    const y = padTop + i * rowH;
+    const cy = y + rowH / 2;
+    svg += `<text x="${padL - 8}" y="${cy + 3}" font-size="11" fill="#333" text-anchor="end">${it.label}</text>`;
+    if (it.value == null || !isFinite(it.value)) {
+      svg += `<text x="${midX + 6}" y="${cy + 3}" font-size="10" fill="#aaa">無資料</text>`;
+      return;
+    }
+    const x = xForValue(it.value);
+    const barY = cy - 7, barH = 14;
+    const color = it.value >= 0 ? '#1a56db' : '#c2410c';
+    const rx = Math.min(x, midX), rw = Math.abs(x - midX);
+    svg += `<rect x="${rx}" y="${barY}" width="${rw}" height="${barH}" fill="${color}" rx="2"/>`;
+    const labelX = it.value >= 0 ? x + 4 : x - 4;
+    const anchor = it.value >= 0 ? 'start' : 'end';
+    svg += `<text x="${labelX}" y="${cy + 3}" font-size="10" fill="#333" text-anchor="${anchor}">${fmtNum(it.value, 1)}</text>`;
+  });
+  svg += '</svg>';
+  return svg;
 }
 
 function legendHTML(seriesList) {
@@ -793,6 +869,59 @@ async function loadFiscal() {
   }
 }
 
+// ───────────────────────── 指標 7：NFP 非農就業與勞動市場斷層 ─────────────────────────
+async function loadNfp() {
+  const el = document.getElementById('nfp-chart');
+  try {
+    const data = await fetchJSON('/api/nfp');
+    const h = data.headline;
+    document.getElementById('nfp-stats').innerHTML =
+      textStatBox('最新月份', h.latestMonth) +
+      statBox('MoM新增（初值）', h.latestInitialChange, '千人') +
+      statBox('MoM新增（現值）', h.latestCurrentChange, '千人') +
+      (h.priorRevision
+        ? statBox(`上月修訂差額（${h.priorRevision.date}）`, h.priorRevision.revisionDelta, '千人')
+        : textStatBox('上月修訂差額', null));
+    const seriesList = [
+      { points: h.currentMoM, color: '#1a56db', label: 'MoM新增（現值，已修訂）' },
+      { points: h.initialMoM, color: '#c2410c', label: 'MoM新增（初值，首次公布）', dashed: true },
+    ];
+    renderChart(el, seriesList);
+    document.getElementById('nfp-legend').innerHTML = legendHTML(seriesList);
+
+    const industryItems = (data.industries || [])
+      .slice()
+      .sort((a, b) => (b.momChange ?? -Infinity) - (a.momChange ?? -Infinity))
+      .map(it => ({ label: it.label, value: it.momChange }));
+    document.getElementById('nfp-industry-chart').innerHTML = barChartSVG(industryItems, { width: 640 });
+
+    const hh = data.household || {};
+    const latestUnemp = (hh.unemployment || [])[hh.unemployment.length - 1];
+    const latestPart = (hh.participation || [])[hh.participation.length - 1];
+    const latestU6 = (hh.u6 || [])[hh.u6.length - 1];
+    document.getElementById('nfp-household-stats').innerHTML =
+      statBox('失業率 U-3', latestUnemp ? latestUnemp.value : null, '%') +
+      statBox('勞動參與率', latestPart ? latestPart.value : null, '%') +
+      statBox('廣義失業率 U-6', latestU6 ? latestU6.value : null, '%');
+    const hhSeries = [
+      { points: hh.unemployment || [], color: '#1a56db', label: '失業率 U-3%' },
+      { points: hh.u6 || [], color: '#c2410c', label: 'U-6%', dashed: true },
+      { points: hh.participation || [], color: '#0f9d58', label: '勞動參與率%（右軸）', axis: 'right' },
+    ];
+    renderChart(document.getElementById('nfp-household-chart'), hhSeries);
+    document.getElementById('nfp-household-legend').innerHTML = legendHTML(hhSeries);
+
+    const diffusion = data.diffusion || [];
+    const latestDiff = diffusion[diffusion.length - 1];
+    document.getElementById('nfp-diffusion-stats').innerHTML =
+      statBox('1個月擴散指數', latestDiff ? latestDiff.value : null, '') +
+      textStatBox('多空分界', '50');
+    renderChart(document.getElementById('nfp-diffusion-chart'), [{ points: diffusion, color: '#7c3aed', label: '1個月擴散指數' }]);
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">NFP 資料載入失敗：${e.message}</div>`;
+  }
+}
+
 // ───────────────────────── 指標 2：實質消費支出 ─────────────────────────
 async function loadPce() {
   const el = document.getElementById('pce-chart');
@@ -889,7 +1018,7 @@ async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.textContent = '載入中…';
-  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadCorpProfits(), loadYield(), loadDebt(), loadCreditSpreads(), loadFomc(), loadFiscal()]);
+  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadCorpProfits(), loadYield(), loadDebt(), loadCreditSpreads(), loadFomc(), loadFiscal(), loadNfp()]);
   btn.disabled = false;
   btn.textContent = '重新整理資料';
   document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');

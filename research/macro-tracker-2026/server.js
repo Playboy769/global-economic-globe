@@ -19,6 +19,10 @@
 //   信用利差（掛指標4）-> /api/credit-spreads (FRED BAMLH0A0HYM2 高收益債＋BAMLC0A0CM 投資級 OAS，需 FRED_API_KEY)
 //   企業利潤週期（掛指標2）-> /api/corp-profits (BEA NIPA Table 1.14 稅前/稅後利潤等，季頻，需 BEA_API_KEY)
 //
+// 獨立第 7 項（NFP，非六項框架原生成員，是後續加開的獨立卡片）：
+//   ⑦ 非農就業與勞動市場斷層 -> /api/nfp (BLS CES 12產業別＋CPS家戶調查，免金鑰；FRED PAYEMS
+//      初值/修訂值比對＋官方擴散指數，需 FRED_API_KEY)
+//
 // 沒有使用者資料、沒有登入閘門——純唯讀公開資料代理，手動輸入的部分留在前端 localStorage。
 //
 // FRED_API_KEY 為必要環境變數才能啟用 ② 與勞動市場鬆緊度的自動抓取。
@@ -538,10 +542,157 @@ async function fetchFomcStatements() {
   return { items };
 }
 
+// ── ⑦ NFP：非農就業與勞動市場斷層（獨立卡片，非六項框架原生成員）──
+// 三邊資料拼起來：
+//   ① 12 個產業別本月 MoM 新增就業 + 家戶調查（失業率／勞動參與率／U-6）
+//      -> BLS CES/CPS API，一次 POST 抓齊全部序列，免金鑰
+//   ② Headline 總非農就業「初值 vs 修訂後值」-> FRED PAYEMS，同一序列分別用
+//      output_type=1（目前最新、已修訂）與 output_type=4（當初第一次公布時的水準）各拉一次
+//   ③ 官方 1 個月擴散指數（多少比例產業在新增雇用）-> FRED SMS00000000000000021
+//      （BLS 原始擴散指數的 FRED 鏡像，不是自行依產業資料重算）
+//
+// ⚠️ 修訂方法論（老實寫在這裡）：這裡「初值 MoM 新增」是用「該月自己第一次公布時的水準」
+// 減去「上一個月自己第一次公布時的水準」，是可重現的一致定義；財經媒體常引用的「當月發布時
+// 比較的是『上月當下已知、可能已修訂一次的水準』」略有不同，兩者差異通常是幾千人等級，
+// 不影響修訂方向的判讀，但精確數字可能對不上媒體當時報導的數字。
+const NFP_INDUSTRIES = [
+  { label: '礦業與伐木', ids: ['CES1000000001'] },
+  { label: '營建業', ids: ['CES2000000001'] },
+  { label: '製造業', ids: ['CES3000000001'] },
+  { label: '貿易／運輸／公用事業', ids: ['CES4000000001'] },
+  { label: '資訊業', ids: ['CES5000000001'] },
+  { label: '金融業', ids: ['CES5500000001'] },
+  { label: '專業與商業服務', ids: ['CES6000000001'] },
+  { label: '教育與醫療服務', ids: ['CES6500000001'] },
+  { label: '休閒與餐旅業', ids: ['CES7000000001'] },
+  { label: '其他服務業', ids: ['CES8000000001'] },
+  { label: '聯邦政府', ids: ['CES9091000001'] },
+  { label: '州及地方政府', ids: ['CES9092000001', 'CES9093000001'] }, // BLS 無合併序列，加總州+地方兩條官方序列
+];
+const NFP_HOUSEHOLD_SERIES = {
+  unemployment: 'LNS14000000', // 失業率 U-3
+  participation: 'LNS11300000', // 勞動參與率
+  u6: 'LNS13327709', // 廣義失業率 U-6
+};
+const NFP_DIFFUSION_SERIES = 'SMS00000000000000021'; // FRED：Diffusion Indexes, 1-Month Span, Total Nonfarm
+
+async function fetchNfp() {
+  if (!FRED_API_KEY) {
+    const err = new Error('FRED_API_KEY 未設定');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const thisYear = new Date().getUTCFullYear();
+  const startYear = thisYear - 5;
+  const obsStart = `${startYear}-01-01`;
+
+  // ① BLS：12 個產業別（13 條底層序列，州+地方分開拉再加總）+ 家戶調查 3 條，一次 POST 抓齊
+  const blsIds = [...new Set(NFP_INDUSTRIES.flatMap(i => i.ids))].concat(Object.values(NFP_HOUSEHOLD_SERIES));
+  const blsR = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ seriesid: blsIds, startyear: String(startYear), endyear: String(thisYear) }),
+  });
+  if (!blsR.ok) throw new Error('BLS API HTTP ' + blsR.status);
+  const blsJ = await blsR.json();
+  if (blsJ.status !== 'REQUEST_SUCCEEDED') throw new Error('BLS API: ' + (blsJ.message || []).join('; '));
+
+  const blsBySeries = {};
+  for (const s of blsJ.Results.series) {
+    const pts = s.data
+      .map(d => ({ date: periodToDate(d.year, d.period), value: Number(d.value) }))
+      .filter(d => d.date && Number.isFinite(d.value))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    blsBySeries[s.seriesID] = pts;
+  }
+
+  const industries = NFP_INDUSTRIES.map(ind => {
+    // 多條序列（州+地方）逐日期加總；單條序列直接沿用
+    const dates = [...new Set(ind.ids.flatMap(id => (blsBySeries[id] || []).map(p => p.date)))].sort();
+    const summed = dates.map(date => ({
+      date,
+      value: ind.ids.reduce((sum, id) => {
+        const pt = (blsBySeries[id] || []).find(p => p.date === date);
+        return pt ? sum + pt.value : sum;
+      }, 0),
+    }));
+    const latest = summed[summed.length - 1];
+    const prior = summed[summed.length - 2];
+    const momChange = (latest && prior) ? Number((latest.value - prior.value).toFixed(1)) : null;
+    return { label: ind.label, level: latest ? latest.value : null, momChange, latestDate: latest ? latest.date : null };
+  });
+
+  const household = {};
+  for (const [key, id] of Object.entries(NFP_HOUSEHOLD_SERIES)) {
+    household[key] = (blsBySeries[id] || []).slice(-60);
+  }
+
+  // ② FRED PAYEMS：現值（output_type=1）vs 初次公布值（output_type=4）
+  const [curR, initR] = await Promise.all([
+    fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=PAYEMS&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=${obsStart}&output_type=1`),
+    fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=PAYEMS&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=${obsStart}&output_type=4&realtime_start=${obsStart}&realtime_end=9999-12-31`),
+  ]);
+  if (!curR.ok) throw new Error('FRED PAYEMS(current) HTTP ' + curR.status);
+  if (!initR.ok) throw new Error('FRED PAYEMS(initial) HTTP ' + initR.status);
+  const curJ = await curR.json();
+  const initJ = await initR.json();
+  const toLevelPts = j => (j.observations || [])
+    .map(o => ({ date: o.date, value: Number(o.value) }))
+    .filter(o => Number.isFinite(o.value));
+  const curLevels = toLevelPts(curJ);
+  const initLevels = toLevelPts(initJ);
+
+  function toMomSeries(levels) {
+    return levels.map((d, i) => {
+      const prior = levels[i - 1];
+      if (!prior) return null;
+      return { date: d.date, value: Number((d.value - prior.value).toFixed(0)) };
+    }).filter(Boolean);
+  }
+  const currentMoM = toMomSeries(curLevels);
+  const initialMoM = toMomSeries(initLevels);
+
+  const latestCur = currentMoM[currentMoM.length - 1] || null;
+  const latestMonth = latestCur ? latestCur.date : null;
+  const latestInit = latestMonth ? (initialMoM.find(p => p.date === latestMonth) || null) : null;
+  // 上一個月的「初值 vs 現值」修訂差額：用現值序列倒數第二筆的日期，對照初值序列同日期那筆
+  const priorDate = currentMoM.length > 1 ? currentMoM[currentMoM.length - 2].date : null;
+  const priorCur = priorDate ? currentMoM.find(p => p.date === priorDate) : null;
+  const priorInit = priorDate ? initialMoM.find(p => p.date === priorDate) : null;
+  const priorRevision = (priorCur && priorInit) ? {
+    date: priorDate,
+    initialChange: priorInit.value,
+    currentChange: priorCur.value,
+    revisionDelta: priorCur.value - priorInit.value,
+  } : null;
+
+  // ③ FRED：BLS 官方 1 個月擴散指數（Total Nonfarm）
+  const diffR = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=${NFP_DIFFUSION_SERIES}&api_key=${FRED_API_KEY}&file_type=json&sort_order=asc&observation_start=${obsStart}`);
+  if (!diffR.ok) throw new Error('FRED diffusion index HTTP ' + diffR.status);
+  const diffJ = await diffR.json();
+  const diffusion = toLevelPts(diffJ);
+
+  return {
+    asOf: new Date().toISOString(),
+    headline: {
+      latestMonth,
+      latestInitialChange: latestInit ? latestInit.value : null,
+      latestCurrentChange: latestCur ? latestCur.value : null,
+      priorRevision,
+      currentMoM: currentMoM.slice(-60),
+      initialMoM: initialMoM.slice(-60),
+    },
+    household,
+    diffusion: diffusion.slice(-60),
+    industries,
+  };
+}
+
 const ENDPOINTS = {
   '/api/cpi-stickiness': () => cached('cpi', fetchCpiStickiness),
   '/api/real-pce': () => cached('pce', fetchRealPce),
   '/api/corp-profits': () => cached('corpprofits', fetchCorpProfits),
+  '/api/nfp': () => cached('nfp', fetchNfp),
   '/api/jobless-claims': () => cached('jobless', fetchJoblessClaims),
   '/api/pce-breadth': () => cached('breadth', fetchPceBreadth),
   '/api/credit-spreads': () => cached('spreads', fetchCreditSpreads),
