@@ -17,6 +17,7 @@
 //   勞動市場鬆緊度   -> /api/jobless-claims (FRED ICSA 週度初請＋IC4WSA 4週移動平均，需 FRED_API_KEY)
 //   PCE 通膨廣度     -> /api/pce-breadth    (BEA NIUnderlyingDetail Table 2.4.4U，需 BEA_API_KEY)
 //   信用利差（掛指標4）-> /api/credit-spreads (FRED BAMLH0A0HYM2 高收益債＋BAMLC0A0CM 投資級 OAS，需 FRED_API_KEY)
+//   企業利潤週期（掛指標2）-> /api/corp-profits (BEA NIPA Table 1.14 稅前/稅後利潤等，季頻，需 BEA_API_KEY)
 //
 // 沒有使用者資料、沒有登入閘門——純唯讀公開資料代理，手動輸入的部分留在前端 localStorage。
 //
@@ -330,6 +331,103 @@ async function fetchRealPce() {
   };
 }
 
+// ── 指標 2 輔助：企業利潤週期（BEA NIPA Table 1.14，季頻）──
+// 資料來源 BEA NIPA Table 1.14「Gross Value Added of Domestic Corporate Business」，取整體
+// 企業（金融＋非金融合計）的稅前利潤（Line 11「Corporate profits with IVA and CCAdj」，即
+// 一般引用的headline 企業利潤數字）及其下游分解（Line 12-15：企業所得稅、稅後利潤、淨股利、
+// 未分配利潤）。曾用 GetParameterValues 逐一核對 NIPA 表清單才挑到這張——Table 1.14 標題
+// 沒有「Profits」字樣（叫 Gross Value Added），容易被誤認成別的表；真正的 headline「Corporate
+// profits with IVA and CCAdj」數字實際上就藏在這張表的 Line 11。
+//
+// ⚠️ 是季頻，且公布時間落後：本季資料通常要等到該季結束後約 2 個月的 GDP「第二次估計」
+// 才會出現在 API 裡（第一次的「預估」估計還沒有完整利潤細項），不像儀表板其他多數指標
+// 是月頻甚至週頻——nextUpdateNote 是依此估算的概略下次更新月份，不是 BEA 官方公告的日期。
+const BEA_CORP_PROFITS_TABLE = 'T11400';
+const BEA_CORP_PROFITS_LINES = {
+  11: 'profitsBeforeTax', // Corporate profits with IVA and CCAdj（headline 數字）
+  12: 'taxes',            // Taxes on corporate income
+  13: 'profitsAfterTax',  // Profits after tax with IVA and CCAdj
+  14: 'dividends',        // Net dividends
+  15: 'undistributed',    // Undistributed profits with IVA and CCAdj
+};
+
+async function fetchCorpProfits() {
+  if (!BEA_API_KEY) {
+    const err = new Error('BEA_API_KEY 未設定或尚未啟用');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const thisYear = new Date().getUTCFullYear();
+  const years = [];
+  for (let y = thisYear - 9; y <= thisYear; y++) years.push(y); // 拉 10 年，季頻資料點少，要拉長才看得出趨勢
+  const url = `https://apps.bea.gov/api/data/?UserID=${BEA_API_KEY}&method=GetData&datasetname=NIPA&TableName=${BEA_CORP_PROFITS_TABLE}&Frequency=Q&Year=${years.join(',')}&ResultFormat=JSON`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('BEA API HTTP ' + r.status);
+  const j = await r.json();
+  const results = j.BEAAPI && j.BEAAPI.Results;
+  if (!results || results.Error) {
+    throw new Error('BEA API: ' + (results && results.Error && results.Error.APIErrorDescription || 'unknown error'));
+  }
+  const rows = results.Data || [];
+
+  const byField = {};
+  for (const field of Object.values(BEA_CORP_PROFITS_LINES)) byField[field] = new Map();
+  for (const row of rows) {
+    const field = BEA_CORP_PROFITS_LINES[Number(row.LineNumber)];
+    if (!field) continue;
+    const m = /^(\d{4})Q([1-4])$/.exec(row.TimePeriod);
+    if (!m) continue;
+    const value = Number(String(row.DataValue).replace(/,/g, '')); // DataValue 是千分位字串，如 "1,757,834"
+    if (!Number.isFinite(value)) continue;
+    const date = `${m[1]}-${String((Number(m[2]) - 1) * 3 + 1).padStart(2, '0')}-01`; // 用該季起始月表示整季
+    byField[field].set(date, value);
+  }
+
+  const dates = [...byField.profitsBeforeTax.keys()].sort();
+  const seriesFor = field => dates.map(d => ({ date: d, value: byField[field].has(d) ? byField[field].get(d) : null }));
+  const preTax = seriesFor('profitsBeforeTax');
+
+  const qoq = preTax.map((d, i) => {
+    const prior = preTax[i - 1];
+    if (!prior || d.value == null || prior.value == null) return null;
+    return { date: d.date, value: Number((((d.value / prior.value) - 1) * 100).toFixed(2)) };
+  }).filter(Boolean);
+  const yoy = preTax.map((d, i) => {
+    const prior = preTax[i - 4];
+    if (!prior || d.value == null || prior.value == null) return null;
+    return { date: d.date, value: Number((((d.value / prior.value) - 1) * 100).toFixed(2)) };
+  }).filter(Boolean);
+
+  const latestDate = dates[dates.length - 1] || null;
+  const breakdown = latestDate
+    ? Object.entries(BEA_CORP_PROFITS_LINES).map(([lineNumber, field]) => ({
+        lineNumber: Number(lineNumber),
+        field,
+        value: byField[field].has(latestDate) ? byField[field].get(latestDate) : null,
+      }))
+    : [];
+
+  // 下次更新概略估算：latestDate 是「已有資料的最新一季」的起始月；下一季結束後約 2 個月
+  // 才會有下一筆資料（見上方⚠️說明）——用 Date 物件算，讓月份跨年自動進位不必手動處理。
+  let nextUpdateNote = null;
+  if (latestDate) {
+    const [ly, lm] = latestDate.split('-').map(Number);
+    const d = new Date(Date.UTC(ly, (lm - 1) + 7, 1)); // +7 = 下一季(+3個月) 結束(+2) 再等公布(+2)
+    nextUpdateNote = `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月`;
+  }
+
+  return {
+    asOf: new Date().toISOString(),
+    unit: '$M（Current Dollars, SAAR 季調年化）',
+    latestQuarter: latestDate,
+    nextUpdateNote,
+    preTax: preTax.slice(-40),
+    qoq: qoq.slice(-40),
+    yoy: yoy.slice(-40),
+    breakdown,
+  };
+}
+
 // ── ③ Treasury 每日殖利率曲線（2Y/5Y/10Y/20Y/30Y 比較）＋ 近期標售結果 ──
 const YIELD_TENORS = { y2: 'BC_2YEAR', y5: 'BC_5YEAR', y10: 'BC_10YEAR', y20: 'BC_20YEAR', y30: 'BC_30YEAR' };
 
@@ -443,6 +541,7 @@ async function fetchFomcStatements() {
 const ENDPOINTS = {
   '/api/cpi-stickiness': () => cached('cpi', fetchCpiStickiness),
   '/api/real-pce': () => cached('pce', fetchRealPce),
+  '/api/corp-profits': () => cached('corpprofits', fetchCorpProfits),
   '/api/jobless-claims': () => cached('jobless', fetchJoblessClaims),
   '/api/pce-breadth': () => cached('breadth', fetchPceBreadth),
   '/api/credit-spreads': () => cached('spreads', fetchCreditSpreads),

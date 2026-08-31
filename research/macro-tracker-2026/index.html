@@ -261,6 +261,21 @@
       <button class="btn" onclick="saveManual('pce')">儲存</button>
       <span class="saved-tag" id="pce-saved">已儲存</span>
     </div>
+
+    <div class="sub-block">
+      <h3>企業利潤週期（稅前利潤 QoQ／YoY，輔助訊號）</h3>
+      <div class="stat-row" id="corpprofit-stats"></div>
+      <div class="chart-wrap" id="corpprofit-chart"></div>
+      <div class="legend" id="corpprofit-legend"></div>
+      <div class="flag-box">⚑ 企業利潤是消費支出的上游動能來源之一：獲利若持續轉弱，企業資本支出與雇用意願通常會跟著收斂，最終回頭壓抑消費——可與本指標的 Real PCE 走勢互相對照，判斷「消費撐住」是靠獲利支撐的內生動能，還是脫節於獲利的舉債式消費。⚠️ 這是全體企業（金融＋非金融合計）的稅前利潤，非個股或單一產業別的獲利，且季頻更新明顯落後於儀表板其他多數月頻／週頻指標。</div>
+      <div class="source-note">資料來源：BEA NIPA Table 1.14（Gross Value Added of Domestic Corporate Business），Line 11「Corporate profits with IVA and CCAdj」，季頻、季調年化（SAAR）。<span id="corpprofit-next"></span></div>
+      <div class="breadth-table-wrap">
+        <table class="breadth-table" id="corpprofit-table">
+          <thead><tr><th>項目</th><th class="num">金額（$B，SAAR）</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- 3. 長債殖利率韌性 -->
@@ -800,6 +815,46 @@ async function loadPce() {
   }
 }
 
+// ───────────────────────── 指標 2 輔助：企業利潤週期 ─────────────────────────
+const CORP_PROFIT_LABELS = {
+  profitsBeforeTax: '稅前利潤（含IVA/CCAdj）',
+  taxes: '企業所得稅',
+  profitsAfterTax: '稅後利潤',
+  dividends: '淨股利',
+  undistributed: '未分配利潤',
+};
+
+async function loadCorpProfits() {
+  const el = document.getElementById('corpprofit-chart');
+  try {
+    const data = await fetchJSON('/api/corp-profits');
+    const latestQoq = data.qoq[data.qoq.length - 1];
+    const latestYoy = data.yoy[data.yoy.length - 1];
+    document.getElementById('corpprofit-stats').innerHTML =
+      statBox('最新 QoQ%', latestQoq ? latestQoq.value : null, '%') +
+      statBox('最新 YoY%', latestYoy ? latestYoy.value : null, '%') +
+      textStatBox('最新季度', data.latestQuarter);
+    const seriesList = [
+      { points: data.qoq, color: '#1a56db', label: '稅前利潤 QoQ%' },
+      { points: data.yoy, color: '#0f9d58', label: '稅前利潤 YoY%' },
+    ];
+    renderChart(el, seriesList);
+    document.getElementById('corpprofit-legend').innerHTML = legendHTML(seriesList);
+
+    const tbody = document.querySelector('#corpprofit-table tbody');
+    if (tbody) {
+      tbody.innerHTML = (data.breakdown || []).map(b => `<tr>
+        <td>${CORP_PROFIT_LABELS[b.field] || b.field}</td>
+        <td class="num">${b.value != null ? fmtNum(b.value / 1000, 1) : '—'}</td>
+      </tr>`).join('');
+    }
+    const nextEl = document.getElementById('corpprofit-next');
+    if (nextEl) nextEl.textContent = data.nextUpdateNote ? `季頻，下一季資料預計約 ${data.nextUpdateNote}才會公布。` : '';
+  } catch (e) {
+    el.innerHTML = `<div class="err-msg">企業利潤資料載入失敗：${e.message}</div>`;
+  }
+}
+
 // ───────────────────────── 手動輸入區塊（localStorage）─────────────────────────
 const MANUAL_KEYS = {
   pce: ['pce-note'],
@@ -834,7 +889,7 @@ async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.textContent = '載入中…';
-  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadYield(), loadDebt(), loadCreditSpreads(), loadFomc(), loadFiscal()]);
+  await Promise.all([loadCpi(), loadJoblessClaims(), loadBreadth(), loadPce(), loadCorpProfits(), loadYield(), loadDebt(), loadCreditSpreads(), loadFomc(), loadFiscal()]);
   btn.disabled = false;
   btn.textContent = '重新整理資料';
   document.getElementById('as-of').textContent = '最後更新：' + new Date().toLocaleString('zh-TW');
