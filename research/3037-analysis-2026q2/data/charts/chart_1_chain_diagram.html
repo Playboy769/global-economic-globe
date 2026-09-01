@@ -1,0 +1,113 @@
+<div style="max-width:900px;margin:0 auto;">
+<svg viewBox="0 0 900 748" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+  <rect x="0" y="0" width="900" height="748" fill="#ffffff"/>
+  <text x="450" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#15181a" font-family="sans-serif">欣興電子（3037）供應鏈結構圖</text>
+  <text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,92) rotate(-90)">上游原料／設備</text>
+  <text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,282) rotate(-90)">欣興電子（3037）</text>
+  <text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,474) rotate(-90)">下游客戶（未具名）</text>
+  <text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,663) rotate(-90)">終端應用市場</text>
+  <defs>
+    <marker id="ar-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#c2410c"/></marker>
+    <marker id="ar-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#dc2626"/></marker>
+    <marker id="ar-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#15803d"/></marker>
+  </defs>
+
+  <!-- upstream -> hub -->
+  <polyline points="104,118 104,150 450,150 450,248" fill="none" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#ar-red)"/>
+  <polyline points="246,118 246,168 450,168 450,248" fill="none" stroke="#c2410c" stroke-width="1.6" marker-end="url(#ar-amber)"/>
+  <polyline points="388,118 388,186 450,186 450,248" fill="none" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#ar-red)"/>
+  <polyline points="530,118 530,186 450,186 450,248" fill="none" stroke="#c2410c" stroke-width="1.6" marker-end="url(#ar-amber)"/>
+  <polyline points="672,118 672,168 450,168 450,248" fill="none" stroke="#c2410c" stroke-width="1.6" marker-end="url(#ar-amber)"/>
+  <polyline points="814,118 814,150 450,150 450,248" fill="none" stroke="#c2410c" stroke-width="1.6" marker-end="url(#ar-amber)"/>
+
+  <!-- hub -> customers -->
+  <polyline points="450,312 450,340 115,340 115,440" fill="none" stroke="#15803d" stroke-width="1.6" marker-end="url(#ar-green)"/>
+  <polyline points="450,312 450,358 287,358 287,440" fill="none" stroke="#15803d" stroke-width="1.6" marker-end="url(#ar-green)"/>
+  <polyline points="450,312 450,376 459,376 459,440" fill="none" stroke="#15803d" stroke-width="1.6" marker-end="url(#ar-green)"/>
+  <polyline points="450,312 450,358 631,358 631,440" fill="none" stroke="#15803d" stroke-width="1.6" marker-end="url(#ar-green)"/>
+  <polyline points="450,312 450,340 803,340 803,440" fill="none" stroke="#15803d" stroke-width="1.6" marker-end="url(#ar-green)"/>
+
+  <!-- customers -> end market -->
+  <polyline points="115,502 115,560 300,560 300,628" fill="none" stroke="#15803d" stroke-width="1.4" marker-end="url(#ar-green)"/>
+  <polyline points="287,502 287,588 380,588 380,628" fill="none" stroke="#15803d" stroke-width="1.4" marker-end="url(#ar-green)"/>
+  <polyline points="459,502 459,628" fill="none" stroke="#15803d" stroke-width="1.4" marker-end="url(#ar-green)"/>
+  <polyline points="631,502 631,588 540,588 540,628" fill="none" stroke="#15803d" stroke-width="1.4" marker-end="url(#ar-green)"/>
+  <polyline points="803,502 803,560 620,560 620,628" fill="none" stroke="#15803d" stroke-width="1.4" marker-end="url(#ar-green)"/>
+
+  <!-- L1 upstream boxes -->
+  <g font-family="sans-serif">
+    <rect x="40" y="58" width="128" height="60" rx="9" fill="rgb(246,228,221)" stroke="#c2410c" stroke-width="1.4"/>
+    <text x="104" y="83" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">味之素 ABF 膜</text>
+    <text x="104" y="99" text-anchor="middle" font-size="9.5" fill="#b91c1c" font-family="ui-monospace,Consolas,Menlo,monospace">近單一來源</text>
+    <text x="104" y="112" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">build-up film</text>
+
+    <rect x="182" y="58" width="128" height="60" rx="9" fill="rgb(246,228,221)" stroke="#c2410c" stroke-width="1.4"/>
+    <text x="246" y="83" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">載板基板 CCL</text>
+    <text x="246" y="99" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">BT樹脂·玻纖布</text>
+    <text x="246" y="112" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">供應商 M 占進貨11%</text>
+
+    <rect x="324" y="58" width="128" height="60" rx="9" fill="rgb(246,228,221)" stroke="#dc2626" stroke-width="1.6"/>
+    <text x="388" y="83" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">Low-CTE 玻纖布</text>
+    <text x="388" y="99" text-anchor="middle" font-size="9.5" fill="#b91c1c" font-family="ui-monospace,Consolas,Menlo,monospace">單一來源·缺料瓶頸</text>
+    <text x="388" y="112" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">2H26 難緩解</text>
+
+    <rect x="466" y="58" width="128" height="60" rx="9" fill="rgb(246,228,221)" stroke="#c2410c" stroke-width="1.4"/>
+    <text x="530" y="83" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">載板級銅箔</text>
+    <text x="530" y="99" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">成本與客戶協議轉嫁</text>
+
+    <rect x="608" y="58" width="128" height="60" rx="9" fill="rgb(246,228,221)" stroke="#c2410c" stroke-width="1.4"/>
+    <text x="672" y="83" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">乾膜·藥液·金鹽</text>
+    <text x="672" y="99" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">電鍍銅·除膠·表面處理</text>
+
+    <rect x="750" y="58" width="128" height="60" rx="9" fill="rgb(246,228,221)" stroke="#c2410c" stroke-width="1.4"/>
+    <text x="814" y="83" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">長交期設備</text>
+    <text x="814" y="99" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">曝光·電鍍·雷射鑽孔</text>
+    <text x="814" y="112" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">2026預訂 316 億</text>
+  </g>
+
+  <!-- L2 hub -->
+  <g font-family="sans-serif">
+    <rect x="300" y="248" width="300" height="64" rx="12" fill="#15181a" stroke="#15181a" stroke-width="1.4"/>
+    <text x="450" y="276" text-anchor="middle" font-size="14" font-weight="700" fill="#f5f6f5">欣興電子 3037</text>
+    <text x="450" y="296" text-anchor="middle" font-size="10.5" fill="#c9cdce" font-family="ui-monospace,Consolas,Menlo,monospace">ABF/BT 載板 52% · HDI 27% · PCB 9% · BT 10% · FPC 2%</text>
+  </g>
+
+  <!-- L3 customers -->
+  <g font-family="sans-serif">
+    <rect x="40" y="440" width="150" height="62" rx="9" fill="rgb(224,240,224)" stroke="#15803d" stroke-width="1.4"/>
+    <text x="115" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">客戶辛</text>
+    <text x="115" y="482" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">未具名·FY25 占銷貨 28%</text>
+    <text x="115" y="495" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">美系 AI 運算平台(推測)</text>
+
+    <rect x="212" y="440" width="150" height="62" rx="9" fill="rgb(224,240,224)" stroke="#15803d" stroke-width="1.4"/>
+    <text x="287" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">其他載板客戶</text>
+    <text x="287" y="483" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">CPU/GPU/ASIC/網通 IC</text>
+
+    <rect x="384" y="440" width="150" height="62" rx="9" fill="rgb(224,240,224)" stroke="#15803d" stroke-width="1.4"/>
+    <text x="459" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">系統廠 / EMS</text>
+    <text x="459" y="483" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">伺服器·網通·PC/NB</text>
+
+    <rect x="556" y="440" width="150" height="62" rx="9" fill="rgb(224,240,224)" stroke="#15803d" stroke-width="1.4"/>
+    <text x="631" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">記憶體/行動客戶</text>
+    <text x="631" y="483" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">BT 載板應用</text>
+
+    <rect x="728" y="440" width="150" height="62" rx="9" fill="rgb(224,240,224)" stroke="#15803d" stroke-width="1.4"/>
+    <text x="803" y="466" text-anchor="middle" font-size="12" font-weight="700" fill="#15181a">車用電子客戶</text>
+    <text x="803" y="483" text-anchor="middle" font-size="9.5" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">HDI/PCB 應用</text>
+  </g>
+
+  <!-- L4 end market -->
+  <g font-family="sans-serif">
+    <rect x="40" y="628" width="838" height="60" rx="12" fill="#15181a" stroke="#15181a" stroke-width="1.4"/>
+    <text x="459" y="654" text-anchor="middle" font-size="14" font-weight="700" fill="#f5f6f5">終端應用市場</text>
+    <text x="459" y="674" text-anchor="middle" font-size="10.5" fill="#c9cdce" font-family="ui-monospace,Consolas,Menlo,monospace">AI 資料中心 61% · 通訊/網通 24% · IoT/消費 ~5% · 車用 3% · 其他 7%（FY2026Q2 法說會簡報）</text>
+  </g>
+
+  <!-- legend -->
+  <line x1="120" y1="716" x2="150" y2="716" stroke="#c2410c" stroke-width="2.4"/>
+  <text x="158" y="720" font-size="10.5" fill="#5a6167" font-family="sans-serif">一般供應流</text>
+  <line x1="300" y1="716" x2="330" y2="716" stroke="#dc2626" stroke-width="2.4" stroke-dasharray="6 4"/>
+  <text x="338" y="720" font-size="10.5" fill="#5a6167" font-family="sans-serif">單一來源·缺料支線（味之素 ABF 膜、Low-CTE 玻纖布）</text>
+</svg>
+  <div style="font-size:12px;color:#666;text-align:center;margin-top:6px;">資料來源：欣興 FY2025（民國114年度）股東會年報「主要進銷貨客戶」「主要原料供應狀況」與 2026Q2 法人說明會簡報（應用別占比）。年報僅揭露一家 ≥10% 客戶（辛，占銷貨 28%）與最大供應商 M（占進貨 11%），其餘節點為產業結構整理；上游採購佔比與下游銷貨佔比為不同計算基礎，不可直接加總；查詢日期 2026-08-31</div>
+</div>
