@@ -638,6 +638,18 @@
       "port": 8176
     },
     {
+      "name": "3037-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8177",
+        "--directory",
+        "research/3037-analysis-2026q2/3037_FY2026Q2_Analysis"
+      ],
+      "port": 8177
+    },
+    {
       "name": "nvda-q2-analysis",
       "runtimeExecutable": "python",
       "runtimeArgs": [
@@ -659,6 +671,30 @@
       "env": {
         "PORT": "8178"
       }
+    },
+    {
+      "name": "sector-rotation-system",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8181",
+        "--directory",
+        "sector-rotation-system"
+      ],
+      "port": 8181
+    },
+    {
+      "name": "abf-chain-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8182",
+        "--directory",
+        "research/abf-substrate-supply-chain-2026q3"
+      ],
+      "port": 8182
     }
   ]
 }
