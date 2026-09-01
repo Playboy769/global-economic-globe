@@ -696,7 +696,7 @@ Sub DrawDeepAnalysis(wsP As Worksheet, posData() As Variant, _
         .Interior.Color = RGB(0, 0, 0)
         .Font.Color = RGB(221, 221, 221)
         .Font.Name = "Consolas"
-        .Font.Size = 10
+        .Font.Size = 36   ' sheet-wide default; every element below inherits this
     End With
     wsA.Activate
     ActiveWindow.DisplayGridlines = False
