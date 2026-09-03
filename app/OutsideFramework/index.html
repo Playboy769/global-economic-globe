@@ -205,18 +205,31 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .tl-body .wk-name{font-family:'Orchid','Noto Serif TC',serif;font-size:15px;font-weight:600;margin:3px 0 4px;padding-left:12px;transition:color .2s ease}
 .tl-body .wk-type{font-size:12px;color:#999;line-height:1.6;padding-left:12px}
 
-.works-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:wk-idx}
+.works-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .wk-card{cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:26px;border:1px solid #eee;border-radius:16px;overflow:visible;position:relative;transition:transform .3s cubic-bezier(.4,0,.2,1),border-color .3s ease,box-shadow .3s ease}
 .wk-card.wk-hidden{display:none}
 .wk-card:hover{transform:translateY(-4px);border-color:#ddd;box-shadow:0 20px 40px -22px rgba(0,0,0,.16)}
 .wk-card:focus-visible{outline:1px solid var(--c-accent);outline-offset:4px}
-.wk-card::before{counter-increment:wk-idx;content:counter(wk-idx, decimal-leading-zero);font-family:'Orchid','Noto Serif TC',serif;font-size:10px;color:#ccc;letter-spacing:.06em;transition:color .2s}
-.wk-card:hover::before{color:var(--c-accent)}
 .wk-card::after{content:'→';position:absolute;top:26px;right:24px;font-size:13px;color:#ccc;opacity:0;transform:translateX(-4px);transition:opacity .25s ease,transform .25s ease,color .2s ease}
 .wk-card:hover::after{opacity:1;transform:translateX(0);color:var(--c-accent)}
 .wk-info{display:flex;flex-direction:column;gap:5px;padding:0}
 .wk-name{font-size:16px;font-weight:500;margin-bottom:0;letter-spacing:.01em;font-family:'Orchid','Noto Serif TC','PMingLiU',serif}
-.wk-type{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;font-weight:400}
+/* Bilingual Works-card title — Chinese primary, small uppercase English kicker beneath.
+   Scoped with :has(.wk-zh) so earnings cards (plain-text .wk-name, rebuilt by the sidebar
+   view) keep their old single-line rendering untouched. */
+.wk-name:has(.wk-zh){display:flex;flex-direction:column;gap:2px;font-weight:600}
+.wk-name .wk-zh{font-size:16px;line-height:1.3;color:var(--c-ink)}
+.wk-name .wk-en{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:10px;font-weight:400;color:#b3b3b3;text-transform:uppercase;letter-spacing:.08em}
+.wk-type{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:11.5px;color:#8a8a8a;letter-spacing:.01em;font-weight:400;line-height:1.55}
+/* Visible sub-group header inside the flat Works grid (every filter except Earnings Call,
+   which keeps its own sidebar view). A full-width grid row. NOT .wk-group-title — that one
+   stays display:none and is only parsed by buildEarningsRows() for the earnings sidebar.
+   Shown/hidden per active category by syncSubheads(). */
+.wk-subhead{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:14px 0 0;padding-bottom:9px;border-bottom:1px solid #ececec}
+.wk-subhead:first-child{margin-top:0}
+.wk-subhead.wk-hidden{display:none}
+.wk-subhead .sh-zh{font-family:'Orchid','Noto Serif TC','PMingLiU',serif;font-size:14px;font-weight:600;color:var(--c-ink);letter-spacing:.02em}
+.wk-subhead .sh-en{font-family:'Calibri','Noto Sans TC',sans-serif;font-size:10px;font-weight:400;color:#b3b3b3;text-transform:uppercase;letter-spacing:.08em}
 /* Tools page reuses .wk-card as a plain <a> (opens the tool in a new tab, no preview overlay,
    see #page-tools below) — neutralize link styling so it renders identically to the div-based
    Works cards. */
@@ -523,6 +536,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 @media(max-width:600px){
   .works-grid{grid-template-columns:1fr}
   .wk-name{font-size:14px}
+  .wk-name .wk-zh{font-size:14px}
   .phil-steles{gap:36px}
 }
 @media(max-width:480px){
@@ -853,15 +867,112 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
     </div>
     <div class="works-grid">
 
-      <!--GATE--><div data-published="2026-06-21" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Economy — 開啟預覽" onclick="openGatedWork('econ')">
-        <div class="wk-info"><div class="wk-name">Economy</div><div class="wk-type">GDP &middot; Trade &middot; 100 Countries</div></div>
+      <!-- ══════════ Non–Earnings-Call works: grouped under visible .wk-subhead headers.
+           filterCat() shows one category at a time; syncSubheads() hides a header whose
+           group has no visible card. Earnings Call is left untouched further down (hidden
+           .wk-group-title markers + the sidebar view built by buildEarningsRows()). Cards
+           carry data-published for the Timeline page and (tech-notes) data-tags for the
+           Browse-by-Topic panel. GATE markers wrap the login-gated cards — keep them. ══════════ -->
+
+      <!-- ── FINANCE & MARKETS ── -->
+      <div class="wk-subhead" data-cat="finance"><span class="sh-zh">總經環境</span><span class="sh-en">Macro Environment</span></div>
+      <!--GATE--><div data-published="2026-06-21" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="全球經濟 — 開啟預覽" onclick="openGatedWork('econ')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">全球經濟</span><span class="wk-en">Economy</span></div><div class="wk-type">100 國 GDP、貿易流向與製造業指標 · 3D 地球視覺化</div></div>
       </div><!--/GATE-->
-      <!--GATE--><div data-published="2026-06-21" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="Energy — 開啟預覽" onclick="openGatedWork('energy')">
-        <div class="wk-info"><div class="wk-name">Energy</div><div class="wk-type">Oil Routes &middot; LNG &middot; Infrastructure</div></div>
+      <!--GATE--><div data-published="2026-06-21" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="能源版圖 — 開啟預覽" onclick="openGatedWork('energy')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">能源版圖</span><span class="wk-en">Energy</span></div><div class="wk-type">石油航線、LNG 與能源基礎設施地圖</div></div>
       </div><!--/GATE-->
-      <!--GATE--><div data-published="2026-06-21" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="InvestFrame — 開啟預覽" onclick="openGatedWork('invest')">
-        <div class="wk-info"><div class="wk-name">InvestFrame</div><div class="wk-type">3-Layer Narrative &middot; Framework</div></div>
+      <div data-published="2026-08-08" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="市場天氣 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/market-weather')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">市場天氣</span><span class="wk-en">Market Weather</span></div><div class="wk-type">VIX、殖利率曲線、信用利差、金融情勢指數 · 一頁總經溫度計</div></div>
+      </div>
+      <div data-published="2026-08-01" class="wk-card reveal reveal-delay-3" data-cat="finance" tabindex="0" role="button" aria-label="金融事件簿 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Financial_Events_Timeline.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">金融事件簿</span><span class="wk-en">Financial Events Timeline</span></div><div class="wk-type">總體經濟與個股重大事件 · 公開資料時間軸</div></div>
+      </div>
+
+      <div class="wk-subhead" data-cat="finance"><span class="sh-zh">市場結構與情緒</span><span class="sh-en">Market Structure &amp; Sentiment</span></div>
+      <!--GATE--><div data-published="2026-06-21" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="投資框架 — 開啟預覽" onclick="openGatedWork('invest')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">投資框架</span><span class="wk-en">InvestFrame</span></div><div class="wk-type">總經、風險、產業、持倉四環 · 三層敘事框架</div></div>
       </div><!--/GATE-->
+      <!--GATE--><div data-published="2026-08-09" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="隱含波動率曲面 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/volsurface/')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">隱含波動率曲面</span><span class="wk-en">Volatility Surface</span></div><div class="wk-type">即時選擇權鏈、3D 波動率曲面、微笑偏斜與期限結構 · 二維局部迴歸擬合</div></div>
+      </div><!--/GATE-->
+
+      <div class="wk-subhead" data-cat="finance"><span class="sh-zh">選擇權</span><span class="sh-en">Options</span></div>
+      <!--GATE--><div data-published="2026-06-30" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="選擇權指南 — 開啟預覽" onclick="openGatedWork('options')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">選擇權指南</span><span class="wk-en">Options Guide</span></div><div class="wk-type">策略、Greeks、損益結構、風險</div></div>
+      </div><!--/GATE-->
+      <!--GATE--><div data-published="2026-07-01" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="布朗運動模擬器 — 開啟預覽" onclick="openGatedWork('brownian')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">布朗運動模擬器</span><span class="wk-en">Brownian Motion</span></div><div class="wk-type">隨機漫步、蒙地卡羅路徑模擬</div></div>
+      </div><!--/GATE-->
+
+      <div class="wk-subhead" data-cat="finance"><span class="sh-zh">台股籌碼與輪動</span><span class="sh-en">TW Positioning &amp; Rotation</span></div>
+      <!--GATE--><div data-published="2026-06-29" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="台股資訊雷達 — 開啟預覽" onclick="openGatedWork('warning')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">台股資訊雷達</span><span class="wk-en">TWII Infor</span></div><div class="wk-type">警示雷達、法人籌碼、除息日曆、高價股</div></div>
+      </div><!--/GATE-->
+      <div data-published="2026-08-30" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="三大法人籌碼透視 — 開啟預覽" onclick="openGatedWork('https://twchips-report-production.up.railway.app')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">三大法人籌碼透視</span><span class="wk-en">TW Chips Report</span></div><div class="wk-type">現貨 vs 期貨、自營商拆分、三方分歧、選擇權 CALL／PUT · TAIFEX／TWSE 資料</div></div>
+      </div>
+      <div data-published="2026-08-30" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="產業輪動儀表板 — 開啟預覽" onclick="openGatedWork('https://sector-rotation-system-production.up.railway.app')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">產業輪動儀表板</span><span class="wk-en">Sector Rotation Dashboard</span></div><div class="wk-type">RRG 2D／3D、台美雙市場、資金流向、季節性、機構持倉追蹤</div></div>
+      </div>
+
+      <!-- ── PUBLIC DATA ── -->
+      <div class="wk-subhead" data-cat="public-data"><span class="sh-zh">台灣公用事業數據</span><span class="sh-en">Taiwan Utilities Data</span></div>
+      <!--GATE--><div data-published="2026-08-09" class="wk-card reveal" data-cat="public-data" tabindex="0" role="button" aria-label="台灣油價歷史 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/fuelprice')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">台灣油價歷史</span><span class="wk-en">Fuel Price History</span></div><div class="wk-type">中油 620 次調價紀錄 · 從 800KB 的 ASPX 網頁裡解析出來 · 公開不等於可用</div></div>
+      </div><!--/GATE-->
+      <!--GATE--><div data-published="2026-08-09" class="wk-card reveal reveal-delay-1" data-cat="public-data" tabindex="0" role="button" aria-label="台電電網記錄器 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/powergrid')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">台電電網記錄器</span><span class="wk-en">Grid Recorder</span></div><div class="wk-type">每 10 分鐘持續記錄全台 204 部機組 · 檢修與友善降載統計 · 只有留下帶子才答得出來的問題</div></div>
+      </div><!--/GATE-->
+
+      <!-- ── NETWORK ANALYSIS ── -->
+      <div data-published="2026-05-12" class="wk-card reveal" data-cat="network" tabindex="0" role="button" aria-label="結構洞分析 — 開啟預覽" onclick="openGatedWork('https://structural-holes-production.up.railway.app/')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">結構洞分析</span><span class="wk-en">Structural Holes</span></div><div class="wk-type">網絡分析、圖論、中介中心性</div></div>
+      </div>
+
+      <!-- ── CAUSAL LOGIC ── -->
+      <div data-published="2026-06-22" class="wk-card reveal" data-cat="causal" tabindex="0" role="button" aria-label="因果框架 — 開啟預覽" onclick="openGatedWork('causal')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">因果框架</span><span class="wk-en">CausalFrame</span></div><div class="wk-type">因果邏輯圖、系統迴圈、槓桿點</div></div>
+      </div>
+
+      <!-- ── KNOWLEDGE ── -->
+      <div class="wk-subhead" data-cat="knowledge"><span class="sh-zh">知識庫</span><span class="sh-en">Knowledge Base</span></div>
+      <div data-published="2026-06-21" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="文章資料庫 — 開啟預覽" onclick="openGatedWork('https://articlebase.up.railway.app/')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">文章資料庫</span><span class="wk-en">Article Database</span></div><div class="wk-type">全文搜尋、標籤、封存</div></div>
+      </div>
+
+      <div class="wk-subhead" data-cat="knowledge"><span class="sh-zh">完全解析專題</span><span class="sh-en">Deep-Dive Explainers</span></div>
+      <div data-published="2026-08-16" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="猛健樂完全解析 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/mounjaro')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">猛健樂完全解析</span><span class="wk-en">Mounjaro Explainer</span></div><div class="wk-type">藥商背景、雙重 GIP／GLP-1 機轉、SURPASS／SURMOUNT 臨床證據、與 Ozempic／Wegovy 比較</div></div>
+      </div>
+      <div data-published="2026-08-20" class="wk-card reveal reveal-delay-1" data-cat="knowledge" tabindex="0" role="button" aria-label="Agentic AI 完全解析 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/agentic-ai')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">Agentic AI 完全解析</span><span class="wk-en">Agentic AI Explainer</span></div><div class="wk-type">ReAct 核心迴圈、系統組成要件、安全性與風險控制、多代理編排模式</div></div>
+      </div>
+
+      <!-- ── TECH NOTES ── 深度技術／基礎設施筆記。新增時直接加 .wk-card（data-cat="tech-notes"），
+           擺在對應的 .wk-subhead 之後即可；分群機制只作用於 data-cat="earnings"。 -->
+      <div class="wk-subhead" data-cat="tech-notes"><span class="sh-zh">AI 基礎設施全鏈</span><span class="sh-en">AI Infrastructure Chain</span></div>
+      <div data-published="2026-07-28" class="wk-card reveal" data-cat="tech-notes" data-tags="ai-capex,power-infrastructure,foundry" tabindex="0" role="button" aria-label="伺服器機櫃全鏈技術解剖 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Server_Rack_Full_Chain.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">伺服器機櫃全鏈技術解剖</span><span class="wk-en">Server Rack Full Chain</span></div><div class="wk-type">晶片設計 → 製造封裝 → 機櫃 → 資料中心 · 12 環節 · AI／x86 對照</div></div>
+      </div>
+      <div data-published="2026-07-28" class="wk-card reveal reveal-delay-1" data-cat="tech-notes" data-tags="ai-accelerator,ai-capex,power-infrastructure" tabindex="0" role="button" aria-label="AMD Helios 對照 Nvidia Vera Rubin — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_AMD_Helios_vs_Vera_Rubin.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">AMD Helios 對照 Nvidia Vera Rubin</span><span class="wk-en">Helios vs Vera Rubin</span></div><div class="wk-type">組裝 → 晶粒拓樸 → 供電 → 定價 → 商業模式 → 軟體護城河 · 12 環節 · 機櫃級對照</div></div>
+      </div>
+      <div data-published="2026-09-01" class="wk-card reveal reveal-delay-2" data-cat="tech-notes" data-tags="neocloud,ai-capex,circular-financing,power-infrastructure,taiwan-supply-chain" tabindex="0" role="button" aria-label="Neocloud 完整產業鏈解剖 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Neocloud_Full_Chain.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">Neocloud 完整產業鏈解剖</span><span class="wk-en">Neocloud Full Chain</span></div><div class="wk-type">資本結構 → 服務商圖譜 → 矽晶與記憶體 → 系統整合 → 電力電網 · 12 環節 · 循環融資與台灣供應鏈定位</div></div>
+      </div>
+
+      <div class="wk-subhead" data-cat="tech-notes"><span class="sh-zh">技術門檻與產業格局</span><span class="sh-en">Moats &amp; Sector Structure</span></div>
+      <div data-published="2026-08-21" class="wk-card reveal" data-cat="tech-notes" data-tags="memory-cycle,export-controls,geopolitics" tabindex="0" role="button" aria-label="DRAM／NAND 技術門檻與出口管制鎖喉 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_DRAM_NAND_Moat_and_Export_Controls.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">DRAM／NAND 技術門檻與出口管制</span><span class="wk-en">DRAM / NAND Moats</span></div><div class="wk-type">三重門檻 → EUV 出口管制 → 市占現況 → CXMT／蘋果真實案例 → 歷史對照 · 10 環節</div></div>
+      </div>
+      <div data-published="2026-09-01" class="wk-card reveal reveal-delay-1" data-cat="tech-notes" data-tags="t-glass,material-transition,glass-fiber,taiwan-supply-chain,ai-capex" tabindex="0" role="button" aria-label="ABF 載板產業鏈全景與投資觀察 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_ABF_Substrate_Chain.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">ABF 載板產業鏈全景</span><span class="wk-en">ABF Substrate Chain</span></div><div class="wk-type">味之素獨家供應 → 三雄稼動率 → 客戶集中度 → 玻璃基板下一節點 · 欣興／景碩／南電護城河比較</div></div>
+      </div>
+      <div data-published="2026-09-03" class="wk-card reveal reveal-delay-2" data-cat="tech-notes" data-tags="observability,ai-capex,customer-concentration,consolidation,saas" tabindex="0" role="button" aria-label="Observability 平台賽道競爭格局 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DDOG_Industry_2026Q2.html')">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">Observability 平台賽道競爭格局</span><span class="wk-en">Observability Landscape</span></div><div class="wk-type">市場規模口徑 → 價值鏈與亦敵亦友結構 → 玩家分層與模組覆蓋矩陣 → Datadog 護城河 → AI／LLM 可觀測轉型 → 財務估值比較 · DDOG FY2026 Q2 基準</div></div>
+      </div>
+
       <div class="wk-group-title first">矽晶圓 &middot; Silicon Wafer</div>
       <div data-published="2026-07-11" class="wk-card reveal reveal-delay-2" data-cat="earnings" data-tags="foundry,memory-cycle" tabindex="0" role="button" aria-label="SUMCO Corporation FY2026 Q1 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/SUMCO_FY26Q1_Analysis.html')">
         <div class="wk-info"><div class="wk-name">SUMCO Corporation</div><div class="wk-type">FY2026 Q1（2026年1–3月）&middot; 財報簡報 &middot; 損益摘要 &middot; 現金流 &middot; 風險矩陣</div><div class="wk-next-earn">下次財報：2026/08/06</div></div>
@@ -1128,73 +1239,6 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div><!--/GATE-->
       <div data-published="2026-08-08" class="wk-card reveal" data-cat="earnings" tabindex="0" role="button" aria-label="話術偵測 Earnings Quiz — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/earnings-quiz')">
         <div class="wk-info"><div class="wk-name">話術偵測 Earnings Quiz</div><div class="wk-type">四選一小遊戲 &middot; 從 439 則法說會 Q&amp;A 判讀出題 &middot; 猜猜真正的邏輯缺口是哪一個</div></div>
-      </div>
-      <!--GATE--><div class="wk-group-title">即時資料工具 &middot; Live Data Tools</div>
-      <div data-published="2026-08-09" class="wk-card reveal" data-cat="public-data" tabindex="0" role="button" aria-label="台灣油價歷史 Fuel Price History — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/fuelprice')">
-        <div class="wk-info"><div class="wk-name">台灣油價歷史 Fuel Price History</div><div class="wk-type">中油 620 次調價紀錄 &middot; 從 800KB 的 ASPX 網頁裡解析出來 &middot; 公開不等於可用</div></div>
-      </div>
-      <div data-published="2026-08-09" class="wk-card reveal" data-cat="public-data" tabindex="0" role="button" aria-label="台電電網記錄器 Grid Recorder — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/powergrid')">
-        <div class="wk-info"><div class="wk-name">台電電網記錄器 Grid Recorder</div><div class="wk-type">每 10 分鐘持續記錄全台 204 部機組 &middot; 檢修與友善降載統計 &middot; 只有留下帶子才答得出來的問題</div></div>
-      </div>
-      <div data-published="2026-08-09" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="隱含波動率曲面 Volatility Surface — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/volsurface/')">
-        <div class="wk-info"><div class="wk-name">隱含波動率曲面 Volatility Surface</div><div class="wk-type">即時選擇權鏈 &middot; 3D 波動率曲面 &middot; 微笑偏斜 &amp; 期限結構 &middot; 二維局部迴歸擬合</div></div>
-      </div><!--/GATE-->
-      <div data-published="2026-08-08" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="市場天氣 Market Weather — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/market-weather')">
-        <div class="wk-info"><div class="wk-name">市場天氣 Market Weather</div><div class="wk-type">VIX &middot; 殖利率曲線 &middot; 信用利差 &middot; 金融情勢指數 &middot; 綜合成一頁總經溫度計</div></div>
-      </div>
-      <div data-published="2026-08-01" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="金融事件簿 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Financial_Events_Timeline.html')">
-        <div class="wk-info"><div class="wk-name">金融事件簿</div><div class="wk-type">Financial Events Timeline &middot; 總體經濟 &amp; 個股重大事件 &middot; 公開資料時間軸</div></div>
-      </div>
-      <!--GATE--><div data-published="2026-06-29" class="wk-card reveal reveal-delay-1" data-cat="finance" tabindex="0" role="button" aria-label="TWII INFOR — 開啟預覽" onclick="openGatedWork('warning')">
-        <div class="wk-info"><div class="wk-name">TWII INFOR</div><div class="wk-type">警示雷達 &middot; 法人籌碼 &middot; 除息日曆 &middot; 高價股</div></div>
-      </div><!--/GATE-->
-      <!--GATE--><div data-published="2026-06-30" class="wk-card reveal reveal-delay-2" data-cat="finance" tabindex="0" role="button" aria-label="Options Guide — 開啟預覽" onclick="openGatedWork('options')">
-        <div class="wk-info"><div class="wk-name">Options Guide</div><div class="wk-type">Strategy &middot; Greeks &middot; Payoff &middot; Risk</div></div>
-      </div><!--/GATE-->
-      <!--GATE--><div data-published="2026-07-01" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="Brownian Motion — 開啟預覽" onclick="openGatedWork('brownian')">
-        <div class="wk-info"><div class="wk-name">Brownian Motion</div><div class="wk-type">Random Walk &middot; Monte Carlo &middot; Simulation</div></div>
-      </div><!--/GATE-->
-      <div data-published="2026-05-12" class="wk-card reveal" data-cat="network" tabindex="0" role="button" aria-label="Structural Holes — 開啟預覽" onclick="openGatedWork('https://structural-holes-production.up.railway.app/')">
-        <div class="wk-info"><div class="wk-name">Structural Holes</div><div class="wk-type">Network Analysis &middot; Graph Theory</div></div>
-      </div>
-      <div data-published="2026-06-22" class="wk-card reveal" data-cat="causal" tabindex="0" role="button" aria-label="CausalFrame — 開啟預覽" onclick="openGatedWork('causal')">
-        <div class="wk-info"><div class="wk-name">CausalFrame</div><div class="wk-type">Causal Logic &middot; Diagram</div></div>
-      </div>
-      <div data-published="2026-06-21" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Article Database — 開啟預覽" onclick="openGatedWork('https://articlebase.up.railway.app/')">
-        <div class="wk-info"><div class="wk-name">Article Database</div><div class="wk-type">文章資料庫 &middot; Search &middot; Archive</div></div>
-      </div>
-      <div data-published="2026-08-16" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="猛健樂完全解析 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/mounjaro')">
-        <div class="wk-info"><div class="wk-name">猛健樂完全解析</div><div class="wk-type">藥物專題 &middot; 藥商背景 &middot; 雙重GIP/GLP-1機轉 &middot; SURPASS/SURMOUNT臨床證據 &middot; 與Ozempic/Wegovy比較</div></div>
-      </div>
-      <div data-published="2026-08-20" class="wk-card reveal" data-cat="knowledge" tabindex="0" role="button" aria-label="Agentic AI 完全解析 — 開啟預覽" onclick="openGatedWork('https://globe-invest.up.railway.app/agentic-ai')">
-        <div class="wk-info"><div class="wk-name">Agentic AI 完全解析</div><div class="wk-type">技術專題 &middot; ReAct核心迴圈 &middot; 系統組成要件 &middot; 安全性與風險控制 &middot; 多代理編排模式</div></div>
-      </div>
-      <div data-published="2026-08-30" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="三大法人籌碼透視 TW Chips Report — 開啟預覽" onclick="openGatedWork('https://twchips-report-production.up.railway.app')">
-        <div class="wk-info"><div class="wk-name">三大法人籌碼透視 TW Chips Report</div><div class="wk-type">現貨vs期貨 &middot; 自營商拆分 &middot; 三方分歧 &middot; 選擇權CALL/PUT &middot; TAIFEX／TWSE 資料</div></div>
-      </div>
-      <div data-published="2026-08-30" class="wk-card reveal" data-cat="finance" tabindex="0" role="button" aria-label="產業輪動儀表板 Sector Rotation Dashboard — 開啟預覽" onclick="openGatedWork('https://sector-rotation-system-production.up.railway.app')">
-        <div class="wk-info"><div class="wk-name">產業輪動儀表板 Sector Rotation Dashboard</div><div class="wk-type">RRG 2D／3D &middot; 台股／美股雙市場 &middot; 資金流向 &middot; 季節性 &middot; 機構持倉追蹤</div></div>
-      </div>
-
-      <!-- Tech Notes: 深度技術/基礎設施筆記，與 Earnings Call 分開。這一類沒有 .wk-group-title 分群
-           （分群機制只作用於 data-cat="earnings"，見 buildEarningsRows()）；新增時直接加 .wk-card 即可。 -->
-      <div data-published="2026-07-28" class="wk-card reveal" data-cat="tech-notes" data-tags="ai-capex,power-infrastructure,foundry" tabindex="0" role="button" aria-label="伺服器機櫃全鏈技術解剖 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Server_Rack_Full_Chain.html')">
-        <div class="wk-info"><div class="wk-name">Server Rack · 全鏈解剖</div><div class="wk-type">晶片設計 &rarr; 製造封裝 &rarr; 機櫃 &rarr; 資料中心 &middot; 12 環節 &middot; AI／x86 對照</div></div>
-      </div>
-      <div data-published="2026-07-28" class="wk-card reveal" data-cat="tech-notes" data-tags="ai-accelerator,ai-capex,power-infrastructure" tabindex="0" role="button" aria-label="AMD Helios 對照 Nvidia Vera Rubin — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_AMD_Helios_vs_Vera_Rubin.html')">
-        <div class="wk-info"><div class="wk-name">Helios · 對照 Vera Rubin</div><div class="wk-type">組裝 &rarr; 晶粒拓樸 &rarr; 供電 &rarr; 定價 &rarr; 商業模式 &rarr; 軟體護城河 &middot; 12 環節 &middot; 機櫃級對照</div></div>
-      </div>
-      <div data-published="2026-08-21" class="wk-card reveal" data-cat="tech-notes" data-tags="memory-cycle,export-controls,geopolitics" tabindex="0" role="button" aria-label="DRAM／NAND 技術門檻與出口管制鎖喉 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_DRAM_NAND_Moat_and_Export_Controls.html')">
-        <div class="wk-info"><div class="wk-name">DRAM／NAND · 門檻與鎖喉</div><div class="wk-type">三重門檻 &rarr; EUV出口管制 &rarr; 市占現況 &rarr; CXMT／蘋果真實案例 &rarr; 歷史對照 &middot; 10 環節 &middot; 記憶體業技術與地緣政治</div></div>
-      </div>
-      <div data-published="2026-09-01" class="wk-card reveal" data-cat="tech-notes" data-tags="neocloud,ai-capex,circular-financing,power-infrastructure,taiwan-supply-chain" tabindex="0" role="button" aria-label="Neocloud 完整產業鏈解剖 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_Neocloud_Full_Chain.html')">
-        <div class="wk-info"><div class="wk-name">Neocloud · 完整產業鏈解剖</div><div class="wk-type">資本結構 &rarr; 服務商圖譜 &rarr; 矽晶與記憶體 &rarr; 系統整合 &rarr; 電力電網 &middot; 12 環節 &middot; 循環融資與台灣供應鏈定位</div></div>
-      </div>
-      <div data-published="2026-09-01" class="wk-card reveal" data-cat="tech-notes" data-tags="t-glass,material-transition,glass-fiber,taiwan-supply-chain,ai-capex" tabindex="0" role="button" aria-label="ABF 載板產業鏈全景與投資觀察 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/TechNote_ABF_Substrate_Chain.html')">
-        <div class="wk-info"><div class="wk-name">ABF 載板 · 產業鏈全景</div><div class="wk-type">味之素獨家供應 &rarr; 三雄稼動率 &rarr; 客戶集中度 &rarr; 玻璃基板下一節點 &middot; 產業轉型節點觀察 &middot; 欣興／景碩／南電護城河比較</div></div>
-      </div>
-      <div data-published="2026-09-03" class="wk-card reveal" data-cat="tech-notes" data-tags="observability,ai-capex,customer-concentration,consolidation,saas" tabindex="0" role="button" aria-label="Datadog 所處產業：Observability 平台賽道競爭格局 — 開啟預覽" onclick="previewWork(this,'https://globe-invest.up.railway.app/research/DDOG_Industry_2026Q2.html')">
-        <div class="wk-info"><div class="wk-name">Observability 賽道 · 競爭格局</div><div class="wk-type">市場規模口徑 &rarr; 價值鏈與亦敵亦友結構 &rarr; 玩家分層與模組覆蓋矩陣 &rarr; Datadog 護城河 &rarr; AI／LLM 可觀測轉型 &rarr; 財務估值比較 &middot; DDOG FY2026 Q2 基準 &middot; Dynatrace／Elastic／Grafana／Splunk／New Relic／Chronosphere</div></div>
       </div>
 
     </div>
@@ -1885,10 +1929,19 @@ function renderWkExtras(root, extras, reduced) {
   });
 }
 
+/* A Works card's display title: the Chinese primary when the card uses the bilingual
+   <span class="wk-zh">/<span class="wk-en"> markup, otherwise the whole .wk-name text
+   (earnings cards, which stay single-line and are rebuilt by the sidebar view). */
+function wkTitleOf(cardEl) {
+  var n = cardEl && cardEl.querySelector('.wk-name');
+  if (!n) return '';
+  var zh = n.querySelector('.wk-zh');
+  return (zh ? zh.textContent : n.textContent).trim();
+}
+
 function previewWork(cardEl, mode) {
   if (wkPreviewState.open || wkPreviewState.animating) return;
-  var wkNameEl = cardEl && cardEl.querySelector('.wk-name');
-  trackEvent('work_click', '/#works', wkNameEl ? wkNameEl.textContent.trim() : mode);
+  trackEvent('work_click', '/#works', wkTitleOf(cardEl) || mode);
   wkPreviewState.animating = true;
   wkPreviewState.mode = mode;
   wkPreviewState.cardEl = cardEl;
@@ -1924,15 +1977,15 @@ function previewWork(cardEl, mode) {
   const typeBox = root.querySelector('.wkp-type');
   const idxBox = root.querySelector('.wkp-idx');
 
-  const srcName = cardEl.querySelector('.wk-name');
+  const srcTitle = wkTitleOf(cardEl);
   const srcType = cardEl.querySelector('.wk-type');
-  nameBox.textContent = srcName ? srcName.textContent : '';
+  nameBox.textContent = srcTitle;
   typeBox.textContent = srcType ? srcType.textContent : '';
 
   root.setAttribute('aria-hidden', 'false');
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-modal', 'true');
-  root.setAttribute('aria-label', srcName ? srcName.textContent : '');
+  root.setAttribute('aria-label', srcTitle);
 
   const allCards = Array.from(document.querySelectorAll('#page-works .wk-card'));
   const idx = allCards.indexOf(cardEl) + 1;
@@ -2420,6 +2473,8 @@ function applyTopicFilter() {
     var match = tags.some(function (t) { return activeTopics.has(t); });
     card.classList.toggle('wk-hidden', !match);
   });
+  // Topic filtering cuts across every category, so the per-category sub-headers don't apply.
+  document.querySelectorAll('#page-works .wk-subhead').forEach(function (sh) { sh.classList.add('wk-hidden'); });
   countEl.textContent = activeTopics.size + ' topic' + (activeTopics.size > 1 ? 's' : '') + ' selected';
   updateWorksCount();
 }
@@ -2436,12 +2491,28 @@ function filterCat(cat, pillEl) {
   document.querySelectorAll('#page-works .wk-card').forEach(card => {
     card.classList.toggle('wk-hidden', card.dataset.cat !== cat);
   });
+  syncSubheads(cat);
   if (cat === 'earnings') {
     enterEarningsView();
   } else if (earningsViewActive) {
     exitEarningsView();
   }
   updateWorksCount();
+}
+
+/* Show a .wk-subhead only for the active category, and only when at least one card in the
+   run after it (up to the next subhead, or the start of the earnings block) is visible — so
+   a filter that empties a group hides that group's header along with it. */
+function syncSubheads(cat) {
+  document.querySelectorAll('#page-works .wk-subhead').forEach(function (sh) {
+    if (sh.dataset.cat !== cat) { sh.classList.add('wk-hidden'); return; }
+    var hasVisible = false, el = sh.nextElementSibling;
+    while (el && !el.classList.contains('wk-subhead') && !el.classList.contains('wk-group-title')) {
+      if (el.classList.contains('wk-card') && !el.classList.contains('wk-hidden')) { hasVisible = true; break; }
+      el = el.nextElementSibling;
+    }
+    sh.classList.toggle('wk-hidden', !hasVisible);
+  });
 }
 
 /* ── Timeline: reads data-published off the existing #page-works .wk-card elements once
@@ -2463,13 +2534,12 @@ function buildTimelineRows() {
       handler = 'gated';
     }
     if (!m) return;
-    var nameEl = card.querySelector('.wk-name');
     var typeEl = card.querySelector('.wk-type');
     rows.push({
       date: card.dataset.published,
       mode: m[1],
       handler: handler,
-      name: nameEl ? nameEl.textContent.trim() : '',
+      name: wkTitleOf(card),
       type: typeEl ? typeEl.textContent.trim() : '',
       cat: card.dataset.cat
     });
@@ -3164,6 +3234,11 @@ document.addEventListener('keydown', function (e) {
   var qs = params.toString();
   history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
 })();
+
+// Works opens filtered to Finance & Markets. There is no "All" pill, so without this the
+// grid would first paint every category's ~150 cards in one flat wall — which is exactly
+// the "太雜亂" this grouping pass was meant to fix.
+filterCat('finance', document.querySelector('.wf-pill[data-cat="finance"]'));
 </script>
 </body>
 </html>
