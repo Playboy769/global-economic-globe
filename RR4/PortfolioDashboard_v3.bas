@@ -1529,7 +1529,11 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
             d(0) = aggShares
             d(2) = aggCost
             d(5) = oldestDate
-            d(11) = lots
+            ' d(11) holds an object (the FIFO lot Collection); an object
+            ' assignment needs Set - a plain Let-assign raises run-time
+            ' error 450 (invalid property assignment) and aborts the whole
+            ' dashboard rebuild before DrawDeepAnalysis ever runs.
+            Set d(11) = lots
 
             dict(posKey) = d
         End If
