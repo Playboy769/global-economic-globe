@@ -707,6 +707,30 @@
         "research/datadog-analysis-2026q2/DDOG_Industry_2026Q2"
       ],
       "port": 8184
+    },
+    {
+      "name": "cosmetics-codex",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "projects/cosmetics-codex/server.js"
+      ],
+      "port": 8183,
+      "env": {
+        "PORT": "8183",
+        "COSMETICS_DATA_DIR": "projects/cosmetics-codex/.localdata"
+      }
+    },
+    {
+      "name": "3189-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8179",
+        "--directory",
+        "research/3189-analysis-2026q2/3189_FY2026Q2_Analysis"
+      ],
+      "port": 8179
     }
   ]
 }
