@@ -695,6 +695,18 @@
         "research/abf-substrate-supply-chain-2026q3"
       ],
       "port": 8182
+    },
+    {
+      "name": "ddog-industry",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8184",
+        "--directory",
+        "research/datadog-analysis-2026q2/DDOG_Industry_2026Q2"
+      ],
+      "port": 8184
     }
   ]
 }
