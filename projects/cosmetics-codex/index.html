@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>化妝品圖鑑 · 日韓</title>
+<style>
+/* 視覺鐵則：純白底、深色高對比字；顏色只出現在徽章、邊框、色條、色卡等小面積元素。
+   區塊級元件的 margin-bottom 一律 16–20px（.divider 前後 20–22px）。 */
+:root{
+  --bg:#ffffff;
+  --ink:#1a1618;
+  --ink-2:#4a4246;
+  --ink-3:#7d7276;
+  --line:#ece6e8;
+  --line-2:#f5f1f2;
+  --rose:#b0596f;
+  --rose-soft:#f9eff2;
+  --gold:#a5824f;
+  --cat-makeup:#c2687e;
+  --cat-skincare:#5f938c;
+  --cat-fragrance:#8f7bb4;
+  --cat-hairbody:#b58a5c;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(26,22,24,.05), 0 8px 24px rgba(26,22,24,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--rose);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+
+/* ── 頁首 ───────────────────────────────────────────── */
+.masthead{
+  border-bottom:1px solid var(--line);
+  padding:34px 28px 22px;
+  background:var(--bg);
+}
+.masthead-inner{max-width:1500px;margin:0 auto}
+.eyebrow{
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:10px;
+}
+.masthead h1{
+  margin:0 0 8px;font-size:34px;line-height:1.25;font-weight:300;letter-spacing:.06em;
+}
+.masthead h1 em{font-style:normal;font-weight:600}
+.masthead .lede{margin:0 0 18px;color:var(--ink-2);max-width:70ch;font-size:14px}
+.stat-row{display:flex;flex-wrap:wrap;gap:22px;margin-bottom:18px}
+.stat-box .n{font-size:22px;font-weight:600;letter-spacing:.02em}
+.stat-box .k{font-size:11px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase}
+
+/* ── 版面 ───────────────────────────────────────────── */
+.shell{max-width:1500px;margin:0 auto;padding:24px 28px 72px;display:grid;grid-template-columns:250px 1fr;gap:32px}
+.sidebar{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow-y:auto;padding-right:6px}
+.filter-group{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line-2)}
+.filter-group:last-child{border-bottom:none}
+.filter-title{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+  margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;
+}
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  border-radius:999px;padding:4px 11px;font-size:12.5px;line-height:1.5;transition:.15s;
+}
+.chip:hover{border-color:var(--rose);color:var(--rose)}
+.chip[aria-pressed="true"]{background:var(--rose);border-color:var(--rose);color:#fff}
+.chip .c{opacity:.6;font-size:11px;margin-left:4px}
+select,input[type=search],input[type=text],input[type=number],textarea{
+  width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  font-family:inherit;font-size:13.5px;color:var(--ink);background:#fff;
+}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--rose-soft);border-color:var(--rose)}
+.range-row{display:flex;align-items:center;gap:8px}
+.range-row span{color:var(--ink-3);font-size:12px}
+
+/* ── 工具列 ─────────────────────────────────────────── */
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  margin-bottom:18px;
+}
+.toolbar .left{display:flex;gap:10px;align-items:center;flex:1;min-width:260px}
+.toolbar .right{display:flex;gap:10px;align-items:center}
+.search-wrap{position:relative;flex:1;max-width:420px}
+.result-count{font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+.btn{
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  border-radius:8px;padding:7px 14px;font-size:13px;transition:.15s;
+}
+.btn:hover{border-color:var(--rose);color:var(--rose)}
+.btn-primary{background:var(--rose);border-color:var(--rose);color:#fff}
+.btn-primary:hover{background:#9c4c60;border-color:#9c4c60;color:#fff}
+.active-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.active-filters:empty{display:none}
+.pill{
+  background:var(--rose-soft);border:1px solid #f0dde2;color:#8d4256;
+  border-radius:999px;padding:3px 10px;font-size:12px;
+}
+.pill button{border:none;background:none;color:inherit;margin-left:5px;padding:0;font-size:13px;line-height:1}
+
+/* ── 卡片牆 ─────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:20px}
+.card{
+  border:1px solid var(--line);border-radius:var(--radius);background:#fff;
+  overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;
+  transition:.18s;margin-bottom:0;
+}
+.card:hover{border-color:#dcd0d4;box-shadow:var(--shadow);transform:translateY(-2px)}
+.thumb{
+  position:relative;aspect-ratio:4/3;background:var(--line-2);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.thumb img{width:100%;height:100%;object-fit:contain;background:#fff}
+.thumb-fallback{
+  width:100%;height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+}
+.swatch-stack{display:flex;gap:5px}
+.swatch-stack i{
+  width:22px;height:22px;border-radius:50%;display:block;
+  border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+.thumb-fallback .ph{
+  font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+}
+.cat-flag{
+  position:absolute;top:9px;left:9px;background:rgba(255,255,255,.94);
+  border:1px solid var(--line);border-radius:999px;padding:2px 9px;
+  font-size:10.5px;letter-spacing:.08em;color:var(--ink-2);
+}
+.origin-flag{
+  position:absolute;top:9px;right:9px;background:rgba(255,255,255,.94);
+  border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+  font-size:10px;letter-spacing:.1em;color:var(--ink-3);
+}
+.card-body{padding:13px 14px 15px;flex:1;display:flex;flex-direction:column}
+.card-brand{
+  font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-name{font-size:14.5px;font-weight:600;line-height:1.45;margin-bottom:4px}
+.card-sub{font-size:11.5px;color:var(--ink-3);margin-bottom:10px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{
+  margin-top:auto;display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding-top:10px;border-top:1px solid var(--line-2);
+}
+.price{font-size:14px;font-weight:600}
+.price small{font-size:10.5px;color:var(--ink-3);font-weight:400;margin-right:2px}
+.rating{font-size:12px;color:var(--gold);white-space:nowrap}
+.card-shades{display:flex;gap:4px;margin-bottom:9px;flex-wrap:wrap}
+.card-shades i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.08)}
+.card-shades .more{font-size:10.5px;color:var(--ink-3)}
+.tag-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:9px}
+.tag{
+  font-size:10.5px;border:1px solid var(--line);border-radius:4px;
+  padding:1px 6px;color:var(--ink-3);
+}
+
+/* ── 詳情抽屜 ───────────────────────────────────────── */
+.scrim{
+  position:fixed;inset:0;background:rgba(26,22,24,.34);
+  opacity:0;pointer-events:none;transition:.2s;z-index:40;
+}
+/* 抽屜開著時鎖住背景捲動，否則滑鼠在遮罩上滾動會捲到後面的卡片牆，
+   關閉後回到原本位置會對不上。 */
+body.drawer-open{overflow:hidden}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(560px,100%);
+  background:#fff;border-left:1px solid var(--line);z-index:50;
+  transform:translateX(100%);transition:transform .22s ease;
+  display:flex;flex-direction:column;
+}
+.drawer.on{transform:none}
+.drawer-head{
+  padding:20px 24px 16px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+}
+.drawer-body{padding:22px 24px 40px;overflow-y:auto;flex:1}
+.close-x{border:none;background:none;font-size:24px;line-height:1;color:var(--ink-3);padding:0 2px}
+.close-x:hover{color:var(--ink)}
+.d-brand{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.d-name{font-size:21px;font-weight:600;line-height:1.4;margin:0 0 4px}
+.d-local{font-size:12.5px;color:var(--ink-3);margin:0}
+.d-hero{
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  margin-bottom:18px;background:var(--line-2);aspect-ratio:16/10;
+  display:flex;align-items:center;justify-content:center;
+}
+.d-hero img{width:100%;height:100%;object-fit:contain;background:#fff}
+.kv{display:grid;grid-template-columns:88px 1fr;gap:8px 14px;margin-bottom:18px;font-size:13.5px}
+.kv dt{color:var(--ink-3);font-size:12.5px}
+.kv dd{margin:0;color:var(--ink)}
+.sec{margin-bottom:18px}
+.sec h3{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+  margin:0 0 9px;font-weight:600;
+}
+.shade-list{display:flex;flex-direction:column;gap:7px}
+.shade-item{display:flex;align-items:center;gap:10px;font-size:13px}
+.shade-item i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.1);flex:none}
+.shade-item .code{color:var(--ink-3);font-size:12px;min-width:44px}
+.note{
+  background:var(--line-2);border-left:3px solid var(--rose);
+  border-radius:0 6px 6px 0;padding:11px 13px;font-size:12.5px;color:var(--ink-2);
+  margin-top:10px;margin-bottom:18px;
+}
+.prosc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.prosc ul{margin:0;padding-left:18px;font-size:13px}
+.prosc li{margin-bottom:3px}
+.prosc h4{font-size:12px;margin:0 0 6px;color:var(--ink-3);font-weight:600}
+.divider{height:1px;background:var(--line);margin:20px 0 22px}
+.drawer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+
+/* ── 表單 ───────────────────────────────────────────── */
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:12px;color:var(--ink-3);margin-bottom:4px}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.msg{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.msg.err{background:#fdf0f2;border:1px solid #f2d6dc;color:#96354c}
+.msg.ok{background:#eef6f3;border:1px solid #d3e8e0;color:#2f6b58}
+
+.empty{
+  border:1px dashed var(--line);border-radius:var(--radius);
+  padding:56px 24px;text-align:center;color:var(--ink-3);
+}
+.footer{
+  border-top:1px solid var(--line);margin-top:40px;padding:22px 28px 40px;
+  color:var(--ink-3);font-size:12px;
+}
+.footer-inner{max-width:1500px;margin:0 auto}
+.sidebar-toggle{display:none}
+
+@media (max-width:980px){
+  .shell{grid-template-columns:1fr;gap:18px;padding:18px 18px 60px}
+  .sidebar{position:static;max-height:none;display:none;
+    border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+  .sidebar.open{display:block}
+  .sidebar-toggle{display:inline-block}
+  .masthead{padding:24px 18px 18px}
+  .masthead h1{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="eyebrow">Japanese &amp; Korean Beauty · Reference Codex</div>
+    <h1>化妝品<em>圖鑑</em></h1>
+    <p class="lede">日系與韓系彩妝、保養、香水與美髮美體的產品資料庫。收錄品牌定位、關鍵成分、色號色卡、適用膚質與使用場景，可依條件篩選比較。</p>
+    <div class="stat-row">
+      <div class="stat-box"><div class="n" id="stat-total">—</div><div class="k">收錄產品</div></div>
+      <div class="stat-box"><div class="n" id="stat-brand">—</div><div class="k">品牌</div></div>
+      <div class="stat-box"><div class="n" id="stat-jp">—</div><div class="k">日系</div></div>
+      <div class="stat-box"><div class="n" id="stat-kr">—</div><div class="k">韓系</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="filter-group">
+      <div class="filter-title">分類</div>
+      <div class="chip-wrap" id="f-category"></div>
+    </div>
+    <div class="filter-group" id="g-subcategory">
+      <div class="filter-title">品項</div>
+      <div class="chip-wrap" id="f-subcategory"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">產地</div>
+      <div class="chip-wrap" id="f-origin"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">適用膚質</div>
+      <div class="chip-wrap" id="f-skin"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">功效</div>
+      <div class="chip-wrap" id="f-efficacy"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">使用場景</div>
+      <div class="chip-wrap" id="f-scene"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">品牌</div>
+      <select id="f-brand"><option value="">全部品牌</option></select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">價格（TWD 參考價）</div>
+      <div class="range-row">
+        <input type="number" id="f-pmin" placeholder="最低" min="0">
+        <span>–</span>
+        <input type="number" id="f-pmax" placeholder="最高" min="0">
+      </div>
+      <div class="hint">參考價依通路與時間變動，僅供比較量級。</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <div class="left">
+        <div class="search-wrap">
+          <input type="search" id="q" placeholder="搜尋品牌、品名、成分、關鍵字…" autocomplete="off">
+        </div>
+        <button class="btn sidebar-toggle" id="btn-filters">篩選</button>
+      </div>
+      <div class="right">
+        <span class="result-count" id="count">—</span>
+        <select id="sort" style="width:auto">
+          <option value="rating-desc">評分高到低</option>
+          <option value="price-asc">價格低到高</option>
+          <option value="price-desc">價格高到低</option>
+          <option value="year-desc">上市年份新到舊</option>
+          <option value="brand-asc">品牌 A→Z</option>
+        </select>
+        <button class="btn btn-primary" id="btn-new">＋ 新增</button>
+      </div>
+    </div>
+
+    <div class="active-filters" id="active"></div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none">
+      找不到符合條件的產品。<br>試著放寬篩選條件，或清除目前的關鍵字。
+    </div>
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    資料整理自品牌官方網站與公開通路資訊；價格為台灣通路參考價，會隨檔期與匯率變動。
+    色卡為色系示意，實際色號與質地請以品牌官方頁面為準。本頁僅供資訊參考，非醫療或購買建議。
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div id="drawer-title"></div>
+    <button class="close-x" id="drawer-close" aria-label="關閉">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<script>
+'use strict';
+/* 化妝品圖鑑前端。零外部依賴：資料全部來自本站 /api/*，圖片走品牌官方網址外連，
+   載入失敗時自動退回色卡卡片（外連圖有斷鏈風險，這層 fallback 是預期行為而非錯誤）。 */
+
+var CAT_COLOR = {
+  '彩妝': 'var(--cat-makeup)',
+  '保養品': 'var(--cat-skincare)',
+  '香水': 'var(--cat-fragrance)',
+  '美髮美體': 'var(--cat-hairbody)'
+};
+var CAT_TINT = { '彩妝': '#f7edf0', '保養品': '#ecf4f2', '香水': '#f1eef7', '美髮美體': '#f7f1e9' };
+var ORIGIN_LABEL = { JP: '日系', KR: '韓系' };
+
+var state = {
+  q: '', category: '', subcategory: '', origin: '', brand: '',
+  skin_type: '', efficacy: '', scene: '', price_min: '', price_max: '',
+  sort: 'rating-desc'
+};
+var facets = null;
+var items = [];
+var editToken = '';
+
+function el(tag, attrs, kids) {
+  var n = document.createElement(tag);
+  if (attrs) Object.keys(attrs).forEach(function (k) {
+    if (k === 'class') n.className = attrs[k];
+    else if (k === 'text') n.textContent = attrs[k];
+    else if (k === 'html') n.innerHTML = attrs[k];
+    else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+  });
+  (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
+  return n;
+}
+function qs(id) { return document.getElementById(id); }
+function stars(r) {
+  if (!r) return '';
+  var full = Math.floor(r), half = (r - full) >= 0.5;
+  return '★'.repeat(full) + (half ? '☆' : '') + ' ' + r.toFixed(1);
+}
+function money(v) { return v ? Number(v).toLocaleString('zh-TW') : '—'; }
+
+/* ── 篩選側欄 ─────────────────────────────────────── */
+function topEntries(obj, n) {
+  return Object.keys(obj || {})
+    .map(function (k) { return [k, obj[k]]; })
+    .sort(function (a, b) { return b[1] - a[1] || a[0].localeCompare(b[0], 'zh-Hant'); })
+    .slice(0, n || 999);
+}
+function renderChips(host, key, entries, labelFn) {
+  host.innerHTML = '';
+  entries.forEach(function (e) {
+    var val = e[0], cnt = e[1];
+    var on = state[key] === val;
+    host.appendChild(el('button', {
+      class: 'chip', 'aria-pressed': on ? 'true' : 'false',
+      html: (labelFn ? labelFn(val) : val) + '<span class="c">' + cnt + '</span>',
+      onclick: function () {
+        state[key] = on ? '' : val;
+        if (key === 'category') state.subcategory = '';
+        load();
+      }
+    }));
+  });
+}
+function renderFacets() {
+  renderChips(qs('f-category'), 'category', topEntries(facets.category));
+  var subSrc = state.category
+    ? (facets.subcategory_by_category[state.category] || {})
+    : facets.subcategory;
+  renderChips(qs('f-subcategory'), 'subcategory', topEntries(subSrc, 14));
+  renderChips(qs('f-origin'), 'origin', topEntries(facets.origin), function (v) { return ORIGIN_LABEL[v] || v; });
+  renderChips(qs('f-skin'), 'skin_type', topEntries(facets.skin_types, 10));
+  renderChips(qs('f-efficacy'), 'efficacy', topEntries(facets.efficacy, 14));
+  renderChips(qs('f-scene'), 'scene', topEntries(facets.scenes, 8));
+
+  var sel = qs('f-brand');
+  if (sel.options.length <= 1) {
+    topEntries(facets.brand).sort(function (a, b) { return a[0].localeCompare(b[0]); })
+      .forEach(function (e) { sel.appendChild(el('option', { value: e[0], text: e[0] + '（' + e[1] + '）' })); });
+  }
+  sel.value = state.brand;
+
+  qs('stat-total').textContent = facets.total;
+  qs('stat-brand').textContent = Object.keys(facets.brand).length;
+  qs('stat-jp').textContent = facets.origin.JP || 0;
+  qs('stat-kr').textContent = facets.origin.KR || 0;
+}
+
+var FILTER_LABELS = {
+  q: '關鍵字', category: '分類', subcategory: '品項', origin: '產地', brand: '品牌',
+  skin_type: '膚質', efficacy: '功效', scene: '場景', price_min: '最低價', price_max: '最高價'
+};
+function renderActive() {
+  var host = qs('active');
+  host.innerHTML = '';
+  Object.keys(FILTER_LABELS).forEach(function (k) {
+    if (!state[k]) return;
+    var shown = k === 'origin' ? (ORIGIN_LABEL[state[k]] || state[k]) : state[k];
+    var pill = el('span', { class: 'pill', text: FILTER_LABELS[k] + '：' + shown });
+    pill.appendChild(el('button', {
+      text: '×', title: '移除', onclick: function () {
+        state[k] = '';
+        if (k === 'q') qs('q').value = '';
+        if (k === 'price_min') qs('f-pmin').value = '';
+        if (k === 'price_max') qs('f-pmax').value = '';
+        if (k === 'category') state.subcategory = '';
+        load();
+      }
+    }));
+    host.appendChild(pill);
+  });
+  if (host.children.length) {
+    host.appendChild(el('button', {
+      class: 'chip', text: '清除全部', onclick: function () {
+        Object.keys(FILTER_LABELS).forEach(function (k) { state[k] = ''; });
+        qs('q').value = ''; qs('f-pmin').value = ''; qs('f-pmax').value = '';
+        load();
+      }
+    }));
+  }
+}
+
+/* ── 卡片 ─────────────────────────────────────────── */
+function thumbFallback(p) {
+  var sw = el('div', { class: 'swatch-stack' });
+  var list = (p.shades || []).slice(0, 4);
+  if (list.length) {
+    list.forEach(function (s) { sw.appendChild(el('i', { style: 'background:' + (s.hex || '#ddd') })); });
+  } else {
+    sw.appendChild(el('i', { style: 'background:' + (CAT_COLOR[p.category] || '#ccc') + ';opacity:.65' }));
+  }
+  return el('div', {
+    class: 'thumb-fallback',
+    style: 'background:' + (CAT_TINT[p.category] || '#f4f4f4')
+  }, [sw, el('div', { class: 'ph', text: p.subcategory || p.category })]);
+}
+function makeThumb(p) {
+  var t = el('div', { class: 'thumb' });
+  if (p.image_url) {
+    var img = el('img', { src: p.image_url, alt: p.name_zh, loading: 'lazy', referrerpolicy: 'no-referrer' });
+    // 外連官方圖片可能因對方改版或擋盜連而失效，失敗就換成色卡版面。
+    img.addEventListener('error', function () {
+      t.innerHTML = '';
+      t.appendChild(thumbFallback(p));
+      decorate(t, p);
+    });
+    t.appendChild(img);
+  } else {
+    t.appendChild(thumbFallback(p));
+  }
+  decorate(t, p);
+  return t;
+}
+function decorate(t, p) {
+  t.appendChild(el('span', {
+    class: 'cat-flag', text: p.subcategory || p.category,
+    style: 'color:' + (CAT_COLOR[p.category] || 'var(--ink-2)')
+  }));
+  if (p.origin) t.appendChild(el('span', { class: 'origin-flag', text: ORIGIN_LABEL[p.origin] || p.origin }));
+}
+function card(p) {
+  var shadeRow = null;
+  if ((p.shades || []).length) {
+    shadeRow = el('div', { class: 'card-shades' });
+    p.shades.slice(0, 6).forEach(function (s) {
+      shadeRow.appendChild(el('i', { style: 'background:' + (s.hex || '#ddd'), title: (s.code || '') + ' ' + (s.name || '') }));
+    });
+    if (p.shades.length > 6) shadeRow.appendChild(el('span', { class: 'more', text: '+' + (p.shades.length - 6) }));
+  }
+  var tags = el('div', { class: 'tag-row' });
+  (p.efficacy || []).slice(0, 3).forEach(function (t) { tags.appendChild(el('span', { class: 'tag', text: t })); });
+
+  var body = el('div', { class: 'card-body' }, [
+    el('div', { class: 'card-brand', text: p.brand + (p.brand_zh ? ' · ' + p.brand_zh : '') }),
+    el('div', { class: 'card-name', text: p.name_zh }),
+    el('div', { class: 'card-sub', text: p.name_local || p.volume || '' }),
+    shadeRow, tags,
+    el('div', { class: 'card-meta' }, [
+      el('span', { class: 'price', html: p.price_twd ? '<small>NT$</small>' + money(p.price_twd) : '—' }),
+      el('span', { class: 'rating', text: stars(p.rating) })
+    ])
+  ]);
+  return el('button', { class: 'card', onclick: function () { openDetail(p.id); } }, [makeThumb(p), body]);
+}
+
+function renderGrid() {
+  var g = qs('grid');
+  g.innerHTML = '';
+  items.forEach(function (p) { g.appendChild(card(p)); });
+  qs('count').textContent = items.length + ' 件';
+  qs('empty').style.display = items.length ? 'none' : 'block';
+}
+
+/* ── 詳情 ─────────────────────────────────────────── */
+function sec(title, node) {
+  if (!node) return null;
+  return el('div', { class: 'sec' }, [el('h3', { text: title }), node]);
+}
+// sec()/tagList() 對空欄位回傳 null，而 appendChild(null) 會丟 TypeError，
+// 一丟就會中斷後面所有區塊的渲染（連 openDrawer 都跑不到）。一律走這個守衛。
+function put(host, node) { if (node) host.appendChild(node); }
+function bullets(arr) {
+  if (!arr || !arr.length) return null;
+  var ul = el('ul');
+  arr.forEach(function (t) { ul.appendChild(el('li', { text: t })); });
+  return ul;
+}
+function tagList(arr) {
+  if (!arr || !arr.length) return null;
+  var w = el('div', { class: 'chip-wrap' });
+  arr.forEach(function (t) { w.appendChild(el('span', { class: 'tag', text: t })); });
+  return w;
+}
+function openDetail(id) {
+  fetch('/api/products/' + encodeURIComponent(id)).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d.item) return;
+    var p = d.item;
+    qs('drawer-title').innerHTML = '';
+    qs('drawer-title').appendChild(el('div', { class: 'd-brand', text: p.brand + (p.brand_zh ? ' · ' + p.brand_zh : '') }));
+    qs('drawer-title').appendChild(el('h2', { class: 'd-name', text: p.name_zh }));
+    if (p.name_local) qs('drawer-title').appendChild(el('p', { class: 'd-local', text: p.name_local }));
+
+    var b = qs('drawer-body');
+    b.innerHTML = '';
+
+    var hero = el('div', { class: 'd-hero' });
+    if (p.image_url) {
+      var im = el('img', { src: p.image_url, alt: p.name_zh, referrerpolicy: 'no-referrer' });
+      im.addEventListener('error', function () { hero.innerHTML = ''; hero.appendChild(thumbFallback(p)); });
+      hero.appendChild(im);
+    } else { hero.appendChild(thumbFallback(p)); }
+    b.appendChild(hero);
+
+    var kv = el('dl', { class: 'kv' });
+    function row(k, v) { if (!v) return; kv.appendChild(el('dt', { text: k })); kv.appendChild(el('dd', { text: v })); }
+    row('分類', p.category + (p.subcategory ? ' / ' + p.subcategory : ''));
+    row('產地', ORIGIN_LABEL[p.origin] || p.origin);
+    row('容量', p.volume);
+    row('參考價', p.price_twd ? 'NT$ ' + money(p.price_twd) : '');
+    row('上市年份', p.launch_year);
+    row('評分', p.rating ? stars(p.rating) : '');
+    if (p.longevity) row('留香', p.longevity);
+    b.appendChild(kv);
+
+    if (p.review) b.appendChild(el('div', { class: 'note', text: '⚑ ' + p.review }));
+
+    put(b, sec('功效標籤', tagList(p.efficacy)));
+    put(b, sec('關鍵成分', tagList(p.key_ingredients)));
+    put(b, sec('無添加 / 配方標示', tagList(p.free_of)));
+    put(b, sec('適用膚質', tagList(p.skin_types)));
+    put(b, sec('使用場景', tagList(p.scenes)));
+
+    if (p.notes_top || p.notes_mid || p.notes_base) {
+      var nk = el('dl', { class: 'kv' });
+      function nrow(k, v) { if (!v) return; nk.appendChild(el('dt', { text: k })); nk.appendChild(el('dd', { text: v })); }
+      nrow('前調', p.notes_top); nrow('中調', p.notes_mid); nrow('後調', p.notes_base);
+      put(b, sec('香調', nk));
+    }
+
+    if ((p.shades || []).length) {
+      var sl = el('div', { class: 'shade-list' });
+      p.shades.forEach(function (s) {
+        sl.appendChild(el('div', { class: 'shade-item' }, [
+          el('i', { style: 'background:' + (s.hex || '#ddd') }),
+          el('span', { class: 'code', text: s.code || '' }),
+          el('span', { text: s.name || '' })
+        ]));
+      });
+      put(b, sec('色號色卡', sl));
+      if (p.shade_note) b.appendChild(el('div', { class: 'note', text: p.shade_note }));
+    }
+
+    if ((p.pros || []).length || (p.cons || []).length) {
+      b.appendChild(el('div', { class: 'prosc' }, [
+        el('div', {}, [el('h4', { text: '優點' }), bullets(p.pros) || el('div', { class: 'hint', text: '—' })]),
+        el('div', {}, [el('h4', { text: '注意' }), bullets(p.cons) || el('div', { class: 'hint', text: '—' })])
+      ]));
+    }
+
+    b.appendChild(el('div', { class: 'divider' }));
+    var act = el('div', { class: 'drawer-actions' });
+    if (p.official_url) act.appendChild(el('a', { class: 'btn', href: p.official_url, target: '_blank', rel: 'noopener noreferrer', text: '品牌官方網站 ↗' }));
+    act.appendChild(el('button', { class: 'btn', text: '編輯', onclick: function () { openForm(p); } }));
+    act.appendChild(el('button', {
+      class: 'btn', text: '刪除', onclick: function () {
+        if (!confirm('確定刪除「' + p.name_zh + '」？此動作無法復原。')) return;
+        apiWrite('/api/products/' + encodeURIComponent(p.id), 'DELETE', null, function () { closeDrawer(); load(); });
+      }
+    }));
+    b.appendChild(act);
+    if (p.source_note) b.appendChild(el('div', { class: 'hint', text: '資料來源：' + p.source_note }));
+
+    openDrawer();
+  });
+}
+
+/* ── 新增 / 編輯 ──────────────────────────────────── */
+function field(label, name, value, opts) {
+  opts = opts || {};
+  var input = opts.textarea
+    ? el('textarea', { name: name, rows: opts.rows || 3, text: value == null ? '' : value })
+    : el('input', { type: opts.type || 'text', name: name, value: value == null ? '' : value, placeholder: opts.ph || '' });
+  var kids = [el('label', { text: label }), input];
+  if (opts.hint) kids.push(el('div', { class: 'hint', text: opts.hint }));
+  return el('div', { class: 'form-row' }, kids);
+}
+function openForm(p) {
+  p = p || {};
+  var isNew = !p.id;
+  qs('drawer-title').innerHTML = '';
+  qs('drawer-title').appendChild(el('h2', { class: 'd-name', text: isNew ? '新增產品' : '編輯：' + p.name_zh }));
+  var b = qs('drawer-body');
+  b.innerHTML = '';
+  var msg = el('div', { class: 'msg err', style: 'display:none' });
+  b.appendChild(msg);
+
+  var f = el('form');
+  f.appendChild(field('ID（小寫英數與連字號，存檔後不可改）', 'id', p.id, { hint: '例：kate-lip-monster', ph: 'brand-product-name' }));
+  f.appendChild(el('div', { class: 'form-2' }, [field('品牌（英文）*', 'brand', p.brand), field('品牌（中文）', 'brand_zh', p.brand_zh)]));
+  f.appendChild(field('品名（中文）*', 'name_zh', p.name_zh));
+  f.appendChild(field('品名（日文／韓文原名）', 'name_local', p.name_local));
+  f.appendChild(el('div', { class: 'form-2' }, [field('分類*', 'category', p.category, { ph: '彩妝 / 保養品 / 香水 / 美髮美體' }), field('品項', 'subcategory', p.subcategory, { ph: '粉底液、精華…' })]));
+  f.appendChild(el('div', { class: 'form-2' }, [field('產地', 'origin', p.origin, { ph: 'JP 或 KR' }), field('容量', 'volume', p.volume)]));
+  f.appendChild(el('div', { class: 'form-2' }, [field('參考價（TWD）', 'price_twd', p.price_twd, { type: 'number' }), field('上市年份', 'launch_year', p.launch_year, { type: 'number' })]));
+  f.appendChild(field('評分（0–5）', 'rating', p.rating, { type: 'number' }));
+  f.appendChild(field('心得／解讀', 'review', p.review, { textarea: true, rows: 3 }));
+  f.appendChild(field('功效標籤（逗號分隔）', 'efficacy', (p.efficacy || []).join('、'), { ph: '保濕、控油' }));
+  f.appendChild(field('關鍵成分（逗號分隔）', 'key_ingredients', (p.key_ingredients || []).join('、')));
+  f.appendChild(field('無添加標示（逗號分隔）', 'free_of', (p.free_of || []).join('、')));
+  f.appendChild(field('適用膚質（逗號分隔）', 'skin_types', (p.skin_types || []).join('、')));
+  f.appendChild(field('使用場景（逗號分隔）', 'scenes', (p.scenes || []).join('、')));
+  f.appendChild(field('優點（逗號分隔）', 'pros', (p.pros || []).join('、')));
+  f.appendChild(field('注意事項（逗號分隔）', 'cons', (p.cons || []).join('、')));
+  f.appendChild(field('色號（一行一個：色號｜名稱｜#hex）', 'shades',
+    (p.shades || []).map(function (s) { return [s.code || '', s.name || '', s.hex || ''].join('｜'); }).join('\n'),
+    { textarea: true, rows: 4, hint: '例：03｜陽炎｜#C0554A' }));
+  f.appendChild(field('色卡註記', 'shade_note', p.shade_note));
+  f.appendChild(field('官方圖片網址', 'image_url', p.image_url, { hint: '需為 http(s) 開頭；載入失敗會自動改用色卡卡片。' }));
+  f.appendChild(field('品牌官網網址', 'official_url', p.official_url));
+  f.appendChild(field('資料來源註記', 'source_note', p.source_note));
+
+  var bar = el('div', { class: 'drawer-actions' }, [
+    el('button', { class: 'btn btn-primary', type: 'submit', text: isNew ? '新增' : '儲存' }),
+    el('button', { class: 'btn', type: 'button', text: '取消', onclick: function () { p.id ? openDetail(p.id) : closeDrawer(); } })
+  ]);
+  f.appendChild(bar);
+
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var fd = new FormData(f);
+    var payload = {};
+    ['id', 'brand', 'brand_zh', 'name_zh', 'name_local', 'category', 'subcategory', 'origin',
+      'volume', 'review', 'shade_note', 'image_url', 'official_url', 'source_note'].forEach(function (k) {
+        payload[k] = (fd.get(k) || '').trim();
+      });
+    ['price_twd', 'launch_year', 'rating'].forEach(function (k) {
+      var v = (fd.get(k) || '').trim();
+      payload[k] = v === '' ? null : Number(v);
+    });
+    ['efficacy', 'key_ingredients', 'free_of', 'skin_types', 'scenes', 'pros', 'cons'].forEach(function (k) {
+      payload[k] = (fd.get(k) || '').split(/[、,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    });
+    payload.shades = (fd.get('shades') || '').split('\n').map(function (line) {
+      var a = line.split(/[｜|]/).map(function (s) { return s.trim(); });
+      if (!a[0] && !a[1]) return null;
+      return { code: a[0] || '', name: a[1] || '', hex: a[2] || '#dddddd' };
+    }).filter(Boolean);
+
+    apiWrite(isNew ? '/api/products' : '/api/products/' + encodeURIComponent(p.id),
+      isNew ? 'POST' : 'PUT', payload,
+      function (d) { load(); openDetail(d.item.id); },
+      function (err) { msg.textContent = err; msg.style.display = 'block'; });
+  });
+
+  b.appendChild(f);
+  openDrawer();
+}
+
+function apiWrite(url, method, payload, ok, fail) {
+  var headers = { 'content-type': 'application/json' };
+  if (editToken) headers['x-edit-token'] = editToken;
+  fetch(url, { method: method, headers: headers, body: payload ? JSON.stringify(payload) : undefined })
+    .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+    .then(function (res) {
+      if (res.status === 403) {
+        var t = prompt('這個站設定了編輯權杖，請輸入 EDIT_TOKEN：');
+        if (t) { editToken = t; apiWrite(url, method, payload, ok, fail); }
+        return;
+      }
+      if (res.d.error) { (fail || alert)(res.d.error); return; }
+      ok(res.d);
+    })
+    .catch(function (e) { (fail || alert)('連線失敗：' + e.message); });
+}
+
+/* ── 抽屜控制 ─────────────────────────────────────── */
+function openDrawer() {
+  qs('drawer').classList.add('on');
+  qs('drawer').setAttribute('aria-hidden', 'false');
+  qs('scrim').classList.add('on');
+  qs('drawer-body').scrollTop = 0;
+  document.body.classList.add('drawer-open');
+}
+function closeDrawer() {
+  qs('drawer').classList.remove('on');
+  qs('drawer').setAttribute('aria-hidden', 'true');
+  qs('scrim').classList.remove('on');
+  document.body.classList.remove('drawer-open');
+}
+qs('drawer-close').addEventListener('click', closeDrawer);
+qs('scrim').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+
+/* ── 載入 ─────────────────────────────────────────── */
+function load() {
+  var params = new URLSearchParams();
+  Object.keys(state).forEach(function (k) { if (state[k]) params.set(k, state[k]); });
+  Promise.all([
+    fetch('/api/facets').then(function (r) { return r.json(); }),
+    fetch('/api/products?' + params.toString()).then(function (r) { return r.json(); })
+  ]).then(function (res) {
+    facets = res[0];
+    items = res[1].items || [];
+    renderFacets();
+    renderActive();
+    renderGrid();
+  }).catch(function (e) {
+    qs('grid').innerHTML = '';
+    qs('empty').style.display = 'block';
+    qs('empty').textContent = '資料載入失敗：' + e.message;
+  });
+}
+
+var t = null;
+qs('q').addEventListener('input', function (e) {
+  clearTimeout(t);
+  var v = e.target.value;
+  t = setTimeout(function () { state.q = v.trim(); load(); }, 260);
+});
+qs('sort').addEventListener('change', function (e) { state.sort = e.target.value; load(); });
+qs('f-brand').addEventListener('change', function (e) { state.brand = e.target.value; load(); });
+['f-pmin', 'f-pmax'].forEach(function (id) {
+  qs(id).addEventListener('change', function () {
+    state.price_min = qs('f-pmin').value;
+    state.price_max = qs('f-pmax').value;
+    load();
+  });
+});
+qs('btn-new').addEventListener('click', function () { openForm(null); });
+qs('btn-filters').addEventListener('click', function () { qs('sidebar').classList.toggle('open'); });
+
+load();
+</script>
+</body>
+</html>
