@@ -378,8 +378,16 @@ both repos.
 - `archive/` — superseded/legacy material kept for reference, not maintained
 - `RR4/`, `RR5/`, `EMA Bias Model/` — active personal trading/VBA projects, not part of the web
   app suite. Left at the repo root deliberately — do not reorganize without asking.
+- `shared-vba/` — VBA modules shared **verbatim** between the standalone `SEC-Filing-Fetcher`
+  workbook and the RR4 workbook's "Company research" integration
+  (`modHttp`/`modJsonUtil`/`modPrices` + the headless readers `modSECData`/`modMOPSData`).
+  `shared-vba/` is the source of truth; push into both `.xlsm` with
+  `scripts/sync-shared-vba.ps1` (programmatic `CodeModule.AddFromString`, **never** the VBE
+  "Import File" menu — ANSI mojibake). See `shared-vba/README.md` and the plan/audit under
+  `RR4/company-research-*`.
 - `scripts/` — maintenance scripts: `sync-globe-invest.ps1` (GlobalEco/InvestFrame/CausalFrame →
-  globe-invest/app/), `sync-article-db.ps1` (article_db/index.html → article-db-api remote)
+  globe-invest/app/), `sync-article-db.ps1` (article_db/index.html → article-db-api remote),
+  `sync-shared-vba.ps1` (`shared-vba/*.bas` → SEC-Filing-Fetcher + RR4 workbooks)
 
 ## Commit hygiene
 
