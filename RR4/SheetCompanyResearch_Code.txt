@@ -1,0 +1,42 @@
+' ============================================================================
+'  Worksheet code-behind for the "Company research" sheet (RR4 workbook).
+' ----------------------------------------------------------------------------
+'  This is NOT a .bas module -- it lives in the sheet's own code module.
+'  Paste it there via the VBE (right-click the "Company research" sheet in the
+'  Project Explorer > View Code), or inject it with CodeModule.AddFromString
+'  against the sheet's CodeName (same mechanism as
+'  SEC-Filing-Fetcher/build.ps1's SheetInput_Code.txt).
+'
+'  Mirrors SEC-Filing-Fetcher's SheetInput Worksheet_Change: typing a ticker
+'  into B34 (or changing the D34 market override) triggers the lower-half
+'  financial deep-dive. The MARKET SCANNER output above (rows 1..~32, written
+'  by Sanner.RunCompanyResearch) is untouched.
+'
+'  Cells:
+'    B34  ticker / TW co_id      (e.g. NVDA  or  2395)
+'    D34  market override        US | TW | (blank = AUTO-detect)
+'    F34  status / error line    (written by CompanyResearchSEC)
+' ============================================================================
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    On Error GoTo Done
+
+    Dim hitInput As Boolean, hitMarket As Boolean
+    hitInput = Not Intersect(Target, Me.Range(CompanyResearchSEC.CR_INPUT_CELL)) Is Nothing
+    hitMarket = Not Intersect(Target, Me.Range(CompanyResearchSEC.CR_MARKET_CELL)) Is Nothing
+    If Not (hitInput Or hitMarket) Then Exit Sub
+
+    Application.EnableEvents = False
+
+    Dim tk As String, mkt As String
+    tk = Trim$(CStr(Me.Range(CompanyResearchSEC.CR_INPUT_CELL).Value))
+    mkt = Trim$(CStr(Me.Range(CompanyResearchSEC.CR_MARKET_CELL).Value))
+
+    Application.EnableEvents = True
+
+    Call CompanyResearchSEC.RunDeepDive(tk, mkt)
+    Exit Sub
+
+Done:
+    Application.EnableEvents = True
+End Sub
