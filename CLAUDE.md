@@ -227,6 +227,42 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
   再讀格子與 `SeriesCollection.Formula`／軸刻度。`Chart.Export` 在自動化模式下只會寫出 0 位元組
   PNG，別花時間截圖。
 
+#### 估值欄位與台股股利（2026-09-05 起）
+
+Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估值區塊**（`modValuation.bas`
+定義欄位常數與表頭，美股台股共用一組標籤，避免兩邊漂移）：預收款流動/非流動/合計、
+盈餘保留率、內生成長率、投入資本、NOPAT、ROIC、WACC、ROIC−WACC 價差、預收款來源。
+刻意**接在第 48 欄（Items）之後而不是插進去**——48 這個欄號在 modSEC/modMOPS 兩邊都有
+寫死的呼叫點，插入會把它們整排推掉。新欄位一併進了 `modCharts` 的 `metricCols`，所以
+會照現行慣例自動寫進 RawData 並套 `FitValueAxis`。
+
+- **口徑**（有多種合理定義，所以寫在 `modValuation.bas` 檔頭）：投入資本＝總資產−流動負債；
+  NOPAT＝營業利益×(1−有效稅率)；內生成長率＝ROE(期末權益)×保留率。**季報列會把流量型
+  比率年化（×4）**，否則拿單季 ROIC 去比年化 WACC，幾乎每家公司都會看起來在毀滅價值。
+- **WACC 是估的，不是抓的**——沒有任何 filing 揭露資金成本。Beta 由月報酬對基準指數回歸，
+  Rf／ERP／稅率備援放在 **`Input!B12:B20`**（美股台股各一組＋Beta 回歸月數），刻意放在
+  工作表而非寫死成常數，這樣每個 WACC 背後的假設都看得到也改得動。
+- **預收款欄位的覆蓋率陷阱**：窄口徑的 `CustomerAdvances*`／`CustomerDeposits*` 幾乎沒人
+  用——實測 CY2024Q4 全市場只有約 **43 家**標記，`ContractWithCustomerLiability*` 則有
+  **2,033 家**（SEC frames API）；台股 IFRS 更是**完全沒有**「預收貨款」這個資產負債表科目
+  （實查 3017 FY2025Q1，只有合約負債、存入保證金、以及**預收股款**——最後這個是增資，
+  不是客戶預付，別誤用）。所以是**窄口徑優先、缺了才退合約負債**，且第 59 欄逐列標示
+  實際用的是哪一個，兩者語意不同不可混比。
+- **台股股利走另一支查詢**（`modTWDividend.bas`，MOPS `ajax_t05st09_2`，POST）。三個會
+  回「看起來正常但沒資料」的空殼頁、不會報錯的坑：① `firstin` 必須是字串 **`ture`**
+  （MOPS 自己拼錯的 typo，送 `true`/`1` 都不行）② 必須帶 `encodeURIComponent=1`
+  ③ 回應是**大寫 `<TR>/<TD>`**、每格補的是實體 `&nbsp;` 而非字元，且「股利年度」與
+  「年度／上半年／下半年」**合併在同一格**，欄位索引會整排位移。`TYPEK=all` 一次涵蓋
+  上市與上櫃（3017／6488 實測），不需要分市場探測；半年配的公司同一年度要加總。
+  抓不到時退 TWSE `TWT49U` 除權息表，但那支沒有股利年度、要靠「除息年 N → 股利年度 N−1」
+  推算，所以來源要標註。
+- ⚠️ **不要用 Yahoo 的 `events=div` 當台股股利來源**：實測 3017 的 2026 除息事件回
+  `17.898518`，官方是 `20.881604`——它會**漏掉資本公積發放的現金**那一段。
+
+> 這裡的驗證數字都是實跑 Excel COM 得到的，不是推論；`build.ps1` 只注入不編譯的老問題
+> 依舊——這次就是靠實跑才抓到「`Public Const` 放在程序之間」的編譯錯誤（VBA 要求模組層級
+> 宣告必須在所有程序之前），而 build 照樣印 SUCCESS。
+
 ## Deployment topology (this is the part that bites)
 
 There are **eight separate Railway deployments** sourced from **five separate git repos**, plus
@@ -489,8 +525,14 @@ AAOI/ATI/AXTI 交叉驗證）。
      `/opendata/t187ap05_L`（月營收彙總）。用途是**覆核 MOPS 抓到的數字**，不是取代它。
 
   ⚠️ **兩個已實測踩過的坑，抓取時一律照做**：
-  - **openapi 的全市場單一 JSON 會被截斷**：實測 `t187ap05_L` 只讀到公司代號 2374 就斷了，
-    3017 完全沒出現在回應裡。**不要用這類全表端點查個股**，個股一律走 MOPS 對應頁面。
+  - **openapi 的全市場單一 JSON 會被 WebFetch 截斷**：實測 `t187ap05_L` 只讀到公司代號
+    2374 就斷了，3017 完全沒出現在回應裡。**用 WebFetch 讀這類全表端點查個股就是不行**，
+    個股一律走 MOPS 對應頁面。
+    > ⚠️ **2026-09-05 更正**：這是 **WebFetch 的限制，不是端點本身的**。同一天實測
+    > `curl -s "https://openapi.twse.com.tw/v1/opendata/t187ap45_L" -o t45.json` 抓下
+    > 2.4MB 完整回應、1,226 筆全在，3017 也查得到。所以要用這類全表端點時，
+    > **改成 curl 落地成檔再本地解析**（注意 Windows 主控台會用 cp950 解碼，Python 讀檔
+    > 要明確指定 `encoding='utf-8'`），不要因為這條就直接放棄 openapi。
   - **MOPS 寬表逐欄擷取會串行**：實測 3017 月營收頁，「當月營收」與「累計」欄正確，但
     「去年同月營收／去年同月增減%」被讀成隔壁列的數字（回報 +5.51%，實際約 +57.4%）。
     **每個單月數字都要用累計欄反算交叉驗證**（本月累計 − 上月累計 ＝ 本月單月），
