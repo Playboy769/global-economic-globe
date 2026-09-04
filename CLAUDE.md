@@ -308,8 +308,14 @@ Google 回呼卡在「Invalid or expired login request」，人被鎖在自己�
 #### cosmetics-codex（日韓化妝品圖鑑，2026-09-03 新增）
 
 `projects/cosmetics-codex/`：166 筆日韓彩妝／保養／香水／美髮美體的產品資料庫，
-卡片牆＋篩選側欄前端＋零 npm 依賴的 Node 後端。**公開瀏覽、刻意不上架 OutsideFramework
-Works**（同 gaoye-mock-exam 的處理）。volume `cosmetics-codex-volume` 掛在 `/data`。
+卡片牆＋篩選側欄前端＋零 npm 依賴的 Node 後端。公開瀏覽、無登入閘門。
+volume `cosmetics-codex-volume` 掛在 `/data`。
+
+**已上架 OutsideFramework Works**（2026-09-03）：`data-cat="knowledge"` 的「知識庫
+Knowledge Base」小節，緊接在文章資料庫之後，`data-published="2026-09-03"`。卡片**沒有**
+包在 `<!--GATE-->` 裡（站本身公開），但 Knowledge 這顆分類按鈕在 GATE 內——所以
+**訪客在 Works 頁選不到 Knowledge 分類，只會在 Timeline 看到它**；要讓訪客也能從 Works
+點進去，得把那顆 pill 移出 GATE（文章資料庫目前也是同樣情況，屬既有設計而非疏漏）。
 
 - **寫入 API 預設開放**（知道網址就能改資料）。要擋住陌生人，設 service 變數
   `EDIT_TOKEN=<任意字串>`，之後 POST/PUT/DELETE 都必須帶 `x-edit-token`，前端會自動
