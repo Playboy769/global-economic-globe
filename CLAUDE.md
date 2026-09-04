@@ -242,12 +242,13 @@ this main repo itself:
 | twchips-report（三大法人籌碼透視，2026-08-30 新增）| **`twchips-report/` — 其自己的 repo**（GitHub `Playboy769/twchips-report`，私有，Railway 綁 GitHub 自動部署）| `app.py`(FastAPI/uvicorn) + `index.html`/`lookup.html` 靜態報告；資料抓取透過第三方套件 `twchips`（pip 依賴 `git+https://github.com/catcat222222/twchips`，**非**本 repo 專案，本機 `twchips/` 只是唯讀參考副本、無獨立部署）| `twchips-report-production.up.railway.app` |
 | gaoye-mock-exam (高業模擬測驗＋錯題紀錄) | this repo | `projects/gaoye-mock-exam/` → `index.html`/`server.js`/`store.js`，**用 `railway up` 直接上傳，不綁 GitHub** | `gaoye-mock-exam-production.up.railway.app` |
 | macro-tracker（總經黏性追蹤儀表板，2026-08-30 新增）| this repo | `research/macro-tracker-2026/` → `index.html`/`server.js`，**用 `railway up` 直接上傳，不綁 GitHub**；無登入、無資料庫，純唯讀代理政府公開 API（BLS/US Treasury），手動輸入的部分存前端 localStorage | `macro-tracker-production-f296.up.railway.app` |
+| cosmetics-codex（日韓化妝品圖鑑，2026-09-03 新增）| this repo | `projects/cosmetics-codex/` → `index.html`/`server.js`/`store.js`＋`data/part*.json` 種子，**用 `railway up` 直接上傳，不綁 GitHub**；無登入（公開瀏覽），SQLite 寫在 volume `cosmetics-codex-volume`（`/data`）| `cosmetics-codex-production.up.railway.app` |
 | my-slide | **`my-slide/` — its own repo** (Netlify) | — | — |
 
-### gaoye-mock-exam、macro-tracker：用 `railway up` 直接上傳的服務
+### gaoye-mock-exam、macro-tracker、cosmetics-codex：用 `railway up` 直接上傳的服務
 
 其他服務（Outside Framework、globe-invest、Article Database、structural-holes）都是
-Railway 綁 GitHub repo 自動部署，**這兩個不是**——它們沒有綁任何 repo，都在同一個
+Railway 綁 GitHub repo 自動部署，**這三個不是**——它們沒有綁任何 repo，都在同一個
 Railway 專案 `dependable-charm` 底下當獨立 service，要更新一律：
 
 ```
@@ -303,6 +304,32 @@ Google 回呼卡在「Invalid or expired login request」，人被鎖在自己�
 
 `index.html` 由 `高業考古/高業考古題-高頻觀念分析/scripts/s10_practice.py` 產生，
 **不要手改**，改模板 `scripts/practice_template.html` 後重跑該腳本。
+
+#### cosmetics-codex（日韓化妝品圖鑑，2026-09-03 新增）
+
+`projects/cosmetics-codex/`：166 筆日韓彩妝／保養／香水／美髮美體的產品資料庫，
+卡片牆＋篩選側欄前端＋零 npm 依賴的 Node 後端。**公開瀏覽、刻意不上架 OutsideFramework
+Works**（同 gaoye-mock-exam 的處理）。volume `cosmetics-codex-volume` 掛在 `/data`。
+
+- **寫入 API 預設開放**（知道網址就能改資料）。要擋住陌生人，設 service 變數
+  `EDIT_TOKEN=<任意字串>`，之後 POST/PUT/DELETE 都必須帶 `x-edit-token`，前端會自動
+  跳出輸入框。沒有走 ofw 中央登入，因此不必動 `auth.js` 那五份副本。
+- **`data/part*.json` 是種子，不是資料來源**。`store.js` 只在 products 表為空時匯入，
+  之後以 volume 裡的 SQLite 為準，不會覆蓋線上編輯的內容；要強制重匯設 `COSMETICS_RESEED=1`。
+  改了種子檔記得線上不會自動跟著變（`tools/apply-images.js` 就是為了同時更新兩邊）。
+- **`PUT /api/products/:id` 是整筆覆寫**：`store.upsert` 會把沒帶到的欄位設成 null，
+  所以任何部分更新都必須先 GET 再合併再 PUT。
+- 本機開發用 `COSMETICS_DATA_DIR` 把資料庫導到專案內的 `.localdata/`（已進 .gitignore），
+  否則 `/data` 在 Windows 會解析成 `C:\data`。launch.json 名稱 `cosmetics-codex` :8183。
+
+**圖片走品牌官網外連**，載入失敗時前端自動退回色卡卡片——那是預期行為不是 bug。
+`tools/` 下有三支採集工具（`survey-sites.js` 快篩可採性、`harvest-images.js` 採集、
+`apply-images.js` 套用）。實測品牌站分三類，只有前兩類抓得到圖：① Shopify 站
+（`/products.json`）② 靜態站且 og:image 就是商品圖 ③ og:image 是全站通用圖或商品圖由
+JS 載入（CANMAKE、ETUDE、CEZANNE、SHISEIDO…）。第三類唯一的例外是 CANMAKE：它是
+WordPress 且 `wp-json` 開放，但**前 13 大品牌網域裡只有它是 WordPress，這招不通用**。
+採集器刻意只產出提案不直接寫入，因為品名相似度比對必然誤判（實際踩過：配到男士線、
+mini 版、組合包、品牌 banner、上妝後膚色特寫），**套用前一律把圖下載目視確認**。
 
 ### article-db is ALSO a two-repo split — same trap as globe-invest
 `article_db/index.html` in this repo is the **dev-source copy only**. Railway's
@@ -373,7 +400,9 @@ both repos.
   topology section above, must be pushed to both
 - `projects/` — standalone tools/apps not part of the outside-framework family (stock analyzer,
   tech value screener, food calorie lookup, market warning radar, options guide, brownian motion
-  simulator — the last one is also deployed via `globe-invest/app/brownian`, see above)
+  simulator — the last one is also deployed via `globe-invest/app/brownian`, see above).
+  ⚠️ 這個資料夾底下**有兩個是真的有部署的服務**，不要當成純本機工具：
+  `gaoye-mock-exam/` 與 `cosmetics-codex/`，兩者都靠 `railway up` 上傳（見上方拓撲）
 - `research/` — one-off analysis writeups (e.g. earnings-call breakdowns), not living apps
 - `archive/` — superseded/legacy material kept for reference, not maintained
 - `RR4/`, `RR5/`, `EMA Bias Model/` — active personal trading/VBA projects, not part of the web
