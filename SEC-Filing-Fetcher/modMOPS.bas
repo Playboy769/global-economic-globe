@@ -42,7 +42,8 @@ Private Const MOPS_USER_AGENT As String = "Ryan Personal Research Tool ryan92992
 Private Function MetricKeys() As Variant
     MetricKeys = Array("Revenue", "GrossProfit", "OperatingIncome", "NetIncome", "Eps", "Assets", "Liabilities", "Cfo", _
         "Rd", "Sga", "Inventory", "Ar", "CurrentAssets", "CurrentLiabilities", "LongTermDebt", "ShortTermDebt", _
-        "StockholdersEquity", "CapEx", "Cash", "Da", "Cogs", "InterestExpense", "EffectiveTaxRate", "Shares", "AccountsPayable")
+        "StockholdersEquity", "CapEx", "Cash", "Da", "Cogs", "InterestExpense", "EffectiveTaxRate", "Shares", "AccountsPayable", _
+        "CustAdvCurrent", "CustAdvNoncurrent", "Dividends", "StockDividends")
 End Function
 
 ' ---------- Entry point ----------
@@ -88,6 +89,19 @@ Public Sub FetchMOPSFilings()
     Dim entityName As String
     entityName = ""
 
+    ' Dividends come from a different MOPS query than the financial statements
+    ' (see modTWDividend) and are declared per fiscal YEAR, so they are fetched
+    ' once here rather than per quarter. The range mirrors B10's quarter count
+    ' -- 4 quarters to a year, plus a year of slack because the newest
+    ' declaration always belongs to the year before the newest quarter.
+    Dim divYears As Long
+    divYears = (wantQ \ 4) + 2
+    Dim nowRocYear As Long
+    nowRocYear = Year(Date) - 1911
+    SetTWStatus wsIn, "抓取股利分派歷年資料中..."
+    Dim divData As Object
+    Set divData = modTWDividend.FetchTWDividends(coId, nowRocYear - divYears, nowRocYear)
+
     Dim gotQ As Long
     gotQ = 0
     Dim triesLeft As Long
@@ -115,6 +129,12 @@ Public Sub FetchMOPSFilings()
 
             Dim metricsQ As Object
             Set metricsQ = ExtractTWMetrics(facts, qStart, qEnd, qEnd)
+            ' Whole-year dividend on a quarterly row, deliberately: a TW dividend
+            ' has no quarterly counterpart. modValuation is told the figure is
+            ' annual (dpsIsAnnual) so it annualises EPS before dividing.
+            metricsQ("Dividends") = modTWDividend.CashDividendForRocYear(divData, curYear - 1911)
+            metricsQ("StockDividends") = modTWDividend.StockDividendForRocYear(divData, curYear - 1911)
+            metricsQ("DividendsKnown") = modTWDividend.DividendYearIsDeclarable(divData, curYear - 1911)
             Call AccumulateMetricsIntoMaps(maps, metricsQ, accnQ, "MOPS-Q", fyLabel, fpLabelQ, qStart, qEnd, qEnd)
             filingsQuarterly.Add BuildTWFilingDict(accnQ, "MOPS-Q", qEnd)
             quarterlyRows.Add BuildTWRowSpec(entityName, coId, metricsQ, "MOPS-Q", fyLabel, fpLabelQ, qEnd, usedUrl)
@@ -127,6 +147,9 @@ Public Sub FetchMOPSFilings()
 
                 Dim metricsA As Object
                 Set metricsA = ExtractTWMetrics(facts, fyStart, qEnd, qEnd)
+                metricsA("Dividends") = modTWDividend.CashDividendForRocYear(divData, curYear - 1911)
+                metricsA("StockDividends") = modTWDividend.StockDividendForRocYear(divData, curYear - 1911)
+                metricsA("DividendsKnown") = modTWDividend.DividendYearIsDeclarable(divData, curYear - 1911)
                 Call AccumulateMetricsIntoMaps(maps, metricsA, accnA, "MOPS-10-K", fyLabel, fpLabelA, fyStart, qEnd, qEnd)
                 filingsAnnual.Add BuildTWFilingDict(accnA, "MOPS-10-K", qEnd)
                 annualRows.Add BuildTWRowSpec(entityName, coId, metricsA, "MOPS-10-K", fyLabel, fpLabelA, qEnd, usedUrl)
@@ -146,6 +169,28 @@ Public Sub FetchMOPSFilings()
     End If
     If entityName = "" Then entityName = coId
 
+    ' Fetched before the rows are written (rather than just before BuildDashboard,
+    ' its only previous consumer) because the WACC column needs a market-value
+    ' equity weight at each quarter's own report date. One fetch, both consumers.
+    SetTWStatus wsIn, "抓取股價歷史與 Beta（WACC 用）中..."
+    Dim priceHistory As Object
+    Set priceHistory = FetchTWPriceHistory(coId, wantQ)
+
+    Dim capmParams As Object
+    Set capmParams = modValuation.LoadCapmParams(wsIn, True)
+    ' Same .TW-then-.TWO probe FetchTWPriceHistory uses -- there is no cheap way
+    ' to know a CO_ID's market ahead of time (see its comment).
+    Call modValuation.AttachBeta(capmParams, coId & ".TW")
+    If Not CBool(capmParams("betaIsEstimated")) Then
+        Call modValuation.AttachBeta(capmParams, coId & ".TWO")
+    End If
+
+    Dim vctx As Object
+    Set vctx = CreateObject("Scripting.Dictionary")
+    Set vctx("prices") = priceHistory
+    Set vctx("params") = capmParams
+    vctx("divOk") = CBool(divData("ok"))
+
     SetTWStatus wsIn, "寫入 TW_Filings 工作表中..."
     Call ClearTWFilingsSheet(wsOut)
     Call WriteTWHeaders(wsOut)
@@ -154,11 +199,11 @@ Public Sub FetchMOPSFilings()
     rowIdx = 2
     Dim spec As Variant
     For Each spec In annualRows
-        Call WriteTWFilingRow(wsOut, rowIdx, spec)
+        Call WriteTWFilingRow(wsOut, rowIdx, spec, vctx)
         rowIdx = rowIdx + 1
     Next spec
     For Each spec In quarterlyRows
-        Call WriteTWFilingRow(wsOut, rowIdx, spec)
+        Call WriteTWFilingRow(wsOut, rowIdx, spec, vctx)
         rowIdx = rowIdx + 1
     Next spec
 
@@ -170,6 +215,7 @@ Public Sub FetchMOPSFilings()
         wsOut.Range(wsOut.Cells(2, 17), wsOut.Cells(rowIdx - 1, 18)).NumberFormat = "0.00%"
         wsOut.Range(wsOut.Cells(2, 19), wsOut.Cells(rowIdx - 1, 20)).NumberFormat = "#,##0"
         wsOut.Range(wsOut.Cells(2, 21), wsOut.Cells(rowIdx - 1, 21)).NumberFormat = "0.00%"
+        wsOut.Range(wsOut.Cells(2, 22), wsOut.Cells(rowIdx - 1, 22)).NumberFormat = "0.0000"
         wsOut.Range(wsOut.Cells(2, 25), wsOut.Cells(rowIdx - 1, 28)).NumberFormat = "#,##0"
         wsOut.Range(wsOut.Cells(2, 29), wsOut.Cells(rowIdx - 1, 29)).NumberFormat = "0.00"
         wsOut.Range(wsOut.Cells(2, 30), wsOut.Cells(rowIdx - 1, 31)).NumberFormat = "#,##0"
@@ -180,6 +226,7 @@ Public Sub FetchMOPSFilings()
         wsOut.Range(wsOut.Cells(2, 39), wsOut.Cells(rowIdx - 1, 45)).NumberFormat = "0.00"
         wsOut.Range(wsOut.Cells(2, 46), wsOut.Cells(rowIdx - 1, 46)).NumberFormat = "#,##0"
         wsOut.Range(wsOut.Cells(2, 47), wsOut.Cells(rowIdx - 1, 47)).NumberFormat = "0.00"
+        Call modValuation.FormatValuationColumns(wsOut, 2, rowIdx - 1)
     End If
 
     Call modTheme.ApplyDarkTheme(wsOut, wsOut.UsedRange, 1)
@@ -196,34 +243,24 @@ Public Sub FetchMOPSFilings()
     Dim allMapsArr As Variant
     allMapsArr = Array(maps("Assets"), maps("Revenue"), maps("NetIncome"))
 
-    Dim priceHistory As Object
-    Set priceHistory = FetchTWPriceHistory(coId, wantQ)
-
     Call modCharts.BuildDashboard(ThisWorkbook, coId, entityName, filingsAnnual, filingsQuarterly, maps("Eps"), priceHistory, _
         maps("Revenue"), maps("Shares"), allMapsArr, maps("Inventory"), maps("Ar"), maps("CurrentAssets"), maps("CurrentLiabilities"), _
         maps("LongTermDebt"), maps("StockholdersEquity"), maps("EffectiveTaxRate"), maps("CapEx"), maps("Cfo"), _
-        maps("Cash"), maps("Da"), maps("OperatingIncome"), maps("Cfo"), maps("NetIncome"), _
+        maps("Cash"), maps("Da"), maps("OperatingIncome"), maps("Dividends"), maps("NetIncome"), _
         maps("ShortTermDebt"), maps("Cogs"), maps("AccountsPayable"), maps("Assets"), filingsBlockLastRow, wsOut, "TW_Dashboard", "TW_RawData", "10-K")
-    ' Note: maps("Cfo") is passed twice deliberately -- see the "dividends"
-    ' comment in ExtractTWMetrics: there is no reliable per-share dividend tag
-    ' in this feed, so the Dividends slot has nothing real to pass. Reusing Cfo
-    ' here (rather than Nothing) avoids a LookupConceptValue crash on a Nothing
-    ' map; DPS/Dividend Yield/Payout Ratio on the resulting Dashboard read as
-    ' CFO-derived nonsense and are overwritten to blank below.
-    Call BlankOutDividendRow(ThisWorkbook, "TW_Dashboard")
+    ' The Dividends slot used to receive maps("Cfo") as a crash-avoiding
+    ' placeholder, because this feed had no per-share dividend at all, and the
+    ' resulting CFO-derived DPS/Dividend Yield/Payout Ratio rows were then
+    ' wiped by BlankOutDividendRow. modTWDividend now supplies the real thing,
+    ' so the real map goes in and the blanking is gone.
+    Call modTWDividend.WriteTWDividendsSheet(ThisWorkbook, coId, entityName, divData)
 
     SetTWStatus wsIn, "繪製台股季度快照分頁中..."
     Call modCharts.BuildQuarterlyDashboard(ThisWorkbook, coId, entityName, filingsQuarterly, maps("Revenue"), maps("Eps"), maps("Shares"), allMapsArr, priceHistory, _
         maps("Inventory"), maps("Ar"), maps("CurrentAssets"), maps("CurrentLiabilities"), _
         maps("LongTermDebt"), maps("StockholdersEquity"), maps("EffectiveTaxRate"), maps("CapEx"), maps("Cfo"), _
-        maps("Cash"), maps("Da"), maps("OperatingIncome"), maps("Cfo"), maps("NetIncome"), _
+        maps("Cash"), maps("Da"), maps("OperatingIncome"), maps("Dividends"), maps("NetIncome"), _
         maps("ShortTermDebt"), maps("Cogs"), maps("AccountsPayable"), maps("Assets"), "TW_QuarterlySnapshot")
-    ' Same CFO-placeholder-for-dividends issue as the annual Dashboard call
-    ' above -- BuildQuarterlyDashboard was ALSO given maps("Cfo") in the
-    ' dividends slot, so TW_QuarterlySnapshot needs the same cleanup call
-    ' (confirmed missing: without this, its Dividend Yield/Payout Ratio rows
-    ' showed CFO-derived nonsense in the millions of percent).
-    Call BlankOutDividendRow(ThisWorkbook, "TW_QuarterlySnapshot")
 
     SetTWStatus wsIn, "抓取月營收中..."
     Call BuildMonthlyRevenue(wsIn, coId, entityName, wantQ * 3 + 6)
@@ -243,34 +280,6 @@ ErrHandler:
     lastPhase = CStr(wsIn.Range("B1").Value)
     SetTWStatus wsIn, "台股抓取發生錯誤（上一步：" & lastPhase & "）：" & Err.Description & " [來源: " & Err.Source & "]"
     Resume CleanExit
-End Sub
-
-' Dividends per share has no reliable direct tag in this feed (see
-' ExtractTWMetrics's comment) -- FetchMOPSFilings passes the CFO map into
-' BuildDashboard's dividends slot purely so LookupConceptValue always has a
-' real Dictionary to call .Exists on, then this blanks the resulting nonsense
-' cells (Dividend Yield / Payout Ratio rows, and the DPS row) back out rather
-' than showing CFO-derived garbage.
-Private Sub BlankOutDividendRow(ByVal wb As Workbook, ByVal dashboardSheetName As String)
-    Dim ws As Worksheet
-    On Error Resume Next
-    Set ws = wb.Sheets(dashboardSheetName)
-    On Error GoTo 0
-    If ws Is Nothing Then Exit Sub
-
-    Dim lastRow As Long, lastCol As Long
-    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
-    If lastCol < 2 Then Exit Sub
-
-    Dim r As Long
-    For r = 1 To lastRow
-        Dim lbl As String
-        lbl = CStr(ws.Cells(r, 1).Value)
-        If lbl = "Dividend Yield" Or lbl = "Payout Ratio" Then
-            ws.Range(ws.Cells(r, 2), ws.Cells(r, lastCol)).ClearContents
-        End If
-    Next r
 End Sub
 
 ' ---------- Per-quarter fetch + parse ----------
@@ -504,6 +513,22 @@ Private Function ExtractTWMetrics(ByVal facts As Object, ByVal durStart As Date,
     ' Accounts Payable -- only needed for the Cash Conversion Cycle's DPO leg.
     m("AccountsPayable") = GetFact(facts, Array("ifrs-full:TradeAndOtherCurrentPayablesToTradeSuppliers"), instCtx)
     m("InterestExpense") = GetFact(facts, Array("ifrs-full:FinanceCosts"), durCtx)
+    ' Customer prepayments. NOTE THE SUBSTITUTION: the US side of this feature
+    ' (modSEC) reads the us-gaap CustomerAdvances*/CustomerDeposits* tags, but
+    ' the TW IFRS taxonomy has no balance-sheet element for customer advances at
+    ' all -- verified against a live MOPS statement (3017, FY2025Q1), whose only
+    ' matching elements are ifrs-full:CurrentContractLiabilities,
+    ' tifrs-bsci-ci:GuaranteeDepositsReceived (存入保證金, refundable security
+    ' deposits, not prepayment for goods) and tifrs-bsci-ci:AdvanceReceiptsFor-
+    ' ShareCapital (預收股款 -- an equity subscription, emphatically not a
+    ' customer). Contract liabilities are therefore the only available TW
+    ' equivalent and are what these columns carry here. That makes the TW
+    ' figures BROADER than the US ones (they include subscription/service
+    ' deferrals, not just goods prepayments), so the two markets' columns are
+    ' not strictly like-for-like -- do not compare them across markets without
+    ' saying so.
+    m("CustAdvCurrent") = GetFact(facts, Array("ifrs-full:CurrentContractLiabilities"), instCtx)
+    m("CustAdvNoncurrent") = GetFact(facts, Array("ifrs-full:NoncurrentContractLiabilities"), instCtx)
     ' No direct "effective tax rate" tag exists in the TW taxonomy (unlike SEC's
     ' EffectiveIncomeTaxRateContinuingOperations) -- computed from the two
     ' income-statement lines that are tagged.
@@ -515,14 +540,22 @@ Private Function ExtractTWMetrics(ByVal facts As Object, ByVal durStart As Date,
     ' definition, so dividing recovers the share count MOPS itself used.
     m("Shares") = SafeDivVariant(m("NetIncome"), epsV)
 
-    ' Dividends per share: MOPS's per-quarter statement carries only an
-    ' aggregate cash-dividend AMOUNT in the equity-change statement
-    ' (tifrs-es:CashDividendsOfOrdinaryShare), disclosed once a year at most and
-    ' not reliably present in every quarter -- not worth a fragile per-share
-    ' back-out here. Left unpopulated; see BlankOutDividendRow in
-    ' FetchMOPSFilings for how the resulting Dashboard cells are kept clean.
+    ' Dividends per share is NOT available on this page: the equity-change
+    ' statement carries only an aggregate cash-dividend AMOUNT
+    ' (tifrs-es:CashDividendsOfOrdinaryShare), disclosed at most once a year and
+    ' missing from most quarters. m("Dividends") / m("StockDividends") are
+    ' filled in by the caller from modTWDividend's separate MOPS query instead.
 
     Set ExtractTWMetrics = m
+End Function
+
+' Whether this row's fiscal year can have a dividend at all. A row from the
+' CURRENT fiscal year has none yet, which is not the same as "paid nothing" --
+' see modTWDividend.DividendYearIsDeclarable.
+Private Function DividendsKnownFor(ByVal m As Object) As Boolean
+    DividendsKnownFor = False
+    If Not m.Exists("DividendsKnown") Then Exit Function
+    DividendsKnownFor = CBool(m("DividendsKnown"))
 End Function
 
 Private Function SumIfNumeric(ByVal a As Variant, ByVal b As Variant) As Variant
@@ -661,6 +694,13 @@ Private Sub WriteTWHeaders(ByVal ws As Worksheet)
     For i = 0 To UBound(headers)
         ws.Cells(1, i + 1).Value = headers(i)
     Next i
+    ' Columns 49-58 come from modValuation so this sheet and the US Filings
+    ' sheet can't drift apart on labels.
+    Dim vh As Variant
+    vh = modValuation.ValuationHeaders()
+    For i = 0 To UBound(vh)
+        ws.Cells(1, modValuation.COL_ADV_CURRENT + i).Value = vh(i)
+    Next i
 End Sub
 
 ' Bundles one row's write-time inputs so FetchMOPSFilings can collect
@@ -683,7 +723,7 @@ Private Function BuildTWRowSpec(ByVal entityName As String, ByVal coId As String
     Set BuildTWRowSpec = d
 End Function
 
-Private Sub WriteTWFilingRow(ByVal ws As Worksheet, ByVal rowIdx As Long, ByVal spec As Object)
+Private Sub WriteTWFilingRow(ByVal ws As Worksheet, ByVal rowIdx As Long, ByVal spec As Object, ByVal vctx As Object)
     Dim m As Object
     Set m = spec("metrics")
 
@@ -721,7 +761,7 @@ Private Sub WriteTWFilingRow(ByVal ws As Worksheet, ByVal rowIdx As Long, ByVal 
         .Cells(rowIdx, 19).Value = SafeNum(m("Rd"))
         .Cells(rowIdx, 20).Value = SafeNum(m("Sga"))
         .Cells(rowIdx, 21).Value = SafeDivVariant(liabV, assetsV)
-        .Cells(rowIdx, 22).Value = ""
+        .Cells(rowIdx, 22).Value = m("Dividends")
         .Cells(rowIdx, 23).Value = spec("sourceUrl")
         .Cells(rowIdx, 24).Value = ""
         .Cells(rowIdx, 25).Value = SafeNum(invV)
@@ -749,6 +789,20 @@ Private Sub WriteTWFilingRow(ByVal ws As Worksheet, ByVal rowIdx As Long, ByVal 
         .Cells(rowIdx, 47).Value = SafeDivVariant(opIncV, intExpV)
         .Cells(rowIdx, 48).Value = ""
     End With
+
+    ' dpsTagExists now reflects whether the dividend fetch actually succeeded.
+    ' When it did, a year with no declaration genuinely means "paid nothing"
+    ' (retention 1); when it did not, the ratio must stay blank rather than
+    ' report full retention for every company.
+    Call modValuation.WriteValuationCells(ws, rowIdx, _
+        m("CustAdvCurrent"), m("CustAdvNoncurrent"), _
+        niV, equityV, m("Eps"), m("Dividends"), _
+        assetsV, curLV, opIncV, m("EffectiveTaxRate"), _
+        sharesV, NearestPriceOnOrBefore(vctx("prices"), reportDateStr), _
+        m("ShortTermDebt"), m("LongTermDebt"), intExpV, _
+        vctx("params"), modValuation.PeriodsPerYear(CStr(spec("form")), "10-K"), DividendsKnownFor(m), _
+        IIf(IsNumeric(m("CustAdvCurrent")) Or IsNumeric(m("CustAdvNoncurrent")), modValuation.ADV_SRC_CONTRACT, ""), _
+        True)
 End Sub
 
 ' ---------- Price history ----------

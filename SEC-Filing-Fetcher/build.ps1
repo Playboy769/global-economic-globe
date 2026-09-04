@@ -187,7 +187,7 @@ try {
     Write-Output "STEP: got VBProject, type = $($vbProj.GetType().Name)"
 
     $vbext_ct_StdModule = 1
-    foreach ($modName in @("modJsonUtil","modHttp","modPrices","modTheme","modValuation","modSEC","modCharts","modMOPS")) {
+    foreach ($modName in @("modJsonUtil","modHttp","modPrices","modTheme","modValuation","modSEC","modCharts","modTWDividend","modMOPS")) {
         $modComp = $vbProj.VBComponents.Add($vbext_ct_StdModule)
         $modComp.Name = $modName
         $raw = Get-Content "$base\$modName.bas" -Raw -Encoding UTF8
