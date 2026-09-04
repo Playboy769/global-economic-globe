@@ -30,6 +30,9 @@ const DENY = {
   // 佔比沒過三成門檻。
   'biore-u-body-wash': 'Kao 的 og:image 是 Bioré 品牌 banner，非商品照',
   'biore-uv-aqua-rich-watery-essence': 'Kao 的 og:image 是 Bioré UV 品牌 banner，非商品照',
+  // CANMAKE 這輪：wp-json 標題配對是準的，但該商品頁的靜態 HTML 裡沒有包裝照。
+  'canmake-powder-cheeks': '該頁只有上妝後的膚色特寫，沒有商品包裝照',
+  'canmake-perfect-stylist-eyes': '官網已無パーフェクトスタイリストアイズ，配到的是不同商品パーフェクトマルチアイズ',
 };
 
 async function api(pathname, init) {

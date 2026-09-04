@@ -34,6 +34,11 @@ const SOURCES = [
   { brand: 'Curél', type: 'sitemap', sitemap: 'https://www.kao.co.jp/sitemap.xml', pat: /curel/ },
   { brand: 'Bioré', type: 'sitemap', sitemap: 'https://www.kao.co.jp/sitemap.xml', pat: /biore/ },
   { brand: 'ATRIX', type: 'sitemap', sitemap: 'https://www.kao.co.jp/sitemap.xml', pat: /atrix/ },
+  // CANMAKE 的 og:image 是全站通用圖、商品圖靠 JS 載入，前兩種來源都無效；但它是
+  // WordPress 且 wp-json 開放，自訂型別 item 能直接列出全部商品的標題與網址，
+  // 商品頁的靜態 HTML 裡也留有 wp-content/uploads 的實際圖檔路徑。
+  // （實測前 13 大品牌網域裡只有 CANMAKE 是 WordPress，這招不通用。）
+  { brand: 'CANMAKE', type: 'wp', base: 'https://www.canmake.com', postType: 'item' },
 ];
 
 async function get(url, ms = 20000, asJson = false) {
@@ -78,11 +83,17 @@ function words(s) {
 }
 function bigrams(s) { const o = new Set(); for (let i = 0; i < s.length - 1; i++) o.add(s.slice(i, i + 2)); return o; }
 
+// 標題常帶「 | 品牌名」尾巴，比長度前要先去掉，否則所有 sitemap 來源都會被長度懲罰。
+function stripSuffix(s) { return String(s || '').split(/[|｜]/)[0].trim(); }
+
 function dice(a, b) {
-  const A = norm(a), B = norm(b);
+  const A = norm(a), B = norm(stripSuffix(b));
   if (!A || !B) return 0;
-  if (A.length >= 4 && B.includes(A)) return 1;
-  if (B.length >= 5 && A.includes(B)) return 0.9;
+  // 包含關係不能一律給滿分：クリームチーク 同時被「クリームチーク」與
+  // 「クリームチーク(クリアタイプ)」包含，給同分的話變體會靠排序偶然勝出。
+  // 改成依長度比例給分，標題愈接近品名本身分數愈高，完全相同才是 1.0。
+  if (A.length >= 4 && B.includes(A)) return 0.6 + 0.4 * (A.length / B.length);
+  if (B.length >= 5 && A.includes(B)) return 0.55 + 0.35 * (B.length / A.length);
   const ga = bigrams(A), gb = bigrams(B);
   if (!ga.size || !gb.size) return 0;
   let i = 0; for (const g of ga) if (gb.has(g)) i++;
@@ -90,10 +101,13 @@ function dice(a, b) {
 }
 // 英文標題（Shopify 多為英文）用詞彙重疊，中日韓用 bigram，取兩者最高分。
 function tokenOverlap(a, b) {
-  const A = new Set(words(a)), B = new Set(words(b));
+  const A = new Set(words(a)), B = new Set(words(stripSuffix(b)));
   if (!A.size || !B.size) return 0;
   let i = 0; for (const w of A) if (B.has(w)) i++;
-  return i / A.size;
+  // 用 F1 而非單向召回率：召回率會讓「クリームチーク」在「クリームチーク(クリアタイプ)」
+  // 裡拿到滿分（品名整串就是一個 token），變體因此與本品同分。F1 會因為標題多出的
+  // token 而扣分，本品才贏得過變體。
+  return (2 * i) / (A.size + B.size);
 }
 // 變體關鍵字不該搶走本品的圖。這份清單是實跑後補出來的——第一版漏了男士線與大容量，
 // 結果 LANEIGE 化妝水配到「크림 스킨 옴므」（男士全效）、ROUND LAB 面霜配到「포 맨」，
@@ -136,6 +150,49 @@ async function fromShopify(src) {
       out.push({ title: p.title, image: img, url: src.base + '/products/' + p.handle });
     }
     if (j.products.length < 250) break;
+  }
+  return out;
+}
+
+// WordPress 站：wp-json 列出商品（標題＋網址），圖片再從商品頁的 uploads 路徑挑。
+// 檔名慣例（CANMAKE 實測）：col<NN>_img_00 是主商品照、_img_01 之後是情境／細節圖、
+// chip 是色票色塊、banner／howto／logo 是版面素材。優先序照這個排。
+function pickProductImage(html, origin) {
+  const urls = [...new Set(
+    [...html.matchAll(/https?:\/\/[^"'\s)]*\/wp-content\/uploads\/[^"'\s)]+?\.(?:jpg|jpeg|png|webp)/gi)].map(m => m[0])
+  )].filter(u => !/chip|banner|howto|logo|icon|sprite|common_bg/i.test(u));
+  // 只認 col<NN>_img_<NN> 這種商品照命名。原本還留了 common_img 當回退，實測
+  // パウダーチークス 因此拿到附贈刷具的照片——那頁的靜態 HTML 根本沒有商品照。
+  // 寧可回傳空字串讓卡片走色卡 fallback，也不要放一張不是該商品的圖。
+  const shots = urls.filter(u => /_img_\d/i.test(u));
+  if (!shots.length) return '';
+  shots.sort((a, b) => (/_img_00/i.test(b) ? 1 : 0) - (/_img_00/i.test(a) ? 1 : 0) || a.length - b.length);
+  return shots[0];
+}
+
+async function fromWordPress(src, mine) {
+  const items = [];
+  for (let page = 1; page <= 5; page++) {
+    const j = await get(src.base + '/wp-json/wp/v2/' + src.postType
+      + '?per_page=100&page=' + page + '&_fields=id,title,link', 25000, true);
+    if (!Array.isArray(j) || !j.length) break;
+    for (const it of j) items.push({ title: decode((it.title && it.title.rendered) || ''), url: it.link });
+    if (j.length < 100) break;
+  }
+  console.log('（wp-json 列出 ' + items.length + ' 個商品，只取回對得上的商品頁）');
+  // 先用標題配對，只對命中的商品抓頁面——不必把整個站掃一遍。
+  const out = [];
+  for (const p of mine) {
+    let best = null;
+    for (const it of items) {
+      const s = scorePair(p, it);
+      if (!best || s > best.s) best = { s, it };
+    }
+    if (!best || best.s < MIN_SCORE) continue;
+    const html = await get(best.it.url, 20000);
+    if (!html) continue;
+    const img = pickProductImage(html, src.base);
+    if (img) out.push({ title: best.it.title, image: img, url: best.it.url });
   }
   return out;
 }
@@ -188,7 +245,9 @@ async function imageLoads(url) {
     const mine = all.filter(p => p.brand.toLowerCase() === src.brand.toLowerCase());
     if (!mine.length) continue;
     process.stdout.write(src.brand + '（圖鑑內 ' + mine.length + ' 筆，來源 ' + src.type + '）… ');
-    const cands = src.type === 'shopify' ? await fromShopify(src) : await fromSitemap(src);
+    const cands = src.type === 'shopify' ? await fromShopify(src)
+      : src.type === 'wp' ? await fromWordPress(src, mine)
+        : await fromSitemap(src);
     console.log('候選 ' + cands.length + ' 個');
     if (!cands.length) continue;
 

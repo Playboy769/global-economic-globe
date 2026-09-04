@@ -1,137 +1,65 @@
 [
   {
-    "id": "cosrx-low-ph-good-morning-cleanser",
-    "name_zh": "低pH晨間潔面凝膠",
-    "brand": "COSRX",
-    "score": 0.833,
-    "matched_title": "Low pH Good Morning Gel Cleanser",
-    "image_url": "https://cdn.shopify.com/s/files/1/0513/3775/6828/files/low-ph-good-morning-gel-cleanser-cosrx-official-1.jpg?v=1768785801",
-    "source_page": "https://www.cosrx.com/products/low-ph-good-morning-gel-cleanser"
-  },
-  {
-    "id": "cosrx-snail-96-essence",
-    "name_zh": "蝸牛96黏液修護精華",
-    "brand": "COSRX",
-    "score": 0.75,
-    "matched_title": "Advanced Snail 96 Mucin Power Essence",
-    "image_url": "https://cdn.shopify.com/s/files/1/0513/3775/6828/files/james_800x1067_1_1_4e9750cc-2cd6-4817-ace5-be2305a85806.jpg?v=1763111577",
-    "source_page": "https://www.cosrx.com/products/advanced-snail-96-mucin-power-essence"
-  },
-  {
-    "id": "beautyofjoseon-glow-serum",
-    "name_zh": "蜂膠煥采精華",
-    "brand": "Beauty of Joseon",
-    "score": 0.667,
-    "matched_title": "Glow Serum : Propolis + Niacinamide",
-    "image_url": "https://cdn.shopify.com/s/files/1/0558/4135/7989/files/glow-serum-propolis-niacinamide-1-front.webp?v=1770278801",
-    "source_page": "https://beautyofjoseon.com/products/glow-serum-propolis-niacinamide"
-  },
-  {
-    "id": "beautyofjoseon-relief-sun",
-    "name_zh": "米糠益生菌防曬",
-    "brand": "Beauty of Joseon",
-    "score": 0.667,
-    "matched_title": "Relief Sun : Rice + Niacinamide (SPF50+ PA++++)",
-    "image_url": "https://cdn.shopify.com/s/files/1/0558/4135/7989/files/01_0805__-_EU_UK.jpg?v=1787280568",
-    "source_page": "https://beautyofjoseon.com/products/relief-sun-rice-probiotics-spf50-pa-uk"
-  },
-  {
-    "id": "laneige-neo-cushion-matte",
-    "name_zh": "新水酷淨透氣墊 霧光",
-    "brand": "LANEIGE",
+    "id": "canmake-cream-cheek",
+    "name_zh": "奶油蜜頰彩",
+    "brand": "CANMAKE",
     "score": 1,
-    "matched_title": "네오 쿠션 더 매트 | 라네즈 한국",
-    "image_url": "https://laneige.com/web/product/big/20260402/94ba4035f80e5b490cf1e982ae06a722.jpg",
-    "source_page": "https://laneige.com/product/%EB%84%A4%EC%98%A4-%EC%BF%A0%EC%85%98-%EB%8D%94-%EB%A7%A4%ED%8A%B8/39/"
+    "matched_title": "クリームチーク",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/10/B00_69_col05_img_00.jpg",
+    "source_page": "https://www.canmake.com/item/detail/cream-cheek/"
   },
   {
-    "id": "laneige-water-sleeping-mask",
-    "name_zh": "水酷肌因夜間修護凍膜",
-    "brand": "LANEIGE",
+    "id": "canmake-powder-cheeks",
+    "name_zh": "柔滑腮紅",
+    "brand": "CANMAKE",
     "score": 1,
-    "matched_title": "워터 슬리핑 마스크 | 라네즈 한국",
-    "image_url": "https://laneige.com/web/product/big/20260309/8ff325dd24401729806afe2f6e134dd0.jpg",
-    "source_page": "https://laneige.com/product/%EC%9B%8C%ED%84%B0-%EC%8A%AC%EB%A6%AC%ED%95%91-%EB%A7%88%EC%8A%A4%ED%81%AC/56/"
+    "matched_title": "パウダーチークス",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/08/B00_183_colP01_img_02.jpg",
+    "source_page": "https://www.canmake.com/item/detail/powder-cheeks/"
   },
   {
-    "id": "laneige-cream-skin-toner",
-    "name_zh": "水漾乳霜化妝水",
-    "brand": "LANEIGE",
+    "id": "canmake-silky-souffle-eyes",
+    "name_zh": "絲滑舒芙蕾眼影",
+    "brand": "CANMAKE",
     "score": 1,
-    "matched_title": "크림 스킨 세라펩타이드™ 미스트 | 라네즈 한국",
-    "image_url": "https://laneige.com/web/product/big/20260309/3d1ac17eec7aa59db5792fb9cf7b14a4.jpg",
-    "source_page": "https://laneige.com/product/%ED%81%AC%EB%A6%BC-%EC%8A%A4%ED%82%A8-%EC%84%B8%EB%9D%BC%ED%8E%A9%ED%83%80%EC%9D%B4%EB%93%9C-%EB%AF%B8%EC%8A%A4%ED%8A%B8/83/"
+    "matched_title": "シルキースフレアイズ",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/08/C01_105_col06_img_00-1.jpg",
+    "source_page": "https://www.canmake.com/item/detail/silky-souffle-eyes/"
   },
   {
-    "id": "roundlab-birch-sun-cream",
-    "name_zh": "白樺樹防曬霜",
-    "brand": "ROUND LAB",
+    "id": "canmake-stay-on-balm-rouge",
+    "name_zh": "水潤保濕唇膏",
+    "brand": "CANMAKE",
     "score": 1,
-    "matched_title": "자작나무 수분 선크림 50ml",
-    "image_url": "https://roundlab.co.kr/web/product/big/202511/adeb0024e3e3a5c01fe9d3d40e5dddb1.jpg",
-    "source_page": "https://roundlab.co.kr/product/자작나무-수분-선크림-50ml/138/"
+    "matched_title": "ステイオンバームルージュ",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/08/D02_03_col03_img_00.jpg",
+    "source_page": "https://www.canmake.com/item/detail/stay-on-balm-rouge/"
   },
   {
-    "id": "roundlab-birch-moisturizing-cream",
-    "name_zh": "白樺樹保濕霜",
-    "brand": "ROUND LAB",
-    "score": 0.82,
-    "matched_title": "포 맨 자작나무 수분 크림 75ml",
-    "image_url": "https://roundlab.co.kr/web/product/big/202511/73d4f2a0ae0938a8814d1eeba39d5eae.jpg",
-    "source_page": "https://roundlab.co.kr/product/포-맨-자작나무-수분-크림-75ml/205/"
-  },
-  {
-    "id": "roundlab-1025-dokdo-toner",
-    "name_zh": "1025獨島化妝水",
-    "brand": "ROUND LAB",
-    "score": 0.82,
-    "matched_title": "1025 독도 토너 대용량 500ml",
-    "image_url": "https://roundlab.co.kr/web/product/big/202511/d766bcfb678649513f0ed85f0d54659b.jpg",
-    "source_page": "https://roundlab.co.kr/product/1025-독도-토너-대용량-500ml/14/"
-  },
-  {
-    "id": "romand-zero-velvet-tint",
-    "name_zh": "零負擔絲絨唇釉",
-    "brand": "rom&nd",
+    "id": "canmake-quick-lash-curler",
+    "name_zh": "零死角捲翹睫毛膏",
+    "brand": "CANMAKE",
     "score": 1,
-    "matched_title": "롬앤 제로 벨벳 틴트 #오리지널",
-    "image_url": "https://cafe24.poxo.com/ec01/romand/6aDrbsrpgztyixM+aENnH1D89vbvN874SJZ0smDxiaa/k9zGF5hClK+Cdcc6Crl70h/a8RobAiR24eeOO4zRMg==/_/web/product/big/202309/2d230db7b7c269265454347fb83ac46e.jpg",
-    "source_page": "https://romand.co.kr/product/롬앤-제로-벨벳-틴트-오리지널/120/"
+    "matched_title": "クイックラッシュカーラー",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/08/C02_40_col00_img_00.jpg",
+    "source_page": "https://www.canmake.com/item/detail/quick-lash-curler/"
   },
   {
-    "id": "romand-glasting-water-tint",
-    "name_zh": "玻璃水光唇釉",
-    "brand": "rom&nd",
+    "id": "canmake-marshmallow-finish-powder",
+    "name_zh": "棉花糖蜜粉餅",
+    "brand": "CANMAKE",
     "score": 1,
-    "matched_title": "롬앤 글래스팅 워터 틴트 #선셋",
-    "image_url": "https://cafe24.poxo.com/ec01/romand/6aDrbsrpgztyixM+aENnH1D89vbvN874SJZ0smDxiaa/k9zGF5hClK+Cdcc6Crl70h/a8RobAiR24eeOO4zRMg==/_/web/product/big/202311/af9e13c1bc102190426318bd77eb1374.jpg",
-    "source_page": "https://romand.co.kr/product/롬앤-글래스팅-워터-틴트-선셋/842/"
+    "matched_title": "マシュマロフィニッシュパウダー",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/08/A03_62_colMO_img_01.jpg",
+    "source_page": "https://www.canmake.com/item/detail/marshmallow-finish-powder/"
   },
   {
-    "id": "romand-juicy-lasting-tint",
-    "name_zh": "果汁持久唇釉",
-    "brand": "rom&nd",
-    "score": 1,
-    "matched_title": "롬앤 쥬시 래스팅 틴트 #단종귀환템",
-    "image_url": "https://cafe24.poxo.com/ec01/romand/6aDrbsrpgztyixM+aENnH1D89vbvN874SJZ0smDxiaa/k9zGF5hClK+Cdcc6Crl70h/a8RobAiR24eeOO4zRMg==/_/web/product/big/202405/02328a5594831a9c7d4bfebd28cee9f1.jpg",
-    "source_page": "https://romand.co.kr/product/롬앤-쥬시-래스팅-틴트-단종귀환템/890/"
-  },
-  {
-    "id": "biore-u-body-wash",
-    "name_zh": "溫和沐浴乳",
-    "brand": "Bioré",
-    "score": 1,
-    "matched_title": "ビオレu | ボディウォッシュシリーズ | ビオレu | 花王株式会社",
-    "image_url": "https://www.kao.co.jp/content/dam/sites/kao/www-kao-co-jp/bioreu/cmn/sns/share_bioreu_202311.jpg",
-    "source_page": "https://www.kao.co.jp/bioreu/family/body_w/bioreu/"
-  },
-  {
-    "id": "biore-uv-aqua-rich-watery-essence",
-    "name_zh": "水感防曬精華",
-    "brand": "Bioré",
-    "score": 0.537,
-    "matched_title": "花王株式会社 | ビオレUV | アクアリッチ 水感エッセンス",
-    "image_url": "https://www.kao.co.jp/content/dam/sites/kao/www-kao-co-jp/bioreuv/cmn/share_bioreuv.jpg",
-    "source_page": "https://www.kao.co.jp/bioreuv/microuv/"
+    "id": "canmake-perfect-stylist-eyes",
+    "name_zh": "完美修飾五色眼影",
+    "brand": "CANMAKE",
+    "score": 0.56,
+    "matched_title": "パーフェクトマルチアイズ",
+    "image_url": "https://www.canmake.com/wp-content/uploads/2025/08/C01_20_col03_img_00-1.jpg",
+    "source_page": "https://www.canmake.com/item/detail/perfect-multi-eyes/"
   }
 ]
