@@ -60,6 +60,8 @@ Public Sub FetchSECFilings()
     Dim mapCOGS As Object, mapInterestExpense As Object
     Dim mapShortTermDebt As Object
     Dim mapAccountsPayable As Object
+    Dim mapCustAdvCurrent As Object, mapCustAdvNoncurrent As Object
+    Dim mapContractLiabCurrent As Object, mapContractLiabNoncurrent As Object
 
     Set mapRevenue = BuildConceptMap(usgaapRaw, Array("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet"), "USD")
     Set mapNetIncome = BuildConceptMap(usgaapRaw, Array("NetIncomeLoss", "ProfitLoss"), "USD")
@@ -140,6 +142,49 @@ Public Sub FetchSECFilings()
     ' Accounts Payable -- only needed for the Cash Conversion Cycle's DPO leg;
     ' every other existing metric already had what it needed without this tag.
     Set mapAccountsPayable = BuildConceptMap(usgaapRaw, Array("AccountsPayableCurrent", "AccountsPayableTradeCurrent"), "USD")
+    ' Customer advances / deposits -- money collected before the revenue is
+    ' earned. Deliberately NOT the ASC 606 contract-liability tags: those cover
+    ' every unearned-revenue flavour (subscription deferrals included), whereas
+    ' what is wanted here is specifically the customer-prepayment kind. The
+    ' trade-off is coverage -- plenty of filers never tag these at all and the
+    ' columns then stay blank, which is a true "not disclosed under this
+    ' concept", not a fetch failure.
+    Set mapCustAdvCurrent = BuildConceptMap(usgaapRaw, Array("CustomerAdvancesCurrent", "CustomerDepositsCurrent", "CustomerAdvancesAndDeposits", "CustomerAdvancesAndProgressBillingsForLongTermContractsOrPrograms"), "USD")
+    Set mapCustAdvNoncurrent = BuildConceptMap(usgaapRaw, Array("CustomerAdvancesNoncurrent", "CustomerDepositsNoncurrent"), "USD")
+    ' Gap-fill only (see modValuation.PickAdvances for the coverage numbers that
+    ' forced this): the ASC 606 contract-liability tags are broader -- they also
+    ' sweep in subscription and service deferrals, not just prepayment for goods
+    ' -- so a row that falls back to them is labelled as such in COL_ADV_SOURCE
+    ' rather than being silently mixed in with the narrow-concept rows.
+    Set mapContractLiabCurrent = BuildConceptMap(usgaapRaw, Array("ContractWithCustomerLiabilityCurrent", "DeferredRevenueCurrent"), "USD")
+    Set mapContractLiabNoncurrent = BuildConceptMap(usgaapRaw, Array("ContractWithCustomerLiabilityNoncurrent", "DeferredRevenueNoncurrent"), "USD")
+
+    ' Price history is fetched HERE rather than just before BuildDashboard (its
+    ' only previous consumer) because the new WACC column needs a market-value
+    ' equity weight at each filing's own report date, and those rows are written
+    ' below. One fetch, both consumers.
+    SetStatus wsIn, "抓取股價歷史與 Beta（WACC 用）中..."
+    Dim priceHistory As Object
+    ' Reach back at least as far as the oldest fetched 10-K (wantK years, +1 for
+    ' buffer) so Price/Market Cap/P-E/EV-series aren't blank for the oldest
+    ' column when B4 asks for more years than the old fixed 6-year window covered.
+    Set priceHistory = FetchDailyPrices(ticker, DateAdd("yyyy", -(wantK + 1), Date), Date)
+
+    Dim capmParams As Object
+    Set capmParams = modValuation.LoadCapmParams(wsIn, False)
+    Call modValuation.AttachBeta(capmParams, ticker)
+
+    ' One bag for everything the valuation columns need, rather than six more
+    ' positional arguments on WriteFilingRow's already 26-parameter signature.
+    Dim vctx As Object
+    Set vctx = CreateObject("Scripting.Dictionary")
+    Set vctx("advCurrent") = mapCustAdvCurrent
+    Set vctx("advNoncurrent") = mapCustAdvNoncurrent
+    Set vctx("clCurrent") = mapContractLiabCurrent
+    Set vctx("clNoncurrent") = mapContractLiabNoncurrent
+    Set vctx("shortTermDebt") = mapShortTermDebt
+    Set vctx("prices") = priceHistory
+    Set vctx("params") = capmParams
 
     SetStatus wsIn, "寫入工作表中..."
     ' Snapshot the accession-number -> segment-note-URL mapping already on the
@@ -163,12 +208,12 @@ Public Sub FetchSECFilings()
     For Each f In filings10K
         rowIdx = WriteFilingRow(wsOut, rowIdx, entityName, cik, f, mapRevenue, mapNetIncome, mapEps, mapAssets, mapLiabilities, mapCFO, mapGrossProfit, mapOperatingIncome, mapRD, mapSGA, mapDividends, _
             mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapShares, allMaps, knownSegmentUrls, _
-            mapCOGS, mapInterestExpense, mapCash)
+            mapCOGS, mapInterestExpense, mapCash, vctx)
     Next f
     For Each f In filings10Q
         rowIdx = WriteFilingRow(wsOut, rowIdx, entityName, cik, f, mapRevenue, mapNetIncome, mapEps, mapAssets, mapLiabilities, mapCFO, mapGrossProfit, mapOperatingIncome, mapRD, mapSGA, mapDividends, _
             mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapShares, allMaps, knownSegmentUrls, _
-            mapCOGS, mapInterestExpense, mapCash)
+            mapCOGS, mapInterestExpense, mapCash, vctx)
     Next f
 
     If rowIdx > 2 Then
@@ -190,6 +235,7 @@ Public Sub FetchSECFilings()
         wsOut.Range(wsOut.Cells(2, 39), wsOut.Cells(rowIdx - 1, 45)).NumberFormat = "0.00"
         wsOut.Range(wsOut.Cells(2, 46), wsOut.Cells(rowIdx - 1, 46)).NumberFormat = "#,##0"
         wsOut.Range(wsOut.Cells(2, 47), wsOut.Cells(rowIdx - 1, 47)).NumberFormat = "0.00"
+        Call modValuation.FormatValuationColumns(wsOut, 2, rowIdx - 1)
     End If
 
     ' The 10-K/10-Q block ends here -- record its boundary BEFORE appending
@@ -220,18 +266,13 @@ Public Sub FetchSECFilings()
     wsOut.Columns.AutoFit
     ' Banner styling must come AFTER ApplyDarkTheme, which blanket-paints the
     ' whole UsedRange black -- doing this any earlier would just get wiped.
-    With wsOut.Range(wsOut.Cells(otherBannerRow, 1), wsOut.Cells(otherBannerRow, 48))
+    With wsOut.Range(wsOut.Cells(otherBannerRow, 1), wsOut.Cells(otherBannerRow, modValuation.COL_VALUATION_LAST))
         .Font.Bold = True
         .Font.Color = RGB(255, 165, 0)
         .Interior.Color = RGB(45, 45, 45)
     End With
 
     SetStatus wsIn, "繪製 Dashboard（股價圖、財務快照、趨勢圖）中，稍候..."
-    Dim priceHistory As Object
-    ' Reach back at least as far as the oldest fetched 10-K (wantK years, +1 for
-    ' buffer) so Price/Market Cap/P-E/EV-series aren't blank for the oldest
-    ' column when B4 asks for more years than the old fixed 6-year window covered.
-    Set priceHistory = FetchDailyPrices(ticker, DateAdd("yyyy", -(wantK + 1), Date), Date)
     Call BuildDashboard(ThisWorkbook, ticker, entityName, filings10K, filings10Q, mapEps, priceHistory, _
         mapRevenue, mapShares, allMaps, mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, _
         mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
@@ -789,7 +830,8 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapShares As Object, _
     ByVal allMaps As Variant, ByVal knownSegmentUrls As Object, _
-    ByVal mapCOGS As Object, ByVal mapInterestExpense As Object, ByVal mapCash As Object) As Long
+    ByVal mapCOGS As Object, ByVal mapInterestExpense As Object, ByVal mapCash As Object, _
+    ByVal vctx As Object) As Long
 
     Dim form As String, accn As String, filingDate As String, reportDate As String, primDoc As String, isAmended As Boolean
     form = f("form")
@@ -879,6 +921,23 @@ Private Function WriteFilingRow(ByVal wsOut As Worksheet, ByVal rowIdx As Long, 
         .Cells(rowIdx, 46).Value = SafeNumber(intExpV)
         .Cells(rowIdx, 47).Value = SafeRatio(opIncV, intExpV)
     End With
+
+    Dim adv As Object
+    Set adv = modValuation.PickAdvances( _
+        LookupConceptValue(vctx("advCurrent"), accn, reportDate, form), _
+        LookupConceptValue(vctx("advNoncurrent"), accn, reportDate, form), _
+        LookupConceptValue(vctx("clCurrent"), accn, reportDate, form), _
+        LookupConceptValue(vctx("clNoncurrent"), accn, reportDate, form))
+
+    Call modValuation.WriteValuationCells(wsOut, rowIdx, _
+        adv("cur"), adv("non"), _
+        netIncV, equityV, LookupConceptValue(mapEps, accn, reportDate, form), _
+        LookupConceptValue(mapDividends, accn, reportDate, form), _
+        assetsV, curLiabV, opIncV, LookupConceptValue(mapEffectiveTaxRate, accn, reportDate, form), _
+        sharesV, NearestPriceOnOrBefore(vctx("prices"), reportDate), _
+        LookupConceptValue(vctx("shortTermDebt"), accn, reportDate, form), _
+        LookupConceptValue(mapLongTermDebt, accn, reportDate, form), intExpV, _
+        vctx("params"), modValuation.PeriodsPerYear(form, "10-K"), True, CStr(adv("source")), False)
 
     WriteFilingRow = rowIdx + 1
 End Function
@@ -1043,6 +1102,13 @@ Private Sub WriteHeaders(ByVal wsOut As Worksheet)
     Dim i As Long
     For i = 0 To UBound(headers)
         wsOut.Cells(1, i + 1).Value = headers(i)
+    Next i
+    ' Columns 49-58 (customer advances / sustainable growth / ROIC vs WACC) come
+    ' from modValuation so the US and TW sheets can't drift apart on labels.
+    Dim vh As Variant
+    vh = modValuation.ValuationHeaders()
+    For i = 0 To UBound(vh)
+        wsOut.Cells(1, modValuation.COL_ADV_CURRENT + i).Value = vh(i)
     Next i
     ' actual header styling (black/orange, Calibri) is applied afterward by
     ' ApplyDarkTheme once all data rows are written

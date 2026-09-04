@@ -52,10 +52,39 @@ try {
     $wsInput.Range("A10").Value2 = "MOPS 季數"
     $wsInput.Range("B10").Value2 = 10
 
+    # WACC / ROIC inputs (modValuation.LoadCapmParams reads B12:B20 -- the cell
+    # addresses are mirrored as CAPM_CELL_* consts there, keep both in step).
+    # These live on the sheet rather than as VBA constants so the assumptions
+    # behind every WACC number stay visible and adjustable without a rebuild.
+    # Beta is NOT here: it is regressed per run from actual monthly price
+    # returns against the benchmark index named below.
+    $wsInput.Range("A11").Value2 = "WACC / ROIC 參數（可留白，使用預設值；Beta 由股價自動回歸）"
+    $wsInput.Range("A11").Font.Bold = $true
+    $wsInput.Range("A12").Value2 = "美股 無風險利率 Rf"
+    $wsInput.Range("B12").Value2 = 0.042
+    $wsInput.Range("A13").Value2 = "美股 市場風險溢酬 ERP"
+    $wsInput.Range("B13").Value2 = 0.05
+    $wsInput.Range("A14").Value2 = "美股 稅率備援（filings 無有效稅率時）"
+    $wsInput.Range("B14").Value2 = 0.21
+    $wsInput.Range("A15").Value2 = "美股 Beta 基準指數"
+    $wsInput.Range("B15").Value2 = "^GSPC"
+    $wsInput.Range("A16").Value2 = "台股 無風險利率 Rf"
+    $wsInput.Range("B16").Value2 = 0.015
+    $wsInput.Range("A17").Value2 = "台股 市場風險溢酬 ERP"
+    $wsInput.Range("B17").Value2 = 0.06
+    $wsInput.Range("A18").Value2 = "台股 稅率備援"
+    $wsInput.Range("B18").Value2 = 0.2
+    $wsInput.Range("A19").Value2 = "台股 Beta 基準指數"
+    $wsInput.Range("B19").Value2 = "^TWII"
+    $wsInput.Range("A20").Value2 = "Beta 回歸月數（24-180）"
+    $wsInput.Range("B20").Value2 = 60
+    $wsInput.Range("B12:B14").NumberFormat = "0.00%"
+    $wsInput.Range("B16:B18").NumberFormat = "0.00%"
+
     # Black/orange dark theme, Yu Gothic throughout, applied once here since the
     # Input sheet's static cells (unlike Filings/OtherFilings/etc.) are never
     # cleared or rewritten by the macros, so this persists across runs.
-    $inputRange = $wsInput.Range("A1:B10")
+    $inputRange = $wsInput.Range("A1:B20")
     $inputRange.Interior.Color = 0
     $inputRange.Font.Color = 16777215
     $inputRange.Font.Name = "Yu Gothic"
@@ -64,11 +93,13 @@ try {
     $wsInput.Range("A4:A7").Font.Color = 42495
     $wsInput.Range("A8").Font.Color = 42495
     $wsInput.Range("A9:A10").Font.Color = 42495
+    $wsInput.Range("A11").Font.Color = 42495
+    $wsInput.Range("A12:A20").Font.Color = 42495
     $wsInput.Range("A1").Interior.Color = 23220               # dark orange, RGB(180,90,0)
     $wsInput.Range("A1").Font.Color = 16777215
     $wsInput.Range("B1").Font.Color = 16777215
 
-    $borderRange = $wsInput.Range("A1:B10")
+    $borderRange = $wsInput.Range("A1:B20")
     $borderRange.Borders.LineStyle = 1   # xlContinuous
     $borderRange.Borders.Weight = 2      # xlThin
     $borderRange.Borders.Color = 5263440 # dark gray, RGB(80,80,80)
@@ -156,7 +187,7 @@ try {
     Write-Output "STEP: got VBProject, type = $($vbProj.GetType().Name)"
 
     $vbext_ct_StdModule = 1
-    foreach ($modName in @("modJsonUtil","modHttp","modPrices","modTheme","modSEC","modCharts","modMOPS")) {
+    foreach ($modName in @("modJsonUtil","modHttp","modPrices","modTheme","modValuation","modSEC","modCharts","modMOPS")) {
         $modComp = $vbProj.VBComponents.Add($vbext_ct_StdModule)
         $modComp.Name = $modName
         $raw = Get-Content "$base\$modName.bas" -Raw -Encoding UTF8

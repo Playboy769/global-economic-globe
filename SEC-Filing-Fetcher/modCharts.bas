@@ -1254,7 +1254,10 @@ Private Sub BuildFinancialChartsInto(ByVal ws As Worksheet, ByVal wsFilings As W
     Next r
 
     Dim metricCols As Variant
-    metricCols = Array(10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35)
+    ' 49-58 are the valuation block (customer advances, sustainable growth,
+    ' invested capital, NOPAT, ROIC, WACC, ROIC-WACC spread) -- see modValuation.
+    metricCols = Array(10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, _
+        49, 50, 51, 52, 53, 54, 55, 56, 57, 58)
 
     Dim leftPositions As Variant
     leftPositions = Array(startLeft, startLeft + 390)
