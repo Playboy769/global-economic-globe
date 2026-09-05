@@ -158,11 +158,22 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 .works-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:56px}
 .works-count{font-family:'Orchid','Noto Serif TC',serif;font-size:12px;color:#bbb;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:baseline;gap:8px}
 .wc-num{font-size:26px;font-style:italic;font-weight:300;color:var(--c-accent);letter-spacing:0;text-transform:none}
-.works-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:44px}
+/* Works page head. Deliberately NOT .sec-heading + .works-head: on this page the grid IS
+   the subject, and a 56px display heading with an accent highlight block took the first
+   fixation every time. The section title collapses to one eyebrow line instead, and the
+   project count rides on the same line rather than floating off to the right.
+   .works-head / .sec-heading are untouched — Timeline and the other sections still use them. */
+.works-line{display:flex;align-items:center;gap:13px;margin-bottom:22px}
+.works-line::before{content:'';width:30px;height:1px;background:var(--c-accent);flex-shrink:0}
+.wl-lbl{font-family:'Orchid','Noto Serif TC',serif;font-size:11.5px;color:#8e8e8e;text-transform:uppercase;letter-spacing:.2em}
+.wl-sep{color:#e0e0e0;font-size:10px}
+.works-count.wl-count{font-size:11.5px;color:#c4c4c4;letter-spacing:.2em;gap:6px}
+.works-count.wl-count .wc-num{font-size:13px;font-weight:400;color:var(--c-accent-deep)}
+.works-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:34px}
 .wf-pill{padding:8px 18px;border:1px solid #ddd;border-radius:100px;font-family:'Calibri',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#888;cursor:pointer;background:#fff;transition:all .2s ease;user-select:none}
 .wf-pill:hover{border-color:#bbb;color:#333}
 .wf-pill.active{background:var(--c-ink);border-color:var(--c-ink);color:#fff}
-.topics-bar{display:flex;align-items:center;gap:10px;margin:-28px 0 32px}
+.topics-bar{display:flex;align-items:center;gap:10px;margin:-22px 0 26px}
 .topics-toggle{display:inline-flex;align-items:center;gap:6px;font-family:'Calibri',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#999;cursor:pointer;user-select:none;transition:color .2s ease}
 .topics-toggle:hover{color:#555}
 .topics-toggle .tt-icon{display:inline-block;font-size:13px;line-height:1;transition:transform .2s ease}
@@ -556,6 +567,7 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
      grid name+date columns, which is what overflowed the viewport before) -- */
   .works-head{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:36px}
   .works-count{display:none}
+  .wl-sep{display:none}
   /* Mobile only ever shows the two ungated categories (Earnings Call / Tech Notes) —
      Finance & Markets, Network Analysis, Causal Logic and Knowledge are already
      login-gated server-side for guests (see the GATE comment-markers wrapping these
@@ -794,12 +806,10 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
 <!-- ── WORKS ── -->
 <div class="page" id="page-works">
   <div class="container">
-    <div class="works-head">
-      <div>
-        <div class="about-label reveal">Works</div>
-        <h2 class="sec-heading reveal reveal-delay-1">Selected <span class="stmt-accent">works</span></h2>
-      </div>
-      <span class="works-count reveal reveal-delay-2" id="works-count"></span>
+    <div class="works-line reveal">
+      <span class="wl-lbl">Selected Works</span>
+      <span class="wl-sep">/</span>
+      <span class="works-count wl-count" id="works-count"></span>
     </div>
     <div class="works-filter" id="works-filter">
       <div class="wf-pill active" data-cat="finance" onclick="filterCat('finance',this)">Finance &amp; Markets</div>
@@ -917,6 +927,9 @@ body.not-home #top-nav{background:rgba(255,255,255,0.92);backdrop-filter:blur(20
       </div>
       <div data-published="2026-08-20" class="wk-card" data-cat="knowledge" tabindex="0" role="button" aria-label="Agentic AI 完全解析 — 開新分頁" onclick="openGatedWork('https://globe-invest.up.railway.app/agentic-ai', this)">
         <div class="wk-info"><div class="wk-name"><span class="wk-zh">Agentic AI 完全解析</span><span class="wk-en">Agentic AI Explainer</span></div></div>
+      </div>
+      <div data-published="2026-09-05" class="wk-card" data-cat="knowledge" tabindex="0" role="button" aria-label="飛機圖鑑 — 開新分頁" onclick="openGatedWork('https://globe-invest.up.railway.app/aircraft-field-guide', this)">
+        <div class="wk-info"><div class="wk-name"><span class="wk-zh">飛機圖鑑</span><span class="wk-en">Aircraft Field Guide</span></div></div>
       </div>
 
       <!-- ── TECH NOTES ── 深度技術／基礎設施筆記。新增時直接加 .wk-card（data-cat="tech-notes"），
