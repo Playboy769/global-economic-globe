@@ -97,6 +97,28 @@ End Sub
 
 ' ---------- Per-ticker snapshot export ----------
 
+' Opt-out switch for ExportTickerSnapshot, read from Input!B21 (see build.ps1's
+' Input sheet layout, same convention as the WACC/ROIC params in B12:B20 --
+' kept on the sheet rather than a hardcoded Const so each workbook copy can
+' carry its own setting even though this module's code is byte-identical
+' across copies). Blank/missing/non-boolean cell defaults to True (export ON),
+' so any workbook built before this toggle existed -- or with the cell
+' accidentally cleared -- keeps its original always-export behavior with zero
+' migration needed.
+Public Function IsAutoExportEnabled(ByVal wb As Workbook) As Boolean
+    On Error GoTo Fallback
+    Dim v As Variant
+    v = wb.Worksheets("Input").Range("B21").Value2
+    If IsEmpty(v) Or CStr(v) = "" Then
+        IsAutoExportEnabled = True
+    Else
+        IsAutoExportEnabled = CBool(v)
+    End If
+    Exit Function
+Fallback:
+    IsAutoExportEnabled = True
+End Function
+
 ' Called once a full fetch (US SEC or TW MOPS) finishes, so a single ticker's
 ' result can be handed off/archived without the whole multi-ticker working
 ' file. Saves a standalone, macro-free copy of just that ticker's

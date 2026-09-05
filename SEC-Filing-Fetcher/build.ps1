@@ -78,13 +78,24 @@ try {
     $wsInput.Range("B19").Value2 = "^TWII"
     $wsInput.Range("A20").Value2 = "Beta 回歸月數（24-180）"
     $wsInput.Range("B20").Value2 = 60
+
+    # Opt-out switch for modCharts.ExportTickerSnapshot (read by
+    # modCharts.IsAutoExportEnabled). Lives on the sheet, not a VBA Const, so
+    # a workbook copy that should skip the per-ticker .xlsx export (e.g. a
+    # "no export" variant) can carry a different value here while modCharts/
+    # modSEC/modMOPS stay byte-identical across every copy. Blank cell also
+    # means "on" -- see IsAutoExportEnabled's fallback -- this default value
+    # just keeps a freshly built workbook's Input sheet self-documenting.
+    $wsInput.Range("A21").Value2 = "自動匯出個股快照 (.xlsx)（TRUE=開，FALSE=關；留白視為開）"
+    $wsInput.Range("B21").Value2 = $true
+
     $wsInput.Range("B12:B14").NumberFormat = "0.00%"
     $wsInput.Range("B16:B18").NumberFormat = "0.00%"
 
     # Black/orange dark theme, Yu Gothic throughout, applied once here since the
     # Input sheet's static cells (unlike Filings/OtherFilings/etc.) are never
     # cleared or rewritten by the macros, so this persists across runs.
-    $inputRange = $wsInput.Range("A1:B20")
+    $inputRange = $wsInput.Range("A1:B21")
     $inputRange.Interior.Color = 0
     $inputRange.Font.Color = 16777215
     $inputRange.Font.Name = "Yu Gothic"
@@ -94,12 +105,12 @@ try {
     $wsInput.Range("A8").Font.Color = 42495
     $wsInput.Range("A9:A10").Font.Color = 42495
     $wsInput.Range("A11").Font.Color = 42495
-    $wsInput.Range("A12:A20").Font.Color = 42495
+    $wsInput.Range("A12:A21").Font.Color = 42495
     $wsInput.Range("A1").Interior.Color = 23220               # dark orange, RGB(180,90,0)
     $wsInput.Range("A1").Font.Color = 16777215
     $wsInput.Range("B1").Font.Color = 16777215
 
-    $borderRange = $wsInput.Range("A1:B20")
+    $borderRange = $wsInput.Range("A1:B21")
     $borderRange.Borders.LineStyle = 1   # xlContinuous
     $borderRange.Borders.Weight = 2      # xlThin
     $borderRange.Borders.Color = 5263440 # dark gray, RGB(80,80,80)

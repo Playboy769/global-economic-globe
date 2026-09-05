@@ -283,8 +283,10 @@ Public Sub FetchSECFilings()
         mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
         mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets)
 
-    SetStatus wsIn, "匯出個股快照 (.xlsx) 中..."
-    Call ExportTickerSnapshot(ThisWorkbook, ticker, "Dashboard", "RawData", "QuarterlySnapshot")
+    If modCharts.IsAutoExportEnabled(ThisWorkbook) Then
+        SetStatus wsIn, "匯出個股快照 (.xlsx) 中..."
+        Call ExportTickerSnapshot(ThisWorkbook, ticker, "Dashboard", "RawData", "QuarterlySnapshot")
+    End If
 
     SetStatus wsIn, "完成：" & entityName & "（CIK " & cik & "）10-K " & filings10K.Count & " 筆、10-Q " & filings10Q.Count & " 筆、8-K " & filings8K.Count & " 筆、Form4 " & filingsForm4.Count & " 筆，於 " & Format$(Now, "yyyy-mm-dd hh:nn:ss")
 
