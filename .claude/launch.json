@@ -614,6 +614,18 @@
       "port": 8174
     },
     {
+      "name": "aircraft-field-guide",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8185",
+        "--directory",
+        "projects/aircraft-field-guide"
+      ],
+      "port": 8185
+    },
+    {
       "name": "gaoye-mock-exam",
       "runtimeExecutable": "node",
       "runtimeArgs": [
