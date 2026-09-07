@@ -445,12 +445,20 @@ End Sub
 ' RawData writes -- the quarterly trend charts already live on Dashboard
 ' (BuildFinancialChartsInto's "季度 Quarterly" series), this sheet is purely
 ' the tabular quarter-by-quarter read.
+' filings10KForQ4: Optional and trailing (after sheetName, not before) so the
+' existing modMOPS.bas caller -- which positionally supplies its own
+' sheetName ("TW_QuarterlySnapshot") as the last argument -- keeps compiling
+' unchanged and keeps getting NO Q4 derivation (TW quarterly filings are a
+' different reporting regime; deriving Q4 for them is out of scope here).
+' Only modSEC.bas's US caller passes this, by name, to get Q4 columns backed
+' out of the matching 10-K -- see BuildQuarterlyColumnsWithQ4.
 Public Sub BuildQuarterlyDashboard(ByVal wb As Workbook, ByVal ticker As String, ByVal entityName As String, _
     ByVal filings10Q As Collection, ByVal mapRevenue As Object, ByVal mapEps As Object, ByVal mapShares As Object, ByVal allMaps As Variant, ByVal prices As Object, _
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
     ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
-    ByVal mapShortTermDebt As Object, ByVal mapCOGS As Object, ByVal mapAccountsPayable As Object, ByVal mapAssets As Object, Optional ByVal sheetName As String = "QuarterlySnapshot")
+    ByVal mapShortTermDebt As Object, ByVal mapCOGS As Object, ByVal mapAccountsPayable As Object, ByVal mapAssets As Object, Optional ByVal sheetName As String = "QuarterlySnapshot", _
+    Optional ByVal filings10KForQ4 As Collection = Nothing)
 
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet(wb, sheetName)
@@ -459,7 +467,7 @@ Public Sub BuildQuarterlyDashboard(ByVal wb As Workbook, ByVal ticker As String,
     Dim tableLastRow As Long, tableLastCol As Long
     Call BuildSnapshotTableInto(ws, entityName, ticker, filings10Q, mapRevenue, mapEps, mapShares, allMaps, prices, _
         mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
-        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, True, tableLastRow, tableLastCol)
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, True, tableLastRow, tableLastCol, filings10KForQ4)
 
     ws.Columns.AutoFit
 End Sub
@@ -680,6 +688,145 @@ Private Sub BuildPriceChartInto(ByVal ws As Worksheet, ByVal wsRaw As Worksheet,
     chartBottomOut = co.Top + co.Height
 End Sub
 
+' Wraps LookupConceptValue so BuildSnapshotTableInto's per-period metric loop
+' doesn't need an if/else at every call site for a synthetic derived-Q4 column
+' (see BuildQuarterlyColumnsWithQ4). `col` is one "column entry" dictionary:
+' - a real filing (isDerivedQ4=False): identical to calling LookupConceptValue
+'   directly with col's own accn/reportDate/form.
+' - a derived Q4 column (isDerivedQ4=True) with isFlow=True (an income-
+'   statement or cash-flow item, which the 10-K only ever reports as a
+'   FULL-YEAR cumulative total -- SEC's XBRL company-concept/companyfacts
+'   APIs never expose a discrete Q4 duration fact for a US filer): backs Q4
+'   out as FY(10-K) - Q1 - Q2 - Q3. Any one of the four pieces missing blanks
+'   the whole result -- a partial subtraction would silently understate or
+'   overstate Q4, which is worse than leaving it blank.
+' - a derived Q4 column with isFlow=False (a balance-sheet/point-in-time
+'   item): the 10-K's own value as of its own fiscal-year-end reportDate IS
+'   already the Q4 figure -- no subtraction needed or wanted.
+Private Function LookupValueForColumn(ByVal map As Object, ByVal col As Object, ByVal isFlow As Boolean) As Variant
+    If Not CBool(col("isDerivedQ4")) Or Not isFlow Then
+        LookupValueForColumn = LookupConceptValue(map, CStr(col("accn")), CStr(col("reportDate")), CStr(col("form")))
+        Exit Function
+    End If
+
+    Dim q1 As Object, q2 As Object, q3 As Object
+    Set q1 = col("q1")
+    Set q2 = col("q2")
+    Set q3 = col("q3")
+
+    Dim vFY As Variant, v1 As Variant, v2 As Variant, v3 As Variant
+    vFY = LookupConceptValue(map, CStr(col("accn")), CStr(col("reportDate")), CStr(col("form")))
+    v1 = LookupConceptValue(map, CStr(q1("accn")), CStr(q1("reportDate")), CStr(q1("form")))
+    v2 = LookupConceptValue(map, CStr(q2("accn")), CStr(q2("reportDate")), CStr(q2("form")))
+    v3 = LookupConceptValue(map, CStr(q3("accn")), CStr(q3("reportDate")), CStr(q3("form")))
+
+    If HasVal(vFY) And HasVal(v1) And HasVal(v2) And HasVal(v3) Then
+        LookupValueForColumn = CDbl(vFY) - CDbl(v1) - CDbl(v2) - CDbl(v3)
+    Else
+        LookupValueForColumn = ""
+    End If
+End Function
+
+' Builds the quarterly table's column list, synthesizing a Q4 column for every
+' fiscal year where all three 10-Qs (Q1/Q2/Q3) were fetched AND a matching
+' 10-K (fp="FY") is on file. SEC's companyfacts/companyconcept XBRL APIs never
+' expose a discrete Q4 duration fact for a US filer -- only the cumulative
+' annual one on the 10-K -- which is why the quarterly table previously
+' skipped every Q4 column outright.
+' Returns a 1-based Variant array of column-entry Dictionaries (each carrying
+' accn/reportDate/form/fy/isDerivedQ4, plus q1/q2/q3 sub-dictionaries when
+' isDerivedQ4=True), sorted ascending by reportDate -- sorting on reportDate
+' alone is enough to interleave a synthetic Q4 in the right place, since a
+' fiscal year's own reportDate (its 10-K's fiscal-year-end) always falls after
+' that year's Q3 and before the next fiscal year's Q1.
+Private Function BuildQuarterlyColumnsWithQ4(ByVal filings10K As Collection, ByVal filings10Q As Collection, ByVal allMaps As Variant) As Variant
+    Dim cols As New Collection
+
+    Dim f As Variant, fyfp As String, parts As Variant
+    For Each f In filings10Q
+        Dim c As Object
+        Set c = CreateObject("Scripting.Dictionary")
+        c("accn") = CStr(f("accn"))
+        c("reportDate") = CStr(f("reportDate"))
+        c("form") = CStr(f("form"))
+        c("isDerivedQ4") = False
+
+        fyfp = LookupFyFp(allMaps, CStr(c("accn")), CStr(c("reportDate")), CStr(c("form")))
+        parts = Split(fyfp, "|")
+        c("fy") = parts(0)
+        c("fp") = parts(1)
+        cols.Add c
+    Next f
+
+    ' Index the real quarters by fiscal year so each 10-K only has to look its
+    ' own year up once, rather than rescanning all of filings10Q per 10-K.
+    Dim byFy As Object
+    Set byFy = CreateObject("Scripting.Dictionary")
+    Dim item As Variant
+    For Each item In cols
+        If item("fy") <> "" Then
+            If Not byFy.Exists(item("fy")) Then Set byFy(item("fy")) = CreateObject("Scripting.Dictionary")
+            Set byFy(item("fy"))(item("fp")) = item
+        End If
+    Next item
+
+    Dim fy As String, fp As String
+    For Each f In filings10K
+        fyfp = LookupFyFp(allMaps, CStr(f("accn")), CStr(f("reportDate")), CStr(f("form")))
+        parts = Split(fyfp, "|")
+        fy = parts(0): fp = parts(1)
+        If fy <> "" And fp = "FY" Then
+            If byFy.Exists(fy) Then
+                If byFy(fy).Exists("Q1") And byFy(fy).Exists("Q2") And byFy(fy).Exists("Q3") Then
+                    Dim q4 As Object
+                    Set q4 = CreateObject("Scripting.Dictionary")
+                    q4("accn") = CStr(f("accn"))
+                    q4("reportDate") = CStr(f("reportDate"))
+                    q4("form") = CStr(f("form"))
+                    q4("isDerivedQ4") = True
+                    q4("fy") = fy
+                    Set q4("q1") = byFy(fy)("Q1")
+                    Set q4("q2") = byFy(fy)("Q2")
+                    Set q4("q3") = byFy(fy)("Q3")
+                    cols.Add q4
+                End If
+            End If
+        End If
+    Next f
+
+    ' Collection -> array, then a small ascending insertion sort on reportDate
+    ' (ISO "yyyy-mm-dd" text sorts correctly lexically) -- consistent with this
+    ' file's existing small-n sorts (see BuildPriceChartInto) rather than
+    ' pulling in a separate sort utility for what's at most a few dozen columns.
+    Dim n As Long
+    n = cols.Count
+    Dim arr() As Object
+    ReDim arr(1 To n)
+    Dim i As Long
+    i = 0
+    For Each item In cols
+        i = i + 1
+        Set arr(i) = item
+    Next item
+
+    Dim j As Long, key As Object
+    For i = 2 To n
+        Set key = arr(i)
+        j = i - 1
+        Do While j >= 1
+            If CStr(arr(j)("reportDate")) > CStr(key("reportDate")) Then
+                Set arr(j + 1) = arr(j)
+                j = j - 1
+            Else
+                Exit Do
+            End If
+        Loop
+        Set arr(j + 1) = key
+    Next i
+
+    BuildQuarterlyColumnsWithQ4 = arr
+End Function
+
 ' Table: actual historical fiscal-year snapshot (Stock Price / Market Cap /
 ' Revenue / EPS / P-E / P-S / growth rates / valuation & return ratios) across
 ' the 10-Ks already fetched, grouped into labeled sections (market data / income
@@ -692,13 +839,18 @@ End Sub
 ' band's "近N年/季" label) -- the metric computation itself is period-agnostic,
 ' it just uses whatever accn/reportDate/form each passed-in filing carries, so
 ' the same code serves both the annual (10-K) and quarterly (10-Q) callers.
+' filings10KForDerivedQuarters: ONLY meaningful when isQuarterly=True -- the
+' real annual 10-Ks, used solely to synthesize Q4 columns (see
+' BuildQuarterlyColumnsWithQ4). Left Nothing for the annual caller (no
+' derivation needed there -- every 10-K column is already a real filed
+' period) and for any quarterly caller that doesn't have 10-Ks on hand.
 Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As String, ByVal ticker As String, ByVal filings10K As Collection, _
     ByVal mapRevenue As Object, ByVal mapEps As Object, ByVal mapShares As Object, ByVal allMaps As Variant, ByVal prices As Object, _
     ByVal mapInventory As Object, ByVal mapAR As Object, ByVal mapCurrentAssets As Object, ByVal mapCurrentLiabilities As Object, _
     ByVal mapLongTermDebt As Object, ByVal mapStockholdersEquity As Object, ByVal mapEffectiveTaxRate As Object, ByVal mapCapEx As Object, ByVal mapCFO As Object, _
     ByVal mapCash As Object, ByVal mapDA As Object, ByVal mapOperatingIncome As Object, ByVal mapDividends As Object, ByVal mapNetIncome As Object, _
     ByVal mapShortTermDebt As Object, ByVal mapCOGS As Object, ByVal mapAccountsPayable As Object, ByVal mapAssets As Object, ByVal isQuarterly As Boolean, _
-    ByRef tableLastRow As Long, ByRef tableLastCol As Long)
+    ByRef tableLastRow As Long, ByRef tableLastCol As Long, Optional ByVal filings10KForDerivedQuarters As Collection = Nothing)
 
     On Error GoTo BSTIErr
 
@@ -715,15 +867,50 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     End If
 
     Dim n As Long
-    n = filings10K.Count
     Dim ordered() As Object
-    ReDim ordered(1 To n)
-    i = 0
     Dim f As Variant
-    For Each f In filings10K
-        i = i + 1
-        Set ordered(n - i + 1) = f
-    Next f
+
+    ' Nested Ifs, not one "isQuarterly And Not x Is Nothing And x.Count > 0"
+    ' condition -- VBA's And does not short-circuit (see the investedCapital/
+    ' HasVal comments elsewhere in this file for the same trap), so a combined
+    ' condition would still evaluate filings10KForDerivedQuarters.Count when
+    ' it's Nothing (the annual caller never passes it) and throw error 91
+    ' before isQuarterly=False ever gets a chance to short the check out.
+    Dim useQ4Derivation As Boolean
+    useQ4Derivation = False
+    If isQuarterly Then
+        If Not filings10KForDerivedQuarters Is Nothing Then
+            If filings10KForDerivedQuarters.Count > 0 Then useQ4Derivation = True
+        End If
+    End If
+
+    If useQ4Derivation Then
+        ' filings10K here is actually the quarterly caller's 10-Q collection
+        ' (see the parameter comment above BuildSnapshotTableInto) -- pass it
+        ' as the "quarters" argument, and the real 10-Ks as the "annual"
+        ' argument, so BuildQuarterlyColumnsWithQ4 can back Q4 out of each
+        ' fiscal year that has all of Q1/Q2/Q3 plus a matching 10-K.
+        Dim colsArr As Variant
+        colsArr = BuildQuarterlyColumnsWithQ4(filings10KForDerivedQuarters, filings10K, allMaps)
+        n = UBound(colsArr)
+        ReDim ordered(1 To n)
+        Dim ci As Long
+        For ci = 1 To n
+            Set ordered(ci) = colsArr(ci)
+        Next ci
+    Else
+        n = filings10K.Count
+        ReDim ordered(1 To n)
+        i = 0
+        For Each f In filings10K
+            i = i + 1
+            Set ordered(n - i + 1) = f
+            ' A real filing dict never has this key -- give it one so the rest
+            ' of this loop can treat every column uniformly (see
+            ' LookupValueForColumn), whether or not any Q4 was ever derived.
+            ordered(n - i + 1)("isDerivedQ4") = False
+        Next f
+    End If
 
     ws.Range("A1").Value = entityName & " (" & ticker & ")"
     ws.Range("A1").Font.Bold = True
@@ -765,27 +952,46 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
         form = ordered(i)("form")
 
         Dim fyfp As String, parts As Variant, colHeader As String
-        fyfp = LookupFyFp(allMaps, accn, reportDate, form)
-        parts = Split(fyfp, "|")
-        If parts(0) <> "" Then
-            If isQuarterly And parts(1) <> "" Then
-                colHeader = "FY" & parts(0) & parts(1)
-            Else
-                colHeader = "FY" & parts(0)
-            End If
-        ElseIf isQuarterly Then
-            colHeader = Format$(CDate(reportDate), "yyyy-mm")
+        Dim isDerivedQ4Col As Boolean
+        isDerivedQ4Col = CBool(ordered(i)("isDerivedQ4"))
+
+        If isDerivedQ4Col Then
+            ' Synthesized column -- accn/reportDate/form point at the 10-K
+            ' itself, whose own fp is "FY", so LookupFyFp would mislabel this
+            ' "FYxxxxFY" instead of "FYxxxxQ4". fy was already resolved once
+            ' when BuildQuarterlyColumnsWithQ4 matched this 10-K to its Q1-Q3.
+            colHeader = "FY" & ordered(i)("fy") & "Q4"
         Else
-            colHeader = Format$(CDate(reportDate), "yyyy")
+            fyfp = LookupFyFp(allMaps, accn, reportDate, form)
+            parts = Split(fyfp, "|")
+            If parts(0) <> "" Then
+                If isQuarterly And parts(1) <> "" Then
+                    colHeader = "FY" & parts(0) & parts(1)
+                Else
+                    colHeader = "FY" & parts(0)
+                End If
+            ElseIf isQuarterly Then
+                colHeader = Format$(CDate(reportDate), "yyyy-mm")
+            Else
+                colHeader = Format$(CDate(reportDate), "yyyy")
+            End If
         End If
         ws.Cells(1, i + 1).Value = colHeader
         ws.Cells(1, i + 1).Font.Bold = True
+        If isDerivedQ4Col Then
+            ' Flag the synthetic column right at the header -- see the
+            ' whole-column italic pass after the table is written for why the
+            ' marking covers every row, not just the flow-derived ones.
+            ws.Cells(1, i + 1).Font.Italic = True
+            ws.Cells(1, i + 1).AddComment "由 10-K 全年數據減去前三季 10-Q 反推得出（SEC XBRL 無獨立 Q4 duration 資料），非直接申報數字。本欄比率/倍數類指標以反推後的流量數字重新計算；Effective Tax Rate 因無法反推，本欄留空。"
+            ws.Cells(1, i + 1).Comment.Shape.TextFrame.AutoSize = True
+        End If
 
         Dim priceV As Variant, sharesV As Variant, revV As Variant, epsV As Variant
         priceV = NearestPriceOnOrBefore(prices, reportDate)
-        sharesV = LookupConceptValue(mapShares, accn, reportDate, form)
-        revV = LookupConceptValue(mapRevenue, accn, reportDate, form)
-        epsV = LookupConceptValue(mapEps, accn, reportDate, form)
+        sharesV = LookupValueForColumn(mapShares, ordered(i), False)
+        revV = LookupValueForColumn(mapRevenue, ordered(i), True)
+        epsV = LookupValueForColumn(mapEps, ordered(i), True)
 
         If HasVal(priceV) Then priceRow(i) = CDbl(priceV) Else priceRow(i) = ""
         If HasVal(sharesV) Then sharesRow(i) = CDbl(sharesV) Else sharesRow(i) = ""
@@ -834,21 +1040,31 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
 
         Dim invV As Variant, arV As Variant, curAssetsV As Variant, curLiabV As Variant
         Dim ltDebtV As Variant, stDebtV As Variant, equityV As Variant, taxRateV As Variant, capexV As Variant, cfoV As Variant
-        invV = LookupConceptValue(mapInventory, accn, reportDate, form)
-        arV = LookupConceptValue(mapAR, accn, reportDate, form)
-        curAssetsV = LookupConceptValue(mapCurrentAssets, accn, reportDate, form)
-        curLiabV = LookupConceptValue(mapCurrentLiabilities, accn, reportDate, form)
-        ltDebtV = LookupConceptValue(mapLongTermDebt, accn, reportDate, form)
-        stDebtV = LookupConceptValue(mapShortTermDebt, accn, reportDate, form)
-        equityV = LookupConceptValue(mapStockholdersEquity, accn, reportDate, form)
-        taxRateV = LookupConceptValue(mapEffectiveTaxRate, accn, reportDate, form)
-        capexV = LookupConceptValue(mapCapEx, accn, reportDate, form)
-        cfoV = LookupConceptValue(mapCFO, accn, reportDate, form)
+        invV = LookupValueForColumn(mapInventory, ordered(i), False)
+        arV = LookupValueForColumn(mapAR, ordered(i), False)
+        curAssetsV = LookupValueForColumn(mapCurrentAssets, ordered(i), False)
+        curLiabV = LookupValueForColumn(mapCurrentLiabilities, ordered(i), False)
+        ltDebtV = LookupValueForColumn(mapLongTermDebt, ordered(i), False)
+        stDebtV = LookupValueForColumn(mapShortTermDebt, ordered(i), False)
+        equityV = LookupValueForColumn(mapStockholdersEquity, ordered(i), False)
+        ' Effective tax rate is a RATE, not an additive flow -- FY minus
+        ' Q1+Q2+Q3 is not a meaningful operation on a percentage, and we don't
+        ' fetch the pretax-income/tax-expense components that would let us
+        ' compute a real Q4-only rate. Left blank for a derived column rather
+        ' than showing the full-year rate mislabeled as Q4 (ROIC's existing
+        ' "missing tax rate treated as 0" fallback already covers this).
+        If isDerivedQ4Col Then
+            taxRateV = ""
+        Else
+            taxRateV = LookupConceptValue(mapEffectiveTaxRate, accn, reportDate, form)
+        End If
+        capexV = LookupValueForColumn(mapCapEx, ordered(i), True)
+        cfoV = LookupValueForColumn(mapCFO, ordered(i), True)
 
         Dim cogsV2 As Variant, apV As Variant, assetsV2 As Variant
-        cogsV2 = LookupConceptValue(mapCOGS, accn, reportDate, form)
-        apV = LookupConceptValue(mapAccountsPayable, accn, reportDate, form)
-        assetsV2 = LookupConceptValue(mapAssets, accn, reportDate, form)
+        cogsV2 = LookupValueForColumn(mapCOGS, ordered(i), True)
+        apV = LookupValueForColumn(mapAccountsPayable, ordered(i), False)
+        assetsV2 = LookupValueForColumn(mapAssets, ordered(i), False)
         If HasVal(cogsV2) Then cogsRow(i) = CDbl(cogsV2) Else cogsRow(i) = ""
         If HasVal(apV) Then apRow(i) = CDbl(apV) Else apRow(i) = ""
         If HasVal(assetsV2) Then assetsRow(i) = CDbl(assetsV2) Else assetsRow(i) = ""
@@ -883,11 +1099,11 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
 
         ' ---- Valuation & return ratios ----
         Dim cashV As Variant, opIncV As Variant, daV As Variant, dpsV As Variant, netIncV As Variant
-        cashV = LookupConceptValue(mapCash, accn, reportDate, form)
-        opIncV = LookupConceptValue(mapOperatingIncome, accn, reportDate, form)
-        daV = LookupConceptValue(mapDA, accn, reportDate, form)
-        dpsV = LookupConceptValue(mapDividends, accn, reportDate, form)
-        netIncV = LookupConceptValue(mapNetIncome, accn, reportDate, form)
+        cashV = LookupValueForColumn(mapCash, ordered(i), False)
+        opIncV = LookupValueForColumn(mapOperatingIncome, ordered(i), True)
+        daV = LookupValueForColumn(mapDA, ordered(i), True)
+        dpsV = LookupValueForColumn(mapDividends, ordered(i), True)
+        netIncV = LookupValueForColumn(mapNetIncome, ordered(i), True)
 
         If HasVal(cashV) Then cashRow(i) = CDbl(cashV) Else cashRow(i) = ""
         If HasVal(opIncV) Then opIncRow(i) = CDbl(opIncV) Else opIncRow(i) = ""
@@ -1158,6 +1374,20 @@ Private Sub BuildSnapshotTableInto(ByVal ws As Worksheet, ByVal entityName As St
     ' Section banners must be styled AFTER the blanket black-paint above, or
     ' this paint would immediately overwrite their gray background.
     Call StyleBannerRows(ws, bannerRows, n + 1)
+
+    ' Italicize every derived-Q4 column across its full height (all rows, not
+    ' just the flow-derived ones) -- even a "point-in-time" row in that column
+    ' (e.g. Cash, Stockholders Equity) has no corresponding filed 10-Q, so
+    ' flagging the whole column keeps the "synthetic quarter" signal visible
+    ' regardless of which row a reader lands on. The header cell's own italic
+    ' + comment (set above) already explains why.
+    If isQuarterly Then
+        For i = 1 To n
+            If CBool(ordered(i)("isDerivedQ4")) Then
+                ws.Range(ws.Cells(2, i + 1), ws.Cells(lastRow, i + 1)).Font.Italic = True
+            End If
+        Next i
+    End If
 
     ' ---- P/E and P/S percentile band across all fetched fiscal years ----
     ' Not pinned to "5 years" -- uses whatever window was actually fetched

@@ -278,10 +278,14 @@ Public Sub FetchSECFilings()
         mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
         mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, filingsBlockLastRow, wsOut)
 
-    SetStatus wsIn, "繪製季度快照分頁中..."
+    SetStatus wsIn, "繪製季度快照分頁中（含 10-K 反推 Q4）..."
+    ' filings10KForQ4:=filings10K (named, not positional) so this call skips
+    ' over the sheetName optional slot cleanly -- see the parameter comment on
+    ' BuildQuarterlyDashboard for why it's trailing.
     Call BuildQuarterlyDashboard(ThisWorkbook, ticker, entityName, filings10Q, mapRevenue, mapEps, mapShares, allMaps, priceHistory, _
         mapInventory, mapAR, mapCurrentAssets, mapCurrentLiabilities, mapLongTermDebt, mapStockholdersEquity, mapEffectiveTaxRate, mapCapEx, mapCFO, _
-        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets)
+        mapCash, mapDA, mapOperatingIncome, mapDividends, mapNetIncome, mapShortTermDebt, mapCOGS, mapAccountsPayable, mapAssets, _
+        filings10KForQ4:=filings10K)
 
     If modCharts.IsAutoExportEnabled(ThisWorkbook) Then
         SetStatus wsIn, "匯出個股快照 (.xlsx) 中..."
