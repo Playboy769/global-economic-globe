@@ -1,0 +1,30 @@
+' ============================================================================
+'  Worksheet code-behind for the "Groups" sheet (RR4 workbook).
+' ----------------------------------------------------------------------------
+'  NOT a .bas module -- it lives in the sheet's own code module.
+'
+'  The Groups sheet holds tblGroups, the single source of truth for every
+'  MARKET SCANNER group (built-in sectors and the H2 Forecast groups alike).
+'  Columns by position: 1 Market (TW/US) | 2 Group | 3 Ticker | 4 Source |
+'  5 Note -- one row per ticker; only the column order matters to the code.
+'
+'  Any edit inside the table rebuilds the GroupList name (column H) that
+'  feeds the keyword dropdown on "Company research", and the group database
+'  panel beside the scanner (L1:V33).
+' ============================================================================
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = Me.ListObjects(Sanner.GROUPS_TABLE)
+    On Error GoTo 0
+    If lo Is Nothing Then Exit Sub
+    If Intersect(Target, lo.Range) Is Nothing Then Exit Sub
+
+    On Error GoTo Done
+    Application.EnableEvents = False
+    Call Sanner.RebuildGroupList
+    Call Sanner.RebuildGroupDb
+Done:
+    Application.EnableEvents = True
+End Sub
