@@ -1963,10 +1963,11 @@ body.dark #notes-search-panel { background: #1a1a1a; border-color: #2a2a2a; }
 body.dark .nspi-note { color: #9aa8d8; }
 
 /* ── Fetch URL dialog ────────────────────────────────────────── */
-#fetch-url-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+#fetch-url-dialog, #fetch-url-error-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,.5); z-index: 700; display: none;
   align-items: center; justify-content: center; }
-#fetch-url-dialog.open { display: flex; }
+#fetch-url-error-dialog { z-index: 720; }
+#fetch-url-dialog.open, #fetch-url-error-dialog.open { display: flex; }
 .fud-inner { background: var(--bg-darker); border-radius: 14px; padding: 22px 24px;
   width: 400px; max-width: 90vw; }
 body.dark .fud-inner { background: #1a1a1a; }
@@ -1974,6 +1975,11 @@ body.dark .fud-inner { background: #1a1a1a; }
   border: 1px solid var(--border); border-radius: 6px; font-size: 13px;
   outline: none; background: var(--bg-light); color: var(--text-main); margin-bottom: 10px; }
 #fetch-url-input:focus { border-color: var(--accent); }
+#fue-detail { white-space: pre-wrap; word-break: break-word; font-size: 11px; line-height: 1.5;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background: var(--bg-light); color: var(--text-muted); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 10px; max-height: 180px; overflow: auto; margin: 0; }
+body.dark #fue-detail { background: #111; color: #bbb; border-color: #333; }
 
 /* ── Word count bar tweak ────────────────────────────────────── */
 .word-count-bar { font-size: 12px; }
@@ -5540,14 +5546,28 @@ function showFetchUrlDialog() {
 function hideFetchUrlDialog() {
   document.getElementById('fetch-url-dialog').classList.remove('open');
 }
+let _lastFetchError = '';
 async function doFetchUrl() {
   const url = document.getElementById('fetch-url-input').value.trim();
   if (!url) return;
   const btn = document.getElementById('fetch-url-btn');
   btn.textContent = '抓取中…'; btn.disabled = true;
+  let httpInfo = '';
   try {
-    const res = await fetch(`${API_BASE}/fetch-url?url=${encodeURIComponent(url)}`).then(r => r.json());
-    if (res.detail) { toast('抓取失敗：' + res.detail); return; }
+    const r = await fetch(`${API_BASE}/fetch-url?url=${encodeURIComponent(url)}`);
+    httpInfo = `HTTP ${r.status} ${r.statusText}`.trim();
+    const ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      // 伺服器沒回 JSON：多半是登入逾時被導向中央登入頁，或伺服器 500 錯誤頁
+      const txt = (await r.text()).slice(0, 600).trim();
+      showFetchError(url, `${httpInfo}\n伺服器沒有回傳 JSON（可能是登入逾時被導向，或伺服器內部錯誤）。\n\n${txt}`);
+      return;
+    }
+    const res = await r.json();
+    if (!r.ok || res.detail) {
+      showFetchError(url, `${httpInfo}\n${res && res.detail ? res.detail : '抓取失敗，且伺服器未提供原因。'}`);
+      return;
+    }
     if (res.title)   document.getElementById('f-title').value   = res.title;
     if (res.content) document.getElementById('f-content').value = res.content;
     if (res.author) { const el = document.getElementById('f-author'); if (el && !el.value) el.value = res.author; }
@@ -5557,11 +5577,43 @@ async function doFetchUrl() {
     hideFetchUrlDialog();
     const filled = ['標題', res.author && '作者', res.date && '日期'].filter(Boolean).join('、');
     toast(`✓ 已填入：${filled}與內容`);
-  } catch(e) { toast('抓取失敗'); }
-  finally { btn.textContent = '抓取'; btn.disabled = false; }
+  } catch(e) {
+    showFetchError(url, `${httpInfo || '請求未送達'}\n${e && e.message ? e.message : e}`);
+  } finally { btn.textContent = '抓取'; btn.disabled = false; }
+}
+function showFetchError(url, detail) {
+  _lastFetchError = `URL: ${url}\n${detail}`;
+  document.getElementById('fue-friendly').textContent =
+    '這則來源擋掉了伺服器端的自動擷取，或它的內文是由瀏覽器端 JavaScript 載入的。' +
+    '你仍然可以按「手動填寫」直接在表單貼上標題與內容後儲存——不影響存檔。';
+  document.getElementById('fue-detail').textContent = detail;
+  document.getElementById('fetch-url-error-dialog').classList.add('open');
+}
+function hideFetchError() {
+  document.getElementById('fetch-url-error-dialog').classList.remove('open');
+}
+function copyFetchError() {
+  const done = () => toast('已複製錯誤訊息');
+  const fail = () => toast('複製失敗，請手動選取文字');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(_lastFetchError).then(done, fail);
+  } else { fail(); }
+}
+function fetchErrorManual() {
+  const url = document.getElementById('fetch-url-input').value.trim();
+  const src = document.getElementById('f-source');
+  if (src && !src.value && url) src.value = url;
+  hideFetchError();
+  hideFetchUrlDialog();
+  const t = document.getElementById('f-title');
+  if (t) t.focus();
+  toast('請手動填寫標題與內容');
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { hideFetchUrlDialog(); closeStats(); closeCLD(); closeAsk(); closeGraphView(); }
+  if (e.key === 'Escape') {
+    if (document.getElementById('fetch-url-error-dialog').classList.contains('open')) { hideFetchError(); return; }
+    hideFetchUrlDialog(); closeStats(); closeCLD(); closeAsk(); closeGraphView();
+  }
 });
 
 // ── 因果循環圖 (CLD) ──────────────────────────────────────────
@@ -6771,6 +6823,21 @@ function graphResetView() {
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn-cancel" onclick="hideFetchUrlDialog()">取消</button>
       <button class="btn-save" id="fetch-url-btn" onclick="doFetchUrl()">抓取</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fetch URL error dialog -->
+<div id="fetch-url-error-dialog">
+  <div class="fud-inner">
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text-main)">⚠️ 這則網址無法自動擷取</div>
+    <div id="fue-friendly" style="font-size:13px;color:var(--text-muted);line-height:1.65;margin-bottom:12px"></div>
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:4px">技術原因（可複製回報）</div>
+    <pre id="fue-detail"></pre>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn-cancel" onclick="copyFetchError()">複製訊息</button>
+      <button class="btn-cancel" onclick="hideFetchError()">關閉</button>
+      <button class="btn-save" onclick="fetchErrorManual()">手動填寫</button>
     </div>
   </div>
 </div>

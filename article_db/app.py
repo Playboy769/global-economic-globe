@@ -981,12 +981,61 @@ def _fetch_substack(url: str) -> dict | None:
     return {"title": title, "author": author, "date": date, "content": content}
 
 
+# Substack Note（短動態）URL 的各種形狀，全部都要認得：
+#   substack.com/@handle/note/c-<id>                （分享連結的新格式，本次 bug 的來源）
+#   substack.com/note/c-<id>                        （會 302 到 /profile/<uid>-<slug>/note/…）
+#   substack.com/profile/<uid>-<slug>/note/c-<id>
+#   <pub>.substack.com/note/c-<id>
+#   open.substack.com/pub/<pub>/note/c-<id>
+_SUBSTACK_NOTE_RE = re.compile(
+    r'substack\.com/(?:@[^/?]+/|profile/[^/?]+/|pub/[^/?]+/)?note/', re.I
+)
+_SUBSTACK_NOTE_ID_RE = re.compile(r'substack\.com/(?:[^?\s]*/)?note/c-(\d+)', re.I)
+
+
+def _is_substack_note(url: str) -> bool:
+    return bool(_SUBSTACK_NOTE_RE.search(url))
+
+
+def _fetch_substack_note_api(url: str) -> dict | None:
+    """Substack Notes 走官方 reader API 取乾淨 JSON。比抓 SPA HTML 殼可靠得多
+    （實測連瀏覽器式標頭都不用，bare 請求即回完整 JSON），是 datacenter IP 被
+    Substack 擋掉 HTML 頁時唯一還通的路。只認 c-<id>（留言型 Note）。"""
+    m = _SUBSTACK_NOTE_ID_RE.search(url)
+    if not m:
+        return None
+    api_url = f"https://substack.com/api/v1/reader/comment/{m.group(1)}"
+    try:
+        with httpx.Client(headers=_FETCH_HEADERS, follow_redirects=True, timeout=15) as client:
+            r = client.get(api_url)
+            r.raise_for_status()
+            d = r.json()
+    except Exception:
+        return None
+
+    item = d.get("item") or {}
+    c = item.get("comment") or {}
+    body = (c.get("body") or "").strip()
+    if not body:
+        return None
+
+    author = (c.get("name") or "").strip()
+    date = (c.get("date") or "")[:10]
+    # Notes 沒有標題欄位，用內文第一行（去掉 markdown 井字號）當標題，供列表顯示用
+    first_line = next(
+        (ln.strip().lstrip("#").strip() for ln in body.splitlines() if ln.strip()), ""
+    )
+    title = first_line[:60] + ("…" if len(first_line) > 60 else "")
+    return {"title": title, "author": author, "date": date, "content": body}
+
+
 def _fetch_substack_note(url: str) -> dict | None:
     """Substack「Notes」貼文（短動態，非文章）沒有對應的 by-slug API 可用，
     網頁本身又是重度 SPA 殼層，一般抓取流程（trafilatura + og/meta）在這種頁面上
     會把標題誤判成發文者名稱、作者誤判成頁面通用的 <meta name="author" content="Substack">。
-    改用頁面內嵌的 JSON-LD（@type: SocialMediaPosting）直接取得乾淨的作者與全文內容。"""
-    if not re.match(r'https?://(?:www\.)?substack\.com/@[^/?]+/note/', url):
+    改用頁面內嵌的 JSON-LD（@type: SocialMediaPosting）直接取得乾淨的作者與全文內容。
+    這是 reader API 取不到時（例如非 c- 型 Note、或 API 也被擋）的後備。"""
+    if not _is_substack_note(url):
         return None
 
     try:
@@ -1033,8 +1082,21 @@ def _fetch_substack_note(url: str) -> dict | None:
 
 @app.get("/fetch-url")
 def fetch_url_endpoint(url: str):
-    # ── Substack ──────────────────────────────────────────────────
-    substack = _fetch_substack(url) or _fetch_substack_note(url)
+    # ── Substack Notes（短動態）：先走官方 reader API，再退頁面 JSON-LD ──
+    if _is_substack_note(url):
+        note = _fetch_substack_note_api(url) or _fetch_substack_note(url)
+        if note:
+            return note
+        raise HTTPException(
+            422,
+            "Substack Note 無法自動擷取。官方 reader API 與頁面內嵌 JSON-LD 都取不到內文"
+            "——通常是 Substack 對伺服器端請求回 403／要求登入，或這則 Note 的內文由"
+            "瀏覽器端 JavaScript 動態載入。請開啟原文後，把標題與內容手動複製貼上即可，"
+            "存檔不受影響。",
+        )
+
+    # ── Substack 一般文章（/p/ 連結）──────────────────────────────
+    substack = _fetch_substack(url)
     if substack:
         return substack
 
@@ -1044,8 +1106,18 @@ def fetch_url_endpoint(url: str):
             resp = client.get(url)
             resp.raise_for_status()
             raw = resp.text
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            422,
+            f"目標網站回應 HTTP {e.response.status_code}，可能封鎖了伺服器端抓取"
+            "（不是網址打錯）。請開啟原文後手動複製貼上內容。",
+        )
     except Exception as e:
-        raise HTTPException(400, f"無法抓取：{e}")
+        raise HTTPException(
+            422,
+            f"無法連線到目標網址（{type(e).__name__}: {e}）。"
+            "請確認網址無誤，或手動複製貼上內容。",
+        )
 
     # title: JSON-LD → og:title → <title>
     ld = _json_ld(raw)
@@ -1094,5 +1166,14 @@ def fetch_url_endpoint(url: str):
         clean = re.sub(r"<[^>]+>", " ", clean)
         clean = html_mod.unescape(re.sub(r"[ \t]+", " ", clean).strip())
         content = "\n".join(ln.strip() for ln in clean.splitlines() if ln.strip())
+
+    # 連上了頁面卻幾乎抓不到東西（主文與標題都空）——多半是整頁由 JS 動態產生，
+    # 或內容在登入牆之後。與其回傳一段空白讓使用者以為成功，不如明講。
+    if len(content.strip()) < 30 and len(title.strip()) < 3:
+        raise HTTPException(
+            422,
+            "已連上該網址，但擷取不到主文與標題——整頁很可能由 JavaScript 動態產生，"
+            "或內容在登入牆之後。請開啟原文後手動複製貼上內容。",
+        )
 
     return {"title": title, "content": content, "author": author, "date": date}
