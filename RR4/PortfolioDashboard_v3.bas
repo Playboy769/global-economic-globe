@@ -1144,7 +1144,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     ws.cells(r, 7).NumberFormat = "$#,##0"
 
     ws.cells(r, 8).Value = shares
-    ws.cells(r, 8).NumberFormat = "#,##0.##"
+    ws.cells(r, 8).NumberFormat = "General"
 
     ws.cells(r, 9).Value = entryPx
     ws.cells(r, 9).NumberFormat = "#,##0.00"
