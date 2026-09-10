@@ -5,12 +5,14 @@ Option Explicit
 '  CompanyResearchSEC  --  RR4 "Company research" sheet, lower half
 ' ----------------------------------------------------------------------------
 '  Renders a single-ticker financial deep-dive under the MARKET SCANNER output
-'  (Sanner.RunCompanyResearch). US tickers -> SEC EDGAR XBRL via
+'  (Sanner.ScanTickers). US tickers -> SEC EDGAR XBRL via
 '  shared-vba/modSECData; TW co_ids -> MOPS iXBRL via shared-vba/modMOPSData.
 '
-'  Trigger: the "Company research" sheet's Worksheet_Change on B34
-'  (see RR4/SheetCompanyResearch_Code.txt). D34 optionally overrides the
-'  auto-detected market ("US" / "TW" / blank = AUTO). F34 shows status.
+'  Trigger: the "Company research" sheet's Worksheet_Change on B108
+'  (see RR4/SheetCompanyResearch_Code.txt). D108 optionally overrides the
+'  auto-detected market ("US" / "TW" / blank = AUTO). F108 shows status.
+'  Rows 1-33 are the MARKET SCANNER and rows 35-106 its price-chart wall
+'  (Sanner.CHART_FIRST_ROW..CHART_LAST_ROW); this band starts below them.
 '
 '  Requires the shared-vba modules imported into this workbook:
 '    modHttp  modJsonUtil  modPrices  modSECData  modMOPSData
@@ -22,14 +24,14 @@ Option Explicit
 ' ============================================================================
 
 Public Const CR_SHEET       As String = "Company research"
-Public Const CR_INPUT_CELL  As String = "B34"
-Public Const CR_MARKET_CELL As String = "D34"
-Public Const CR_STATUS_CELL As String = "F34"
+Public Const CR_INPUT_CELL  As String = "B108"
+Public Const CR_MARKET_CELL As String = "D108"
+Public Const CR_STATUS_CELL As String = "F108"
 
-Private Const TITLE_ROW      As Long = 36
-Private Const HDR_ROW        As Long = 37
-Private Const FIRST_DATA_ROW As Long = 38
-Private Const CLEAR_LAST_ROW As Long = 400
+Private Const TITLE_ROW      As Long = 110
+Private Const HDR_ROW        As Long = 111
+Private Const FIRST_DATA_ROW As Long = 112
+Private Const CLEAR_LAST_ROW As Long = 474
 Private Const LAST_COL       As Long = 24
 
 Private Const WANT_ANNUAL    As Long = 4
@@ -490,7 +492,7 @@ Private Function DetectMarket(ByVal tk As String, ByVal override As String) As S
 End Function
 
 Private Sub StyleInputCell(ByVal ws As Worksheet)
-    ' B34 = the ticker / co_id input. Yellow ground, black bold text, so it
+    ' CR_INPUT_CELL = the ticker / co_id input. Yellow ground, black bold text, so it
     ' stands out on the all-black sheet as "type here". Formatting only -- does
     ' not fire Worksheet_Change.
     With ws.Range(CR_INPUT_CELL)
