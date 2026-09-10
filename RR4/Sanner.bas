@@ -1059,7 +1059,7 @@ Private Sub DrawChartWall(ws As Worksheet, serKey As Object, serDt() As Variant,
             End With
             .HasLegend = False
             .HasTitle = True
-            .ChartTitle.text = plotTk(p) & "   " & Format(plotLast(p) - 100, "+0.0;-0.0;0.0") & "%"
+            .ChartTitle.text = plotTk(p)
 
             .ChartArea.Format.Fill.Visible = msoTrue
             .ChartArea.Format.Fill.Solid
@@ -1082,28 +1082,35 @@ Private Sub DrawChartWall(ws As Worksheet, serKey As Object, serDt() As Variant,
             With .Axes(xlCategory)
                 .CategoryType = xlTimeScale
                 .BaseUnit = xlDays
-                .MajorUnitScale = xlMonths
-                .MajorUnit = 3
-                .TickLabels.NumberFormat = "yy/mm"
+                .MajorUnitScale = xlYears
+                .MajorUnit = 1
+                ' Year ticks start at the axis minimum, so pin the maximum to
+                ' min + 1 year (or the last bar, if later): the axis then shows
+                ' the window's start year on the left and its end year on the right.
+                .MinimumScale = CDbl(xr.cells(1, 1).Value)
+                .MaximumScale = Application.Max(CDbl(xr.cells(xr.rows.count, 1).Value), CDbl(DateAdd("yyyy", 1, xr.cells(1, 1).Value)))
+                .TickLabels.NumberFormat = "yyyy"
                 .Format.line.ForeColor.RGB = RGB(90, 90, 90)
             End With
 
-            ' All chart text: white Calibri 12
+            ' All chart text: white Calibri 9 (title bold)
             .ChartArea.Font.Name = "Calibri"
-            .ChartArea.Font.Size = 12
+            .ChartArea.Font.Size = 9
             .ChartArea.Font.Color = RGB(255, 255, 255)
             With .ChartTitle.Font
-                .Name = "Calibri": .Size = 12: .Color = RGB(255, 255, 255): .Bold = True
+                .Name = "Calibri": .Size = 9: .Color = RGB(255, 255, 255): .Bold = True
             End With
             With .Axes(xlValue).TickLabels.Font
-                .Name = "Calibri": .Size = 12: .Color = RGB(255, 255, 255)
+                .Name = "Calibri": .Size = 9: .Color = RGB(255, 255, 255)
             End With
             With .Axes(xlCategory).TickLabels.Font
-                .Name = "Calibri": .Size = 12: .Color = RGB(255, 255, 255)
+                .Name = "Calibri": .Size = 9: .Color = RGB(255, 255, 255)
             End With
         End With
     Next p
 End Sub
+
+
 
 
 
