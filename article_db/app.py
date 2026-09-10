@@ -905,6 +905,52 @@ def _extract_main_md(raw: str) -> str:
     return best
 
 
+# Substack 文章頁的內文本體就在 <div ... class="body markup" ...> 這一個容器裡，
+# byline／發佈日期／分享數／「翻譯」按鈕都在它外面。直接 markdownify 這個 div，標題、
+# 清單、粗體全部保留，也不夾帶那些雜訊——比 trafilatura（會把 <li><p>…</p></li> 這種帶
+# 區塊子節點的清單整個壓平、bullet 與換行全丟）和 _extract_main_md（會把 byline／分享列
+# 一起吃進來）都乾淨。這是 2026-09-10 修「抓取後排版失效」時加的：Substack 的
+# api/v1/posts/by-slug 端點已不再回 JSON（改回整頁 HTML），_fetch_substack() 因此失效，
+# 文章一律掉進 trafilatura 這條會壓平清單的路。
+_SUBSTACK_BODY_RE = re.compile(
+    r'<div\b[^>]*\bclass="[^"]*\bbody markup\b[^"]*"[^>]*>', re.I
+)
+
+
+def _substack_body_md(raw: str) -> str:
+    """抽 Substack 文章頁的 <div class="body markup"> 內文轉 Markdown；不是 Substack 頁
+    或找不到該容器就回空字串。"""
+    if 'available-content' not in raw:
+        return ""
+    m = _SUBSTACK_BODY_RE.search(raw)
+    if not m:
+        return ""
+    start = m.start()
+    depth = 0
+    for tm in re.finditer(r'<(/?)div\b[^>]*>', raw[start:], re.I):
+        depth += -1 if tm.group(1) else 1
+        if depth == 0:  # 配到與起手 div 對應的 </div>
+            return _html_to_md(raw[start:start + tm.end()])
+    return ""
+
+
+def _md_list_lines(s: str) -> int:
+    return len(re.findall(r'(?m)^[ \t]*(?:[-*+]|\d+\.)[ \t]+\S', s))
+
+
+def _prefer_alt_extraction(alt: str, cur: str) -> bool:
+    """要不要改用 markdownify 的 <article>/<main> 抽取結果，而非 trafilatura 的。"""
+    if not alt:
+        return False
+    # 明顯更長 → trafilatura 疑似只抓到部分主文（原有規則）
+    if len(alt) > len(cur) + 400 and len(alt) > len(cur) * 1.25:
+        return True
+    # markdownify 保留了明顯更多清單列，且整體長度沒縮水 → trafilatura 疑似把清單壓平
+    if _md_list_lines(alt) >= _md_list_lines(cur) + 3 and len(alt) >= len(cur) * 0.9:
+        return True
+    return False
+
+
 def _og(raw: str, prop: str) -> str:
     m = re.search(
         rf'<meta[^>]+(?:property|name)=["\']og:{prop}["\'][^>]+content=["\'](.*?)["\']',
@@ -1139,18 +1185,25 @@ def fetch_url_endpoint(url: str):
     if date:
         date = date[:10]
 
-    # content: trafilatura 萃取主體文字（markdown 格式）
-    content = trafilatura.extract(
-        raw, url=url, include_comments=False, include_tables=True,
-        include_formatting=True, no_fallback=False, favor_recall=True,
-        output_format="markdown",
-    ) or ""
+    # content: 依來源挑最能保留結構（清單／粗體／標題）的抽取法
+    # (a) Substack 文章：頁面裡的 <div class="body markup"> 就是乾淨的文章本體
+    content = _substack_body_md(raw)
 
-    # 備援：trafilatura 有時只抓到部分主文。比對 <article>/<main> 區塊，
-    # 若明顯更長（絕對與相對都更長）就改用它，避免文章被截斷。
-    alt = _extract_main_md(raw)
-    if len(alt) > len(content) + 400 and len(alt) > len(content) * 1.25:
-        content = alt
+    # (b) 其餘網站：trafilatura 萃取主體文字（markdown 格式）
+    if not content:
+        content = trafilatura.extract(
+            raw, url=url, include_comments=False, include_tables=True,
+            include_formatting=True, no_fallback=False, favor_recall=True,
+            output_format="markdown",
+        ) or ""
+
+        # 備援：trafilatura 有時只抓到部分主文，或把 <li><p>…</p></li> 這種帶區塊子節點的
+        # 清單整個壓平（bullet 與換行全丟，粗體還會黏在 CJK 標點上變成純文字的 **）。
+        # 改用 markdownify 抽 <article>/<main>：截斷時它更完整，清單也保留得好。只有在明顯
+        # 更完整時才換，避免把 byline／推薦文章等雜訊一起換進來。
+        alt = _extract_main_md(raw)
+        if _prefer_alt_extraction(alt, content):
+            content = alt
 
     # 備援：JSON-LD 內嵌的 articleBody。不少站台（含部分軟性付費牆）
     # 即使畫面上把內文遮住，全文仍以 articleBody 形式存在頁面裡。
