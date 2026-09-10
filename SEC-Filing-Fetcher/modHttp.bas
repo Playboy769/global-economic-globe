@@ -48,7 +48,7 @@ Public Function HttpGet(ByVal url As String) As String
                 Err.Raise vbObjectError + 5002, "HttpGet", "網路錯誤，重試 " & HTTP_MAX_ATTEMPTS & " 次後仍失敗：" & comErrDesc & " for " & url
             End If
         ElseIf http.Status = 200 Then
-            HttpGet = http.ResponseText
+            HttpGet = Utf8Body(http)
             Exit Function
         ElseIf http.Status = 429 Or http.Status >= 500 Then
             If attempt = HTTP_MAX_ATTEMPTS Then
@@ -60,4 +60,28 @@ Public Function HttpGet(ByVal url As String) As String
 
         Application.Wait Now + TimeSerial(0, 0, attempt)
     Next attempt
+End Function
+
+' The response body decoded as UTF-8. SEC (and Yahoo) serve UTF-8 JSON as
+' "application/json" with no charset, and WinHttp's ResponseText then decodes
+' the bytes with the wrong code page: SEC's entityName
+' "KRATOS DEFENSE<U+00A0>& SECURITY SOLUTIONS,<U+00A0>INC." came out with an
+' A-circumflex before every such space. MOPS pages are Big5 and go through
+' modMOPSData.HttpGetBig5, not HttpGet. Falls back to ResponseText if the
+' stream decode fails (e.g. an empty body).
+Private Function Utf8Body(ByVal http As Object) As String
+    On Error GoTo Fallback
+    Dim stm As Object
+    Set stm = CreateObject("ADODB.Stream")
+    stm.Type = 1                      ' adTypeBinary
+    stm.Open
+    stm.Write http.ResponseBody
+    stm.Position = 0
+    stm.Type = 2                      ' adTypeText
+    stm.Charset = "utf-8"
+    Utf8Body = stm.ReadText
+    stm.Close
+    Exit Function
+Fallback:
+    Utf8Body = http.ResponseText
 End Function
