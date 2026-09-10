@@ -743,6 +743,18 @@
         "research/3189-analysis-2026q2/3189_FY2026Q2_Analysis"
       ],
       "port": 8179
+    },
+    {
+      "name": "onto-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8186",
+        "--directory",
+        "research/onto-analysis-2026q2/ONTO_FY2026Q2_Analysis"
+      ],
+      "port": 8186
     }
   ]
 }
