@@ -42,8 +42,11 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$SecXlsm = "C:\Users\ryan9\OneDrive\桌面\SECFilingFetcher.xlsm",
-    [string]$Rr4Xlsm = "C:\Users\ryan9\OneDrive\桌面\Portfolio\Compound RR4 Portfolio 2026 H2.xlsm",
+    # Built from the Desktop special folder rather than a literal path: this file
+    # has no BOM, and Windows PowerShell 5.1 decodes a BOM-less script with the
+    # ANSI code page, which mangles a literal CJK folder name in a default value.
+    [string]$SecXlsm = (Join-Path ([Environment]::GetFolderPath('Desktop')) "Portfolio\SECFilingFetcher.xlsm"),
+    [string]$Rr4Xlsm = (Join-Path ([Environment]::GetFolderPath('Desktop')) "Portfolio\Compound RR4 Portfolio 2026 H2.xlsm"),
     [switch]$DryRun
 )
 
