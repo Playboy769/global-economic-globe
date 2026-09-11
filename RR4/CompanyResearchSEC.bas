@@ -8,10 +8,10 @@ Option Explicit
 '  (Sanner.ScanTickers). US tickers -> SEC EDGAR XBRL via
 '  shared-vba/modSECData; TW co_ids -> MOPS iXBRL via shared-vba/modMOPSData.
 '
-'  Trigger: the "Company research" sheet's Worksheet_Change on B108
-'  (see RR4/SheetCompanyResearch_Code.txt). D108 optionally overrides the
-'  auto-detected market ("US" / "TW" / blank = AUTO). F108 shows status.
-'  Rows 1-33 are the MARKET SCANNER and rows 35-106 its price-chart wall
+'  Trigger: the "Company research" sheet's Worksheet_Change on B160
+'  (see RR4/SheetCompanyResearch_Code.txt). D160 optionally overrides the
+'  auto-detected market ("US" / "TW" / blank = AUTO). F160 shows status.
+'  Rows 1-33 are the MARKET SCANNER and rows 35-158 its price-chart wall
 '  (Sanner.CHART_FIRST_ROW..CHART_LAST_ROW); this band starts below them.
 '
 '  Requires the shared-vba modules imported into this workbook:
@@ -24,14 +24,14 @@ Option Explicit
 ' ============================================================================
 
 Public Const CR_SHEET       As String = "Company research"
-Public Const CR_INPUT_CELL  As String = "B108"
-Public Const CR_MARKET_CELL As String = "D108"
-Public Const CR_STATUS_CELL As String = "F108"
+Public Const CR_INPUT_CELL  As String = "B160"
+Public Const CR_MARKET_CELL As String = "D160"
+Public Const CR_STATUS_CELL As String = "F160"
 
-Private Const TITLE_ROW      As Long = 110
-Private Const HDR_ROW        As Long = 111
-Private Const FIRST_DATA_ROW As Long = 112
-Private Const CLEAR_LAST_ROW As Long = 474
+Private Const TITLE_ROW      As Long = 162
+Private Const HDR_ROW        As Long = 163
+Private Const FIRST_DATA_ROW As Long = 164
+Private Const CLEAR_LAST_ROW As Long = 526
 Private Const LAST_COL       As Long = 24
 
 Private Const WANT_ANNUAL    As Long = 4

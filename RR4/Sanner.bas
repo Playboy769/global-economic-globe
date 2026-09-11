@@ -29,7 +29,7 @@ Public Const SCAN_MAX_TICKERS  As Long = 29
 ' Group database panel beside the scanner (see RebuildGroupDb): four
 ' side-by-side blocks from column L (L1:Z33), each GROUP | N | TICKERS + a
 ' gap column, confined to rows 1..SCAN_LAST_ROW because the deep-dive
-' clears A36:BH400. The last block takes the TW groups that do not fit in
+' clears A162:BH526. The last block takes the TW groups that do not fit in
 ' the TW block.
 Public Const DB_FIRST_COL      As Long = 12         ' L, right after the scan table (C..K)
 Public Const DB_BLOCK_COLS     As Long = 4
@@ -58,17 +58,19 @@ Private Const NB_LONG          As Long = 55
 Private Const NB_LOOKBACK      As Long = 250
 Private Const NB_STRONG        As Double = 80
 
-' Price-chart wall under the scan table: one line chart per scanned ticker,
-' 5 per row, rebased to 100 at the start of the window, all on one scale.
-' Rows 35..106 are fixed at 15pt so the deep-dive (CompanyResearchSEC, input
-' on row 108) always starts below the last chart row.
+' Price-chart wall under the scan table: one line chart per scanned ticker
+' for the first CHART_MAX table rows (top R55), 4 per row, rebased to 100 at
+' the start of the window, all on one scale. Rows 35..158 are fixed at 15pt
+' (1860pt >= 5 chart rows x 344pt) so the deep-dive (CompanyResearchSEC,
+' input on row 160) always starts below the last chart row.
 Public Const CHART_FIRST_ROW   As Long = 35
-Public Const CHART_LAST_ROW    As Long = 106
+Public Const CHART_LAST_ROW    As Long = 158
 Public Const CHART_DATA_SHEET  As String = "ScanPrices"
 Private Const CHART_ROW_HEIGHT As Double = 15
-Private Const CHART_PER_ROW    As Long = 5
-Private Const CHART_W          As Double = 250
-Private Const CHART_H          As Double = 168
+Private Const CHART_PER_ROW    As Long = 4
+Private Const CHART_MAX        As Long = 20
+Private Const CHART_W          As Double = 500
+Private Const CHART_H          As Double = 336
 Private Const CHART_GAP        As Double = 8
 Private Const CHART_PREFIX     As String = "ScanChart_"
 Private Const YEAR_BARS        As Long = 250        ' "1 year": chart window and 1Y HIGH%
@@ -991,6 +993,7 @@ Private Sub DrawChartWall(ws As Worksheet, serKey As Object, serDt() As Variant,
     Dim nPlot As Long, r As Long, tk As String, s As Long
     Dim gMin As Double, gMax As Double: gMin = 1E+300: gMax = -1E+300
     For r = 3 To 2 + nRows
+        If nPlot >= CHART_MAX Then Exit For
         tk = CStr(ws.cells(r, SC_TICKER).Value)
         If serKey.Exists(tk) Then
             s = serKey(tk)
