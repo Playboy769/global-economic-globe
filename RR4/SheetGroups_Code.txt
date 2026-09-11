@@ -10,7 +10,7 @@
 '
 '  Any edit inside the table rebuilds the GroupList name (column H) that
 '  feeds the keyword dropdown on "Company research", and the group database
-'  panel beside the scanner (L1:V33).
+'  panel beside the scanner (L1:Z33).
 ' ============================================================================
 
 Private Sub Worksheet_Change(ByVal Target As Range)

@@ -19,11 +19,11 @@
 '     SheetInput Worksheet_Change: typing a ticker into B108 (or changing the
 '     D108 market override) runs CompanyResearchSEC.RunDeepDive.
 '
-'  3. Group database panel (L1:V33, built by Sanner.RebuildGroupDb).
+'  3. Group database panel (L1:Z33, built by Sanner.RebuildGroupDb).
 '     Double-clicking a group name there writes it into A4, which runs
 '     trigger 1 above.
 '
-'  Layout: scan table C1:K33 | group panel L1:V33 | price-chart wall rows
+'  Layout: scan table C1:K33 | group panel L1:Z33 | price-chart wall rows
 '  35-106 (one line chart per scanned ticker) | deep-dive from row 108.
 '
 '  Cells:

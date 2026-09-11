@@ -26,13 +26,14 @@ Public Const GROUP_STATUS_CELL As String = "A5"     ' merged A5:B12
 Public Const SCAN_LAST_ROW     As Long = 33
 Public Const SCAN_MAX_TICKERS  As Long = 29
 
-' Group database panel beside the scanner (see RebuildGroupDb): three
-' side-by-side blocks from column L, each GROUP | N | TICKERS + a gap
-' column, confined to rows 1..SCAN_LAST_ROW because the deep-dive clears
-' A36:BH400.
+' Group database panel beside the scanner (see RebuildGroupDb): four
+' side-by-side blocks from column L (L1:Z33), each GROUP | N | TICKERS + a
+' gap column, confined to rows 1..SCAN_LAST_ROW because the deep-dive
+' clears A36:BH400. The last block takes the TW groups that do not fit in
+' the TW block.
 Public Const DB_FIRST_COL      As Long = 12         ' L, right after the scan table (C..K)
 Public Const DB_BLOCK_COLS     As Long = 4
-Public Const DB_BLOCKS         As Long = 3
+Public Const DB_BLOCKS         As Long = 4
 
 ' Scan table columns (C..K). SECTOR stays last: RebuildGroupDb reads it to
 ' highlight the groups shown in the current scan.
@@ -572,7 +573,8 @@ End Function
 ' ================================================================
 '  GROUP DATABASE PANEL -- "Company research", right of the scanner
 '  Block 0 = every non built-in source (H2 ...), block 1 = built-in
-'  US, block 2 = built-in TW. One row per group: name, ticker count,
+'  US, block 2 = built-in TW, block 3 = built-in TW that overflows
+'  block 2. One row per group: name, ticker count,
 '  ticker list (single line, clipped by the fixed column width).
 '  Rebuilt after every tblGroups edit and every scan. Groups present
 '  in the current scan's SECTOR column are highlighted.
@@ -655,10 +657,19 @@ Sub RebuildGroupDb()
         Next r
     End If
 
-    Dim titles As Variant: titles = Array("H2 / CUSTOM", "US", "TW")
-    Dim nameWidths As Variant: nameWidths = Array(18, 36, 32)
+    Dim titles As Variant: titles = Array("H2 / CUSTOM", "US", "TW", "TW (cont.)")
+    Dim nameWidths As Variant: nameWidths = Array(18, 36, 32, 32)
     Dim maxRows As Long: maxRows = SCAN_LAST_ROW - 2          ' rows 3..SCAN_LAST_ROW
     Dim b As Long, c0 As Long, rw As Long, shown As Long, total As Long, hot As Boolean
+
+    ' TW groups past the first maxRows continue in the last block
+    Dim twSeen As Long
+    For k = 1 To n
+        If gBlock(k) = 2 Then
+            twSeen = twSeen + 1
+            If twSeen > maxRows Then gBlock(k) = 3
+        End If
+    Next k
     For b = 0 To DB_BLOCKS - 1
         c0 = DB_FIRST_COL + b * DB_BLOCK_COLS
         total = 0
