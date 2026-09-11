@@ -183,8 +183,8 @@ Sub ScanTickers(market As String, Sector As String, tickerList As Variant, ticke
             tech = ScanTech(cls)
             wsRes.cells(rowNum, SC_PRICE).Value = tech.price
             wsRes.cells(rowNum, SC_PRICE).NumberFormat = "#,##0.00"
-            WriteColoredPct wsRes.cells(rowNum, SC_HIGHDIST), tech.DistFromHigh, "0.00%", False
-            WriteColoredPct wsRes.cells(rowNum, SC_CHG180), tech.Change180D, "0.00%", True
+            WriteColoredPct wsRes.cells(rowNum, SC_HIGHDIST), tech.DistFromHigh, "0.00%"
+            WriteColoredPct wsRes.cells(rowNum, SC_CHG180), tech.Change180D, "0.00%"
             Call WriteNormBias(wsRes.cells(rowNum, SC_R20), NormBias(cls, NB_SHORT, NB_LOOKBACK))
             Call WriteNormBias(wsRes.cells(rowNum, SC_R55), NormBias(cls, NB_LONG, NB_LOOKBACK))
             Call ApplyScanTrend(wsRes.cells(rowNum, SC_TREND), tech)
@@ -265,32 +265,17 @@ End Sub
 ' ================================================================
 '  Cell helpers
 ' ================================================================
-Private Sub WriteColoredPct(cell As Range, val As Double, fmt As String, positiveIsGood As Boolean)
+' Taiwan convention, same as R20/R55 and TREND: up = red, down = green, 0 = gray
+Private Sub WriteColoredPct(cell As Range, val As Double, fmt As String)
     cell.Value = val
     cell.NumberFormat = fmt
-    
-    ' If the value is exactly 0, color it Gray
-    If val = 0 Then
-        cell.Font.Color = RGB(150, 150, 150)
-        Exit Sub
-    End If
-    
-    ' Determine colors based on the positiveIsGood flag
-    If positiveIsGood Then
-        If val > 0 Then
-            cell.Font.Color = RGB(0, 210, 100)  ' Positive is Good -> Green
-        Else
-            cell.Font.Color = RGB(255, 80, 80)  ' Negative is Bad -> Red
-        End If
+    If val > 0 Then
+        cell.Font.Color = RGB(255, 80, 80)
+    ElseIf val < 0 Then
+        cell.Font.Color = RGB(0, 210, 100)
     Else
-        ' If positiveIsGood is False, we assume Negative is Good
-        If val < 0 Then
-            cell.Font.Color = RGB(0, 210, 100)  ' Negative is Good -> Green
-        Else
-            cell.Font.Color = RGB(255, 80, 80)  ' Positive is Bad -> Red
-        End If
+        cell.Font.Color = RGB(150, 150, 150)
     End If
-
 End Sub
 
 Private Sub ApplyScanTrend(cell As Range, tech As TechIndicators)
