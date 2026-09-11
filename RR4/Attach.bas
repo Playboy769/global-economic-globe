@@ -1194,11 +1194,29 @@ Sub RunSystemDebug()
             End If
             wr = wr + 1
 
-            Dim mLR As Long: mLR = wsH.Cells(wsH.Rows.Count, "M").End(xlUp).Row
-            Dim mCount As Long: mCount = mLR - 1
-            Call DB_Row(wsDB, wr, "HistoryLog", "M-col data count (Port Ret)", _
-                IIf(mCount > 0, "OK", "ERROR"), mCount & " rows", _
-                IIf(mCount > 0, RGB(0, 210, 100), RGB(255, 80, 80)))
+            ' Layout v2: F/H/J/L = index prices, G/I/K/M = YTD Ret%.
+            ' Count rows where the SPY price actually got logged - a blank
+            ' there means the Yahoo fetch failed (blank is written, not 0).
+            Dim pxLR As Long: pxLR = wsH.Cells(wsH.Rows.Count, "F").End(xlUp).Row
+            Dim pxCount As Long: pxCount = pxLR - 1
+            Call DB_Row(wsDB, wr, "HistoryLog", "Index price rows (Col F, SPY)", _
+                IIf(pxCount > 0, "OK", "ERROR"), pxCount & " rows", _
+                IIf(pxCount > 0, RGB(0, 210, 100), RGB(255, 80, 80)))
+            wr = wr + 1
+
+            ' YTD baselines live on the HistoryRaw sheet (B1 = baseline year)
+            Dim wsRaw As Worksheet
+            On Error Resume Next: Set wsRaw = ThisWorkbook.Sheets("HistoryRaw"): On Error GoTo 0
+            Dim baseYear As Variant, baseOK As Boolean
+            baseOK = False
+            If Not wsRaw Is Nothing Then
+                baseYear = wsRaw.Range("B1").Value
+                If IsNumeric(baseYear) And Not IsEmpty(baseYear) Then baseOK = (CLng(baseYear) = Year(Date))
+            End If
+            Call DB_Row(wsDB, wr, "HistoryLog", "YTD baselines (HistoryRaw!B1)", _
+                IIf(baseOK, "OK", "WARN"), _
+                IIf(baseOK, "Baselined on " & CStr(baseYear), "Missing or stale - rebuilt on next log"), _
+                IIf(baseOK, RGB(0, 210, 100), RGB(255, 140, 0)))
             wr = wr + 1
 
             Dim todayLogged As Boolean: todayLogged = False

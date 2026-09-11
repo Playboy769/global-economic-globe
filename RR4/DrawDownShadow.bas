@@ -3,7 +3,9 @@ Option Explicit
 
 ' ================================================================
 ' DRAWDOWN SHADOW v2.0
-' Builds drawdown shadow + pain-adjusted chart from HistoryLog!M
+' Builds drawdown shadow + pain-adjusted chart from HistoryLog!B/C
+' (daily return derived from TotalMarketValue / TotalCumulativePnL;
+'  it used to read the never-populated HistoryLog!M)
 '
 ' v2 changes vs v1:
 '   1. Detection rule:
@@ -32,30 +34,42 @@ Public Sub BuildDrawdownShadow()
     Application.StatusBar = "Building drawdown shadow v2..."
     On Error GoTo CleanFail
 
-    ' --- Read HistoryLog!M into typed arrays ---
+    ' --- Derive the daily portfolio return from HistoryLog!B/C ---
+    ' HistoryLog layout v2 (2026-08-13) has no stored portfolio-return column
+    ' any more - column M is now "YTD Ret% (SOX)".  The daily return is
+    ' recomputed here as (CumPnL_t - CumPnL_t-1) / MarketValue_t-1, which
+    ' keeps deposits/withdrawals out of the numerator.
     Dim wsH As Worksheet
     On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo CleanFail
     If wsH Is Nothing Then MsgBox "HistoryLog sheet not found", vbExclamation: GoTo CleanExit
 
     Dim lastRow As Long
-    lastRow = wsH.Cells(wsH.Rows.Count, "M").End(xlUp).Row
-    If lastRow < 3 Then MsgBox "Not enough data in column M (need >= 5 rows for 5-day window)", vbInformation: GoTo CleanExit
+    lastRow = wsH.Cells(wsH.Rows.Count, "A").End(xlUp).Row
+    If lastRow < 4 Then MsgBox "Not enough rows in HistoryLog (need >= 5 rows for the 5-day window)", vbInformation: GoTo CleanExit
 
-    Dim n As Long: n = lastRow - 1
+    ' row 2 has no predecessor, so the series starts at row 3
+    Dim n As Long: n = lastRow - 2
     Dim ret() As Double: ReDim ret(1 To n)
     Dim dateStr() As String: ReDim dateStr(1 To n)
     Dim valid() As Boolean: ReDim valid(1 To n)
 
     Dim r As Long, i As Long
-    For r = 2 To lastRow
-        i = r - 1
-        Dim v As Variant: v = wsH.Cells(r, "M").Value
-        If IsNumeric(v) Then
-            ret(i) = CDbl(v)
-            valid(i) = True
-        Else
-            ret(i) = 0
-            valid(i) = False
+    For r = 3 To lastRow
+        i = r - 2
+        Dim pnlNow As Variant, pnlPrev As Variant, mktPrev As Variant
+        pnlNow = wsH.Cells(r, "C").Value
+        pnlPrev = wsH.Cells(r - 1, "C").Value
+        mktPrev = wsH.Cells(r - 1, "B").Value
+
+        ret(i) = 0
+        valid(i) = False
+        If IsNumeric(pnlNow) And IsNumeric(pnlPrev) And IsNumeric(mktPrev) Then
+            If Not IsEmpty(pnlNow) And Not IsEmpty(pnlPrev) And Not IsEmpty(mktPrev) Then
+                If CDbl(mktPrev) <> 0 Then
+                    ret(i) = (CDbl(pnlNow) - CDbl(pnlPrev)) / CDbl(mktPrev)
+                    valid(i) = True
+                End If
+            End If
         End If
         dateStr(i) = "R" & r
         On Error Resume Next
