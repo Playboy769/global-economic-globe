@@ -383,10 +383,13 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   OHLCV（`FetchOhlcv`，高低收依 `adjclose/close` 縮放＝yfinance `auto_adjust`，量不動），每檔算 20 日價格變動、
   Chaikin Money Flow（20 日）、OBV 20 日變動（以「幾天平均量」表示）與 `classify()` 訊號（CMF 死區 ±0.05、
   OBV 死區 ±0.5 天，兩者相反→方向不明＋儲存格註解 `CMF/OBV disagree`），實測 26 檔與 Python 差 <1e-13、訊號全等。
-  表格多了 **J:M（20D PX% / CMF / OBV(d) / SIGNAL）**，所以表變成 A:M、N 是間隔、**圖表改從 O 欄起**；
+  表格多了 **K:N（20D PX% / CMF / OBV(d) / SIGNAL）**，所以表變成 A:N、O 是間隔、**圖表改從 P 欄起**；
   `RRG_FLOW` 散布圖緊接 `RRG_MAIN` 下方同寬同高（一檔一個單點 series：▲ OBV 升／◆ OBV 降／● 持平，顏色＝訊號，
   紅 INFLOW／綠 OUTFLOW／琥珀 BEAR DIV／藍 BULL DIV／灰 NEUTRAL；±0.05 死區用兩條 `_dz*` 虛線輔助 series 畫，
   資料放尾巴資料塊下方）。雙擊聚焦兩張圖一起連動；表格下方多一段 MONEY FLOW SIGNALS 成員清單與英文註解。
+  **I 欄 TRAIL 是欄狀 sparkline**（13 週 RS-RATIO 逐週變化，紅正綠負），來源是尾巴資料塊右側的 TRAIL 區塊
+  （每檔一列 13 格）；`SparklineGroups.Add` 的來源範圍會跟著 nav bar 插列自動位移，但 `Cells.Clear` 不清 sparkline，
+  重建前要先 `Cells.SparklineGroups.Clear`。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
