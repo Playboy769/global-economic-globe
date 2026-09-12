@@ -23,10 +23,12 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 '  Rows 1-3                    nav bar (modNav.DrawNavRows, code "P")
 '  Upper-left  A:G  rows 4-22  total, USD/TWD, ARRANGE <GO>, weight bar,
 '                              daily log, summary
-'  Upper-right I:R  rows 4-26  ticker panel (TickerInsight module)
-'  Chart band       rows 27-40 weight donut at F (RR4_DONUT) and the
+'  Upper-right I:R  rows 4-24  ticker panel (TickerInsight module)
+'  (row 25 blank)
+'  Chart band       rows 26-39 weight donut at F (RR4_DONUT) and the
 '                              realized-PnL line across J:S (RR4_RLPNL)
 '                              (v4.7 - both used to sit right of the panel)
+'  (row 40 blank)
 '  Position log                title row 41, headers row 42, data from 43
 '  (row numbers in the notes below are the v4 ones; add RR4_TOP = 3)
 '
@@ -66,7 +68,9 @@ Public Const RR4_FX_CELL   As String = "C5"
 Public Const RR4_ARR_CELL  As String = "E5"
 ' v4.7 (2026-09-12): a 14-row chart band (RR4_CHART_TOP..) sits between the
 ' upper blocks and the position log, which moved down from 27/28/29.
-Public Const RR4_CHART_TOP As Long = 27
+' v4.7.1: one blank row above (25) and below (40) the band; the ticker
+' panel was shortened to row 24 to make room (TickerInsight TI_BOTTOM).
+Public Const RR4_CHART_TOP As Long = 26
 Public Const RR4_CHART_ROWS As Long = 14
 Public Const RR4_POS_TITLE As Long = 41
 Public Const RR4_POS_HDR   As Long = 42

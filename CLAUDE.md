@@ -289,8 +289,8 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **RR4 頁版面 v4.2（`PortfolioDashboard_v3.bas` 檔頭有完整表）**：`RR4_TOP = 3`（bar）、
   `RR4_LEFT = 1`（A 欄留白）。總值 B4、USD/TWD 輸入 C5、ARRANGE 輸入 E5、設定格 T1/T2
   （`InceptionDate`/`StartingCapital` 兩個名稱由 `PointConfigNames` 重新指向；舊 S1/S2
-  會被一次性搬過來）、**圖表帶 rows 27–40**（甜甜圈在 F、實現損益折線在 J:S，v4.7）、持倉表 標題/表頭/資料 =
-  **41/42/43** 列（v4.7 前是 27/28/29）、隱藏排序鍵 V 欄。
+  會被一次性搬過來）、**圖表帶 rows 26–39**（甜甜圈在 F、實現損益折線在 J:S，上下各留一列空白，v4.7.1；ticker
+  panel 因此縮到 row 24）、持倉表 標題/表頭/資料 = **41/42/43** 列（v4.7 前是 27/28/29）、隱藏排序鍵 V 欄。
   Ticker panel（`TickerInsight.bas`）已併進同一張表的 J:S、rows 4–26，輸入格 K4（代號）
   / L20（目標價）、追蹤格 X1——獨立的「Ticker Insight」工作表已不存在。
   **其他模組讀 RR4 頁一律透過 `RR4_*` 常數／`RR4FxRate()`／`RR4PositionCount()`，禁止

@@ -7,10 +7,10 @@ Option Explicit
 ' US colour convention (green +, red -)
 '
 ' v2 (2026-09-11): the separate "Ticker Insight" sheet is gone. The
-' panel now lives in the upper-right block of the RR4 sheet (J4:S26),
+' panel now lives in the upper-right block of the RR4 sheet (J4:S24),
 ' next to the summary; PortfolioDashboard_v3 owns the rest of the page
 ' and the column widths / row heights. Nothing here may delete shapes or
-' touch cells outside J4:S26 (plus the hidden tracker X1) - the weight
+' touch cells outside J4:S24 (plus the hidden tracker X1) - the weight
 ' bar, the weight donut and the nav bar (rows 1-3) share the sheet.
 ' v2.1 (2026-09-12): everything moved down RR4_TOP = 3 rows for the nav
 ' bar; the row numbers in the layout below are the v2 ones + 3.
@@ -33,8 +33,8 @@ Option Explicit
 '   J13 2) LIFETIME METRICS     J14:J16 labels, L14:L16 values
 '   J18 3) PROJECTION           J19:J22 labels, L19:L22 values
 '                               L20 = PRICE TARGET [input]
-'   N6  4) RECENT TRADE HISTORY N7:S7 header, N8:S25 newest first,
-'                               N26 "+n older" when it does not fit
+'   N6  4) RECENT TRADE HISTORY N7:S7 header, N8:S23 newest first,
+'                               N24 "+n older" when it does not fit
 '   X1  (hidden) ticker of the last render - keeps L20 when the same
 '       ticker is refreshed, clears it when the ticker changes
 '
@@ -54,8 +54,8 @@ Private Const TI_VAL    As Long = 12    ' L - values
 Private Const TI_HCOL   As Long = 14    ' N - first trade-history column
 Private Const TI_HHDR   As Long = 7     ' trade-history header row
 Private Const TI_H1     As Long = 8     ' first trade-history row
-Private Const TI_HLAST  As Long = 25    ' last trade-history row
-Private Const TI_BOTTOM As Long = 26    ' last panel row
+Private Const TI_HLAST  As Long = 23    ' last trade-history row (v2.3: was 25)
+Private Const TI_BOTTOM As Long = 24    ' last panel row (v2.3: was 26 - the chart band starts at 26)
 Private Const TI_RIGHT  As Long = 19    ' S - last panel column
 
 ' Transaction column letters (from existing schema)
@@ -491,7 +491,7 @@ Private Function PanelCompanyName(ws As Worksheet, ticker As String) As String
     On Error GoTo 0
 End Function
 
-' Wipe the panel block only (J4:S26 minus the K4 input cell).
+' Wipe the panel block only (J4:S24 minus the K4 input cell).
 Private Sub ClearTickerData(ws As Worksheet)
     Dim blk As Range
     Set blk = Union(ws.cells(RR4_TOP + 1, TI_LBL), _
