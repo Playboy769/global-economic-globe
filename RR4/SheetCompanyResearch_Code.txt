@@ -7,35 +7,20 @@
 '  against the sheet's CodeName (same mechanism as
 '  SEC-Filing-Fetcher/build.ps1's SheetInput_Code.txt).
 '
-'  Three entry points live here:
+'  CR page layout v3 (2026-09-12): input strip A1:B3, scan table C1:K33
+'  with a 1Y sparkline per row in L, group panel from M, deep-dive from row 36.
 '
-'  1. Group keyword (upper half). Typing one or more group names into A4
-'     (merged A4:B4, dropdown fed by the GroupList name) runs the MARKET
-'     SCANNER over those groups via Sanner.RunGroupKeyword. Names must match a
-'     group in the Groups sheet's tblGroups exactly (case and spaces ignored);
-'     separate several with commas. Status/candidates are written to A5.
-'
-'  2. Financial deep-dive (lower half). Mirrors SEC-Filing-Fetcher's
-'     SheetInput Worksheet_Change: typing a ticker into B160 (or changing the
-'     D160 market override) runs CompanyResearchSEC.RunDeepDive.
-'
-'  3. Group database panel (L1:Z33, built by Sanner.RebuildGroupDb).
-'     Double-clicking a group name there writes it into A4, which runs
-'     trigger 1 above.
-'
-'  Layout: scan table C1:K33 | group panel L1:Z33 | price-chart wall rows
-'  35-158 (one line chart per scanned ticker, first 20) | deep-dive from row 160.
-'
-'  Cells:
-'    A4   group keyword(s)      (a tblGroups group name, or "name1,name2")
-'    A5   group status line     (written by Sanner.RunGroupKeyword)
-'    B160 ticker / TW co_id     (e.g. NVDA  or  2395)
-'    D160 market override       US | TW | (blank = AUTO-detect)
-'    F160 status / error line   (written by CompanyResearchSEC)
+'  1. B1 GROUP <GO>: one or more group names (dropdown fed by the GroupList
+'     name; several separated by commas) -> Sanner.RunGroupKeyword scans them.
+'  2. B2 TICKER <GO> (or the B3 market override) -> CompanyResearchSEC.RunDeepDive.
+'  3. Double-click: a group name in the panel -> B1 (scan); a ticker in the
+'     scan table C3:C31 -> B2 (deep-dive).
+'  Status messages go to the Excel status bar (NavNotify), nothing on the page.
 ' ============================================================================
 
 Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
-    If Sanner.RunGroupFromDb(Target) Then Cancel = True
+    If Sanner.RunGroupFromDb(Target) Then Cancel = True: Exit Sub
+    If CompanyResearchSEC.RunDeepDiveFromScan(Target) Then Cancel = True
 End Sub
 
 Private Sub Worksheet_Change(ByVal Target As Range)

@@ -319,6 +319,13 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段
   重配）而跟 Realized 表脫節——2026-09-08/09 曾因此差 −2,070／+2,373，折線圖出現假尖峰。
   C 欄（含未實現）仍是快照，無法重述。
+- **Company research（CR）頁 v3 版面（2026-09-12）**：`A1:B3` 輸入條（B1 GROUP 下拉／B2 TICKER／
+  B3 MKT，`Sanner.DrawCrHeader` 畫並順手清掉 v2 殘留：A4:B4 合併格、A5 狀態塊、rows 35–158
+  的 20 張走勢圖牆與 row 160 舊輸入列）、`C1:K33` 掃描表＋**L 欄每列一條 1 年 sparkline**
+  （`DrawSparklines`，資料仍在隱藏表 `ScanPrices`）、群組面板從 **M** 欄起、**Deep-dive 從
+  row 36**（`CompanyResearchSEC` TITLE_ROW 36，原 162）。**雙擊掃描表代號 → deep-dive**
+  （`RunDeepDiveFromScan`，`.TW/.TWO` 後綴會被剝掉並強制 MOPS），雙擊群組面板 → 掃描。
+  所有狀態訊息走 `NavNotify`，頁上不再有狀態格。仍是「資料頁」不掛 nav bar。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。

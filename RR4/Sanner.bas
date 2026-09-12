@@ -16,11 +16,25 @@ Public Const GROUPS_SHEET      As String = "Groups"
 Public Const GROUPS_TABLE      As String = "tblGroups"
 Public Const GROUP_LIST_NAME   As String = "GroupList"
 Public Const GROUP_LIST_COL    As Long = 8          ' column H of the Groups sheet
-Public Const GROUP_INPUT_CELL  As String = "A4"     ' merged A4:B4
-Public Const GROUP_STATUS_CELL As String = "A5"     ' merged A5:B12
+' ----------------------------------------------------------------
+'  CR PAGE LAYOUT v3 (2026-09-12) - everything on one screen
+'    A1:B3   input strip (DrawCrHeader): A = label, B = input cell
+'            B1 GROUP <GO>   B2 TICKER <GO>   B3 MKT (US / TW / blank)
+'    C1:K33  scan table (title row 1, headers row 2, tickers from row 3)
+'    L3:L31  1-year sparkline per scanned ticker (replaces the old
+'            20-chart wall that used to fill rows 35-158)
+'    M1:..   group database panel (RebuildGroupDb)
+'    row 36+ financial deep-dive (CompanyResearchSEC)
+'  Double-click a ticker in C3:C31 -> deep-dive; double-click a group in
+'  the panel -> scan. Status text goes to the Excel status bar (NavNotify).
+' ----------------------------------------------------------------
+Public Const GROUP_INPUT_CELL  As String = "B1"
+Public Const CR_TICKER_INPUT   As String = "B2"     ' = CompanyResearchSEC.CR_INPUT_CELL
+Public Const CR_MARKET_INPUT   As String = "B3"     ' = CompanyResearchSEC.CR_MARKET_CELL
+Public Const SPARK_COL         As Long = 12         ' L
 
 ' The scanner owns rows 1..SCAN_LAST_ROW of C:K; row 34 is a spacer above
-' the chart wall (CHART_FIRST_ROW). The summary line lands two rows below
+' the deep-dive band. The summary line lands two rows below
 ' the last ticker, so 29 tickers (rows 3..31, summary on 33) is the most
 ' that fits.
 Public Const SCAN_LAST_ROW     As Long = 33
@@ -31,7 +45,7 @@ Public Const SCAN_MAX_TICKERS  As Long = 29
 ' gap column, confined to rows 1..SCAN_LAST_ROW because the deep-dive
 ' clears A162:BH526. The last block takes the TW groups that do not fit in
 ' the TW block.
-Public Const DB_FIRST_COL      As Long = 12         ' L, right after the scan table (C..K)
+Public Const DB_FIRST_COL      As Long = 13         ' M, right after the sparkline column (L)
 Public Const DB_BLOCK_COLS     As Long = 4
 Public Const DB_BLOCKS         As Long = 4
 
@@ -58,20 +72,13 @@ Private Const NB_LONG          As Long = 55
 Private Const NB_LOOKBACK      As Long = 250
 Private Const NB_STRONG        As Double = 80
 
-' Price-chart wall under the scan table: one line chart per scanned ticker
-' for the first CHART_MAX table rows (top R55), 4 per row, rebased to 100 at
-' the start of the window, all on one scale. Rows 35..158 are fixed at 15pt
-' (1860pt >= 5 chart rows x 344pt) so the deep-dive (CompanyResearchSEC,
-' input on row 160) always starts below the last chart row.
-Public Const CHART_FIRST_ROW   As Long = 35
-Public Const CHART_LAST_ROW    As Long = 158
+' Sparklines (v3): the 1-year window of every scanned ticker, rebased to
+' 100, lives on the hidden sheet CHART_DATA_SHEET (three columns per
+' ticker: Date | Index | High) and one sparkline per table row points at
+' its Index column. The old chart wall (rows 35-158, 20 charts) is gone;
+' CHART_PREFIX is kept only so leftovers get deleted.
 Public Const CHART_DATA_SHEET  As String = "ScanPrices"
-Private Const CHART_ROW_HEIGHT As Double = 15
-Private Const CHART_PER_ROW    As Long = 4
-Private Const CHART_MAX        As Long = 20
-Private Const CHART_W          As Double = 500
-Private Const CHART_H          As Double = 336
-Private Const CHART_GAP        As Double = 8
+Private Const CHART_MAX        As Long = SCAN_MAX_TICKERS
 Private Const CHART_PREFIX     As String = "ScanChart_"
 Private Const YEAR_BARS        As Long = 250        ' "1 year": chart window and 1Y HIGH%
 
@@ -98,7 +105,8 @@ Sub ScanTickers(market As String, Sector As String, tickerList As Variant, ticke
     ' Only the scan block is cleared -- the group panel sits right of it and
     ' the chart wall / deep-dive below it
     Dim scanArea As Range
-    Set scanArea = wsRes.Range(wsRes.cells(1, SC_TICKER), wsRes.cells(SCAN_LAST_ROW, SCAN_LAST_COL))
+    Set scanArea = wsRes.Range(wsRes.cells(1, SC_TICKER), wsRes.cells(SCAN_LAST_ROW, SPARK_COL))
+    Call ClearSparklines(wsRes)
     With scanArea
         .Clear
         .Interior.Color = RGB(0, 0, 0)
@@ -117,7 +125,7 @@ Sub ScanTickers(market As String, Sector As String, tickerList As Variant, ticke
 
     Dim hdrs As Variant
     hdrs = Array("TICKER", "COMPANY", "PRICE", "1Y HIGH%", "180D CHG%", _
-                 "R" & NB_SHORT, "R" & NB_LONG, "TREND", "SECTOR")
+                 "R" & NB_SHORT, "R" & NB_LONG, "TREND", "SECTOR", "1Y")
     Dim ci As Integer
     For ci = 0 To UBound(hdrs)
         With wsRes.cells(2, SC_TICKER + ci)
@@ -128,9 +136,9 @@ Sub ScanTickers(market As String, Sector As String, tickerList As Variant, ticke
             .HorizontalAlignment = xlCenter
         End With
     Next ci
-    With wsRes.Range(wsRes.cells(2, SC_TICKER), wsRes.cells(2, SCAN_LAST_COL)).Borders(xlEdgeBottom)
+    With wsRes.Range(wsRes.cells(2, SC_TICKER), wsRes.cells(2, SPARK_COL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 
@@ -153,7 +161,7 @@ Sub ScanTickers(market As String, Sector As String, tickerList As Variant, ticke
         ok = FetchDaily2y(tkr, sym, nm, dts, cls)
 
         Dim rowBg As Long: rowBg = IIf((rowNum Mod 2) = 1, RGB(12, 12, 12), RGB(20, 20, 20))
-        With wsRes.Range(wsRes.cells(rowNum, SC_TICKER), wsRes.cells(rowNum, SCAN_LAST_COL))
+        With wsRes.Range(wsRes.cells(rowNum, SC_TICKER), wsRes.cells(rowNum, SPARK_COL))
             .Interior.Color = rowBg
             .HorizontalAlignment = xlCenter
             .Font.Name = "Consolas"
@@ -211,23 +219,20 @@ Sub ScanTickers(market As String, Sector As String, tickerList As Variant, ticke
 
     Call DrawScanSummary(wsRes, rowNum + 1, market, Sector, tickerList, rowNum - 3)
 
-    scanArea.Columns.AutoFit
+    wsRes.Range(wsRes.cells(1, SC_TICKER), wsRes.cells(SCAN_LAST_ROW, SCAN_LAST_COL)).Columns.AutoFit
     wsRes.Columns(SC_TICKER).ColumnWidth = 10
     wsRes.Columns(SC_COMPANY).ColumnWidth = 28
     wsRes.Columns(SC_SECTOR).ColumnWidth = 14
+    wsRes.Columns(SPARK_COL).ColumnWidth = 18
 
     ' Refresh the group panel so its highlight follows this scan
     Call RebuildGroupDb
-    Call DrawChartWall(wsRes, serKey, serDt, serCl, rowNum - 3)
+    Call DrawSparklines(wsRes, serKey, serDt, serCl, rowNum - 3)
+    Call DrawCrHeader(wsRes)
 
-    Application.StatusBar = "Scan complete " & ChrW(&H2014) & " " & Format(Now, "hh:mm:ss")
     Application.ScreenUpdating = True
-    ' An invisible (automation) instance would hang on a modal box
-    If Application.Visible Then
-        MsgBox "Scan complete! " & (rowNum - 3) & " stocks scanned." & _
-               IIf(total > rowNum - 3, vbLf & "Truncated: " & total & " tickers in the list, only the first " & _
-                   (rowNum - 3) & " fit in the scan table.", ""), vbInformation
-    End If
+    Call NavNotify("SCAN done " & Format(Now, "hh:mm:ss") & " - " & (rowNum - 3) & " tickers" & _
+                   IIf(total > rowNum - 3, " (first " & (rowNum - 3) & " of " & total & ", table full)", ""))
 End Sub
 
 ' ================================================================
@@ -471,13 +476,12 @@ End Sub
 Sub RunGroupKeyword(ByVal raw As String)
     Dim wsRes As Worksheet
     Set wsRes = ThisWorkbook.Worksheets("Company research")
-    Dim st As Range: Set st = wsRes.Range(GROUP_STATUS_CELL)
 
     raw = Replace(Replace(raw, ChrW(&HFF0C), ","), ChrW(&H3001), ",")
-    If Len(Trim$(raw)) = 0 Then st.Value = "": Exit Sub
+    If Len(Trim$(raw)) = 0 Then Exit Sub
 
     Dim allNames As Variant: allNames = GetGroupNames("")
-    If IsEmpty(allNames) Then st.Value = "Groups table missing or empty.": Exit Sub
+    If IsEmpty(allNames) Then Call NavNotify("Groups table missing or empty.", True): Exit Sub
 
     Dim picked As Object: Set picked = CreateObject("Scripting.Dictionary")
     Dim miss As String, cand As String
@@ -498,7 +502,7 @@ Sub RunGroupKeyword(ByVal raw As String)
                 miss = miss & IIf(Len(miss) > 0, ", ", "") & t
                 For j = 0 To UBound(allNames)
                     If InStr(1, GroupKey(CStr(allNames(j))), GroupKey(t), vbTextCompare) > 0 Then
-                        cand = cand & vbLf & "- " & allNames(j)
+                        cand = cand & IIf(Len(cand) > 0, ", ", "") & allNames(j)
                     End If
                 Next j
             End If
@@ -506,12 +510,12 @@ Sub RunGroupKeyword(ByVal raw As String)
     Next i
 
     If Len(miss) > 0 Then
-        st.Value = "No exact group: " & miss & vbLf & _
-                   IIf(Len(cand) > 0, "Candidates:" & cand, "No group name contains that text.") & _
-                   vbLf & "Nothing scanned."
+        Call NavNotify("No exact group [" & miss & "] - " & _
+                   IIf(Len(cand) > 0, "candidates: " & cand, "no group name contains that text") & _
+                   " - nothing scanned", True)
         Exit Sub
     End If
-    If picked.count = 0 Then st.Value = "": Exit Sub
+    If picked.count = 0 Then Exit Sub
 
     ' Merge tickers across the picked groups; the first group a ticker
     ' appears in labels its row.
@@ -532,19 +536,12 @@ Sub RunGroupKeyword(ByVal raw As String)
             Next k
         End If
     Next g
-    If tick.count = 0 Then st.Value = "Group has no tickers.": Exit Sub
+    If tick.count = 0 Then Call NavNotify("Group has no tickers.", True): Exit Sub
 
     Dim scanLabel As String: scanLabel = Join(picked.keys, " + ")
     Dim n As Long: n = tick.count
 
     Call ScanTickers(mkt, scanLabel, tick.keys, tick.items)
-
-    If n > SCAN_MAX_TICKERS Then
-        st.Value = "Scanned first " & SCAN_MAX_TICKERS & " of " & n & " tickers (truncated: only " & _
-                   SCAN_MAX_TICKERS & " fit in the scan table) @ " & Format(Now, "hh:mm") & vbLf & scanLabel
-    Else
-        st.Value = "Scanned " & n & " tickers @ " & Format(Now, "hh:mm") & vbLf & scanLabel
-    End If
 End Sub
 
 ' Last used scan row in column C, never looking below SCAN_LAST_ROW (the
@@ -926,7 +923,7 @@ Private Function ScanTickerRows(ws As Worksheet) As Long
 End Function
 
 ' ================================================================
-'  PRICE-CHART WALL (rows CHART_FIRST_ROW..CHART_LAST_ROW)
+'  SPARKLINE DATA (was the price-chart wall)
 '  Source data lives on the hidden sheet CHART_DATA_SHEET, three columns
 '  per ticker (Date | Index=100 | Window high), row 1 = ticker, row 2 =
 '  headers, row 3.. = data. Charts point at those ranges.
@@ -946,37 +943,30 @@ Private Function ScanDataSheet() As Worksheet
     Set ScanDataSheet = wd
 End Function
 
-' A round axis step giving 3..6 intervals over the span
-Private Function NiceStep(ByVal span As Double) As Double
-    Dim steps As Variant: steps = Array(5, 10, 20, 25, 50, 100, 200, 250, 500, 1000)
-    Dim i As Long
-    For i = 0 To UBound(steps)
-        If span / steps(i) <= 6 Then NiceStep = steps(i): Exit Function
-    Next i
-    NiceStep = 1000
-End Function
 
-Private Sub DrawChartWall(ws As Worksheet, serKey As Object, serDt() As Variant, serCl() As Variant, ByVal nRows As Long)
+' Drop every sparkline on the sheet (and any chart left from the old wall).
+Private Sub ClearSparklines(ws As Worksheet)
+    On Error Resume Next
+    ws.cells.SparklineGroups.Clear
     Dim j As Long
     For j = ws.ChartObjects.count To 1 Step -1
         If Left$(ws.ChartObjects(j).Name, Len(CHART_PREFIX)) = CHART_PREFIX Then ws.ChartObjects(j).Delete
     Next j
-    With ws.Range(ws.cells(CHART_FIRST_ROW - 1, 1), ws.cells(CHART_LAST_ROW + 1, 60))
-        .Clear
-        .Interior.Color = RGB(0, 0, 0)
-    End With
-    ws.Range(ws.cells(CHART_FIRST_ROW - 1, 1), ws.cells(CHART_LAST_ROW + 1, 1)).EntireRow.RowHeight = CHART_ROW_HEIGHT
+    On Error GoTo 0
+End Sub
+
+' One sparkline per scanned ticker in SPARK_COL: the 1-year window rebased
+' to 100 (data on CHART_DATA_SHEET, same columns the chart wall used).
+' Red when the ticker ended the year above where it started, green below -
+' the same colour rule the wall's lines had.
+Private Sub DrawSparklines(ws As Worksheet, serKey As Object, serDt() As Variant, serCl() As Variant, ByVal nRows As Long)
+    Call ClearSparklines(ws)
     If nRows <= 0 Or serKey.count = 0 Then Exit Sub
 
     Dim wd As Worksheet: Set wd = ScanDataSheet()
     wd.cells.Clear
 
-    ' Pass 1: write each plotted ticker's window (table order) and find the
-    ' shared value range
-    Dim plotTk() As String, plotBase() As Long, plotLen() As Long, plotLast() As Double
-    ReDim plotTk(1 To nRows): ReDim plotBase(1 To nRows): ReDim plotLen(1 To nRows): ReDim plotLast(1 To nRows)
     Dim nPlot As Long, r As Long, tk As String, s As Long
-    Dim gMin As Double, gMax As Double: gMin = 1E+300: gMax = -1E+300
     For r = 3 To 2 + nRows
         If nPlot >= CHART_MAX Then Exit For
         tk = CStr(ws.cells(r, SC_TICKER).Value)
@@ -997,119 +987,86 @@ Private Sub DrawChartWall(ws As Worksheet, serKey As Object, serDt() As Variant,
                     out(q + 3, 1) = d(first + q)
                     out(q + 3, 2) = c(first + q) / c(first) * 100
                     If out(q + 3, 2) > hi Then hi = out(q + 3, 2)
-                    If out(q + 3, 2) < gMin Then gMin = out(q + 3, 2)
                 Next q
                 For q = 0 To m - 1
                     out(q + 3, 3) = hi
                 Next q
-                If hi > gMax Then gMax = hi
                 Dim col0 As Long: col0 = (nPlot - 1) * 3 + 1
                 wd.Range(wd.cells(1, col0), wd.cells(m + 2, col0 + 2)).Value = out
                 wd.Range(wd.cells(3, col0), wd.cells(m + 2, col0)).NumberFormat = "yyyy-mm-dd"
-                plotTk(nPlot) = tk: plotBase(nPlot) = col0: plotLen(nPlot) = m
-                plotLast(nPlot) = out(m + 2, 2)
+
+                Dim src As String
+                src = "'" & wd.Name & "'!" & wd.Range(wd.cells(3, col0 + 1), wd.cells(m + 2, col0 + 1)).Address
+                Dim sg As Object
+                Set sg = ws.cells(r, SPARK_COL).SparklineGroups.Add(Type:=xlSparkLine, SourceData:=src)
+                With sg
+                    .SeriesColor.Color = IIf(out(m + 2, 2) >= 100, RGB(255, 80, 80), RGB(0, 210, 100))
+                    .LineWeight = 1
+                    .Points.Markers.Visible = False
+                    .Points.Highpoint.Visible = False
+                    .Points.Lowpoint.Visible = False
+                    .Axes.Horizontal.Axis.Visible = False
+                    .DisplayBlanksAs = xlNotPlotted
+                End With
             End If
         End If
     Next r
-    If nPlot = 0 Then Exit Sub
-
-    Dim yStep As Double: yStep = NiceStep(gMax - gMin)
-    Dim yMin As Double: yMin = Int(gMin / yStep) * yStep
-    Dim yMax As Double: yMax = -Int(-gMax / yStep) * yStep
-
-    ' Pass 2: one chart per ticker, CHART_PER_ROW across
-    Dim x0 As Double: x0 = ws.cells(1, SC_TICKER).Left
-    Dim y0 As Double: y0 = ws.cells(CHART_FIRST_ROW, 1).Top
-    Dim p As Long
-    For p = 1 To nPlot
-        Dim co As ChartObject
-        Set co = ws.ChartObjects.Add( _
-            x0 + ((p - 1) Mod CHART_PER_ROW) * (CHART_W + CHART_GAP), _
-            y0 + ((p - 1) \ CHART_PER_ROW) * (CHART_H + CHART_GAP), CHART_W, CHART_H)
-        co.Name = CHART_PREFIX & p
-        co.Placement = xlFreeFloating
-        Dim xr As Range, vr As Range, hr As Range
-        Set xr = wd.Range(wd.cells(3, plotBase(p)), wd.cells(2 + plotLen(p), plotBase(p)))
-        Set vr = xr.Offset(0, 1)
-        Set hr = xr.Offset(0, 2)
-        With co.Chart
-            .ChartType = xlLine
-            Do While .SeriesCollection.count > 0
-                .SeriesCollection(1).Delete
-            Loop
-            With .SeriesCollection.NewSeries
-                .Name = plotTk(p)
-                .XValues = xr
-                .Values = vr
-                .MarkerStyle = xlMarkerStyleNone
-                .Format.line.Visible = msoTrue
-                .Format.line.Weight = 0.75
-                .Format.line.ForeColor.RGB = IIf(plotLast(p) >= 100, RGB(255, 80, 80), RGB(0, 210, 100))
-            End With
-            With .SeriesCollection.NewSeries
-                .Name = "High"
-                .XValues = xr
-                .Values = hr
-                .MarkerStyle = xlMarkerStyleNone
-                .Format.line.Visible = msoTrue
-                .Format.line.Weight = 0.75
-                .Format.line.DashStyle = msoLineDash
-                .Format.line.ForeColor.RGB = RGB(160, 160, 160)
-            End With
-            .HasLegend = False
-            .HasTitle = True
-            .ChartTitle.text = plotTk(p)
-
-            .ChartArea.Format.Fill.Visible = msoTrue
-            .ChartArea.Format.Fill.Solid
-            .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
-            .ChartArea.Format.line.Visible = msoTrue
-            .ChartArea.Format.line.ForeColor.RGB = RGB(60, 60, 60)
-            .PlotArea.Format.Fill.Visible = msoTrue
-            .PlotArea.Format.Fill.Solid
-            .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
-
-            With .Axes(xlValue)
-                .MinimumScale = yMin
-                .MaximumScale = yMax
-                .MajorUnit = yStep
-                .HasMajorGridlines = True
-                .MajorGridlines.Format.line.ForeColor.RGB = RGB(45, 45, 45)
-                .Format.line.ForeColor.RGB = RGB(90, 90, 90)
-                .TickLabels.NumberFormat = "0"
-            End With
-            With .Axes(xlCategory)
-                .CategoryType = xlTimeScale
-                .BaseUnit = xlDays
-                .MajorUnitScale = xlYears
-                .MajorUnit = 1
-                ' Year ticks start at the axis minimum, so pin the maximum to
-                ' min + 1 year (or the last bar, if later): the axis then shows
-                ' the window's start year on the left and its end year on the right.
-                .MinimumScale = CDbl(xr.cells(1, 1).Value)
-                .MaximumScale = Application.Max(CDbl(xr.cells(xr.rows.count, 1).Value), CDbl(DateAdd("yyyy", 1, xr.cells(1, 1).Value)))
-                .TickLabels.NumberFormat = "yyyy"
-                .Format.line.ForeColor.RGB = RGB(90, 90, 90)
-            End With
-
-            ' All chart text: white Calibri 9 (title bold)
-            .ChartArea.Font.Name = "Calibri"
-            .ChartArea.Font.Size = 9
-            .ChartArea.Font.Color = RGB(255, 255, 255)
-            With .ChartTitle.Font
-                .Name = "Calibri": .Size = 9: .Color = RGB(255, 255, 255): .Bold = True
-            End With
-            With .Axes(xlValue).TickLabels.Font
-                .Name = "Calibri": .Size = 9: .Color = RGB(255, 255, 255)
-            End With
-            With .Axes(xlCategory).TickLabels.Font
-                .Name = "Calibri": .Size = 9: .Color = RGB(255, 255, 255)
-            End With
-        End With
-    Next p
 End Sub
 
+' ================================================================
+'  INPUT STRIP (A1:B3) + one-time cleanup of the pre-v3 layout
+' ================================================================
+Public Sub DrawCrHeader(ws As Worksheet)
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error GoTo Fin
 
+    ' leftovers of the v2 layout: merged A4:B4 / A5:B12, the dropdown on A4,
+    ' the 15pt rows of the chart wall, the old row-160 input line
+    With ws.Range("A1:B33")
+        .UnMerge
+        .Validation.Delete
+    End With
+    ' A4:B33 held the v2 keyword cell + status block; nothing lives there now
+    With ws.Range("A4:B33")
+        .Clear
+        .Interior.Color = RGB(0, 0, 0)
+    End With
+    ws.Range("A34:A400").EntireRow.RowHeight = ws.StandardHeight
+    ws.Columns(1).ColumnWidth = 20
+    ws.Columns(2).ColumnWidth = 24
 
-
-
+    With ws.Range("A1:B3")
+        .Clear
+        .Interior.Color = RGB(0, 0, 0)
+        .Font.Name = "Consolas"
+        .Font.Size = 10
+        .VerticalAlignment = xlCenter
+    End With
+    Dim lbl As Variant: lbl = Array("GROUP <GO>", "TICKER <GO>", "MKT US/TW")
+    Dim i As Long
+    For i = 0 To 2
+        With ws.cells(1 + i, 1)
+            .Value = lbl(i)
+            .Font.Color = RR4_ACCENT
+            .Font.Bold = True
+        End With
+        With ws.cells(1 + i, 2)
+            .NumberFormat = "@"
+            .Interior.Color = RR4_INPUT_BG
+            .Font.Color = RR4_INPUT_FG
+            .Font.Bold = True
+            .HorizontalAlignment = xlLeft
+        End With
+    Next i
+    ' group dropdown on the GROUP cell (GroupList name, see RebuildGroupList)
+    On Error Resume Next
+    With ws.Range(GROUP_INPUT_CELL).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="=" & GROUP_LIST_NAME
+        .ShowError = False
+    End With
+    On Error GoTo Fin
+Fin:
+    Application.EnableEvents = prevEv
+End Sub

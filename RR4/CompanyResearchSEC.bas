@@ -8,11 +8,13 @@ Option Explicit
 '  (Sanner.ScanTickers). US tickers -> SEC EDGAR XBRL via
 '  shared-vba/modSECData; TW co_ids -> MOPS iXBRL via shared-vba/modMOPSData.
 '
-'  Trigger: the "Company research" sheet's Worksheet_Change on B160
-'  (see RR4/SheetCompanyResearch_Code.txt). D160 optionally overrides the
-'  auto-detected market ("US" / "TW" / blank = AUTO). F160 shows status.
-'  Rows 1-33 are the MARKET SCANNER and rows 35-158 its price-chart wall
-'  (Sanner.CHART_FIRST_ROW..CHART_LAST_ROW); this band starts below them.
+'  Trigger: the "Company research" sheet's Worksheet_Change on B2 (the
+'  TICKER cell of the input strip, see RR4/SheetCompanyResearch_Code.txt)
+'  or a double-click on a ticker in the scan table (RunDeepDiveFromScan).
+'  B3 optionally overrides the auto-detected market ("US" / "TW" / blank =
+'  AUTO). Status goes to the Excel status bar (NavNotify).
+'  Rows 1-33 are the MARKET SCANNER; this band starts at row 36 (v3 layout,
+'  2026-09-12 - it used to start at row 162 under a 20-chart wall).
 '
 '  Requires the shared-vba modules imported into this workbook:
 '    modHttp  modJsonUtil  modPrices  modSECData  modMOPSData
@@ -24,14 +26,13 @@ Option Explicit
 ' ============================================================================
 
 Public Const CR_SHEET       As String = "Company research"
-Public Const CR_INPUT_CELL  As String = "B160"
-Public Const CR_MARKET_CELL As String = "D160"
-Public Const CR_STATUS_CELL As String = "F160"
+Public Const CR_INPUT_CELL  As String = "B2"
+Public Const CR_MARKET_CELL As String = "B3"
 
-Private Const TITLE_ROW      As Long = 162
-Private Const HDR_ROW        As Long = 163
-Private Const FIRST_DATA_ROW As Long = 164
-Private Const CLEAR_LAST_ROW As Long = 526
+Private Const TITLE_ROW      As Long = 36
+Private Const HDR_ROW        As Long = 37
+Private Const FIRST_DATA_ROW As Long = 38
+Private Const CLEAR_LAST_ROW As Long = 400
 Private Const LAST_COL       As Long = 24
 
 Private Const WANT_ANNUAL    As Long = 4
@@ -41,12 +42,11 @@ Private Const MAX_PERIODS    As Long = 8
 
 Private Const CLR_BG    As Long = 0             ' black -- the lower band is ALWAYS black, never reset to white
 Private Const CLR_TEXT  As Long = 15132390      ' RGB(230,230,230)
-Private Const CLR_HEAD  As Long = 49151         ' RGB(255,191,0) amber
+Private Const CLR_HEAD  As Long = 25800         ' RGB(200,100,0) - RR4_ACCENT
 Private Const CLR_MUTED As Long = 8355711       ' RGB(127,127,127)
 Private Const CLR_FLAG  As Long = 3129855       ' RGB(255,192,0)-ish note
 Private Const FONT_FACE As String = "Calibri"   ' whole lower band, incl. CJK entity names
 Private Const COL_A_WIDTH As Double = 20
-Private Const CLR_INPUT_BG As Long = 65535       ' bright yellow -- the B34 "type here" cell
 
 ' Set per run by RunDeepDive. Money values are divided by mDivisor and shown in
 ' billions; mUnitLbl goes into the table titles.
@@ -67,20 +67,23 @@ Public Sub RunDeepDive(ByVal rawTicker As String, Optional ByVal marketOverride 
         Exit Sub
     End If
 
-    Call StyleInputCell(ws)
-
     Dim tk As String
     tk = UCase$(Trim$(rawTicker))
 
     Call ClearLowerBand(ws)
 
-    If tk = "" Then
-        Call SetStatus(ws, "")
-        Exit Sub
-    End If
+    If tk = "" Then Exit Sub
 
+    ' a scan-table symbol carries the Yahoo suffix (2330.TW / 3374.TWO):
+    ' that IS the market, and MOPS wants the bare co_id
     Dim mkt As String
-    mkt = DetectMarket(tk, marketOverride)
+    If Right$(tk, 4) = ".TWO" Then
+        tk = Left$(tk, Len(tk) - 4): mkt = "TW"
+    ElseIf Right$(tk, 3) = ".TW" Then
+        tk = Left$(tk, Len(tk) - 3): mkt = "TW"
+    Else
+        mkt = DetectMarket(tk, marketOverride)
+    End If
 
     ' Both feeds report in whole currency units (SEC companyfacts = actual USD;
     ' MOPS t164sb01 iXBRL = actual NTD, ParseIxFacts already applied the scale
@@ -491,19 +494,6 @@ Private Function DetectMarket(ByVal tk As String, ByVal override As String) As S
     DetectMarket = IIf(allDigits, "TW", "US")
 End Function
 
-Private Sub StyleInputCell(ByVal ws As Worksheet)
-    ' CR_INPUT_CELL = the ticker / co_id input. Yellow ground, black bold text, so it
-    ' stands out on the all-black sheet as "type here". Formatting only -- does
-    ' not fire Worksheet_Change.
-    With ws.Range(CR_INPUT_CELL)
-        .Interior.Color = CLR_INPUT_BG
-        .Font.Color = 0
-        .Font.Bold = True
-        .Font.Name = FONT_FACE
-        .HorizontalAlignment = xlLeft
-    End With
-End Sub
-
 Private Sub ClearLowerBand(ByVal ws As Worksheet)
     ' Clear content, then repaint the whole band BLACK. Never xlNone / white.
     With ws.Range(ws.Cells(TITLE_ROW, 1), ws.Cells(CLEAR_LAST_ROW, 60))
@@ -542,8 +532,18 @@ Private Sub WriteFlag(ByVal ws As Worksheet, ByVal atRow As Long, ByVal txt As S
 End Sub
 
 Private Sub SetStatus(ByVal ws As Worksheet, ByVal msg As String)
-    Application.EnableEvents = False
-    ws.Range(CR_STATUS_CELL).Value = msg
-    Application.EnableEvents = True
-    Application.StatusBar = IIf(msg = "", False, "Company research: " & msg)
+    If Len(msg) = 0 Then Exit Sub
+    Call NavNotify("DEEP-DIVE " & msg, Left$(msg, 6) = "Error:" Or Left$(msg, 2) = "No")
 End Sub
+
+' Double-click on a ticker in the scan table (C3:C31) -> deep-dive it.
+' Called from the sheet's Worksheet_BeforeDoubleClick; True = handled.
+Public Function RunDeepDiveFromScan(ByVal Target As Range) As Boolean
+    If Target.Column <> Sanner.SC_TICKER Then Exit Function
+    If Target.row < 3 Or Target.row > Sanner.SCAN_LAST_ROW Then Exit Function
+    Dim tk As String: tk = Trim$(CStr(Target.Value))
+    If Len(tk) = 0 Or UCase$(tk) = "SUMMARY" Then Exit Function
+    RunDeepDiveFromScan = True
+    ' writing the input cell fires Worksheet_Change -> RunDeepDive
+    Target.Worksheet.Range(CR_INPUT_CELL).Value = tk
+End Function
