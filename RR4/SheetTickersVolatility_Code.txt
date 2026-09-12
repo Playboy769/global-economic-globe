@@ -2,9 +2,11 @@
 '  Code-behind of the "Tickers Volatility" worksheet (nav code VT).
 '  The ticker input is B2 in the page's own layout, i.e. B5 while the
 '  nav bar occupies rows 1-3 (modNav.NavOffset). The analysis routine
-'  (modvolatility.UpdateVolatilityAnalysis_Pro) still works in its
-'  original fixed rows, so the bar is taken off around the call and put
-'  back afterwards - also when the routine bails out early.
+'  (modvolatility.UpdateVolatilityAnalysis_Pro) draws the page from row 1
+'  and rebuilds its 12 charts every run, so the bar is taken off around
+'  the call and put back afterwards - also when the routine bails out
+'  early. The charts are xlMove, so NavAdd shifts them down with the rows
+'  instead of shrinking them.
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
