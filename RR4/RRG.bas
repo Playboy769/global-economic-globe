@@ -35,12 +35,13 @@ Option Explicit
 '  Layout (page rows; the nav bar adds 3 on top - see NavOffset):
 '    row 1   title + subtitle
 '    row 2   hint
-'    row 4   table header, rows 5..30 one ETF each (A..I)
-'    O4      chart RRG_MAIN (scatter, one series per ETF)
-'    O32     chart RRG_FLOW (money flow: price change vs CMF, one series per ETF)
+'    row 4   table header, rows 5..30 one ETF each (A..N; I = TRAIL sparkline)
+'    P4      chart RRG_MAIN (scatter, one series per ETF)
+'    P32     chart RRG_FLOW (money flow: price change vs CMF, one series per ETF)
 '    row 33  quadrant + money-flow signal membership, then notes
 '    Z5..    tail dates (shared by every ETF - all are aligned to SPY days)
 '    AA4..   tail data block (2 columns per ETF, 14 rows) - chart source
+'    after it: TRAIL block, one row per ETF, 13 weekly RS-RATIO changes (sparkline source)
 '
 '  FOCUS: double-click a ticker in column A -> only that trail stays lit
 '  (thicker line, every dot dated), every other ETF goes dark grey and
@@ -64,8 +65,8 @@ Private Const TBL_HDR As Long = 4
 Private Const TBL_FIRST As Long = 5
 Private Const DATA_COL As Long = 27          ' AA
 Private Const DATE_COL As Long = 26          ' Z
-Private Const CHART_COL As Long = 15         ' O  (table is A:M, N is the gap)
-Private Const TBL_NCOL As Long = 13
+Private Const CHART_COL As Long = 16         ' P  (table is A:N, O is the gap)
+Private Const TBL_NCOL As Long = 14
 Private Const CHART_W As Double = 560
 Private Const CHART_H As Double = 470
 
@@ -294,6 +295,7 @@ Sub BuildRRG()
     Call ShapesMoveOnly(ws)
     Dim co As ChartObject
     For Each co In ws.ChartObjects: co.Delete: Next co
+    ws.cells.SparklineGroups.Clear
     ws.cells.Clear
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
@@ -309,9 +311,9 @@ Sub BuildRRG()
     For rr = 1 To 60: ws.Rows(rr).RowHeight = 18: Next rr
     ws.Columns(1).ColumnWidth = 8: ws.Columns(2).ColumnWidth = 9: ws.Columns(3).ColumnWidth = 15
     ws.Columns(4).ColumnWidth = 9: ws.Columns(5).ColumnWidth = 9: ws.Columns(6).ColumnWidth = 11
-    ws.Columns(7).ColumnWidth = 9: ws.Columns(8).ColumnWidth = 9: ws.Columns(9).ColumnWidth = 5
-    ws.Columns(10).ColumnWidth = 9: ws.Columns(11).ColumnWidth = 8: ws.Columns(12).ColumnWidth = 8
-    ws.Columns(13).ColumnWidth = 10: ws.Columns(14).ColumnWidth = 3
+    ws.Columns(7).ColumnWidth = 9: ws.Columns(8).ColumnWidth = 9: ws.Columns(9).ColumnWidth = 10
+    ws.Columns(10).ColumnWidth = 5: ws.Columns(11).ColumnWidth = 9: ws.Columns(12).ColumnWidth = 8
+    ws.Columns(13).ColumnWidth = 8: ws.Columns(14).ColumnWidth = 10: ws.Columns(15).ColumnWidth = 3
 
     Dim asOf As Date: asOf = DateSerial(1970, 1, 1) + bDays(nb - 1)
     With ws.cells(1, 1)
@@ -335,7 +337,7 @@ Sub BuildRRG()
 
     ' ---- table ----
     Dim hdr As Variant
-    hdr = Array("TICKER", "LABEL", "GROUP", "RS-RATIO", "RS-MOM", "QUADRANT", "1W dRAT", "1W dMOM", "PTS", _
+    hdr = Array("TICKER", "LABEL", "GROUP", "RS-RATIO", "RS-MOM", "QUADRANT", "1W dRAT", "1W dMOM", "TRAIL", "PTS", _
                 "20D PX%", "CMF", "OBV(d)", "SIGNAL")
     For j = 0 To UBound(hdr)
         With ws.cells(TBL_HDR, j + 1)
@@ -374,7 +376,7 @@ Sub BuildRRG()
                 ws.cells(r, 8).Value = ly - tailY(i, TAIL_POINTS - 2)
                 ws.Range(ws.cells(r, 7), ws.cells(r, 8)).NumberFormat = "+0.00;-0.00;0.00"
             End If
-            ws.cells(r, 9).Value = tailN(i)
+            ws.cells(r, 10).Value = tailN(i)
             For j = 0 To 3
                 If quadList(j) = q Then quadMembers(j) = quadMembers(j) & IIf(quadMembers(j) = "", "", "  ") & tickers(i)
             Next j
@@ -388,16 +390,16 @@ Sub BuildRRG()
         End If
         ' money flow columns J:M
         If fOk(i) Then
-            ws.cells(r, 10).Value = fPchg(i): ws.cells(r, 10).NumberFormat = "+0.0%;-0.0%;0.0%"
-            ws.cells(r, 11).Value = fCmf(i): ws.cells(r, 11).NumberFormat = "+0.000;-0.000;0.000"
-            ws.cells(r, 12).Value = fObv(i): ws.cells(r, 12).NumberFormat = "+0.0;-0.0;0.0"
-            ws.cells(r, 13).Value = fSig(i)
-            If fNote(i) <> "" Then ws.cells(r, 13).AddComment fNote(i)
+            ws.cells(r, 11).Value = fPchg(i): ws.cells(r, 11).NumberFormat = "+0.0%;-0.0%;0.0%"
+            ws.cells(r, 12).Value = fCmf(i): ws.cells(r, 12).NumberFormat = "+0.000;-0.000;0.000"
+            ws.cells(r, 13).Value = fObv(i): ws.cells(r, 13).NumberFormat = "+0.0;-0.0;0.0"
+            ws.cells(r, 14).Value = fSig(i)
+            If fNote(i) <> "" Then ws.cells(r, 14).AddComment fNote(i)
             For j = 0 To 4
                 If sigList(j) = fSig(i) Then sigMembers(j) = sigMembers(j) & IIf(sigMembers(j) = "", "", "  ") & tickers(i)
             Next j
         Else
-            ws.cells(r, 13).Value = "N/A"
+            ws.cells(r, 14).Value = "N/A"
         End If
         ws.Range(ws.cells(r, 4), ws.cells(r, TBL_NCOL)).HorizontalAlignment = xlRight
         ws.cells(r, 6).HorizontalAlignment = xlRight
@@ -489,6 +491,31 @@ Sub BuildRRG()
         ws.Range(ws.cells(TBL_FIRST, cx), ws.cells(TBL_FIRST + TAIL_POINTS - 1, cx + 1)).Font.Color = RGB(90, 90, 90)
         ws.Columns(cx).ColumnWidth = 7: ws.Columns(cx + 1).ColumnWidth = 7
     Next i
+
+    ' ---- TRAIL: weekly RS-RATIO changes, one row per ETF, column sparkline in I ----
+    Dim trCol As Long: trCol = DATA_COL + 2 * n + 1
+    With ws.cells(TBL_HDR - 1, trCol)
+        .Value = "TRAIL (weekly dRS-RATIO, sparkline source)": .Font.Color = RGB(90, 90, 90): .Font.Size = 8
+    End With
+    For i = 0 To n - 1
+        For k = 1 To TAIL_POINTS - 1
+            If k >= TAIL_POINTS - tailN(i) + 1 Then
+                ws.cells(TBL_FIRST + i, trCol + k - 1).Value = tailX(i, k) - tailX(i, k - 1)
+            End If
+        Next k
+        ws.Columns(trCol + i).ColumnWidth = 5
+    Next i
+    With ws.Range(ws.cells(TBL_FIRST, trCol), ws.cells(TBL_FIRST + n - 1, trCol + TAIL_POINTS - 2))
+        .NumberFormat = "0.00": .Font.Color = RGB(90, 90, 90)
+    End With
+    Dim sg As SparklineGroup
+    Set sg = ws.Range(ws.cells(TBL_FIRST, 9), ws.cells(TBL_FIRST + n - 1, 9)).SparklineGroups.Add( _
+        Type:=xlSparkColumn, SourceData:=ws.Range(ws.cells(TBL_FIRST, trCol), ws.cells(TBL_FIRST + n - 1, trCol + TAIL_POINTS - 2)).Address(False, False))
+    sg.SeriesColor.Color = RGB(220, 80, 80)          ' up = red (TW convention, same as the weight bars)
+    sg.Points.Negative.Visible = True
+    sg.Points.Negative.Color.Color = RGB(80, 200, 120)
+    sg.Axes.Horizontal.Axis.Visible = False
+    sg.DisplayBlanksAs = xlNotPlotted
 
     ' ---- chart ----
     Call DrawRrgChart(ws, tickers, tailX, tailY, tailN, n, xMin - 1.5, xMax + 1.5, yMin - 1.5, yMax + 1.5, asOf)
@@ -709,13 +736,13 @@ Private Sub PaintTableRows(ws As Worksheet, ByVal focusTk As String)
                 ws.cells(r, 7).Font.Color = IIf(ws.cells(r, 7).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
                 ws.cells(r, 8).Font.Color = IIf(ws.cells(r, 8).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
             End If
-            ws.cells(r, 9).Font.Color = RGB(120, 120, 120)
-            If ws.cells(r, 10).Value <> "" Then
-                ws.cells(r, 10).Font.Color = IIf(ws.cells(r, 10).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+            ws.cells(r, 10).Font.Color = RGB(120, 120, 120)
+            If ws.cells(r, 11).Value <> "" Then
                 ws.cells(r, 11).Font.Color = IIf(ws.cells(r, 11).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
                 ws.cells(r, 12).Font.Color = IIf(ws.cells(r, 12).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+                ws.cells(r, 13).Font.Color = IIf(ws.cells(r, 13).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
             End If
-            ws.cells(r, 13).Font.Color = SigColor(CStr(ws.cells(r, 13).Value)): ws.cells(r, 13).Font.Bold = True
+            ws.cells(r, 14).Font.Color = SigColor(CStr(ws.cells(r, 14).Value)): ws.cells(r, 14).Font.Bold = True
         End If
         i = i + 1: r = r + 1
     Loop
@@ -753,8 +780,8 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
         Dim obvOf As Object: Set obvOf = CreateObject("Scripting.Dictionary")
         r = TBL_FIRST + off
         Do While ws.cells(r, 1).Value <> ""
-            sigOf(CStr(ws.cells(r, 1).Value)) = CStr(ws.cells(r, 13).Value)
-            obvOf(CStr(ws.cells(r, 1).Value)) = Val(ws.cells(r, 12).Value)
+            sigOf(CStr(ws.cells(r, 1).Value)) = CStr(ws.cells(r, 14).Value)
+            obvOf(CStr(ws.cells(r, 1).Value)) = Val(ws.cells(r, 13).Value)
             r = r + 1
         Loop
         For Each s In cf.Chart.SeriesCollection
@@ -942,8 +969,8 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
             Dim r As Long: r = TBL_FIRST + off + i
             Dim s As Series: Set s = ch.SeriesCollection.NewSeries
             s.Name = tickers(i)
-            s.XValues = ws.Range(ws.cells(r, 10), ws.cells(r, 10))
-            s.Values = ws.Range(ws.cells(r, 11), ws.cells(r, 11))
+            s.XValues = ws.Range(ws.cells(r, 11), ws.cells(r, 11))
+            s.Values = ws.Range(ws.cells(r, 12), ws.cells(r, 12))
             s.ChartType = xlXYScatter
             Call StyleFlowSeries(s, SigColor(fSig(i)), fObv(i), 0)
         End If
