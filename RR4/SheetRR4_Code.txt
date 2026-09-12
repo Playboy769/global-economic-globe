@@ -1,0 +1,39 @@
+' ================================================================
+'  Code-behind of the RR4 worksheet (sheet code name differs per
+'  workbook - look the sheet up by its tab name "RR4"). Kept here as
+'  plain text because document modules are not exported as .bas.
+'
+'  Worksheet_Change: the page's own input cells -
+'    D5  ARRANGE <GO>   -> PortfolioDashboard_v3.ApplyArrange
+'    J4  TICKER <GO>    -> TickerInsight.RefreshTickerInsight
+'    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
+'  (addresses come from the RR4_* / TI_* constants). The nav command
+'  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
+'  The CmdBtn0-7 click handlers were removed with the ActiveX buttons
+'  (2026-09-12) - their jobs are nav commands now (see modNav).
+' ================================================================
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Target.CountLarge > 1 Then Exit Sub
+    Dim hitArr As Boolean, hitTicker As Boolean, hitTarget As Boolean
+    hitArr = Not Intersect(Target, Me.Range(RR4_ARR_CELL)) Is Nothing
+    hitTicker = Not Intersect(Target, Me.Range(TI_TICKER_CELL)) Is Nothing
+    hitTarget = Not Intersect(Target, Me.Range(TI_TARGET_CELL)) Is Nothing
+    If Not (hitArr Or hitTicker Or hitTarget) Then Exit Sub
+
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    If hitArr Then
+        Call ApplyArrange(CStr(Target.Value))
+    ElseIf hitTicker Then
+        Call RefreshTickerInsight(CStr(Target.Value))
+    Else
+        Call RefreshTickerProjection
+    End If
+
+Fin:
+    Application.EnableEvents = True
+    Application.ScreenUpdating = True
+    If Err.Number <> 0 Then
+        MsgBox "RR4 input error " & Err.Number & ": " & Err.Description, vbCritical
+    End If
+End Sub

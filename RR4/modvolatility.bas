@@ -20,7 +20,7 @@ Sub UpdateVolatilityAnalysis_Pro()
     ' 1. 設定工作表與輸入
     Set ws = ThisWorkbook.Sheets("Tickers volatility")
     Ticker = Trim(ws.Range("B2").Value)
-    If Ticker = "" Then MsgBox "請在 B2 輸入股票代碼", vbExclamation: Exit Sub
+    If Ticker = "" Then Call NavNotify("VT: type a ticker in the input cell", True): Exit Sub
     
     Application.ScreenUpdating = False
     
@@ -29,14 +29,14 @@ Sub UpdateVolatilityAnalysis_Pro()
     
     ' 3. 抓取歷史數據 (改為抓取 10 年，確保有 1000 個交易日)
     If Not GetHistoricalData(Ticker, allDates, allPrices) Then
-        MsgBox "無法抓取數據，請檢查代碼或網絡。", vbCritical
+        Call NavNotify("VT: could not download price history for " & Ticker, True)
         Application.ScreenUpdating = True
         Exit Sub
     End If
     
     totalDays = UBound(allPrices) + 1
     If totalDays < 20 Then
-        MsgBox "數據筆數不足以進行進階分析。", vbExclamation
+        Call NavNotify("VT: not enough price history for " & Ticker & " (need 20+ days)", True)
         Application.ScreenUpdating = True
         Exit Sub
     End If
@@ -52,7 +52,7 @@ Sub UpdateVolatilityAnalysis_Pro()
     Call AnalyzeAndOutput(ws, allPrices, 1000, 54, "Past 1000 Days")
     
     Application.ScreenUpdating = True
-    MsgBox "100天、200天、1000天進階波動率分析更新完成！", vbInformation
+    Call NavNotify("VT done - 100 / 200 / 1000-day volatility for " & Ticker)
 End Sub
 
 '=============================================================================

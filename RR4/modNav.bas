@@ -1,0 +1,378 @@
+Attribute VB_Name = "modNav"
+Option Explicit
+
+' ================================================================
+'  RR4 NAV BAR v1 (2026-09-12) - typed page codes and commands
+' ----------------------------------------------------------------
+'  Rows 1-3 of every REPORT page (one column right on RR4, see NavLeft):
+'    row 1   page code badge | command cell (grey = input) |
+'            page title + status of the last command
+'    row 2   page codes   (the current page in white)
+'    row 3   action codes
+'  Type a code into that grey cell and press Enter; Workbook_SheetChange
+'  hands it to RunNavCommand, which clears the cell again.
+'
+'  Pages   P RR4 . R Realized . T Transactions . H HistoryLog . A Analysis
+'          V Volatility180D . VT Tickers Volatility . D DrawdownChart
+'          C HoldingsCorr . CC Correlation . CR Company research
+'  Actions UP update dashboard . ADD / DEL trade forms . V! D! C! recalc
+'          and show that page . DBG system debug . CLEARALL wipe all data
+'          (ClearAllData keeps its own Yes/No confirmation)
+'  Jumping to a page never recalculates it - the "!" codes do that.
+'
+'  Which pages carry the bar:
+'    RR4 reserves rows 1-3 in its own layout (PortfolioDashboard_v3,
+'    RR4_TOP) and draws the bar itself.
+'    A / V / VT / D / C / CC are drawn from row 1 by their own routines,
+'    so those routines call NavStrip first (delete the 3 rows when they
+'    are there) and NavAdd last (insert 3 rows, draw the bar). A hidden
+'    sheet-level name RR4NAV marks a page that currently carries the rows,
+'    which is what stops a redraw from stacking a second set.
+'    VT and CC keep a typed input in B2; their sheet code finds it with
+'    NavOffset (B5 while the bar is there). Those pages are not column-
+'    shifted - only RR4 has the blank column A.
+'    Data pages (R / T / H / CR) get no bar on purpose: many modules read
+'    them by fixed row (header row 1, data from row 2).
+' ================================================================
+Public Const NAV_ROWS     As Long = 3
+Private Const NAV_MARK    As String = "RR4NAV"
+
+' Whether the last NavNotify was an error (NavEcho repaints it in red).
+' Module-level declarations must precede every procedure in VBA - putting
+' this next to NavNotify further down is a compile error for the whole
+' module ("only comments may appear after End Sub").
+Private m_lastIsErr As Boolean
+
+' The bar starts in column A on every page except RR4, whose own layout keeps
+' column A as a blank spacer (RR4_LEFT), so there it starts in B.
+Private Function NavLeft(ByVal ws As Worksheet) As Long
+    If NavPageCode(ws) = "P" Then NavLeft = RR4_LEFT
+End Function
+
+' Address of the page's command cell - B1, or C1 on RR4.
+Public Function NavCmdCell(ByVal ws As Object) As String
+    If Not TypeOf ws Is Worksheet Then Exit Function
+    NavCmdCell = ws.cells(1, 2 + NavLeft(ws)).Address(False, False)
+End Function
+
+' --- code -> sheet tab name ---------------------------------------
+Public Function NavSheetName(ByVal code As String) As String
+    Select Case UCase(code)
+        Case "P":  NavSheetName = "RR4"
+        Case "R":  NavSheetName = "Realized"
+        Case "T":  NavSheetName = "Transactions"
+        Case "H":  NavSheetName = "HistoryLog"
+        Case "A":  NavSheetName = "Analysis"
+        Case "V":  NavSheetName = "Volatility180D"
+        Case "VT": NavSheetName = "Tickers Volatility"
+        Case "D":  NavSheetName = "DrawdownChart"
+        Case "C":  NavSheetName = "HoldingsCorr"
+        Case "CC": NavSheetName = "Correlation"
+        Case "CR": NavSheetName = "Company research"
+    End Select
+End Function
+
+Private Function NavTitle(ByVal code As String) As String
+    Select Case UCase(code)
+        Case "P":  NavTitle = "PORTFOLIO"
+        Case "A":  NavTitle = "DEEP ANALYSIS"
+        Case "V":  NavTitle = "VOLATILITY 180D"
+        Case "VT": NavTitle = "TICKER VOLATILITY"
+        Case "D":  NavTitle = "DRAWDOWN"
+        Case "C":  NavTitle = "HOLDINGS CORRELATION"
+        Case "CC": NavTitle = "SECTOR CORRELATION"
+    End Select
+End Function
+
+' Code of a report page (one that carries the bar), "" for anything else.
+Public Function NavPageCode(ByVal ws As Object) As String
+    If Not TypeOf ws Is Worksheet Then Exit Function
+    Dim c As Variant
+    For Each c In Array("P", "A", "V", "VT", "D", "C", "CC")
+        If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
+            NavPageCode = CStr(c)
+            Exit Function
+        End If
+    Next c
+End Function
+
+Public Function NavHasRows(ByVal ws As Worksheet) As Boolean
+    If NavPageCode(ws) = "P" Then
+        NavHasRows = True           ' RR4 layout reserves rows 1-3
+        Exit Function
+    End If
+    Dim nm As Name
+    For Each nm In ws.Names
+        If Right(nm.Name, Len(NAV_MARK) + 1) = "!" & NAV_MARK Then
+            NavHasRows = True
+            Exit Function
+        End If
+    Next nm
+End Function
+
+' Rows the bar currently pushes a page's own layout down by.
+Public Function NavOffset(ByVal ws As Worksheet) As Long
+    If NavPageCode(ws) = "P" Then Exit Function     ' RR4 layout already counts them
+    If NavHasRows(ws) Then NavOffset = NAV_ROWS
+End Function
+
+' Take the bar rows off so a routine can redraw its page from row 1.
+Public Sub NavStrip(ByVal ws As Worksheet)
+    If NavPageCode(ws) = "P" Then Exit Sub
+    If Not NavHasRows(ws) Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    Call ShapesMoveOnly(ws)         ' see ShapesMoveOnly: charts anchored in rows 1-3
+    ws.Rows("1:" & NAV_ROWS).Delete
+    Dim k As Long
+    For k = ws.Names.count To 1 Step -1
+        If Right(ws.Names(k).Name, Len(NAV_MARK) + 1) = "!" & NAV_MARK Then ws.Names(k).Delete
+    Next k
+Fin:
+    Application.EnableEvents = prevEv
+End Sub
+
+' Shapes default to xlMoveAndSize, which RESIZES them when rows inside their
+' span are inserted or deleted - and DrawdownChart's chart is anchored at row
+' 1, so every strip/add cycle would shrink it. xlMove keeps the size and just
+' slides the shape with the rows, which is what the bar needs.
+Private Sub ShapesMoveOnly(ByVal ws As Worksheet)
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To ws.Shapes.count
+        ws.Shapes(i).Placement = xlMove
+    Next i
+    On Error GoTo 0
+End Sub
+
+' Put the bar rows back on top of a page (insert once, redraw always).
+Public Sub NavAdd(ByVal ws As Worksheet, Optional ByVal code As String = "")
+    If code = "" Then code = NavPageCode(ws)
+    If code = "" Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    If code <> "P" And Not NavHasRows(ws) Then
+        Call ShapesMoveOnly(ws)
+        ws.Rows("1:" & NAV_ROWS).Insert Shift:=xlDown
+        ws.Names.Add Name:=NAV_MARK, RefersTo:="=TRUE", Visible:=False
+    End If
+    Call DrawNavRows(ws, code)
+Fin:
+    Application.EnableEvents = prevEv
+End Sub
+
+' ----------------------------------------------------------------
+' Paint rows 1-3. On RR4 the bar owns A:S only - T1/T2 hold the inception /
+' capital config and X1 the ticker-panel tracker, and column A stays blank.
+' ----------------------------------------------------------------
+Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error GoTo Fin
+
+    Dim off As Long: off = NavLeft(ws)
+    Dim area As Range
+    If code = "P" Then
+        ' stop short of T1/T2 (the inception / capital config cells)
+        Set area = ws.Range(ws.cells(1, 1), ws.cells(3, 19))
+    Else
+        Set area = ws.Range("A1:Z3")
+    End If
+    With area
+        .Clear
+        .Interior.Color = RGB(0, 0, 0)
+        .Font.Name = "Consolas"
+        .Font.Size = 9
+        .Font.Bold = False
+        .Font.Color = RGB(150, 150, 150)
+        .VerticalAlignment = xlCenter
+        .HorizontalAlignment = xlLeft
+    End With
+    ws.Rows(1).RowHeight = 24
+    ws.Rows(2).RowHeight = 16
+    ws.Rows(3).RowHeight = 18
+
+    ' row 1: badge | command cell | title
+    With ws.cells(1, 1 + off)
+        .Value = code
+        .Interior.Color = RGB(255, 192, 0)
+        .Font.Color = RGB(0, 0, 0)
+        .Font.Size = 11
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
+    End With
+    With ws.cells(1, 2 + off)
+        .NumberFormat = "@"
+        .Interior.Color = RR4_INPUT_BG
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Size = 10
+        .Font.Bold = True
+    End With
+    Call NavStatus(ws, "type a code in the grey cell + Enter", False)
+
+    ' row 2: pages
+    Dim pages As Variant
+    pages = Array("P", "Portfolio", "R", "Realized", "T", "Trans", "H", "History", _
+                  "A", "Analysis", "V", "Vol", "VT", "TkrVol", "D", "Drawdown", _
+                  "C", "HoldCorr", "CC", "SectorCorr", "CR", "Research")
+    Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RGB(255, 192, 0))
+
+    ' row 3: actions
+    Dim acts As Variant
+    acts = Array("UP", "Update", "ADD", "Trade", "DEL", "Delete", "V!", "Recalc vol", _
+                 "D!", "Drawdown", "C!", "Corr", "DBG", "Debug", "CLEARALL", "Wipe all data")
+    Call WriteCodeLine(ws.cells(3, 1 + off), acts, "", RGB(0, 200, 255))
+
+    With area.Rows(3).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RGB(255, 192, 0)
+        .Weight = xlThin
+    End With
+
+Fin:
+    ' leaving EnableEvents off would kill every input cell in the workbook
+    Application.EnableEvents = prevEv
+End Sub
+
+' "CODE label   CODE label ..." in one cell (it overflows to the right),
+' codes coloured, the current page's pair in white bold.
+Private Sub WriteCodeLine(ByVal cell As Range, pairs As Variant, ByVal current As String, _
+                          ByVal codeColor As Long)
+    Dim s As String, i As Long
+    For i = LBound(pairs) To UBound(pairs) Step 2
+        s = s & pairs(i) & " " & pairs(i + 1) & "    "
+    Next i
+    cell.NumberFormat = "@"
+    cell.Value = s
+    Dim pos As Long: pos = 1
+    For i = LBound(pairs) To UBound(pairs) Step 2
+        Dim cLen As Long: cLen = Len(pairs(i))
+        Dim lLen As Long: lLen = Len(pairs(i + 1))
+        If StrComp(pairs(i), current, vbTextCompare) = 0 Then
+            With cell.Characters(pos, cLen + 1 + lLen).Font
+                .Color = RGB(255, 255, 255)
+                .Bold = True
+                .Underline = xlUnderlineStyleSingle
+            End With
+        Else
+            With cell.Characters(pos, cLen).Font
+                .Color = codeColor
+                .Bold = True
+            End With
+        End If
+        pos = pos + cLen + 1 + lLen + 4
+    Next i
+End Sub
+
+Public Sub NavStatus(ByVal ws As Worksheet, ByVal msg As String, ByVal isErr As Boolean)
+    Dim code As String: code = NavPageCode(ws)
+    Dim ttl As String: ttl = NavTitle(code)
+    If ttl = "" Then ttl = UCase(ws.Name)
+    With ws.cells(1, 3 + NavLeft(ws))
+        .NumberFormat = "@"
+        .Value = ttl & "     " & msg
+        .Font.Size = 9
+        .Font.Bold = False
+        .Font.Color = RGB(150, 150, 150)
+        .Characters(1, Len(ttl)).Font.Color = RGB(255, 192, 0)
+        .Characters(1, Len(ttl)).Font.Bold = True
+        .Characters(1, Len(ttl)).Font.Size = 11
+        If isErr And Len(msg) > 0 Then .Characters(Len(ttl) + 6, Len(msg)).Font.Color = RGB(255, 80, 80)
+    End With
+End Sub
+
+' ================================================================
+'  NavNotify replaces the old "done" / "nothing to do" MsgBoxes of the
+'  routines the nav commands run (UP, V!, D!, C!, DBG, CLEARALL, the VT
+'  and CC inputs): the message goes to the Excel status bar and to the
+'  status line of the page in front - no dialog to click away. Real
+'  errors and the CLEARALL Yes/No confirmation still use MsgBox.
+' ================================================================
+Public Sub NavNotify(ByVal msg As String, Optional ByVal isErr As Boolean = False)
+    m_lastIsErr = isErr
+    Application.StatusBar = msg
+    Call NavEcho
+End Sub
+
+' Show the current status-bar text on the active page's bar (used after a
+' routine that redrew / switched pages once it had already notified).
+Public Sub NavEcho()
+    On Error Resume Next
+    Dim sb As Variant: sb = Application.StatusBar
+    If VarType(sb) <> vbString Then Exit Sub
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+    If ws Is Nothing Then Exit Sub
+    If NavPageCode(ws) = "" Then Exit Sub
+    If Not NavHasRows(ws) Then Exit Sub
+    Call NavStatus(ws, CStr(sb), m_lastIsErr)
+End Sub
+
+' ================================================================
+'  Command dispatcher (called from ThisWorkbook.Workbook_SheetChange)
+' ================================================================
+Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
+    Dim cmd As String: cmd = UCase(Trim(raw))
+
+    ' empty the command cell so the next code can be typed straight in
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    src.cells(1, 2 + NavLeft(src)).Value = ""
+    Application.EnableEvents = prevEv
+    If cmd = "" Then Exit Sub
+
+    Select Case cmd
+        Case "P", "R", "T", "H", "A", "V", "VT", "D", "C", "CC", "CR"
+            Call NavGoto(cmd, src)
+            Exit Sub                ' a jump has no result to echo
+        Case "UP"
+            Call RebuildPortfolioDashboard
+        Case "ADD"
+            Call OpenTransactionForm
+        Case "DEL"
+            Call OpenDeleteForm
+        Case "V!"
+            Call UpdatePortfolioVolatility
+            Call NavGoto("V", src)
+        Case "D!"
+            Call BuildDrawdownShadow
+        Case "C!"
+            Call BuildHoldingsCorrelation
+        Case "DBG"
+            Call RunSystemDebug
+        Case "CLEARALL"
+            Call ClearAllData
+        Case Else
+            Call NavStatus(src, "UNKNOWN CODE [" & cmd & "]", True)
+            Exit Sub
+    End Select
+    Call NavEcho
+End Sub
+
+' Jump to a page. A report page built before the bar existed gets it
+' here, the first time it is visited.
+Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(NavSheetName(code))
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
+                       IIf(code = "V" Or code = "D" Or code = "C", " - run " & code & "!", ""), True)
+        Exit Sub
+    End If
+    If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible
+    If NavPageCode(ws) <> "" And NavPageCode(ws) <> "P" And Not NavHasRows(ws) Then
+        Call NavAdd(ws, code)
+    End If
+    ws.Activate
+    If NavPageCode(ws) <> "" Then
+        ws.cells(1, 2 + NavLeft(ws)).Select
+    Else
+        ws.Range("A1").Select
+    End If
+    ActiveWindow.ScrollRow = 1
+    ActiveWindow.ScrollColumn = 1
+End Sub

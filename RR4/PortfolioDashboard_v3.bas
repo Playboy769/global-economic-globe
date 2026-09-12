@@ -18,6 +18,65 @@ Private Const SH_HRAW     As String = "HistoryRaw"
 Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 
 ' ================================================================
+'  RR4 PAGE LAYOUT v4.1 (2026-09-12; v4 2026-09-11)
+' ----------------------------------------------------------------
+'  Rows 1-3                    nav bar (modNav.DrawNavRows, code "P")
+'  Upper-left  A:G  rows 4-22  total, USD/TWD, ARRANGE <GO>, weight bar,
+'                              daily log, summary
+'  Upper-right I:R  rows 4-26  ticker panel (TickerInsight module)
+'              U..  rows 4-17  weight donut (chart RR4_DONUT)
+'  Position log                title row 27, headers row 28, data from 29
+'  (row numbers in the notes below are the v4 ones; add RR4_TOP = 3)
+'
+'  Position log columns (BROKER column and broker group rows removed):
+'    A TICKER   B NAME      C ENTRY DT  D DAYS      E SECTOR   F NET EXPOS
+'    G SHARES   H ENTRY PX  I LAST      J % CHG     K UNRL PNL L WT%
+'    M W.BETA   N BETA 180D O P.TARGET  P SWING RISK (typed by hand)
+'    T (hidden) default-order key, used by ARRANGE "DEF"
+'
+'  ARRANGE <GO> (D2): UNU/UND = UNRL PNL, PCU/PCD = % CHG, DAU/DAD = DAYS,
+'  WTU/WTD = WT%.  U = low -> high, D = high -> low.  Blank or DEF = TW
+'  codes first (numeric), then US tickers A-Z.  Typing a code re-sorts the
+'  rows already on the sheet (no price refetch) - see ApplyArrange.
+'
+'  ResetSheetStyle clears the whole sheet, so every hand-entered value is
+'  read FIRST and written back: B2 USD/TWD, D2 ARRANGE code, S1/S2 (the
+'  InceptionDate / StartingCapital names set by SetupPortfolioConfig), the
+'  SWING RISK column, and the ticker panel's J1 ticker / K17 price target.
+'  Up to v3, B2 and S1:S2 were read AFTER the clear, so the rate always
+'  fell back to 31.6 and inception / capital to their hard-coded defaults.
+' ================================================================
+' v4.1 (2026-09-12): rows 1-3 now hold the nav bar (modNav) and the whole
+' page above moved down by RR4_TOP - every row number in this module that
+' belongs to the page is written as RR4_TOP + <its v4 row>, and the cell
+' constants below are the moved addresses. Other modules must read the
+' page through these constants / RR4FxRate(), never by literal address.
+Public Const RR4_TOP       As Long = 3
+' v4.2 (2026-09-12): column A is a blank spacer for breathing room, so the
+' page also moved one column right - body columns are B:Q, the ticker panel
+' J:S, the hidden order key V, and the config cells T1/T2 (they were S1/S2,
+' which the panel now covers; RebuildPortfolioDashboard migrates them).
+Public Const RR4_LEFT      As Long = 1
+Public Const RR4_CFG_INC   As String = "T1"
+Public Const RR4_CFG_CAP   As String = "T2"
+Public Const RR4_TOTAL_CELL As String = "B4"
+Public Const RR4_FX_CELL   As String = "C5"
+Public Const RR4_ARR_CELL  As String = "E5"
+Public Const RR4_POS_TITLE As Long = 27
+Public Const RR4_POS_HDR   As Long = 28
+Public Const RR4_POS_FIRST As Long = 29
+Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
+Private Const RR4_NCOL      As Long = 17    ' last body column, B:Q
+Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
+Private Const RR4_SWING_COL As Long = 17    ' Q
+Private Const RR4_LOG_ROWS  As Long = 5     ' daily-log trade lines, rows 10-14
+Private Const RR4_WBAR_PREFIX As String = "RR4W_"
+' Every cell the user types into is painted this grey (RGB 70,70,70):
+' the nav command cell B1, USD/TWD B5, ARRANGE D5, SWING RISK (P29:P..),
+' and the ticker panel's J4 / K20.
+Public Const RR4_INPUT_BG  As Long = 4605510
+
+' ================================================================
 '  MAIN ENTRY
 ' ================================================================
 Sub RebuildPortfolioDashboard()
@@ -27,34 +86,49 @@ Sub RebuildPortfolioDashboard()
     Set wsP = ThisWorkbook.Sheets(SH_PORT)
     Set wsTr = ThisWorkbook.Sheets(SH_TRANS)
     Set wsR = ThisWorkbook.Sheets(SH_REAL)
-    
+
     If Not g_PriceCache Is Nothing Then
         g_PriceCache.RemoveAll
         g_CacheTime = Now
     End If
-    
-    ' Backfill missing history rows
 
+    ' The page writes into its own input cells (B1, D5, J4, K20) - keep the
+    ' Worksheet_Change / Workbook_SheetChange handlers out of the way.
+    Dim prevEvents As Boolean: prevEvents = Application.EnableEvents
+    Application.EnableEvents = False
     Application.ScreenUpdating = False
-    Dim swingRiskMap As Object
-    Set swingRiskMap = CreateObject("Scripting.Dictionary")
-    Dim srLastRow As Long
-    srLastRow = wsP.cells(wsP.Rows.count, 1).End(xlUp).row
-    Dim srRow As Long
-    For srRow = 5 To srLastRow
-        Dim srTicker As String: srTicker = CStr(wsP.cells(srRow, 1).Value)
-        Dim srVal    As String: srVal = CStr(wsP.cells(srRow, 17).Value)
-        If srTicker <> "" And srVal <> "" Then
-            swingRiskMap(srTicker) = srVal
-        End If
-    Next srRow
+    On Error GoTo Fail
+
+    ' --- hand-entered values: read BEFORE the sheet is cleared ---
+    Dim exRate As Double: exRate = GetExRate(wsP)
+    Dim arrCode As String: arrCode = UCase(CellStr(wsP.Range(RR4_ARR_CELL).Value))
+    Dim tiTicker As String: tiTicker = UCase(CellStr(wsP.Range(TI_TICKER_CELL).Value))
+    Dim tiTarget As Variant: tiTarget = wsP.Range(TI_TARGET_CELL).Value
+    ' config (SetupPortfolioConfig): T1/T2 since v4.2, S1/S2 before it - the
+    ' panel covers S now, so carry the old pair over once
+    Dim cfgInc As Variant: cfgInc = wsP.Range(RR4_CFG_INC).Value
+    Dim cfgCap As Variant: cfgCap = wsP.Range(RR4_CFG_CAP).Value
+    If Not IsDate(cfgInc) Then cfgInc = wsP.Range("S1").Value
+    If NumOr0(cfgCap) <= 0 Then cfgCap = wsP.Range("S2").Value
+    Dim swingRiskMap As Object: Set swingRiskMap = ReadSwingRisk(wsP)
+    ' A sheet still on an older layout has other data sitting in these cells:
+    ' keep only a real ARRANGE code and a numeric target for a real ticker.
+    If Not IsArrangeCode(arrCode) Then arrCode = ""
+    ' only trust the panel cells when the panel label is actually there -
+    ' on an older layout those cells hold a column header, not a ticker
+    If CellStr(wsP.cells(RR4_TOP + 1, 10).Value) <> "TICKER <GO>" Then tiTicker = ""
+    If IsError(tiTarget) Then tiTarget = Empty
+    If tiTicker = "" Or Not IsNumeric(tiTarget) Then tiTarget = Empty
+
     Call ResetSheetStyle(wsP)
+    If IsDate(cfgInc) Then wsP.Range(RR4_CFG_INC).Value = cfgInc
+    If NumOr0(cfgCap) > 0 Then wsP.Range(RR4_CFG_CAP).Value = cfgCap
+    Call PointConfigNames(wsP)
+    Call RemoveLegacyButtons(wsP)
+    Call DrawNavRows(wsP, "P")
 
     Dim positions As Object
     Set positions = BuildPositions(wsTr)
-
-    Dim exRate As Double
-    exRate = GetExRate(wsP)
 
     Dim posData()    As Variant
     Dim totalMktTWD  As Double
@@ -69,22 +143,40 @@ Sub RebuildPortfolioDashboard()
     On Error Resume Next
     ' PNL(TWD) moved G -> H when RET% was inserted as column B (Attach.bas)
     realPnL = Application.WorksheetFunction.Sum(wsR.Columns("H"))
-    On Error GoTo 0
+    On Error GoTo Fail
 
     Dim portBeta As Double
     portBeta = CalcPortBeta(posData)
 
-    Call DrawHeader(wsP, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount, exRate)
+    ' previous trading day's cumulative PnL - read before LogHistory
+    ' rewrites / appends today's HistoryLog row
+    Dim prevPnL As Variant: prevPnL = PrevDayCumPnL()
+
+    Call DrawHeader(wsP, totalMktTWD, exRate, arrCode)
+    Call DrawDailyLog(wsP, posData, exRate, totalMktTWD, totalUnrlTWD + realPnL, realPnL, prevPnL)
+    Call DrawSummary(wsP, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount)
     Call DrawColumnHeaders(wsP)
     Dim lastDataRow As Long
     lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap)
+    Call ApplyArrange(arrCode)
     Call DrawDisclaimer(wsP, lastDataRow)
+    Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
 
     Application.ScreenUpdating = True
     Call DrawDeepAnalysis(wsP, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL)
+    Application.EnableEvents = prevEvents
     Application.StatusBar = "Dashboard updated: " & Format(Now, "hh:mm:ss")
-    MsgBox "Dashboard updated!", vbInformation
+    Call NavNotify("UP done " & Format(Now, "hh:mm:ss") & " - " & posCount & " positions")
+    Exit Sub
+
+Fail:
+    Dim errN As Long: errN = Err.Number
+    Dim errD As String: errD = Err.Description
+    Application.EnableEvents = prevEvents
+    Application.ScreenUpdating = True
+    Application.StatusBar = "Dashboard update FAILED: " & errD
+    If Application.Visible Then MsgBox "RebuildPortfolioDashboard error " & errN & ": " & errD, vbCritical
 End Sub
 
 ' ================================================================
@@ -138,7 +230,12 @@ Private Sub LogHistory(totalMkt As Double, totalPnL As Double, realPnL As Double
 
     Dim nr As Long: nr = wsH.cells(wsH.Rows.count, "A").End(xlUp).row + 1
     If nr > 2 Then
-        If Int(CDate(wsH.cells(nr - 1, 1).Value)) = Date Then nr = nr - 1
+        ' guard the date: text or an error value in column A used to abort the
+        ' whole rebuild here, after the page had already been drawn
+        Dim lastStamp As Variant: lastStamp = wsH.cells(nr - 1, 1).Value
+        If IsDate(lastStamp) Then
+            If Int(CDate(lastStamp)) = Date Then nr = nr - 1
+        End If
     End If
 
     With wsH
@@ -555,121 +652,288 @@ Private Sub ResetSheetStyle(ws As Worksheet)
     ws.Activate
     ActiveWindow.DisplayGridlines = False
 
-    Dim colWidths As Variant
-    colWidths = Array(5, 22, 10, 8, 8, 10, 10, 8, 10, 10, 8, 11, 7, 8, 10, 10)
-    ' Column widths (Excel units ? pixels / 7)
-    ' A=240px?34  B=580px?83  F=580px?83  others=138px?20
+    ' A is a blank spacer. B ticker, C name, F sector are the wide text
+    ' columns; Q SWING RISK is free text; R/S hold the panel's PnL / return.
+    ws.Columns(1).ColumnWidth = 2
     Dim i As Integer
-    For i = 1 To 16
+    For i = 2 To 19
         Select Case i
-            Case 1: ws.Columns(i).ColumnWidth = 17          ' A: 240px
-            Case 2, 6: ws.Columns(i).ColumnWidth = 40       ' B, F: 580px
-            Case Else: ws.Columns(i).ColumnWidth = 11       ' others: 138px
+            Case 2: ws.Columns(i).ColumnWidth = 17
+            Case 3, 6: ws.Columns(i).ColumnWidth = 40
+            Case 17: ws.Columns(i).ColumnWidth = 20
+            Case 18: ws.Columns(i).ColumnWidth = 13
+            Case Else: ws.Columns(i).ColumnWidth = 11
         End Select
     Next i
+    ws.Columns(RR4_ORD_COL).ColumnWidth = 4
+    ws.Columns(RR4_ORD_COL).Hidden = True
 
     Dim r As Long
-    For r = 1 To 100
+    For r = 1 To 200
         ws.Rows(r).RowHeight = 18
     Next r
-    ws.Rows(1).RowHeight = 28
-    ws.Rows(4).RowHeight = 20
+    ws.Rows(RR4_TOP + 1).RowHeight = 28
 End Sub
 
 ' ================================================================
-'  Header (rows 1-3)
+'  Header (page rows 1-4 = sheet rows 4-7): total, USD/TWD, ARRANGE <GO>,
+'  weight-bar label
 ' ================================================================
-Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, totalCost As Double, _
-                        totalUnrl As Double, realPnL As Double, _
-                        portBeta As Double, posCount As Long, exRate As Double)
-
-    Dim unrlPct As Double
-    If totalCost > 0 Then unrlPct = totalUnrl / totalCost Else unrlPct = 0
-
-    With ws.cells(1, 1)
-        .Value = Format(totalMkt, "$#,##0")
+Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
+                       arrCode As String)
+    With ws.cells(RR4_TOP + 1, RR4_LEFT + 1)
+        .Value = totalMkt
+        .NumberFormat = "$#,##0"
         .Font.Color = RGB(255, 192, 0)
         .Font.Size = 16
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
-    
-    ws.cells(1, 2).Value = " <- TOTAL MKT "
-    ws.cells(1, 2).Font.Color = RGB(255, 192, 0)
-    ws.cells(1, 2).Font.Bold = True
-    
-    ws.cells(1, 3).Value = "INCEPTION"
-    ws.cells(1, 3).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 3).Value = Format(GetInceptionDate(ws), "m/d/yyyy")
-    ws.cells(2, 3).Font.Color = RGB(221, 221, 221)
+    ws.cells(RR4_TOP + 1, RR4_LEFT + 2).Value = " <- TOTAL MKT"
+    ws.cells(RR4_TOP + 1, RR4_LEFT + 2).Font.Color = RGB(255, 192, 0)
+    ws.cells(RR4_TOP + 1, RR4_LEFT + 2).Font.Bold = True
 
-    ws.cells(1, 4).Value = "DAYS"
-    ws.cells(1, 4).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 4).Value = Date - GetInceptionDate(ws)
-    ws.cells(2, 4).Font.Color = RGB(221, 221, 221)
+    ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Value = "USD/TWD"
+    ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Font.Color = RGB(150, 150, 150)
+    With ws.cells(RR4_TOP + 2, RR4_LEFT + 2)
+        .Value = exRate
+        .NumberFormat = "0.00"
+        .Interior.Color = RR4_INPUT_BG
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+        .HorizontalAlignment = xlLeft
+    End With
 
-    ws.cells(1, 5).Value = "STARTING"
-    ws.cells(1, 5).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 5).Value = GetStartingCapital(ws)
-    ws.cells(2, 5).Font.Color = RGB(221, 221, 221)
-    ws.cells(2, 5).NumberFormat = "#,##0"
+    With ws.cells(RR4_TOP + 2, RR4_LEFT + 3)
+        .Value = "ARRANGE"
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+        .HorizontalAlignment = xlRight
+    End With
+    With ws.Range(RR4_ARR_CELL)
+        .NumberFormat = "@"
+        .Value = arrCode
+        .Interior.Color = RR4_INPUT_BG
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
+    End With
+    ' E2 (code list + current order) is written by ApplyArrange
 
-    ' 2026-08-13: PORT.BETA / POSITIONS moved down to row 2 (see below, where
-    ' UNRL PNL%/UNRL PNL used to display) - this row is left intentionally
-    ' blank so the widget keeps its original two-row height.
-    ws.cells(1, 9).Value = ""
-    ws.cells(1, 9).NumberFormat = "General"
-    ws.cells(1, 10).Value = ""
-    ws.cells(1, 10).NumberFormat = "General"
-    ws.cells(1, 11).Value = ""
-    ws.cells(1, 11).NumberFormat = "General"
-    ws.cells(1, 12).Value = ""
-    ws.cells(1, 12).NumberFormat = "General"
+    With ws.Range(ws.cells(RR4_TOP + 2, RR4_LEFT + 1), ws.cells(RR4_TOP + 2, RR4_LEFT + 7)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RGB(255, 192, 0)
+        .Weight = xlThin
+    End With
 
-    ws.cells(2, 13).Value = "RL PNL"
-    ws.cells(2, 13).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 14).Value = realPnL
-    ws.cells(2, 14).NumberFormat = "$#,##0"
-    ws.cells(2, 14).Font.Color = PnLColor(realPnL)
-    ws.cells(2, 14).Font.Bold = True
+    ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Value = "WEIGHT"
+    ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Bold = True
+End Sub
 
+' ================================================================
+'  DAILY LOG (page rows 6-12 = sheet rows 9-15) - today only, not kept
+' ----------------------------------------------------------------
+'  One line per BUY / SELL dated today on Transactions:
+'    NEW  = a buy into a ticker that held no shares before today
+'    ADD  = a buy into an existing position
+'    TRIM = a sell that leaves shares
+'    EXIT = a sell that closes the position
+'  TODAY line:
+'    NET    = cumulative PnL now - HistoryLog col C on the last row dated
+'             before today (shows "-" when there is no earlier row)
+'    R.PNL  = realized PnL excluding sells dated today => including them
+'    P.SIZE = market value minus today's net trade flow => market value
+'             (buys add their cost, sells take their proceeds out; TWD)
+' ================================================================
+Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double, _
+                         totalMkt As Double, totalPnL As Double, realPnL As Double, _
+                         prevPnL As Variant)
+    With ws.cells(RR4_TOP + 6, RR4_LEFT + 1)
+        .Value = "DAILY LOG - " & Format(Date, "yyyy/m/d")
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+    End With
+
+    ' shares held now per ticker (all brokers together)
+    Dim held As Object: Set held = CreateObject("Scripting.Dictionary")
+    Dim n As Long: n = PosCountOf(posData)
+    Dim i As Long
+    For i = 1 To n
+        Dim hk As String: hk = UCase(CStr(posData(i, 1)))
+        held(hk) = held(hk) + posData(i, 9)
+    Next i
+
+    Dim wsTr As Worksheet: Set wsTr = ThisWorkbook.Sheets(SH_TRANS)
+    Dim lastR As Long: lastR = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
+    Dim tRows() As Long: ReDim tRows(1 To IIf(lastR > 1, lastR, 1))
+    Dim cnt As Long
+
+    ' pass 1: today's rows, and today's net shares per ticker
+    Dim todayNet As Object: Set todayNet = CreateObject("Scripting.Dictionary")
+    Dim r As Long, act As String, tk As String, sh As Double
+    For r = 2 To lastR
+        Dim dv As Variant: dv = wsTr.cells(r, "B").Value
+        If IsDate(dv) Then
+            If Int(CDate(dv)) = Date Then
+                act = UCase(CellStr(wsTr.cells(r, "D").Value))
+                If act = "BUY" Or act = "SELL" Then
+                    cnt = cnt + 1
+                    tRows(cnt) = r
+                    tk = UCase(CellStr(wsTr.cells(r, "C").Value))
+                    sh = NumOr0(wsTr.cells(r, "E").Value)
+                    If act = "BUY" Then
+                        todayNet(tk) = todayNet(tk) + sh
+                    Else
+                        todayNet(tk) = todayNet(tk) - sh
+                    End If
+                End If
+            End If
+        End If
+    Next r
+
+    ' pass 2: one line per trade
+    Dim flowTWD As Double, k As Long, outRow As Long: outRow = RR4_TOP + 7
+    For k = 1 To cnt
+        r = tRows(k)
+        act = UCase(CellStr(wsTr.cells(r, "D").Value))
+        tk = UCase(CellStr(wsTr.cells(r, "C").Value))
+        sh = NumOr0(wsTr.cells(r, "E").Value)
+        Dim px As Double: px = NumOr0(wsTr.cells(r, "F").Value)
+        Dim amt As Double: amt = NumOr0(wsTr.cells(r, "I").Value)
+        Dim fx As Double
+        If GetCurrencyType(CStr(tk)) = "USD" Then fx = exRate Else fx = 1
+        Dim amtTWD As Double: amtTWD = amt * fx
+        If act = "BUY" Then flowTWD = flowTWD + amtTWD Else flowTWD = flowTWD - amtTWD
+
+        Dim nowSh As Double: nowSh = 0
+        If held.Exists(tk) Then nowSh = held(tk)
+        Dim lineTag As String
+        If act = "BUY" Then
+            If nowSh - todayNet(tk) <= 0.0001 Then lineTag = "NEW" Else lineTag = "ADD"
+        Else
+            If nowSh <= 0.0001 Then lineTag = "EXIT" Else lineTag = "TRIM"
+        End If
+
+        If cnt <= RR4_LOG_ROWS Or k < RR4_LOG_ROWS Then
+            Call WriteLogLine(ws, outRow, lineTag, tk, sh, px, amtTWD)
+            outRow = outRow + 1
+        End If
+    Next k
+
+    If cnt = 0 Then
+        With ws.cells(RR4_TOP + 7, RR4_LEFT + 2)
+            .Value = "NO TRADES TODAY"
+            .Font.Color = RGB(150, 150, 150)
+            .Font.Italic = True
+        End With
+    ElseIf cnt > RR4_LOG_ROWS Then
+        With ws.cells(outRow, RR4_LEFT + 2)
+            .Value = "+" & (cnt - RR4_LOG_ROWS + 1) & " more trades today - see Transactions"
+            .Font.Color = RGB(150, 150, 150)
+            .Font.Italic = True
+        End With
+    End If
+
+    ' --- TODAY line ---
+    Dim realBefore As Double: realBefore = RealizedBefore(Date)
+    Dim sizeBefore As Double: sizeBefore = totalMkt - flowTWD
+    Dim netTxt As String, netVal As Double
+    If IsEmpty(prevPnL) Then
+        netTxt = "-"
+    Else
+        netVal = totalPnL - CDbl(prevPnL)
+        netTxt = Format(netVal, "+#,##0;-#,##0;0")
+    End If
+
+    With ws.cells(RR4_TOP + 12, RR4_LEFT + 1)
+        .Value = "TODAY"
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+    End With
+    With ws.cells(RR4_TOP + 12, RR4_LEFT + 2)
+        .Value = "NET " & netTxt & "   |   R.PNL " & Format(realBefore, "#,##0") & _
+                 " => " & Format(realPnL, "#,##0") & "   |   P.SIZE " & _
+                 Format(sizeBefore, "#,##0") & " => " & Format(totalMkt, "#,##0")
+        .Font.Color = RGB(221, 221, 221)
+        If Not IsEmpty(prevPnL) Then
+            .Characters(5, Len(netTxt)).Font.Color = GainLossColor(netVal)
+            .Characters(5, Len(netTxt)).Font.Bold = True
+        End If
+    End With
+    With ws.Range(ws.cells(RR4_TOP + 12, RR4_LEFT + 1), ws.cells(RR4_TOP + 12, RR4_LEFT + 7)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RGB(255, 192, 0)
+        .Weight = xlThin
+    End With
+End Sub
+
+Private Sub WriteLogLine(ws As Worksheet, r As Long, lineTag As String, tk As String, _
+                         sh As Double, px As Double, amtTWD As Double)
+    With ws.cells(r, RR4_LEFT + 1)
+        .Value = lineTag
+        .Font.Bold = True
+        If lineTag = "NEW" Or lineTag = "ADD" Then
+            .Font.Color = RGB(255, 192, 0)
+        Else
+            .Font.Color = RGB(0, 200, 255)
+        End If
+    End With
+    With ws.cells(r, RR4_LEFT + 2)
+        .Value = tk & "   " & FormatShares(sh) & " sh   @ " & Format(px, "#,##0.00") & _
+                 "   |   " & Format(amtTWD, "#,##0") & " TWD"
+        .Font.Color = RGB(221, 221, 221)
+    End With
+End Sub
+
+' ================================================================
+'  SUMMARY (page rows 14-19 = sheet rows 17-22): labels A / E, values B / F
+' ================================================================
+Private Sub DrawSummary(ws As Worksheet, totalMkt As Double, totalCost As Double, _
+                        totalUnrl As Double, realPnL As Double, _
+                        portBeta As Double, posCount As Long)
+    With ws.cells(RR4_TOP + 14, RR4_LEFT + 1)
+        .Value = "SUMMARY - RR4"
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+    End With
+
+    Dim inc As Date: inc = GetInceptionDate(ws)
     Dim startCap As Double: startCap = GetStartingCapital(ws)
-    Dim rlPct    As Double
-    If startCap > 0 Then rlPct = realPnL / startCap Else rlPct = 0
-    ws.cells(2, 15).Value = "RL PNL%"
-    ws.cells(2, 15).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 16).Value = rlPct
-    ws.cells(2, 16).NumberFormat = "0.00%"
-    ws.cells(2, 16).Font.Color = PnLColor(rlPct)
-    ws.cells(2, 16).Font.Bold = True
+    Dim rlPct As Double, unrlPct As Double
+    If startCap > 0 Then rlPct = realPnL / startCap
+    If totalCost > 0 Then unrlPct = totalUnrl / totalCost
 
-    ws.cells(2, 1).Value = "USD/TWD"
-    ws.cells(2, 1).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 2).Value = exRate
-    ws.cells(2, 2).NumberFormat = "0.00"
-    ws.cells(2, 2).Font.Color = RGB(221, 221, 221)
+    Call SumKV(ws, RR4_TOP + 15, RR4_LEFT + 1, "INCEPTION", inc, "yyyy-mm-dd", False)
+    Call SumKV(ws, RR4_TOP + 16, RR4_LEFT + 1, "DAYS", CDbl(Date - inc), "0", False)
+    Call SumKV(ws, RR4_TOP + 17, RR4_LEFT + 1, "POSITIONS", CDbl(posCount), "0", False)
+    Call SumKV(ws, RR4_TOP + 18, RR4_LEFT + 1, "REALISED PNL", realPnL, "+#,##0;-#,##0;0", True)
+    Call SumKV(ws, RR4_TOP + 19, RR4_LEFT + 1, "UNREALISED PNL", totalUnrl, "+#,##0;-#,##0;0", True)
 
-    ' UNRL PNL%/UNRL PNL calc (unrlPct above, totalUnrl param) intentionally
-    ' kept for LogHistory/DrawDeepAnalysis - just no longer displayed here.
-    ' POSITIONS and PORT.BETA now occupy this row instead (order swapped:
-    ' Positions left, Beta right), same styling as their old row-1 spot.
-    ws.cells(2, 9).Value = "POSITIONS"
-    ws.cells(2, 9).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 10).Value = posCount
-    ws.cells(2, 10).NumberFormat = "General"
-    ws.cells(2, 10).Font.Color = RGB(221, 221, 221)
-    ws.cells(2, 10).Font.Bold = False
+    Call SumKV(ws, RR4_TOP + 15, RR4_LEFT + 5, "STARTING", startCap, "#,##0", False)
+    Call SumKV(ws, RR4_TOP + 16, RR4_LEFT + 5, "NET EXPOSURE", totalMkt, "#,##0", False)
+    Call SumKV(ws, RR4_TOP + 17, RR4_LEFT + 5, "PORT.BETA", portBeta, "0.000", False)
+    ws.cells(RR4_TOP + 17, RR4_LEFT + 6).Font.Color = RGB(255, 192, 0)
+    Call SumKV(ws, RR4_TOP + 18, RR4_LEFT + 5, "REALISED PNL %", rlPct, "+0.00%;-0.00%;0.00%", True)
+    Call SumKV(ws, RR4_TOP + 19, RR4_LEFT + 5, "UNREALISED PNL %", unrlPct, "+0.00%;-0.00%;0.00%", True)
+End Sub
 
-    ws.cells(2, 11).Value = "PORT.BETA"
-    ws.cells(2, 11).Font.Color = RGB(150, 150, 150)
-    ws.cells(2, 12).Value = portBeta
-    ws.cells(2, 12).NumberFormat = "0.00"
-    ws.cells(2, 12).Font.Color = RGB(255, 192, 0)
-    ws.cells(2, 12).Font.Bold = True
-
-    With ws.Range(ws.cells(3, 1), ws.cells(3, 16))
-        .Interior.Color = RGB(255, 192, 0)
-        .RowHeight = 3
+Private Sub SumKV(ws As Worksheet, r As Long, c As Long, lbl As String, _
+                  ByVal v As Variant, fmt As String, colorPnL As Boolean)
+    With ws.cells(r, c)
+        .Value = lbl
+        .Font.Color = RGB(0, 200, 255)
+    End With
+    With ws.cells(r, c + 1)
+        .NumberFormat = fmt
+        .Value = v
+        .Font.Bold = True
+        .HorizontalAlignment = xlLeft
+        If colorPnL Then
+            .Font.Color = GainLossColor(CDbl(v))
+        Else
+            .Font.Color = RGB(221, 221, 221)
+        End If
     End With
 End Sub
 
@@ -691,6 +955,7 @@ Sub DrawDeepAnalysis(wsP As Worksheet, posData() As Variant, _
         wsA.Name = "Analysis"
     End If
 
+    Call NavStrip(wsA)      ' nav bar rows off while the page is redrawn from row 1
     wsA.cells.Clear
     With wsA.cells
         .Interior.Color = RGB(0, 0, 0)
@@ -701,12 +966,12 @@ Sub DrawDeepAnalysis(wsP As Worksheet, posData() As Variant, _
     wsA.Activate
     ActiveWindow.DisplayGridlines = False
 
-    If Not IsArray(posData) Then Exit Sub
+    ' With no positions the page stays empty - but it must still get its nav
+    ' bar back and hand the screen to RR4, or the user is left on a blank,
+    ' bar-less Analysis sheet whose NavOffset is then wrong.
     Dim n As Long
-    On Error Resume Next
-    n = UBound(posData, 1)
-    If Err.Number <> 0 Or n < 1 Then Exit Sub
-    On Error GoTo 0
+    n = PosCountOf(posData)
+    If n < 1 Then GoTo CleanExit
 
     ' ------------------------------------------------------------
     With wsA.cells(1, 1)
@@ -841,84 +1106,14 @@ Sub DrawDeepAnalysis(wsP As Worksheet, posData() As Variant, _
         r = r + 1
     Next i
 
+CleanExit:
     wsA.Columns("A:L").AutoFit
+    Call NavAdd(wsA, "A")   ' after AutoFit, so the long code lines do not widen A
     wsP.Activate   ' return to main sheet
 End Sub
 
-Sub RebuildActiveXButtons()
-    Dim ws As Worksheet
-    Set ws = ThisWorkbook.Sheets("RR4")
-    
-    ' ------------------------------ Unprotect sheet ------------------------------
-    On Error Resume Next
-    ws.Unprotect
-    On Error GoTo 0
-    
-    ' ------------------------------ Remove existing shapes -----------------------
-    
-    Dim shp As Shape
-    Dim delList As New Collection
-    For Each shp In ws.Shapes
-        delList.Add shp.Name
-    Next shp
-    Dim nm As Variant
-    For Each nm In delList
-        On Error Resume Next
-        ws.Shapes(CStr(nm)).Delete
-        On Error GoTo 0
-    Next nm
-    
-    ' ------------------------------ Probe ActiveX availability -------------------
-    Dim testOle As OLEObject
-    On Error Resume Next
-    Set testOle = ws.OLEObjects.Add(ClassType:="Forms.CommandButton.1", _
-                                     Left:=10, Top:=5, Width:=50, Height:=20)
-    If Err.Number <> 0 Then
-        MsgBox "ActiveX is unavailable. Reason: " & Err.Description & vbCr & vbCr & _
-               "Please check:" & vbCr & _
-               "1. File is saved as .xlsm" & vbCr & _
-               "2. Trust Center > Enable ActiveX controls" & vbCr & _
-               "3. Worksheet is not protected", vbExclamation
-        Exit Sub
-    End If
-    testOle.Delete
-    On Error GoTo 0
-    
-    ' ------------------------------ Create new buttons ---------------------------
-    Dim topPos As Double: topPos = ws.Rows(35).Top
-
-    Dim btnDefs As Variant
-    btnDefs = Array( _
-        Array("DELETE ALL", 10, topPos, 130, 20, RGB(30, 0, 0), RGB(255, 60, 60)), _
-        Array("REGULATE", 150, topPos, 160, 20, RGB(10, 10, 30), RGB(100, 160, 255)), _
-        Array("UPDATE", 320, topPos, 100, 20, RGB(0, 25, 0), RGB(0, 220, 100)), _
-        Array("ADD TRANSACTION", 430, topPos, 160, 20, RGB(20, 15, 0), RGB(255, 192, 0)), _
-        Array("HOLDINGS CORR", 600, topPos, 140, 20, RGB(15, 0, 30), RGB(180, 100, 255)), _
-        Array("DRAWDOWN", 750, topPos, 110, 20, RGB(30, 5, 0), RGB(255, 120, 60)), _
-        Array("DEBUG", 870, topPos, 80, 20, RGB(0, 10, 30), RGB(100, 160, 255)), _
-        Array("VOLATILITY", 960, topPos, 110, 20, RGB(0, 20, 30), RGB(80, 200, 255)) _
-    )
-    
-    Dim i As Integer
-    For i = 0 To UBound(btnDefs)
-        Dim b As Variant: b = btnDefs(i)
-        Dim ole As OLEObject
-        Set ole = ws.OLEObjects.Add( _
-            ClassType:="Forms.CommandButton.1", _
-            Left:=b(1), Top:=b(2), Width:=b(3), Height:=b(4))
-        ole.Name = "CmdBtn" & i
-        With ole.Object
-            .Caption = b(0)
-            .Font.Name = "Consolas"
-            .Font.Size = 10
-            .Font.Bold = True
-            .BackColor = b(5)
-            .ForeColor = b(6)
-            .BackStyle = 1
-        End With
-    Next i
-
-End Sub
+' (2026-09-12) RebuildActiveXButtons removed with the buttons themselves -
+' the page is driven by typed nav commands now (modNav).
 
 ' ------------------------------------------------------------
 Private Function DrawAllocTable(ws As Worksheet, startRow As Long, _
@@ -964,16 +1159,27 @@ Private Function DrawAllocTable(ws As Worksheet, startRow As Long, _
     DrawAllocTable = r
 End Function
 ' ================================================================
-'  Column header row (row 4)
+'  Position log title (RR4_POS_TITLE) + column header row (RR4_POS_HDR)
 ' ================================================================
 Private Sub DrawColumnHeaders(ws As Worksheet)
+    With ws.cells(RR4_POS_TITLE, RR4_LEFT + 1)
+        .Value = "POSITION LOG - RR4"
+        .Font.Color = RGB(255, 192, 0)
+        .Font.Bold = True
+    End With
+    With ws.Range(ws.cells(RR4_POS_TITLE, RR4_LEFT + 1), ws.cells(RR4_POS_TITLE, RR4_LEFT + 18)).Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .Color = RGB(255, 192, 0)
+        .Weight = xlThin
+    End With
+
     Dim headers As Variant
-    headers = Array("ISIN", "NAME", "ENTRY DT", "DAYS", "BROKER", _
-                    "SECTOR", "NET EXPOS", "SHARES", "ENTRY PX", "LAST", _
-                    "% CHG", "UNRL PNL", "WT%", "W.BETA", "Beta 180D", "P.TARGET")
+    headers = Array("TICKER", "NAME", "ENTRY DT", "DAYS", "SECTOR", _
+                    "NET EXPOS", "SHARES", "ENTRY PX", "LAST", "% CHG", _
+                    "UNRL PNL", "WT%", "W.BETA", "BETA 180D", "P.TARGET", "SWING RISK")
     Dim i As Integer
     For i = 0 To UBound(headers)
-        With ws.cells(4, i + 1)
+        With ws.cells(RR4_POS_HDR, RR4_LEFT + i + 1)
             .Value = headers(i)
             .Font.Color = RGB(255, 192, 0)
             .Font.Bold = True
@@ -983,20 +1189,8 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
             .HorizontalAlignment = xlCenter
         End With
     Next i
-    
-    ' SWING RISK header (col 17)
-    With ws.cells(4, 17)
-        .Value = "SWING RISK"
-        .Font.Color = RGB(255, 192, 0)
-        .Font.Bold = True
-        .Font.Size = 9
-        .Font.Name = "Consolas"
-        .Interior.Color = RGB(10, 10, 10)
-        .HorizontalAlignment = xlCenter
-    End With
-    
-    ws.Columns(17).ColumnWidth = 20
-    With ws.Range(ws.cells(4, 1), ws.cells(4, 17)).Borders(xlEdgeBottom)
+    ws.Rows(RR4_POS_HDR).RowHeight = 20
+    With ws.Range(ws.cells(RR4_POS_HDR, RR4_LEFT + 1), ws.cells(RR4_POS_HDR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
         .Color = RGB(255, 192, 0)
         .Weight = xlThin
@@ -1004,97 +1198,30 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
 End Sub
 
 ' ------------------------------------------------------------
+' One row per position, no broker grouping (v4). Rows come out in
+' CalcPositions order; ApplyArrange then sorts them and paints the
+' stripes, the P.TARGET highlight and the closing gold rule.
 Private Function WritePositionRows(ws As Worksheet, posData() As Variant, _
                                     totalMkt As Double, ByVal swingRiskMap As Object) As Long
-    WritePositionRows = 5
-    If Not IsArray(posData) Then Exit Function
-    Dim n As Long
-    On Error Resume Next: n = UBound(posData, 1)
-    If Err.Number <> 0 Or n < 1 Then Exit Function
-    On Error GoTo 0
+    WritePositionRows = RR4_POS_FIRST - 1
+    Dim n As Long: n = PosCountOf(posData)
+    If n < 1 Then Exit Function
 
-    Dim i As Long, r As Long: r = 5
-    Dim lastPosRow As Long: lastPosRow = 0
-    Dim currentBroker As String: currentBroker = ""
-    Dim brokerMkt As Double: brokerMkt = 0
-    Dim brokerUnrl As Double: brokerUnrl = 0
-
+    Dim i As Long, r As Long: r = RR4_POS_FIRST
     For i = 1 To n
-        Dim thisBroker As String: thisBroker = CStr(posData(i, 6))
-
-        If thisBroker <> currentBroker Then
-            If currentBroker <> "" Then
-                Call DrawBrokerSubtotal(ws, r, currentBroker, brokerMkt, brokerUnrl)
-                r = r + 1
-            End If
-            Call DrawBrokerHeader(ws, r, thisBroker)
-            r = r + 1
-            currentBroker = thisBroker
-            brokerMkt = 0: brokerUnrl = 0
-        End If
-
         Call WriteOnePositionRow(ws, r, i, posData, totalMkt, swingRiskMap)
-        lastPosRow = r
-        brokerMkt = brokerMkt + posData(i, 8)
-        brokerUnrl = brokerUnrl + posData(i, 13)
         r = r + 1
     Next i
-
-    If currentBroker <> "" Then
-        Call DrawBrokerSubtotal(ws, r, currentBroker, brokerMkt, brokerUnrl)
-        r = r + 1
-    End If
-
-    ' Gold rule under the LAST ticker row, mirroring the header rule drawn in
-    ' DrawColumnHeaders - closes the table off visually. It is anchored to
-    ' lastPosRow (the final real position) rather than r - 1, because r - 1 is
-    ' the blank row reserved by the no-op DrawBrokerSubtotal.
-    If lastPosRow >= 5 Then
-        With ws.Range(ws.cells(lastPosRow, 1), ws.cells(lastPosRow, 17)).Borders(xlEdgeBottom)
-            .LineStyle = xlContinuous
-            .Color = RGB(255, 192, 0)
-            .Weight = xlThin
-        End With
-    End If
-
     WritePositionRows = r - 1
+
+    Call DrawTopExposure(ws, posData, totalMkt)
 End Function
-
-' ------------------------------------------------------------
-Private Sub DrawBrokerHeader(ws As Worksheet, r As Long, brokerName As String)
-    ws.Rows(r).RowHeight = 22
-    With ws.Range(ws.cells(r, 1), ws.cells(r, 17))
-        .Interior.Color = RGB(35, 25, 0)
-        .Font.Name = "Consolas"
-        .Font.Size = 10
-        .Font.Bold = True
-        .Font.Color = RGB(255, 192, 0)
-    End With
-    ws.cells(r, 1).Value = "  == " & brokerName & " " & String(28, "=")
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
-End Sub
-
-' ------------------------------------------------------------
-' 2026-08-13: per-broker Subtotal row display removed for all groups (the
-' "Subtotal <broker>" label + market-value/UNRL sums used to be written to
-' row r here). WritePositionRows still accumulates brokerMkt/brokerUnrl and
-' still reserves this row (r advances the same as before), so the layout
-' keeps its blank separator row between groups instead of collapsing - this
-' sub is just left as a deliberate no-op rather than removing the call
-' sites, so the row-spacing math in WritePositionRows didn't need to change.
-Private Sub DrawBrokerSubtotal(ws As Worksheet, r As Long, brokerName As String, _
-                                brokerMkt As Double, brokerUnrl As Double)
-End Sub
 
 ' ------------------------------------------------------------
 Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
                                  posData() As Variant, totalMkt As Double, _
                                  swingRiskMap As Object)
-    Dim rowBg As Long
-    rowBg = IIf(i Mod 2 = 1, RGB(15, 15, 15), RGB(22, 22, 22))
-
-    With ws.Range(ws.cells(r, 1), ws.cells(r, 17))
-        .Interior.Color = rowBg
+    With ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_NCOL))
         .Font.Name = "Consolas"
         .Font.Size = 10
         .Font.Color = RGB(210, 210, 210)
@@ -1106,7 +1233,6 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     Dim nm         As String: nm = posData(i, 3)
     Dim entryDt    As Date:   entryDt = posData(i, 4)
     Dim days       As Long:   days = posData(i, 5)
-    Dim broker     As String: broker = posData(i, 6)
     Dim Sector     As String: Sector = posData(i, 7)
     Dim netExpos   As Double: netExpos = posData(i, 8)
     Dim shares     As Double: shares = posData(i, 9)
@@ -1121,75 +1247,512 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     Dim wtPct As Double: If totalMkt > 0 Then wtPct = netExpos / totalMkt
     Dim wBeta As Double: wBeta = wtPct * Beta
 
-    ws.cells(r, 1).Value = tickerCode
-    ws.cells(r, 1).Font.Color = RGB(255, 192, 0)
-    ws.cells(r, 1).Font.Bold = True
+    ws.cells(r, RR4_LEFT + 1).Value = tickerCode
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 1).Font.Bold = True
 
-    ws.cells(r, 2).Value = nm
-    ws.cells(r, 2).HorizontalAlignment = xlLeft
-    ws.cells(r, 2).Font.Color = RGB(221, 221, 221)
+    ws.cells(r, RR4_LEFT + 2).Value = nm
+    ws.cells(r, RR4_LEFT + 2).HorizontalAlignment = xlLeft
+    ws.cells(r, RR4_LEFT + 2).Font.Color = RGB(221, 221, 221)
 
-    ws.cells(r, 3).Value = entryDt
-    ws.cells(r, 3).NumberFormat = "m/d/yyyy"
+    ws.cells(r, RR4_LEFT + 3).Value = entryDt
+    ws.cells(r, RR4_LEFT + 3).NumberFormat = "m/d/yyyy"
 
-    ws.cells(r, 4).Value = days
+    ws.cells(r, RR4_LEFT + 4).Value = days
 
-    ws.cells(r, 5).Value = broker
-    ws.cells(r, 5).Font.Color = RGB(180, 180, 180)
+    ws.cells(r, RR4_LEFT + 5).Value = Sector
+    ws.cells(r, RR4_LEFT + 5).Font.Color = RGB(180, 180, 180)
 
-    ws.cells(r, 6).Value = Sector
-    ws.cells(r, 6).Font.Color = RGB(180, 180, 180)
+    ws.cells(r, RR4_LEFT + 6).Value = netExpos
+    ws.cells(r, RR4_LEFT + 6).NumberFormat = "$#,##0"
 
-    ws.cells(r, 7).Value = netExpos
-    ws.cells(r, 7).NumberFormat = "$#,##0"
+    ws.cells(r, RR4_LEFT + 7).Value = shares
+    ws.cells(r, RR4_LEFT + 7).NumberFormat = "General"
 
-    ws.cells(r, 8).Value = shares
-    ws.cells(r, 8).NumberFormat = "General"
+    ws.cells(r, RR4_LEFT + 8).Value = entryPx
+    ws.cells(r, RR4_LEFT + 8).NumberFormat = "#,##0.00"
 
-    ws.cells(r, 9).Value = entryPx
-    ws.cells(r, 9).NumberFormat = "#,##0.00"
+    ws.cells(r, RR4_LEFT + 9).Value = lastPx
+    ws.cells(r, RR4_LEFT + 9).NumberFormat = "#,##0.00"
+    ws.cells(r, RR4_LEFT + 9).Font.Color = RGB(221, 221, 221)
 
-    ws.cells(r, 10).Value = lastPx
-    ws.cells(r, 10).NumberFormat = "#,##0.00"
-    ws.cells(r, 10).Font.Color = RGB(221, 221, 221)
+    ws.cells(r, RR4_LEFT + 10).Value = chgPct
+    ws.cells(r, RR4_LEFT + 10).NumberFormat = "0.00%"
+    ws.cells(r, RR4_LEFT + 10).Font.Bold = True
+    ws.cells(r, RR4_LEFT + 10).Font.Color = PnLColorMuted(Round(unrlPnl, 0))
 
-    ws.cells(r, 11).Value = chgPct
-    ws.cells(r, 11).NumberFormat = "0.00%"
-    ws.cells(r, 11).Font.Bold = True
-    ws.cells(r, 11).Font.Color = PnLColorMuted(Round(unrlPnl, 0))
+    ws.cells(r, RR4_LEFT + 11).Value = unrlPnl
+    ws.cells(r, RR4_LEFT + 11).NumberFormat = "$#,##0;-$#,##0"
+    ws.cells(r, RR4_LEFT + 11).Font.Bold = True
+    ws.cells(r, RR4_LEFT + 11).Font.Color = PnLColorMuted(Round(unrlPnl, 0))
 
-    ws.cells(r, 12).Value = unrlPnl
-    ws.cells(r, 12).NumberFormat = "$#,##0;-$#,##0"
-    ws.cells(r, 12).Font.Bold = True
-    ws.cells(r, 12).Font.Color = PnLColorMuted(Round(unrlPnl, 0))
+    ws.cells(r, RR4_LEFT + 12).Value = wtPct
+    ws.cells(r, RR4_LEFT + 12).NumberFormat = "0.00%"
 
-    ws.cells(r, 13).Value = wtPct
-    ws.cells(r, 13).NumberFormat = "0.00%"
+    ws.cells(r, RR4_LEFT + 13).Value = wBeta
+    ws.cells(r, RR4_LEFT + 13).NumberFormat = "0.000"
 
-    ws.cells(r, 14).Value = wBeta
-    ws.cells(r, 14).NumberFormat = "0.000"
+    ws.cells(r, RR4_LEFT + 14).Value = beta30d
+    ws.cells(r, RR4_LEFT + 14).NumberFormat = "0.000"
+    ws.cells(r, RR4_LEFT + 14).Font.Color = RGB(180, 180, 255)
 
-    ws.cells(r, 15).Value = beta30d
-    ws.cells(r, 15).NumberFormat = "0.000"
-    ws.cells(r, 15).Font.Color = RGB(180, 180, 255)
-
-    ws.cells(r, 16).Value = pTgt
-    ws.cells(r, 16).NumberFormat = "#,##0"
-    ws.cells(r, 16).Font.Color = RGB(255, 192, 0)
-
-    If pTgt > 0 And lastPx > pTgt Then
-        ws.Range(ws.cells(r, 1), ws.cells(r, 17)).Interior.Color = RGB(40, 25, 0)
-    End If
+    ws.cells(r, RR4_LEFT + 15).Value = pTgt
+    ws.cells(r, RR4_LEFT + 15).NumberFormat = "#,##0"
+    ws.cells(r, RR4_LEFT + 15).Font.Color = RGB(255, 192, 0)
 
     If swingRiskMap.Exists(tickerCode) Then
-        With ws.cells(r, 17)
+        With ws.cells(r, RR4_SWING_COL)
             .Value = swingRiskMap(tickerCode)
             .Font.Color = RGB(255, 192, 0)
             .Font.Bold = True
             .HorizontalAlignment = xlCenter
         End With
     End If
+
+    ' hidden default-order key (ARRANGE "DEF")
+    ws.cells(r, RR4_ORD_COL).NumberFormat = "@"
+    ws.cells(r, RR4_ORD_COL).Value = DefaultOrderKey(tickerCode)
 End Sub
+
+' TW codes first, numerically (2330 before 3017), then US tickers A-Z.
+Private Function DefaultOrderKey(ByVal t As String) As String
+    If GetCurrencyType(CStr(t)) = "TWD" Then
+        DefaultOrderKey = "0" & Format(val(t), "0000000000") & UCase(t)
+    Else
+        DefaultOrderKey = "1" & UCase(t)
+    End If
+End Function
+
+' "TOP EXPOSURE  2330 6.1%  NVDA 5.7% ..." next to the position-log title
+Private Sub DrawTopExposure(ws As Worksheet, posData() As Variant, totalMkt As Double)
+    Dim n As Long: n = PosCountOf(posData)
+    If n < 1 Or totalMkt <= 0 Then Exit Sub
+
+    Dim used() As Boolean: ReDim used(1 To n)
+    Dim s As String, k As Long, i As Long, best As Long
+    For k = 1 To IIf(n < 5, n, 5)
+        best = 0
+        For i = 1 To n
+            If Not used(i) Then
+                If best = 0 Then
+                    best = i
+                ElseIf posData(i, 8) > posData(best, 8) Then
+                    best = i
+                End If
+            End If
+        Next i
+        used(best) = True
+        s = s & ShortTicker(CStr(posData(best, 1))) & " " & _
+            Format(posData(best, 8) / totalMkt, "0.0%") & "    "
+    Next k
+
+    With ws.cells(RR4_POS_TITLE, RR4_LEFT + 5)
+        .Value = "TOP EXPOSURE    " & s
+        .Font.Color = RGB(180, 180, 180)
+        .Characters(1, 12).Font.Color = RGB(255, 192, 0)
+        .Characters(1, 12).Font.Bold = True
+    End With
+End Sub
+
+' ================================================================
+'  ARRANGE <GO> - sort the position rows already on the sheet
+' ----------------------------------------------------------------
+'  Called by RebuildPortfolioDashboard and by the RR4 sheet's
+'  Worksheet_Change when D2 is edited. Uses Range.Sort, so values AND
+'  their per-cell fonts move together; the stripes / P.TARGET highlight
+'  / closing rule depend on row position and are repainted afterwards.
+'  Key 2 is always the hidden default-order key, so ties stay stable.
+' ================================================================
+Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets(SH_PORT)
+    code = UCase(Trim(code))
+
+    Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
+    Application.ScreenUpdating = False
+    On Error GoTo Fin
+
+    Dim keyCol As Long, ord As Long, desc As String, known As Boolean
+    known = True
+    Select Case code
+        Case "", "DEF": keyCol = RR4_ORD_COL: ord = xlAscending: desc = "DEFAULT (TW code, then US A-Z)"
+        Case "UNU": keyCol = 11: ord = xlAscending: desc = "UNRL PNL  low > high"
+        Case "UND": keyCol = 11: ord = xlDescending: desc = "UNRL PNL  high > low"
+        Case "PCU": keyCol = 10: ord = xlAscending: desc = "% CHG  low > high"
+        Case "PCD": keyCol = 10: ord = xlDescending: desc = "% CHG  high > low"
+        Case "DAU": keyCol = 4: ord = xlAscending: desc = "DAYS  short > long"
+        Case "DAD": keyCol = 4: ord = xlDescending: desc = "DAYS  long > short"
+        Case "WTU": keyCol = 12: ord = xlAscending: desc = "WT%  light > heavy"
+        Case "WTD": keyCol = 12: ord = xlDescending: desc = "WT%  heavy > light"
+        Case Else
+            known = False
+            keyCol = RR4_ORD_COL: ord = xlAscending
+            desc = "UNKNOWN CODE [" & code & "] - default order"
+    End Select
+
+    Dim lastR As Long: lastR = LastPositionRow(ws)
+    If lastR > RR4_POS_FIRST Then
+        Dim rng As Range
+        Set rng = ws.Range(ws.cells(RR4_POS_FIRST, RR4_LEFT + 1), ws.cells(lastR, RR4_ORD_COL))
+        ' The hidden default-order column is the tie-breaker - but ONLY when it
+        ' is not already Key1. Passing the same column as Key1 and Key2 makes
+        ' Excel write <sortCondition ref="T.."/> TWICE into the sheet's
+        ' sortState; it saves without complaint and then REFUSES TO OPEN the
+        ' file ever again (error 800A03EC, no repair offered). That is what
+        ' broke the workbook on 2026-09-12 - every "DEF" sort hit it.
+        If keyCol = RR4_ORD_COL Then
+            rng.Sort Key1:=ws.cells(RR4_POS_FIRST, keyCol), Order1:=ord, _
+                     Header:=xlNo, Orientation:=xlTopToBottom, MatchCase:=False
+        Else
+            rng.Sort Key1:=ws.cells(RR4_POS_FIRST, keyCol), Order1:=ord, _
+                     Key2:=ws.cells(RR4_POS_FIRST, RR4_ORD_COL), Order2:=xlAscending, _
+                     Header:=xlNo, Orientation:=xlTopToBottom, MatchCase:=False
+        End If
+    End If
+    If lastR >= RR4_POS_FIRST Then Call RestripeRows(ws, lastR)
+    Call DrawWeightBar(ws, lastR)
+    Call DrawDonut(ws, lastR)
+
+    Dim codeList As String: codeList = "UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF  >>  "
+    With ws.cells(RR4_TOP + 2, RR4_LEFT + 5)
+        .Value = codeList & desc
+        .Font.Size = 9
+        .Font.Color = RGB(150, 150, 150)
+        .Characters(Len(codeList) + 1, Len(desc)).Font.Color = IIf(known, RGB(255, 192, 0), RGB(255, 80, 80))
+    End With
+
+Fin:
+    ' never leave the screen frozen behind an error - the sheet's own handler
+    ' only restores EnableEvents
+    Dim errN As Long: errN = Err.Number
+    Application.ScreenUpdating = prevScr
+    If errN <> 0 Then Call NavNotify("ARRANGE failed: " & Err.Description, True)
+End Sub
+
+Private Function IsArrangeCode(ByVal code As String) As Boolean
+    Select Case UCase(Trim(code))
+        Case "", "DEF", "UNU", "UND", "PCU", "PCD", "DAU", "DAD", "WTU", "WTD"
+            IsArrangeCode = True
+    End Select
+End Function
+
+' Last position row = last consecutive row carrying a default-order key.
+' Bounded by the last used cell of column T: an unbounded walk would run off
+' the sheet (error 1004) if that column were ever filled to the bottom, and a
+' stale key below the block would stretch the sort range into the disclaimer's
+' merged rows ("merged cells must be identically sized").
+Private Function LastPositionRow(ws As Worksheet) As Long
+    Dim lastUsed As Long
+    lastUsed = ws.cells(ws.Rows.count, RR4_ORD_COL).End(xlUp).row
+    Dim r As Long: r = RR4_POS_FIRST
+    Do While r <= lastUsed
+        If CellStr(ws.cells(r, RR4_ORD_COL).Value) = "" Then Exit Do
+        r = r + 1
+    Loop
+    LastPositionRow = r - 1
+End Function
+
+Private Sub RestripeRows(ws As Worksheet, lastR As Long)
+    Dim r As Long, bg As Long
+    For r = RR4_POS_FIRST To lastR
+        If (r - RR4_POS_FIRST) Mod 2 = 0 Then bg = RGB(15, 15, 15) Else bg = RGB(22, 22, 22)
+        Dim lastPx As Double: lastPx = NumOr0(ws.cells(r, RR4_LEFT + 9).Value)
+        Dim pTgt As Double: pTgt = NumOr0(ws.cells(r, RR4_LEFT + 15).Value)
+        If pTgt > 0 And lastPx > pTgt Then bg = RGB(40, 25, 0)
+        With ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_NCOL))
+            .Interior.Color = bg
+            .Borders(xlEdgeBottom).LineStyle = xlNone
+        End With
+        ws.cells(r, RR4_SWING_COL).Interior.Color = RR4_INPUT_BG   ' typed by hand
+    Next r
+    With ws.Range(ws.cells(lastR, RR4_LEFT + 1), ws.cells(lastR, RR4_NCOL)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RGB(255, 192, 0)
+        .Weight = xlThin
+    End With
+End Sub
+
+' ================================================================
+'  WEIGHT BAR (row 4, B:G) - one rectangle per position, left to right
+'  in the current ARRANGE order. Width = WT%, colour = % CHG (green up,
+'  red down, stronger the further from 0, full strength at +/-30%).
+'  Shapes are named RR4W_n so only they are cleared on a redraw.
+' ================================================================
+Private Sub DrawWeightBar(ws As Worksheet, lastR As Long)
+    Dim k As Long
+    For k = ws.Shapes.count To 1 Step -1
+        If Left(ws.Shapes(k).Name, Len(RR4_WBAR_PREFIX)) = RR4_WBAR_PREFIX Then ws.Shapes(k).Delete
+    Next k
+    If lastR < RR4_POS_FIRST Then Exit Sub
+
+    Dim barL As Double, barT As Double, barW As Double, barH As Double
+    barL = ws.cells(RR4_TOP + 4, RR4_LEFT + 2).Left
+    barW = ws.cells(RR4_TOP + 4, RR4_LEFT + 8).Left - barL
+    barT = ws.cells(RR4_TOP + 4, RR4_LEFT + 2).Top + 2
+    barH = ws.Rows(RR4_TOP + 4).RowHeight - 4
+
+    Dim sumW As Double, r As Long
+    For r = RR4_POS_FIRST To lastR
+        sumW = sumW + Abs(NumOr0(ws.cells(r, RR4_LEFT + 12).Value))
+    Next r
+    If sumW <= 0 Then Exit Sub
+
+    Dim x As Double: x = barL
+    For r = RR4_POS_FIRST To lastR
+        Dim wt As Double: wt = Abs(NumOr0(ws.cells(r, RR4_LEFT + 12).Value))
+        Dim w As Double: w = wt / sumW * barW
+        If w >= 1 Then
+            Dim pct As Double: pct = NumOr0(ws.cells(r, RR4_LEFT + 10).Value)
+            Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
+            Dim shp As Shape
+            Set shp = ws.Shapes.AddShape(msoShapeRectangle, x, barT, IIf(w > 2, w - 1, w), barH)
+            shp.Name = RR4_WBAR_PREFIX & (r - RR4_POS_FIRST + 1)
+            shp.Line.Visible = msoFalse
+            shp.Fill.ForeColor.RGB = WeightBarColor(pct)
+            shp.Placement = xlMove
+            shp.AlternativeText = tk & "  WT " & Format(wt, "0.0%") & "  " & Format(pct, "+0.0%;-0.0%;0.0%")
+            If w >= 42 Then
+                With shp.TextFrame2
+                    .MarginLeft = 0: .MarginRight = 0: .MarginTop = 0: .MarginBottom = 0
+                    .WordWrap = msoFalse
+                    .VerticalAnchor = msoAnchorMiddle
+                    .TextRange.Text = ShortTicker(tk)
+                    .TextRange.Font.Name = "Consolas"
+                    .TextRange.Font.Size = 7
+                    .TextRange.Font.Fill.ForeColor.RGB = RGB(20, 20, 20)
+                    .TextRange.ParagraphFormat.Alignment = msoAlignCenter
+                End With
+            End If
+        End If
+        x = x + w
+    Next r
+End Sub
+
+Private Function WeightBarColor(ByVal pct As Double) As Long
+    Dim t As Double: t = Abs(pct) / 0.3
+    If t > 1 Then t = 1
+    t = 0.35 + 0.65 * t
+    Dim r1 As Double, g1 As Double, b1 As Double
+    If pct >= 0 Then
+        r1 = 0: g1 = 200: b1 = 90
+    Else
+        r1 = 235: g1 = 70: b1 = 70
+    End If
+    ' blend from dark grey (45,45,45) towards the full colour
+    WeightBarColor = RGB(CLng(45 + (r1 - 45) * t), CLng(45 + (g1 - 45) * t), CLng(45 + (b1 - 45) * t))
+End Function
+
+' v4.1: the eight ActiveX buttons (DELETE ALL .. VOLATILITY) are replaced
+' by typed nav commands (UP / ADD / DEL / V! / D! / C! / DBG / CLEARALL,
+' see modNav). Any CmdBtn* still on the sheet is removed on the next UP.
+Private Sub RemoveLegacyButtons(ws As Worksheet)
+    Dim k As Long
+    On Error Resume Next
+    For k = ws.OLEObjects.count To 1 Step -1
+        If Left(ws.OLEObjects(k).Name, 6) = "CmdBtn" Then ws.OLEObjects(k).Delete
+    Next k
+    On Error GoTo 0
+End Sub
+
+' ================================================================
+'  WEIGHT DONUT (right of the ticker panel, from column U)
+'  Same data and colours as the weight bar: one slice per position in
+'  the current ARRANGE order, size = WT%, colour = % CHG. The series
+'  points at the position-log cells (tickers A, WT% L) instead of holding
+'  copied numbers, so what the chart shows can always be checked on the
+'  sheet. Rebuilt with the weight bar (UP and every ARRANGE).
+' ================================================================
+Private Sub DrawDonut(ws As Worksheet, lastR As Long)
+    ' delete by walking the collection - ChartObjects("name") raises when it is
+    ' missing, and an ignored error there would leave a second chart behind
+    Dim k As Long
+    For k = ws.ChartObjects.count To 1 Step -1
+        If ws.ChartObjects(k).Name = RR4_DONUT_NAME Then ws.ChartObjects(k).Delete
+    Next k
+    If lastR < RR4_POS_FIRST Then Exit Sub
+
+    Dim cL As Double, cT As Double, sz As Double
+    cL = ws.Columns(21).Left + 6                 ' U, right of the panel
+    cT = ws.cells(RR4_TOP + 1, RR4_LEFT + 21).Top + 2
+    sz = ws.cells(RR4_TOP + 14, RR4_LEFT + 21).Top - cT     ' page rows 4-14
+    ' ApplyArrange also runs from the D5 edit, where nothing has re-set the row
+    ' heights: a hidden or squashed block would ask for a zero-height chart
+    If sz < 60 Then sz = 60
+
+    Dim co As ChartObject
+    Set co = ws.ChartObjects.Add(cL, cT, sz + 40, sz)
+    co.Name = RR4_DONUT_NAME
+    co.Placement = xlMove
+    With co.Chart
+        .ChartType = xlDoughnut
+        Do While .SeriesCollection.count > 0
+            .SeriesCollection(1).Delete
+        Loop
+        Dim ser As Series
+        Set ser = .SeriesCollection.NewSeries
+        ser.Name = "WT%"
+        ser.Values = ws.Range(ws.cells(RR4_POS_FIRST, RR4_LEFT + 12), ws.cells(lastR, RR4_LEFT + 12))
+        ser.XValues = ws.Range(ws.cells(RR4_POS_FIRST, RR4_LEFT + 1), ws.cells(lastR, RR4_LEFT + 1))
+        .HasLegend = False
+        .HasTitle = True
+        .ChartTitle.Text = "WEIGHT"
+        .ChartTitle.Font.Name = "Consolas"
+        .ChartTitle.Font.Size = 9
+        .ChartTitle.Font.Bold = True
+        .ChartTitle.Font.Color = RGB(255, 192, 0)
+        .ChartGroups(1).DoughnutHoleSize = 58
+        .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        .ChartArea.Format.Line.Visible = msoFalse
+        .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+
+        Dim r As Long, p As Long
+        For r = RR4_POS_FIRST To lastR
+            p = r - RR4_POS_FIRST + 1
+            With ser.Points(p).Format
+                .Fill.ForeColor.RGB = WeightBarColor(NumOr0(ws.cells(r, RR4_LEFT + 10).Value))
+                .Line.ForeColor.RGB = RGB(0, 0, 0)
+                .Line.Weight = 1.5
+            End With
+        Next r
+    End With
+End Sub
+
+' ================================================================
+'  Read-only accessors for other modules (Attach, TickerInsight) so
+'  they never hard-code where the RR4 page keeps a value.
+' ================================================================
+' Keep the InceptionDate / StartingCapital names on the config cells - they
+' pointed at S1/S2 until v4.2 moved the pair to T1/T2.
+Private Sub PointConfigNames(ws As Worksheet)
+    On Error Resume Next
+    ThisWorkbook.names("InceptionDate").Delete
+    ThisWorkbook.names("StartingCapital").Delete
+    ThisWorkbook.names.Add "InceptionDate", ws.Range(RR4_CFG_INC)
+    ThisWorkbook.names.Add "StartingCapital", ws.Range(RR4_CFG_CAP)
+    ws.Columns(20).Hidden = True
+    On Error GoTo 0
+End Sub
+
+Public Function RR4FxRate() As Double
+    RR4FxRate = GetExRate(ThisWorkbook.Sheets(SH_PORT))
+End Function
+
+Public Function RR4PositionCount() As Long
+    Dim lastR As Long: lastR = LastPositionRow(ThisWorkbook.Sheets(SH_PORT))
+    If lastR >= RR4_POS_FIRST Then RR4PositionCount = lastR - RR4_POS_FIRST + 1
+End Function
+
+' ================================================================
+'  Small helpers (v4)
+' ================================================================
+' SWING RISK is typed by hand, so it has to survive the sheet clear.
+' Found by its header text, which works on both the v3 layout (row 4,
+' column Q) and v4 (row 25, column P).
+Private Function ReadSwingRisk(ws As Worksheet) As Object
+    Dim m As Object: Set m = CreateObject("Scripting.Dictionary")
+    Dim hdrRow As Long, hdrCol As Long, r As Long, c As Long
+    For r = 1 To 60
+        For c = 1 To 20
+            If UCase(CellStr(ws.cells(r, c).Value)) = "SWING RISK" Then
+                hdrRow = r: hdrCol = c
+                Exit For
+            End If
+        Next c
+        If hdrRow > 0 Then Exit For
+    Next r
+    If hdrRow > 0 Then
+        Dim lastR As Long: lastR = ws.cells(ws.Rows.count, RR4_LEFT + 1).End(xlUp).row
+        For r = hdrRow + 1 To lastR
+            Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
+            Dim sv As String: sv = CellStr(ws.cells(r, hdrCol).Value)
+            If tk <> "" And sv <> "" Then m(tk) = sv
+        Next r
+    End If
+    Set ReadSwingRisk = m
+End Function
+
+' HistoryLog column C (cumulative PnL) on the last row dated before today
+Private Function PrevDayCumPnL() As Variant
+    PrevDayCumPnL = Empty
+    Dim wsH As Worksheet
+    On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo 0
+    If wsH Is Nothing Then Exit Function
+    Dim r As Long
+    For r = wsH.cells(wsH.Rows.count, "A").End(xlUp).row To 2 Step -1
+        Dim dv As Variant: dv = wsH.cells(r, "A").Value
+        If IsDate(dv) Then
+            If Int(CDate(dv)) < Date Then
+                Dim cv As Variant: cv = wsH.cells(r, "C").Value
+                If Not IsError(cv) And Not IsEmpty(cv) And IsNumeric(cv) Then PrevDayCumPnL = CDbl(cv)
+                Exit Function
+            End If
+        End If
+    Next r
+End Function
+
+' Realized sheet: sum of PNL(TWD) (col H) for sells dated before d (col I)
+Private Function RealizedBefore(ByVal d As Date) As Double
+    Dim wsR As Worksheet
+    On Error Resume Next: Set wsR = ThisWorkbook.Sheets(SH_REAL): On Error GoTo 0
+    If wsR Is Nothing Then Exit Function
+    Dim r As Long, lastR As Long
+    lastR = wsR.cells(wsR.Rows.count, "A").End(xlUp).row
+    For r = 2 To lastR
+        Dim dv As Variant: dv = wsR.cells(r, "I").Value
+        If IsDate(dv) Then
+            If Int(CDate(dv)) < d Then RealizedBefore = RealizedBefore + NumOr0(wsR.cells(r, "H").Value)
+        End If
+    Next r
+End Function
+
+Private Function PosCountOf(posData() As Variant) As Long
+    On Error Resume Next
+    PosCountOf = UBound(posData, 1)
+    If Err.Number <> 0 Then PosCountOf = 0
+    Err.Clear
+    On Error GoTo 0
+End Function
+
+Private Function CellStr(ByVal v As Variant) As String
+    If IsError(v) Then Exit Function
+    If IsEmpty(v) Or IsNull(v) Then Exit Function
+    CellStr = Trim(CStr(v))
+End Function
+
+Private Function NumOr0(ByVal v As Variant) As Double
+    If IsError(v) Then Exit Function
+    If IsEmpty(v) Then Exit Function
+    If IsNumeric(v) Then NumOr0 = CDbl(v)
+End Function
+
+Private Function FormatShares(ByVal sh As Double) As String
+    If sh = Int(sh) Then
+        FormatShares = Format(sh, "#,##0")
+    Else
+        FormatShares = Format(sh, "#,##0.####")
+    End If
+End Function
+
+Private Function ShortTicker(ByVal t As String) As String
+    t = UCase(Trim(t))
+    If Right(t, 4) = ".TWO" Then
+        t = Left(t, Len(t) - 4)
+    ElseIf Right(t, 3) = ".TW" Then
+        t = Left(t, Len(t) - 3)
+    End If
+    ShortTicker = t
+End Function
+
+' Green gain / red loss - the convention of the ticker panel, the weight
+' bar and the loss-red holdings rows, so the RR4 page reads one way.
+Private Function GainLossColor(ByVal v As Double) As Long
+    If v > 0 Then
+        GainLossColor = RGB(0, 210, 100)
+    ElseIf v < 0 Then
+        GainLossColor = RGB(255, 80, 80)
+    Else
+        GainLossColor = RGB(200, 200, 200)
+    End If
+End Function
 ' ================================================================
 '  Disclaimer (bottom rows)
 ' ================================================================
@@ -1197,23 +1760,23 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     Dim r As Long: r = startRow + 3
 
     On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
+    ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).UnMerge
+    ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).Merge
     On Error GoTo 0
-    ws.cells(r, 1).Value = "On the way in Medium-High  Beta Between 2-2.5 , Remember alwaus do the Eliminate underperformers"
-    ws.cells(r, 1).Font.Color = RGB(255, 192, 0)
-    ws.cells(r, 1).Font.Italic = True
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
+    ws.cells(r, RR4_LEFT + 1).Value = "On the way in Medium-High  Beta Between 2-2.5 , Remember alwaus do the Eliminate underperformers"
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 1).Font.Italic = True
+    ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 
     r = r + 1
     On Error Resume Next
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).UnMerge
-    ws.Range(ws.cells(r, 1), ws.cells(r, 16)).Merge
+    ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).UnMerge
+    ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).Merge
     On Error GoTo 0
-    ws.cells(r, 1).Value = "FOCUS ON WHAT MY ACTIONS ARE & DO YOUR OWN WORK ! => WHO SAYS YOU CAN'T FIND BETTER TRADE-IDEAS ? => Narrative + Money Flow + Technicals = Valuation Skyrocket"
-    ws.cells(r, 1).Font.Color = RGB(255, 192, 0)
-    ws.cells(r, 1).Font.Italic = True
-    ws.cells(r, 1).HorizontalAlignment = xlLeft
+    ws.cells(r, RR4_LEFT + 1).Value = "FOCUS ON WHAT MY ACTIONS ARE & DO YOUR OWN WORK ! => WHO SAYS YOU CAN'T FIND BETTER TRADE-IDEAS ? => Narrative + Money Flow + Technicals = Valuation Skyrocket"
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 1).Font.Italic = True
+    ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 End Sub
 
 Private Sub CalcPositions(positions As Object, exRate As Double, _
@@ -1604,11 +2167,14 @@ Private Function PnLColorMuted(v As Double) As Long
     End If
 End Function
 
+' USD/TWD from the page's input cell. B2 is where v4 kept it - read once
+' as a fallback so the first v4.1 rebuild carries a typed rate across.
 Private Function GetExRate(ws As Worksheet) As Double
-    On Error Resume Next
-    GetExRate = val(ws.Range("B2").Value)
-    On Error GoTo 0
-    If GetExRate <= 0 Then GetExRate = 31.6
+    ' (the v4 "read B2 as well" fallback is gone: B2 is a nav-bar cell now)
+    Dim v As Double
+    v = NumOr0(ws.Range(RR4_FX_CELL).Value)
+    If v < 20 Or v > 50 Then v = 31.6
+    GetExRate = v
 End Function
 
 Private Function GetInceptionDate(ws As Worksheet) As Date
@@ -1645,10 +2211,10 @@ Sub SetupPortfolioConfig()
     ThisWorkbook.names("StartingCapital").Delete
     On Error GoTo 0
 
-    ws.Range("S1").Value = CDate(inDate)
-    ws.Range("S2").Value = CDbl(startCap)
-    ThisWorkbook.names.Add "InceptionDate", ws.Range("S1")
-    ThisWorkbook.names.Add "StartingCapital", ws.Range("S2")
+    ws.Range(RR4_CFG_INC).Value = CDate(inDate)
+    ws.Range(RR4_CFG_CAP).Value = CDbl(startCap)
+    ThisWorkbook.names.Add "InceptionDate", ws.Range(RR4_CFG_INC)
+    ThisWorkbook.names.Add "StartingCapital", ws.Range(RR4_CFG_CAP)
     ws.Columns("S").Hidden = True
 
     MsgBox "Config saved!" & vbCr & "Inception: " & inDate & vbCr & "Capital: " & startCap, vbInformation
@@ -1695,7 +2261,7 @@ Sub BuildHoldingsCorrelation()
 
     Dim tickerCount As Long: tickerCount = uniqTickers.count
     If tickerCount < 2 Then
-        MsgBox "Need at least 2 holdings.", vbInformation
+        Call NavNotify("C!: need at least 2 holdings", True)
         Application.ScreenUpdating = True: Exit Sub
     End If
 
@@ -1787,7 +2353,8 @@ Sub BuildHoldingsCorrelation()
             diagMsg = diagMsg & vbCr
         Next dIdx
         diagMsg = diagMsg & vbCr & "Tip: re-import Attach module, save / close / reopen workbook, retry."
-        MsgBox diagMsg, vbInformation, "Holdings Correlation"
+        Debug.Print diagMsg
+        Call NavNotify("C!: only " & usedCount & " common trading days - per-ticker counts in the Immediate window", True)
         Application.ScreenUpdating = True: Exit Sub
     End If
 
@@ -1825,7 +2392,7 @@ Sub BuildHoldingsCorrelation()
 
     Application.ScreenUpdating = True
     Application.StatusBar = "HoldingsCorr updated: " & Format(Now, "hh:mm:ss")
-     MsgBox "Holdings correlation matrix updated.", vbInformation
+    Call NavNotify("C! done " & Format(Now, "hh:mm:ss") & " - holdings correlation updated")
 End Sub
 
 ' ------------------------------------------------------------
@@ -1839,6 +2406,7 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
         wsC.Name = "HoldingsCorr"
     End If
 
+    Call NavStrip(wsC)
     wsC.cells.Clear
     With wsC.cells
         .Interior.Color = RGB(0, 0, 0)
@@ -1990,6 +2558,7 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
 
     ' ------------------------------------------------------------
 
+    Call NavAdd(wsC, "C")
     wsC.Activate
 End Sub
 ' ------------------------------------------------------------
@@ -2218,7 +2787,7 @@ End Sub
 '  180D VOLATILITY - per-stock std dev + market-value-weighted
 '  portfolio std dev
 ' ----------------------------------------------------------------
-'  Button: "VOLATILITY" (RebuildActiveXButtons). Not run automatically
+'  Nav command V! (was the VOLATILITY button). Not run automatically
 '  from RebuildPortfolioDashboard - each holding needs its own ~1y
 '  Yahoo history call, too slow to fire on every dashboard refresh.
 '
@@ -2257,11 +2826,11 @@ Sub UpdatePortfolioVolatility()
     Dim posCount As Long
     Call CalcPositions(positions, exRate, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, posCount)
 
-    If Not IsArray(posData) Then MsgBox "No positions found.", vbExclamation: Exit Sub
+    If Not IsArray(posData) Then Call NavNotify("V!: no positions found", True): Exit Sub
     Dim n As Long
     On Error Resume Next
     n = UBound(posData, 1)
-    If Err.Number <> 0 Or n < 1 Then MsgBox "No positions found.", vbExclamation: Exit Sub
+    If Err.Number <> 0 Or n < 1 Then Call NavNotify("V!: no positions found", True): Exit Sub
     On Error GoTo 0
 
     Application.ScreenUpdating = False
@@ -2351,7 +2920,7 @@ Sub UpdatePortfolioVolatility()
 
     Application.ScreenUpdating = True
     Application.StatusBar = "Volatility updated: " & Format(Now, "hh:mm:ss")
-    MsgBox "180D volatility analysis updated!", vbInformation
+    Call NavNotify("V! done " & Format(Now, "hh:mm:ss") & " - 180D volatility updated")
 End Sub
 
 ' ------------------------------------------------------------
@@ -2420,6 +2989,7 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
         wsV.Name = "Volatility180D"
     End If
 
+    Call NavStrip(wsV)
     wsV.Cells.Clear
     With wsV.Cells
         .Interior.Color = RGB(0, 0, 0)
@@ -2531,6 +3101,7 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
     wsV.Cells(r, 1).Font.Italic = True
 
     wsV.Columns("A:E").AutoFit
+    Call NavAdd(wsV, "V")
     ThisWorkbook.Sheets(SH_PORT).Activate
 End Sub
 

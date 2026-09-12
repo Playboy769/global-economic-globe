@@ -1,0 +1,22 @@
+' ================================================================
+'  Code-behind of ThisWorkbook (kept as plain text, like the sheet code).
+'  Workbook_SheetChange: the nav bar's command cell (B1, or C1 on RR4 -
+'  modNav.NavCmdCell) on every report page -> modNav.RunNavCommand. Data
+'  pages have no bar, so that cell of theirs is ignored by the
+'  NavPageCode / NavHasRows checks.
+' ================================================================
+Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    If Target.CountLarge > 1 Then Exit Sub
+    If Target.Address(False, False) <> NavCmdCell(Sh) Then Exit Sub
+    If NavPageCode(Sh) = "" Then Exit Sub
+    If Not NavHasRows(Sh) Then Exit Sub
+
+    On Error GoTo Fail
+    Call RunNavCommand(CStr(Target.Value), Sh)
+    Exit Sub
+
+Fail:
+    Application.EnableEvents = True
+    Application.ScreenUpdating = True
+    MsgBox "Nav command error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub

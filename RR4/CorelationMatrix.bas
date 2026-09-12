@@ -8,6 +8,7 @@ Sub BuildCorrelationMatrix()
         Set wsC = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count))
         wsC.Name = "Correlation"
     End If
+    Call NavStrip(wsC)      ' nav bar rows off: the page is drawn from row 1 and B2 is read below
 
     ' ¢w¢w Layout constants ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w
     Dim MATRIX_ROW As Long: MATRIX_ROW = 2
@@ -222,7 +223,8 @@ Sub BuildCorrelationMatrix()
     wsC.cells(1, 1).Select
 
     Application.StatusBar = "Correlation matrix done ¡X " & Format(Now, "hh:mm:ss")
-    MsgBox "Done! (" & nSec & " sectors, " & nDays & " days)", vbInformation
+    Call NavAdd(wsC, "CC")
+    Call NavNotify("CC done - " & nSec & " sectors, " & nDays & " days")
 End Sub
 
 ' ¢w¢w Fetch closing price array (nDays entries) ¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w

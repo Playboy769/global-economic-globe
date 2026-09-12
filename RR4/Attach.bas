@@ -549,8 +549,8 @@ Sub CalculateRealizedPnL()
     Dim dictLots As Object: Set dictLots = CreateObject("Scripting.Dictionary")
 
     Dim exRate As Double
-    On Error Resume Next: exRate = Val(wsPort.Range("B2").Value): On Error GoTo 0
-    If exRate <= 0 Then exRate = 32
+    ' the RR4 page's USD/TWD input (cell moves with the layout - ask the owner)
+    exRate = RR4FxRate()
 
     Dim lastRow As Long: lastRow = wsTrans.Cells(wsTrans.Rows.Count, "A").End(xlUp).Row
     Dim writeRow As Long: writeRow = 2
@@ -683,28 +683,11 @@ Sub CalculateRealizedPnL()
         End If
     Next rr
 
-    ' Update RR4 Entry PX
-    Dim portLastRow As Long: portLastRow = wsPort.Cells(wsPort.Rows.Count, "A").End(xlUp).Row
-    Dim pr As Long
-    For pr = 5 To portLastRow
-        Dim pTicker As String: pTicker = UCase(Trim(wsPort.Cells(pr, 1).Value))
-        Dim pBroker As String: pBroker = Trim(CStr(wsPort.Cells(pr, 13).Value))
-        If pBroker = "" Then pBroker = "Default"
-
-        Dim pKey As String: pKey = pTicker & "|" & pBroker
-
-        If dictLots.Exists(pKey) And pTicker <> "" Then
-            Dim totSh As Double: totSh = 0
-            Dim totCost As Double: totCost = 0
-            For ll = 1 To dictLots(pKey).Count
-                totSh = totSh + dictLots(pKey)(ll)(0)
-                totCost = totCost + dictLots(pKey)(ll)(0) * dictLots(pKey)(ll)(1)
-            Next ll
-            If totSh > 0.00001 Then
-                wsPort.Cells(pr, 9).Value = totCost / totSh
-            End If
-        End If
-    Next pr
+    ' (2026-09-12) The "Update RR4 Entry PX" pass that used to follow is gone:
+    ' it matched RR4 rows by ticker + column 13 as the broker, which stopped
+    ' being the broker column several layouts ago, and on the v4 page its
+    ' column 9 is LAST - a match would have overwritten the live price.
+    ' RebuildPortfolioDashboard writes ENTRY PX from the same FIFO lots.
 
     wsReal.Columns("A:J").AutoFit
     Application.ScreenUpdating = True
@@ -736,7 +719,7 @@ Sub ClearAllData()
         If LR > 1 Then wsHist.Range("A2:M" & LR).ClearContents
     End If
 
-    MsgBox "All data cleared.", vbInformation
+    Call NavNotify("CLEARALL done - all data cleared")
 End Sub
 
 ' ================================================================
@@ -1238,25 +1221,26 @@ Sub RunSystemDebug()
     Dim wsP As Worksheet
     On Error Resume Next: Set wsP = ThisWorkbook.Sheets("RR4"): On Error GoTo 0
     If Not wsP Is Nothing Then
+        ' Cell addresses come from PortfolioDashboard_v3 (RR4_FX_CELL etc.),
+        ' so this check follows the page layout instead of hard-coding it.
         Dim exRate As Double: exRate = 0
-        On Error Resume Next: exRate = CDbl(wsP.Range("C22").Value): On Error GoTo 0
-        Call DB_Row(wsDB, wr, "RR4", "FX rate C22 (USD/TWD)", _
+        On Error Resume Next: exRate = CDbl(wsP.Range(RR4_FX_CELL).Value): On Error GoTo 0
+        Call DB_Row(wsDB, wr, "RR4", "FX rate " & RR4_FX_CELL & " (USD/TWD)", _
             IIf(exRate > 20 And exRate < 50, "OK", "WARN"), _
             IIf(exRate > 0, Format(exRate, "0.00"), "No value"), _
             IIf(exRate > 20 And exRate < 50, RGB(0, 210, 100), RGB(255, 140, 0)))
         wr = wr + 1
 
         Dim totalMkt As Double: totalMkt = 0
-        On Error Resume Next: totalMkt = CDbl(wsP.Cells(1, 1).Value): On Error GoTo 0
-        Call DB_Row(wsDB, wr, "RR4", "Total market value (Cell A1)", _
+        On Error Resume Next: totalMkt = CDbl(wsP.Range(RR4_TOTAL_CELL).Value): On Error GoTo 0
+        Call DB_Row(wsDB, wr, "RR4", "Total market value (" & RR4_TOTAL_CELL & ")", _
             IIf(totalMkt > 0, "OK", "ERROR"), _
             IIf(totalMkt > 0, Format(totalMkt, "#,##0") & " TWD", "No value or zero"), _
             IIf(totalMkt > 0, RGB(0, 210, 100), RGB(255, 80, 80)))
         wr = wr + 1
 
-        Dim posLR As Long: posLR = wsP.Cells(wsP.Rows.Count, 1).End(xlUp).Row
-        Dim posCount As Long: posCount = posLR - 4
-        Call DB_Row(wsDB, wr, "RR4", "Position count (Row 5+)", _
+        Dim posCount As Long: posCount = RR4PositionCount()
+        Call DB_Row(wsDB, wr, "RR4", "Position count (row " & RR4_POS_FIRST & "+)", _
             IIf(posCount > 0, "OK", "WARN"), posCount & " positions", _
             IIf(posCount > 0, RGB(0, 210, 100), RGB(255, 140, 0)))
         wr = wr + 1
@@ -1264,8 +1248,8 @@ Sub RunSystemDebug()
         Dim incDate As Date
         Dim stCap As Double
         On Error Resume Next
-        incDate = CDate(wsP.Range("C2").Value)
-        stCap = CDbl(wsP.Range("E2").Value)
+        incDate = CDate(ThisWorkbook.Names("InceptionDate").RefersToRange.Value)
+        stCap = CDbl(ThisWorkbook.Names("StartingCapital").RefersToRange.Value)
         On Error GoTo 0
         Call DB_Row(wsDB, wr, "RR4", "InceptionDate (named range)", _
             IIf(incDate > DateSerial(2000, 1, 1), "OK", "ERROR"), _
@@ -1431,8 +1415,7 @@ Sub RunSystemDebug()
 
     Application.ScreenUpdating = True
     Application.StatusBar = "Debug complete - Health: " & healthScore & "/100"
-    MsgBox "Debug complete. Health score: " & healthScore & "/100" & vbCr & _
-           "OK: " & okCount & " WARN: " & warnCount & " ERROR: " & errCount, vbInformation
+    Call NavNotify("DBG done - health " & healthScore & "/100  OK " & okCount & "  WARN " & warnCount & "  ERROR " & errCount, errCount > 0)
 End Sub
 
 ' ----------------------------------------------------------------

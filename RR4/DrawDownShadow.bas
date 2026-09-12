@@ -41,11 +41,11 @@ Public Sub BuildDrawdownShadow()
     ' keeps deposits/withdrawals out of the numerator.
     Dim wsH As Worksheet
     On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo CleanFail
-    If wsH Is Nothing Then MsgBox "HistoryLog sheet not found", vbExclamation: GoTo CleanExit
+    If wsH Is Nothing Then Call NavNotify("D!: HistoryLog sheet not found", True): GoTo CleanExit
 
     Dim lastRow As Long
     lastRow = wsH.Cells(wsH.Rows.Count, "A").End(xlUp).Row
-    If lastRow < 4 Then MsgBox "Not enough rows in HistoryLog (need >= 5 rows for the 5-day window)", vbInformation: GoTo CleanExit
+    If lastRow < 4 Then Call NavNotify("D!: not enough HistoryLog rows (need >= 5 for the 5-day window)", True): GoTo CleanExit
 
     ' row 2 has no predecessor, so the series starts at row 3
     Dim n As Long: n = lastRow - 2
@@ -128,7 +128,7 @@ Public Sub BuildDrawdownShadow()
     Loop
 
     If segments.Count = 0 Then
-        MsgBox "No drawdown segments found (no 5-day window has >= 4 negative days)", vbInformation
+        Call NavNotify("D!: no drawdown segments (no 5-day window has >= 4 negative days)")
         GoTo CleanExit
     End If
 
@@ -146,6 +146,7 @@ Public Sub BuildDrawdownShadow()
         Set wsD = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
         wsD.Name = SH_OUT
     End If
+    Call NavStrip(wsD)      ' nav bar rows off while the page is redrawn from row 1
     wsD.Cells.Clear
 
     Dim shp As Shape
@@ -474,13 +475,12 @@ Public Sub BuildDrawdownShadow()
     Next ci
 
 CleanExit:
+    If Not wsD Is Nothing Then Call NavAdd(wsD, "D")
     Application.ScreenUpdating = True
     Application.StatusBar = False
     If segments.Count > 0 Then
         Application.StatusBar = "Drawdown Shadow v2 done: " & segments.Count & " episodes"
-        MsgBox "Done! Found " & segments.Count & " drawdown segments." & vbCrLf & _
-               "Rule: 5-day window with >= 4 negative days" & vbCrLf & _
-               "Positive returns within segment are ignored in cumRet.", vbInformation
+        Call NavNotify("D! done - " & segments.Count & " drawdown segments (5-day window, >= 4 negative days)")
     End If
     Exit Sub
 

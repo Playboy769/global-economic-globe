@@ -1,0 +1,20 @@
+' ================================================================
+'  Code-behind of the "Correlation" worksheet (nav code CC).
+'  DAYS input: B2 in the page's own layout, B5 while the nav bar is on
+'  top (modNav.NavOffset). BuildCorrelationMatrix takes the bar off,
+'  reads B2, redraws and puts the bar back itself.
+' ================================================================
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Target.CountLarge > 1 Then Exit Sub
+    If Intersect(Target, Me.Range("B2").Offset(NavOffset(Me), 0)) Is Nothing Then Exit Sub
+    If IsEmpty(Target.Value) Or Not IsNumeric(Target.Value) Then Exit Sub
+    If Target.Value <= 0 Then Exit Sub
+
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    Call BuildCorrelationMatrix
+
+Fin:
+    Application.EnableEvents = True
+    If Err.Number <> 0 Then MsgBox "Correlation error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub

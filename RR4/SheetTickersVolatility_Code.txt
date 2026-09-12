@@ -1,0 +1,28 @@
+' ================================================================
+'  Code-behind of the "Tickers Volatility" worksheet (nav code VT).
+'  The ticker input is B2 in the page's own layout, i.e. B5 while the
+'  nav bar occupies rows 1-3 (modNav.NavOffset). The analysis routine
+'  (modvolatility.UpdateVolatilityAnalysis_Pro) still works in its
+'  original fixed rows, so the bar is taken off around the call and put
+'  back afterwards - also when the routine bails out early.
+' ================================================================
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Target.CountLarge > 1 Then Exit Sub
+    Dim inp As Range: Set inp = Me.Range("B2").Offset(NavOffset(Me), 0)
+    If Intersect(Target, inp) Is Nothing Then Exit Sub
+    If Trim(CStr(inp.Value)) = "" Then Exit Sub
+
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    Call NavStrip(Me)
+    Call UpdateVolatilityAnalysis_Pro
+
+Fin:
+    Dim errN As Long: errN = Err.Number
+    Dim errD As String: errD = Err.Description
+    On Error Resume Next
+    Call NavAdd(Me, "VT")
+    Call NavEcho        ' the routine's NavNotify ran while the bar was off
+    Application.EnableEvents = True
+    If errN <> 0 Then MsgBox "Tickers Volatility error " & errN & ": " & errD, vbCritical
+End Sub
