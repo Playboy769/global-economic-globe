@@ -19,6 +19,9 @@ API 端點: https://www.moomoo.com/quote-api/quote-v2/get-plate-list
 - 2026-09-12 第二次實測：直接打 API 會回 HTTP 200 但 body 是空的（resp.json() 拋 JSONDecodeError）。
   站方要先「開過頁面」拿到 cookie（含 csrfToken）才肯回資料，所以改用 Session 先 GET 一次
   sector-industry 頁面暖身，並把 cookie 裡的 csrfToken 放進 `futu-x-csrf-token` 標頭。
+- 2026-09-12 第三次實測：每秒 1 次連打 6 頁後，第 7 頁回 HTML「403 - Operations too frequent」
+  （HTTP 200、Content-Type text/html）。所以請求間隔拉到 REQUEST_INTERVAL 秒，碰到 too frequent
+  就等 RETRY_WAIT 秒再重試（最多 MAX_RETRIES 次、每次等待加倍），且每抓完一頁就寫一次 CSV。
 - 若暖身後仍拿不到資料，把瀏覽器開發者工具裡的 Cookie 整串貼到 COOKIE 變數。
 - 請勿高頻或大量重複呼叫，僅供個人查詢使用。
 """
@@ -59,6 +62,13 @@ PLATE_TYPES = {
 
 PAGE_SIZE = 30
 
+REQUEST_INTERVAL = 4   # 每個請求之間至少等幾秒（1 秒會踩到 too frequent）
+RETRY_WAIT = 30        # 被限流時第一次等幾秒；之後每次加倍
+MAX_RETRIES = 3
+
+OUT_PATH = "moomoo_us_plate_list.csv"
+FIELDNAMES = ["plateType", "plateCode", "plateName", "plateEnName", "plateId", "leaderStock"]
+
 
 def quote_token(params: dict) -> str:
     """複製前端 axios 攔截器的簽章：參數值全轉字串後 JSON 化，HMAC-SHA512 再 SHA256 各取前 10 碼。"""
@@ -79,11 +89,17 @@ def warm_up() -> requests.Session:
     return sess
 
 
+class TooFrequent(Exception):
+    pass
+
+
 def parse_json(resp: requests.Response, ctx: str) -> dict:
     try:
         return resp.json()
     except ValueError:
         body = " ".join(resp.text[:300].split())
+        if "too frequent" in body.lower():
+            raise TooFrequent(ctx) from None
         raise RuntimeError(
             f"回應不是 JSON ({ctx}) — HTTP {resp.status_code}, "
             f"Content-Type={resp.headers.get('Content-Type')!r}, "
@@ -91,7 +107,7 @@ def parse_json(resp: requests.Response, ctx: str) -> dict:
         ) from None
 
 
-def fetch_plate_type(sess: requests.Session, plate_type: int, label: str):
+def fetch_plate_type(sess: requests.Session, plate_type: int, label: str, on_page=None):
     rows = []
     page = 0
     total_pages = None
@@ -105,9 +121,22 @@ def fetch_plate_type(sess: requests.Session, plate_type: int, label: str):
             "pageSize": PAGE_SIZE,
         }
         headers = {"quote-token": quote_token(params)}
-        resp = sess.get(BASE_URL, headers=headers, params=params, timeout=10)
-        resp.raise_for_status()
-        payload = parse_json(resp, f"plateType={plate_type}, page={page}")
+        wait = RETRY_WAIT
+        for attempt in range(MAX_RETRIES + 1):
+            resp = sess.get(BASE_URL, headers=headers, params=params, timeout=10)
+            resp.raise_for_status()
+            try:
+                payload = parse_json(resp, f"plateType={plate_type}, page={page}")
+                break
+            except TooFrequent:
+                if attempt == MAX_RETRIES:
+                    raise RuntimeError(
+                        f"連續 {MAX_RETRIES} 次被限流 (plateType={plate_type}, page={page})，"
+                        f"請隔幾分鐘再跑一次。"
+                    ) from None
+                print(f"[{label}] 第 {page + 1} 頁被限流（too frequent），等 {wait} 秒後重試…")
+                time.sleep(wait)
+                wait *= 2
 
         if payload.get("code") != 0:
             raise RuntimeError(f"API 回傳錯誤 (plateType={plate_type}, page={page}): {payload}")
@@ -127,10 +156,19 @@ def fetch_plate_type(sess: requests.Session, plate_type: int, label: str):
             })
 
         print(f"[{label}] 已抓取第 {page + 1}/{total_pages} 頁，累積 {len(rows)} 筆")
+        if on_page:
+            on_page(rows)
         page += 1
-        time.sleep(1)  # 禮貌性延遲，避免打太快
+        time.sleep(REQUEST_INTERVAL)  # 禮貌性延遲；1 秒實測會被限流
 
     return rows
+
+
+def write_csv(rows):
+    with open(OUT_PATH, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def main():
