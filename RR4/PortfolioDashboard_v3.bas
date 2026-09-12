@@ -742,6 +742,7 @@ End Sub
 '  Sheet style reset
 ' ================================================================
 Private Sub ResetSheetStyle(ws As Worksheet)
+    ws.cells.UnMerge          ' the NOTE header (R:S) is re-merged by DrawColumnHeaders
     ws.cells.Clear
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
@@ -1089,9 +1090,16 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
             .Font.Size = 9
             .Font.Name = "Consolas"
             .Interior.Color = RGB(10, 10, 10)
-            .HorizontalAlignment = IIf(headers(i) = "NOTE", xlLeft, xlCenter)
+            .HorizontalAlignment = xlCenter
         End With
     Next i
+    ' NOTE header spans R:S (the data rows stay unmerged - text overflows)
+    With ws.Range(ws.cells(RR4_POS_HDR, RR4_NOTE_COL), ws.cells(RR4_POS_HDR, RR4_NOTE_COL + 1))
+        .UnMerge
+        .Interior.Color = RGB(10, 10, 10)
+        .Merge
+        .HorizontalAlignment = xlCenter
+    End With
     ws.Rows(RR4_POS_HDR).RowHeight = 20
     With ws.Range(ws.cells(RR4_POS_HDR, RR4_LEFT + 1), ws.cells(RR4_POS_HDR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
