@@ -344,13 +344,18 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   算法註解。DAYS 輸入格 B2（有 bar 時 B5）。**不用凍結窗格**、表頭橫排（使用者指定）。**建置期間必須 `EnableEvents=False`**：寫 DAYS 格
   會觸發 `SheetCorrelation` 的 `Worksheet_Change` 重入呼叫自己，內層插了 bar 列、外層照舊座標
   繼續寫，整頁錯位——已修，別拿掉那段。
-- **Company research（CR）頁 v3 版面（2026-09-12）**：`A1:B3` 輸入條（B1 GROUP 下拉／B2 TICKER／
-  B3 MKT，`Sanner.DrawCrHeader` 畫並順手清掉 v2 殘留：A4:B4 合併格、A5 狀態塊、rows 35–158
-  的 20 張走勢圖牆與 row 160 舊輸入列）、`C1:K33` 掃描表＋**L 欄每列一條 1 年 sparkline**
-  （`DrawSparklines`，資料仍在隱藏表 `ScanPrices`）、群組面板從 **M** 欄起、**Deep-dive 從
-  row 36**（`CompanyResearchSEC` TITLE_ROW 36，原 162）。**雙擊掃描表代號 → deep-dive**
-  （`RunDeepDiveFromScan`，`.TW/.TWO` 後綴會被剝掉並強制 MOPS），雙擊群組面板 → 掃描。
-  所有狀態訊息走 `NavNotify`，頁上不再有狀態格。仍是「資料頁」不掛 nav bar。
+- **Company research（CR）頁 v4 版面（2026-09-12，接續同日的 v3）**：`Sanner.bas` 全面改 RR4 深橘
+  （標題／表頭／代號／群組面板皆 `RR4_ACCENT`，分隔線 `RR4_LINE` 畫在輸入條下、表頭下、最後一筆資料下）。
+  **輸入條改成一列橫向**：row 1 標題「COMPANY RESEARCH」＋ C1 掃描脈絡（市場｜群組｜時間），
+  **row 2 是 `GROUP` B2／`TICKER` D2／`MKT` F2**（v3 是 A1:B3 三列直排、標籤被切掉）。掃描表
+  **表頭 row 4、資料 rows 5–33、SUMMARY row 35**，列高 20，deep-dive 因此由 row 36 下移到
+  **row 40**（`CompanyResearchSEC` TITLE_ROW 40 / HDR 41 / FIRST_DATA 42），該段字型由 Calibri
+  改 Consolas 與上半段一致。**群組面板從 M 欄改到 L 欄、每塊由 4 欄縮成 3 欄**（`DB_BLOCK_COLS = 3`）——
+  砍掉那欄逗號串起來的 TICKERS 清單（永遠被欄寬截斷，卻佔掉整頁約八成寬度）。**L 欄的 sparkline 整個拿掉**
+  （v3 改版後就沒再畫出來），`ClearSparklines` 保留以清掉舊殘留。兩個搬版陷阱：**row 3 要清掉並重新塗黑**
+  （v3 的表格從 row 3 開始，且 `Range.Clear` 會留下「無填滿」＝黑底頁上的白帶），以及 **`DrawCrHeader`
+  只在輸入條已是 v4 形態時才保留輸入格內容**（否則會把 v3 留在 D2/F2 的表頭文字「COMPANY」「1Y HIGH%」
+  當成使用者輸入保存下來）。雙擊行為不變，仍是資料頁不掛 nav bar。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
