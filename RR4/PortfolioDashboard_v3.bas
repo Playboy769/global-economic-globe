@@ -24,8 +24,10 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 '  Upper-left  A:G  rows 4-22  total, USD/TWD, ARRANGE <GO>, weight bar,
 '                              daily log, summary
 '  Upper-right I:R  rows 4-26  ticker panel (TickerInsight module)
-'              U..  rows 4-17  weight donut (chart RR4_DONUT)
-'  Position log                title row 27, headers row 28, data from 29
+'  Chart band       rows 27-40 weight donut at F (RR4_DONUT) and the
+'                              realized-PnL line across J:S (RR4_RLPNL)
+'                              (v4.7 - both used to sit right of the panel)
+'  Position log                title row 41, headers row 42, data from 43
 '  (row numbers in the notes below are the v4 ones; add RR4_TOP = 3)
 '
 '  Position log columns (BROKER column and broker group rows removed):
@@ -62,9 +64,13 @@ Public Const RR4_CFG_CAP   As String = "T2"
 Public Const RR4_TOTAL_CELL As String = "B4"
 Public Const RR4_FX_CELL   As String = "C5"
 Public Const RR4_ARR_CELL  As String = "E5"
-Public Const RR4_POS_TITLE As Long = 27
-Public Const RR4_POS_HDR   As Long = 28
-Public Const RR4_POS_FIRST As Long = 29
+' v4.7 (2026-09-12): a 14-row chart band (RR4_CHART_TOP..) sits between the
+' upper blocks and the position log, which moved down from 27/28/29.
+Public Const RR4_CHART_TOP As Long = 27
+Public Const RR4_CHART_ROWS As Long = 14
+Public Const RR4_POS_TITLE As Long = 41
+Public Const RR4_POS_HDR   As Long = 42
+Public Const RR4_POS_FIRST As Long = 43
 Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
 Private Const RR4_RLPNL_NAME As String = "RR4_RLPNL"   ' realized-PnL line chart (v4.6)
 Private Const RR4_NCOL      As Long = 17    ' last body column, B:Q
@@ -1395,11 +1401,12 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
     Next k
     If lastR < RR4_POS_FIRST Then Exit Sub
 
+    ' chart band (v4.7): left edge on column F, full band height
     Dim cL As Double, cT As Double, sz As Double
-    cL = ws.Columns(21).Left + 6                 ' U, right of the panel
-    cT = ws.cells(RR4_TOP + 1, RR4_LEFT + 21).Top + 2
-    sz = ws.cells(RR4_TOP + 14, RR4_LEFT + 21).Top - cT     ' page rows 4-14
-    ' ApplyArrange also runs from the D5 edit, where nothing has re-set the row
+    cL = ws.Columns(RR4_LEFT + 5).Left + 4
+    cT = ws.Rows(RR4_CHART_TOP).Top + 4
+    sz = ws.Rows(RR4_CHART_TOP + RR4_CHART_ROWS).Top - cT - 4
+    ' ApplyArrange also runs from the E5 edit, where nothing has re-set the row
     ' heights: a hidden or squashed block would ask for a zero-height chart
     If sz < 60 Then sz = 60
 
@@ -1465,18 +1472,13 @@ Private Sub DrawRealizedChart(ws As Worksheet)
     Dim lastR As Long: lastR = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
     If lastR < 3 Then Exit Sub          ' one point is not a line
 
-    ' same left as the donut, under it; twice the donut's width and twice
-    ' the height of page rows 15-26 (v4.6.2) - column U rightwards and the
-    ' rows below are free, the position log stops at Q
+    ' chart band (v4.7): columns J:S, full band height, next to the donut
     Dim cL As Double, cT As Double, cW As Double, cH As Double
-    cL = ws.Columns(21).Left + 6
-    Dim donutT As Double: donutT = ws.cells(RR4_TOP + 1, RR4_LEFT + 21).Top + 2
-    Dim donutH As Double: donutH = ws.cells(RR4_TOP + 14, RR4_LEFT + 21).Top - donutT
-    If donutH < 60 Then donutH = 60
-    cW = donutH * 3
-    cT = ws.cells(RR4_TOP + 15, RR4_LEFT + 21).Top + 4
-    cH = (ws.cells(RR4_TOP + 27, RR4_LEFT + 21).Top - cT) * 2
-    If cH < 160 Then cH = 160
+    cL = ws.Columns(10).Left + 4
+    cW = ws.Columns(20).Left - cL - 4
+    cT = ws.Rows(RR4_CHART_TOP).Top + 4
+    cH = ws.Rows(RR4_CHART_TOP + RR4_CHART_ROWS).Top - cT - 4
+    If cH < 120 Then cH = 120
 
     Dim co As ChartObject
     Set co = ws.ChartObjects.Add(cL, cT, cW, cH)
