@@ -1426,7 +1426,7 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
         .ChartTitle.Font.Size = 9
         .ChartTitle.Font.Bold = True
         .ChartTitle.Font.Color = RR4_ACCENT
-        .ChartGroups(1).DoughnutHoleSize = 40
+        .ChartGroups(1).DoughnutHoleSize = 56
         .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
         .ChartArea.Format.Line.Visible = msoFalse
         .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
@@ -1490,8 +1490,8 @@ Private Sub DrawRealizedChart(ws As Worksheet)
         ser.Name = "REALIZED PNL"
         ser.Values = wsH.Range(wsH.cells(2, 4), wsH.cells(lastR, 4))
         ser.XValues = wsH.Range(wsH.cells(2, 1), wsH.cells(lastR, 1))
-        ser.Format.Line.ForeColor.RGB = RR4_ACCENT
-        ser.Format.Line.Weight = 1.5
+        ser.Format.Line.ForeColor.RGB = RGB(255, 192, 0)    ' yellow line (v4.6.1)
+        ser.Format.Line.Weight = 0.75                       ' 1 px
         ser.MarkerStyle = xlMarkerStyleNone
         ser.Smooth = False
 
@@ -1508,7 +1508,9 @@ Private Sub DrawRealizedChart(ws As Worksheet)
 
         With .Axes(xlCategory)
             .CategoryType = xlTimeScale
-            .TickLabels.NumberFormat = "m/d"
+            .MajorUnitScale = xlMonths
+            .MajorUnit = 2                  ' one tick every two months
+            .TickLabels.NumberFormat = "yyyy/m"
             .TickLabels.Font.Name = "Consolas"
             .TickLabels.Font.Size = 7
             .TickLabels.Font.Color = RGB(150, 150, 150)
