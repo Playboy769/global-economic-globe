@@ -272,17 +272,17 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 
 - **ActiveX 按鈕已全部移除，改成打字導覽列（`modNav.bas`）**：每個*報表頁* rows 1–3 是
   bar，在灰色格（B1，**RR4 頁是 C1**）打代碼＋Enter，`ThisWorkbook.Workbook_SheetChange`
-  轉給 `RunNavCommand`。頁面碼 P/R/T/H/V/VT/D/C/CC/CR（**A Analysis 頁已於 v4.6 刪除**，
-  幣別占比併進 Summary，`RR4_RLPNL` 實現損益折線圖放在甜甜圈下方、資料直接指向 HistoryLog A/D 欄），動作碼 UP/ADD/DEL/V!/D!/C!/DBG/
+  轉給 `RunNavCommand`。頁面碼 P/R/T/H/V/VT/C/CC/CR（**A Analysis 頁已於 v4.6 刪除、D DrawdownChart 與 `DrawDownShadow.bas` 於同日刪除**，
+  幣別占比併進 Summary，`RR4_RLPNL` 實現損益折線圖放在甜甜圈下方、資料直接指向 HistoryLog A/D 欄），動作碼 UP/ADD/DEL/V!/C!/DBG/
   CLEARALL；跳頁不重算，只有 `!` 碼會重算。
   - **資料頁（Realized/Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
     模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。
-  - V/VT/D/C/CC 各自的繪製程序從第 1 列開始畫，所以進場先 `NavStrip(ws)`、收尾
+  - V/VT/C/CC 各自的繪製程序從第 1 列開始畫，所以進場先 `NavStrip(ws)`、收尾
     （含提早 exit 的路徑）`NavAdd(ws, code)`；隱藏的工作表層級名稱 `RR4NAV` 標記
     「目前有那 3 列」，靠它避免重畫時疊出第二條 bar。VT/CC 的打字輸入格用
     `NavOffset` 定位（B2 → 有 bar 時是 B5）。
-  - Strip/Add 前會把所有 shape 設成 `xlMove`：預設 `xlMoveAndSize` 會讓 DrawdownChart
-    那張錨在第 1 列的圖每次縮一圈。
+  - Strip/Add 前會把所有 shape 設成 `xlMove`：預設 `xlMoveAndSize` 會讓錨在第 1 列的圖
+    每次縮一圈（當年 DrawdownChart 就是這樣壞的）。
   - **收尾訊息一律 `NavNotify(msg, isErr)`（只寫 Excel 底部狀態列；v4.4 起 bar 第 1 列
     不再放頁面標題與狀態文字），不再 MsgBox**；只有
     真正的錯誤與 CLEARALL 的 Yes/No 確認保留 MsgBox。

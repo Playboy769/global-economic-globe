@@ -1065,7 +1065,7 @@ Sub RunSystemDebug()
     Dim sheetNames As Variant
     sheetNames = Array("RR4", "Transactions", "Realized", "HistoryLog", _
                        "HoldingsCorr", "Correlation", _
-                       "DrawdownChart", "DebugLog")
+                       "DebugLog")
     Dim sn As Variant
     For Each sn In sheetNames
         Dim wsCheck As Worksheet

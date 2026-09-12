@@ -14,7 +14,8 @@ Option Explicit
 '  hands it to RunNavCommand, which clears the cell again.
 '
 '  Pages   P RR4 . R Realized . T Transactions . H HistoryLog
-'          V Volatility180D . VT Tickers Volatility . D DrawdownChart
+'          V Volatility180D . VT Tickers Volatility
+'          (D DrawdownChart removed 2026-09-12 with DrawDownShadow.bas)
 '          C HoldingsCorr . CC Correlation . CR Company research
 '  Actions UP update dashboard . ADD / DEL trade forms . V! D! C! recalc
 '          and show that page . DBG system debug . CLEARALL wipe all data
@@ -65,7 +66,6 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "H":  NavSheetName = "HistoryLog"
         Case "V":  NavSheetName = "Volatility180D"
         Case "VT": NavSheetName = "Tickers Volatility"
-        Case "D":  NavSheetName = "DrawdownChart"
         Case "C":  NavSheetName = "HoldingsCorr"
         Case "CC": NavSheetName = "Correlation"
         Case "CR": NavSheetName = "Company research"
@@ -76,7 +76,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "V", "VT", "D", "C", "CC")
+    For Each c In Array("P", "V", "VT", "C", "CC")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -122,9 +122,9 @@ Fin:
 End Sub
 
 ' Shapes default to xlMoveAndSize, which RESIZES them when rows inside their
-' span are inserted or deleted - and DrawdownChart's chart is anchored at row
-' 1, so every strip/add cycle would shrink it. xlMove keeps the size and just
-' slides the shape with the rows, which is what the bar needs.
+' span are inserted or deleted - a chart anchored at row 1 would shrink on
+' every strip/add cycle. xlMove keeps the size and just slides the shape
+' with the rows, which is what the bar needs.
 Private Sub ShapesMoveOnly(ByVal ws As Worksheet)
     On Error Resume Next
     Dim i As Long
@@ -213,14 +213,14 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     ' row 2: pages
     Dim pages As Variant
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
-                  "V", "VOL", "VT", "TKRVOL", "D", "DRAWDOWN", _
+                  "V", "VOL", "VT", "TKRVOL", _
                   "C", "HOLDCORR", "CC", "SECTORCORR", "CR", "RESEARCH")
     Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
     acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
-                 "D!", "DRAWDOWN", "C!", "CORR", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
+                 "C!", "CORR", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
     Call WriteCodeLine(ws.cells(3, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
@@ -319,7 +319,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "R", "T", "H", "V", "VT", "D", "C", "CC", "CR"
+        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "CR"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -331,8 +331,6 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
         Case "V!"
             Call UpdatePortfolioVolatility
             Call NavGoto("V", src)
-        Case "D!"
-            Call BuildDrawdownShadow
         Case "C!"
             Call BuildHoldingsCorrelation
         Case "DBG"
@@ -355,7 +353,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "D" Or code = "C", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "C", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible
