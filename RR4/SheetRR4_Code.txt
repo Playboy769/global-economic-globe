@@ -7,6 +7,7 @@
 '    D5  ARRANGE <GO>   -> PortfolioDashboard_v3.ApplyArrange
 '    J4  TICKER <GO>    -> TickerInsight.RefreshTickerInsight
 '    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
+'    B27:D38 WATCHLIST  -> PortfolioDashboard_v3.RefreshWatchlistRow (v4.9)
 '  (addresses come from the RR4_* / TI_* constants). The nav command
 '  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
 '  The CmdBtn0-7 click handlers were removed with the ActiveX buttons
@@ -14,11 +15,13 @@
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
-    Dim hitArr As Boolean, hitTicker As Boolean, hitTarget As Boolean
+    Dim hitArr As Boolean, hitTicker As Boolean, hitTarget As Boolean, hitWL As Boolean
     hitArr = Not Intersect(Target, Me.Range(RR4_ARR_CELL)) Is Nothing
     hitTicker = Not Intersect(Target, Me.Range(TI_TICKER_CELL)) Is Nothing
     hitTarget = Not Intersect(Target, Me.Range(TI_TARGET_CELL)) Is Nothing
-    If Not (hitArr Or hitTicker Or hitTarget) Then Exit Sub
+    hitWL = Not Intersect(Target, Me.Range(Me.Cells(RR4_WL_FIRST, RR4_LEFT + 1), _
+                                            Me.Cells(RR4_WL_LAST, RR4_LEFT + 3))) Is Nothing
+    If Not (hitArr Or hitTicker Or hitTarget Or hitWL) Then Exit Sub
 
     Application.EnableEvents = False
     On Error GoTo Fin
@@ -26,8 +29,10 @@ Private Sub Worksheet_Change(ByVal Target As Range)
         Call ApplyArrange(CStr(Target.Value))
     ElseIf hitTicker Then
         Call RefreshTickerInsight(CStr(Target.Value))
-    Else
+    ElseIf hitTarget Then
         Call RefreshTickerProjection
+    Else
+        Call RefreshWatchlistRow(Me, Target.Row)
     End If
 
 Fin:

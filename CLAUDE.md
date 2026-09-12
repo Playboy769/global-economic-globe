@@ -306,6 +306,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   寬度 11 的留白）；權重橫條**紅漲綠跌**（台股慣例）、白字；甜甜圈用 `DonutColor` 固定
   12 色調色盤＋「代號 %」標籤（doughnut 標籤只能貼在環上，Excel 沒有 outside 位置）；
   導覽列未選取的代碼／標籤調暗、只有目前頁亮起，不用底線。
+- **WATCHLIST（v4.9）**：圖表帶左側 B25:E38——標題 25、表頭 26、12 列 27–38。B 代號／C 策略／
+  D 目標進場價是輸入格（`ReadWatchlist` 清頁前讀出、`DrawWatchlist` 寫回），E 現價由 UP 或
+  `SheetRR4` 的 `Worksheet_Change`（B27:D38）呼叫 `RefreshWatchlistRow` 用 `GetStockPrice` 補；
+  現價 ≤ 目標時整列亮橘（底 60,30,0）。ARRANGE 不會動到它。
 - **HistoryLog D 欄（Realized PnL）不是快照，是每次 UP 重算的**（v4.8）：`RebuildRealizedHistory`
   在 `LogHistory` 收尾把每一列 D 改成「Realized 表依出場日累計到該列日期」。v4.7 前是
   append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段

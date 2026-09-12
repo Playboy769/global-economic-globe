@@ -72,6 +72,14 @@ Public Const RR4_ARR_CELL  As String = "E5"
 ' panel was shortened to row 24 to make room (TickerInsight TI_BOTTOM).
 Public Const RR4_CHART_TOP As Long = 26
 Public Const RR4_CHART_ROWS As Long = 14
+' WATCHLIST (v4.9, 2026-09-12): B:E of the chart band, left of the donut.
+' Title row 25, header 26, 12 entry rows 27-38. B ticker / C strategy /
+' D entry target are typed by hand (input cells) and survive the clear;
+' E last price is fetched on UP. A row whose last <= target is lit.
+Public Const RR4_WL_TITLE  As Long = 25
+Public Const RR4_WL_HDR    As Long = 26
+Public Const RR4_WL_FIRST  As Long = 27
+Public Const RR4_WL_LAST   As Long = 38
 Public Const RR4_POS_TITLE As Long = 41
 Public Const RR4_POS_HDR   As Long = 42
 Public Const RR4_POS_FIRST As Long = 43
@@ -139,6 +147,7 @@ Sub RebuildPortfolioDashboard()
     If Not IsDate(cfgInc) Then cfgInc = wsP.Range("S1").Value
     If NumOr0(cfgCap) <= 0 Then cfgCap = wsP.Range("S2").Value
     Dim swingRiskMap As Object: Set swingRiskMap = ReadSwingRisk(wsP)
+    Dim wl As Variant: wl = ReadWatchlist(wsP)
     ' A sheet still on an older layout has other data sitting in these cells:
     ' keep only a real ARRANGE code and a numeric target for a real ticker.
     If Not IsArrangeCode(arrCode) Then arrCode = ""
@@ -187,6 +196,7 @@ Sub RebuildPortfolioDashboard()
     Dim lastDataRow As Long
     lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap)
     Call ApplyArrange(arrCode)
+    Call DrawWatchlist(wsP, wl)
     Call DrawDisclaimer(wsP, lastDataRow)
     Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
@@ -1593,6 +1603,117 @@ Private Sub DrawRealizedChart(ws As Worksheet)
             .MajorGridlines.Format.Line.ForeColor.RGB = RGB(30, 30, 30)
         End With
     End With
+End Sub
+
+' ================================================================
+'  WATCHLIST (B25:E38) - see the RR4_WL_* constants
+' ================================================================
+' Hand-typed rows, read BEFORE the sheet is cleared. Only trusted when the
+' title is in place (an older layout has other things in those cells).
+' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target, blanks
+' compacted out; Empty when there is nothing.
+Private Function ReadWatchlist(ws As Worksheet) As Variant
+    If UCase(CellStr(ws.cells(RR4_WL_TITLE, RR4_LEFT + 1).Value)) <> "WATCHLIST" Then Exit Function
+    Dim tmp(1 To 12, 1 To 3) As Variant, n As Long, r As Long
+    For r = RR4_WL_FIRST To RR4_WL_LAST
+        Dim tk As String: tk = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
+        Dim st As String: st = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
+        Dim tg As Variant: tg = ws.cells(r, RR4_LEFT + 3).Value
+        If tk <> "" Or st <> "" Or NumOr0(tg) > 0 Then
+            n = n + 1
+            tmp(n, 1) = tk
+            tmp(n, 2) = st
+            tmp(n, 3) = IIf(IsNumeric(tg) And Not IsEmpty(tg), CDbl(tg), Empty)
+        End If
+    Next r
+    If n = 0 Then Exit Function
+    Dim out() As Variant: ReDim out(1 To n, 1 To 3)
+    For r = 1 To n
+        out(r, 1) = tmp(r, 1): out(r, 2) = tmp(r, 2): out(r, 3) = tmp(r, 3)
+    Next r
+    ReadWatchlist = out
+End Function
+
+' Title, header, 12 rows (input cells painted even when empty), then the
+' live price + highlight per row.
+Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
+    With ws.cells(RR4_WL_TITLE, RR4_LEFT + 1)
+        .Value = "WATCHLIST"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+    End With
+    Dim hdr As Variant: hdr = Array("TICKER", "STRATEGY", "ENTRY TGT", "LAST")
+    Dim c As Long
+    For c = 0 To 3
+        With ws.cells(RR4_WL_HDR, RR4_LEFT + 1 + c)
+            .Value = hdr(c)
+            .Font.Color = RGB(0, 200, 255)
+            .Font.Size = 9
+            .HorizontalAlignment = IIf(c = 1, xlLeft, xlCenter)
+        End With
+    Next c
+    With ws.Range(ws.cells(RR4_WL_HDR, RR4_LEFT + 1), ws.cells(RR4_WL_HDR, RR4_LEFT + 4)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+
+    Dim n As Long: If IsArray(wl) Then n = UBound(wl, 1)
+    Dim r As Long, i As Long
+    For r = RR4_WL_FIRST To RR4_WL_LAST
+        i = r - RR4_WL_FIRST + 1
+        ' the three typed columns are input cells whether filled or not
+        For c = 1 To 3
+            With ws.cells(r, RR4_LEFT + c)
+                .Interior.Color = RR4_INPUT_BG
+                .Font.Color = RR4_INPUT_FG
+                .Font.Bold = (c = 1)
+                .HorizontalAlignment = IIf(c = 2, xlLeft, xlCenter)
+                .NumberFormat = IIf(c = 3, "#,##0.00", "@")
+            End With
+        Next c
+        ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlCenter
+        ws.cells(r, RR4_LEFT + 4).NumberFormat = "#,##0.00"
+        If i <= n Then
+            ws.cells(r, RR4_LEFT + 1).Value = wl(i, 1)
+            ws.cells(r, RR4_LEFT + 2).Value = wl(i, 2)
+            If Not IsEmpty(wl(i, 3)) Then ws.cells(r, RR4_LEFT + 3).Value = wl(i, 3)
+        End If
+        Call RefreshWatchlistRow(ws, r)
+    Next r
+End Sub
+
+' Live price into E and the lit / unlit state of one row. Public: the RR4
+' sheet code calls it when B/C/D of a watchlist row is edited.
+Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
+    If r < RR4_WL_FIRST Or r > RR4_WL_LAST Then Exit Sub
+    Dim tk As String: tk = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
+    Dim tgt As Double: tgt = NumOr0(ws.cells(r, RR4_LEFT + 3).Value)
+    Dim px As Double
+    If tk <> "" Then
+        On Error Resume Next
+        px = GetStockPrice(tk)
+        On Error GoTo 0
+    End If
+    With ws.cells(r, RR4_LEFT + 4)
+        If px > 0 Then .Value = px Else .Value = IIf(tk = "", "", "-")
+        .Font.Color = RGB(221, 221, 221)
+        .Font.Bold = False
+    End With
+    ' lit when the price has come down to the entry target
+    Dim hit As Boolean: hit = (px > 0 And tgt > 0 And px <= tgt)
+    Dim cells4 As Range
+    Set cells4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
+    If hit Then
+        cells4.Interior.Color = RGB(60, 30, 0)
+        cells4.Font.Color = RR4_ACCENT
+        cells4.Font.Bold = True
+    Else
+        ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 3)).Interior.Color = RR4_INPUT_BG
+        ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 3)).Font.Color = RR4_INPUT_FG
+        ws.cells(r, RR4_LEFT + 4).Interior.Color = RGB(0, 0, 0)
+        ws.cells(r, RR4_LEFT + 1).Font.Bold = True
+    End If
 End Sub
 
 ' Slice n of the donut (1-based, cycles after RR4_PALETTE_N).
