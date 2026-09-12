@@ -1543,7 +1543,7 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
             .Font.Name = "Consolas"
             .Font.Size = 8
             .Font.Bold = True
-            .Font.Color = RGB(255, 255, 255)
+            .Font.Color = RGB(190, 190, 190)     ' light grey (v4.10.1)
         End With
         ser.HasLeaderLines = True
         On Error Resume Next
