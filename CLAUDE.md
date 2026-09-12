@@ -323,6 +323,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   新增 **RISK CONTRIB%**（w_i·cov(r_i,r_p)/var(r_p)，共同視窗算、合計 100%，最大者亮橘）、
   **RISK/WEIGHT**（>1.3 紅、<0.7 綠）、**WEIGHTED AVG STDEV／DIVERSIFICATION RATIO**
   （Σwσ ÷ σ_p）、**1-DAY VAR 95%**（1.645·σ_daily·總市值，TWD）。仍由 `V!` 重算，跳頁不重算。
+- **HoldingsCorr（C）頁 v2（2026-09-12）**：RR4 配色、連續紅綠熱圖（`CorrHeatBg/Fg`，0 = 近黑）取代
+  7 級色階、對角線畫 —、右側 **AVG CORR** 欄（最低綠＝最分散、最高紅＝最擁擠）、色階列＋
+  **PORTFOLIO AVG PAIRWISE CORR**、**最相關／最不相關 5 對**、底部算法註解。仍由 `C!` 重算。
 - **Company research（CR）頁 v3 版面（2026-09-12）**：`A1:B3` 輸入條（B1 GROUP 下拉／B2 TICKER／
   B3 MKT，`Sanner.DrawCrHeader` 畫並順手清掉 v2 殘留：A4:B4 合併格、A5 狀態塊、rows 35–158
   的 20 張走勢圖牆與 row 160 舊輸入列）、`C1:K33` 掃描表＋**L 欄每列一條 1 年 sparkline**

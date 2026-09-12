@@ -2641,6 +2641,10 @@ End Sub
 Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
                                      corrMatrix() As Double, usedCount As Long, _
                                      commonDates() As Date)
+    ' v2 (2026-09-12): RR4 page look - orange accent, grey dividers, a
+    ' continuous red/green heat map instead of 7 bins, a colour ramp legend,
+    ' AVG CORR per holding, the most / least correlated pairs, and a
+    ' portfolio-wide average pairwise correlation.
     Dim wsC As Worksheet
     On Error Resume Next: Set wsC = ThisWorkbook.Sheets("HoldingsCorr"): On Error GoTo 0
     If wsC Is Nothing Then
@@ -2652,115 +2656,126 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
     wsC.cells.Clear
     With wsC.cells
         .Interior.Color = RGB(0, 0, 0)
-        .Font.Color = RGB(200, 200, 200)
+        .Font.Color = RGB(221, 221, 221)
         .Font.Name = "Consolas"
         .Font.Size = 9
+        .VerticalAlignment = xlCenter
     End With
     wsC.Activate
     ActiveWindow.DisplayGridlines = False
+    Dim rr As Long
+    For rr = 1 To 60: wsC.Rows(rr).RowHeight = 18: Next rr
 
-    ' ------------------------------------------------------------
     Dim retCount As Long: retCount = usedCount - 1
+    Dim i As Long, j As Long
+
+    ' ---- header --------------------------------------------------
     With wsC.cells(1, 1)
-        .Value = "HOLDINGS CORRELATION  |  " & retCount & "-DAY  |  " & _
-                 Format(commonDates(0), "m/d/yy") & " ~ " & _
-                 Format(commonDates(usedCount - 1), "m/d/yy") & _
-                 "  |  " & Format(Now, "hh:mm:ss")
-        .Font.Color = RGB(255, 192, 0)
+        .Value = "HOLDINGS CORRELATION"
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
-        .Font.Size = 11
+        .Font.Size = 14
     End With
-    With wsC.Range(wsC.cells(2, 1), wsC.cells(2, tickerCount + 2))
-        .Interior.Color = RGB(255, 192, 0)
-        .RowHeight = 3
+    wsC.Rows(1).RowHeight = 24
+    With wsC.cells(1, 4)
+        .Value = retCount & "-day log returns  .  " & Format(commonDates(0), "yyyy/m/d") & " ~ " & _
+                 Format(commonDates(usedCount - 1), "yyyy/m/d") & "  .  updated " & Format(Now, "yyyy/mm/dd hh:mm")
+        .Font.Color = RGB(120, 120, 120)
+        .Font.Size = 9
+    End With
+    Dim lastCol As Long: lastCol = tickerCount + 3       ' matrix cols 2..n+1, gap, AVG at n+3
+    With wsC.Range(wsC.cells(1, 1), wsC.cells(1, lastCol + 6)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
     End With
 
-    ' ------------------------------------------------------------
-    Dim HDR As Long: HDR = 4
-    wsC.Columns(1).ColumnWidth = 12
-    Dim i As Long
+    ' ---- per-holding average correlation + portfolio average ----------
+    Dim avgCorr() As Double: ReDim avgCorr(0 To tickerCount - 1)
+    Dim sumAll As Double, nPairs As Long
     For i = 0 To tickerCount - 1
-        wsC.Columns(i + 2).ColumnWidth = 7
+        Dim sRow As Double: sRow = 0
+        For j = 0 To tickerCount - 1
+            If i <> j Then sRow = sRow + corrMatrix(i, j)
+            If j > i Then sumAll = sumAll + corrMatrix(i, j): nPairs = nPairs + 1
+        Next j
+        If tickerCount > 1 Then avgCorr(i) = sRow / (tickerCount - 1)
     Next i
+    Dim portAvg As Double: If nPairs > 0 Then portAvg = sumAll / nPairs
 
-    ' ------------------------------------------------------------
+    ' ---- matrix --------------------------------------------------
+    Dim HDR As Long: HDR = 3
+    wsC.Columns(1).ColumnWidth = 12
+    For i = 0 To tickerCount - 1
+        wsC.Columns(i + 2).ColumnWidth = 8
+    Next i
+    wsC.Columns(tickerCount + 2).ColumnWidth = 2
+    wsC.Columns(lastCol).ColumnWidth = 10
+
     With wsC.cells(HDR, 1)
-         .Value = "Row / Col"
-        .Font.Color = RGB(100, 100, 100)
+        .Value = "TICKER"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
         .Interior.Color = RGB(10, 10, 10)
         .HorizontalAlignment = xlCenter
     End With
-
     For i = 0 To tickerCount - 1
         With wsC.cells(HDR, i + 2)
-            .Value = tickers(i)
-            .Font.Color = RGB(255, 192, 0)
+            .Value = ShortTicker(tickers(i))
+            .Font.Color = RR4_ACCENT
             .Font.Bold = True
             .Font.Size = 8
             .Interior.Color = RGB(10, 10, 10)
             .HorizontalAlignment = xlCenter
-            .VerticalAlignment = xlBottom
         End With
-        wsC.Rows(HDR).RowHeight = 20
+    Next i
+    With wsC.cells(HDR, lastCol)
+        .Value = "AVG CORR"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 8
+        .Interior.Color = RGB(10, 10, 10)
+        .HorizontalAlignment = xlCenter
+    End With
+    wsC.Rows(HDR).RowHeight = 20
+    With wsC.Range(wsC.cells(HDR, 1), wsC.cells(HDR, lastCol)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+
+    Dim minAvg As Double: minAvg = 2
+    Dim maxAvg As Double: maxAvg = -2
+    For i = 0 To tickerCount - 1
+        If avgCorr(i) < minAvg Then minAvg = avgCorr(i)
+        If avgCorr(i) > maxAvg Then maxAvg = avgCorr(i)
     Next i
 
-    ' ------------------------------------------------------------
-    Dim j As Long
     For i = 0 To tickerCount - 1
         Dim rn As Long: rn = HDR + 1 + i
-        wsC.Rows(rn).RowHeight = 18
-
-        ' ------------------------------------------------------------
+        wsC.Rows(rn).RowHeight = 22
         With wsC.cells(rn, 1)
-            .Value = tickers(i)
-            .Font.Color = RGB(255, 192, 0)
+            .Value = ShortTicker(tickers(i))
+            .Font.Color = RR4_ACCENT
             .Font.Bold = True
-            .Font.Size = 9
             .HorizontalAlignment = xlCenter
             .Interior.Color = RGB(10, 10, 10)
         End With
-
         For j = 0 To tickerCount - 1
-            Dim cv As Double: cv = corrMatrix(i, j)
-            Dim bgC As Long, fgC As Long
-
-            ' ------------------------------------------------------------
-            If i = j Then
-                ' ------------------------------------------------------------
-                bgC = RGB(40, 28, 0)
-                fgC = RGB(255, 192, 0)
-            ElseIf cv >= 0.2 Then
-                ' ------------------------------------------------------------
-                If cv >= 0.7 Then
-                    bgC = RGB(100, 0, 0):   fgC = RGB(255, 130, 130)
-                ElseIf cv >= 0.4 Then
-                    bgC = RGB(70, 0, 0):    fgC = RGB(230, 100, 100)
-                Else
-                    bgC = RGB(45, 5, 5):    fgC = RGB(210, 80, 80)
-                End If
-            ElseIf cv <= -0.2 Then
-                ' ------------------------------------------------------------
-                If cv <= -0.7 Then
-                    bgC = RGB(0, 70, 20):   fgC = RGB(80, 255, 140)
-                ElseIf cv <= -0.4 Then
-                    bgC = RGB(0, 50, 15):   fgC = RGB(60, 220, 110)
-                Else
-                    bgC = RGB(0, 35, 10):   fgC = RGB(40, 200, 90)
-                End If
-            Else
-                ' ------------------------------------------------------------
-                bgC = RGB(18, 18, 18):      fgC = RGB(150, 150, 150)
-            End If
-
             With wsC.cells(rn, j + 2)
-                .Value = Round(cv, 2)
-                .NumberFormat = "0.00"
                 .HorizontalAlignment = xlCenter
-                .Font.Bold = True
                 .Font.Size = 8
-                .Interior.Color = bgC
-                .Font.Color = fgC
-                ' ------------------------------------------------------------
+                If i = j Then
+                    .Value = ChrW(&H2014)
+                    .Interior.Color = RGB(20, 20, 20)
+                    .Font.Color = RGB(70, 70, 70)
+                Else
+                    .Value = corrMatrix(i, j)
+                    .NumberFormat = "0.00"
+                    .Font.Bold = (Abs(corrMatrix(i, j)) >= 0.5)
+                    .Interior.Color = CorrHeatBg(corrMatrix(i, j))
+                    .Font.Color = CorrHeatFg(corrMatrix(i, j))
+                End If
                 With .Borders
                     .LineStyle = xlContinuous
                     .Color = RGB(0, 0, 0)
@@ -2768,41 +2783,166 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
                 End With
             End With
         Next j
-    Next i
-
-    ' ------------------------------------------------------------
-    Dim LR As Long: LR = HDR + tickerCount + 2
-    wsC.cells(LR, 1).Value = "LEGEND"
-    wsC.cells(LR, 1).Font.Color = RGB(255, 192, 0)
-    wsC.cells(LR, 1).Font.Bold = True
-
-    Dim leg As Variant
-    leg = Array( _
-        Array(">= 0.70  High +corr", RGB(100, 0, 0), RGB(255, 130, 130)), _
-        Array("0.40~0.69 Mid +corr", RGB(70, 0, 0), RGB(230, 100, 100)), _
-        Array("0.20~0.39 Low +corr", RGB(45, 5, 5), RGB(210, 80, 80)), _
-        Array("-0.19~0.19 Neutral", RGB(18, 18, 18), RGB(150, 150, 150)), _
-        Array("-0.20~-0.39 Low -corr", RGB(0, 35, 10), RGB(40, 200, 90)), _
-        Array("-0.40~-0.69 Mid -corr", RGB(0, 50, 15), RGB(60, 220, 110)), _
-        Array("<= -0.70 High -corr", RGB(0, 70, 20), RGB(80, 255, 140)))
-
-    Dim li As Long
-    For li = 0 To UBound(leg)
-        With wsC.cells(LR + 1 + li, 1)
-            .Value = leg(li)(0)
-            .Interior.Color = leg(li)(1)
-            .Font.Color = leg(li)(2)
+        ' AVG CORR column: the most diversifying holding (lowest) in green,
+        ' the most crowded (highest) in red
+        With wsC.cells(rn, lastCol)
+            .Value = avgCorr(i)
+            .NumberFormat = "0.00"
+            .HorizontalAlignment = xlCenter
             .Font.Bold = True
-            .Font.Size = 9
+            .Interior.Color = RGB(12, 12, 12)
+            If tickerCount > 2 And avgCorr(i) = minAvg Then
+                .Font.Color = RGB(0, 200, 90)
+            ElseIf tickerCount > 2 And avgCorr(i) = maxAvg Then
+                .Font.Color = RGB(235, 70, 70)
+            Else
+                .Font.Color = RGB(200, 200, 200)
+            End If
         End With
-        wsC.Rows(LR + 1 + li).RowHeight = 16
-    Next li
+    Next i
+    Dim lastMatrixRow As Long: lastMatrixRow = HDR + tickerCount
+    With wsC.Range(wsC.cells(lastMatrixRow, 1), wsC.cells(lastMatrixRow, lastCol)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
 
-    ' ------------------------------------------------------------
+    ' ---- legend: colour ramp + portfolio average ----------------------
+    Dim r As Long: r = lastMatrixRow + 2
+    wsC.cells(r, 1).Value = "SCALE"
+    wsC.cells(r, 1).Font.Color = RR4_ACCENT
+    wsC.cells(r, 1).Font.Bold = True
+    Dim ramp As Variant: ramp = Array(-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1)
+    Dim k As Long
+    For k = 0 To UBound(ramp)
+        ' the ramp may run into the narrow gap column - widen it enough to show
+        If wsC.Columns(k + 2).ColumnWidth < 7 Then wsC.Columns(k + 2).ColumnWidth = 7
+        With wsC.cells(r, k + 2)
+            .Value = ramp(k)
+            .NumberFormat = "+0.00;-0.00;0.00"
+            .Font.Size = 8
+            .HorizontalAlignment = xlCenter
+            .Interior.Color = CorrHeatBg(CDbl(ramp(k)))
+            .Font.Color = CorrHeatFg(CDbl(ramp(k)))
+        End With
+    Next k
+    With wsC.cells(r, UBound(ramp) + 3)
+        .Value = "red = move together   green = move against   (Pearson on daily log returns, common window)"
+        .Font.Color = RGB(120, 120, 120)
+        .Font.Size = 9
+    End With
+    r = r + 1
+    wsC.cells(r, 1).Value = "PORTFOLIO AVG PAIRWISE CORR"
+    wsC.cells(r, 1).Font.Color = RGB(150, 150, 150)
+    With wsC.cells(r, 4)
+        .Value = portAvg
+        .NumberFormat = "0.00"
+        .Font.Bold = True
+        .Font.Color = IIf(portAvg >= 0.5, RGB(235, 70, 70), IIf(portAvg <= 0.2, RGB(0, 200, 90), RGB(221, 221, 221)))
+    End With
+    wsC.cells(r, 5).Value = IIf(portAvg >= 0.5, "crowded - holdings largely share one bet", _
+                            IIf(portAvg <= 0.2, "well spread", "moderate"))
+    wsC.cells(r, 5).Font.Color = RGB(120, 120, 120)
+    wsC.cells(r, 5).Font.Size = 9
+
+    ' ---- top / bottom pairs -------------------------------------
+    r = r + 2
+    Dim nP As Long: nP = tickerCount * (tickerCount - 1) \ 2
+    Dim pA() As Long, pB() As Long, pV() As Double
+    ReDim pA(1 To nP): ReDim pB(1 To nP): ReDim pV(1 To nP)
+    k = 0
+    For i = 0 To tickerCount - 1
+        For j = i + 1 To tickerCount - 1
+            k = k + 1: pA(k) = i: pB(k) = j: pV(k) = corrMatrix(i, j)
+        Next j
+    Next i
+    ' simple selection sort, descending
+    Dim a As Long, b As Long, tmpL As Long, tmpD As Double
+    For a = 1 To nP - 1
+        For b = a + 1 To nP
+            If pV(b) > pV(a) Then
+                tmpD = pV(a): pV(a) = pV(b): pV(b) = tmpD
+                tmpL = pA(a): pA(a) = pA(b): pA(b) = tmpL
+                tmpL = pB(a): pB(a) = pB(b): pB(b) = tmpL
+            End If
+        Next b
+    Next a
+    Dim show As Long: show = IIf(nP < 5, nP, 5)
+
+    wsC.cells(r, 1).Value = "MOST CORRELATED PAIRS"
+    wsC.cells(r, 1).Font.Color = RR4_ACCENT
+    wsC.cells(r, 1).Font.Bold = True
+    wsC.cells(r, 6).Value = "LEAST CORRELATED / HEDGING PAIRS"
+    wsC.cells(r, 6).Font.Color = RR4_ACCENT
+    wsC.cells(r, 6).Font.Bold = True
+    r = r + 1
+    For k = 1 To show
+        Call CorrPairLine(wsC, r + k - 1, 1, ShortTicker(tickers(pA(k))), ShortTicker(tickers(pB(k))), pV(k))
+        Dim kk As Long: kk = nP - k + 1
+        Call CorrPairLine(wsC, r + k - 1, 6, ShortTicker(tickers(pA(kk))), ShortTicker(tickers(pB(kk))), pV(kk))
+    Next k
+    r = r + show + 1
+
+    ' ---- footnote -----------------------------------------------
+    Dim notes As Variant
+    notes = Array( _
+        "HOW THESE ARE COMPUTED", _
+        "CORRELATION   = Pearson correlation of daily LOG returns over the dates every holding has in common (" & retCount & " returns)", _
+        "AVG CORR      = mean of a holding's correlations with the other holdings   - lowest (green) diversifies most, highest (red) is the most crowded", _
+        "PORTFOLIO AVG = mean of all pairwise correlations (each pair once)   - >= 0.5 crowded, <= 0.2 well spread", _
+        "PAIRS         = the same matrix ranked: top 5 pairs that move together, bottom 5 that move against each other")
+    For k = 0 To UBound(notes)
+        With wsC.cells(r + k, 1)
+            .Value = notes(k)
+            .Font.Size = 9
+            If k = 0 Then
+                .Font.Color = RR4_ACCENT: .Font.Bold = True
+            Else
+                .Font.Color = RGB(120, 120, 120)
+            End If
+        End With
+    Next k
 
     Call NavAdd(wsC, "C")
     wsC.Activate
 End Sub
+
+' "3653 x 7610    0.82" with the value in the heat colour
+Private Sub CorrPairLine(ws As Worksheet, r As Long, c As Long, t1 As String, t2 As String, v As Double)
+    With ws.cells(r, c)
+        .Value = t1 & " x " & t2
+        .Font.Color = RGB(200, 200, 200)
+    End With
+    With ws.cells(r, c + 3)
+        .Value = v
+        .NumberFormat = "0.00"
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
+        .Interior.Color = CorrHeatBg(v)
+        .Font.Color = CorrHeatFg(v)
+    End With
+End Sub
+
+' Continuous heat: black at 0, towards red for +1 and green for -1.
+Private Function CorrHeatBg(ByVal v As Double) As Long
+    Dim t As Double: t = Abs(v): If t > 1 Then t = 1
+    If v >= 0 Then
+        CorrHeatBg = RGB(CLng(14 + (170 - 14) * t), CLng(14 + (40 - 14) * t), CLng(14 + (25 - 14) * t))
+    Else
+        CorrHeatBg = RGB(CLng(14 + (0 - 14) * t), CLng(14 + (120 - 14) * t), CLng(14 + (55 - 14) * t))
+    End If
+End Function
+
+Private Function CorrHeatFg(ByVal v As Double) As Long
+    If Abs(v) >= 0.5 Then
+        CorrHeatFg = RGB(255, 255, 255)
+    ElseIf Abs(v) >= 0.2 Then
+        CorrHeatFg = RGB(220, 220, 220)
+    Else
+        CorrHeatFg = RGB(140, 140, 140)
+    End If
+End Function
+
 ' ------------------------------------------------------------
 Private Sub CorrGetCommonDates(priceData() As Object, tickerCount As Long, _
                                 ByRef commonDates() As Date, ByRef usedCount As Long)
