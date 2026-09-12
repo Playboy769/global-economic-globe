@@ -1496,7 +1496,10 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
     co.Name = RR4_DONUT_NAME
     co.Placement = xlMove
     With co.Chart
-        .ChartType = xlDoughnut
+        ' v4.10: a PIE, not a doughnut - Excel can only put doughnut labels
+        ' on the ring, and the labels are wanted outside with leader lines.
+        ' The hole is faked with a black circle drawn over the centre below.
+        .ChartType = xlPie
         Do While .SeriesCollection.count > 0
             .SeriesCollection(1).Delete
         Loop
@@ -1512,7 +1515,6 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
         .ChartTitle.Font.Size = 9
         .ChartTitle.Font.Bold = True
         .ChartTitle.Font.Color = RR4_ACCENT
-        .ChartGroups(1).DoughnutHoleSize = 56
         .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
         .ChartArea.Format.Line.Visible = msoFalse
         .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
@@ -1527,9 +1529,38 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
             End With
         Next r
 
-        ' no data labels (v4.4) - hover shows ticker / WT%, the colour order
-        ' matches the position log
-        ser.HasDataLabels = False
+        ' "3653.TW 14.9%" outside each slice with a leader line (v4.10)
+        ser.HasDataLabels = True
+        With ser.DataLabels
+            .ShowSeriesName = False
+            .ShowValue = False
+            .ShowLegendKey = False
+            .ShowCategoryName = True
+            .ShowPercentage = True
+            .Separator = " "
+            .NumberFormat = "0.0%"
+            .Position = xlLabelPositionOutsideEnd
+            .Font.Name = "Consolas"
+            .Font.Size = 8
+            .Font.Bold = True
+            .Font.Color = RGB(255, 255, 255)
+        End With
+        ser.HasLeaderLines = True
+        On Error Resume Next
+        ser.LeaderLines.Format.Line.ForeColor.RGB = RGB(120, 120, 120)
+        ser.LeaderLines.Format.Line.Weight = 0.75
+        On Error GoTo 0
+
+        ' fake the 56% hole: a black circle centred on the plot area
+        Dim pa As PlotArea: Set pa = .PlotArea
+        Dim d As Double: d = IIf(pa.InsideWidth < pa.InsideHeight, pa.InsideWidth, pa.InsideHeight) * 0.56
+        Dim hole As Shape
+        Set hole = .Shapes.AddShape(msoShapeOval, _
+                     pa.InsideLeft + (pa.InsideWidth - d) / 2, _
+                     pa.InsideTop + (pa.InsideHeight - d) / 2, d, d)
+        hole.Name = "RR4_DONUT_HOLE"
+        hole.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        hole.Line.Visible = msoFalse
     End With
 End Sub
 

@@ -304,7 +304,8 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   RGB 200,100,0），其他報表頁（Analysis/Vol/Corr）仍是琥珀 255,192,0；輸入格一律 `RR4_INPUT_BG`（RGB 40,40,40）底＋
   `RR4_INPUT_FG` 白字；區塊分隔線一律 `RR4_LINE`（RGB 70,70,70）深灰、從 B 欄起（A 欄是
   寬度 11 的留白）；權重橫條**紅漲綠跌**（台股慣例）、白字；甜甜圈用 `DonutColor` 固定
-  12 色調色盤＋「代號 %」標籤（doughnut 標籤只能貼在環上，Excel 沒有 outside 位置）；
+  12 色調色盤＋「代號 %」標籤放在環**外**（v4.10 起圖型其實是 xlPie＋畫在中央的黑色圓形
+  `RR4_DONUT_HOLE` 假裝成洞——真 doughnut 的標籤只能貼在環上，Excel 沒有 outside 位置）；
   導覽列未選取的代碼／標籤調暗、只有目前頁亮起，不用底線。
 - **WATCHLIST（v4.9.1）**：圖表帶左側 B25:E38——標題 25、表頭 26、**row 27 是輸入列**
   （B 代號／C 策略／D 目標價，代號＋目標價都填了就由 `SheetRR4.Worksheet_Change` →
