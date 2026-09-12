@@ -51,6 +51,9 @@ Option Explicit
 '  into the sheet module by BuildRRG itself the first time the sheet is
 '  built (needs "Trust access to the VBA project object model").  The
 '  focused ticker lives in the hidden sheet name RRGFOCUS.
+'  SORT: double-click a column header to sort the table by it (again to
+'  flip); double-click the page title to restore the build order and clear
+'  the focus.  See RrgSort.
 ' ================================================================
 
 Private Const RS_WINDOW As Long = 65
@@ -75,6 +78,8 @@ Private Const FLOW_LOOKBACK As Long = 20
 Private Const CMF_DEADZONE As Double = 0.05
 Private Const OBV_DEADZONE As Double = 0.5
 Private Const FOCUS_MARK As String = "RRGFOCUS"
+Private Const SORT_MARK As String = "RRGSORT"      ' "col|dir" of the current table sort
+Private Const SEQ_COL As Long = 25           ' Y: build order, restored by double-clicking the title
 Private Const DIM_GREY As Long = 4210752     ' RGB(64,64,64)
 
 Private Const NAN As Double = -1E+300
@@ -328,7 +333,7 @@ Sub BuildRRG()
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.cells(2, 1)
-        .Value = "RG! <GO> refetches and redraws  .  double-click a ticker to focus it (again, or the TICKER header, to clear)  .  same maths as rrg_dynamic.py"
+        .Value = "RG! <GO> refetches and redraws  .  double-click a ticker to focus it (again to clear)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.Range(ws.cells(2, 1), ws.cells(2, TBL_NCOL)).Borders(xlEdgeBottom)
@@ -469,6 +474,10 @@ Sub BuildRRG()
     End With
     ' tail dates: every ETF is aligned to SPY's days and sampled backwards
     ' from the same last day, so one date column serves all of them
+    ws.cells(TBL_HDR, SEQ_COL).Value = "seq": ws.cells(TBL_HDR, SEQ_COL).Font.Color = RGB(90, 90, 90)
+    For i = 0 To n - 1: ws.cells(TBL_FIRST + i, SEQ_COL).Value = i + 1: Next i
+    ws.Range(ws.cells(TBL_FIRST, SEQ_COL), ws.cells(TBL_FIRST + n - 1, SEQ_COL)).Font.Color = RGB(90, 90, 90)
+    ws.Columns(SEQ_COL).ColumnWidth = 4
     ws.cells(TBL_HDR, DATE_COL).Value = "date": ws.cells(TBL_HDR, DATE_COL).Font.Color = RGB(90, 90, 90)
     For k = 0 To TAIL_POINTS - 1
         Dim di As Long: di = nb - 1 - TAIL_SPACING * (TAIL_POINTS - 1 - k)
@@ -523,6 +532,7 @@ Sub BuildRRG()
 
     Call NavAdd(ws, "RG")
     Call SetFocusMark(ws, "")
+    Call SetMark(ws, SORT_MARK, "")
     Call EnsureSheetCode(ws)
     Application.ScreenUpdating = True
     Application.EnableEvents = prevEv
@@ -808,32 +818,42 @@ End Sub
 
 ' Sheet double-click handler (called from SheetRRG_Code.txt).
 Public Sub RrgDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
-    If Target.Column <> 1 Then Exit Sub
     Dim off As Long: off = NavOffset(ws)
-    Dim tk As String: tk = Trim(CStr(Target.Value))
-    If Target.Row = TBL_HDR + off Then
+    If Target.Row = 1 + off And Target.Column = 1 Then          ' page title: reset everything
         Cancel = True
         Call RrgFocus(ws, "")
-    ElseIf Target.Row > TBL_HDR + off And tk <> "" Then
-        If ws.cells(Target.Row, 6).Value = "" Then Exit Sub        ' below the table
+        Call RrgSort(ws, 0)
+    ElseIf Target.Row = TBL_HDR + off And Target.Column >= 1 And Target.Column <= TBL_NCOL Then
+        Cancel = True
+        Call RrgSort(ws, Target.Column)
+    ElseIf Target.Column = 1 And Target.Row > TBL_HDR + off Then
+        Dim tk As String: tk = Trim(CStr(Target.Value))
+        If tk = "" Or ws.cells(Target.Row, 6).Value = "" Then Exit Sub        ' below the table
         Cancel = True
         If GetFocusMark(ws) = tk Then Call RrgFocus(ws, "") Else Call RrgFocus(ws, tk)
     End If
 End Sub
 
 Private Sub SetFocusMark(ws As Worksheet, ByVal tk As String)
-    On Error Resume Next
-    ws.Names(FOCUS_MARK).Delete
-    On Error GoTo 0
-    ws.Names.Add Name:=FOCUS_MARK, RefersTo:="=""" & tk & """", Visible:=False
+    Call SetMark(ws, FOCUS_MARK, tk)
 End Sub
 
 Private Function GetFocusMark(ws As Worksheet) As String
+    GetFocusMark = GetMark(ws, FOCUS_MARK)
+End Function
+
+Private Sub SetMark(ws As Worksheet, ByVal nm As String, ByVal v As String)
     On Error Resume Next
-    Dim v As String: v = ws.Names(FOCUS_MARK).RefersTo      ' ="SMH"
+    ws.Names(nm).Delete
     On Error GoTo 0
-    v = Replace(Replace(v, "=", ""), """", "")
-    GetFocusMark = v
+    ws.Names.Add Name:=nm, RefersTo:="=""" & v & """", Visible:=False
+End Sub
+
+Private Function GetMark(ws As Worksheet, ByVal nm As String) As String
+    On Error Resume Next
+    Dim v As String: v = ws.Names(nm).RefersTo      ' ="SMH"
+    On Error GoTo 0
+    GetMark = Replace(Replace(v, "=", ""), """", "")
 End Function
 
 ' Write the sheet's event code (a copy of RR4/SheetRRG_Code.txt) into the
@@ -1049,6 +1069,152 @@ Private Sub CornerLabel(ch As Chart, ByVal txt As String, ByVal col As Long, ByV
     End With
     shp.Fill.Visible = msoFalse
     shp.Line.Visible = msoFalse
+End Sub
+
+' ----------------------------------------------------------------
+' SORT: double-click a column header.  Same header again flips the
+' direction; the page title restores the build order (SEQ column Y).
+' The table rows (A:N), the TRAIL block and the SEQ column move together;
+' the tail data block is per-ticker columns so it is untouched, and the
+' RRG_FLOW series (which point at table cells) are re-bound by ticker.
+Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
+    Dim off As Long: off = NavOffset(ws)
+    Dim r0 As Long: r0 = TBL_FIRST + off
+    Dim n As Long: n = 0
+    Do While ws.cells(r0 + n, 1).Value <> ""
+        n = n + 1
+    Loop
+    If n < 2 Then Exit Sub
+    Application.ScreenUpdating = False
+    Dim trCol As Long: trCol = DATA_COL + 2 * n + 1
+    Dim tw As Long: tw = TAIL_POINTS - 1
+
+    ' --- direction: same column again flips it ---
+    Dim prev As String: prev = GetMark(ws, SORT_MARK)         ' "col|dir"
+    Dim dir As Long
+    Dim isText As Boolean: isText = (col = 1 Or col = 2 Or col = 3 Or col = 6 Or col = TBL_NCOL)
+    If col = 0 Then
+        dir = 1
+    ElseIf Split(prev & "|", "|")(0) = CStr(col) Then
+        dir = -CLng(Val(Split(prev & "|", "|")(1)))
+    Else
+        dir = IIf(isText, 1, -1)                              ' numbers: biggest first
+    End If
+
+    ' --- read everything that moves ---
+    Dim tbl As Variant: tbl = ws.Range(ws.cells(r0, 1), ws.cells(r0 + n - 1, TBL_NCOL)).Value
+    Dim trl As Variant: trl = ws.Range(ws.cells(r0, trCol), ws.cells(r0 + n - 1, trCol + tw - 1)).Value
+    Dim seq As Variant: seq = ws.Range(ws.cells(r0, SEQ_COL), ws.cells(r0 + n - 1, SEQ_COL)).Value
+    Dim notes() As String: ReDim notes(1 To n)
+    Dim i As Long, j As Long
+    For i = 1 To n
+        If Not ws.cells(r0 + i - 1, TBL_NCOL).Comment Is Nothing Then notes(i) = ws.cells(r0 + i - 1, TBL_NCOL).Comment.Text
+    Next i
+
+    ' --- order (insertion sort on n ~ 26 rows; blanks always last) ---
+    Dim idx() As Long: ReDim idx(1 To n)
+    For i = 1 To n: idx(i) = i: Next i
+    For i = 2 To n
+        Dim cur As Long: cur = idx(i)
+        j = i - 1
+        Do While j >= 1
+            If SortBefore(tbl, seq, idx(j), cur, col, dir, isText) Then Exit Do
+            idx(j + 1) = idx(j)
+            j = j - 1
+        Loop
+        idx(j + 1) = cur
+    Next i
+
+    ' --- write back in the new order ---
+    Dim tbl2 As Variant: tbl2 = tbl
+    Dim trl2 As Variant: trl2 = trl
+    Dim seq2 As Variant: seq2 = seq
+    Dim c As Long
+    For i = 1 To n
+        For c = 1 To TBL_NCOL: tbl2(i, c) = tbl(idx(i), c): Next c
+        For c = 1 To tw: trl2(i, c) = trl(idx(i), c): Next c
+        seq2(i, 1) = seq(idx(i), 1)
+    Next i
+    ' column I holds the sparklines - leave it alone, write A:H and J:N
+    Dim lv As Variant: ReDim lv(1 To n, 1 To 8)
+    Dim rv As Variant: ReDim rv(1 To n, 1 To TBL_NCOL - 9)
+    For i = 1 To n
+        For c = 1 To 8: lv(i, c) = tbl2(i, c): Next c
+        For c = 10 To TBL_NCOL: rv(i, c - 9) = tbl2(i, c): Next c
+    Next i
+    ws.Range(ws.cells(r0, 1), ws.cells(r0 + n - 1, 8)).Value = lv
+    ws.Range(ws.cells(r0, 10), ws.cells(r0 + n - 1, TBL_NCOL)).Value = rv
+    ws.Range(ws.cells(r0, trCol), ws.cells(r0 + n - 1, trCol + tw - 1)).Value = trl2
+    ws.Range(ws.cells(r0, SEQ_COL), ws.cells(r0 + n - 1, SEQ_COL)).Value = seq2
+    ' number formats were set per cell at build time (rows without data had none)
+    ws.Range(ws.cells(r0, 4), ws.cells(r0 + n - 1, 5)).NumberFormat = "0.00"
+    ws.Range(ws.cells(r0, 7), ws.cells(r0 + n - 1, 8)).NumberFormat = "+0.00;-0.00;0.00"
+    ws.Range(ws.cells(r0, 11), ws.cells(r0 + n - 1, 11)).NumberFormat = "+0.0%;-0.0%;0.0%"
+    ws.Range(ws.cells(r0, 12), ws.cells(r0 + n - 1, 12)).NumberFormat = "+0.000;-0.000;0.000"
+    ws.Range(ws.cells(r0, 13), ws.cells(r0 + n - 1, 13)).NumberFormat = "+0.0;-0.0;0.0"
+    ws.Range(ws.cells(r0, TBL_NCOL), ws.cells(r0 + n - 1, TBL_NCOL)).ClearComments
+    For i = 1 To n
+        If notes(idx(i)) <> "" Then ws.cells(r0 + i - 1, TBL_NCOL).AddComment notes(idx(i))
+    Next i
+
+    ' --- RRG_FLOW series point at table cells: re-bind by ticker ---
+    Dim rowOf As Object: Set rowOf = CreateObject("Scripting.Dictionary")
+    For i = 1 To n: rowOf(CStr(tbl2(i, 1))) = r0 + i - 1: Next i
+    Dim cf As ChartObject
+    On Error Resume Next
+    Set cf = ws.ChartObjects("RRG_FLOW")
+    On Error GoTo 0
+    If Not cf Is Nothing Then
+        Dim s As Series
+        For Each s In cf.Chart.SeriesCollection
+            If Left(s.Name, 1) <> "_" Then
+                If rowOf.Exists(s.Name) Then
+                    s.XValues = ws.Range(ws.cells(rowOf(s.Name), 11), ws.cells(rowOf(s.Name), 11))
+                    s.Values = ws.Range(ws.cells(rowOf(s.Name), 12), ws.cells(rowOf(s.Name), 12))
+                End If
+            End If
+        Next s
+    End If
+
+    ' --- header marker + colours ---
+    Dim hr As Long: hr = TBL_HDR + off
+    ws.Range(ws.cells(hr, 1), ws.cells(hr, TBL_NCOL)).Font.Underline = xlUnderlineStyleNone
+    If col > 0 Then ws.cells(hr, col).Font.Underline = xlUnderlineStyleSingle
+    Call SetMark(ws, SORT_MARK, IIf(col = 0, "", col & "|" & dir))
+    Call PaintTableRows(ws, GetMark(ws, FOCUS_MARK))
+    Application.ScreenUpdating = True
+    If col = 0 Then
+        Call NavNotify("RRG: build order restored")
+    Else
+        Call NavNotify("RRG: sorted by " & ws.cells(hr, col).Value & IIf(dir > 0, " ascending", " descending") & "  -  double-click the header again to flip, the title to restore")
+    End If
+End Sub
+
+' True when row a should come before row b.
+Private Function SortBefore(ByRef tbl As Variant, ByRef seq As Variant, ByVal a As Long, ByVal b As Long, _
+                            ByVal col As Long, ByVal dir As Long, ByVal isText As Boolean) As Boolean
+    If col = 0 Then
+        SortBefore = (Val(seq(a, 1)) <= Val(seq(b, 1)))
+        Exit Function
+    End If
+    Dim va As Variant, vb As Variant
+    va = tbl(a, col): vb = tbl(b, col)
+    Dim ea As Boolean, eb As Boolean
+    ea = IsEmpty(va) Or (CStr(va) = ""): eb = IsEmpty(vb) Or (CStr(vb) = "")
+    If ea And eb Then SortBefore = (Val(seq(a, 1)) <= Val(seq(b, 1))): Exit Function
+    If ea Then SortBefore = False: Exit Function
+    If eb Then SortBefore = True: Exit Function
+    Dim cmp As Long
+    If isText Then
+        cmp = StrComp(CStr(va), CStr(vb), vbTextCompare)
+    Else
+        If CDbl(va) < CDbl(vb) Then cmp = -1 Else If CDbl(va) > CDbl(vb) Then cmp = 1 Else cmp = 0
+    End If
+    If cmp = 0 Then SortBefore = (Val(seq(a, 1)) <= Val(seq(b, 1))) Else SortBefore = (cmp * dir < 0)
+End Function
+
+Public Sub RrgSortByName(ByVal col As Long)
+    Call RrgSort(ThisWorkbook.Sheets("RRG"), col)
 End Sub
 
 ' colour scaled towards black: f = 1 keeps it, f = 0.25 is a quarter as bright
