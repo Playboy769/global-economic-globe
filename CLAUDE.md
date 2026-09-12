@@ -354,6 +354,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   砍掉那欄逗號串起來的 TICKERS 清單（永遠被欄寬截斷，卻佔掉整頁約八成寬度）。面板起始欄一度改到 L，
   隨後定案為 **M**（`DB_FIRST_COL = 13`）、**L 欄留成寬 3 的黑色空白**當掃描表與面板之間的間隔——
   面板緊貼 SECTOR 欄時兩塊會讀成同一張表；`RebuildGroupDb` 的清除／塗黑範圍因此往左多包一欄。
+  **面板一律「清得比寫得寬」**：清到固定的 `DB_CLEAR_LAST_COL`（AD）並重設最後一塊之後的欄寬——
+  v3 每塊 4 欄、整片到 AA，v4 縮成 3 欄只清到 W，結果 v3 最後一塊（含 TICKERS 欄）留在 X:AA，
+  跟新面板並排顯示同一組「TW (cont.)」群組。rows 1–`SCAN_LAST_ROW` 是面板獨佔（deep-dive 從 row 40 起），
+  多清幾欄零成本。
   **原本 L 欄的 sparkline 整個拿掉**
   （v3 改版後就沒再畫出來），`ClearSparklines` 保留以清掉舊殘留。兩個搬版陷阱：**row 3 要清掉並重新塗黑**
   （v3 的表格從 row 3 開始，且 `Range.Clear` 會留下「無填滿」＝黑底頁上的白帶），以及 **`DrawCrHeader`
