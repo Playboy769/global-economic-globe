@@ -323,6 +323,16 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   新增 **RISK CONTRIB%**（w_i·cov(r_i,r_p)/var(r_p)，共同視窗算、合計 100%，最大者亮橘）、
   **RISK/WEIGHT**（>1.3 紅、<0.7 綠）、**WEIGHTED AVG STDEV／DIVERSIFICATION RATIO**
   （Σwσ ÷ σ_p）、**1-DAY VAR 95%**（1.645·σ_daily·總市值，TWD）。仍由 `V!` 重算，跳頁不重算。
+- **Tickers Volatility（VT）頁 v2（2026-09-12）**：`modvolatility.bas` 整支重寫成純 ASCII、RR4 配色。
+  三個回看期（100/200/1000 日）改成**同一張表的三個欄**（A 指標名／B C D 三期），不再是上下三塊。
+  砍掉 Skewness／Kurtosis／Max Up・Down Streak（日報酬高階動差換樣本就翻號、連紅連黑不可行動），
+  新增 **20D VOL PERCENTILE**（現在的 20 日波動落在「該欄自己那段視窗」的第幾百分位，≥80 亮橘）。
+  **12 張圖改由 `DrawVtCharts` 每次重建**——原本是手工圖表指死格子且已經走鐘：200 日的 Max/Min 圖
+  指向 `B16:B17`（100 日的數字），三張 Risk 圖用 6 個類別標籤餵 4 個值。圖表命名 `VT_*`、`xlMove`，
+  類別軸標籤 `xlTickLabelPositionLow`（MDD 與最差日是負值，預設標籤會壓在零線上跟長條打架）。
+  統計表 rows 5–14、分布表 rows 18–39（22 格共用一欄 RANGE）、**註解放 row 58 以後**（在圖表帶下方，
+  放在表格正下方會被浮動圖表蓋住）。輸入格仍是 B2（有 bar 時 B5）。順手修：整頁 `Cells.Clear` 取代
+  寫死的 `A4:F100 ClearContents`、台股代號 `.TW` 抓不到改試 `.TWO`、建置期間 `EnableEvents=False`。
 - **HoldingsCorr（C）頁 v2（2026-09-12）**：RR4 配色、連續紅綠熱圖（`CorrHeatBg/Fg`，0 = 近黑）取代
   7 級色階、對角線畫 —、右側 **AVG CORR** 欄（最低綠＝最分散、最高紅＝最擁擠）、色階列＋
   **PORTFOLIO AVG PAIRWISE CORR**、**最相關／最不相關 5 對**、底部算法註解。仍由 `C!` 重算。
