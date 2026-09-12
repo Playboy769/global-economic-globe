@@ -5,8 +5,9 @@ Option Explicit
 '  RR4 NAV BAR v1 (2026-09-12) - typed page codes and commands
 ' ----------------------------------------------------------------
 '  Rows 1-3 of every REPORT page (one column right on RR4, see NavLeft):
-'    row 1   page code badge | command cell (grey = input) |
-'            page title + status of the last command
+'    row 1   page code badge | command cell (grey = input)
+'            (v4.4: no page title / status text on the bar any more -
+'            NavNotify messages go to the Excel status bar only)
 '    row 2   page codes   (the current page in white)
 '    row 3   action codes
 '  Type a code into that grey cell and press Enter; Workbook_SheetChange
@@ -69,18 +70,6 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "C":  NavSheetName = "HoldingsCorr"
         Case "CC": NavSheetName = "Correlation"
         Case "CR": NavSheetName = "Company research"
-    End Select
-End Function
-
-Private Function NavTitle(ByVal code As String) As String
-    Select Case UCase(code)
-        Case "P":  NavTitle = "PORTFOLIO"
-        Case "A":  NavTitle = "DEEP ANALYSIS"
-        Case "V":  NavTitle = "VOLATILITY 180D"
-        Case "VT": NavTitle = "TICKER VOLATILITY"
-        Case "D":  NavTitle = "DRAWDOWN"
-        Case "C":  NavTitle = "HOLDINGS CORRELATION"
-        Case "CC": NavTitle = "SECTOR CORRELATION"
     End Select
 End Function
 
@@ -221,7 +210,6 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
         .Font.Size = 10
         .Font.Bold = True
     End With
-    Call NavStatus(ws, "type a code in the grey cell + Enter", False)
 
     ' row 2: pages
     Dim pages As Variant
@@ -293,21 +281,12 @@ Private Function DimColor(ByVal c As Long, ByVal factor As Double) As Long
     DimColor = RGB(CLng(r * factor), CLng(g * factor), CLng(b * factor))
 End Function
 
+' v4.4: the bar no longer carries a title / status line - everything goes
+' to the Excel status bar (bottom of the window). Kept as the single place
+' status text is routed through so the callers did not have to change.
 Public Sub NavStatus(ByVal ws As Worksheet, ByVal msg As String, ByVal isErr As Boolean)
-    Dim code As String: code = NavPageCode(ws)
-    Dim ttl As String: ttl = NavTitle(code)
-    If ttl = "" Then ttl = UCase(ws.Name)
-    With ws.cells(1, 3 + NavLeft(ws))
-        .NumberFormat = "@"
-        .Value = ttl & "     " & msg
-        .Font.Size = 9
-        .Font.Bold = False
-        .Font.Color = RGB(150, 150, 150)
-        .Characters(1, Len(ttl)).Font.Color = RGB(255, 192, 0)
-        .Characters(1, Len(ttl)).Font.Bold = True
-        .Characters(1, Len(ttl)).Font.Size = 11
-        If isErr And Len(msg) > 0 Then .Characters(Len(ttl) + 6, Len(msg)).Font.Color = RGB(255, 80, 80)
-    End With
+    m_lastIsErr = isErr
+    If Len(msg) > 0 Then Application.StatusBar = IIf(isErr, "ERROR - ", "") & msg
 End Sub
 
 ' ================================================================
@@ -319,22 +298,12 @@ End Sub
 ' ================================================================
 Public Sub NavNotify(ByVal msg As String, Optional ByVal isErr As Boolean = False)
     m_lastIsErr = isErr
-    Application.StatusBar = msg
-    Call NavEcho
+    Application.StatusBar = IIf(isErr, "ERROR - ", "") & msg
 End Sub
 
-' Show the current status-bar text on the active page's bar (used after a
-' routine that redrew / switched pages once it had already notified).
+' v4.4: nothing to repaint on the page any more; kept so the sheet code /
+' RunNavCommand callers still compile.
 Public Sub NavEcho()
-    On Error Resume Next
-    Dim sb As Variant: sb = Application.StatusBar
-    If VarType(sb) <> vbString Then Exit Sub
-    Dim ws As Worksheet
-    Set ws = ActiveSheet
-    If ws Is Nothing Then Exit Sub
-    If NavPageCode(ws) = "" Then Exit Sub
-    If Not NavHasRows(ws) Then Exit Sub
-    Call NavStatus(ws, CStr(sb), m_lastIsErr)
 End Sub
 
 ' ================================================================

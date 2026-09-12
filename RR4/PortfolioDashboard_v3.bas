@@ -698,12 +698,11 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
-    ws.cells(RR4_TOP + 1, RR4_LEFT + 2).Value = " <- TOTAL MKT"
-    ws.cells(RR4_TOP + 1, RR4_LEFT + 2).Font.Color = RGB(255, 192, 0)
-    ws.cells(RR4_TOP + 1, RR4_LEFT + 2).Font.Bold = True
+    ' (v4.4: the " <- TOTAL MKT" caption next to the figure is gone)
 
     ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Value = "USD/TWD"
     ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Font.Color = RGB(150, 150, 150)
+    ws.cells(RR4_TOP + 2, RR4_LEFT + 1).HorizontalAlignment = xlCenter
     With ws.cells(RR4_TOP + 2, RR4_LEFT + 2)
         .Value = exRate
         .NumberFormat = "0.00"
@@ -717,7 +716,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
         .Value = "ARRANGE"
         .Font.Color = RGB(255, 192, 0)
         .Font.Bold = True
-        .HorizontalAlignment = xlRight
+        .HorizontalAlignment = xlCenter
     End With
     With ws.Range(RR4_ARR_CELL)
         .NumberFormat = "@"
@@ -738,6 +737,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Value = "WEIGHT"
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Bold = True
+    ws.cells(RR4_TOP + 4, RR4_LEFT + 1).HorizontalAlignment = xlRight
 End Sub
 
 ' ================================================================
@@ -1463,7 +1463,8 @@ End Function
 Private Sub RestripeRows(ws As Worksheet, lastR As Long)
     Dim r As Long, bg As Long
     For r = RR4_POS_FIRST To lastR
-        If (r - RR4_POS_FIRST) Mod 2 = 0 Then bg = RGB(15, 15, 15) Else bg = RGB(22, 22, 22)
+        ' v4.4: one step darker than the 15 / 22 used on the other pages
+        If (r - RR4_POS_FIRST) Mod 2 = 0 Then bg = RGB(8, 8, 8) Else bg = RGB(14, 14, 14)
         Dim lastPx As Double: lastPx = NumOr0(ws.cells(r, RR4_LEFT + 9).Value)
         Dim pTgt As Double: pTgt = NumOr0(ws.cells(r, RR4_LEFT + 15).Value)
         If pTgt > 0 And lastPx > pTgt Then bg = RGB(40, 25, 0)
@@ -1570,7 +1571,7 @@ End Sub
 '  Same data as the weight bar: one slice per position in the current
 '  ARRANGE order, size = WT%. Colours come from a fixed palette
 '  (DonutColor, one per slice - NOT the up/down colour of the bar, v4.3),
-'  each slice labelled "TICKER  n%" in white Consolas. The series
+'  no data labels. The series
 '  points at the position-log cells (tickers A, WT% L) instead of holding
 '  copied numbers, so what the chart shows can always be checked on the
 '  sheet. Rebuilt with the weight bar (UP and every ARRANGE).
@@ -1630,24 +1631,9 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
             End With
         Next r
 
-        ' "3653.TW  14.9%" outside each slice, white Consolas. Built from the
-        ' chart's own category + percentage fields: a per-point .Text
-        ' assignment was silently ignored right after HasDataLabels (Excel
-        ' rebuilt the labels from the series afterwards).
-        ser.HasDataLabels = True
-        With ser.DataLabels
-            .ShowSeriesName = False
-            .ShowValue = False
-            .ShowLegendKey = False
-            .ShowCategoryName = True
-            .ShowPercentage = True
-            .Separator = "  "
-            .NumberFormat = "0.0%"
-            .Font.Name = "Consolas"
-            .Font.Size = 7
-            .Font.Bold = True
-            .Font.Color = RGB(255, 255, 255)
-        End With
+        ' no data labels (v4.4) - hover shows ticker / WT%, the colour order
+        ' matches the position log
+        ser.HasDataLabels = False
     End With
 End Sub
 

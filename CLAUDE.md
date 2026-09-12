@@ -282,7 +282,8 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     `NavOffset` 定位（B2 → 有 bar 時是 B5）。
   - Strip/Add 前會把所有 shape 設成 `xlMove`：預設 `xlMoveAndSize` 會讓 DrawdownChart
     那張錨在第 1 列的圖每次縮一圈。
-  - **收尾訊息一律 `NavNotify(msg, isErr)`（狀態列＋頁面狀態行），不再 MsgBox**；只有
+  - **收尾訊息一律 `NavNotify(msg, isErr)`（只寫 Excel 底部狀態列；v4.4 起 bar 第 1 列
+    不再放頁面標題與狀態文字），不再 MsgBox**；只有
     真正的錯誤與 CLEARALL 的 Yes/No 確認保留 MsgBox。
 - **RR4 頁版面 v4.2（`PortfolioDashboard_v3.bas` 檔頭有完整表）**：`RR4_TOP = 3`（bar）、
   `RR4_LEFT = 1`（A 欄留白）。總值 B4、USD/TWD 輸入 C5、ARRANGE 輸入 E5、設定格 T1/T2
