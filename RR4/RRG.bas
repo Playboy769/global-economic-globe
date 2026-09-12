@@ -50,7 +50,8 @@ Option Explicit
 '  sheet's Worksheet_BeforeDoubleClick (RR4/SheetRRG_Code.txt) is written
 '  into the sheet module by BuildRRG itself the first time the sheet is
 '  built (needs "Trust access to the VBA project object model").  The
-'  focused ticker lives in the hidden sheet name RRGFOCUS.
+'  focused tickers live in the hidden sheet name RRGFOCUS (comma-separated:
+'  double-click adds / removes; one ticker gets dated dots, several only names).
 '  SORT: double-click a column header to sort the table by it (again to
 '  flip); double-click the page title to restore the build order and clear
 '  the focus.  See RrgSort.
@@ -333,7 +334,7 @@ Sub BuildRRG()
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.cells(2, 1)
-        .Value = "RG! <GO> refetches and redraws  .  double-click a ticker to focus it (again to clear)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
+        .Value = "RG! <GO> refetches and redraws  .  double-click tickers to focus them (again to remove, title to show all)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.Range(ws.cells(2, 1), ws.cells(2, TBL_NCOL)).Borders(xlEdgeBottom)
@@ -665,8 +666,8 @@ Private Sub StyleSeries(ws As Worksheet, s As Series, ByVal qc As Long, ByVal np
     Dim k As Long
     Dim baseCol As Long: baseCol = IIf(mode = 1, DIM_GREY, qc)
     s.Format.Line.ForeColor.RGB = baseCol
-    s.Format.Line.Weight = IIf(mode = 2, 2, 1)
-    s.Format.Line.Transparency = IIf(mode = 2, 0.15, 0.5)
+    s.Format.Line.Weight = IIf(mode >= 2, 2, 1)
+    s.Format.Line.Transparency = IIf(mode >= 2, 0.15, 0.5)
     s.MarkerStyle = xlMarkerStyleCircle
     s.MarkerSize = 4
     s.MarkerBackgroundColor = baseCol
@@ -674,17 +675,19 @@ Private Sub StyleSeries(ws As Worksheet, s As Series, ByVal qc As Long, ByVal np
     s.HasDataLabels = False
     For k = 1 To np - 1
         Dim fade As Double: fade = 0.25 + 0.75 * (k - 1) / (np - 1)
-        s.Points(k).MarkerSize = IIf(mode = 2, 5, 3)
+        s.Points(k).MarkerSize = IIf(mode >= 2, 5, 3)
         s.Points(k).MarkerBackgroundColor = IIf(mode = 1, DIM_GREY, Dim2(qc, fade))
         s.Points(k).MarkerForegroundColor = IIf(mode = 1, DIM_GREY, Dim2(qc, fade))
     Next k
     With s.Points(np)
-        .MarkerSize = IIf(mode = 1, 6, IIf(mode = 2, 11, 9))
+        .MarkerSize = IIf(mode = 1, 6, IIf(mode >= 2, 11, 9))
         .MarkerBackgroundColor = baseCol
         .MarkerForegroundColor = baseCol
     End With
     If mode = 0 Then
         Call PointLabel(s.Points(np), s.Name, RGB(210, 210, 210), 8)
+    ElseIf mode = 3 Then
+        Call PointLabel(s.Points(np), s.Name, RGB(255, 255, 255), 9)
     ElseIf mode = 2 Then
         Dim off As Long: off = NavOffset(ws)
         For k = 1 To np
@@ -725,7 +728,7 @@ Private Sub PaintTableRows(ws As Worksheet, ByVal focusTk As String)
         Dim tk As String: tk = CStr(ws.cells(r, 1).Value)
         Dim q As String: q = CStr(ws.cells(r, 6).Value)
         rng.Font.Bold = False
-        If focusTk <> "" And tk = focusTk Then
+        If focusTk <> "" And InSet(focusTk, tk) Then
             rng.Interior.Color = RR4_ACCENT
             rng.Font.Color = RGB(0, 0, 0)
             rng.Font.Bold = True
@@ -759,8 +762,12 @@ Private Sub PaintTableRows(ws As Worksheet, ByVal focusTk As String)
 End Sub
 
 ' ----------------------------------------------------------------
-' Focus: "" shows every ETF, otherwise only tk stays lit.
+' Focus: "" shows every ETF, otherwise only the tickers in tk (comma-
+' separated set) stay lit - one ticker also gets its dates, several only
+' their names.
 Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
+    tk = NormSet(tk)
+    Dim litMode As Long: litMode = IIf(SetCount(tk) = 1, 2, 3)
     Dim co As ChartObject
     On Error Resume Next
     Set co = ws.ChartObjects("RRG_MAIN")
@@ -778,7 +785,7 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
     Dim s As Series
     For Each s In co.Chart.SeriesCollection
         Dim mode As Long
-        If tk = "" Then mode = 0 Else mode = IIf(s.Name = tk, 2, 1)
+        If tk = "" Then mode = 0 Else mode = IIf(InSet(tk, s.Name), litMode, 1)
         Call StyleSeries(ws, s, QuadColor(CStr(quadOf(s.Name))), s.Points.count, mode)
     Next s
     Dim cf As ChartObject
@@ -796,7 +803,7 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
         Loop
         For Each s In cf.Chart.SeriesCollection
             If Left(s.Name, 1) <> "_" Then
-                If tk = "" Then mode = 0 Else mode = IIf(s.Name = tk, 2, 1)
+                If tk = "" Then mode = 0 Else mode = IIf(InSet(tk, s.Name), litMode, 1)
                 Call StyleFlowSeries(s, SigColor(CStr(sigOf(s.Name))), CDbl(obvOf(s.Name)), mode)
             End If
         Next s
@@ -807,7 +814,8 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
     If tk = "" Then
         Call NavNotify("RRG: showing all")
     Else
-        Call NavNotify("RRG: focus " & tk & " (" & quadOf(tk) & ")  -  double-click it again or the TICKER header to show all")
+        Call NavNotify("RRG: focus " & Replace(tk, ",", " + ") & IIf(SetCount(tk) = 1, " (" & quadOf(tk) & ")", "") & _
+                       "  -  double-click a ticker to add / remove it, the title to show all")
     End If
 End Sub
 
@@ -830,7 +838,7 @@ Public Sub RrgDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel A
         Dim tk As String: tk = Trim(CStr(Target.Value))
         If tk = "" Or ws.cells(Target.Row, 6).Value = "" Then Exit Sub        ' below the table
         Cancel = True
-        If GetFocusMark(ws) = tk Then Call RrgFocus(ws, "") Else Call RrgFocus(ws, tk)
+        Call RrgFocus(ws, ToggleSet(GetFocusMark(ws), tk))
     End If
 End Sub
 
@@ -1042,13 +1050,13 @@ Private Sub StyleFlowSeries(s As Series, ByVal col As Long, ByVal obvT As Double
     Else
         s.MarkerStyle = xlMarkerStyleCircle
     End If
-    s.MarkerSize = IIf(mode = 1, 6, IIf(mode = 2, 14, 9))
+    s.MarkerSize = IIf(mode = 1, 6, IIf(mode >= 2, 14, 9))
     s.MarkerBackgroundColor = c
     s.MarkerForegroundColor = c
     s.HasDataLabels = False
     If mode = 0 Then
         Call PointLabel(s.Points(1), s.Name, RGB(210, 210, 210), 8, xlLabelPositionAbove)
-    ElseIf mode = 2 Then
+    ElseIf mode >= 2 Then
         Call PointLabel(s.Points(1), s.Name, RGB(255, 255, 255), 10, xlLabelPositionAbove)
     End If
 End Sub
@@ -1216,6 +1224,31 @@ End Function
 Public Sub RrgSortByName(ByVal col As Long)
     Call RrgSort(ThisWorkbook.Sheets("RRG"), col)
 End Sub
+
+' ---- comma-separated ticker sets (the focus group) ----
+Private Function NormSet(ByVal v As String) As String
+    Dim p As Variant, out As String
+    For Each p In Split(v, ",")
+        If Trim(p) <> "" Then out = out & IIf(out = "", "", ",") & UCase(Trim(p))
+    Next p
+    NormSet = out
+End Function
+
+Private Function InSet(ByVal v As String, ByVal tk As String) As Boolean
+    InSet = InStr("," & v & ",", "," & UCase(tk) & ",") > 0
+End Function
+
+Private Function SetCount(ByVal v As String) As Long
+    If v = "" Then SetCount = 0 Else SetCount = UBound(Split(v, ",")) + 1
+End Function
+
+Private Function ToggleSet(ByVal v As String, ByVal tk As String) As String
+    If InSet(v, tk) Then
+        ToggleSet = NormSet(Replace("," & v & ",", "," & UCase(tk) & ",", ","))
+    Else
+        ToggleSet = NormSet(v & "," & tk)
+    End If
+End Function
 
 ' colour scaled towards black: f = 1 keeps it, f = 0.25 is a quarter as bright
 Private Function Dim2(ByVal c As Long, ByVal f As Double) As Long
