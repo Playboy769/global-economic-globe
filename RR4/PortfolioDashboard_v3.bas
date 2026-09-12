@@ -92,9 +92,10 @@ Public Const RR4_POS_HDR   As Long = 42
 Public Const RR4_POS_FIRST As Long = 43
 Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
 Private Const RR4_RLPNL_NAME As String = "RR4_RLPNL"   ' realized-PnL line chart (v4.6)
-Private Const RR4_NCOL      As Long = 17    ' last body column, B:Q
+Private Const RR4_NCOL      As Long = 19    ' last body column, B:S (R:S = NOTE, v4.11)
 Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
 Private Const RR4_SWING_COL As Long = 17    ' Q
+Private Const RR4_NOTE_COL  As Long = 18    ' R (text overflows into S, which stays empty)
 Private Const RR4_LOG_ROWS  As Long = 5     ' daily-log trade lines, rows 10-14
 Private Const RR4_POS_ROW_H As Double = 24  ' position-log data rows (v4.5, was 18)
 Private Const RR4_WBAR_PREFIX As String = "RR4W_"
@@ -104,9 +105,6 @@ Private Const RR4_WBAR_PREFIX As String = "RR4W_"
 ' B2 input of the VT / CC pages. (v4.3, 2026-09-12: was 70,70,70 + yellow.)
 Public Const RR4_INPUT_BG  As Long = 2631720
 Public Const RR4_INPUT_FG  As Long = 16777215
-' SWING RISK column only: a shade darker than the other input cells so it
-' sits closer to the row stripes (v4.5.1, RGB 25,25,25).
-Private Const RR4_SWING_BG As Long = 1644825
 ' Accent colour of the RR4 page and the nav bar (v4.5, 2026-09-12): dark
 ' orange RGB(200,100,0) - was the amber RGB(255,192,0) the other report
 ' pages (Vol / Corr) still use.
@@ -153,7 +151,8 @@ Sub RebuildPortfolioDashboard()
     Dim cfgCap As Variant: cfgCap = wsP.Range(RR4_CFG_CAP).Value
     If Not IsDate(cfgInc) Then cfgInc = wsP.Range("S1").Value
     If NumOr0(cfgCap) <= 0 Then cfgCap = wsP.Range("S2").Value
-    Dim swingRiskMap As Object: Set swingRiskMap = ReadSwingRisk(wsP)
+    Dim swingRiskMap As Object: Set swingRiskMap = ReadHandColumn(wsP, "SWING RISK")
+    Dim noteMap As Object: Set noteMap = ReadHandColumn(wsP, "NOTE")
     Dim wl As Variant: wl = ReadWatchlist(wsP)
     ' A sheet still on an older layout has other data sitting in these cells:
     ' keep only a real ARRANGE code and a numeric target for a real ticker.
@@ -201,7 +200,7 @@ Sub RebuildPortfolioDashboard()
     Call DrawSummary(wsP, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount)
     Call DrawColumnHeaders(wsP)
     Dim lastDataRow As Long
-    lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap)
+    lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap, noteMap)
     Call ApplyArrange(arrCode)
     Call DrawWatchlist(wsP, wl)
     Call DrawDisclaimer(wsP, lastDataRow)
@@ -1071,7 +1070,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
         .Font.Color = RR4_ACCENT
         .Font.Bold = True
     End With
-    With ws.Range(ws.cells(RR4_POS_TITLE, RR4_LEFT + 1), ws.cells(RR4_POS_TITLE, RR4_LEFT + 18)).Borders(xlEdgeTop)
+    With ws.Range(ws.cells(RR4_POS_TITLE, RR4_LEFT + 1), ws.cells(RR4_POS_TITLE, RR4_NCOL)).Borders(xlEdgeTop)
         .LineStyle = xlContinuous
         .Color = RR4_LINE
         .Weight = xlThin
@@ -1080,7 +1079,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
     Dim headers As Variant
     headers = Array("TICKER", "NAME", "ENTRY DT", "DAYS", "SECTOR", _
                     "NET EXPOS", "SHARES", "ENTRY PX", "LAST", "% CHG", _
-                    "UNRL PNL", "WT%", "W.BETA", "BETA 180D", "P.TARGET", "SWING RISK")
+                    "UNRL PNL", "WT%", "W.BETA", "BETA 180D", "P.TARGET", "SWING RISK", "NOTE")
     Dim i As Integer
     For i = 0 To UBound(headers)
         With ws.cells(RR4_POS_HDR, RR4_LEFT + i + 1)
@@ -1090,7 +1089,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
             .Font.Size = 9
             .Font.Name = "Consolas"
             .Interior.Color = RGB(10, 10, 10)
-            .HorizontalAlignment = xlCenter
+            .HorizontalAlignment = IIf(headers(i) = "NOTE", xlLeft, xlCenter)
         End With
     Next i
     ws.Rows(RR4_POS_HDR).RowHeight = 20
@@ -1106,14 +1105,15 @@ End Sub
 ' CalcPositions order; ApplyArrange then sorts them and paints the
 ' stripes, the P.TARGET highlight and the closing gold rule.
 Private Function WritePositionRows(ws As Worksheet, posData() As Variant, _
-                                    totalMkt As Double, ByVal swingRiskMap As Object) As Long
+                                    totalMkt As Double, ByVal swingRiskMap As Object, _
+                                    ByVal noteMap As Object) As Long
     WritePositionRows = RR4_POS_FIRST - 1
     Dim n As Long: n = PosCountOf(posData)
     If n < 1 Then Exit Function
 
     Dim i As Long, r As Long: r = RR4_POS_FIRST
     For i = 1 To n
-        Call WriteOnePositionRow(ws, r, i, posData, totalMkt, swingRiskMap)
+        Call WriteOnePositionRow(ws, r, i, posData, totalMkt, swingRiskMap, noteMap)
         r = r + 1
     Next i
     WritePositionRows = r - 1
@@ -1124,7 +1124,7 @@ End Function
 ' ------------------------------------------------------------
 Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
                                  posData() As Variant, totalMkt As Double, _
-                                 swingRiskMap As Object)
+                                 swingRiskMap As Object, noteMap As Object)
     With ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_NCOL))
         .Font.Name = "Consolas"
         .Font.Size = 10
@@ -1204,14 +1204,21 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     ws.cells(r, RR4_LEFT + 15).NumberFormat = "#,##0"
     ws.cells(r, RR4_LEFT + 15).Font.Color = RR4_ACCENT
 
-    If swingRiskMap.Exists(tickerCode) Then
-        With ws.cells(r, RR4_SWING_COL)
-            .Value = swingRiskMap(tickerCode)
-            .Font.Color = RR4_INPUT_FG
-            .Font.Bold = True
-            .HorizontalAlignment = xlCenter
-        End With
-    End If
+    ' hand-typed columns (SWING RISK, NOTE): white text on the row stripe
+    With ws.cells(r, RR4_SWING_COL)
+        .NumberFormat = "@"
+        If swingRiskMap.Exists(tickerCode) Then .Value = swingRiskMap(tickerCode)
+        .Font.Color = RR4_INPUT_FG
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
+    End With
+    With ws.cells(r, RR4_NOTE_COL)
+        .NumberFormat = "@"
+        If noteMap.Exists(tickerCode) Then .Value = noteMap(tickerCode)
+        .Font.Color = RR4_INPUT_FG
+        .Font.Bold = False
+        .HorizontalAlignment = xlLeft
+    End With
 
     ' hidden default-order key (ARRANGE "DEF")
     ws.cells(r, RR4_ORD_COL).NumberFormat = "@"
@@ -1367,8 +1374,9 @@ Private Sub RestripeRows(ws As Worksheet, lastR As Long)
             .Interior.Color = bg
             .Borders(xlEdgeBottom).LineStyle = xlNone
         End With
-        ws.cells(r, RR4_SWING_COL).Interior.Color = RR4_SWING_BG   ' typed by hand
+        ' v4.11: SWING RISK / NOTE ride the stripe like every other cell
         ws.cells(r, RR4_SWING_COL).Font.Color = RR4_INPUT_FG
+        ws.cells(r, RR4_NOTE_COL).Font.Color = RR4_INPUT_FG
     Next r
     With ws.Range(ws.cells(lastR, RR4_LEFT + 1), ws.cells(lastR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
@@ -1870,15 +1878,15 @@ End Function
 ' ================================================================
 '  Small helpers (v4)
 ' ================================================================
-' SWING RISK is typed by hand, so it has to survive the sheet clear.
-' Found by its header text, which works on both the v3 layout (row 4,
-' column Q) and v4 (row 25, column P).
-Private Function ReadSwingRisk(ws As Worksheet) As Object
+' SWING RISK and NOTE are typed by hand, so they have to survive the
+' sheet clear. Found by header text (whatever row the log is on), keyed
+' by ticker so an ARRANGE between two UPs does not mis-assign them.
+Private Function ReadHandColumn(ws As Worksheet, ByVal headerText As String) As Object
     Dim m As Object: Set m = CreateObject("Scripting.Dictionary")
     Dim hdrRow As Long, hdrCol As Long, r As Long, c As Long
     For r = 1 To 60
         For c = 1 To 20
-            If UCase(CellStr(ws.cells(r, c).Value)) = "SWING RISK" Then
+            If UCase(CellStr(ws.cells(r, c).Value)) = UCase(headerText) Then
                 hdrRow = r: hdrCol = c
                 Exit For
             End If
@@ -1893,7 +1901,7 @@ Private Function ReadSwingRisk(ws As Worksheet) As Object
             If tk <> "" And sv <> "" Then m(tk) = sv
         Next r
     End If
-    Set ReadSwingRisk = m
+    Set ReadHandColumn = m
 End Function
 
 ' HistoryLog column C (cumulative PnL) on the last row dated before today

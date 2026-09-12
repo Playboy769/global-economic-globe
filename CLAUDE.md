@@ -295,7 +295,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   / L20（目標價）、追蹤格 X1——獨立的「Ticker Insight」工作表已不存在。
   **其他模組讀 RR4 頁一律透過 `RR4_*` 常數／`RR4FxRate()`／`RR4PositionCount()`，禁止
   寫死位址**（Attach.bas 舊的 `C22`/`A1`/`B2` 全在搬版後讀錯格）。`ResetSheetStyle`
-  會清整張表，所有手打值（FX、ARRANGE 碼、SWING RISK Q 欄、panel 的代號/目標價、T1/T2）
+  會清整張表，所有手打值（FX、ARRANGE 碼、SWING RISK Q 欄與 NOTE R 欄［v4.11，依表頭文字定位、以代號為鍵］、panel 的代號/目標價、T1/T2、WATCHLIST）
   要在清除**前**讀出、之後寫回。
 - **ARRANGE 碼** UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF：只重排已在表上的列、不重抓價；
   權重橫條（`RR4W_*` shapes）與甜甜圈圖（`RR4_DONUT`）每次 arrange 都重建。DEF 排序曾
