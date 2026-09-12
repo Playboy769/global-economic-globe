@@ -371,8 +371,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `FetchPriceArray` 只抓 `close` 且只切前 5000 字元，250 天會截尾，不能拿來算 RRG。版面：A:I 表格
   （TICKER/LABEL/GROUP/RS-RATIO/RS-MOM/QUADRANT/1W dRAT/1W dMOM/PTS）、K 欄起 `RRG_MAIN` 散布圖（一檔一個
   series、軸交叉 100/100、四角象限文字方塊）、Z 欄尾巴日期、AA 欄起每檔兩欄的尾巴資料塊。
-  **雙擊 A 欄代號＝聚焦**（`SheetRRG_Code.txt` → `RrgDoubleClick`）：那條加粗、每個點標日期、表格列橘底，
-  其他全部變 RGB(64,64,64) 無標籤；再雙擊同一代號或表頭 TICKER 恢復。聚焦對象記在隱藏名稱 `RRGFOCUS`，
+  **雙擊 A 欄代號＝加入／移出聚焦組**（`SheetRRG_Code.txt` → `RrgDoubleClick`，可多選）：組內的加粗、表格列橘底，
+  只選 1 檔時每個點標日期、2 檔以上只標代號；其他全部變 RGB(64,64,64) 無標籤；全部移出或雙擊頁標題恢復。
+  聚焦組記在隱藏名稱 `RRGFOCUS`（逗號分隔），
   `RG!` 重建會清掉。**RRG 工作表由 `BuildRRG` 自建，所以事件碼是 `EnsureSheetCode` 在建表時用
   `VBProject.VBComponents` 自己寫進去的**（需要「信任存取 VBA 專案物件模型」，注入腳本本來就靠它）。
   三個圖表坑：per-point `Format.Fill.Transparency` 會把標記顏色重設成主題色（改用 `Dim2` 往黑混色做漸淡）；
