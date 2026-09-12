@@ -1,0 +1,6 @@
+Option Explicit
+
+' RRG page: double-click a ticker in column A to focus it (see RRG.bas)
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call RrgDoubleClick(Me, Target, Cancel)
+End Sub

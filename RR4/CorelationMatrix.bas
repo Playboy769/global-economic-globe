@@ -24,7 +24,7 @@ Private Const MATRIX_COL As Long = 4         ' D
 Private Const DEFAULT_DAYS As Long = 60
 
 ' Universe: ticker | short label | group. Order = group order.
-Private Function SectorList() As Variant
+Public Function SectorList() As Variant
     SectorList = Array( _
         Array("SMH", "SMH", "SEMI"), Array("SOXX", "SOXX", "SEMI"), _
         Array("CHAT", "GenAI", "AI/TECH"), Array("MAGS", "Mag7", "AI/TECH"), Array("SKYY", "Cloud", "AI/TECH"), _
