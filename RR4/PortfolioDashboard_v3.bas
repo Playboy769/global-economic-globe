@@ -3129,9 +3129,15 @@ Sub UpdatePortfolioVolatility()
 
     Dim portAnnVol As Double, portDaysUsed As Long
     Dim retCount As Long: retCount = usedCount - 1
+    ' risk contribution (v4.12): w_i * cov(r_i, r_p) / var(r_p) - the share of
+    ' the portfolio's variance each holding is responsible for; sums to 100%
+    ' (weights sum to 1 and every series runs over the same common window)
+    Dim riskContrib() As Double: ReDim riskContrib(0 To n - 1)
     If retCount >= 2 Then
         Dim portRet() As Double
         ReDim portRet(0 To retCount - 1)
+        Dim stkRet() As Double
+        ReDim stkRet(0 To n - 1, 0 To retCount - 1)
 
         Dim j As Long
         For j = 0 To retCount - 1
@@ -3144,7 +3150,8 @@ Sub UpdatePortfolioVolatility()
                 p1 = priceData(i)(commonDates(j + 1))
                 On Error GoTo 0
                 If p0 > 0 And totalMktTWD > 0 Then
-                    wsum = wsum + (mktVals(i) / totalMktTWD) * (p1 - p0) / p0
+                    stkRet(i, j) = (p1 - p0) / p0
+                    wsum = wsum + (mktVals(i) / totalMktTWD) * stkRet(i, j)
                 End If
             Next i
             portRet(j) = wsum
@@ -3154,11 +3161,30 @@ Sub UpdatePortfolioVolatility()
         On Error Resume Next
         portAnnVol = Application.WorksheetFunction.StDev_S(portRet) * Sqr(252)
         On Error GoTo 0
+
+        ' covariance of each holding with the portfolio
+        Dim meanP As Double
+        For j = 0 To retCount - 1: meanP = meanP + portRet(j): Next j
+        meanP = meanP / retCount
+        Dim varP As Double
+        For j = 0 To retCount - 1: varP = varP + (portRet(j) - meanP) ^ 2: Next j
+        varP = varP / (retCount - 1)
+        If varP > 0 And totalMktTWD > 0 Then
+            For i = 0 To n - 1
+                Dim meanI As Double: meanI = 0
+                For j = 0 To retCount - 1: meanI = meanI + stkRet(i, j): Next j
+                meanI = meanI / retCount
+                Dim covIP As Double: covIP = 0
+                For j = 0 To retCount - 1: covIP = covIP + (stkRet(i, j) - meanI) * (portRet(j) - meanP): Next j
+                covIP = covIP / (retCount - 1)
+                riskContrib(i) = (mktVals(i) / totalMktTWD) * covIP / varP
+            Next i
+        End If
     End If
 
     ' ---- 4. Render ----
     Call VolRenderSheet(tickers, mktVals, totalMktTWD, n, stockAnnVol, stockDaysUsed, _
-                         portAnnVol, portDaysUsed, commonDates, usedCount)
+                         portAnnVol, portDaysUsed, commonDates, usedCount, riskContrib)
 
     Application.ScreenUpdating = True
     Application.StatusBar = "Volatility updated: " & Format(Now, "hh:mm:ss")
@@ -3221,7 +3247,7 @@ End Function
 Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD As Double, _
                             n As Long, stockAnnVol() As Double, stockDaysUsed() As Long, _
                             portAnnVol As Double, portDaysUsed As Long, _
-                            commonDates() As Date, usedCount As Long)
+                            commonDates() As Date, usedCount As Long, riskContrib() As Double)
     Dim wsV As Worksheet
     On Error Resume Next
     Set wsV = ThisWorkbook.Sheets("Volatility180D")
@@ -3231,6 +3257,9 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
         wsV.Name = "Volatility180D"
     End If
 
+    ' v4.12 (2026-09-12): RR4 page look - orange accent, grey dividers,
+    ' 8/14 stripes, muted labels; plus RISK CONTRIB%, diversification ratio
+    ' and a 1-day 95% VaR line.
     Call NavStrip(wsV)
     wsV.Cells.Clear
     With wsV.Cells
@@ -3238,95 +3267,136 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
         .Font.Color = RGB(221, 221, 221)
         .Font.Name = "Consolas"
         .Font.Size = 10
+        .VerticalAlignment = xlCenter
     End With
     wsV.Activate
     ActiveWindow.DisplayGridlines = False
+    Dim rr As Long
+    For rr = 1 To 60: wsV.Rows(rr).RowHeight = 18: Next rr
 
     With wsV.Cells(1, 1)
-        .Value = "PORTFOLIO 180D VOLATILITY  |  Updated: " & Format(Now, "yyyy/mm/dd hh:mm:ss")
-        .Font.Color = RGB(255, 192, 0)
+        .Value = "PORTFOLIO 180D VOLATILITY"
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
         .Font.Size = 14
     End With
-    With wsV.Range(wsV.Cells(2, 1), wsV.Cells(2, 6))
-        .Interior.Color = RGB(255, 192, 0)
-        .RowHeight = 3
+    wsV.Rows(1).RowHeight = 24
+    With wsV.Cells(1, 4)
+        .Value = "updated " & Format(Now, "yyyy/mm/dd hh:mm")
+        .Font.Color = RGB(120, 120, 120)
+        .Font.Size = 9
+    End With
+    With wsV.Range(wsV.Cells(1, 1), wsV.Cells(1, 7)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
     End With
 
-    Dim r As Long: r = 4
+    Dim r As Long: r = 3
     wsV.Cells(r, 1).Value = "PORTFOLIO (MARKET-VALUE WEIGHTED)"
-    wsV.Cells(r, 1).Font.Color = RGB(255, 192, 0)
+    wsV.Cells(r, 1).Font.Color = RR4_ACCENT
     wsV.Cells(r, 1).Font.Bold = True
     r = r + 1
 
-    Call WriteKV(wsV, r, "Annualized Std Dev", portAnnVol, "0.00%", False): r = r + 1
     Dim portDailyVol As Double: If portAnnVol > 0 Then portDailyVol = portAnnVol / Sqr(252)
-    Call WriteKV(wsV, r, "Daily Std Dev", portDailyVol, "0.00%", False): r = r + 1
+    Dim sumWVol As Double, i As Long
+    For i = 0 To n - 1
+        If totalMktTWD > 0 Then sumWVol = sumWVol + mktVals(i) / totalMktTWD * stockAnnVol(i)
+    Next i
+    Dim divRatio As Double: If portAnnVol > 0 Then divRatio = sumWVol / portAnnVol
+    Dim var95 As Double: var95 = 1.645 * portDailyVol * totalMktTWD
 
-    wsV.Cells(r, 1).Value = "Trading Days Used"
-    wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
-    wsV.Cells(r, 2).Value = portDaysUsed & " / 180"
-    wsV.Cells(r, 2).Font.Color = IIf(portDaysUsed < 180, RGB(255, 192, 0), RGB(221, 221, 221))
-    wsV.Cells(r, 2).Font.Bold = True
-    r = r + 1
-
+    ' left column
+    Call WriteKV(wsV, r, "ANNUALIZED STD DEV", portAnnVol, "0.00%", False)
+    Call WriteKV(wsV, r + 1, "DAILY STD DEV", portDailyVol, "0.00%", False)
+    Call WriteKV(wsV, r + 2, "1-DAY VAR 95% (TWD)", -var95, "#,##0", True)
+    wsV.Cells(r + 3, 1).Value = "TRADING DAYS USED"
+    wsV.Cells(r + 3, 1).Font.Color = RGB(150, 150, 150)
+    wsV.Cells(r + 3, 2).Value = portDaysUsed & " / 180"
+    wsV.Cells(r + 3, 2).Font.Color = IIf(portDaysUsed < 180, RR4_ACCENT, RGB(221, 221, 221))
+    wsV.Cells(r + 3, 2).Font.Bold = True
+    ' right column
+    Call WriteKV2(wsV, r, 4, "WEIGHTED AVG STDEV", sumWVol, "0.00%")
+    Call WriteKV2(wsV, r + 1, 4, "DIVERSIFICATION RATIO", divRatio, "0.00x")
+    wsV.Cells(r + 1, 6).Value = IIf(divRatio >= 1.5, "well diversified", IIf(divRatio >= 1.2, "moderate", "concentrated"))
+    wsV.Cells(r + 1, 6).Font.Color = RGB(120, 120, 120)
+    wsV.Cells(r + 1, 6).Font.Size = 9
     If usedCount >= 2 Then
-        wsV.Cells(r, 1).Value = "Common Date Range"
-        wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
-        wsV.Cells(r, 2).Value = Format(commonDates(0), "yyyy/m/d") & "  ~  " & _
-                                 Format(commonDates(usedCount - 1), "yyyy/m/d")
-        wsV.Cells(r, 2).Font.Color = RGB(221, 221, 221)
-        r = r + 1
+        wsV.Cells(r + 2, 4).Value = "COMMON DATE RANGE"
+        wsV.Cells(r + 2, 4).Font.Color = RGB(150, 150, 150)
+        wsV.Cells(r + 2, 5).Value = Format(commonDates(0), "yyyy/m/d") & " ~ " & _
+                                     Format(commonDates(usedCount - 1), "yyyy/m/d")
+        wsV.Cells(r + 2, 5).Font.Color = RGB(221, 221, 221)
     End If
-
+    r = r + 4
     If portDaysUsed > 0 And portDaysUsed < 180 Then
         wsV.Cells(r, 1).Value = "* shortest-history holding capped the common window below 180 days"
-        wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
+        wsV.Cells(r, 1).Font.Color = RGB(120, 120, 120)
         wsV.Cells(r, 1).Font.Italic = True
+        wsV.Cells(r, 1).Font.Size = 9
         r = r + 1
     End If
 
-    r = r + 2
+    r = r + 1
     wsV.Cells(r, 1).Value = "PER-STOCK 180D STANDARD DEVIATION"
-    wsV.Cells(r, 1).Font.Color = RGB(255, 192, 0)
+    wsV.Cells(r, 1).Font.Color = RR4_ACCENT
     wsV.Cells(r, 1).Font.Bold = True
+    With wsV.Cells(r, 4)
+        .Value = "RISK CONTRIB% = weight x cov(stock, portfolio) / var(portfolio)  -  sums to 100%"
+        .Font.Color = RGB(120, 120, 120)
+        .Font.Size = 9
+    End With
     r = r + 1
 
     Dim hdrs As Variant
-    hdrs = Array("TICKER", "WEIGHT%", "DAYS USED", "DAILY STDEV", "ANNUALIZED STDEV")
+    hdrs = Array("TICKER", "WEIGHT%", "DAYS USED", "DAILY STDEV", "ANNUALIZED STDEV", "RISK CONTRIB%", "RISK/WEIGHT")
     Dim c As Long
     For c = 0 To UBound(hdrs)
         With wsV.Cells(r, c + 1)
             .Value = hdrs(c)
-            .Font.Color = RGB(255, 192, 0)
+            .Font.Color = RR4_ACCENT
             .Font.Bold = True
+            .Font.Size = 9
             .Interior.Color = RGB(10, 10, 10)
             .HorizontalAlignment = xlCenter
         End With
     Next c
+    With wsV.Range(wsV.Cells(r, 1), wsV.Cells(r, 7)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+    wsV.Rows(r).RowHeight = 20
     r = r + 1
 
-    Dim i As Long
+    Dim maxContrib As Double
     For i = 0 To n - 1
-        Dim rowBg As Long: rowBg = IIf(i Mod 2 = 0, RGB(15, 15, 15), RGB(22, 22, 22))
-        With wsV.Range(wsV.Cells(r, 1), wsV.Cells(r, 5))
+        If riskContrib(i) > maxContrib Then maxContrib = riskContrib(i)
+    Next i
+
+    Dim firstDataRow As Long: firstDataRow = r
+    For i = 0 To n - 1
+        Dim rowBg As Long: rowBg = IIf(i Mod 2 = 0, RGB(8, 8, 8), RGB(14, 14, 14))
+        With wsV.Range(wsV.Cells(r, 1), wsV.Cells(r, 7))
             .Interior.Color = rowBg
             .HorizontalAlignment = xlCenter
         End With
+        wsV.Rows(r).RowHeight = 22
 
         wsV.Cells(r, 1).Value = tickers(i)
-        wsV.Cells(r, 1).Font.Color = RGB(255, 192, 0)
+        wsV.Cells(r, 1).Font.Color = RR4_ACCENT
         wsV.Cells(r, 1).Font.Bold = True
 
-        If totalMktTWD > 0 Then
-            wsV.Cells(r, 2).Value = mktVals(i) / totalMktTWD
-            wsV.Cells(r, 2).NumberFormat = "0.00%"
-        End If
+        Dim w As Double: w = 0
+        If totalMktTWD > 0 Then w = mktVals(i) / totalMktTWD
+        wsV.Cells(r, 2).Value = w
+        wsV.Cells(r, 2).NumberFormat = "0.00%"
 
         wsV.Cells(r, 3).Value = stockDaysUsed(i) & IIf(stockDaysUsed(i) < 180, "*", "")
-        wsV.Cells(r, 3).Font.Color = IIf(stockDaysUsed(i) < 180, RGB(255, 192, 0), RGB(200, 200, 200))
+        wsV.Cells(r, 3).Font.Color = IIf(stockDaysUsed(i) < 180, RR4_ACCENT, RGB(160, 160, 160))
 
-        Dim dailyVol As Double: If stockAnnVol(i) > 0 Then dailyVol = stockAnnVol(i) / Sqr(252)
+        Dim dailyVol As Double: dailyVol = 0
+        If stockAnnVol(i) > 0 Then dailyVol = stockAnnVol(i) / Sqr(252)
         wsV.Cells(r, 4).Value = dailyVol
         wsV.Cells(r, 4).NumberFormat = "0.00%"
 
@@ -3334,17 +3404,60 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
         wsV.Cells(r, 5).NumberFormat = "0.00%"
         wsV.Cells(r, 5).Font.Bold = True
 
+        wsV.Cells(r, 6).Value = riskContrib(i)
+        wsV.Cells(r, 6).NumberFormat = "0.0%"
+        wsV.Cells(r, 6).Font.Bold = True
+        ' the single biggest risk contributor is lit
+        If maxContrib > 0 And riskContrib(i) = maxContrib Then
+            wsV.Cells(r, 6).Font.Color = RR4_ACCENT
+        End If
+
+        ' risk share vs weight share: >1 = punches above its weight
+        If w > 0 Then
+            wsV.Cells(r, 7).Value = riskContrib(i) / w
+            wsV.Cells(r, 7).NumberFormat = "0.00x"
+            wsV.Cells(r, 7).Font.Color = IIf(riskContrib(i) / w > 1.3, RGB(235, 70, 70), _
+                                        IIf(riskContrib(i) / w < 0.7, RGB(0, 200, 90), RGB(200, 200, 200)))
+        End If
         r = r + 1
     Next i
+    With wsV.Range(wsV.Cells(r - 1, 1), wsV.Cells(r - 1, 7)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
 
     r = r + 1
     wsV.Cells(r, 1).Value = "* fewer than 180 trading days of history available - used actual days shown"
-    wsV.Cells(r, 1).Font.Color = RGB(150, 150, 150)
+    wsV.Cells(r, 1).Font.Color = RGB(120, 120, 120)
     wsV.Cells(r, 1).Font.Italic = True
+    wsV.Cells(r, 1).Font.Size = 9
+    r = r + 1
+    wsV.Cells(r, 1).Value = "  RISK/WEIGHT > 1.3 (red): the holding adds more risk than its weight; < 0.7 (green): it dampens the book"
+    wsV.Cells(r, 1).Font.Color = RGB(120, 120, 120)
+    wsV.Cells(r, 1).Font.Italic = True
+    wsV.Cells(r, 1).Font.Size = 9
 
-    wsV.Columns("A:E").AutoFit
+    wsV.Columns(1).ColumnWidth = 24
+    wsV.Columns(2).ColumnWidth = 12
+    wsV.Columns(3).ColumnWidth = 12
+    wsV.Columns(4).ColumnWidth = 22
+    wsV.Columns(5).ColumnWidth = 18
+    wsV.Columns(6).ColumnWidth = 15
+    wsV.Columns(7).ColumnWidth = 13
     Call NavAdd(wsV, "V")
     ThisWorkbook.Sheets(SH_PORT).Activate
+End Sub
+
+' label in column c, value in c+1 (used for the right-hand KV column)
+Private Sub WriteKV2(ws As Worksheet, r As Long, c As Long, label As String, _
+                     val As Double, fmt As String)
+    ws.cells(r, c).Value = label
+    ws.cells(r, c).Font.Color = RGB(150, 150, 150)
+    ws.cells(r, c + 1).Value = val
+    ws.cells(r, c + 1).NumberFormat = fmt
+    ws.cells(r, c + 1).Font.Bold = True
+    ws.cells(r, c + 1).Font.Color = RGB(221, 221, 221)
 End Sub
 
 

@@ -319,6 +319,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段
   重配）而跟 Realized 表脫節——2026-09-08/09 曾因此差 −2,070／+2,373，折線圖出現假尖峰。
   C 欄（含未實現）仍是快照，無法重述。
+- **Volatility180D（V）頁 v4.12（2026-09-12）**：改成 RR4 配色（橘強調、灰分隔線、8/14 條紋），
+  新增 **RISK CONTRIB%**（w_i·cov(r_i,r_p)/var(r_p)，共同視窗算、合計 100%，最大者亮橘）、
+  **RISK/WEIGHT**（>1.3 紅、<0.7 綠）、**WEIGHTED AVG STDEV／DIVERSIFICATION RATIO**
+  （Σwσ ÷ σ_p）、**1-DAY VAR 95%**（1.645·σ_daily·總市值，TWD）。仍由 `V!` 重算，跳頁不重算。
 - **Company research（CR）頁 v3 版面（2026-09-12）**：`A1:B3` 輸入條（B1 GROUP 下拉／B2 TICKER／
   B3 MKT，`Sanner.DrawCrHeader` 畫並順手清掉 v2 殘留：A4:B4 合併格、A5 狀態塊、rows 35–158
   的 20 張走勢圖牆與 row 160 舊輸入列）、`C1:K33` 掃描表＋**L 欄每列一條 1 年 sparkline**
