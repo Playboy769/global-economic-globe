@@ -326,6 +326,14 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **HoldingsCorr（C）頁 v2（2026-09-12）**：RR4 配色、連續紅綠熱圖（`CorrHeatBg/Fg`，0 = 近黑）取代
   7 級色階、對角線畫 —、右側 **AVG CORR** 欄（最低綠＝最分散、最高紅＝最擁擠）、色階列＋
   **PORTFOLIO AVG PAIRWISE CORR**、**最相關／最不相關 5 對**、底部算法註解。仍由 `C!` 重算。
+- **Correlation（CC）頁 v2（2026-09-12）**：`CorelationMatrix.bas` 整支改寫成純 ASCII。ETF 宇宙改抄
+  `sector-rotation-system/config.py` 的 `RotationConfig.universe`＋SPY（27 檔），依其
+  `TICKER_CATEGORY` 分 SEMI / AI-TECH / INDEX-FACTOR / SECTOR SPDR / COMMODITY / SINGLE INDUSTRY /
+  BENCHMARK 分組（`SectorList()`，**config 改了要手動同步**）。RR4 配色、連續熱圖（共用
+  `CorrHeatBg/Fg`，已改 Public）、AVG CORR 與 vs SPY 欄、組內平均相關、跨組 top/bottom 6 對、
+  算法註解。DAYS 輸入格 B2（有 bar 時 B5）。**建置期間必須 `EnableEvents=False`**：寫 DAYS 格
+  會觸發 `SheetCorrelation` 的 `Worksheet_Change` 重入呼叫自己，內層插了 bar 列、外層照舊座標
+  繼續寫，整頁錯位——已修，別拿掉那段。
 - **Company research（CR）頁 v3 版面（2026-09-12）**：`A1:B3` 輸入條（B1 GROUP 下拉／B2 TICKER／
   B3 MKT，`Sanner.DrawCrHeader` 畫並順手清掉 v2 殘留：A4:B4 合併格、A5 狀態塊、rows 35–158
   的 20 張走勢圖牆與 row 160 舊輸入列）、`C1:K33` 掃描表＋**L 欄每列一條 1 年 sparkline**

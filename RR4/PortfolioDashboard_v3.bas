@@ -2924,7 +2924,7 @@ Private Sub CorrPairLine(ws As Worksheet, r As Long, c As Long, t1 As String, t2
 End Sub
 
 ' Continuous heat: black at 0, towards red for +1 and green for -1.
-Private Function CorrHeatBg(ByVal v As Double) As Long
+Public Function CorrHeatBg(ByVal v As Double) As Long
     Dim t As Double: t = Abs(v): If t > 1 Then t = 1
     If v >= 0 Then
         CorrHeatBg = RGB(CLng(14 + (170 - 14) * t), CLng(14 + (40 - 14) * t), CLng(14 + (25 - 14) * t))
@@ -2933,7 +2933,7 @@ Private Function CorrHeatBg(ByVal v As Double) As Long
     End If
 End Function
 
-Private Function CorrHeatFg(ByVal v As Double) As Long
+Public Function CorrHeatFg(ByVal v As Double) As Long
     If Abs(v) >= 0.5 Then
         CorrHeatFg = RGB(255, 255, 255)
     ElseIf Abs(v) >= 0.2 Then
