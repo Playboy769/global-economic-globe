@@ -1465,16 +1465,18 @@ Private Sub DrawRealizedChart(ws As Worksheet)
     Dim lastR As Long: lastR = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
     If lastR < 3 Then Exit Sub          ' one point is not a line
 
-    ' same left / width as the donut, from the row under it to page row 26
+    ' same left as the donut, under it; twice the donut's width and twice
+    ' the height of page rows 15-26 (v4.6.2) - column U rightwards and the
+    ' rows below are free, the position log stops at Q
     Dim cL As Double, cT As Double, cW As Double, cH As Double
     cL = ws.Columns(21).Left + 6
     Dim donutT As Double: donutT = ws.cells(RR4_TOP + 1, RR4_LEFT + 21).Top + 2
     Dim donutH As Double: donutH = ws.cells(RR4_TOP + 14, RR4_LEFT + 21).Top - donutT
     If donutH < 60 Then donutH = 60
-    cW = donutH * 1.5
+    cW = donutH * 3
     cT = ws.cells(RR4_TOP + 15, RR4_LEFT + 21).Top + 4
-    cH = ws.cells(RR4_TOP + 27, RR4_LEFT + 21).Top - cT
-    If cH < 80 Then cH = 80
+    cH = (ws.cells(RR4_TOP + 27, RR4_LEFT + 21).Top - cT) * 2
+    If cH < 160 Then cH = 160
 
     Dim co As ChartObject
     Set co = ws.ChartObjects.Add(cL, cT, cW, cH)
@@ -1501,7 +1503,7 @@ Private Sub DrawRealizedChart(ws As Worksheet)
         .ChartTitle.Font.Name = "Consolas"
         .ChartTitle.Font.Size = 9
         .ChartTitle.Font.Bold = True
-        .ChartTitle.Font.Color = RR4_ACCENT
+        .ChartTitle.Font.Color = RGB(255, 255, 255)
         .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
         .ChartArea.Format.Line.Visible = msoFalse
         .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
@@ -1513,7 +1515,7 @@ Private Sub DrawRealizedChart(ws As Worksheet)
             .TickLabels.NumberFormat = "yyyy/m"
             .TickLabels.Font.Name = "Consolas"
             .TickLabels.Font.Size = 7
-            .TickLabels.Font.Color = RGB(150, 150, 150)
+            .TickLabels.Font.Color = RGB(255, 255, 255)
             .Format.Line.ForeColor.RGB = RR4_LINE
             .MajorGridlines.Delete
         End With
@@ -1521,7 +1523,7 @@ Private Sub DrawRealizedChart(ws As Worksheet)
             .TickLabels.NumberFormat = "#,##0"
             .TickLabels.Font.Name = "Consolas"
             .TickLabels.Font.Size = 7
-            .TickLabels.Font.Color = RGB(150, 150, 150)
+            .TickLabels.Font.Color = RGB(255, 255, 255)
             .Format.Line.Visible = msoFalse
             .HasMajorGridlines = True
             .MajorGridlines.Format.Line.ForeColor.RGB = RGB(30, 30, 30)
