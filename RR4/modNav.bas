@@ -159,6 +159,15 @@ Public Sub NavAdd(ByVal ws As Worksheet, Optional ByVal code As String = "")
         ws.Names.Add Name:=NAV_MARK, RefersTo:="=TRUE", Visible:=False
     End If
     Call DrawNavRows(ws, code)
+    ' VT / CC keep a typed input in B2 (B5 with the bar): paint it like every
+    ' other input cell (RR4_INPUT_BG dark grey, white text)
+    If code = "VT" Or code = "CC" Then
+        With ws.Range("B2").Offset(NAV_ROWS, 0)
+            .Interior.Color = RR4_INPUT_BG
+            .Font.Color = RR4_INPUT_FG
+            .Font.Bold = True
+        End With
+    End If
 Fin:
     Application.EnableEvents = prevEv
 End Sub
@@ -190,9 +199,11 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
         .VerticalAlignment = xlCenter
         .HorizontalAlignment = xlLeft
     End With
+    ' rows 2/3 are taller than the text needs and vertically centred, so the
+    ' three lines sit apart without extra rows (v4.3 - was 16 / 18)
     ws.Rows(1).RowHeight = 24
-    ws.Rows(2).RowHeight = 16
-    ws.Rows(3).RowHeight = 18
+    ws.Rows(2).RowHeight = 22
+    ws.Rows(3).RowHeight = 22
 
     ' row 1: badge | command cell | title
     With ws.cells(1, 1 + off)
@@ -206,7 +217,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     With ws.cells(1, 2 + off)
         .NumberFormat = "@"
         .Interior.Color = RR4_INPUT_BG
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_INPUT_FG
         .Font.Size = 10
         .Font.Bold = True
     End With
@@ -214,20 +225,22 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
 
     ' row 2: pages
     Dim pages As Variant
-    pages = Array("P", "Portfolio", "R", "Realized", "T", "Trans", "H", "History", _
-                  "A", "Analysis", "V", "Vol", "VT", "TkrVol", "D", "Drawdown", _
-                  "C", "HoldCorr", "CC", "SectorCorr", "CR", "Research")
+    pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
+                  "A", "ANALYSIS", "V", "VOL", "VT", "TKRVOL", "D", "DRAWDOWN", _
+                  "C", "HOLDCORR", "CC", "SECTORCORR", "CR", "RESEARCH")
     Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RGB(255, 192, 0))
 
     ' row 3: actions
     Dim acts As Variant
-    acts = Array("UP", "Update", "ADD", "Trade", "DEL", "Delete", "V!", "Recalc vol", _
-                 "D!", "Drawdown", "C!", "Corr", "DBG", "Debug", "CLEARALL", "Wipe all data")
+    acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
+                 "D!", "DRAWDOWN", "C!", "CORR", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
     Call WriteCodeLine(ws.cells(3, 1 + off), acts, "", RGB(0, 200, 255))
 
-    With area.Rows(3).Borders(xlEdgeBottom)
+    ' divider under the bar: dark grey, starting at the bar's first column
+    ' (B on RR4, so the blank spacer column A carries no line)
+    With ws.Range(ws.cells(3, 1 + off), area.cells(3, area.Columns.count)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 
@@ -236,8 +249,10 @@ Fin:
     Application.EnableEvents = prevEv
 End Sub
 
-' "CODE label   CODE label ..." in one cell (it overflows to the right),
-' codes coloured, the current page's pair in white bold.
+' "CODE LABEL   CODE LABEL ..." in one cell (it overflows to the right).
+' v4.3: everything is dimmed - codes at half brightness of codeColor,
+' labels dark grey - and only the current page's pair is lit (code in the
+' full colour, label light grey). No underline.
 Private Sub WriteCodeLine(ByVal cell As Range, pairs As Variant, ByVal current As String, _
                           ByVal codeColor As Long)
     Dim s As String, i As Long
@@ -246,25 +261,37 @@ Private Sub WriteCodeLine(ByVal cell As Range, pairs As Variant, ByVal current A
     Next i
     cell.NumberFormat = "@"
     cell.Value = s
+    cell.Font.Color = RGB(120, 120, 120)        ' dimmed labels
+    Dim dimCode As Long: dimCode = DimColor(codeColor, 0.6)
     Dim pos As Long: pos = 1
     For i = LBound(pairs) To UBound(pairs) Step 2
         Dim cLen As Long: cLen = Len(pairs(i))
         Dim lLen As Long: lLen = Len(pairs(i + 1))
         If StrComp(pairs(i), current, vbTextCompare) = 0 Then
-            With cell.Characters(pos, cLen + 1 + lLen).Font
-                .Color = RGB(255, 255, 255)
+            With cell.Characters(pos, cLen).Font
+                .Color = codeColor
                 .Bold = True
-                .Underline = xlUnderlineStyleSingle
+            End With
+            With cell.Characters(pos + cLen + 1, lLen).Font
+                .Color = RGB(235, 235, 235)
+                .Bold = True
             End With
         Else
             With cell.Characters(pos, cLen).Font
-                .Color = codeColor
+                .Color = dimCode
                 .Bold = True
             End With
         End If
         pos = pos + cLen + 1 + lLen + 4
     Next i
 End Sub
+
+' Scale an RGB Long towards black (factor 1 = unchanged, 0 = black).
+Private Function DimColor(ByVal c As Long, ByVal factor As Double) As Long
+    Dim r As Long, g As Long, b As Long
+    r = c Mod 256: g = (c \ 256) Mod 256: b = (c \ 65536) Mod 256
+    DimColor = RGB(CLng(r * factor), CLng(g * factor), CLng(b * factor))
+End Function
 
 Public Sub NavStatus(ByVal ws As Worksheet, ByVal msg As String, ByVal isErr As Boolean)
     Dim code As String: code = NavPageCode(ws)

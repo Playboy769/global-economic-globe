@@ -71,10 +71,19 @@ Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
 Private Const RR4_SWING_COL As Long = 17    ' Q
 Private Const RR4_LOG_ROWS  As Long = 5     ' daily-log trade lines, rows 10-14
 Private Const RR4_WBAR_PREFIX As String = "RR4W_"
-' Every cell the user types into is painted this grey (RGB 70,70,70):
-' the nav command cell B1, USD/TWD B5, ARRANGE D5, SWING RISK (P29:P..),
-' and the ticker panel's J4 / K20.
-Public Const RR4_INPUT_BG  As Long = 4605510
+' Every cell the user types into is painted this dark grey (RGB 40,40,40)
+' with WHITE text (RR4_INPUT_FG): the nav command cell C1, USD/TWD C5,
+' ARRANGE E5, SWING RISK (Q29:Q..), the ticker panel's K4 / L20, and the
+' B2 input of the VT / CC pages. (v4.3, 2026-09-12: was 70,70,70 + yellow.)
+Public Const RR4_INPUT_BG  As Long = 2631720
+Public Const RR4_INPUT_FG  As Long = 16777215
+' Section divider lines on the RR4 page (nav bar bottom, USD/TWD row, TODAY
+' row, position-log title / header / last row, ticker-panel history header)
+' are this dark grey since v4.3 - was the amber RGB(255,192,0).
+Public Const RR4_LINE      As Long = 4605510    ' RGB(70,70,70)
+' Donut slice palette (v4.3): one colour per position, cycled. Chosen to
+' stay apart from each other on the black chart background.
+Private Const RR4_PALETTE_N As Long = 12
 
 ' ================================================================
 '  MAIN ENTRY
@@ -652,9 +661,9 @@ Private Sub ResetSheetStyle(ws As Worksheet)
     ws.Activate
     ActiveWindow.DisplayGridlines = False
 
-    ' A is a blank spacer. B ticker, C name, F sector are the wide text
+    ' A is a blank spacer (as wide as E). B ticker, C name, F sector are the wide text
     ' columns; Q SWING RISK is free text; R/S hold the panel's PnL / return.
-    ws.Columns(1).ColumnWidth = 2
+    ws.Columns(1).ColumnWidth = 11      ' v4.3: same as E (was 2)
     Dim i As Integer
     For i = 2 To 19
         Select Case i
@@ -699,7 +708,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
         .Value = exRate
         .NumberFormat = "0.00"
         .Interior.Color = RR4_INPUT_BG
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .HorizontalAlignment = xlLeft
     End With
@@ -714,7 +723,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
         .NumberFormat = "@"
         .Value = arrCode
         .Interior.Color = RR4_INPUT_BG
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
@@ -722,7 +731,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
 
     With ws.Range(ws.cells(RR4_TOP + 2, RR4_LEFT + 1), ws.cells(RR4_TOP + 2, RR4_LEFT + 7)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 
@@ -863,7 +872,7 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
     End With
     With ws.Range(ws.cells(RR4_TOP + 12, RR4_LEFT + 1), ws.cells(RR4_TOP + 12, RR4_LEFT + 7)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 End Sub
@@ -1169,7 +1178,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
     End With
     With ws.Range(ws.cells(RR4_POS_TITLE, RR4_LEFT + 1), ws.cells(RR4_POS_TITLE, RR4_LEFT + 18)).Borders(xlEdgeTop)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 
@@ -1192,7 +1201,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
     ws.Rows(RR4_POS_HDR).RowHeight = 20
     With ws.Range(ws.cells(RR4_POS_HDR, RR4_LEFT + 1), ws.cells(RR4_POS_HDR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 End Sub
@@ -1303,7 +1312,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     If swingRiskMap.Exists(tickerCode) Then
         With ws.cells(r, RR4_SWING_COL)
             .Value = swingRiskMap(tickerCode)
-            .Font.Color = RGB(255, 192, 0)
+            .Font.Color = RR4_INPUT_FG
             .Font.Bold = True
             .HorizontalAlignment = xlCenter
         End With
@@ -1463,18 +1472,20 @@ Private Sub RestripeRows(ws As Worksheet, lastR As Long)
             .Borders(xlEdgeBottom).LineStyle = xlNone
         End With
         ws.cells(r, RR4_SWING_COL).Interior.Color = RR4_INPUT_BG   ' typed by hand
+        ws.cells(r, RR4_SWING_COL).Font.Color = RR4_INPUT_FG
     Next r
     With ws.Range(ws.cells(lastR, RR4_LEFT + 1), ws.cells(lastR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 End Sub
 
 ' ================================================================
 '  WEIGHT BAR (row 4, B:G) - one rectangle per position, left to right
-'  in the current ARRANGE order. Width = WT%, colour = % CHG (green up,
-'  red down, stronger the further from 0, full strength at +/-30%).
+'  in the current ARRANGE order. Width = WT%, colour = % CHG - TW
+'  convention since v4.3: RED up, GREEN down, stronger the further from
+'  0, full strength at +/-30%. Ticker text is white.
 '  Shapes are named RR4W_n so only they are cleared on a redraw.
 ' ================================================================
 Private Sub DrawWeightBar(ws As Worksheet, lastR As Long)
@@ -1518,7 +1529,7 @@ Private Sub DrawWeightBar(ws As Worksheet, lastR As Long)
                     .TextRange.Text = ShortTicker(tk)
                     .TextRange.Font.Name = "Consolas"
                     .TextRange.Font.Size = 7
-                    .TextRange.Font.Fill.ForeColor.RGB = RGB(20, 20, 20)
+                    .TextRange.Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
                     .TextRange.ParagraphFormat.Alignment = msoAlignCenter
                 End With
             End If
@@ -1532,10 +1543,11 @@ Private Function WeightBarColor(ByVal pct As Double) As Long
     If t > 1 Then t = 1
     t = 0.35 + 0.65 * t
     Dim r1 As Double, g1 As Double, b1 As Double
+    ' red = up, green = down (TW convention, v4.3)
     If pct >= 0 Then
-        r1 = 0: g1 = 200: b1 = 90
-    Else
         r1 = 235: g1 = 70: b1 = 70
+    Else
+        r1 = 0: g1 = 200: b1 = 90
     End If
     ' blend from dark grey (45,45,45) towards the full colour
     WeightBarColor = RGB(CLng(45 + (r1 - 45) * t), CLng(45 + (g1 - 45) * t), CLng(45 + (b1 - 45) * t))
@@ -1555,8 +1567,10 @@ End Sub
 
 ' ================================================================
 '  WEIGHT DONUT (right of the ticker panel, from column U)
-'  Same data and colours as the weight bar: one slice per position in
-'  the current ARRANGE order, size = WT%, colour = % CHG. The series
+'  Same data as the weight bar: one slice per position in the current
+'  ARRANGE order, size = WT%. Colours come from a fixed palette
+'  (DonutColor, one per slice - NOT the up/down colour of the bar, v4.3),
+'  each slice labelled "TICKER  n%" in white Consolas. The series
 '  points at the position-log cells (tickers A, WT% L) instead of holding
 '  copied numbers, so what the chart shows can always be checked on the
 '  sheet. Rebuilt with the weight bar (UP and every ARRANGE).
@@ -1579,7 +1593,9 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
     If sz < 60 Then sz = 60
 
     Dim co As ChartObject
-    Set co = ws.ChartObjects.Add(cL, cT, sz + 40, sz)
+    ' wider than tall: doughnut labels can only sit ON the ring (Excel has
+    ' no outside position for doughnuts), so the ring is kept thick
+    Set co = ws.ChartObjects.Add(cL, cT, sz * 1.5, sz)
     co.Name = RR4_DONUT_NAME
     co.Placement = xlMove
     With co.Chart
@@ -1599,7 +1615,7 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
         .ChartTitle.Font.Size = 9
         .ChartTitle.Font.Bold = True
         .ChartTitle.Font.Color = RGB(255, 192, 0)
-        .ChartGroups(1).DoughnutHoleSize = 58
+        .ChartGroups(1).DoughnutHoleSize = 40
         .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
         .ChartArea.Format.Line.Visible = msoFalse
         .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
@@ -1608,13 +1624,50 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
         For r = RR4_POS_FIRST To lastR
             p = r - RR4_POS_FIRST + 1
             With ser.Points(p).Format
-                .Fill.ForeColor.RGB = WeightBarColor(NumOr0(ws.cells(r, RR4_LEFT + 10).Value))
+                .Fill.ForeColor.RGB = DonutColor(p)
                 .Line.ForeColor.RGB = RGB(0, 0, 0)
                 .Line.Weight = 1.5
             End With
         Next r
+
+        ' "3653.TW  14.9%" outside each slice, white Consolas. Built from the
+        ' chart's own category + percentage fields: a per-point .Text
+        ' assignment was silently ignored right after HasDataLabels (Excel
+        ' rebuilt the labels from the series afterwards).
+        ser.HasDataLabels = True
+        With ser.DataLabels
+            .ShowSeriesName = False
+            .ShowValue = False
+            .ShowLegendKey = False
+            .ShowCategoryName = True
+            .ShowPercentage = True
+            .Separator = "  "
+            .NumberFormat = "0.0%"
+            .Font.Name = "Consolas"
+            .Font.Size = 7
+            .Font.Bold = True
+            .Font.Color = RGB(255, 255, 255)
+        End With
     End With
 End Sub
+
+' Slice n of the donut (1-based, cycles after RR4_PALETTE_N).
+Private Function DonutColor(ByVal n As Long) As Long
+    Select Case ((n - 1) Mod RR4_PALETTE_N) + 1
+        Case 1:  DonutColor = RGB(255, 192, 0)      ' amber
+        Case 2:  DonutColor = RGB(0, 170, 255)      ' sky blue
+        Case 3:  DonutColor = RGB(0, 200, 120)      ' green
+        Case 4:  DonutColor = RGB(230, 80, 80)      ' red
+        Case 5:  DonutColor = RGB(170, 110, 255)    ' violet
+        Case 6:  DonutColor = RGB(255, 130, 40)     ' orange
+        Case 7:  DonutColor = RGB(0, 210, 210)      ' teal
+        Case 8:  DonutColor = RGB(240, 90, 180)     ' pink
+        Case 9:  DonutColor = RGB(190, 210, 60)     ' lime
+        Case 10: DonutColor = RGB(90, 130, 255)     ' indigo
+        Case 11: DonutColor = RGB(255, 220, 120)    ' pale gold
+        Case 12: DonutColor = RGB(160, 160, 160)    ' grey
+    End Select
+End Function
 
 ' ================================================================
 '  Read-only accessors for other modules (Attach, TickerInsight) so

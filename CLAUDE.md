@@ -297,6 +297,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **ARRANGE 碼** UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF：只重排已在表上的列、不重抓價；
   權重橫條（`RR4W_*` shapes）與甜甜圈圖（`RR4_DONUT`）每次 arrange 都重建。DEF 排序曾
   觸發「`Range.Sort` Key1=Key2 → 存檔後永遠打不開」，`ApplyArrange` 已只在鍵不同時才傳 Key2。
+- **配色慣例（v4.3，2026-09-12）**：輸入格一律 `RR4_INPUT_BG`（RGB 40,40,40）底＋
+  `RR4_INPUT_FG` 白字；區塊分隔線一律 `RR4_LINE`（RGB 70,70,70）深灰、從 B 欄起（A 欄是
+  寬度 11 的留白）；權重橫條**紅漲綠跌**（台股慣例）、白字；甜甜圈用 `DonutColor` 固定
+  12 色調色盤＋「代號 %」標籤（doughnut 標籤只能貼在環上，Excel 沒有 outside 位置）；
+  導覽列未選取的代碼／標籤調暗、只有目前頁亮起，不用底線。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。

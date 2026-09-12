@@ -408,8 +408,8 @@ Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
     With ws.Range(TI_TICKER_CELL)
         .NumberFormat = "@"
         .Value = ticker
-        .Interior.Color = RR4_INPUT_BG          ' grey = input cell
-        .Font.Color = RGB(255, 192, 0)
+        .Interior.Color = RR4_INPUT_BG          ' dark grey = input cell
+        .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .Font.Size = 11
         .HorizontalAlignment = xlCenter
@@ -459,14 +459,14 @@ Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
     Next c
     With ws.Range(ws.cells(TI_HHDR, TI_HCOL), ws.cells(TI_HHDR, TI_RIGHT)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 
     ' --- grey PRICE TARGET input ---
     With ws.Range(TI_TARGET_CELL)
         .Interior.Color = RR4_INPUT_BG
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .NumberFormat = "0.00"
         .HorizontalAlignment = xlCenter
