@@ -7,7 +7,9 @@
 '    D5  ARRANGE <GO>   -> PortfolioDashboard_v3.ApplyArrange
 '    J4  TICKER <GO>    -> TickerInsight.RefreshTickerInsight
 '    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
-'    B27:D38 WATCHLIST  -> PortfolioDashboard_v3.RefreshWatchlistRow (v4.9)
+'    B27:D27 WATCHLIST entry row -> PortfolioDashboard_v3.WatchlistCommitEntry
+'                        (appends to rows 28-38 once ticker + target are in)
+'  Worksheet_BeforeDoubleClick: B28:E38 -> WatchlistDeleteRow (v4.9.1)
 '  (addresses come from the RR4_* / TI_* constants). The nav command
 '  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
 '  The CmdBtn0-7 click handlers were removed with the ActiveX buttons
@@ -19,8 +21,8 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     hitArr = Not Intersect(Target, Me.Range(RR4_ARR_CELL)) Is Nothing
     hitTicker = Not Intersect(Target, Me.Range(TI_TICKER_CELL)) Is Nothing
     hitTarget = Not Intersect(Target, Me.Range(TI_TARGET_CELL)) Is Nothing
-    hitWL = Not Intersect(Target, Me.Range(Me.Cells(RR4_WL_FIRST, RR4_LEFT + 1), _
-                                            Me.Cells(RR4_WL_LAST, RR4_LEFT + 3))) Is Nothing
+    hitWL = Not Intersect(Target, Me.Range(Me.Cells(RR4_WL_ENTRY, RR4_LEFT + 1), _
+                                            Me.Cells(RR4_WL_ENTRY, RR4_LEFT + 3))) Is Nothing
     If Not (hitArr Or hitTicker Or hitTarget Or hitWL) Then Exit Sub
 
     Application.EnableEvents = False
@@ -32,7 +34,7 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     ElseIf hitTarget Then
         Call RefreshTickerProjection
     Else
-        Call RefreshWatchlistRow(Me, Target.Row)
+        Call WatchlistCommitEntry(Me)
     End If
 
 Fin:
@@ -41,4 +43,17 @@ Fin:
     If Err.Number <> 0 Then
         MsgBox "RR4 input error " & Err.Number & ": " & Err.Description, vbCritical
     End If
+End Sub
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    If Target.CountLarge > 1 Then Exit Sub
+    If Intersect(Target, Me.Range(Me.Cells(RR4_WL_FIRST, RR4_LEFT + 1), _
+                                  Me.Cells(RR4_WL_LAST, RR4_LEFT + 4))) Is Nothing Then Exit Sub
+    Cancel = True
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    Call WatchlistDeleteRow(Me, Target.Row)
+Fin:
+    Application.EnableEvents = True
+    If Err.Number <> 0 Then MsgBox "Watchlist delete error " & Err.Number & ": " & Err.Description, vbCritical
 End Sub

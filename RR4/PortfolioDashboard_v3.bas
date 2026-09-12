@@ -72,13 +72,20 @@ Public Const RR4_ARR_CELL  As String = "E5"
 ' panel was shortened to row 24 to make room (TickerInsight TI_BOTTOM).
 Public Const RR4_CHART_TOP As Long = 26
 Public Const RR4_CHART_ROWS As Long = 14
-' WATCHLIST (v4.9, 2026-09-12): B:E of the chart band, left of the donut.
-' Title row 25, header 26, 12 entry rows 27-38. B ticker / C strategy /
-' D entry target are typed by hand (input cells) and survive the clear;
-' E last price is fetched on UP. A row whose last <= target is lit.
+' WATCHLIST (v4.9, 2026-09-12; v4.9.1 entry-row flow): B:E of the chart
+' band, left of the donut. Title row 25, header 26.
+'   Row 27 = ENTRY ROW (input cells): type B ticker / C strategy / D entry
+'            target; as soon as ticker AND target are both in, the sheet
+'            code hands the row to WatchlistCommitEntry, which appends it
+'            to the list and clears row 27 for the next one.
+'   Rows 28-38 = the saved list (11 entries), E = live last price, a row
+'            whose last <= target is lit. Double-click a saved row to
+'            delete it (WatchlistDeleteRow, from Worksheet_BeforeDoubleClick).
+' Saved rows survive the clear (ReadWatchlist / DrawWatchlist).
 Public Const RR4_WL_TITLE  As Long = 25
 Public Const RR4_WL_HDR    As Long = 26
-Public Const RR4_WL_FIRST  As Long = 27
+Public Const RR4_WL_ENTRY  As Long = 27
+Public Const RR4_WL_FIRST  As Long = 28
 Public Const RR4_WL_LAST   As Long = 38
 Public Const RR4_POS_TITLE As Long = 41
 Public Const RR4_POS_HDR   As Long = 42
@@ -1608,18 +1615,18 @@ End Sub
 ' ================================================================
 '  WATCHLIST (B25:E38) - see the RR4_WL_* constants
 ' ================================================================
-' Hand-typed rows, read BEFORE the sheet is cleared. Only trusted when the
+' Saved rows, read BEFORE the sheet is cleared. Only trusted when the
 ' title is in place (an older layout has other things in those cells).
 ' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target, blanks
 ' compacted out; Empty when there is nothing.
 Private Function ReadWatchlist(ws As Worksheet) As Variant
-    If UCase(CellStr(ws.cells(RR4_WL_TITLE, RR4_LEFT + 1).Value)) <> "WATCHLIST" Then Exit Function
+    If Left(UCase(CellStr(ws.cells(RR4_WL_TITLE, RR4_LEFT + 1).Value)), 9) <> "WATCHLIST" Then Exit Function
     Dim tmp(1 To 12, 1 To 3) As Variant, n As Long, r As Long
     For r = RR4_WL_FIRST To RR4_WL_LAST
         Dim tk As String: tk = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
         Dim st As String: st = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
         Dim tg As Variant: tg = ws.cells(r, RR4_LEFT + 3).Value
-        If tk <> "" Or st <> "" Or NumOr0(tg) > 0 Then
+        If tk <> "" Then
             n = n + 1
             tmp(n, 1) = tk
             tmp(n, 2) = st
@@ -1634,13 +1641,16 @@ Private Function ReadWatchlist(ws As Worksheet) As Variant
     ReadWatchlist = out
 End Function
 
-' Title, header, 12 rows (input cells painted even when empty), then the
-' live price + highlight per row.
+' Title, header, the entry row, then the saved rows with live price.
 Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
     With ws.cells(RR4_WL_TITLE, RR4_LEFT + 1)
-        .Value = "WATCHLIST"
-        .Font.Color = RR4_ACCENT
-        .Font.Bold = True
+        .Value = "WATCHLIST     type in row " & RR4_WL_ENTRY & " + Enter to add  .  double-click a row to delete"
+        .Font.Color = RGB(120, 120, 120)
+        .Font.Size = 9
+        .Font.Bold = False
+        .Characters(1, 9).Font.Color = RR4_ACCENT
+        .Characters(1, 9).Font.Bold = True
+        .Characters(1, 9).Font.Size = 10
     End With
     Dim hdr As Variant: hdr = Array("TICKER", "STRATEGY", "ENTRY TGT", "LAST")
     Dim c As Long
@@ -1658,22 +1668,12 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
         .Weight = xlThin
     End With
 
+    Call WatchlistPaintEntryRow(ws)
+
     Dim n As Long: If IsArray(wl) Then n = UBound(wl, 1)
     Dim r As Long, i As Long
     For r = RR4_WL_FIRST To RR4_WL_LAST
         i = r - RR4_WL_FIRST + 1
-        ' the three typed columns are input cells whether filled or not
-        For c = 1 To 3
-            With ws.cells(r, RR4_LEFT + c)
-                .Interior.Color = RR4_INPUT_BG
-                .Font.Color = RR4_INPUT_FG
-                .Font.Bold = (c = 1)
-                .HorizontalAlignment = IIf(c = 2, xlLeft, xlCenter)
-                .NumberFormat = IIf(c = 3, "#,##0.00", "@")
-            End With
-        Next c
-        ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlCenter
-        ws.cells(r, RR4_LEFT + 4).NumberFormat = "#,##0.00"
         If i <= n Then
             ws.cells(r, RR4_LEFT + 1).Value = wl(i, 1)
             ws.cells(r, RR4_LEFT + 2).Value = wl(i, 2)
@@ -1683,8 +1683,77 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
     Next r
 End Sub
 
-' Live price into E and the lit / unlit state of one row. Public: the RR4
-' sheet code calls it when B/C/D of a watchlist row is edited.
+' The entry row: three dark input cells, always empty after a commit.
+Private Sub WatchlistPaintEntryRow(ws As Worksheet)
+    Dim c As Long
+    For c = 1 To 3
+        With ws.cells(RR4_WL_ENTRY, RR4_LEFT + c)
+            .Value = ""
+            .Interior.Color = RR4_INPUT_BG
+            .Font.Color = RR4_INPUT_FG
+            .Font.Bold = (c = 1)
+            .HorizontalAlignment = IIf(c = 2, xlLeft, xlCenter)
+            .NumberFormat = IIf(c = 3, "#,##0.00", "@")
+        End With
+    Next c
+    With ws.cells(RR4_WL_ENTRY, RR4_LEFT + 4)
+        .Value = ""
+        .Interior.Color = RGB(0, 0, 0)
+    End With
+End Sub
+
+' Called by the sheet code when B/C/D of the entry row changes. Commits
+' once ticker AND target are both in; otherwise leaves the row alone so
+' the other cells can still be typed.
+Public Sub WatchlistCommitEntry(ws As Worksheet)
+    Dim tk As String: tk = UCase(Trim(CellStr(ws.cells(RR4_WL_ENTRY, RR4_LEFT + 1).Value)))
+    Dim st As String: st = CellStr(ws.cells(RR4_WL_ENTRY, RR4_LEFT + 2).Value)
+    Dim tg As Variant: tg = ws.cells(RR4_WL_ENTRY, RR4_LEFT + 3).Value
+    If tk = "" Then Exit Sub
+    If Not IsNumeric(tg) Or IsEmpty(tg) Then Exit Sub
+    If CDbl(tg) <= 0 Then Exit Sub
+
+    ' first free saved row
+    Dim r As Long, dest As Long
+    For r = RR4_WL_FIRST To RR4_WL_LAST
+        If CellStr(ws.cells(r, RR4_LEFT + 1).Value) = "" Then dest = r: Exit For
+    Next r
+    If dest = 0 Then
+        Call NavNotify("WATCHLIST full (" & (RR4_WL_LAST - RR4_WL_FIRST + 1) & " rows) - double-click a row to delete one", True)
+        Exit Sub
+    End If
+    ws.cells(dest, RR4_LEFT + 1).NumberFormat = "@"
+    ws.cells(dest, RR4_LEFT + 1).Value = tk
+    ws.cells(dest, RR4_LEFT + 2).NumberFormat = "@"
+    ws.cells(dest, RR4_LEFT + 2).Value = st
+    ws.cells(dest, RR4_LEFT + 3).NumberFormat = "#,##0.00"
+    ws.cells(dest, RR4_LEFT + 3).Value = CDbl(tg)
+    Call RefreshWatchlistRow(ws, dest)
+    Call WatchlistPaintEntryRow(ws)
+    ws.cells(RR4_WL_ENTRY, RR4_LEFT + 1).Select
+    Call NavNotify("WATCHLIST + " & tk & " @ " & Format(CDbl(tg), "#,##0.00"))
+End Sub
+
+' Called by the sheet code on a double-click inside the saved rows: drop
+' that entry and close the gap.
+Public Sub WatchlistDeleteRow(ws As Worksheet, ByVal r As Long)
+    If r < RR4_WL_FIRST Or r > RR4_WL_LAST Then Exit Sub
+    Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
+    If tk = "" Then Exit Sub
+    Dim k As Long
+    For k = r To RR4_WL_LAST - 1
+        ws.cells(k, RR4_LEFT + 1).Value = ws.cells(k + 1, RR4_LEFT + 1).Value
+        ws.cells(k, RR4_LEFT + 2).Value = ws.cells(k + 1, RR4_LEFT + 2).Value
+        ws.cells(k, RR4_LEFT + 3).Value = ws.cells(k + 1, RR4_LEFT + 3).Value
+    Next k
+    ws.Range(ws.cells(RR4_WL_LAST, RR4_LEFT + 1), ws.cells(RR4_WL_LAST, RR4_LEFT + 3)).ClearContents
+    For k = r To RR4_WL_LAST
+        Call RefreshWatchlistRow(ws, k)
+    Next k
+    Call NavNotify("WATCHLIST - " & tk & " removed")
+End Sub
+
+' Live price into E and the lit / unlit state of one saved row.
 Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
     If r < RR4_WL_FIRST Or r > RR4_WL_LAST Then Exit Sub
     Dim tk As String: tk = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
@@ -1695,23 +1764,31 @@ Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
         px = GetStockPrice(tk)
         On Error GoTo 0
     End If
+    Dim cells4 As Range
+    Set cells4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
+    cells4.NumberFormat = "General"
+    ws.cells(r, RR4_LEFT + 1).NumberFormat = "@"
+    ws.cells(r, RR4_LEFT + 2).NumberFormat = "@"
+    ws.cells(r, RR4_LEFT + 3).NumberFormat = "#,##0.00"
+    ws.cells(r, RR4_LEFT + 4).NumberFormat = "#,##0.00"
+    ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlCenter
+    ws.cells(r, RR4_LEFT + 2).HorizontalAlignment = xlLeft
+    ws.cells(r, RR4_LEFT + 3).HorizontalAlignment = xlCenter
+    ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlCenter
     With ws.cells(r, RR4_LEFT + 4)
         If px > 0 Then .Value = px Else .Value = IIf(tk = "", "", "-")
-        .Font.Color = RGB(221, 221, 221)
-        .Font.Bold = False
     End With
     ' lit when the price has come down to the entry target
     Dim hit As Boolean: hit = (px > 0 And tgt > 0 And px <= tgt)
-    Dim cells4 As Range
-    Set cells4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
     If hit Then
         cells4.Interior.Color = RGB(60, 30, 0)
         cells4.Font.Color = RR4_ACCENT
         cells4.Font.Bold = True
     Else
-        ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 3)).Interior.Color = RR4_INPUT_BG
-        ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 3)).Font.Color = RR4_INPUT_FG
-        ws.cells(r, RR4_LEFT + 4).Interior.Color = RGB(0, 0, 0)
+        cells4.Interior.Color = RGB(0, 0, 0)
+        cells4.Font.Color = RGB(221, 221, 221)
+        cells4.Font.Bold = False
+        ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
         ws.cells(r, RR4_LEFT + 1).Font.Bold = True
     End If
 End Sub
