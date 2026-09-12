@@ -401,7 +401,7 @@ Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
     ' --- Row 1: TICKER <GO> input + company name ---
     With ws.cells(RR4_TOP + 1, TI_LBL)
         .Value = "TICKER <GO>"
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
         .ShrinkToFit = True
     End With
@@ -915,7 +915,7 @@ End Sub
 Private Sub WriteTitle(ws As Worksheet, r As Long, c As Long, txt As String)
     With ws.cells(r, c)
         .Value = txt
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
     End With
 End Sub

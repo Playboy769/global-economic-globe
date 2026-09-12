@@ -197,7 +197,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     ' row 1: badge | command cell | title
     With ws.cells(1, 1 + off)
         .Value = code
-        .Interior.Color = RGB(255, 192, 0)
+        .Interior.Color = RR4_ACCENT
         .Font.Color = RGB(0, 0, 0)
         .Font.Size = 11
         .Font.Bold = True
@@ -216,7 +216,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
                   "A", "ANALYSIS", "V", "VOL", "VT", "TKRVOL", "D", "DRAWDOWN", _
                   "C", "HOLDCORR", "CC", "SECTORCORR", "CR", "RESEARCH")
-    Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RGB(255, 192, 0))
+    Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant

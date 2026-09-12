@@ -70,6 +70,7 @@ Private Const RR4_NCOL      As Long = 17    ' last body column, B:Q
 Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
 Private Const RR4_SWING_COL As Long = 17    ' Q
 Private Const RR4_LOG_ROWS  As Long = 5     ' daily-log trade lines, rows 10-14
+Private Const RR4_POS_ROW_H As Double = 24  ' position-log data rows (v4.5, was 18)
 Private Const RR4_WBAR_PREFIX As String = "RR4W_"
 ' Every cell the user types into is painted this dark grey (RGB 40,40,40)
 ' with WHITE text (RR4_INPUT_FG): the nav command cell C1, USD/TWD C5,
@@ -77,6 +78,10 @@ Private Const RR4_WBAR_PREFIX As String = "RR4W_"
 ' B2 input of the VT / CC pages. (v4.3, 2026-09-12: was 70,70,70 + yellow.)
 Public Const RR4_INPUT_BG  As Long = 2631720
 Public Const RR4_INPUT_FG  As Long = 16777215
+' Accent colour of the RR4 page and the nav bar (v4.5, 2026-09-12): dark
+' orange RGB(200,100,0) - was the amber RGB(255,192,0) the other report
+' pages (Analysis / Vol / Corr) still use.
+Public Const RR4_ACCENT    As Long = 25800
 ' Section divider lines on the RR4 page (nav bar bottom, USD/TWD row, TODAY
 ' row, position-log title / header / last row, ticker-panel history header)
 ' are this dark grey since v4.3 - was the amber RGB(255,192,0).
@@ -693,7 +698,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
     With ws.cells(RR4_TOP + 1, RR4_LEFT + 1)
         .Value = totalMkt
         .NumberFormat = "$#,##0"
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Size = 16
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
@@ -714,7 +719,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
 
     With ws.cells(RR4_TOP + 2, RR4_LEFT + 3)
         .Value = "ARRANGE"
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
@@ -735,7 +740,7 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
     End With
 
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Value = "WEIGHT"
-    ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Color = RR4_ACCENT
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Bold = True
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).HorizontalAlignment = xlRight
 End Sub
@@ -760,7 +765,7 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
                          prevPnL As Variant)
     With ws.cells(RR4_TOP + 6, RR4_LEFT + 1)
         .Value = "DAILY LOG - " & Format(Date, "yyyy/m/d")
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
     End With
 
@@ -857,7 +862,7 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
 
     With ws.cells(RR4_TOP + 12, RR4_LEFT + 1)
         .Value = "TODAY"
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
     End With
     With ws.cells(RR4_TOP + 12, RR4_LEFT + 2)
@@ -883,7 +888,7 @@ Private Sub WriteLogLine(ws As Worksheet, r As Long, lineTag As String, tk As St
         .Value = lineTag
         .Font.Bold = True
         If lineTag = "NEW" Or lineTag = "ADD" Then
-            .Font.Color = RGB(255, 192, 0)
+            .Font.Color = RR4_ACCENT
         Else
             .Font.Color = RGB(0, 200, 255)
         End If
@@ -903,7 +908,7 @@ Private Sub DrawSummary(ws As Worksheet, totalMkt As Double, totalCost As Double
                         portBeta As Double, posCount As Long)
     With ws.cells(RR4_TOP + 14, RR4_LEFT + 1)
         .Value = "SUMMARY - RR4"
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
     End With
 
@@ -922,7 +927,7 @@ Private Sub DrawSummary(ws As Worksheet, totalMkt As Double, totalCost As Double
     Call SumKV(ws, RR4_TOP + 15, RR4_LEFT + 5, "STARTING", startCap, "#,##0", False)
     Call SumKV(ws, RR4_TOP + 16, RR4_LEFT + 5, "NET EXPOSURE", totalMkt, "#,##0", False)
     Call SumKV(ws, RR4_TOP + 17, RR4_LEFT + 5, "PORT.BETA", portBeta, "0.000", False)
-    ws.cells(RR4_TOP + 17, RR4_LEFT + 6).Font.Color = RGB(255, 192, 0)
+    ws.cells(RR4_TOP + 17, RR4_LEFT + 6).Font.Color = RR4_ACCENT
     Call SumKV(ws, RR4_TOP + 18, RR4_LEFT + 5, "REALISED PNL %", rlPct, "+0.00%;-0.00%;0.00%", True)
     Call SumKV(ws, RR4_TOP + 19, RR4_LEFT + 5, "UNREALISED PNL %", unrlPct, "+0.00%;-0.00%;0.00%", True)
 End Sub
@@ -1173,7 +1178,7 @@ End Function
 Private Sub DrawColumnHeaders(ws As Worksheet)
     With ws.cells(RR4_POS_TITLE, RR4_LEFT + 1)
         .Value = "POSITION LOG - RR4"
-        .Font.Color = RGB(255, 192, 0)
+        .Font.Color = RR4_ACCENT
         .Font.Bold = True
     End With
     With ws.Range(ws.cells(RR4_POS_TITLE, RR4_LEFT + 1), ws.cells(RR4_POS_TITLE, RR4_LEFT + 18)).Borders(xlEdgeTop)
@@ -1190,7 +1195,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
     For i = 0 To UBound(headers)
         With ws.cells(RR4_POS_HDR, RR4_LEFT + i + 1)
             .Value = headers(i)
-            .Font.Color = RGB(255, 192, 0)
+            .Font.Color = RR4_ACCENT
             .Font.Bold = True
             .Font.Size = 9
             .Font.Name = "Consolas"
@@ -1236,7 +1241,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
         .Font.Color = RGB(210, 210, 210)
         .HorizontalAlignment = xlCenter
     End With
-    ws.Rows(r).RowHeight = 18
+    ws.Rows(r).RowHeight = RR4_POS_ROW_H
 
     Dim tickerCode As String: tickerCode = CStr(posData(i, 1))
     Dim nm         As String: nm = posData(i, 3)
@@ -1257,7 +1262,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     Dim wBeta As Double: wBeta = wtPct * Beta
 
     ws.cells(r, RR4_LEFT + 1).Value = tickerCode
-    ws.cells(r, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
     ws.cells(r, RR4_LEFT + 1).Font.Bold = True
 
     ws.cells(r, RR4_LEFT + 2).Value = nm
@@ -1307,7 +1312,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
 
     ws.cells(r, RR4_LEFT + 15).Value = pTgt
     ws.cells(r, RR4_LEFT + 15).NumberFormat = "#,##0"
-    ws.cells(r, RR4_LEFT + 15).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 15).Font.Color = RR4_ACCENT
 
     If swingRiskMap.Exists(tickerCode) Then
         With ws.cells(r, RR4_SWING_COL)
@@ -1358,7 +1363,7 @@ Private Sub DrawTopExposure(ws As Worksheet, posData() As Variant, totalMkt As D
     With ws.cells(RR4_POS_TITLE, RR4_LEFT + 5)
         .Value = "TOP EXPOSURE    " & s
         .Font.Color = RGB(180, 180, 180)
-        .Characters(1, 12).Font.Color = RGB(255, 192, 0)
+        .Characters(1, 12).Font.Color = RR4_ACCENT
         .Characters(1, 12).Font.Bold = True
     End With
 End Sub
@@ -1426,7 +1431,7 @@ Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
         .Value = codeList & desc
         .Font.Size = 9
         .Font.Color = RGB(150, 150, 150)
-        .Characters(Len(codeList) + 1, Len(desc)).Font.Color = IIf(known, RGB(255, 192, 0), RGB(255, 80, 80))
+        .Characters(Len(codeList) + 1, Len(desc)).Font.Color = IIf(known, RR4_ACCENT, RGB(255, 80, 80))
     End With
 
 Fin:
@@ -1615,7 +1620,7 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
         .ChartTitle.Font.Name = "Consolas"
         .ChartTitle.Font.Size = 9
         .ChartTitle.Font.Bold = True
-        .ChartTitle.Font.Color = RGB(255, 192, 0)
+        .ChartTitle.Font.Color = RR4_ACCENT
         .ChartGroups(1).DoughnutHoleSize = 40
         .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
         .ChartArea.Format.Line.Visible = msoFalse
@@ -1803,7 +1808,7 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).Merge
     On Error GoTo 0
     ws.cells(r, RR4_LEFT + 1).Value = "On the way in Medium-High  Beta Between 2-2.5 , Remember alwaus do the Eliminate underperformers"
-    ws.cells(r, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
     ws.cells(r, RR4_LEFT + 1).Font.Italic = True
     ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 
@@ -1813,7 +1818,7 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).Merge
     On Error GoTo 0
     ws.cells(r, RR4_LEFT + 1).Value = "FOCUS ON WHAT MY ACTIONS ARE & DO YOUR OWN WORK ! => WHO SAYS YOU CAN'T FIND BETTER TRADE-IDEAS ? => Narrative + Money Flow + Technicals = Valuation Skyrocket"
-    ws.cells(r, RR4_LEFT + 1).Font.Color = RGB(255, 192, 0)
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
     ws.cells(r, RR4_LEFT + 1).Font.Italic = True
     ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 End Sub
