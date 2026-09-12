@@ -272,8 +272,8 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 
 - **ActiveX 按鈕已全部移除，改成打字導覽列（`modNav.bas`）**：每個*報表頁* rows 1–3 是
   bar，在灰色格（B1，**RR4 頁是 C1**）打代碼＋Enter，`ThisWorkbook.Workbook_SheetChange`
-  轉給 `RunNavCommand`。頁面碼 P/R/T/H/V/VT/C/CC/CR（**A Analysis 頁已於 v4.6 刪除、D DrawdownChart 與 `DrawDownShadow.bas` 於同日刪除**，
-  幣別占比併進 Summary，`RR4_RLPNL` 實現損益折線圖放在甜甜圈下方、資料直接指向 HistoryLog A/D 欄），動作碼 UP/ADD/DEL/V!/C!/DBG/
+  轉給 `RunNavCommand`。頁面碼 P/R/T/H/V/VT/C/CC/RG/CR（**A Analysis 頁已於 v4.6 刪除、D DrawdownChart 與 `DrawDownShadow.bas` 於同日刪除**，
+  幣別占比併進 Summary，`RR4_RLPNL` 實現損益折線圖放在甜甜圈下方、資料直接指向 HistoryLog A/D 欄），動作碼 UP/ADD/DEL/V!/C!/RG!/DBG/
   CLEARALL；跳頁不重算，只有 `!` 碼會重算。
   - **資料頁（Realized/Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
     模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。
@@ -363,6 +363,22 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   （v3 的表格從 row 3 開始，且 `Range.Clear` 會留下「無填滿」＝黑底頁上的白帶），以及 **`DrawCrHeader`
   只在輸入條已是 v4 形態時才保留輸入格內容**（否則會把 v3 留在 D2/F2 的表頭文字「COMPANY」「1Y HIGH%」
   當成使用者輸入保存下來）。雙擊行為不變，仍是資料頁不掛 nav bar。
+- **RRG（RG）頁（2026-09-12）**：`RRG.bas`，`sector-rotation-system/rrg_dynamic.py` 的 Excel 版，
+  **只有當天快照、沒有時間滑桿**。算法逐條照抄 Python（RS-Ratio = 100·rs/SMA65、RS-Mom = 100·ratio/SMA20、
+  兩者再 EWM span 3 `adjust=True`、尾巴取最後 66 列從最新往回每 5 個取 1 → 14 點），實測 26 檔與
+  `compute_daily_rrg` 差 <1e-12。宇宙直接共用 `CorelationMatrix.SectorList()`（已改 Public）扣掉 SPY。
+  **價格自己抓 Yahoo chart API 的 `adjclose`＋`timestamp` 依日期對齊 SPY**（`FetchAdjSeries`）——CC 頁的
+  `FetchPriceArray` 只抓 `close` 且只切前 5000 字元，250 天會截尾，不能拿來算 RRG。版面：A:I 表格
+  （TICKER/LABEL/GROUP/RS-RATIO/RS-MOM/QUADRANT/1W dRAT/1W dMOM/PTS）、K 欄起 `RRG_MAIN` 散布圖（一檔一個
+  series、軸交叉 100/100、四角象限文字方塊）、Z 欄尾巴日期、AA 欄起每檔兩欄的尾巴資料塊。
+  **雙擊 A 欄代號＝聚焦**（`SheetRRG_Code.txt` → `RrgDoubleClick`）：那條加粗、每個點標日期、表格列橘底，
+  其他全部變 RGB(64,64,64) 無標籤；再雙擊同一代號或表頭 TICKER 恢復。聚焦對象記在隱藏名稱 `RRGFOCUS`，
+  `RG!` 重建會清掉。**RRG 工作表由 `BuildRRG` 自建，所以事件碼是 `EnsureSheetCode` 在建表時用
+  `VBProject.VBComponents` 自己寫進去的**（需要「信任存取 VBA 專案物件模型」，注入腳本本來就靠它）。
+  三個圖表坑：per-point `Format.Fill.Transparency` 會把標記顏色重設成主題色（改用 `Dim2` 往黑混色做漸淡）；
+  XY 圖的資料標籤沒有 `ShowXValues`（是 `ShowCategoryName`）；把 `ShowSeriesName/Value/CategoryName`
+  全關會直接刪掉標籤、接著 `.Text` 報「參數無效」——要留 `ShowSeriesName=True` 再覆寫 `.Text`。
+  仍由 `RG!` 重算（27 次 HTTP 約 12–15 秒），跳頁不重算。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
