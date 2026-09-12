@@ -7,14 +7,16 @@
 '  against the sheet's CodeName (same mechanism as
 '  SEC-Filing-Fetcher/build.ps1's SheetInput_Code.txt).
 '
-'  CR page layout v3 (2026-09-12): input strip A1:B3, scan table C1:K33
-'  with a 1Y sparkline per row in L, group panel from M, deep-dive from row 36.
+'  CR page layout v4 (2026-09-12): title row 1, ONE horizontal input strip
+'  on row 2, scan table C4:K35, group panel from column L (group name +
+'  count only), deep-dive from row 40. The v3 sparkline column L is gone.
 '
-'  1. B1 GROUP <GO>: one or more group names (dropdown fed by the GroupList
+'  1. B2 GROUP <GO>: one or more group names (dropdown fed by the GroupList
 '     name; several separated by commas) -> Sanner.RunGroupKeyword scans them.
-'  2. B2 TICKER <GO> (or the B3 market override) -> CompanyResearchSEC.RunDeepDive.
-'  3. Double-click: a group name in the panel -> B1 (scan); a ticker in the
-'     scan table C3:C31 -> B2 (deep-dive).
+'  2. D2 TICKER (or the F2 market override) -> CompanyResearchSEC.RunDeepDive.
+'  3. Double-click: a group name in the panel -> B2 (scan); a ticker in the
+'     scan table -> D2 (deep-dive).
+'  All three addresses come from the constants below, never typed literally.
 '  Status messages go to the Excel status bar (NavNotify), nothing on the page.
 ' ============================================================================
 

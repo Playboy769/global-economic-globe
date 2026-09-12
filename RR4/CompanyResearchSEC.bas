@@ -26,12 +26,12 @@ Option Explicit
 ' ============================================================================
 
 Public Const CR_SHEET       As String = "Company research"
-Public Const CR_INPUT_CELL  As String = "B2"
-Public Const CR_MARKET_CELL As String = "B3"
+Public Const CR_INPUT_CELL  As String = "D2"    ' CR page v4: the strip is horizontal on row 2
+Public Const CR_MARKET_CELL As String = "F2"
 
-Private Const TITLE_ROW      As Long = 36
-Private Const HDR_ROW        As Long = 37
-Private Const FIRST_DATA_ROW As Long = 38
+Private Const TITLE_ROW      As Long = 40   ' v4: the scan block grew by the input strip (was 36)
+Private Const HDR_ROW        As Long = 41
+Private Const FIRST_DATA_ROW As Long = 42
 Private Const CLEAR_LAST_ROW As Long = 400
 Private Const LAST_COL       As Long = 24
 
@@ -45,7 +45,7 @@ Private Const CLR_TEXT  As Long = 15132390      ' RGB(230,230,230)
 Private Const CLR_HEAD  As Long = 25800         ' RGB(200,100,0) - RR4_ACCENT
 Private Const CLR_MUTED As Long = 8355711       ' RGB(127,127,127)
 Private Const CLR_FLAG  As Long = 3129855       ' RGB(255,192,0)-ish note
-Private Const FONT_FACE As String = "Calibri"   ' whole lower band, incl. CJK entity names
+Private Const FONT_FACE As String = "Consolas"  ' whole lower band - same face as the scan table above (v4)
 Private Const COL_A_WIDTH As Double = 20
 
 ' Set per run by RunDeepDive. Money values are divided by mDivisor and shown in
@@ -536,11 +536,11 @@ Private Sub SetStatus(ByVal ws As Worksheet, ByVal msg As String)
     Call NavNotify("DEEP-DIVE " & msg, Left$(msg, 6) = "Error:" Or Left$(msg, 2) = "No")
 End Sub
 
-' Double-click on a ticker in the scan table (C3:C31) -> deep-dive it.
+' Double-click on a ticker in the scan table -> deep-dive it.
 ' Called from the sheet's Worksheet_BeforeDoubleClick; True = handled.
 Public Function RunDeepDiveFromScan(ByVal Target As Range) As Boolean
     If Target.Column <> Sanner.SC_TICKER Then Exit Function
-    If Target.row < 3 Or Target.row > Sanner.SCAN_LAST_ROW Then Exit Function
+    If Target.row < Sanner.SCAN_FIRST_ROW Or Target.row > Sanner.SCAN_LAST_ROW Then Exit Function
     Dim tk As String: tk = Trim$(CStr(Target.Value))
     If Len(tk) = 0 Or UCase$(tk) = "SUMMARY" Then Exit Function
     RunDeepDiveFromScan = True
