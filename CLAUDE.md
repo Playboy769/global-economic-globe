@@ -390,6 +390,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   **I 欄 TRAIL 是欄狀 sparkline**（13 週 RS-RATIO 逐週變化，紅正綠負），來源是尾巴資料塊右側的 TRAIL 區塊
   （每檔一列 13 格）；`SparklineGroups.Add` 的來源範圍會跟著 nav bar 插列自動位移，但 `Cells.Clear` 不清 sparkline，
   重建前要先 `Cells.SparklineGroups.Clear`。
+  **雙擊表頭＝排序**（`RrgSort`，再雙擊同一表頭反向、雙擊頁標題 A 欄回到建置順序並清除聚焦）：表格 A:N、
+  TRAIL 資料塊、Y 欄 `seq`（建置順序）三塊用同一組索引一起重排（尾巴資料塊是每檔一組欄，不動）；`RRG_FLOW`
+  的 series 指向表格儲存格，排完要**依代號重新綁定** XValues/Values；N 欄的 CMF/OBV 註解要重建；I 欄 sparkline
+  不寫值（來源列跟著 TRAIL 資料塊一起換）。目前排序記在隱藏名稱 `RRGSORT`（`col|dir`）。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
