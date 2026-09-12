@@ -350,8 +350,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   **row 2 是 `GROUP` B2／`TICKER` D2／`MKT` F2**（v3 是 A1:B3 三列直排、標籤被切掉）。掃描表
   **表頭 row 4、資料 rows 5–33、SUMMARY row 35**，列高 20，deep-dive 因此由 row 36 下移到
   **row 40**（`CompanyResearchSEC` TITLE_ROW 40 / HDR 41 / FIRST_DATA 42），該段字型由 Calibri
-  改 Consolas 與上半段一致。**群組面板從 M 欄改到 L 欄、每塊由 4 欄縮成 3 欄**（`DB_BLOCK_COLS = 3`）——
-  砍掉那欄逗號串起來的 TICKERS 清單（永遠被欄寬截斷，卻佔掉整頁約八成寬度）。**L 欄的 sparkline 整個拿掉**
+  改 Consolas 與上半段一致。**群組面板每塊由 4 欄縮成 3 欄**（`DB_BLOCK_COLS = 3`）——
+  砍掉那欄逗號串起來的 TICKERS 清單（永遠被欄寬截斷，卻佔掉整頁約八成寬度）。面板起始欄一度改到 L，
+  隨後定案為 **M**（`DB_FIRST_COL = 13`）、**L 欄留成寬 3 的黑色空白**當掃描表與面板之間的間隔——
+  面板緊貼 SECTOR 欄時兩塊會讀成同一張表；`RebuildGroupDb` 的清除／塗黑範圍因此往左多包一欄。
+  **原本 L 欄的 sparkline 整個拿掉**
   （v3 改版後就沒再畫出來），`ClearSparklines` 保留以清掉舊殘留。兩個搬版陷阱：**row 3 要清掉並重新塗黑**
   （v3 的表格從 row 3 開始，且 `Range.Clear` 會留下「無填滿」＝黑底頁上的白帶），以及 **`DrawCrHeader`
   只在輸入條已是 v4 形態時才保留輸入格內容**（否則會把 v3 留在 D2/F2 的表頭文字「COMPANY」「1Y HIGH%」
