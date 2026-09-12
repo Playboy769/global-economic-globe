@@ -3432,11 +3432,32 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
     wsV.Cells(r, 1).Font.Color = RGB(120, 120, 120)
     wsV.Cells(r, 1).Font.Italic = True
     wsV.Cells(r, 1).Font.Size = 9
-    r = r + 1
-    wsV.Cells(r, 1).Value = "  RISK/WEIGHT > 1.3 (red): the holding adds more risk than its weight; < 0.7 (green): it dampens the book"
-    wsV.Cells(r, 1).Font.Color = RGB(120, 120, 120)
-    wsV.Cells(r, 1).Font.Italic = True
+    r = r + 2
+    ' how each number is computed (v4.12.1)
+    wsV.Cells(r, 1).Value = "HOW THESE ARE COMPUTED"
+    wsV.Cells(r, 1).Font.Color = RR4_ACCENT
+    wsV.Cells(r, 1).Font.Bold = True
     wsV.Cells(r, 1).Font.Size = 9
+    r = r + 1
+    Dim notes As Variant
+    notes = Array( _
+        "DAILY STDEV          = sample std dev of the last 180 daily returns (each stock on its own most-recent window)", _
+        "ANNUALIZED STDEV     = DAILY STDEV x sqrt(252)", _
+        "PORTFOLIO STD DEV    = std dev of the market-value-weighted daily return, all stocks on the COMMON date window", _
+        "WEIGHTED AVG STDEV   = sum( weight_i x annualized stdev_i )   - what the portfolio vol would be if every holding moved together", _
+        "DIVERSIFICATION RATIO= WEIGHTED AVG STDEV / PORTFOLIO STD DEV   - 1.0x = no diversification benefit; higher = lower correlation between holdings", _
+        "1-DAY VAR 95%        = 1.645 x portfolio DAILY STD DEV x total market value   - normal-distribution assumption; 1 day in 20 should lose more", _
+        "RISK CONTRIB%        = weight_i x cov(return_i, portfolio return) / var(portfolio return)   - share of portfolio variance; the column sums to 100%", _
+        "RISK/WEIGHT          = RISK CONTRIB% / WEIGHT%   - > 1.3 (red) adds more risk than its size, < 0.7 (green) dampens the book")
+    Dim ni As Long
+    For ni = 0 To UBound(notes)
+        With wsV.Cells(r, 1)
+            .Value = notes(ni)
+            .Font.Color = RGB(120, 120, 120)
+            .Font.Size = 9
+        End With
+        r = r + 1
+    Next ni
 
     wsV.Columns(1).ColumnWidth = 24
     wsV.Columns(2).ColumnWidth = 12
