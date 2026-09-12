@@ -298,6 +298,64 @@ Private Sub LogHistory(totalMkt As Double, totalPnL As Double, realPnL As Double
     Next i
 
     Call WriteHistoryRowFormulas(wsH, nr)
+    Call RebuildRealizedHistory(wsH)
+End Sub
+
+' ================================================================
+'  Column D of every HistoryLog row = realized PnL accumulated up to that
+'  row's date, taken from the Realized sheet AS IT IS NOW (v4.8, 2026-09-12).
+'  Up to v4.7 the column was an append-only snapshot of SUM(Realized!H) at
+'  the moment of each UP, which drifted away from the sheet in two ways:
+'  the USD legs were converted at that day's USD/TWD (the Realized sheet
+'  is re-converted at the current rate on every UP), and a trade entered
+'  or re-dated after the fact re-pairs the FIFO lots for earlier days
+'  (2026-09-08/09 were off by -2,070 / +2,373 for exactly that reason,
+'  and showed up as a fake spike on the REALIZED PNL line). Restating the
+'  column from the Realized sheet keeps D, its Daily Chg% (E) and the
+'  chart consistent with the realized table at all times. Column C
+'  (total cumulative PnL) is left as a snapshot - its unrealized part
+'  cannot be restated.
+'  Realized sheet layout (Attach.CalculateRealizedPnL): H = PNL(TWD),
+'  I = exit date.
+' ================================================================
+Public Sub RebuildRealizedHistory(Optional ByVal wsH As Worksheet = Nothing)
+    If wsH Is Nothing Then
+        On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo 0
+        If wsH Is Nothing Then Exit Sub
+    End If
+    Dim wsR As Worksheet
+    On Error Resume Next: Set wsR = ThisWorkbook.Sheets(SH_REAL): On Error GoTo 0
+    If wsR Is Nothing Then Exit Sub
+
+    ' realized trades: (exit date, PnL TWD)
+    Dim lastR As Long: lastR = wsR.cells(wsR.Rows.count, "A").End(xlUp).row
+    Dim n As Long, r As Long
+    Dim exD() As Long, exP() As Double
+    If lastR >= 2 Then
+        ReDim exD(1 To lastR - 1): ReDim exP(1 To lastR - 1)
+        For r = 2 To lastR
+            Dim dv As Variant: dv = wsR.cells(r, "I").Value
+            If IsDate(dv) Then
+                n = n + 1
+                exD(n) = Int(CDbl(CDate(dv)))
+                exP(n) = NumOr0(wsR.cells(r, "H").Value)
+            End If
+        Next r
+    End If
+
+    Dim lastH As Long: lastH = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
+    For r = 2 To lastH
+        Dim hv As Variant: hv = wsH.cells(r, "A").Value
+        If IsDate(hv) Then
+            Dim dayN As Long: dayN = Int(CDbl(CDate(hv)))
+            Dim cum As Double: cum = 0
+            Dim k As Long
+            For k = 1 To n
+                If exD(k) <= dayN Then cum = cum + exP(k)
+            Next k
+            If Abs(NumOr0(wsH.cells(r, "D").Value) - cum) > 0.005 Then wsH.cells(r, "D").Value = cum
+        End If
+    Next r
 End Sub
 
 ' Header row - rewritten every run so the layout stays self-describing.

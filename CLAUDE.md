@@ -306,6 +306,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   寬度 11 的留白）；權重橫條**紅漲綠跌**（台股慣例）、白字；甜甜圈用 `DonutColor` 固定
   12 色調色盤＋「代號 %」標籤（doughnut 標籤只能貼在環上，Excel 沒有 outside 位置）；
   導覽列未選取的代碼／標籤調暗、只有目前頁亮起，不用底線。
+- **HistoryLog D 欄（Realized PnL）不是快照，是每次 UP 重算的**（v4.8）：`RebuildRealizedHistory`
+  在 `LogHistory` 收尾把每一列 D 改成「Realized 表依出場日累計到該列日期」。v4.7 前是
+  append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段
+  重配）而跟 Realized 表脫節——2026-09-08/09 曾因此差 −2,070／+2,373，折線圖出現假尖峰。
+  C 欄（含未實現）仍是快照，無法重述。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
