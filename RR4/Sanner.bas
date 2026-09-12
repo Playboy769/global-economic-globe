@@ -25,7 +25,8 @@ Public Const GROUP_LIST_COL    As Long = 8          ' column H of the Groups she
 '    row 3        blank
 '    row 4        scan table headers (C:K)
 '    rows 5-33    scanned tickers, row 35 the SUMMARY line
-'    column L on  group database panel (RebuildGroupDb) - group name and
+'    column L     blank spacer between the scan table and the panel
+'    column M on  group database panel (RebuildGroupDb) - group name and
 '                 ticker count only; the TICKERS column was dropped in v4,
 '                 it was always clipped by the column width anyway
 '    row 40+      financial deep-dive (CompanyResearchSEC)
@@ -51,12 +52,15 @@ Public Const SCAN_MAX_TICKERS  As Long = 29
 Public Const SCAN_ROW_H        As Double = 20
 
 ' Group database panel beside the scanner (see RebuildGroupDb): four
-' side-by-side blocks from column L, each GROUP | N + a gap column,
+' side-by-side blocks from column M, each GROUP | N + a gap column,
 ' confined to rows 1..SCAN_LAST_ROW because the deep-dive clears the band
 ' below it. The last block takes the TW groups that do not fit in the TW
 ' block. v4 dropped the third (TICKERS) column of each block - the list was
 ' clipped by the column width, so it read as noise rather than data.
-Public Const DB_FIRST_COL      As Long = 12         ' L
+' DB_FIRST_COL - 1 (column L) is left blank as a spacer, the same way
+' column A is on the RR4 page: the panel used to butt straight up against
+' the SECTOR column and the two blocks read as one.
+Public Const DB_FIRST_COL      As Long = 13         ' M
 Public Const DB_BLOCK_COLS     As Long = 3
 Public Const DB_BLOCKS         As Long = 4
 
@@ -605,7 +609,8 @@ Sub RebuildGroupDb()
     If ws Is Nothing Then Exit Sub
 
     Dim lastCol As Long: lastCol = DB_FIRST_COL + DB_BLOCK_COLS * DB_BLOCKS - 2
-    With ws.Range(ws.cells(1, DB_FIRST_COL), ws.cells(SCAN_LAST_ROW, lastCol))
+    ' start one column early so the spacer is cleared and painted too
+    With ws.Range(ws.cells(1, DB_FIRST_COL - 1), ws.cells(SCAN_LAST_ROW, lastCol))
         .Clear
         .Interior.Color = RGB(0, 0, 0)
         .Font.Name = "Consolas"
@@ -614,6 +619,8 @@ Sub RebuildGroupDb()
         .WrapText = False
         .NumberFormat = "@"
     End With
+
+    ws.Columns(DB_FIRST_COL - 1).ColumnWidth = 3      ' the spacer
 
     ' Groups visible in the current scan (SECTOR column) get highlighted
     Dim active As Object: Set active = CreateObject("Scripting.Dictionary")
