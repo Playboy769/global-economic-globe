@@ -126,7 +126,15 @@ def fetch_plate_type(sess: requests.Session, plate_type: int, label: str, on_pag
         headers = {"quote-token": quote_token(params)}
         wait = RETRY_WAIT
         for attempt in range(MAX_RETRIES + 1):
-            resp = sess.get(BASE_URL, headers=headers, params=params, timeout=10)
+            try:
+                resp = sess.get(BASE_URL, headers=headers, params=params, timeout=10)
+            except requests.exceptions.ConnectionError as e:
+                # 2026-09-12 實測：限流升級後伺服器會直接斷線（RemoteDisconnected），重試也沒用
+                raise SystemExit(
+                    f"伺服器主動斷線 (plateType={plate_type}, page={page})：{e}"
+                    + chr(10)
+                    + "這代表封鎖已升級為拒絕連線，短時間內重試無效，請隔數小時再跑。"
+                ) from None
             resp.raise_for_status()
             try:
                 payload = parse_json(resp, f"plateType={plate_type}, page={page}")
