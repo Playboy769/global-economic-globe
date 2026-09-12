@@ -78,6 +78,9 @@ Private Const RR4_WBAR_PREFIX As String = "RR4W_"
 ' B2 input of the VT / CC pages. (v4.3, 2026-09-12: was 70,70,70 + yellow.)
 Public Const RR4_INPUT_BG  As Long = 2631720
 Public Const RR4_INPUT_FG  As Long = 16777215
+' SWING RISK column only: a shade darker than the other input cells so it
+' sits closer to the row stripes (v4.5.1, RGB 25,25,25).
+Private Const RR4_SWING_BG As Long = 1644825
 ' Accent colour of the RR4 page and the nav bar (v4.5, 2026-09-12): dark
 ' orange RGB(200,100,0) - was the amber RGB(255,192,0) the other report
 ' pages (Analysis / Vol / Corr) still use.
@@ -1477,7 +1480,7 @@ Private Sub RestripeRows(ws As Worksheet, lastR As Long)
             .Interior.Color = bg
             .Borders(xlEdgeBottom).LineStyle = xlNone
         End With
-        ws.cells(r, RR4_SWING_COL).Interior.Color = RR4_INPUT_BG   ' typed by hand
+        ws.cells(r, RR4_SWING_COL).Interior.Color = RR4_SWING_BG   ' typed by hand
         ws.cells(r, RR4_SWING_COL).Font.Color = RR4_INPUT_FG
     Next r
     With ws.Range(ws.cells(lastR, RR4_LEFT + 1), ws.cells(lastR, RR4_NCOL)).Borders(xlEdgeBottom)
