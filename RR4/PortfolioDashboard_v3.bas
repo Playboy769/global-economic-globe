@@ -66,6 +66,7 @@ Public Const RR4_POS_TITLE As Long = 27
 Public Const RR4_POS_HDR   As Long = 28
 Public Const RR4_POS_FIRST As Long = 29
 Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
+Private Const RR4_RLPNL_NAME As String = "RR4_RLPNL"   ' realized-PnL line chart (v4.6)
 Private Const RR4_NCOL      As Long = 17    ' last body column, B:Q
 Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
 Private Const RR4_SWING_COL As Long = 17    ' Q
@@ -83,7 +84,7 @@ Public Const RR4_INPUT_FG  As Long = 16777215
 Private Const RR4_SWING_BG As Long = 1644825
 ' Accent colour of the RR4 page and the nav bar (v4.5, 2026-09-12): dark
 ' orange RGB(200,100,0) - was the amber RGB(255,192,0) the other report
-' pages (Analysis / Vol / Corr) still use.
+' pages (Vol / Corr) still use.
 Public Const RR4_ACCENT    As Long = 25800
 ' Section divider lines on the RR4 page (nav bar bottom, USD/TWD row, TODAY
 ' row, position-log title / header / last row, ticker-panel history header)
@@ -171,7 +172,7 @@ Sub RebuildPortfolioDashboard()
 
     Call DrawHeader(wsP, totalMktTWD, exRate, arrCode)
     Call DrawDailyLog(wsP, posData, exRate, totalMktTWD, totalUnrlTWD + realPnL, realPnL, prevPnL)
-    Call DrawSummary(wsP, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount)
+    Call DrawSummary(wsP, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount)
     Call DrawColumnHeaders(wsP)
     Dim lastDataRow As Long
     lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap)
@@ -179,9 +180,11 @@ Sub RebuildPortfolioDashboard()
     Call DrawDisclaimer(wsP, lastDataRow)
     Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
+    Call DrawRealizedChart(wsP)     ' after LogHistory, so today's row is on the line
 
     Application.ScreenUpdating = True
-    Call DrawDeepAnalysis(wsP, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL)
+    ' (v4.6: the separate "Analysis" sheet / DrawDeepAnalysis is gone - its
+    ' currency split lives in the Summary, the rest was not used)
     Application.EnableEvents = prevEvents
     Application.StatusBar = "Dashboard updated: " & Format(Now, "hh:mm:ss")
     Call NavNotify("UP done " & Format(Now, "hh:mm:ss") & " - " & posCount & " positions")
@@ -904,10 +907,12 @@ Private Sub WriteLogLine(ws As Worksheet, r As Long, lineTag As String, tk As St
 End Sub
 
 ' ================================================================
-'  SUMMARY (page rows 14-19 = sheet rows 17-22): labels A / E, values B / F
+'  SUMMARY (page rows 14-20 = sheet rows 17-23): labels B / F, values C / G
+'  Row 20 (v4.6) = CURRENCY  USD nn% : TWD nn%, by market value in TWD -
+'  the one thing kept from the deleted Analysis page.
 ' ================================================================
-Private Sub DrawSummary(ws As Worksheet, totalMkt As Double, totalCost As Double, _
-                        totalUnrl As Double, realPnL As Double, _
+Private Sub DrawSummary(ws As Worksheet, posData() As Variant, totalMkt As Double, _
+                        totalCost As Double, totalUnrl As Double, realPnL As Double, _
                         portBeta As Double, posCount As Long)
     With ws.cells(RR4_TOP + 14, RR4_LEFT + 1)
         .Value = "SUMMARY - RR4"
@@ -933,6 +938,24 @@ Private Sub DrawSummary(ws As Worksheet, totalMkt As Double, totalCost As Double
     ws.cells(RR4_TOP + 17, RR4_LEFT + 6).Font.Color = RR4_ACCENT
     Call SumKV(ws, RR4_TOP + 18, RR4_LEFT + 5, "REALISED PNL %", rlPct, "+0.00%;-0.00%;0.00%", True)
     Call SumKV(ws, RR4_TOP + 19, RR4_LEFT + 5, "UNREALISED PNL %", unrlPct, "+0.00%;-0.00%;0.00%", True)
+
+    ' currency allocation (market value, TWD terms)
+    Dim usdMV As Double, twdMV As Double, n As Long, i As Long
+    n = PosCountOf(posData)
+    For i = 1 To n
+        If GetCurrencyType(CStr(posData(i, 1))) = "USD" Then
+            usdMV = usdMV + posData(i, 8)
+        Else
+            twdMV = twdMV + posData(i, 8)
+        End If
+    Next i
+    Dim curTxt As String
+    If usdMV + twdMV > 0 Then
+        curTxt = "USD " & Format(usdMV / (usdMV + twdMV), "0%") & " : TWD " & Format(twdMV / (usdMV + twdMV), "0%")
+    Else
+        curTxt = "-"
+    End If
+    Call SumKV(ws, RR4_TOP + 20, RR4_LEFT + 1, "CURRENCY", curTxt, "@", False)
 End Sub
 
 Private Sub SumKV(ws As Worksheet, r As Long, c As Long, lbl As String, _
@@ -954,227 +977,6 @@ Private Sub SumKV(ws As Worksheet, r As Long, c As Long, lbl As String, _
     End With
 End Sub
 
-' ================================================================
-'  DEEP ANALYSIS - Sector / Strategy / Currency / Technical
-'  Writes to a separate "Analysis" sheet, dark theme
-' ================================================================
-Sub DrawDeepAnalysis(wsP As Worksheet, posData() As Variant, _
-                     totalMkt As Double, totalCost As Double, _
-                     totalUnrl As Double, realPnL As Double)
-
-    ' --- Get or create Analysis sheet ---
-    Dim wsA As Worksheet
-    On Error Resume Next
-    Set wsA = ThisWorkbook.Sheets("Analysis")
-    On Error GoTo 0
-    If wsA Is Nothing Then
-        Set wsA = ThisWorkbook.Sheets.Add(After:=wsP)
-        wsA.Name = "Analysis"
-    End If
-
-    Call NavStrip(wsA)      ' nav bar rows off while the page is redrawn from row 1
-    wsA.cells.Clear
-    With wsA.cells
-        .Interior.Color = RGB(0, 0, 0)
-        .Font.Color = RGB(221, 221, 221)
-        .Font.Name = "Consolas"
-        .Font.Size = 36   ' sheet-wide default; every element below inherits this
-    End With
-    wsA.Activate
-    ActiveWindow.DisplayGridlines = False
-
-    ' With no positions the page stays empty - but it must still get its nav
-    ' bar back and hand the screen to RR4, or the user is left on a blank,
-    ' bar-less Analysis sheet whose NavOffset is then wrong.
-    Dim n As Long
-    n = PosCountOf(posData)
-    If n < 1 Then GoTo CleanExit
-
-    ' ------------------------------------------------------------
-    With wsA.cells(1, 1)
-        .Value = "DEEP ANALYSIS  -  " & Format(Now, "yyyy/mm/dd hh:mm")
-        .Font.Color = RGB(255, 192, 0)
-        .Font.Bold = True
-        .Font.Size = 36
-    End With
-    With wsA.Range(wsA.cells(2, 1), wsA.cells(2, 20))
-        .Interior.Color = RGB(255, 192, 0)
-        .RowHeight = 3
-    End With
-
-    ' ------------------------------------------------------------
-    Dim totalPnL As Double: totalPnL = totalUnrl + realPnL
-    Dim retPct   As Double
-    If totalCost > 0 Then retPct = totalPnL / totalCost
-
-    Dim r As Long: r = 4
-    wsA.cells(r, 1).Value = "RETURN SUMMARY"
-    wsA.cells(r, 1).Font.Color = RGB(255, 192, 0)
-    wsA.cells(r, 1).Font.Bold = True
-    r = r + 1
-
-    Call WriteKV(wsA, r, "Total Return %", retPct, "0.00%", True): r = r + 1
-    Call WriteKV(wsA, r, "Total Cost", totalCost, "$#,##0", False): r = r + 1
-    Call WriteKV(wsA, r, "Unrealized PnL", totalUnrl, "$#,##0", True): r = r + 1
-    Call WriteKV(wsA, r, "Realized PnL", realPnL, "$#,##0", True): r = r + 1
-    Call WriteKV(wsA, r, "Total PnL", totalPnL, "$#,##0", True): r = r + 1
-
-    ' ------------------------------------------------------------
-    r = r + 2
-    Dim sectorD   As Object: Set sectorD = CreateObject("Scripting.Dictionary")
-    Dim stratD    As Object: Set stratD = CreateObject("Scripting.Dictionary")
-    Dim currencyD As Object: Set currencyD = CreateObject("Scripting.Dictionary")
-
-    Dim i As Long
-    For i = 1 To n
-        Dim sec  As String: sec = CStr(posData(i, 7))
-        Dim cur  As String: cur = GetCurrencyType(CStr(posData(i, 2)))
-        Dim mv   As Double: mv = posData(i, 8)
-        Dim stg  As String
-        ' strategy stored in posData(i,2) ticker -> need from positions
-        ' use sector as proxy if strategy not in posData
-        stg = CStr(posData(i, 7))   ' fallback: sector
-
-        If sec <> "" Then If sectorD.Exists(sec) Then sectorD(sec) = sectorD(sec) + mv Else sectorD.Add sec, mv
-        If cur <> "" Then If currencyD.Exists(cur) Then currencyD(cur) = currencyD(cur) + mv Else currencyD.Add cur, mv
-    Next i
-
-    r = DrawAllocTable(wsA, r, "SECTOR ALLOCATION", sectorD, totalMkt)
-    r = r + 2
-    r = DrawAllocTable(wsA, r, "CURRENCY ALLOCATION", currencyD, totalMkt)
-
-    ' ------------------------------------------------------------
-    r = r + 2
-    wsA.cells(r, 1).Value = "TECHNICAL & HOLDING ANALYSIS"
-    wsA.cells(r, 1).Font.Color = RGB(255, 192, 0)
-    wsA.cells(r, 1).Font.Bold = True
-    r = r + 1
-
-    ' Header
-    Dim techHdrs As Variant
-    techHdrs = Array("TICKER", "NAME", "DAYS", "LAST", "HIGH DIST%", _
-                     "DAY CHG%", "BIAS5", "BIAS20", "BIAS60", "BIAS120", "BIAS240", "TREND")
-    Dim c As Integer
-    For c = 0 To UBound(techHdrs)
-        With wsA.cells(r, c + 1)
-            .Value = techHdrs(c)
-            .Font.Color = RGB(255, 192, 0)
-            .Font.Bold = True
-            .Interior.Color = RGB(10, 10, 10)
-            .HorizontalAlignment = xlCenter
-        End With
-    Next c
-    r = r + 1
-
-    ' Data rows
-    For i = 1 To n
-        Dim tkr   As String: tkr = CStr(posData(i, 2))
-        Dim nm    As String: nm = CStr(posData(i, 3))
-        Dim ddays As Long: ddays = posData(i, 5)
-
-        Dim rowBg As Long: rowBg = IIf(i Mod 2 = 1, RGB(15, 15, 15), RGB(22, 22, 22))
-        With wsA.Range(wsA.cells(r, 1), wsA.cells(r, 12))
-            .Interior.Color = rowBg
-            .HorizontalAlignment = xlCenter
-        End With
-
-        ' Get tech data from existing function
-        Dim tech As TechIndicators
-        tech = GetTechData(tkr)
-
-        wsA.cells(r, 1).Value = tkr
-        wsA.cells(r, 2).Value = nm
-        wsA.cells(r, 2).HorizontalAlignment = xlLeft
-        wsA.cells(r, 3).Value = ddays
-        wsA.cells(r, 4).Value = posData(i, 11)
-        wsA.cells(r, 4).NumberFormat = "#,##0.00"
-
-        If tech.Success Then
-            wsA.cells(r, 5).Value = tech.DistFromHigh
-            wsA.cells(r, 6).Value = tech.ChangePercent
-            wsA.cells(r, 7).Value = tech.Bias5
-            wsA.cells(r, 8).Value = tech.Bias20
-            wsA.cells(r, 9).Value = tech.Bias60
-            wsA.cells(r, 10).Value = tech.Bias120
-            wsA.cells(r, 11).Value = tech.Bias240
-
-            ' Colour each metric cell
-            Dim mc As Integer
-            For mc = 5 To 11
-                wsA.cells(r, mc).NumberFormat = "0.00%"
-                wsA.cells(r, mc).Font.Color = PnLColor(wsA.cells(r, mc).Value)
-            Next mc
-
-            ' Trend
-            If tech.Bias20 > 0 And tech.Bias60 > 0 Then
-                wsA.cells(r, 12).Value = "BULLISH"
-                wsA.cells(r, 12).Font.Color = RGB(255, 80, 80)
-            ElseIf tech.Bias20 < 0 And tech.Bias60 < 0 Then
-                wsA.cells(r, 12).Value = "BEARISH"
-                wsA.cells(r, 12).Font.Color = RGB(0, 210, 100)
-            Else
-                wsA.cells(r, 12).Value = "NEUTRAL"
-                wsA.cells(r, 12).Font.Color = RGB(200, 200, 200)
-            End If
-            wsA.cells(r, 12).Font.Bold = True
-        Else
-            wsA.cells(r, 5).Value = "N/A"
-        End If
-        r = r + 1
-    Next i
-
-CleanExit:
-    wsA.Columns("A:L").AutoFit
-    Call NavAdd(wsA, "A")   ' after AutoFit, so the long code lines do not widen A
-    wsP.Activate   ' return to main sheet
-End Sub
-
-' (2026-09-12) RebuildActiveXButtons removed with the buttons themselves -
-' the page is driven by typed nav commands now (modNav).
-
-' ------------------------------------------------------------
-Private Function DrawAllocTable(ws As Worksheet, startRow As Long, _
-                                  title As String, dict As Object, _
-                                  totalMkt As Double) As Long
-    Dim r As Long: r = startRow
-    ws.cells(r, 1).Value = title
-    ws.cells(r, 1).Font.Color = RGB(255, 192, 0)
-    ws.cells(r, 1).Font.Bold = True
-    r = r + 1
-
-    ' Header
-    ws.cells(r, 1).Value = "CATEGORY"
-    ws.cells(r, 2).Value = "VALUE"
-    ws.cells(r, 3).Value = "WEIGHT"
-    With ws.Range(ws.cells(r, 1), ws.cells(r, 3))
-        .Font.Bold = True
-        .Interior.Color = RGB(10, 10, 10)
-        .HorizontalAlignment = xlCenter
-        .Font.Color = RGB(255, 192, 0)
-    End With
-    r = r + 1
-
-    Dim key As Variant
-    Dim i   As Long: i = 0
-    For Each key In dict.keys
-        Dim rowBg As Long: rowBg = IIf(i Mod 2 = 0, RGB(15, 15, 15), RGB(22, 22, 22))
-        With ws.Range(ws.cells(r, 1), ws.cells(r, 3))
-            .Interior.Color = rowBg
-            .HorizontalAlignment = xlCenter
-        End With
-        ws.cells(r, 1).Value = key
-        ws.cells(r, 1).HorizontalAlignment = xlLeft
-        ws.cells(r, 2).Value = dict(key)
-        ws.cells(r, 2).NumberFormat = "$#,##0"
-        If totalMkt > 0 Then
-            ws.cells(r, 3).Value = dict(key) / totalMkt
-            ws.cells(r, 3).NumberFormat = "0.00%"
-        End If
-        r = r + 1: i = i + 1
-    Next key
-
-    DrawAllocTable = r
-End Function
 ' ================================================================
 '  Position log title (RR4_POS_TITLE) + column header row (RR4_POS_HDR)
 ' ================================================================
@@ -1642,6 +1444,86 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
         ' no data labels (v4.4) - hover shows ticker / WT%, the colour order
         ' matches the position log
         ser.HasDataLabels = False
+    End With
+End Sub
+
+' ================================================================
+'  REALIZED PNL LINE (v4.6) - under the weight donut, same width.
+'  One series: HistoryLog column D (cumulative realized PnL, TWD) against
+'  column A (date), rows 2..last. Points at the sheet cells, so the line
+'  follows whatever LogHistory / BackfillHistory write there.
+' ================================================================
+Private Sub DrawRealizedChart(ws As Worksheet)
+    Dim k As Long
+    For k = ws.ChartObjects.count To 1 Step -1
+        If ws.ChartObjects(k).Name = RR4_RLPNL_NAME Then ws.ChartObjects(k).Delete
+    Next k
+
+    Dim wsH As Worksheet
+    On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo 0
+    If wsH Is Nothing Then Exit Sub
+    Dim lastR As Long: lastR = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
+    If lastR < 3 Then Exit Sub          ' one point is not a line
+
+    ' same left / width as the donut, from the row under it to page row 26
+    Dim cL As Double, cT As Double, cW As Double, cH As Double
+    cL = ws.Columns(21).Left + 6
+    Dim donutT As Double: donutT = ws.cells(RR4_TOP + 1, RR4_LEFT + 21).Top + 2
+    Dim donutH As Double: donutH = ws.cells(RR4_TOP + 14, RR4_LEFT + 21).Top - donutT
+    If donutH < 60 Then donutH = 60
+    cW = donutH * 1.5
+    cT = ws.cells(RR4_TOP + 15, RR4_LEFT + 21).Top + 4
+    cH = ws.cells(RR4_TOP + 27, RR4_LEFT + 21).Top - cT
+    If cH < 80 Then cH = 80
+
+    Dim co As ChartObject
+    Set co = ws.ChartObjects.Add(cL, cT, cW, cH)
+    co.Name = RR4_RLPNL_NAME
+    co.Placement = xlMove
+    With co.Chart
+        .ChartType = xlLine
+        Do While .SeriesCollection.count > 0
+            .SeriesCollection(1).Delete
+        Loop
+        Dim ser As Series
+        Set ser = .SeriesCollection.NewSeries
+        ser.Name = "REALIZED PNL"
+        ser.Values = wsH.Range(wsH.cells(2, 4), wsH.cells(lastR, 4))
+        ser.XValues = wsH.Range(wsH.cells(2, 1), wsH.cells(lastR, 1))
+        ser.Format.Line.ForeColor.RGB = RR4_ACCENT
+        ser.Format.Line.Weight = 1.5
+        ser.MarkerStyle = xlMarkerStyleNone
+        ser.Smooth = False
+
+        .HasLegend = False
+        .HasTitle = True
+        .ChartTitle.Text = "REALIZED PNL"
+        .ChartTitle.Font.Name = "Consolas"
+        .ChartTitle.Font.Size = 9
+        .ChartTitle.Font.Bold = True
+        .ChartTitle.Font.Color = RR4_ACCENT
+        .ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        .ChartArea.Format.Line.Visible = msoFalse
+        .PlotArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+
+        With .Axes(xlCategory)
+            .CategoryType = xlTimeScale
+            .TickLabels.NumberFormat = "m/d"
+            .TickLabels.Font.Name = "Consolas"
+            .TickLabels.Font.Size = 7
+            .TickLabels.Font.Color = RGB(150, 150, 150)
+            .Format.Line.ForeColor.RGB = RR4_LINE
+            .MajorGridlines.Delete
+        End With
+        With .Axes(xlValue)
+            .TickLabels.NumberFormat = "#,##0"
+            .TickLabels.Font.Name = "Consolas"
+            .TickLabels.Font.Size = 7
+            .TickLabels.Font.Color = RGB(150, 150, 150)
+            .Format.Line.Visible = msoFalse
+            .HasMajorGridlines = True
+            .MajorGridlines.Format.Line.ForeColor.RGB = RGB(30, 30, 30)
+        End With
     End With
 End Sub
 
@@ -2142,7 +2024,7 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
             ' d(11) holds an object (the FIFO lot Collection); an object
             ' assignment needs Set - a plain Let-assign raises run-time
             ' error 450 (invalid property assignment) and aborts the whole
-            ' dashboard rebuild before DrawDeepAnalysis ever runs.
+            ' dashboard rebuild before the page is drawn.
             Set d(11) = lots
 
             dict(posKey) = d

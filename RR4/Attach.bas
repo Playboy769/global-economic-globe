@@ -1064,7 +1064,7 @@ Sub RunSystemDebug()
 
     Dim sheetNames As Variant
     sheetNames = Array("RR4", "Transactions", "Realized", "HistoryLog", _
-                       "Analysis", "HoldingsCorr", "Correlation", _
+                       "HoldingsCorr", "Correlation", _
                        "DrawdownChart", "DebugLog")
     Dim sn As Variant
     For Each sn In sheetNames

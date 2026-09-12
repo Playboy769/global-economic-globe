@@ -13,7 +13,7 @@ Option Explicit
 '  Type a code into that grey cell and press Enter; Workbook_SheetChange
 '  hands it to RunNavCommand, which clears the cell again.
 '
-'  Pages   P RR4 . R Realized . T Transactions . H HistoryLog . A Analysis
+'  Pages   P RR4 . R Realized . T Transactions . H HistoryLog
 '          V Volatility180D . VT Tickers Volatility . D DrawdownChart
 '          C HoldingsCorr . CC Correlation . CR Company research
 '  Actions UP update dashboard . ADD / DEL trade forms . V! D! C! recalc
@@ -24,7 +24,7 @@ Option Explicit
 '  Which pages carry the bar:
 '    RR4 reserves rows 1-3 in its own layout (PortfolioDashboard_v3,
 '    RR4_TOP) and draws the bar itself.
-'    A / V / VT / D / C / CC are drawn from row 1 by their own routines,
+'    V / VT / D / C / CC are drawn from row 1 by their own routines,
 '    so those routines call NavStrip first (delete the 3 rows when they
 '    are there) and NavAdd last (insert 3 rows, draw the bar). A hidden
 '    sheet-level name RR4NAV marks a page that currently carries the rows,
@@ -63,7 +63,6 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "R":  NavSheetName = "Realized"
         Case "T":  NavSheetName = "Transactions"
         Case "H":  NavSheetName = "HistoryLog"
-        Case "A":  NavSheetName = "Analysis"
         Case "V":  NavSheetName = "Volatility180D"
         Case "VT": NavSheetName = "Tickers Volatility"
         Case "D":  NavSheetName = "DrawdownChart"
@@ -77,7 +76,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "A", "V", "VT", "D", "C", "CC")
+    For Each c In Array("P", "V", "VT", "D", "C", "CC")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -214,7 +213,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     ' row 2: pages
     Dim pages As Variant
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
-                  "A", "ANALYSIS", "V", "VOL", "VT", "TKRVOL", "D", "DRAWDOWN", _
+                  "V", "VOL", "VT", "TKRVOL", "D", "DRAWDOWN", _
                   "C", "HOLDCORR", "CC", "SECTORCORR", "CR", "RESEARCH")
     Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RR4_ACCENT)
 
@@ -320,7 +319,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "R", "T", "H", "A", "V", "VT", "D", "C", "CC", "CR"
+        Case "P", "R", "T", "H", "V", "VT", "D", "C", "CC", "CR"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
