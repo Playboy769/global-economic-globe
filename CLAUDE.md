@@ -263,6 +263,44 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 > 依舊——這次就是靠實跑才抓到「`Public Const` 放在程序之間」的編譯錯誤（VBA 要求模組層級
 > 宣告必須在所有程序之前），而 build 照樣印 SUCCESS。
 
+#### RR4 投組儀表板慣例（2026-09-12 起，nav bar v1 ＋ 頁面版面 v4.2）
+
+`RR4/*.bas` 是匯出的原始碼真相；活頁簿本體在 `Desktop\Portfolio\Compound RR4 Portfolio 2026 H2.xlsm`
+（不在 repo）。改完 `.bas` 要用 COM `CodeModule` 注入回活頁簿才生效，注入前先跑
+`python RR4/lint-vba.py RR4/*.bas`（抓「模組層級宣告放在程序之後」這類 build 不會報、
+隱藏 Excel 會卡死的編譯錯誤）。
+
+- **ActiveX 按鈕已全部移除，改成打字導覽列（`modNav.bas`）**：每個*報表頁* rows 1–3 是
+  bar，在灰色格（B1，**RR4 頁是 C1**）打代碼＋Enter，`ThisWorkbook.Workbook_SheetChange`
+  轉給 `RunNavCommand`。頁面碼 P/R/T/H/A/V/VT/D/C/CC/CR，動作碼 UP/ADD/DEL/V!/D!/C!/DBG/
+  CLEARALL；跳頁不重算，只有 `!` 碼會重算。
+  - **資料頁（Realized/Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
+    模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。
+  - A/V/VT/D/C/CC 各自的繪製程序從第 1 列開始畫，所以進場先 `NavStrip(ws)`、收尾
+    （含提早 exit 的路徑）`NavAdd(ws, code)`；隱藏的工作表層級名稱 `RR4NAV` 標記
+    「目前有那 3 列」，靠它避免重畫時疊出第二條 bar。VT/CC 的打字輸入格用
+    `NavOffset` 定位（B2 → 有 bar 時是 B5）。
+  - Strip/Add 前會把所有 shape 設成 `xlMove`：預設 `xlMoveAndSize` 會讓 DrawdownChart
+    那張錨在第 1 列的圖每次縮一圈。
+  - **收尾訊息一律 `NavNotify(msg, isErr)`（狀態列＋頁面狀態行），不再 MsgBox**；只有
+    真正的錯誤與 CLEARALL 的 Yes/No 確認保留 MsgBox。
+- **RR4 頁版面 v4.2（`PortfolioDashboard_v3.bas` 檔頭有完整表）**：`RR4_TOP = 3`（bar）、
+  `RR4_LEFT = 1`（A 欄留白）。總值 B4、USD/TWD 輸入 C5、ARRANGE 輸入 E5、設定格 T1/T2
+  （`InceptionDate`/`StartingCapital` 兩個名稱由 `PointConfigNames` 重新指向；舊 S1/S2
+  會被一次性搬過來）、持倉表 標題/表頭/資料 = 27/28/29 列、隱藏排序鍵 V 欄。
+  Ticker panel（`TickerInsight.bas`）已併進同一張表的 J:S、rows 4–26，輸入格 K4（代號）
+  / L20（目標價）、追蹤格 X1——獨立的「Ticker Insight」工作表已不存在。
+  **其他模組讀 RR4 頁一律透過 `RR4_*` 常數／`RR4FxRate()`／`RR4PositionCount()`，禁止
+  寫死位址**（Attach.bas 舊的 `C22`/`A1`/`B2` 全在搬版後讀錯格）。`ResetSheetStyle`
+  會清整張表，所有手打值（FX、ARRANGE 碼、SWING RISK Q 欄、panel 的代號/目標價、T1/T2）
+  要在清除**前**讀出、之後寫回。
+- **ARRANGE 碼** UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF：只重排已在表上的列、不重抓價；
+  權重橫條（`RR4W_*` shapes）與甜甜圈圖（`RR4_DONUT`）每次 arrange 都重建。DEF 排序曾
+  觸發「`Range.Sort` Key1=Key2 → 存檔後永遠打不開」，`ApplyArrange` 已只在鍵不同時才傳 Key2。
+- **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
+  （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
+  工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
+
 ## Deployment topology (this is the part that bites)
 
 There are **eight separate Railway deployments** sourced from **five separate git repos**, plus
