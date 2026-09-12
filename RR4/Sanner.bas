@@ -63,6 +63,14 @@ Public Const SCAN_ROW_H        As Double = 20
 Public Const DB_FIRST_COL      As Long = 13         ' M
 Public Const DB_BLOCK_COLS     As Long = 3
 Public Const DB_BLOCKS         As Long = 4
+' The panel is WIPED wider than it is WRITTEN, out to this column. Every
+' time the layout narrows, the tail of the previous one is left sitting on
+' the sheet next to the new blocks: v3 used 4 columns per block and reached
+' AA, so after v4 went to 3 columns an old "TW (cont.)" block with its
+' TICKERS list stayed visible in X:AA. Clearing to a fixed generous edge
+' costs nothing (rows 1..SCAN_LAST_ROW are the panel's alone - the
+' deep-dive band starts at row 40) and makes the next narrowing self-clean.
+Public Const DB_CLEAR_LAST_COL As Long = 30         ' AD
 
 ' Scan table columns (C..K). SECTOR stays last: RebuildGroupDb reads it to
 ' highlight the groups shown in the current scan.
@@ -608,9 +616,9 @@ Sub RebuildGroupDb()
     On Error GoTo 0
     If ws Is Nothing Then Exit Sub
 
-    Dim lastCol As Long: lastCol = DB_FIRST_COL + DB_BLOCK_COLS * DB_BLOCKS - 2
-    ' start one column early so the spacer is cleared and painted too
-    With ws.Range(ws.cells(1, DB_FIRST_COL - 1), ws.cells(SCAN_LAST_ROW, lastCol))
+    ' One column earlier so the spacer is cleared and painted too, and out to
+    ' DB_CLEAR_LAST_COL so a previous, wider layout leaves nothing behind.
+    With ws.Range(ws.cells(1, DB_FIRST_COL - 1), ws.cells(SCAN_LAST_ROW, DB_CLEAR_LAST_COL))
         .Clear
         .Interior.Color = RGB(0, 0, 0)
         .Font.Name = "Consolas"
@@ -621,6 +629,13 @@ Sub RebuildGroupDb()
     End With
 
     ws.Columns(DB_FIRST_COL - 1).ColumnWidth = 3      ' the spacer
+    ' columns past the last block keep the width an older, wider panel gave
+    ' them (v3's 40-wide TICKERS columns), which leaves a visible gap
+    Dim lastCol As Long: lastCol = DB_FIRST_COL + DB_BLOCK_COLS * DB_BLOCKS - 2
+    Dim cx As Long
+    For cx = lastCol + 1 To DB_CLEAR_LAST_COL
+        ws.Columns(cx).ColumnWidth = 9
+    Next cx
 
     ' Groups visible in the current scan (SECTOR column) get highlighted
     Dim active As Object: Set active = CreateObject("Scripting.Dictionary")
