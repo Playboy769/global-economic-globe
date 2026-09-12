@@ -4,7 +4,9 @@
 API 端點: https://www.moomoo.com/quote-api/quote-v2/get-plate-list
 
 用法:
-    python fetch_moomoo_plate_list.py
+    python fetch_moomoo_plate_list.py                 # 產業＋概念都抓
+    python fetch_moomoo_plate_list.py --only industry # 只抓產業（或 concept）
+  已存在的 CSV 裡若某分類已抓齊，會自動跳過那個分類，只補缺的；被限流後再跑不必從頭來。
 
 輸出:
     moomoo_us_plate_list.csv  (plateType, plateCode, plateName, plateEnName, plateId, leaderStock)
@@ -26,6 +28,7 @@ API 端點: https://www.moomoo.com/quote-api/quote-v2/get-plate-list
 - 請勿高頻或大量重複呼叫，僅供個人查詢使用。
 """
 
+import argparse
 import csv
 import hashlib
 import hmac
@@ -164,6 +167,19 @@ def fetch_plate_type(sess: requests.Session, plate_type: int, label: str, on_pag
     return rows
 
 
+def read_existing():
+    """讀取上一次留下的 CSV，回傳 {分類: rows}；沒有檔案就回空 dict。"""
+    try:
+        with open(OUT_PATH, newline="", encoding="utf-8-sig") as f:
+            rows = list(csv.DictReader(f))
+    except FileNotFoundError:
+        return {}
+    by_type = {}
+    for r in rows:
+        by_type.setdefault(r["plateType"], []).append(r)
+    return by_type
+
+
 def write_csv(rows):
     with open(OUT_PATH, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
@@ -172,21 +188,42 @@ def write_csv(rows):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--only", choices=sorted(PLATE_TYPES.values()),
+                    help="只抓這一個分類（industry / concept）")
+    ap.add_argument("--fresh", action="store_true", help="忽略既有 CSV，全部重抓")
+    args = ap.parse_args()
+
+    existing = {} if args.fresh else read_existing()
+    for label, rows in list(existing.items()):
+        if len(rows) % PAGE_SIZE == 0:
+            # 剛好是整頁倍數，可能是上次抓到一半被擋；保守起見重抓這一類
+            print(f"既有 CSV 的 [{label}] {len(rows)} 筆可能不完整，本次重抓")
+            del existing[label]
+        else:
+            print(f"既有 CSV 已有 [{label}] {len(rows)} 筆，本次跳過")
+
+    todo = {t: l for t, l in PLATE_TYPES.items()
+            if (args.only is None or l == args.only) and l not in existing}
+    if not todo:
+        print("沒有需要抓的分類。要全部重抓請加 --fresh。")
+        return
+
     sess = warm_up()
-    rows = []
-    for plate_type, label in PLATE_TYPES.items():
-        rows.extend(fetch_plate_type(sess, plate_type, label))
+    done = []  # 已完成的分類（含既有 CSV 裡的）
+    for label in PLATE_TYPES.values():
+        done.extend(existing.get(label, []))
 
-    out_path = "moomoo_us_plate_list.csv"
-    with open(out_path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=["plateType", "plateCode", "plateName", "plateEnName", "plateId", "leaderStock"],
-        )
-        writer.writeheader()
-        writer.writerows(rows)
+    def flush(partial):
+        # 每抓完一頁就整份重寫，中途被擋也留得住已抓到的資料
+        write_csv(done + partial)
 
-    print(f"\n完成！共 {len(rows)} 筆，已存成 {out_path}")
+    for plate_type, label in todo.items():
+        done.extend(fetch_plate_type(sess, plate_type, label, on_page=flush))
+
+    write_csv(done)
+    print()
+    print(f"完成！共 {len(done)} 筆，已存成 {OUT_PATH}")
 
 
 if __name__ == "__main__":
