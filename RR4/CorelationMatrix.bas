@@ -170,7 +170,7 @@ Sub BuildCorrelationMatrix()
     wsC.Columns(2).ColumnWidth = 7
     wsC.Columns(3).ColumnWidth = 1
     For i = 0 To nSec - 1
-        wsC.Columns(MATRIX_COL + i).ColumnWidth = 6.5
+        wsC.Columns(MATRIX_COL + i).ColumnWidth = 7.5     ' fits a 7-char label horizontally
     Next i
     wsC.Columns(MATRIX_COL + nSec).ColumnWidth = 1
     wsC.Columns(MATRIX_COL + nSec + 1).ColumnWidth = 8
@@ -194,20 +194,19 @@ Sub BuildCorrelationMatrix()
             .Font.Bold = True
             .Interior.Color = RGB(10, 10, 10)
             .HorizontalAlignment = xlCenter
-            .Orientation = 90
-            .VerticalAlignment = xlBottom
+            .Font.Size = 7
         End With
     Next i
-    wsC.Rows(MATRIX_ROW).RowHeight = 46
+    wsC.Rows(MATRIX_ROW).RowHeight = 20
     With wsC.cells(MATRIX_ROW, MATRIX_COL + nSec + 1)
-        .Value = "AVG CORR"
+        .Value = "AVG"
         .Font.Color = RR4_ACCENT: .Font.Bold = True: .Interior.Color = RGB(10, 10, 10)
-        .HorizontalAlignment = xlCenter: .Orientation = 90: .VerticalAlignment = xlBottom
+        .HorizontalAlignment = xlCenter: .Font.Size = 7
     End With
     With wsC.cells(MATRIX_ROW, MATRIX_COL + nSec + 2)
         .Value = "vs SPY"
         .Font.Color = RR4_ACCENT: .Font.Bold = True: .Interior.Color = RGB(10, 10, 10)
-        .HorizontalAlignment = xlCenter: .Orientation = 90: .VerticalAlignment = xlBottom
+        .HorizontalAlignment = xlCenter: .Font.Size = 7
     End With
     With wsC.Range(wsC.cells(MATRIX_ROW, 1), wsC.cells(MATRIX_ROW, lastCol)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
@@ -463,9 +462,8 @@ Sub BuildCorrelationMatrix()
 
     Application.ScreenUpdating = True
     Call NavAdd(wsC, "CC")
-    ' freeze labels + header AFTER the bar is on (the bar shifts rows by 3)
-    wsC.cells(MATRIX_ROW + 1 + NavOffset(wsC), MATRIX_COL).Select
-    ActiveWindow.FreezePanes = True
+    ' no frozen panes on this page (2026-09-12) - the FreezePanes = False at
+    ' the top also clears any left over from the v1 layout
     wsC.cells(1, 1).Select
     Application.EnableEvents = prevEv
     Call NavNotify("CC done - " & nSec & " ETFs, " & nDays & " days")

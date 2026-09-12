@@ -331,7 +331,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `TICKER_CATEGORY` 分 SEMI / AI-TECH / INDEX-FACTOR / SECTOR SPDR / COMMODITY / SINGLE INDUSTRY /
   BENCHMARK 分組（`SectorList()`，**config 改了要手動同步**）。RR4 配色、連續熱圖（共用
   `CorrHeatBg/Fg`，已改 Public）、AVG CORR 與 vs SPY 欄、組內平均相關、跨組 top/bottom 6 對、
-  算法註解。DAYS 輸入格 B2（有 bar 時 B5）。**建置期間必須 `EnableEvents=False`**：寫 DAYS 格
+  算法註解。DAYS 輸入格 B2（有 bar 時 B5）。**不用凍結窗格**、表頭橫排（使用者指定）。**建置期間必須 `EnableEvents=False`**：寫 DAYS 格
   會觸發 `SheetCorrelation` 的 `Worksheet_Change` 重入呼叫自己，內層插了 bar 列、外層照舊座標
   繼續寫，整頁錯位——已修，別拿掉那段。
 - **Company research（CR）頁 v3 版面（2026-09-12）**：`A1:B3` 輸入條（B1 GROUP 下拉／B2 TICKER／
