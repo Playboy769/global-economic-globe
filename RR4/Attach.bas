@@ -36,6 +36,8 @@ Public Const REAL_CAP_COL  As Long = 11   ' hand-typed Caption (page column K)
 Public Const REAL_LOAN_COL As Long = 12   ' hand-typed LOAN Distribution header (page column L)
 ' Transactions page (page coordinates; see TrHdrRow / TrCol below)
 Public Const TR_NCOL       As Long = 14   ' A Transaction_ID .. N Broker
+' HistoryLog page (page coordinates; see HistHdrRow / HistCol below)
+Public Const HIST_NCOL     As Long = 13   ' A Date .. M YTD Ret% (SOX)
 
 Function GetCompanyName(Ticker As String) As String
     Dim url As String, http As Object, response As String
@@ -599,6 +601,25 @@ Public Function TrLastRow(ByVal ws As Worksheet) As Long
     If TrLastRow < TrHdrRow(ws) Then TrLastRow = TrHdrRow(ws)
 End Function
 
+' ================================================================
+' HistoryLog page geometry (2026-09-13): page code H carries the nav bar
+' too. Page layout "header row 1, data from row 2, A:M" in page
+' coordinates; PortfolioDashboard_v3 (owner of the log) and the readers
+' here go through these three.
+' ================================================================
+Public Function HistHdrRow(ByVal ws As Worksheet) As Long
+    HistHdrRow = 1 + NavOffset(ws)
+End Function
+
+Public Function HistCol(ByVal ws As Worksheet, ByVal n As Long) As Long
+    HistCol = n + NavLeft(ws)
+End Function
+
+Public Function HistLastRow(ByVal ws As Worksheet) As Long
+    HistLastRow = ws.Cells(ws.Rows.Count, HistCol(ws, 1)).End(xlUp).Row
+    If HistLastRow < HistHdrRow(ws) Then HistLastRow = HistHdrRow(ws)
+End Function
+
 ' One-off move of Transactions onto the nav-bar layout: drop the old
 ' AutoFilter (its stale _FilterDatabase name pointed at C1:C528) so the
 ' inserted rows do not drag a half-height filter along, then let NavAdd
@@ -901,9 +922,10 @@ Sub ClearAllData()
                                                      wsReal.Cells(LR, RealCol(wsReal, REAL_CAP_COL))).ClearContents
     End If
     If Not wsHist Is Nothing Then
-        ' Layout v2 runs A:M; P1:R6 (YTD baselines) and Z3 (token) stay put
-        LR = wsHist.Cells(wsHist.Rows.Count, "A").End(xlUp).Row
-        If LR > 1 Then wsHist.Range("A2:M" & LR).ClearContents
+        ' page A:M (YTD baselines live on HistoryRaw, untouched)
+        LR = HistLastRow(wsHist)
+        If LR > HistHdrRow(wsHist) Then wsHist.Range(wsHist.Cells(HistHdrRow(wsHist) + 1, HistCol(wsHist, 1)), _
+                                                     wsHist.Cells(LR, HistCol(wsHist, HIST_NCOL))).ClearContents
     End If
 
     Call NavNotify("CLEARALL done - all data cleared")
@@ -1135,14 +1157,15 @@ Sub RunSystemDebug()
     Dim wsH As Worksheet
     On Error Resume Next: Set wsH = ThisWorkbook.Sheets("HistoryLog"): On Error GoTo 0
     If Not wsH Is Nothing Then
-        Dim hlLR As Long: hlLR = wsH.Cells(wsH.Rows.Count, "A").End(xlUp).Row
-        Dim hlCount As Long: hlCount = hlLR - 1
+        Dim hlLR As Long: hlLR = HistLastRow(wsH)
+        Dim hlH As Long: hlH = HistHdrRow(wsH)
+        Dim hlCount As Long: hlCount = hlLR - hlH
         Call DB_Row(wsDB, wr, "HistoryLog", "Total rows", "INFO", hlCount & " records", RGB(255, 192, 0))
         wr = wr + 1
 
-        If hlLR >= 2 Then
-            Dim lastLogTime As Variant: lastLogTime = wsH.Cells(hlLR, "A").Value
-            Dim lastLogMkt As Variant: lastLogMkt = wsH.Cells(hlLR, "B").Value
+        If hlLR > hlH Then
+            Dim lastLogTime As Variant: lastLogTime = wsH.Cells(hlLR, HistCol(wsH, 1)).Value
+            Dim lastLogMkt As Variant: lastLogMkt = wsH.Cells(hlLR, HistCol(wsH, 2)).Value
 
             Dim timeDiff As Double
             If IsDate(lastLogTime) Then
@@ -1177,8 +1200,8 @@ Sub RunSystemDebug()
             ' Layout v2: F/H/J/L = index prices, G/I/K/M = YTD Ret%.
             ' Count rows where the SPY price actually got logged - a blank
             ' there means the Yahoo fetch failed (blank is written, not 0).
-            Dim pxLR As Long: pxLR = wsH.Cells(wsH.Rows.Count, "F").End(xlUp).Row
-            Dim pxCount As Long: pxCount = pxLR - 1
+            Dim pxLR As Long: pxLR = wsH.Cells(wsH.Rows.Count, HistCol(wsH, 6)).End(xlUp).Row
+            Dim pxCount As Long: pxCount = pxLR - hlH
             Call DB_Row(wsDB, wr, "HistoryLog", "Index price rows (Col F, SPY)", _
                 IIf(pxCount > 0, "OK", "ERROR"), pxCount & " rows", _
                 IIf(pxCount > 0, RGB(0, 210, 100), RGB(255, 80, 80)))

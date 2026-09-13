@@ -134,6 +134,7 @@ Sub RebuildPortfolioDashboard()
     Set wsR = ThisWorkbook.Sheets(SH_REAL)
     Call MigrateRR4TopRow(wsP)          ' v4.13: one-time shift onto the blank-row-1 layout (before any read)
     Call MigrateTransactionsNav         ' 2026-09-13: Transactions carries the bar too (no-op once it does)
+    Call MigrateHistoryLogNav           ' 2026-09-13: and HistoryLog (no-op once it does)
     Call DrawTransactionsHeader(wsTr)   ' header in the RR4 palette + AutoFilter over the table
 
     If Not g_PriceCache Is Nothing Then
@@ -270,13 +271,38 @@ Private Function HistTickers() As Variant
     HistTickers = Array("SPY", "QQQ", "^TWII", "^SOX")
 End Function
 
+' PAGE columns (A=1); the sheet column is HistCol(wsH, n) - the page
+' carries the nav bar since 2026-09-13 (blank row 1 / column A, bar 2-4).
 Private Function HistPriceCols() As Variant
-    HistPriceCols = Array("F", "H", "J", "L")
+    HistPriceCols = Array(6, 8, 10, 12)          ' F H J L
 End Function
 
 Private Function HistRetCols() As Variant
-    HistRetCols = Array("G", "I", "K", "M")
+    HistRetCols = Array(7, 9, 11, 13)            ' G I K M
 End Function
+
+' One-off move of HistoryLog onto the nav-bar layout. NavAdd inserts the
+' blank row / column and the bar; before that the leftovers the owner
+' chose to drop go: the #DIV/0! "(O-$O$2)/$O$2" formulas + one stranded
+' note in page columns Q:R, the hand-typed X1:X2 pair, and the two "=0"
+' conditional formats on H:L. Every formula row is then rewritten by
+' WriteHistoryRowFormulas so the sheet matches what LogHistory produces.
+' No-op once the bar is there.
+Private Sub MigrateHistoryLogNav()
+    Dim wsH As Worksheet
+    On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo 0
+    If wsH Is Nothing Then Exit Sub
+    If NavHasRows(wsH) Then Exit Sub
+    On Error Resume Next
+    wsH.Cells.FormatConditions.Delete
+    wsH.Range(wsH.Columns(HIST_NCOL + 1), wsH.Columns(HIST_NCOL + 13)).Clear     ' page N:Z
+    On Error GoTo 0
+    Call NavAdd(wsH, "H")
+    Dim r As Long
+    For r = HistHdrRow(wsH) + 1 To HistLastRow(wsH)
+        Call WriteHistoryRowFormulas(wsH, r)
+    Next r
+End Sub
 
 Private Sub LogHistory(totalMkt As Double, totalPnL As Double, realPnL As Double)
     Dim wsH As Worksheet
@@ -288,24 +314,25 @@ Private Sub LogHistory(totalMkt As Double, totalPnL As Double, realPnL As Double
     Call EnsureHistoryHeaders(wsH)
     Call EnsureYTDBaselines(False)
 
-    Dim nr As Long: nr = wsH.cells(wsH.Rows.count, "A").End(xlUp).row + 1
-    If nr > 2 Then
+    Dim hc As Long: hc = NavLeft(wsH)              ' page column n -> sheet column hc + n
+    Dim nr As Long: nr = HistLastRow(wsH) + 1
+    If nr > HistHdrRow(wsH) + 1 Then
         ' guard the date: text or an error value in column A used to abort the
         ' whole rebuild here, after the page had already been drawn
-        Dim lastStamp As Variant: lastStamp = wsH.cells(nr - 1, 1).Value
+        Dim lastStamp As Variant: lastStamp = wsH.cells(nr - 1, hc + 1).Value
         If IsDate(lastStamp) Then
             If Int(CDate(lastStamp)) = Date Then nr = nr - 1
         End If
     End If
 
     With wsH
-        .cells(nr, "A").Value = Now
-        .cells(nr, "B").Value = totalMkt
-        .cells(nr, "C").Value = totalPnL
-        .cells(nr, "D").Value = realPnL
+        .cells(nr, hc + 1).Value = Now
+        .cells(nr, hc + 2).Value = totalMkt
+        .cells(nr, hc + 3).Value = totalPnL
+        .cells(nr, hc + 4).Value = realPnL
 
-        .cells(nr, "A").NumberFormat = "yyyy/m/d h:mm:ss"
-        .Range("B" & nr & ":D" & nr).NumberFormat = "#,##0"
+        .cells(nr, hc + 1).NumberFormat = "yyyy/m/d h:mm:ss"
+        .Range(.cells(nr, hc + 2), .cells(nr, hc + 4)).NumberFormat = "#,##0"
     End With
 
     Dim tickers As Variant, priceCols As Variant
@@ -319,12 +346,12 @@ Private Sub LogHistory(totalMkt As Double, totalPnL As Double, realPnL As Double
         px = GetStockPrice(CStr(tickers(i)))
         On Error GoTo 0
         If px > 0 Then
-            wsH.cells(nr, priceCols(i)).Value = px
+            wsH.cells(nr, hc + priceCols(i)).Value = px
         Else
             ' download failed - leave the cell blank instead of logging a 0
-            wsH.cells(nr, priceCols(i)).ClearContents
+            wsH.cells(nr, hc + priceCols(i)).ClearContents
         End If
-        wsH.cells(nr, priceCols(i)).NumberFormat = "#,##0.00"
+        wsH.cells(nr, hc + priceCols(i)).NumberFormat = "#,##0.00"
     Next i
 
     Call WriteHistoryRowFormulas(wsH, nr)
@@ -374,9 +401,9 @@ Public Sub RebuildRealizedHistory(Optional ByVal wsH As Worksheet = Nothing)
         Next r
     End If
 
-    Dim lastH As Long: lastH = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
-    For r = 2 To lastH
-        Dim hv As Variant: hv = wsH.cells(r, "A").Value
+    Dim lastH As Long: lastH = HistLastRow(wsH)
+    For r = HistHdrRow(wsH) + 1 To lastH
+        Dim hv As Variant: hv = wsH.cells(r, HistCol(wsH, 1)).Value
         If IsDate(hv) Then
             Dim dayN As Long: dayN = Int(CDbl(CDate(hv)))
             Dim cum As Double: cum = 0
@@ -384,14 +411,16 @@ Public Sub RebuildRealizedHistory(Optional ByVal wsH As Worksheet = Nothing)
             For k = 1 To n
                 If exD(k) <= dayN Then cum = cum + exP(k)
             Next k
-            If Abs(NumOr0(wsH.cells(r, "D").Value) - cum) > 0.005 Then wsH.cells(r, "D").Value = cum
+            If Abs(NumOr0(wsH.cells(r, HistCol(wsH, 4)).Value) - cum) > 0.005 Then wsH.cells(r, HistCol(wsH, 4)).Value = cum
         End If
     Next r
 End Sub
 
-' Header row - rewritten every run so the layout stays self-describing.
-' Only A1:M1 plus the P1:R6 baseline block are touched; column Z is left alone.
+' Header row - rewritten every run so the layout stays self-describing
+' (page A1:M1; RR4 palette since 2026-09-13, and the nav bar repainted).
 Private Sub EnsureHistoryHeaders(wsH As Worksheet)
+    Call NavAdd(wsH, "H")
+    Dim r0 As Long: r0 = HistHdrRow(wsH)
     Dim hdr As Variant
     hdr = Array("Date", "TotalMarketValue", "TotalCumulativePnL", _
                 "Realized PnL", "Realized PnL Daily Chg%", _
@@ -401,10 +430,21 @@ Private Sub EnsureHistoryHeaders(wsH As Worksheet)
                 "Price (SOX)", "YTD Ret% (SOX)")
     Dim i As Long
     For i = LBound(hdr) To UBound(hdr)
-        If CStr(wsH.cells(1, i + 1).Value) <> CStr(hdr(i)) Then
-            wsH.cells(1, i + 1).Value = hdr(i)
-        End If
+        With wsH.cells(r0, HistCol(wsH, i + 1))
+            If CStr(.Value) <> CStr(hdr(i)) Then .Value = hdr(i)
+            .Font.Color = RR4_ACCENT
+            .Font.Bold = True
+            .Font.Size = 9
+            .Font.Name = "Consolas"
+            .Interior.Color = RGB(10, 10, 10)
+            .HorizontalAlignment = xlCenter
+        End With
     Next i
+    With wsH.Range(wsH.cells(r0, HistCol(wsH, 1)), wsH.cells(r0, HistCol(wsH, HIST_NCOL))).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
 End Sub
 
 ' The HistoryRaw sheet, created on first use.
@@ -479,10 +519,10 @@ Private Sub WriteHistoryRowFormulas(wsH As Worksheet, r As Long)
     priceCols = HistPriceCols()
     retCols = HistRetCols()
 
-    Dim i As Long, pc As String, rc As String, bc As String
+    Dim i As Long, pc As String, rc As Long, bc As String
     For i = LBound(retCols) To UBound(retCols)
-        pc = priceCols(i) & r
-        rc = retCols(i)
+        pc = wsH.cells(r, HistCol(wsH, priceCols(i))).Address(False, False)   ' sheet address of the page cell
+        rc = HistCol(wsH, retCols(i))
         ' each index divides by its OWN baseline on the raw-data sheet
         bc = SH_HRAW & "!$C$" & (HL_BASE_ROW + i)
         wsH.cells(r, rc).Formula = "=IFERROR(IF(" & pc & "="""","""",(" & pc & "-" & bc & ")/" & bc & "),"""")"
@@ -490,12 +530,15 @@ Private Sub WriteHistoryRowFormulas(wsH As Worksheet, r As Long)
     Next i
 
     ' Realized PnL daily change - "-" instead of #DIV/0! while realized PnL is 0
-    If r > 2 Then
-        wsH.cells(r, "E").Formula = "=IFERROR((D" & r & "-D" & (r - 1) & ")/ABS(D" & (r - 1) & "),""-"")"
+    Dim eCol As Long: eCol = HistCol(wsH, 5)
+    If r > HistHdrRow(wsH) + 1 Then
+        Dim dNow As String: dNow = wsH.cells(r, HistCol(wsH, 4)).Address(False, False)
+        Dim dPrev As String: dPrev = wsH.cells(r - 1, HistCol(wsH, 4)).Address(False, False)
+        wsH.cells(r, eCol).Formula = "=IFERROR((" & dNow & "-" & dPrev & ")/ABS(" & dPrev & "),""-"")"
     Else
-        wsH.cells(r, "E").Formula = "=""-"""
+        wsH.cells(r, eCol).Formula = "=""-"""
     End If
-    wsH.cells(r, "E").NumberFormat = "0.00%"
+    wsH.cells(r, eCol).NumberFormat = "0.00%"
 End Sub
 
 ' Close of the first trading day of `yr` for one ticker.
@@ -604,9 +647,10 @@ Sub BackfillHistory()
     On Error GoTo 0
     If wsH Is Nothing Then MsgBox "History sheet not found": Exit Sub
 
+    Call MigrateHistoryLogNav
     Dim lastRow As Long
-    lastRow = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
-    If lastRow < 2 Then MsgBox "No data to backfill": Exit Sub
+    lastRow = HistLastRow(wsH)
+    If lastRow <= HistHdrRow(wsH) Then MsgBox "No data to backfill": Exit Sub
 
     Call EnsureHistoryHeaders(wsH)
     Call EnsureYTDBaselines(False)
@@ -616,31 +660,32 @@ Sub BackfillHistory()
     Dim tickers As Variant, priceCols As Variant
     tickers = HistTickers()
     priceCols = HistPriceCols()
+    Dim hc As Long: hc = NavLeft(wsH)
 
     Dim filled() As Long
     ReDim filled(LBound(tickers) To UBound(tickers))
 
     Dim i As Long, k As Long
-    For i = 2 To lastRow
-        If wsH.cells(i, "A").Value = "" Then GoTo NextRow
+    For i = HistHdrRow(wsH) + 1 To lastRow
+        If wsH.cells(i, hc + 1).Value = "" Then GoTo NextRow
 
         Dim targetDate As Date
         targetDate = 0
         On Error Resume Next
-        targetDate = CDate(Int(CDbl(wsH.cells(i, "A").Value)))
+        targetDate = CDate(Int(CDbl(wsH.cells(i, hc + 1).Value)))
         On Error GoTo 0
         If targetDate = 0 Then GoTo NextRow
 
         For k = LBound(tickers) To UBound(tickers)
-            If wsH.cells(i, priceCols(k)).Value = "" Then
+            If wsH.cells(i, hc + priceCols(k)).Value = "" Then
                 Dim price As Double
                 price = GetHistoricalPrice(CStr(tickers(k)), targetDate)
                 If price > 0 Then
-                    wsH.cells(i, priceCols(k)).Value = price
+                    wsH.cells(i, hc + priceCols(k)).Value = price
                     filled(k) = filled(k) + 1
                 End If
             End If
-            wsH.cells(i, priceCols(k)).NumberFormat = "#,##0.00"
+            wsH.cells(i, hc + priceCols(k)).NumberFormat = "#,##0.00"
         Next k
 
         Call WriteHistoryRowFormulas(wsH, i)
@@ -688,9 +733,10 @@ Sub RepairHistoryLog()
     On Error GoTo 0
     If wsH Is Nothing Then MsgBox "History sheet not found": Exit Sub
 
+    Call MigrateHistoryLogNav
     Dim lastRow As Long
-    lastRow = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
-    Dim n As Long: n = lastRow - 1
+    lastRow = HistLastRow(wsH)
+    Dim n As Long: n = lastRow - HistHdrRow(wsH)
     If n < 1 Then MsgBox "No data rows to repair.", vbInformation: Exit Sub
 
     If MsgBox("Rebuild HistoryLog index prices from Yahoo history?" & vbLf & vbLf & _
@@ -705,7 +751,8 @@ Sub RepairHistoryLog()
 
     Application.ScreenUpdating = False
 
-    wsH.Range("N1:S" & lastRow).ClearContents
+    Dim hc As Long: hc = NavLeft(wsH)
+    wsH.Range(wsH.cells(HistHdrRow(wsH), hc + 14), wsH.cells(lastRow, hc + 19)).ClearContents   ' page N:S
 
     Call EnsureHistoryHeaders(wsH)
     Call EnsureYTDBaselines(True)
@@ -715,35 +762,35 @@ Sub RepairHistoryLog()
     priceCols = HistPriceCols()
 
     Dim missing As Long, r As Long, k As Long
-    For r = 2 To lastRow
+    For r = HistHdrRow(wsH) + 1 To lastRow
         Dim targetDate As Date
         targetDate = 0
         On Error Resume Next
-        targetDate = CDate(Int(CDbl(wsH.cells(r, "A").Value)))
+        targetDate = CDate(Int(CDbl(wsH.cells(r, hc + 1).Value)))
         On Error GoTo 0
 
         ' D currently holds whatever the broken run left there (old SPY
         ' prices on the pre-repair rows), and the real values are gone.
-        wsH.cells(r, "D").Value = 0
-        wsH.Range("B" & r & ":D" & r).NumberFormat = "#,##0"
+        wsH.cells(r, hc + 4).Value = 0
+        wsH.Range(wsH.cells(r, hc + 2), wsH.cells(r, hc + 4)).NumberFormat = "#,##0"
 
         For k = LBound(tickers) To UBound(tickers)
             Dim price As Double: price = 0
             If targetDate > 0 Then price = GetHistoricalPrice(CStr(tickers(k)), targetDate)
             If price > 0 Then
-                wsH.cells(r, priceCols(k)).Value = price
+                wsH.cells(r, hc + priceCols(k)).Value = price
             Else
-                wsH.cells(r, priceCols(k)).ClearContents
+                wsH.cells(r, hc + priceCols(k)).ClearContents
                 missing = missing + 1
             End If
-            wsH.cells(r, priceCols(k)).NumberFormat = "#,##0.00"
+            wsH.cells(r, hc + priceCols(k)).NumberFormat = "#,##0.00"
         Next k
 
         Call WriteHistoryRowFormulas(wsH, r)
         Application.StatusBar = "Repairing row " & r & "/" & lastRow
     Next r
 
-    wsH.Range("A:M").EntireColumn.AutoFit
+    wsH.Range(wsH.Columns(hc + 1), wsH.Columns(hc + HIST_NCOL)).EntireColumn.AutoFit
     Application.ScreenUpdating = True
     Application.StatusBar = False
 
@@ -1617,8 +1664,8 @@ Private Sub DrawRealizedChart(ws As Worksheet)
     Dim wsH As Worksheet
     On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo 0
     If wsH Is Nothing Then Exit Sub
-    Dim lastR As Long: lastR = wsH.cells(wsH.Rows.count, "A").End(xlUp).row
-    If lastR < 3 Then Exit Sub          ' one point is not a line
+    Dim lastR As Long: lastR = HistLastRow(wsH)
+    If lastR < HistHdrRow(wsH) + 2 Then Exit Sub          ' one point is not a line
 
     ' chart band (v4.7): columns J:S, full band height, next to the donut
     Dim cL As Double, cT As Double, cW As Double, cH As Double
@@ -1640,8 +1687,8 @@ Private Sub DrawRealizedChart(ws As Worksheet)
         Dim ser As Series
         Set ser = .SeriesCollection.NewSeries
         ser.Name = "REALIZED PNL"
-        ser.Values = wsH.Range(wsH.cells(2, 4), wsH.cells(lastR, 4))
-        ser.XValues = wsH.Range(wsH.cells(2, 1), wsH.cells(lastR, 1))
+        ser.Values = wsH.Range(wsH.cells(HistHdrRow(wsH) + 1, HistCol(wsH, 4)), wsH.cells(lastR, HistCol(wsH, 4)))
+        ser.XValues = wsH.Range(wsH.cells(HistHdrRow(wsH) + 1, HistCol(wsH, 1)), wsH.cells(lastR, HistCol(wsH, 1)))
         ser.Format.Line.ForeColor.RGB = RGB(255, 192, 0)    ' yellow line (v4.6.1)
         ser.Format.Line.Weight = 0.75                       ' 1 px
         ser.MarkerStyle = xlMarkerStyleNone
@@ -1941,11 +1988,11 @@ Private Function PrevDayCumPnL() As Variant
     On Error Resume Next: Set wsH = ThisWorkbook.Sheets(SH_HIST): On Error GoTo 0
     If wsH Is Nothing Then Exit Function
     Dim r As Long
-    For r = wsH.cells(wsH.Rows.count, "A").End(xlUp).row To 2 Step -1
-        Dim dv As Variant: dv = wsH.cells(r, "A").Value
+    For r = HistLastRow(wsH) To HistHdrRow(wsH) + 1 Step -1
+        Dim dv As Variant: dv = wsH.cells(r, HistCol(wsH, 1)).Value
         If IsDate(dv) Then
             If Int(CDate(dv)) < Date Then
-                Dim cv As Variant: cv = wsH.cells(r, "C").Value
+                Dim cv As Variant: cv = wsH.cells(r, HistCol(wsH, 3)).Value
                 If Not IsError(cv) And Not IsEmpty(cv) And IsNumeric(cv) Then PrevDayCumPnL = CDbl(cv)
                 Exit Function
             End If

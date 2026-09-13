@@ -2,9 +2,9 @@
 '  Code-behind of ThisWorkbook (kept as plain text, like the sheet code).
 '  Workbook_SheetChange: the nav bar's command cell (B1, or C1 on RR4 -
 '  modNav.NavCmdCell) on every report page -> modNav.RunNavCommand. Data
-'  pages (HistoryLog / Company research) have no bar, so that cell of
-'  theirs is ignored by the NavPageCode / NavHasRows checks; Realized and
-'  Transactions carry one since 2026-09-13.
+'  page Company research has no bar, so that cell of its is ignored by the
+'  NavPageCode / NavHasRows checks; Realized / Transactions / HistoryLog
+'  carry one since 2026-09-13.
 ' ================================================================
 Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
