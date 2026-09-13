@@ -55,6 +55,25 @@ Option Explicit
 '  SORT: double-click a column header to sort the table by it (again to
 '  flip); double-click the page title to restore the build order and clear
 '  the focus.  See RrgSort.
+'
+'  INDUSTRY RRG (nav code RI, recalc RI!) - sheet "RRG Industry" (2026-09-13)
+'    Same page, same maths, same focus / sort, but the universe is the 145
+'    moomoo US industry plates and each "ticker" is a cap-weighted composite
+'    of EVERY constituent (projects/moomoo-plate-list/moomoo_us_plate_stocks.csv,
+'    5,812 stocks, imported into the IndustryMap sheet by ImportIndustryMap /
+'    nav code IMAP).  Column A holds the plate code (BK2072), B the plate name;
+'    chart labels show the name.  The composite is chain-linked from daily
+'    returns so a stock that listed mid-year just joins the index when its
+'    data starts:
+'      idx[t] = idx[t-1] * (1 + sum_i w_i * r_i[t] / sum_i w_i)   over the
+'               constituents that have both t-1 and t; w_i = market cap
+'      high / low use the same weights on high[t]/close[t-1] - 1
+'      volume = sum_i close_i * volume_i  (dollar volume, so CMF / OBV
+'               are not adding up share counts of different stocks)
+'    One RI! is ~5,800 Yahoo requests (40-60 min).  Each finished composite
+'    is written to the hidden IndustryPx sheet keyed by plate code + as-of
+'    day, so Esc (or a network drop) loses at most one industry: run RI!
+'    again the same day and it continues from the cache.
 ' ================================================================
 
 Private Const RS_WINDOW As Long = 65
@@ -71,8 +90,19 @@ Private Const DATA_COL As Long = 27          ' AA
 Private Const DATE_COL As Long = 26          ' Z
 Private Const CHART_COL As Long = 16         ' P  (table is A:N, O is the gap)
 Private Const TBL_NCOL As Long = 14
-Private Const CHART_W As Double = 560
-Private Const CHART_H As Double = 470
+Private Const ETF_CHART_W As Double = 560
+Private Const ETF_CHART_H As Double = 470
+Private Const IND_CHART_W As Double = 1000
+Private Const IND_CHART_H As Double = 820
+Private gChartW As Double                    ' set per build (ETF / IND)
+Private gChartH As Double
+
+Private Const ETF_SHEET As String = "RRG"
+Private Const IND_SHEET As String = "RRG Industry"
+Private Const IND_MAP As String = "IndustryMap"      ' plateCode / plateName / symbol / rank / marketCap / plateType
+Private Const IND_PX As String = "IndustryPx"        ' hidden cache: one composite series per industry row
+Private Const PX_MAXN As Long = 270                  ' points per array in the cache (1y ~ 252 days)
+Private Const PX_FIRST As Long = 6                   ' cache row: A code, B asof, C ok, D fail, E npts, F.. arrays
 
 Private Const CMF_WINDOW As Long = 20
 Private Const FLOW_LOOKBACK As Long = 20
@@ -163,12 +193,23 @@ Private Function FetchOhlcv(ByVal Ticker As String, ByRef days() As Long, ByRef 
     Set http = CreateObject("MSXML2.XMLHTTP")
     Dim url As String
     url = "https://query1.finance.yahoo.com/v8/finance/chart/" & Ticker & "?interval=1d&range=1y"
-    On Error Resume Next
-    http.Open "GET", url, False
-    http.setRequestHeader "User-Agent", "Mozilla/5.0"
-    http.send
-    On Error GoTo 0
-    If http.Status <> 200 Then Exit Function
+    ' a few thousand requests in a row (the industry page) do hit 429s /
+    ' dropped connections now and then: back off and retry before giving up
+    Dim attempt As Long, status As Long
+    For attempt = 1 To 3
+        status = 0
+        On Error Resume Next
+        http.Open "GET", url, False
+        http.setRequestHeader "User-Agent", "Mozilla/5.0"
+        http.send
+        status = http.Status
+        On Error GoTo 0
+        If status = 200 Then Exit For
+        If status = 404 Then Exit Function                 ' unknown symbol: no point retrying
+        Application.Wait Now + TimeSerial(0, 0, 2 * attempt)
+        Set http = CreateObject("MSXML2.XMLHTTP")
+    Next attempt
+    If status <> 200 Then Exit Function
     Dim resp As String: resp = http.responseText
 
     Dim ts() As String, cl() As String, hi() As String, lo() As String, vo() As String, ac() As String
@@ -211,33 +252,62 @@ End Function
 
 ' ----------------------------------------------------------------
 Sub BuildRRG()
+    Call BuildRRGCore("ETF")
+End Sub
+
+' RI!: the industry page.  limitN > 0 builds only the first limitN
+' industries (testing - a full run is ~5,800 requests).
+Sub BuildRRGIndustry(Optional ByVal limitN As Long = 0)
+    Call BuildRRGCore("IND", limitN)
+End Sub
+
+' kind = "ETF" (sheet RRG, SectorList universe, one Yahoo series per ETF)
+'     or "IND" (sheet RRG Industry, IndustryMap universe, composites)
+Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0)
+    Dim isInd As Boolean: isInd = (kind = "IND")
+    Dim sheetNm As String: sheetNm = IIf(isInd, IND_SHEET, ETF_SHEET)
+    Dim navCode As String: navCode = IIf(isInd, "RI", "RG")
+    gChartW = IIf(isInd, IND_CHART_W, ETF_CHART_W)
+    gChartH = IIf(isInd, IND_CHART_H, ETF_CHART_H)
     Dim ws As Worksheet
     On Error Resume Next
-    Set ws = ThisWorkbook.Sheets("RRG")
+    Set ws = ThisWorkbook.Sheets(sheetNm)
     On Error GoTo 0
     If ws Is Nothing Then
         Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count))
-        ws.Name = "RRG"
+        ws.Name = sheetNm
     End If
     Dim prevEv As Boolean: prevEv = Application.EnableEvents
     Application.EnableEvents = False
+    Dim prevCancel As Long: prevCancel = Application.EnableCancelKey
+    Application.EnableCancelKey = xlErrorHandler        ' Esc -> error 18, handled below (cache keeps the progress)
     On Error GoTo Fail
     Call NavStrip(ws)
 
-    ' ---- universe (SPY last in the list is the benchmark) ----
-    Dim lst As Variant: lst = SectorList()
-    Dim nAll As Long: nAll = UBound(lst) + 1
+    ' ---- universe ----
     Dim tickers() As String, labels() As String, groups() As String
     Dim i As Long, j As Long, k As Long, n As Long
-    n = 0
-    ReDim tickers(0 To nAll - 1): ReDim labels(0 To nAll - 1): ReDim groups(0 To nAll - 1)
-    For i = 0 To nAll - 1
-        If UCase(lst(i)(0)) <> BENCH Then
-            tickers(n) = lst(i)(0): labels(n) = lst(i)(1): groups(n) = lst(i)(2)
-            n = n + 1
-        End If
-    Next i
-    ReDim Preserve tickers(0 To n - 1): ReDim Preserve labels(0 To n - 1): ReDim Preserve groups(0 To n - 1)
+    Dim indSyms As Variant, indCaps As Variant          ' IND: per industry, its constituents + weights
+    Dim nStocks As Long
+    If isInd Then
+        n = IndustryUniverse(tickers, labels, groups, indSyms, indCaps, nStocks)
+        If n = 0 Then Err.Raise vbObjectError + 2, , IND_MAP & " sheet is empty - run IMAP (ImportIndustryMap) first"
+        If limitN > 0 And limitN < n Then n = limitN
+    Else
+        ' SPY last in the list is the benchmark
+        Dim lst As Variant: lst = SectorList()
+        Dim nAll As Long: nAll = UBound(lst) + 1
+        n = 0
+        ReDim tickers(0 To nAll - 1): ReDim labels(0 To nAll - 1): ReDim groups(0 To nAll - 1)
+        For i = 0 To nAll - 1
+            If UCase(lst(i)(0)) <> BENCH Then
+                tickers(n) = lst(i)(0): labels(n) = lst(i)(1): groups(n) = lst(i)(2)
+                n = n + 1
+            End If
+        Next i
+        ReDim Preserve tickers(0 To n - 1): ReDim Preserve labels(0 To n - 1): ReDim Preserve groups(0 To n - 1)
+    End If
+    Dim unitNm As String: unitNm = IIf(isInd, "industries", "ETFs")
 
     ' ---- benchmark ----
     Dim bDays() As Long, bPx() As Double, nb As Long
@@ -261,10 +331,19 @@ Sub BuildRRG()
     Dim fPchg() As Double, fCmf() As Double, fObv() As Double, fSig() As String, fNote() As String, fOk() As Boolean
     ReDim fPchg(0 To n - 1): ReDim fCmf(0 To n - 1): ReDim fObv(0 To n - 1)
     ReDim fSig(0 To n - 1): ReDim fNote(0 To n - 1): ReDim fOk(0 To n - 1)
+    Dim t0 As Double: t0 = Timer
+    Dim okC As Long, failC As Long
     For i = 0 To n - 1
         Application.StatusBar = "RRG: fetching [" & (i + 1) & "/" & n & "] " & tickers(i)
         DoEvents
-        nt = FetchOhlcv(tickers(i), tDays, tPx, tH, tL, tV)
+        If isInd Then
+            Dim okThis As Long
+            nt = IndustryComposite(tickers(i), labels(i), indSyms(i), indCaps(i), bDays, nb, bIdx, i + 1, n, t0, _
+                                   tDays, tPx, tH, tL, tV, okC, failC, okThis)
+            groups(i) = okThis & "/" & (UBound(indSyms(i)) + 1)
+        Else
+            nt = FetchOhlcv(tickers(i), tDays, tPx, tH, tL, tV)
+        End If
         fOk(i) = MoneyFlow(tPx, tH, tL, tV, nt, fPchg(i), fCmf(i), fObv(i), fSig(i), fNote(i))
         ReDim rs(0 To nb - 1): ReDim ratio(0 To nb - 1): ReDim mom(0 To nb - 1)
         ReDim sr(0 To nb - 1): ReDim sm(0 To nb - 1)
@@ -314,8 +393,8 @@ Sub BuildRRG()
     ActiveWindow.FreezePanes = False
     ActiveWindow.DisplayGridlines = False
     Dim rr As Long
-    For rr = 1 To 60: ws.Rows(rr).RowHeight = 18: Next rr
-    ws.Columns(1).ColumnWidth = 8: ws.Columns(2).ColumnWidth = 9: ws.Columns(3).ColumnWidth = 15
+    For rr = 1 To TBL_FIRST + n + 40: ws.Rows(rr).RowHeight = 18: Next rr
+    ws.Columns(1).ColumnWidth = 8: ws.Columns(2).ColumnWidth = IIf(isInd, 34, 9): ws.Columns(3).ColumnWidth = IIf(isInd, 8, 15)
     ws.Columns(4).ColumnWidth = 9: ws.Columns(5).ColumnWidth = 9: ws.Columns(6).ColumnWidth = 11
     ws.Columns(7).ColumnWidth = 9: ws.Columns(8).ColumnWidth = 9: ws.Columns(9).ColumnWidth = 10
     ws.Columns(10).ColumnWidth = 5: ws.Columns(11).ColumnWidth = 9: ws.Columns(12).ColumnWidth = 8
@@ -323,18 +402,20 @@ Sub BuildRRG()
 
     Dim asOf As Date: asOf = DateSerial(1970, 1, 1) + bDays(nb - 1)
     With ws.cells(1, 1)
-        .Value = "RELATIVE ROTATION GRAPH"
+        .Value = IIf(isInd, "RRG  INDUSTRIES", "RELATIVE ROTATION GRAPH")
         .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 14
     End With
     ws.Rows(1).RowHeight = 24
     With ws.cells(1, 4)
-        .Value = n & " ETFs vs " & BENCH & "  .  daily adjclose  .  RS " & RS_WINDOW & "d / MOM " & MOM_WINDOW & _
+        .Value = n & " " & unitNm & IIf(isInd, " (" & okC & " stocks, cap-weighted composites" & IIf(failC > 0, ", " & failC & " no data", "") & ")", "") & _
+                 " vs " & BENCH & "  .  daily adjclose  .  RS " & RS_WINDOW & "d / MOM " & MOM_WINDOW & _
                  "d / EWM " & EWM_SPAN & "  .  " & TAIL_WEEKS & "-week tail  .  as of " & Format(asOf, "yyyy/mm/dd") & _
                  "  .  built " & Format(Now, "yyyy/mm/dd hh:mm")
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.cells(2, 1)
-        .Value = "RG! <GO> refetches and redraws  .  double-click tickers to focus them (again to remove, title to show all)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
+        .Value = navCode & "! <GO> refetches and redraws" & IIf(isInd, " (~5,800 requests, 40-60 min; Esc stops, the same-day cache resumes)", "") & _
+                 "  .  double-click " & IIf(isInd, "codes", "tickers") & " to focus them (again to remove, title to show all)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.Range(ws.cells(2, 1), ws.cells(2, TBL_NCOL)).Borders(xlEdgeBottom)
@@ -343,7 +424,8 @@ Sub BuildRRG()
 
     ' ---- table ----
     Dim hdr As Variant
-    hdr = Array("TICKER", "LABEL", "GROUP", "RS-RATIO", "RS-MOM", "QUADRANT", "1W dRAT", "1W dMOM", "TRAIL", "PTS", _
+    hdr = Array(IIf(isInd, "CODE", "TICKER"), IIf(isInd, "INDUSTRY", "LABEL"), IIf(isInd, "STOCKS", "GROUP"), _
+                "RS-RATIO", "RS-MOM", "QUADRANT", "1W dRAT", "1W dMOM", "TRAIL", "PTS", _
                 "20D PX%", "CMF", "OBV(d)", "SIGNAL")
     For j = 0 To UBound(hdr)
         With ws.cells(TBL_HDR, j + 1)
@@ -463,6 +545,22 @@ Sub BuildRRG()
         "            CMF and OBV pointing opposite ways = money direction unknown (cell comment says CMF/OBV disagree)", _
         "            INFLOW up+in / OUTFLOW down+out / BEAR DIV up but money out / BULL DIV down but money in / NEUTRAL", _
         "MARKER    = triangle OBV rising, diamond OBV falling, circle flat; colour = SIGNAL; shaded band = CMF dead zone")
+    If isInd Then
+        Dim indNotes As Variant
+        indNotes = Array( _
+            "", _
+            "INDUSTRY COMPOSITES (this page)", _
+            "Universe  = the 145 moomoo US industry plates; every constituent is used (IndustryMap sheet, IMAP to reimport the CSV)", _
+            "Price     = cap-weighted index chain-linked from daily returns: idx[t] = idx[t-1] x (1 + sum w x r / sum w) over the", _
+            "            stocks that have both days; a stock that listed mid-year joins when its data starts.  Weights = market cap.", _
+            "High/Low  = same weights on high[t]/close[t-1] - 1 and low[t]/close[t-1] - 1;  Volume = sum(close x volume) in dollars", _
+            "Cache     = hidden IndustryPx sheet, one composite per industry keyed by as-of day; RI! reuses it the same day (Esc resumes)", _
+            "STOCKS    = constituents with data / total in the plate")
+        Dim tmpN As Variant: tmpN = notes
+        ReDim Preserve tmpN(0 To UBound(notes) + UBound(indNotes) + 1)
+        For j = 0 To UBound(indNotes): tmpN(UBound(notes) + 1 + j) = indNotes(j): Next j
+        notes = tmpN
+    End If
     For j = 0 To UBound(notes)
         ws.cells(nr + 1 + j, 1).Value = notes(j)
         ws.cells(nr + 1 + j, 1).Font.Color = RGB(150, 150, 150)
@@ -531,22 +629,30 @@ Sub BuildRRG()
     Call DrawRrgChart(ws, tickers, tailX, tailY, tailN, n, xMin - 1.5, xMax + 1.5, yMin - 1.5, yMax + 1.5, asOf)
     Call DrawFlowChart(ws, tickers, fPchg, fCmf, fObv, fSig, fOk, n, asOf)
 
-    Call NavAdd(ws, "RG")
+    Call NavAdd(ws, navCode)
     Call SetFocusMark(ws, "")
     Call SetMark(ws, SORT_MARK, "")
     Call EnsureSheetCode(ws)
     Application.ScreenUpdating = True
     Application.EnableEvents = prevEv
-    Call NavNotify("RRG rebuilt: " & n & " ETFs vs " & BENCH & " as of " & Format(asOf, "yyyy/mm/dd"))
+    Application.EnableCancelKey = prevCancel
+    Call NavNotify("RRG rebuilt: " & n & " " & unitNm & " vs " & BENCH & " as of " & Format(asOf, "yyyy/mm/dd") & _
+                   IIf(isInd, "  (" & Format((Timer - t0) / 60, "0") & " min)", ""))
     Exit Sub
 Fail:
     Dim failMsg As String: failMsg = Err.Description
+    Dim wasCancel As Boolean: wasCancel = (Err.Number = 18)
     Application.StatusBar = False
     Application.ScreenUpdating = True
     Application.EnableEvents = prevEv
+    Application.EnableCancelKey = prevCancel
     On Error Resume Next
-    Call NavAdd(ws, "RG")
-    Call NavNotify("RRG failed: " & failMsg, True)
+    Call NavAdd(ws, navCode)
+    If wasCancel Then
+        Call NavNotify("RRG stopped (Esc) - finished industries are cached, run " & navCode & "! again to continue", True)
+    Else
+        Call NavNotify("RRG failed: " & failMsg, True)
+    End If
 End Sub
 
 ' 100 * x / SMA(x, w); NaN unless the whole window is valid (pandas min_periods = window)
@@ -588,7 +694,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
                          ByVal n As Long, ByVal x0 As Double, ByVal x1 As Double, ByVal y0 As Double, ByVal y1 As Double, ByVal asOf As Date)
     Dim topRow As Long: topRow = TBL_HDR + NavOffset(ws)
     Dim co As ChartObject
-    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL).Left, ws.Rows(topRow).Top, CHART_W, CHART_H)
+    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL).Left, ws.Rows(topRow).Top, gChartW, gChartH)
     co.Name = "RRG_MAIN"
     co.Placement = xlMove
     Dim ch As Chart: Set ch = co.Chart
@@ -684,16 +790,17 @@ Private Sub StyleSeries(ws As Worksheet, s As Series, ByVal qc As Long, ByVal np
         .MarkerBackgroundColor = baseCol
         .MarkerForegroundColor = baseCol
     End With
+    Dim disp As String: disp = DisplayName(ws, s.Name)
     If mode = 0 Then
-        Call PointLabel(s.Points(np), s.Name, RGB(210, 210, 210), 8)
+        Call PointLabel(s.Points(np), disp, RGB(210, 210, 210), IIf(ws.Name = IND_SHEET, 7, 8))
     ElseIf mode = 3 Then
-        Call PointLabel(s.Points(np), s.Name, RGB(255, 255, 255), 9)
+        Call PointLabel(s.Points(np), disp, RGB(255, 255, 255), 9)
     ElseIf mode = 2 Then
         Dim off As Long: off = NavOffset(ws)
         For k = 1 To np
             Dim dr As Long: dr = TBL_FIRST + off + TAIL_POINTS - np + k - 1
             Dim txt As String: txt = Format(ws.cells(dr, DATE_COL).Value, "mm/dd")
-            If k = np Then txt = s.Name & " " & txt
+            If k = np Then txt = disp & " " & txt
             Call PointLabel(s.Points(k), txt, IIf(k = np, RGB(255, 255, 255), RGB(190, 190, 190)), IIf(k = np, 9, 7))
         Next k
     End If
@@ -804,7 +911,7 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
         For Each s In cf.Chart.SeriesCollection
             If Left(s.Name, 1) <> "_" Then
                 If tk = "" Then mode = 0 Else mode = IIf(InSet(tk, s.Name), litMode, 1)
-                Call StyleFlowSeries(s, SigColor(CStr(sigOf(s.Name))), CDbl(obvOf(s.Name)), mode)
+                Call StyleFlowSeries(ws, s, SigColor(CStr(sigOf(s.Name))), CDbl(obvOf(s.Name)), mode)
             End If
         Next s
     End If
@@ -820,8 +927,8 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
 End Sub
 
 ' Same, by sheet name - callable from the Immediate window / Application.Run.
-Public Sub RrgFocusByName(ByVal tk As String)
-    Call RrgFocus(ThisWorkbook.Sheets("RRG"), UCase(Trim(tk)))
+Public Sub RrgFocusByName(ByVal tk As String, Optional ByVal sheetNm As String = ETF_SHEET)
+    Call RrgFocus(ThisWorkbook.Sheets(sheetNm), UCase(Trim(tk)))
 End Sub
 
 ' Sheet double-click handler (called from SheetRRG_Code.txt).
@@ -926,9 +1033,9 @@ End Function
 Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Double, fCmf() As Double, fObv() As Double, _
                           fSig() As String, fOk() As Boolean, ByVal n As Long, ByVal asOf As Date)
     Dim off As Long: off = NavOffset(ws)
-    Dim topPt As Double: topPt = ws.Rows(TBL_HDR + off).Top + CHART_H + 12
+    Dim topPt As Double: topPt = ws.Rows(TBL_HDR + off).Top + gChartH + 12
     Dim co As ChartObject
-    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL).Left, topPt, CHART_W, CHART_H)
+    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL).Left, topPt, gChartW, gChartH)
     co.Name = "RRG_FLOW"
     co.Placement = xlMove
     Dim ch As Chart: Set ch = co.Chart
@@ -1000,7 +1107,7 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
             s.XValues = ws.Range(ws.cells(r, 11), ws.cells(r, 11))
             s.Values = ws.Range(ws.cells(r, 12), ws.cells(r, 12))
             s.ChartType = xlXYScatter
-            Call StyleFlowSeries(s, SigColor(fSig(i)), fObv(i), 0)
+            Call StyleFlowSeries(ws, s, SigColor(fSig(i)), fObv(i), 0)
         End If
     Next i
 
@@ -1041,8 +1148,9 @@ End Sub
 
 ' mode 0 normal / 1 dimmed / 2 focused, same meaning as StyleSeries.
 ' Marker shape = OBV direction (triangle up, diamond down, circle flat).
-Private Sub StyleFlowSeries(s As Series, ByVal col As Long, ByVal obvT As Double, ByVal mode As Long)
+Private Sub StyleFlowSeries(ws As Worksheet, s As Series, ByVal col As Long, ByVal obvT As Double, ByVal mode As Long)
     Dim c As Long: c = IIf(mode = 1, DIM_GREY, col)
+    Dim disp As String: disp = DisplayName(ws, s.Name)
     If obvT > OBV_DEADZONE Then
         s.MarkerStyle = xlMarkerStyleTriangle
     ElseIf obvT < -OBV_DEADZONE Then
@@ -1055,11 +1163,27 @@ Private Sub StyleFlowSeries(s As Series, ByVal col As Long, ByVal obvT As Double
     s.MarkerForegroundColor = c
     s.HasDataLabels = False
     If mode = 0 Then
-        Call PointLabel(s.Points(1), s.Name, RGB(210, 210, 210), 8, xlLabelPositionAbove)
+        Call PointLabel(s.Points(1), disp, RGB(210, 210, 210), IIf(ws.Name = IND_SHEET, 7, 8), xlLabelPositionAbove)
     ElseIf mode >= 2 Then
-        Call PointLabel(s.Points(1), s.Name, RGB(255, 255, 255), 10, xlLabelPositionAbove)
+        Call PointLabel(s.Points(1), disp, RGB(255, 255, 255), 10, xlLabelPositionAbove)
     End If
 End Sub
+
+' What a series is called on the charts: the ticker on the ETF page, the
+' industry name (table column B) on the industry page - column A there is
+' the plate code, which is the series / focus key but says nothing.
+Private Function DisplayName(ws As Worksheet, ByVal key As String) As String
+    DisplayName = key
+    If ws.Name <> IND_SHEET Then Exit Function
+    Dim r As Long: r = TBL_FIRST + NavOffset(ws)
+    Do While ws.cells(r, 1).Value <> ""
+        If StrComp(CStr(ws.cells(r, 1).Value), key, vbTextCompare) = 0 Then
+            If ws.cells(r, 2).Value <> "" Then DisplayName = CStr(ws.cells(r, 2).Value)
+            Exit Function
+        End If
+        r = r + 1
+    Loop
+End Function
 
 Private Sub CornerLabel(ch As Chart, ByVal txt As String, ByVal col As Long, ByVal l As Double, ByVal t As Double, ByVal alignRight As Boolean)
     Dim shp As Shape
@@ -1221,8 +1345,8 @@ Private Function SortBefore(ByRef tbl As Variant, ByRef seq As Variant, ByVal a 
     If cmp = 0 Then SortBefore = (Val(seq(a, 1)) <= Val(seq(b, 1))) Else SortBefore = (cmp * dir < 0)
 End Function
 
-Public Sub RrgSortByName(ByVal col As Long)
-    Call RrgSort(ThisWorkbook.Sheets("RRG"), col)
+Public Sub RrgSortByName(ByVal col As Long, Optional ByVal sheetNm As String = ETF_SHEET)
+    Call RrgSort(ThisWorkbook.Sheets(sheetNm), col)
 End Sub
 
 ' ---- comma-separated ticker sets (the focus group) ----
@@ -1258,3 +1382,326 @@ End Function
 Private Sub QuadLabel(ch As Chart, ByVal txt As String, ByVal l As Double, ByVal t As Double, ByVal anchor As Long)
     Call CornerLabel(ch, txt, QuadColor(txt), l, t, (txt = "LEADING" Or txt = "WEAKENING"))
 End Sub
+
+' ================================================================
+'  INDUSTRY UNIVERSE + COMPOSITES  (RI page)
+' ================================================================
+
+' Reads the IndustryMap sheet (A plateCode, B plateName, C symbol, D rank,
+' E marketCap, F plateType; header row 1, one row per constituent) into
+' one entry per industry, in first-seen order.  indSyms(i) / indCaps(i) are
+' the industry's constituent symbols and market caps (rank order).
+' Returns the number of industries (0 = sheet missing / empty).
+Private Function IndustryUniverse(ByRef tickers() As String, ByRef labels() As String, ByRef groups() As String, _
+                                  ByRef indSyms As Variant, ByRef indCaps As Variant, ByRef nStocks As Long) As Long
+    Dim wm As Worksheet
+    On Error Resume Next
+    Set wm = ThisWorkbook.Sheets(IND_MAP)
+    On Error GoTo 0
+    If wm Is Nothing Then Exit Function
+    Dim lastR As Long: lastR = wm.cells(wm.Rows.count, 1).End(xlUp).Row
+    If lastR < 2 Then Exit Function
+    Dim v As Variant: v = wm.Range(wm.cells(2, 1), wm.cells(lastR, 6)).Value
+    Dim nr As Long: nr = UBound(v, 1)
+    Dim idxOf As Object: Set idxOf = CreateObject("Scripting.Dictionary")
+    Dim syms() As Variant, caps() As Variant, cnt() As Long
+    ReDim tickers(0 To nr - 1): ReDim labels(0 To nr - 1): ReDim groups(0 To nr - 1)
+    ReDim syms(0 To nr - 1): ReDim caps(0 To nr - 1): ReDim cnt(0 To nr - 1)
+    Dim n As Long, r As Long, i As Long
+    Dim tmpS() As String, tmpC() As Double
+    For r = 1 To nr
+        Dim code As String: code = Trim(CStr(v(r, 1)))
+        Dim sym As String: sym = Trim(CStr(v(r, 3)))
+        If code <> "" And sym <> "" Then
+            If Not idxOf.Exists(code) Then
+                idxOf(code) = n
+                tickers(n) = code
+                labels(n) = Trim(CStr(v(r, 2)))
+                groups(n) = ""
+                ReDim tmpS(0 To 0): ReDim tmpC(0 To 0)
+                syms(n) = tmpS: caps(n) = tmpC: cnt(n) = 0
+                n = n + 1
+            End If
+            i = idxOf(code)
+            Dim sArr() As String: sArr = syms(i)
+            Dim cArr() As Double: cArr = caps(i)
+            If cnt(i) > 0 Then ReDim Preserve sArr(0 To cnt(i)): ReDim Preserve cArr(0 To cnt(i))
+            sArr(cnt(i)) = sym
+            cArr(cnt(i)) = IIf(IsNumeric(v(r, 5)), CDbl(v(r, 5)), 0)
+            syms(i) = sArr: caps(i) = cArr
+            cnt(i) = cnt(i) + 1
+            nStocks = nStocks + 1
+        End If
+    Next r
+    If n = 0 Then Exit Function
+    ReDim Preserve tickers(0 To n - 1): ReDim Preserve labels(0 To n - 1): ReDim Preserve groups(0 To n - 1)
+    ReDim Preserve syms(0 To n - 1): ReDim Preserve caps(0 To n - 1)
+    indSyms = syms: indCaps = caps
+    IndustryUniverse = n
+End Function
+
+' moomoo symbol -> Yahoo symbol (BRK.B -> BRK-B).
+Private Function YahooSymbol(ByVal sym As String) As String
+    YahooSymbol = Replace(Trim(sym), ".", "-")
+End Function
+
+' One industry's composite OHLCV on the benchmark's days.  Served from the
+' IndustryPx cache when a row for this code with the same as-of day exists;
+' otherwise every constituent is fetched and the chain-linked index built
+' (see the module header), then cached.  Returns the number of points.
+' okC / failC accumulate the constituents with / without data over the run.
+Private Function IndustryComposite(ByVal code As String, ByVal nm As String, ByVal syms As Variant, ByVal caps As Variant, _
+                                   ByRef bDays() As Long, ByVal nb As Long, ByVal bIdx As Object, _
+                                   ByVal iNo As Long, ByVal nInd As Long, ByVal t0 As Double, _
+                                   ByRef days() As Long, ByRef c() As Double, ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, _
+                                   ByRef okC As Long, ByRef failC As Long, ByRef okThis As Long) As Long
+    Dim asOf As Long: asOf = bDays(nb - 1)
+    Dim nOk As Long, nFail As Long, npts As Long
+    npts = CacheRead(code, asOf, days, c, h, l, v, nOk, nFail)
+    If npts > 0 Then
+        okC = okC + nOk: failC = failC + nFail: okThis = nOk
+        IndustryComposite = npts
+        Exit Function
+    End If
+
+    Dim m As Long: m = UBound(syms) + 1
+    Dim sumW() As Double, sumR() As Double, sumRh() As Double, sumRl() As Double, dv() As Double, anyD() As Boolean
+    ReDim sumW(0 To nb - 1): ReDim sumR(0 To nb - 1): ReDim sumRh(0 To nb - 1): ReDim sumRl(0 To nb - 1)
+    ReDim dv(0 To nb - 1): ReDim anyD(0 To nb - 1)
+    Dim sDays() As Long, sC() As Double, sH() As Double, sL() As Double, sV() As Double, ns As Long
+    Dim j As Long, k As Long, t As Long, tp As Long, w As Double
+    For j = 0 To m - 1
+        w = caps(j)
+        If w > 0 Then
+            Dim el As Double: el = Timer - t0: If el < 0 Then el = el + 86400
+            Application.StatusBar = "RRG-IND [" & iNo & "/" & nInd & "] " & nm & "  stock " & (j + 1) & "/" & m & " " & syms(j) & _
+                                    "  .  fetched " & okC & " ok / " & failC & " none  .  " & Format(el / 60, "0") & " min"
+            DoEvents
+            ns = FetchOhlcv(YahooSymbol(CStr(syms(j))), sDays, sC, sH, sL, sV)
+            If ns >= 2 Then
+                nOk = nOk + 1
+                If bIdx.Exists(sDays(0)) Then
+                    t = bIdx(sDays(0)): anyD(t) = True: dv(t) = dv(t) + sC(0) * sV(0)
+                End If
+                For k = 1 To ns - 1
+                    If bIdx.Exists(sDays(k)) And bIdx.Exists(sDays(k - 1)) Then
+                        If sC(k - 1) > 0 Then
+                            t = bIdx(sDays(k))
+                            sumW(t) = sumW(t) + w
+                            sumR(t) = sumR(t) + w * (sC(k) / sC(k - 1) - 1)
+                            sumRh(t) = sumRh(t) + w * (sH(k) / sC(k - 1) - 1)
+                            sumRl(t) = sumRl(t) + w * (sL(k) / sC(k - 1) - 1)
+                            dv(t) = dv(t) + sC(k) * sV(k)
+                            anyD(t) = True
+                        End If
+                    End If
+                Next k
+            Else
+                nFail = nFail + 1
+            End If
+        Else
+            nFail = nFail + 1
+        End If
+    Next j
+
+    ' chain-link
+    ReDim days(0 To nb - 1): ReDim c(0 To nb - 1): ReDim h(0 To nb - 1): ReDim l(0 To nb - 1): ReDim v(0 To nb - 1)
+    Dim idx As Double: idx = 100
+    Dim started As Boolean
+    For t = 0 To nb - 1
+        If Not started Then
+            If anyD(t) Then
+                started = True
+                days(npts) = bDays(t): c(npts) = idx: h(npts) = idx: l(npts) = idx: v(npts) = dv(t)
+                npts = npts + 1
+            End If
+        ElseIf sumW(t) > 0 Then
+            Dim nx As Double: nx = idx * (1 + sumR(t) / sumW(t))
+            Dim hx As Double: hx = idx * (1 + sumRh(t) / sumW(t))
+            Dim lx As Double: lx = idx * (1 + sumRl(t) / sumW(t))
+            If hx < nx Then hx = nx
+            If lx > nx Then lx = nx
+            days(npts) = bDays(t): c(npts) = nx: h(npts) = hx: l(npts) = lx: v(npts) = dv(t)
+            idx = nx
+            npts = npts + 1
+        End If
+    Next t
+    okC = okC + nOk: failC = failC + nFail: okThis = nOk
+    If npts > 0 Then Call CacheWrite(code, nm, asOf, days, c, h, l, v, npts, nOk, nFail)
+    IndustryComposite = npts
+End Function
+
+' ---- IndustryPx cache: hidden sheet, one row per industry ----
+' A code, B as-of day, C ok, D fail, E npts, then five PX_MAXN-wide blocks
+' (days, close, high, low, volume) from column PX_FIRST.  Column-blocked so
+' one Range read / write moves the whole row.
+Private Function CacheSheet(ByVal create As Boolean) As Worksheet
+    On Error Resume Next
+    Set CacheSheet = ThisWorkbook.Sheets(IND_PX)
+    On Error GoTo 0
+    If CacheSheet Is Nothing And create Then
+        Set CacheSheet = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count))
+        CacheSheet.Name = IND_PX
+        CacheSheet.cells(1, 1).Value = "code": CacheSheet.cells(1, 2).Value = "asof"
+        CacheSheet.cells(1, 3).Value = "ok": CacheSheet.cells(1, 4).Value = "fail": CacheSheet.cells(1, 5).Value = "npts"
+        CacheSheet.cells(1, PX_FIRST).Value = "days / close / high / low / volume, " & PX_MAXN & " columns each"
+        CacheSheet.Visible = xlSheetHidden
+    End If
+End Function
+
+Private Function CacheRow(wc As Worksheet, ByVal code As String) As Long
+    Dim lastR As Long: lastR = wc.cells(wc.Rows.count, 1).End(xlUp).Row
+    Dim r As Long
+    For r = 2 To lastR
+        If StrComp(CStr(wc.cells(r, 1).Value), code, vbTextCompare) = 0 Then CacheRow = r: Exit Function
+    Next r
+End Function
+
+Private Function CacheRead(ByVal code As String, ByVal asOf As Long, ByRef days() As Long, ByRef c() As Double, _
+                           ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByRef nOk As Long, ByRef nFail As Long) As Long
+    Dim wc As Worksheet: Set wc = CacheSheet(False)
+    If wc Is Nothing Then Exit Function
+    Dim r As Long: r = CacheRow(wc, code)
+    If r = 0 Then Exit Function
+    If CLng(Val(wc.cells(r, 2).Value)) <> asOf Then Exit Function
+    Dim npts As Long: npts = CLng(Val(wc.cells(r, 5).Value))
+    If npts <= 0 Or npts > PX_MAXN Then Exit Function
+    nOk = CLng(Val(wc.cells(r, 3).Value)): nFail = CLng(Val(wc.cells(r, 4).Value))
+    Dim blk As Variant: blk = wc.Range(wc.cells(r, PX_FIRST), wc.cells(r, PX_FIRST + 5 * PX_MAXN - 1)).Value
+    ReDim days(0 To npts - 1): ReDim c(0 To npts - 1): ReDim h(0 To npts - 1): ReDim l(0 To npts - 1): ReDim v(0 To npts - 1)
+    Dim k As Long
+    For k = 0 To npts - 1
+        days(k) = CLng(blk(1, 1 + k))
+        c(k) = CDbl(blk(1, 1 + PX_MAXN + k))
+        h(k) = CDbl(blk(1, 1 + 2 * PX_MAXN + k))
+        l(k) = CDbl(blk(1, 1 + 3 * PX_MAXN + k))
+        v(k) = CDbl(blk(1, 1 + 4 * PX_MAXN + k))
+    Next k
+    CacheRead = npts
+End Function
+
+Private Sub CacheWrite(ByVal code As String, ByVal nm As String, ByVal asOf As Long, ByRef days() As Long, ByRef c() As Double, _
+                       ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByVal npts As Long, ByVal nOk As Long, ByVal nFail As Long)
+    Dim wc As Worksheet: Set wc = CacheSheet(True)
+    Dim r As Long: r = CacheRow(wc, code)
+    If r = 0 Then r = wc.cells(wc.Rows.count, 1).End(xlUp).Row + 1
+    If npts > PX_MAXN Then npts = PX_MAXN
+    Dim blk() As Variant: ReDim blk(1 To 1, 1 To 5 * PX_MAXN)
+    Dim k As Long
+    For k = 0 To npts - 1
+        blk(1, 1 + k) = days(k)
+        blk(1, 1 + PX_MAXN + k) = c(k)
+        blk(1, 1 + 2 * PX_MAXN + k) = h(k)
+        blk(1, 1 + 3 * PX_MAXN + k) = l(k)
+        blk(1, 1 + 4 * PX_MAXN + k) = v(k)
+    Next k
+    wc.cells(r, 1).Value = code: wc.cells(r, 2).Value = asOf
+    wc.cells(r, 3).Value = nOk: wc.cells(r, 4).Value = nFail: wc.cells(r, 5).Value = npts
+    wc.Range(wc.cells(r, PX_FIRST), wc.cells(r, PX_FIRST + 5 * PX_MAXN - 1)).Value = blk
+    wc.cells(r, PX_FIRST + 5 * PX_MAXN).Value = nm
+End Sub
+
+' ---- IMAP: import projects/moomoo-plate-list/moomoo_us_plate_stocks.csv ----
+' Rebuilds the IndustryMap sheet (A plateCode, B plateName, C symbol,
+' D rank, E marketCap, F plateType) from the CSV.  csvPath "" opens a file
+' picker, starting at the repo copy when it exists.  The CSV is UTF-8 with
+' BOM and Chinese stock names, so it is read through ADODB.Stream; only
+' the ASCII columns are kept.
+Public Sub ImportIndustryMap(Optional ByVal csvPath As String = "")
+    Dim defPath As String
+    defPath = Environ("USERPROFILE") & "\OneDrive\" & ChrW(&H684C) & ChrW(&H9762) & "\Claudecode\projects\moomoo-plate-list\moomoo_us_plate_stocks.csv"
+    If csvPath = "" Then
+        If Dir(defPath) <> "" Then ChDir Left(defPath, InStrRev(defPath, "\") - 1)
+        Dim pick As Variant
+        pick = Application.GetOpenFilename("moomoo plate stocks CSV (*.csv),*.csv", , "IndustryMap: pick moomoo_us_plate_stocks.csv")
+        If VarType(pick) = vbBoolean Then Exit Sub
+        csvPath = CStr(pick)
+    End If
+    If Dir(csvPath) = "" Then Call NavNotify("IMAP: file not found - " & csvPath, True): Exit Sub
+
+    Dim stm As Object: Set stm = CreateObject("ADODB.Stream")
+    stm.Type = 2: stm.Charset = "utf-8": stm.Open
+    stm.LoadFromFile csvPath
+    Dim txt As String: txt = stm.ReadText
+    stm.Close
+    If Left(txt, 1) = ChrW(&HFEFF) Then txt = Mid(txt, 2)
+    txt = Replace(txt, vbCrLf, vbLf)
+    Dim lines() As String: lines = Split(txt, vbLf)
+    If UBound(lines) < 1 Then Call NavNotify("IMAP: empty file", True): Exit Sub
+
+    Dim hdr() As String: hdr = SplitCsv(lines(0))
+    Dim cCode As Long, cName As Long, cSym As Long, cRank As Long, cCap As Long, cType As Long
+    cCode = -1: cName = -1: cSym = -1: cRank = -1: cCap = -1: cType = -1
+    Dim j As Long
+    For j = 0 To UBound(hdr)
+        Select Case hdr(j)
+            Case "plateCode": cCode = j
+            Case "plateName": cName = j
+            Case "symbol": cSym = j
+            Case "rank": cRank = j
+            Case "marketCapNum": cCap = j
+            Case "plateType": cType = j
+        End Select
+    Next j
+    If cCode < 0 Or cSym < 0 Or cCap < 0 Then Call NavNotify("IMAP: header lacks plateCode / symbol / marketCapNum", True): Exit Sub
+
+    Dim out() As Variant: ReDim out(1 To UBound(lines), 1 To 6)
+    Dim n As Long, i As Long
+    For i = 1 To UBound(lines)
+        If Trim(lines(i)) <> "" Then
+            Dim f() As String: f = SplitCsv(lines(i))
+            If UBound(f) >= cCap Then
+                n = n + 1
+                out(n, 1) = f(cCode)
+                out(n, 2) = IIf(cName >= 0, f(cName), "")
+                out(n, 3) = f(cSym)
+                out(n, 4) = IIf(cRank >= 0, Val(f(cRank)), 0)
+                out(n, 5) = IIf(IsNumeric(f(cCap)) And f(cCap) <> "", CDbl(f(cCap)), 0)
+                out(n, 6) = IIf(cType >= 0, f(cType), "")
+            End If
+        End If
+    Next i
+
+    Dim wm As Worksheet
+    On Error Resume Next
+    Set wm = ThisWorkbook.Sheets(IND_MAP)
+    On Error GoTo 0
+    If wm Is Nothing Then
+        Set wm = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count))
+        wm.Name = IND_MAP
+    End If
+    wm.cells.Clear
+    wm.Range("A1:F1").Value = Array("plateCode", "plateName", "symbol", "rank", "marketCap", "plateType")
+    wm.Range("A1:F1").Font.Bold = True
+    If n > 0 Then wm.Range(wm.cells(2, 1), wm.cells(n + 1, 6)).Value = out
+    wm.Columns(2).ColumnWidth = 34: wm.Columns(5).NumberFormat = "#,##0"
+    wm.cells(1, 8).Value = "imported " & Format(Now, "yyyy/mm/dd hh:mm") & " from " & csvPath
+    ' a new universe invalidates the composites
+    Dim wc As Worksheet: Set wc = CacheSheet(False)
+    If Not wc Is Nothing Then wc.cells.Clear: wc.cells(1, 1).Value = "code"
+    Call NavNotify("IMAP: " & n & " constituents imported into " & IND_MAP & " - run RI! to build the industry RRG")
+End Sub
+
+' RFC-4180 style split: quoted fields may hold commas and doubled quotes.
+Private Function SplitCsv(ByVal line As String) As String()
+    Dim out() As String: ReDim out(0 To 0)
+    Dim n As Long, cur As String, q As Boolean, i As Long, ch As String
+    For i = 1 To Len(line)
+        ch = Mid(line, i, 1)
+        If q Then
+            If ch = """" Then
+                If Mid(line, i + 1, 1) = """" Then cur = cur & """": i = i + 1 Else q = False
+            Else
+                cur = cur & ch
+            End If
+        ElseIf ch = """" Then
+            q = True
+        ElseIf ch = "," Then
+            ReDim Preserve out(0 To n): out(n) = cur: n = n + 1: cur = ""
+        Else
+            cur = cur & ch
+        End If
+    Next i
+    ReDim Preserve out(0 To n): out(n) = cur
+    SplitCsv = out
+End Function
