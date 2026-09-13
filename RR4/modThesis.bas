@@ -5,7 +5,8 @@ Option Explicit
 '  THESIS LIBRARY v2 - notes workbench (nav code TH, TH! = rebuild)
 ' ----------------------------------------------------------------
 '  2026-09-13 (evening).  v1 kept one row per 500-word thesis; v2 keeps one
-'  row per THEME note and shows them grouped by ticker, latest call only:
+'  row per THEME note and shows them grouped by ticker, latest call only;
+'  a QUERY shows every call of the queried tickers, newest first:
 '
 '    ThesisNotes (data sheet)  ListObject tblNotes, one note per row:
 '      TARGET | TYPE (stock / macro) | CALL DATE | STATUS | ROLE |
@@ -26,7 +27,8 @@ Option Explicit
 '                  latest call date (newest first) <-> ticker A-Z (THSORT)
 '      row 8+      STOCK section, then MACRO: one block per target with the
 '                  target bold and its latest call date under it, one line
-'                  per note of that call.  Double-click a target -> the
+'                  per note; notes of older calls follow, each call's date
+'                  on its first row.  Double-click a target -> the
 '                  reading panel shows its archived six-section thesis.
 '
 '    ThesisArchive (hidden)  the v1 tblThesis, untouched: the first TH! run
@@ -440,24 +442,26 @@ Public Sub DrawThesisView(ws As Worksheet)
         .LineStyle = xlContinuous: .Color = RR4_LINE
     End With
 
-    ' ---- filter: latest call per target, QUERY, KEYWORD ----
+    ' ---- filter: latest call per target; with a QUERY every call of the queried
+    '      targets is drawn (newest first); KEYWORD narrows either way ----
     Dim qs As Variant, kws As Variant
     qs = SplitList(q): kws = SplitList(kw)
     Dim keep() As Boolean: ReDim keep(0 To n)
     Dim shown As Object: Set shown = CreateObject("Scripting.Dictionary")   ' target -> note count
+    Dim shownCalls As Object: Set shownCalls = CreateObject("Scripting.Dictionary")
     Dim drawnNotes As Long
     For i = 1 To n
         k = UCase$(tg(i))
-        keep(i) = (dt(i) = latest(k))
-        If keep(i) And Not IsEmpty(qs) Then keep(i) = MatchesQuery(k, qs)
+        If IsEmpty(qs) Then keep(i) = (dt(i) = latest(k)) Else keep(i) = MatchesQuery(k, qs)
         If keep(i) And Not IsEmpty(kws) Then keep(i) = MatchesKeyword(th(i) & " " & be(i) & " " & ev(i), kws)
         If keep(i) Then
             shown(k) = shown(k) + 1
+            shownCalls(k & "|" & CLng(dt(i))) = True
             drawnNotes = drawnNotes + 1
         End If
     Next i
     With ws.cells(PG_IN, C_EVID)
-        .Value = shown.count & " calls drawn . " & drawnNotes & " notes"
+        .Value = shownCalls.count & " calls drawn . " & drawnNotes & " notes"
         .Font.Color = RGB(80, 200, 120): .Font.Bold = True
     End With
 
@@ -514,9 +518,34 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
         tg() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String, keep() As Boolean) As Long
     Dim top As Long: top = r
     Dim i As Long, shownName As String
+    ' every kept note of this target, newest call first (stable: sheet order within one date)
+    Dim idx() As Long, m As Long, a As Long, b As Long, t As Long
+    ReDim idx(1 To n + 1)
     For i = 1 To n
         If keep(i) And UCase$(tg(i)) = key Then
-            If shownName = "" Then shownName = tg(i)
+            m = m + 1: idx(m) = i
+            b = m
+            Do While b > 1
+                If dt(idx(b - 1)) >= dt(idx(b)) Then Exit Do
+                t = idx(b - 1): idx(b - 1) = idx(b): idx(b) = t
+                b = b - 1
+            Loop
+        End If
+    Next i
+    Dim prevDt As Date, firstGroup As Boolean: firstGroup = True
+    For a = 1 To m
+        i = idx(a)
+        If shownName = "" Then shownName = tg(i)
+        If a > 1 And dt(i) <> prevDt Then                  ' a new (older) call starts: label it on its first row
+            If firstGroup And r = top + 1 Then             ' first call had a single note: keep a row for its date
+                ws.cells(r, C_KEY).Value = key
+                r = r + 1
+            End If
+            firstGroup = False
+            Call DateCell(ws.cells(r, C_TGT), dt(i))
+        End If
+        prevDt = dt(i)
+        If True Then
             Dim sc As Range: Set sc = ws.cells(r, C_STATUS)
             sc.Value = Dash(st(i)): sc.Font.Color = StatusColor(st(i))
             With ws.cells(r, C_ROLE)
@@ -528,7 +557,7 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
             ws.cells(r, C_KEY).Value = key
             r = r + 1
         End If
-    Next i
+    Next a
     If r = top + 1 Then                                    ' room for the date line
         ws.cells(r, C_KEY).Value = key
         r = r + 1
@@ -542,13 +571,18 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
         On Error GoTo 0
         .Font.Name = ZH_FONT: .Font.Bold = True: .Font.Size = 10: .Font.Color = RGB(245, 245, 245)
     End With
-    With ws.cells(top + 1, C_TGT)
-        .NumberFormat = "@"                              ' else Excel turns the text back into a date
-        .Value = Format$(callDate, "yyyy-mm-dd")
-        .Font.Color = CLR_MUTED
-    End With
+    Call DateCell(ws.cells(top + 1, C_TGT), callDate)
     DrawBlock = r
 End Function
+
+Private Sub DateCell(cell As Range, ByVal d As Date)
+    With cell
+        .NumberFormat = "@"                              ' else Excel turns the text back into a date
+        .Value = Format$(d, "yyyy-mm-dd")
+        .Font.Color = CLR_MUTED
+        .HorizontalAlignment = xlLeft
+    End With
+End Sub
 
 Private Sub TextCell(cell As Range, ByVal v As String, ByVal clr As Long)
     If Trim$(v) = "" Then

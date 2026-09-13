@@ -509,7 +509,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   在資料頁打字就重畫畫面（TYPE 預設 stock、CALL DATE 預設今天），刪筆記＝刪表格列。**畫面** `Thesis Library`（掛 bar）：
   QUERY（代號，逗號多檔）與 KEYWORD（搜 THEME/BEHAVIOR/EVIDENCE，逗號＝OR，**不搜 ROLE**）標籤在上輸入格在下（合併格，
   實際 B7／E7），右邊「N calls drawn . M notes」；總數列（notes . calls . tickers）；先 STOCK 段再 MACRO 段，每個代號
-  **只畫最新一次 CALL DATE 的筆記**，代號粗體＋下方灰色日期。雙擊表頭第一格＝區塊排序（最新法說日↔代號 A–Z，`THSORT`）；
+  **平常只畫最新一次 CALL DATE 的筆記；QUERY 有打代號時，該代號的全部筆記依 CALL DATE 新→舊分組畫出**（2026-09-13 晚加），代號粗體＋下方灰色最新日期，較舊的每次法說日期寫在該組第一列。雙擊表頭第一格＝區塊排序（最新法說日↔代號 A–Z，`THSORT`）；
   **雙擊代號＝右側浮出該代號封存的 500 字 thesis**（面板平常隱藏、蓋在 BEHAVIOR/EVIDENCE 上，雙擊頁標題關閉）。每列隱藏欄
   （頁面 AD）存區塊代號給雙擊用。**v1 的 tblThesis 原封不動移到隱藏的 `ThesisArchive`**（第一次 `TH!` 自動把舊 `Thesis Library`
   改名、隱藏、清掉 v1 事件碼），v1 的列排序與「2 秒內雙擊刪除」都不在了。事件碼記錄在 `RR4/SheetThesis_Code.txt`、
