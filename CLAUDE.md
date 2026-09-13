@@ -437,6 +437,18 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `CornerLabel`／`QuadLabel`——不要從 `Point.Parent.Parent` 反推圖表，型別會不符。⚠️ **`TextRange.Font.Name`
   只管拉丁字，中文字走 `Font.NameFarEast`**：第一版只設 `.Name`，COM 讀回來是 Noto Sans TC、畫面上中文卻還是
   舊字型；資料標籤、圖標題、軸標題三處都要 `.Name` 與 `.NameFarEast` 一起設。
+- **Thesis Library（TH）頁（2026-09-13）**：`modThesis.bas`，總經＋個股 thesis 資料庫（使用者指定：Excel、同一庫用
+  類型標籤、直接在表末打字新增、點列右側面板讀全文、掛導覽列）。`ListObject tblThesis`，一列一篇 13 欄：
+  日期／類型(macro|stock)／標的／標題／立場(LONG|SHORT|NEUTRAL|WATCH)／500 字 thesis 六段各一欄／下次驗證日／
+  狀態(ACTIVE|CONFIRMED|FALSIFIED|CLOSED)，三個列舉欄有下拉。**A 欄與頁面第 1 列留白**（`TH_LEFT = 1`、標題
+  page row 2、表頭 page row 5，加 bar 後表頭在第 8 列 B 欄），**導覽列也從 B 欄起**（`modNav.NavLeft` 對 `P`
+  與 `TH` 回 `RR4_LEFT`）。面板是文字方塊 `TH_PANEL`（P 欄起、620×760、Noto Sans TC，`Name` 與 `NameFarEast`
+  都設），`ShowThesis` 由工作表 `SelectionChange`（`SheetThesis_Code.txt`，由 `EnsureThesisSheetCode` 寫入）
+  觸發；`Worksheet_Change` 在標的填入時自動補今天日期與 ACTIVE。`TH!` 只重套版面不動資料。中文標籤全部用
+  `ChrW` 組（`L("S1")` 等，.bas 維持 ASCII）。**兩個踩過的坑**：① `If r = 0 Or cells(r, 3)…`——VBA `Or` 不短路，
+  `cells(0, 3)` 直接炸出執行期對話框、COM 的 `Application.Run` 就卡死；② 建置中途出錯會把 `EnableEvents`
+  留在 False，之後所有工作表事件都不動，重試前要先 `Application.EnableEvents = True`、VBE 用
+  `CommandBars.FindControl(1, 228).Execute` 離開中斷模式。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
