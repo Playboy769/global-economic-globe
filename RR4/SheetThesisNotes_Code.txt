@@ -1,0 +1,11 @@
+' ============================================================================
+'  Worksheet code-behind for the "ThesisNotes" data sheet (RR4 workbook),
+'  Thesis Library v2 (2026-09-13).  modThesis.EnsureNotesSheet writes this into
+'  the sheet module itself; this file is the record / manual fallback.
+' ============================================================================
+Option Explicit
+
+' ThesisNotes data (modThesis): editing a note redraws the Thesis Library view
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call ThesisNotesChange(Me, Target)
+End Sub

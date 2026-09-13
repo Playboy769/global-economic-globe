@@ -1,16 +1,17 @@
+' ============================================================================
+'  Worksheet code-behind for the "Thesis Library" view sheet (RR4 workbook),
+'  Thesis Library v2 (2026-09-13).  modThesis.EnsureViewSheet writes this into
+'  the sheet module itself; this file is the record / manual fallback.
+'  The v1 code (ThesisDoubleClick / ThesisChange on tblThesis) is gone - that
+'  table now lives on the hidden ThesisArchive sheet with no event code.
+' ============================================================================
 Option Explicit
 
-' ============================================================================
-'  Worksheet code-behind for the "Thesis Library" sheet (RR4 workbook).
-'  NOT a .bas module -- it lives in the sheet's own code module and is
-'  written there by modThesis.EnsureThesisSheetCode when TH! builds the page.
-' ============================================================================
-
-' Thesis Library: double-click a row to read it in the panel (see modThesis.bas)
-Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
-    Call ThesisDoubleClick(Me, Target, Cancel)
+' Thesis Library view (modThesis): QUERY / KEYWORD inputs, double-click header / target
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call ThesisViewChange(Me, Target)
 End Sub
 
-Private Sub Worksheet_Change(ByVal Target As Range)
-    Call ThesisChange(Me, Target)
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call ThesisViewDoubleClick(Me, Target, Cancel)
 End Sub

@@ -2,60 +2,85 @@ Attribute VB_Name = "modThesis"
 Option Explicit
 
 ' ================================================================
-'  THESIS LIBRARY (nav code TH, TH! = (re)format) - sheet "Thesis Library"
+'  THESIS LIBRARY v2 - notes workbench (nav code TH, TH! = rebuild)
 ' ----------------------------------------------------------------
-'  2026-09-13.  A place to keep macro and single-stock investment theses
-'  and read them quickly.  One row per thesis in the ListObject tblThesis:
+'  2026-09-13 (evening).  v1 kept one row per 500-word thesis; v2 keeps one
+'  row per THEME note and shows them grouped by ticker, latest call only:
 '
-'    A date | B type (macro/stock) | C target | D title | E stance |
-'    F..K the six sections of the 500-word thesis checklist
-'         (research/_templates/500-word-investment-thesis-checklist-template.md):
-'         1 one-line thesis  2 business model & moat  3 why now
-'         4 three supporting numbers  5 biggest risk & falsifiers
-'         6 decision & next checkpoint |
-'    L next check date | M status (ACTIVE / CONFIRMED / FALSIFIED / CLOSED)
+'    ThesisNotes (data sheet)  ListObject tblNotes, one note per row:
+'      TARGET | TYPE (stock / macro) | CALL DATE | STATUS | ROLE |
+'      THEME | BEHAVIOR | EVIDENCE
+'      STATUS  Robust Solid Growing (green) / Slowing Sluggish Challenging
+'              Contraction Warning (red)
+'      ROLE    MOAT / RISK / CATALYST / blank
+'      Typing there redraws the view (TYPE defaults to stock, CALL DATE to
+'      today).  Delete a note = delete its table row there.
 '
-'  New theses are typed straight into the row under the table (the
-'  ListObject grows; type / stance / status carry dropdowns).  Double-
-'  clicking a row shows its six sections in the reading panel (text box TH_PANEL to
-'  the right of the table) - see RR4/SheetThesis_Code.txt, written into the
-'  sheet module by EnsureThesisSheetCode.  Chinese text uses Noto Sans TC;
-'  the labels are ChrW-built so this file stays ASCII (VBE import rule).
+'    Thesis Library (view, carries the nav bar)
+'      page row 1  title
+'      row 2/3     QUERY (tickers, comma = several, blank = all) and KEYWORD
+'                  (searched in THEME / BEHAVIOR / EVIDENCE, comma = OR)
+'                  labels above their inputs; "N calls drawn . M notes"
+'      row 5       totals over all data (notes . calls . tickers)
+'      row 7       header; double-click its TICKER cell = sort blocks by
+'                  latest call date (newest first) <-> ticker A-Z (THSORT)
+'      row 8+      STOCK section, then MACRO: one block per target with the
+'                  target bold and its latest call date under it, one line
+'                  per note of that call.  Double-click a target -> the
+'                  reading panel shows its archived six-section thesis.
 '
-'  TH! never touches the data: it (re)builds the header, widths, dropdowns,
-'  the panel and the nav bar around whatever rows are already there.
+'    ThesisArchive (hidden)  the v1 tblThesis, untouched: the first TH! run
+'      after this change renames the old "Thesis Library" sheet to it and
+'      strips its v1 event code.
 '
-'  Sorting: double-click a header of a short column (date / type / target /
-'  title / stance / next check / status) to sort by it; again = reverse.
-'  First click is descending (newest first); stance and status sort in their
-'  own order (LONG WATCH NEUTRAL SHORT / ACTIVE CONFIRMED FALSIFIED CLOSED)
-'  first.  The header shows an arrow; the sort is kept in the hidden sheet name
-'  THSORT ("col|dir") and re-applied by TH! and when a target is typed.
-'  Double-clicking the page title drops the sort and goes back to date
-'  oldest -> newest (no input-order column is kept).
+'  Chinese labels are ChrW-built so this file stays ASCII (VBE import rule).
 ' ================================================================
 
 Public Const THESIS_SHEET As String = "Thesis Library"
-Public Const THESIS_TABLE As String = "tblThesis"
-Private Const TH_HDR As Long = 4                 ' page row of the header (title row 2, row 3 blank); bar block adds 4
-Private Const TH_LEFT As Long = 0                ' draw from column A; NavAdd inserts the blank column A afterwards (modNav)
-Private Const TH_NCOL As Long = 13
-Private Const PANEL_COL As Long = 15             ' O at draw time (table A:M, N the gap); P once NavAdd adds column A
-Private Const PANEL_W As Double = 620
-Private Const PANEL_H As Double = 760
-Private Const ZH_FONT As String = "Noto Sans TC"
-Private Const DEL_WINDOW As Double = 2#          ' seconds: a second double-click on the same row within this deletes it
-Private Const SORT_MARK As String = "THSORT"     ' "col|dir" of the current sort (dir 2 = first click, 1 = reversed)
-Private m_lastDblRow As Long                     ' row of the last double-click (0 = none)
-Private m_lastDblAt As Double                    ' Timer of that double-click
+Public Const NOTES_SHEET As String = "ThesisNotes"
+Public Const NOTES_TABLE As String = "tblNotes"
+Public Const ARCHIVE_SHEET As String = "ThesisArchive"
+Public Const THESIS_TABLE As String = "tblThesis"        ' the archived v1 table
 
+Private Const NT_TARGET As Long = 1
+Private Const NT_TYPE As Long = 2
+Private Const NT_DATE As Long = 3
+Private Const NT_STATUS As Long = 4
+Private Const NT_ROLE As Long = 5
+Private Const NT_THEME As Long = 6
+Private Const NT_BEHAV As Long = 7
+Private Const NT_EVID As Long = 8
+Private Const NT_NCOL As Long = 8
+
+' view geometry (page coordinates; the bar adds NavOffset rows / NavLeft columns)
+Private Const PG_TITLE As Long = 1
+Private Const PG_LBL As Long = 2
+Private Const PG_IN As Long = 3
+Private Const PG_TOTAL As Long = 5
+Private Const PG_HDR As Long = 7
+Private Const PG_LIST As Long = 8
+Private Const C_TGT As Long = 1
+Private Const C_STATUS As Long = 2
+Private Const C_ROLE As Long = 3
+Private Const C_THEME As Long = 4
+Private Const C_BEHAV As Long = 5
+Private Const C_EVID As Long = 6
+Private Const C_KEY As Long = 30                         ' hidden: the block's target on every row
+Private Const PANEL_COL As Long = 8                      ' H at draw time
+Private Const PANEL_W As Double = 560
+Private Const PANEL_H As Double = 640
+
+Private Const ZH_FONT As String = "Noto Sans TC"
+Private Const MONO As String = "Consolas"
+Private Const CLR_TEXT As Long = 14540253                ' 221,221,221
+Private Const CLR_SOFT As Long = 12632256                ' 192,192,192
+Private Const CLR_MUTED As Long = 8421504                ' 128,128,128
+Private Const CLR_BANNER As Long = 1842204               ' 28,28,28
+Private Const SORT_MARK As String = "THSORT"             ' "date" (default) / "ticker"
+
+' ----------------------------------------------------------------
 Private Function L(ByVal key As String) As String
     Select Case key
-        Case "DATE": L = ChrW(&H65E5) & ChrW(&H671F)
-        Case "TYPE": L = ChrW(&H985E) & ChrW(&H578B)
-        Case "TARGET": L = ChrW(&H6A19) & ChrW(&H7684)
-        Case "TITLE": L = ChrW(&H6A19) & ChrW(&H984C)
-        Case "STANCE": L = ChrW(&H7ACB) & ChrW(&H5834)
         Case "S1": L = ChrW(&H4E00) & ChrW(&H53E5) & ChrW(&H8A71) & ChrW(&H8AD6) & ChrW(&H9EDE)
         Case "S2": L = ChrW(&H5546) & ChrW(&H696D) & ChrW(&H6A21) & ChrW(&H5F0F) & ChrW(&H8207) & ChrW(&H8B77) & ChrW(&H57CE) & ChrW(&H6CB3)
         Case "S3": L = ChrW(&H70BA) & ChrW(&H4EC0) & ChrW(&H9EBC) & ChrW(&H662F) & ChrW(&H73FE) & ChrW(&H5728)
@@ -63,173 +88,171 @@ Private Function L(ByVal key As String) As String
         Case "S5": L = ChrW(&H6700) & ChrW(&H5927) & ChrW(&H98A8) & ChrW(&H96AA) & ChrW(&H8207) & ChrW(&H8B49) & ChrW(&H507D) & ChrW(&H8A0A) & ChrW(&H865F)
         Case "S6": L = ChrW(&H6C7A) & ChrW(&H7B56) & ChrW(&H8207) & ChrW(&H4E0B) & ChrW(&H4E00) & ChrW(&H500B) & ChrW(&H9A57) & ChrW(&H8B49) & ChrW(&H9EDE)
         Case "NEXT": L = ChrW(&H4E0B) & ChrW(&H6B21) & ChrW(&H9A57) & ChrW(&H8B49) & ChrW(&H65E5)
-        Case "STATUS": L = ChrW(&H72C0) & ChrW(&H614B)
-        Case "PANEL_EMPTY": L = ChrW(&H96D9) & ChrW(&H64CA) & ChrW(&H5DE6) & ChrW(&H5074) & ChrW(&H4EFB) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF0C) & ChrW(&H9019) & ChrW(&H88E1) & ChrW(&H986F) & ChrW(&H793A) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H7684) & ChrW(&H516D) & ChrW(&H6BB5) & ChrW(&H5168) & ChrW(&H6587) & ChrW(&HFF1B) & ChrW(&H0032) & ChrW(&H0020) & ChrW(&H79D2) & ChrW(&H5167) & ChrW(&H518D) & ChrW(&H96D9) & ChrW(&H64CA) & ChrW(&H540C) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF1D) & ChrW(&H522A) & ChrW(&H9664) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&HFF08) & ChrW(&H6703) & ChrW(&H5148) & ChrW(&H78BA) & ChrW(&H8A8D) & ChrW(&HFF09)
-        Case "DEL_ASK": L = ChrW(&H522A) & ChrW(&H9664) & ChrW(&H9019) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&HFF1F)
-        Case "DEL_DONE": L = ChrW(&H5DF2) & ChrW(&H522A) & ChrW(&H9664)
-        Case "TITLE_ZH": L = ChrW(&H7E3D) & ChrW(&H7D93) & ChrW(&H8207) & ChrW(&H500B) & ChrW(&H80A1) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H8CC7) & ChrW(&H6599) & ChrW(&H5EAB)
     End Select
 End Function
 
-' Column headers, in table order.
-Private Function Headers() As Variant
-    Headers = Array(L("DATE"), L("TYPE"), L("TARGET"), L("TITLE"), L("STANCE"), _
-                    "1 " & L("S1"), "2 " & L("S2"), "3 " & L("S3"), "4 " & L("S4"), "5 " & L("S5"), "6 " & L("S6"), _
-                    L("NEXT"), L("STATUS"))
+Private Function StatusList() As String
+    StatusList = "Robust,Solid,Growing,Slowing,Sluggish,Challenging,Contraction,Warning"
 End Function
 
-' ----------------------------------------------------------------
+Private Function StatusColor(ByVal s As String) As Long
+    Select Case LCase$(Trim$(s))
+        Case "robust", "solid", "growing": StatusColor = RGB(80, 200, 120)
+        Case "slowing", "sluggish", "challenging", "contraction", "warning": StatusColor = RGB(230, 90, 90)
+        Case Else: StatusColor = CLR_SOFT
+    End Select
+End Function
+
+Private Function RoleColor(ByVal s As String) As Long
+    Select Case UCase$(Trim$(s))
+        Case "MOAT": RoleColor = RR4_ACCENT
+        Case "RISK": RoleColor = RGB(230, 90, 90)
+        Case "CATALYST": RoleColor = RGB(0, 190, 240)
+        Case Else: RoleColor = CLR_MUTED
+    End Select
+End Function
+
+' ================================================================
+'  TH! - migrate v1 once, make sure the data sheet exists, redraw
+' ================================================================
 Sub BuildThesisLibrary()
-    Dim ws As Worksheet
-    On Error Resume Next
-    Set ws = ThisWorkbook.Sheets(THESIS_SHEET)
-    On Error GoTo 0
-    Dim isNew As Boolean
-    If ws Is Nothing Then
-        Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.count))
-        ws.Name = THESIS_SHEET
-        isNew = True
-    End If
     Dim prevEv As Boolean: prevEv = Application.EnableEvents
     Application.EnableEvents = False
     On Error GoTo Fail
-    Application.ScreenUpdating = False
-    Call NavStrip(ws)
+    Call MigrateV1ToArchive
+    Call EnsureNotesSheet
+    Dim ws As Worksheet: Set ws = EnsureViewSheet()
+    Application.EnableEvents = prevEv
+    Call DrawThesisView(ws)
+    Call NavNotify("Thesis Library: " & NoteCount() & " notes")
+    Exit Sub
+Fail:
+    Application.EnableEvents = prevEv
+    Call NavNotify("Thesis Library failed: " & Err.Description, True)
+End Sub
 
+' v1 kept tblThesis on the "Thesis Library" sheet itself.  Rename that sheet to
+' the archive (data untouched), hide it, drop its panel and v1 event code.
+Private Sub MigrateV1ToArchive()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(THESIS_SHEET)
+    On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
     Dim lo As ListObject
     On Error Resume Next
     Set lo = ws.ListObjects(THESIS_TABLE)
     On Error GoTo 0
+    If lo Is Nothing Then Exit Sub
+    If SheetExists(ARCHIVE_SHEET) Then Exit Sub
+    On Error Resume Next
+    ws.Shapes("TH_PANEL").Delete
+    On Error GoTo 0
+    ws.Name = ARCHIVE_SHEET
+    Call WriteSheetCode(ws, "")                      ' no events on the archive
+    ws.Visible = xlSheetHidden
+End Sub
 
-    ' ---- page look (data untouched: only formats) ----
+Private Function SheetExists(ByVal nm As String) As Boolean
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(nm)
+    On Error GoTo 0
+    SheetExists = Not ws Is Nothing
+End Function
+
+Private Function EnsureViewSheet() As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(THESIS_SHEET)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Dim prev As Object: Set prev = ActiveSheet
+        Set ws = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
+        ws.Name = THESIS_SHEET
+        ActiveWindow.DisplayGridlines = False
+        On Error Resume Next
+        prev.Activate
+        On Error GoTo 0
+    End If
+    Call WriteSheetCode(ws, "Option Explicit" & vbCrLf & vbCrLf & _
+        "' Thesis Library view (modThesis): QUERY / KEYWORD inputs, double-click header / target" & vbCrLf & _
+        "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
+        "    Call ThesisViewChange(Me, Target)" & vbCrLf & _
+        "End Sub" & vbCrLf & vbCrLf & _
+        "Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)" & vbCrLf & _
+        "    Call ThesisViewDoubleClick(Me, Target, Cancel)" & vbCrLf & _
+        "End Sub" & vbCrLf, "ThesisViewChange")
+    Set EnsureViewSheet = ws
+End Function
+
+Private Sub EnsureNotesSheet()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(NOTES_SHEET)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Dim prev As Object: Set prev = ActiveSheet
+        Dim after As Object
+        On Error Resume Next
+        Set after = ThisWorkbook.Worksheets(THESIS_SHEET)
+        On Error GoTo 0
+        If after Is Nothing Then Set after = ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count)
+        Set ws = ThisWorkbook.Worksheets.Add(After:=after)
+        ws.Name = NOTES_SHEET
+        ActiveWindow.DisplayGridlines = False
+        On Error Resume Next
+        prev.Activate
+        On Error GoTo 0
+    End If
+
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
-        .Font.Color = RGB(221, 221, 221)
-        .Font.Name = "Consolas"
-        .Font.Size = 9
-        .VerticalAlignment = xlTop
+        .Font.Name = MONO: .Font.Size = 9: .Font.Color = CLR_TEXT
+        .VerticalAlignment = xlCenter
     End With
-    ws.Activate
-    ActiveWindow.DisplayGridlines = False
-    ActiveWindow.FreezePanes = False
-
-    With ws.cells(2, 1 + TH_LEFT)
-        .Value = "THESIS LIBRARY"
-        .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 14
-    End With
-    ws.Rows(2).RowHeight = 24
-    With ws.cells(2, 4 + TH_LEFT)
-        .Value = L("TITLE_ZH") & "  .  one row per thesis, six sections of the 500-word checklist  .  formatted " & Format(Now, "yyyy/mm/dd hh:mm")
-        .Font.Color = RGB(120, 120, 120): .Font.Size = 9: .Font.Name = ZH_FONT
+    With ws.cells(1, 1)
+        .Value = "THESIS NOTES  .  data for Thesis Library (TH) - one theme note per row; type below the table to add, delete a row to remove"
+        .Font.Color = RR4_ACCENT: .Font.Bold = True
     End With
 
-    ' ---- table ----
-    Dim hdr As Variant: hdr = Headers()
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = ws.ListObjects(NOTES_TABLE)
+    On Error GoTo 0
+    Dim hdr As Variant
+    hdr = Array("TARGET", "TYPE", "CALL DATE", "STATUS", "ROLE", "THEME", "BEHAVIOR", "EVIDENCE")
     Dim j As Long
     If lo Is Nothing Then
-        For j = 0 To TH_NCOL - 1: ws.cells(TH_HDR, j + 1 + TH_LEFT).Value = hdr(j): Next j
-        Set lo = ws.ListObjects.Add(xlSrcRange, ws.Range(ws.cells(TH_HDR, 1 + TH_LEFT), ws.cells(TH_HDR + 1, TH_NCOL + TH_LEFT)), , xlYes)
-        lo.Name = THESIS_TABLE
-    Else
-        For j = 0 To TH_NCOL - 1: lo.HeaderRowRange.cells(1, j + 1).Value = hdr(j): Next j
+        For j = 0 To NT_NCOL - 1: ws.cells(3, j + 1).Value = hdr(j): Next j
+        Set lo = ws.ListObjects.Add(xlSrcRange, ws.Range(ws.cells(3, 1), ws.cells(4, NT_NCOL)), , xlYes)
+        lo.Name = NOTES_TABLE
     End If
     lo.TableStyle = ""
-    lo.ShowTableStyleRowStripes = False
     With lo.HeaderRowRange
-        .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 9: .Font.Name = ZH_FONT
+        .Font.Color = RR4_ACCENT: .Font.Bold = True
         .Interior.Color = RGB(0, 0, 0)
-        .WrapText = False
-        .Borders(xlEdgeBottom).LineStyle = xlContinuous
-        .Borders(xlEdgeBottom).Color = RR4_LINE
+        .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Color = RR4_LINE
     End With
-    Dim widths As Variant
-    widths = Array(10, 7, 9, 26, 8, 30, 18, 18, 18, 18, 18, 10, 10)
-    For j = 0 To TH_NCOL - 1: ws.Columns(j + 1 + TH_LEFT).ColumnWidth = widths(j): Next j
-    ws.Columns(TH_NCOL + 1 + TH_LEFT).ColumnWidth = 2
-    If Not lo.DataBodyRange Is Nothing Then Call FormatThesisRows(lo)
-    Call ApplyThesisSort(ws, lo)                     ' re-sort + header arrow (headers were just rewritten)
-
-    ' ---- dropdowns on the whole columns of the table (they extend with it) ----
-    Call SetList(lo.ListColumns(2).DataBodyRange, "macro,stock")
-    Call SetList(lo.ListColumns(5).DataBodyRange, "LONG,SHORT,NEUTRAL,WATCH")
-    Call SetList(lo.ListColumns(13).DataBodyRange, "ACTIVE,CONFIRMED,FALSIFIED,CLOSED")
-
-    ' ---- reading panel ----
-    Call EnsurePanel(ws)
-    Call ShowThesis(ws, Nothing)
-
-    Call NavAdd(ws, "TH")
-    ws.cells(TH_HDR + 1 + NavOffset(ws), 1 + TH_LEFT).Select
-    Call EnsureThesisSheetCode(ws)
-    Application.ScreenUpdating = True
-    Application.EnableEvents = prevEv
-    Call NavNotify("Thesis Library " & IIf(isNew, "created", "formatted") & ": " & ThesisCount(lo) & " theses")
-    Exit Sub
-Fail:
-    Dim msg As String: msg = Err.Description
-    Application.ScreenUpdating = True
-    Application.EnableEvents = prevEv
-    On Error Resume Next
-    Call NavAdd(ws, "TH")
-    Call NavNotify("Thesis Library failed: " & msg, True)
+    Dim widths As Variant: widths = Array(16, 8, 12, 13, 10, 36, 56, 56)
+    For j = 0 To NT_NCOL - 1: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
+    If Not lo.DataBodyRange Is Nothing Then
+        With lo.DataBodyRange
+            .Interior.Color = RGB(8, 8, 8): .Font.Color = CLR_TEXT
+        End With
+        lo.ListColumns(NT_DATE).DataBodyRange.NumberFormat = "yyyy/mm/dd"
+        lo.ListColumns(NT_TARGET).DataBodyRange.Font.Name = ZH_FONT
+        For j = NT_THEME To NT_EVID: lo.ListColumns(j).DataBodyRange.Font.Name = ZH_FONT: Next j
+        Call SetList(lo.ListColumns(NT_TYPE).DataBodyRange, "stock,macro")
+        Call SetList(lo.ListColumns(NT_STATUS).DataBodyRange, StatusList())
+        Call SetList(lo.ListColumns(NT_ROLE).DataBodyRange, "MOAT,RISK,CATALYST")
+    End If
+    Call WriteSheetCode(ws, "Option Explicit" & vbCrLf & vbCrLf & _
+        "' ThesisNotes data (modThesis): editing a note redraws the Thesis Library view" & vbCrLf & _
+        "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
+        "    Call ThesisNotesChange(Me, Target)" & vbCrLf & _
+        "End Sub" & vbCrLf, "ThesisNotesChange")
 End Sub
-
-Private Function ThesisCount(lo As ListObject) As Long
-    If lo.DataBodyRange Is Nothing Then Exit Function
-    Dim r As Range, n As Long
-    For Each r In lo.ListColumns(3).DataBodyRange.cells
-        If Trim(CStr(r.Value)) <> "" Then n = n + 1
-    Next r
-    ThesisCount = n
-End Function
-
-' Row look: dates / short columns Consolas, the text columns Noto Sans TC,
-' long text clipped (not wrapped - the panel is for reading).
-Public Sub FormatThesisRows(lo As ListObject)
-    If lo.DataBodyRange Is Nothing Then Exit Sub
-    With lo.DataBodyRange
-        .Interior.Color = RGB(8, 8, 8)
-        .Font.Color = RGB(221, 221, 221)
-        .Font.Name = "Consolas": .Font.Size = 9
-        .WrapText = False
-        .VerticalAlignment = xlCenter
-        .RowHeight = 18
-    End With
-    lo.ListColumns(1).DataBodyRange.NumberFormat = "yyyy/mm/dd"
-    lo.ListColumns(12).DataBodyRange.NumberFormat = "yyyy/mm/dd"
-    Dim c As Long
-    For c = 3 To 11
-        lo.ListColumns(c).DataBodyRange.Font.Name = ZH_FONT
-    Next c
-    lo.ListColumns(3).DataBodyRange.Font.Color = RR4_ACCENT
-    lo.ListColumns(3).DataBodyRange.Font.Bold = True
-    Dim r As Range
-    For Each r In lo.ListColumns(5).DataBodyRange.cells
-        r.Font.Color = StanceColor(CStr(r.Value)): r.Font.Bold = True
-    Next r
-    For Each r In lo.ListColumns(13).DataBodyRange.cells
-        r.Font.Color = StatusColor(CStr(r.Value)): r.Font.Bold = True
-    Next r
-End Sub
-
-Private Function StanceColor(ByVal s As String) As Long
-    Select Case UCase(s)
-        Case "LONG":    StanceColor = RGB(220, 80, 80)       ' TW convention: red = up
-        Case "SHORT":   StanceColor = RGB(80, 200, 120)
-        Case "WATCH":   StanceColor = RGB(249, 168, 37)
-        Case Else:      StanceColor = RGB(180, 180, 180)
-    End Select
-End Function
-
-Private Function StatusColor(ByVal s As String) As Long
-    Select Case UCase(s)
-        Case "ACTIVE":    StatusColor = RGB(221, 221, 221)
-        Case "CONFIRMED": StatusColor = RGB(80, 200, 120)
-        Case "FALSIFIED": StatusColor = RGB(220, 80, 80)
-        Case "CLOSED":    StatusColor = RGB(110, 110, 110)
-        Case Else:        StatusColor = RGB(180, 180, 180)
-    End Select
-End Function
 
 Private Sub SetList(rng As Range, ByVal items As String)
     If rng Is Nothing Then Exit Sub
@@ -240,21 +263,424 @@ Private Sub SetList(rng As Range, ByVal items As String)
     On Error GoTo 0
 End Sub
 
-' ----------------------------------------------------------------
-' The reading panel: one text box right of the table.
+Private Function NotesTable() As ListObject
+    On Error Resume Next
+    Set NotesTable = ThisWorkbook.Worksheets(NOTES_SHEET).ListObjects(NOTES_TABLE)
+End Function
+
+Private Function NoteCount() As Long
+    Dim lo As ListObject: Set lo = NotesTable()
+    If lo Is Nothing Then Exit Function
+    If lo.DataBodyRange Is Nothing Then Exit Function
+    Dim r As Range
+    For Each r In lo.ListColumns(NT_TARGET).DataBodyRange.cells
+        If Trim$(CStr(r.Value)) <> "" Then NoteCount = NoteCount + 1
+    Next r
+End Function
+
+' ================================================================
+'  Events
+' ================================================================
+Public Sub ThesisNotesChange(ws As Worksheet, ByVal Target As Range)
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = ws.ListObjects(NOTES_TABLE)
+    On Error GoTo 0
+    If lo Is Nothing Then Exit Sub
+    If lo.DataBodyRange Is Nothing Then Exit Sub
+    If Intersect(Target, lo.Range) Is Nothing Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error Resume Next
+    Dim c As Range, rr As Long, body As Range
+    Set body = Intersect(Target, lo.DataBodyRange)
+    If body Is Nothing Then Set body = lo.DataBodyRange.Rows(lo.ListRows.count)
+    For Each c In body.Rows
+        rr = c.Row - lo.HeaderRowRange.Row
+        If rr >= 1 And rr <= lo.ListRows.count Then
+            With lo.DataBodyRange
+                If Trim$(CStr(.cells(rr, NT_TARGET).Value)) <> "" Then
+                    If Trim$(CStr(.cells(rr, NT_TYPE).Value)) = "" Then .cells(rr, NT_TYPE).Value = "stock"
+                    If Trim$(CStr(.cells(rr, NT_DATE).Value)) = "" Then .cells(rr, NT_DATE).Value = Date
+                End If
+            End With
+        End If
+    Next c
+    Call SetList(lo.ListColumns(NT_TYPE).DataBodyRange, "stock,macro")
+    Call SetList(lo.ListColumns(NT_STATUS).DataBodyRange, StatusList())
+    Call SetList(lo.ListColumns(NT_ROLE).DataBodyRange, "MOAT,RISK,CATALYST")
+    lo.ListColumns(NT_DATE).DataBodyRange.NumberFormat = "yyyy/mm/dd"
+    On Error GoTo 0
+    Application.EnableEvents = prevEv
+    If SheetExists(THESIS_SHEET) Then Call DrawThesisView(ThisWorkbook.Worksheets(THESIS_SHEET))
+End Sub
+
+Public Sub ThesisViewChange(ws As Worksheet, ByVal Target As Range)
+    Dim r As Long: r = PG_IN + NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim inputs As Range
+    Set inputs = Union(ws.cells(r, C_TGT + lc), ws.cells(r, C_THEME + lc))
+    If Intersect(Target, inputs) Is Nothing Then Exit Sub
+    Call DrawThesisView(ws)
+End Sub
+
+Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
+    Dim t As Range: Set t = Target.cells(1, 1)
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    If t.Row = PG_HDR + off And t.Column = C_TGT + lc Then
+        Cancel = True
+        Dim cur As String: cur = SortMode(ws)
+        Call SetSortMode(ws, IIf(cur = "ticker", "date", "ticker"))
+        Call DrawThesisView(ws)
+        Exit Sub
+    End If
+    If t.Row = PG_TITLE + off Then
+        Cancel = True
+        Call ShowArchive(ws, "")
+        Exit Sub
+    End If
+    If t.Row >= PG_LIST + off And t.Column = C_TGT + lc Then
+        Dim key As String: key = CStr(ws.cells(t.Row, C_KEY + lc).Value)
+        If key <> "" Then
+            Cancel = True
+            Call ShowArchive(ws, key)
+        End If
+    End If
+End Sub
+
+Private Function SortMode(ws As Worksheet) As String
+    SortMode = "date"
+    Dim nm As Name
+    For Each nm In ws.Names
+        If Right$(nm.Name, Len(SORT_MARK) + 1) = "!" & SORT_MARK Then
+            If InStr(nm.RefersTo, "ticker") > 0 Then SortMode = "ticker"
+            Exit Function
+        End If
+    Next nm
+End Function
+
+Private Sub SetSortMode(ws As Worksheet, ByVal mode As String)
+    ws.Names.Add Name:=SORT_MARK, RefersTo:="=""" & mode & """", Visible:=False
+End Sub
+
+' ================================================================
+'  View
+' ================================================================
+Public Sub DrawThesisView(ws As Worksheet)
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
+    Application.EnableEvents = False
+    Application.ScreenUpdating = False
+    On Error GoTo Fail
+
+    ' keep the typed filters across the redraw
+    Dim q As String, kw As String
+    If NavHasRows(ws) Then
+        q = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_TGT + NavLeft(ws)).Value))
+        kw = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_THEME + NavLeft(ws)).Value))
+    End If
+    Dim mode As String: mode = SortMode(ws)
+
+    Call NavStrip(ws)
+    ws.cells.Clear
+    With ws.cells
+        .Interior.Color = RGB(0, 0, 0)
+        .Font.Name = MONO: .Font.Size = 9: .Font.Color = CLR_TEXT
+        .VerticalAlignment = xlCenter
+        .RowHeight = 17
+    End With
+    Dim widths As Variant: widths = Array(18, 13, 10, 34, 50, 50, 2)
+    Dim j As Long
+    For j = 0 To 6: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
+    ws.Columns(C_KEY).Hidden = True
+
+    ' ---- title + inputs (label above input) ----
+    With ws.cells(PG_TITLE, 1)
+        .Value = "THESIS LIBRARY"
+        .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 12
+    End With
+    ws.Rows(PG_TITLE).RowHeight = 22
+    Call Lbl(ws.cells(PG_LBL, C_TGT), "QUERY")
+    Call Lbl(ws.cells(PG_LBL, C_THEME), "KEYWORD")
+    ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)).Merge
+    ws.Range(ws.cells(PG_IN, C_THEME), ws.cells(PG_IN, C_BEHAV)).Merge
+    Call InputBox_(ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)), q)
+    Call InputBox_(ws.Range(ws.cells(PG_IN, C_THEME), ws.cells(PG_IN, C_BEHAV)), kw)
+    ws.Rows(PG_IN).RowHeight = 20
+
+    ' ---- data ----
+    Dim lo As ListObject: Set lo = NotesTable()
+    Dim n As Long
+    Dim tg() As String, ty() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String
+    n = ReadNotes(lo, tg, ty, dt, st, ro, th, be, ev)
+
+    ' totals over everything
+    Dim calls As Object: Set calls = CreateObject("Scripting.Dictionary")
+    Dim tickers As Object: Set tickers = CreateObject("Scripting.Dictionary")
+    Dim latest As Object: Set latest = CreateObject("Scripting.Dictionary")
+    Dim kind As Object: Set kind = CreateObject("Scripting.Dictionary")
+    Dim i As Long, k As String
+    For i = 1 To n
+        k = UCase$(tg(i))
+        calls(k & "|" & CLng(dt(i))) = True
+        tickers(k) = True
+        If Not latest.Exists(k) Then
+            latest(k) = dt(i): kind(k) = ty(i)
+        ElseIf dt(i) > latest(k) Then
+            latest(k) = dt(i): kind(k) = ty(i)
+        End If
+    Next i
+    With ws.cells(PG_TOTAL, 1)
+        .Value = Format(n, "#,##0") & " notes . " & calls.count & " calls . " & tickers.count & " tickers" & _
+                 "      (double-click a ticker = its archived thesis, the title = close)"
+        .Font.Color = CLR_SOFT: .Font.Bold = True
+    End With
+    With ws.Range(ws.cells(PG_TOTAL, 1), ws.cells(PG_TOTAL, C_EVID)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous: .Color = RR4_LINE
+    End With
+
+    ' ---- filter: latest call per target, QUERY, KEYWORD ----
+    Dim qs As Variant, kws As Variant
+    qs = SplitList(q): kws = SplitList(kw)
+    Dim keep() As Boolean: ReDim keep(0 To n)
+    Dim shown As Object: Set shown = CreateObject("Scripting.Dictionary")   ' target -> note count
+    Dim drawnNotes As Long
+    For i = 1 To n
+        k = UCase$(tg(i))
+        keep(i) = (dt(i) = latest(k))
+        If keep(i) And Not IsEmpty(qs) Then keep(i) = MatchesQuery(k, qs)
+        If keep(i) And Not IsEmpty(kws) Then keep(i) = MatchesKeyword(th(i) & " " & be(i) & " " & ev(i), kws)
+        If keep(i) Then
+            shown(k) = shown(k) + 1
+            drawnNotes = drawnNotes + 1
+        End If
+    Next i
+    With ws.cells(PG_IN, C_EVID)
+        .Value = shown.count & " calls drawn . " & drawnNotes & " notes"
+        .Font.Color = RGB(80, 200, 120): .Font.Bold = True
+    End With
+
+    ' ---- header ----
+    ws.cells(PG_HDR, C_TGT).Value = IIf(mode = "ticker", "TICKER A-Z", "LATEST CALL")
+    ws.cells(PG_HDR, C_STATUS).Value = "STATUS"
+    ws.cells(PG_HDR, C_ROLE).Value = "ROLE"
+    ws.cells(PG_HDR, C_THEME).Value = "THEME"
+    ws.cells(PG_HDR, C_BEHAV).Value = "BEHAVIOR"
+    ws.cells(PG_HDR, C_EVID).Value = "EVIDENCE"
+    With ws.Range(ws.cells(PG_HDR, 1), ws.cells(PG_HDR, C_EVID))
+        .Font.Color = RR4_ACCENT: .Font.Bold = True
+    End With
+    ws.cells(PG_HDR, C_TGT).AddComment "Double-click: sort blocks by latest call date <-> ticker A-Z"
+
+    ' ---- blocks ----
+    Dim r As Long: r = PG_LIST
+    Dim sec As Variant
+    For Each sec In Array("stock", "macro")
+        Dim order As Variant: order = OrderedTargets(shown, latest, kind, CStr(sec), mode)
+        If Not IsEmpty(order) Then
+            With ws.Range(ws.cells(r, 1), ws.cells(r, C_EVID))
+                .Interior.Color = CLR_BANNER
+                .Font.Color = RR4_ACCENT: .Font.Bold = True
+            End With
+            ws.cells(r, 1).Value = UCase$(CStr(sec))
+            r = r + 2
+            Dim ti As Long
+            For ti = LBound(order) To UBound(order)
+                r = DrawBlock(ws, r, CStr(order(ti)), latest(order(ti)), n, tg, dt, st, ro, th, be, ev, keep) + 1
+            Next ti
+        End If
+    Next sec
+    If shown.count = 0 Then
+        ws.cells(r, 1).Value = IIf(n = 0, "No notes yet - add them on the ThesisNotes sheet.", "Nothing matches QUERY / KEYWORD.")
+        ws.cells(r, 1).Font.Color = CLR_MUTED
+    End If
+
+    Call EnsurePanel(ws)
+    Call NavAdd(ws, "TH")
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+    Exit Sub
+Fail:
+    Dim msg As String: msg = Err.Description
+    On Error Resume Next
+    Call NavAdd(ws, "TH")
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+    Call NavNotify("Thesis Library draw failed: " & msg, True)
+End Sub
+
+Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String, ByVal callDate As Date, ByVal n As Long, _
+        tg() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String, keep() As Boolean) As Long
+    Dim top As Long: top = r
+    Dim i As Long, shownName As String
+    For i = 1 To n
+        If keep(i) And UCase$(tg(i)) = key Then
+            If shownName = "" Then shownName = tg(i)
+            Dim sc As Range: Set sc = ws.cells(r, C_STATUS)
+            sc.Value = Dash(st(i)): sc.Font.Color = StatusColor(st(i))
+            With ws.cells(r, C_ROLE)
+                .Value = Dash(ro(i)): .Font.Color = RoleColor(ro(i)): .HorizontalAlignment = xlCenter
+            End With
+            Call TextCell(ws.cells(r, C_THEME), th(i), RGB(245, 245, 245))
+            Call TextCell(ws.cells(r, C_BEHAV), be(i), CLR_SOFT)
+            Call TextCell(ws.cells(r, C_EVID), ev(i), CLR_SOFT)
+            ws.cells(r, C_KEY).Value = key
+            r = r + 1
+        End If
+    Next i
+    If r = top + 1 Then                                    ' room for the date line
+        ws.cells(r, C_KEY).Value = key
+        r = r + 1
+    End If
+    With ws.cells(top, C_TGT)
+        .NumberFormat = "@"                              ' TW codes are digits: keep them text, left-aligned
+        .HorizontalAlignment = xlLeft
+        .Value = shownName
+        On Error Resume Next
+        .Errors(xlNumberAsText).Ignore = True            ' no green "number stored as text" flag
+        On Error GoTo 0
+        .Font.Name = ZH_FONT: .Font.Bold = True: .Font.Size = 10: .Font.Color = RGB(245, 245, 245)
+    End With
+    With ws.cells(top + 1, C_TGT)
+        .NumberFormat = "@"                              ' else Excel turns the text back into a date
+        .Value = Format$(callDate, "yyyy-mm-dd")
+        .Font.Color = CLR_MUTED
+    End With
+    DrawBlock = r
+End Function
+
+Private Sub TextCell(cell As Range, ByVal v As String, ByVal clr As Long)
+    If Trim$(v) = "" Then
+        cell.Value = "-": cell.Font.Color = CLR_MUTED
+    Else
+        cell.Value = v: cell.Font.Color = clr
+        cell.Font.Name = ZH_FONT
+    End If
+End Sub
+
+Private Function Dash(ByVal v As String) As String
+    If Trim$(v) = "" Then Dash = "-" Else Dash = v
+End Function
+
+Private Sub Lbl(cell As Range, ByVal txt As String)
+    With cell
+        .Value = txt
+        .Font.Color = RR4_ACCENT: .Font.Bold = True
+        .VerticalAlignment = xlBottom
+    End With
+End Sub
+
+Private Sub InputBox_(rng As Range, ByVal v As String)
+    With rng
+        .NumberFormat = "@"
+        .Value = v
+        .Interior.Color = RR4_INPUT_BG
+        .Font.Color = RR4_INPUT_FG
+        .Font.Bold = True
+        .Font.Name = ZH_FONT
+        .HorizontalAlignment = xlLeft
+    End With
+End Sub
+
+' Reads tblNotes into parallel 1-based arrays; rows without a TARGET are skipped.
+Private Function ReadNotes(lo As ListObject, tg() As String, ty() As String, dt() As Date, st() As String, _
+        ro() As String, th() As String, be() As String, ev() As String) As Long
+    ReDim tg(0 To 0): ReDim ty(0 To 0): ReDim dt(0 To 0): ReDim st(0 To 0)
+    ReDim ro(0 To 0): ReDim th(0 To 0): ReDim be(0 To 0): ReDim ev(0 To 0)
+    If lo Is Nothing Then Exit Function
+    If lo.DataBodyRange Is Nothing Then Exit Function
+    Dim v As Variant: v = lo.DataBodyRange.Value
+    Dim rows As Long: rows = UBound(v, 1)
+    ReDim tg(0 To rows): ReDim ty(0 To rows): ReDim dt(0 To rows): ReDim st(0 To rows)
+    ReDim ro(0 To rows): ReDim th(0 To rows): ReDim be(0 To rows): ReDim ev(0 To rows)
+    Dim i As Long, n As Long
+    For i = 1 To rows
+        If Trim$(CStr(v(i, NT_TARGET))) <> "" Then
+            n = n + 1
+            tg(n) = Trim$(CStr(v(i, NT_TARGET)))
+            ty(n) = LCase$(Trim$(CStr(v(i, NT_TYPE))))
+            If ty(n) <> "macro" Then ty(n) = "stock"
+            If IsDate(v(i, NT_DATE)) Then dt(n) = CDate(v(i, NT_DATE)) Else dt(n) = 0
+            st(n) = Trim$(CStr(v(i, NT_STATUS)))
+            ro(n) = UCase$(Trim$(CStr(v(i, NT_ROLE))))
+            th(n) = CStr(v(i, NT_THEME))
+            be(n) = CStr(v(i, NT_BEHAV))
+            ev(n) = CStr(v(i, NT_EVID))
+        End If
+    Next i
+    ReadNotes = n
+End Function
+
+Private Function SplitList(ByVal s As String) As Variant
+    SplitList = Empty
+    If Trim$(s) = "" Then Exit Function
+    Dim parts As Variant: parts = Split(s, ",")
+    Dim out() As String, i As Long, n As Long
+    ReDim out(0 To UBound(parts))
+    For i = 0 To UBound(parts)
+        If Trim$(parts(i)) <> "" Then out(n) = UCase$(Trim$(parts(i))): n = n + 1
+    Next i
+    If n = 0 Then Exit Function
+    ReDim Preserve out(0 To n - 1)
+    SplitList = out
+End Function
+
+Private Function MatchesQuery(ByVal key As String, qs As Variant) As Boolean
+    Dim q As Variant, bare As String
+    bare = key
+    If Right$(bare, 4) = ".TWO" Then bare = Left$(bare, Len(bare) - 4)
+    If Right$(bare, 3) = ".TW" Then bare = Left$(bare, Len(bare) - 3)
+    For Each q In qs
+        If key = q Or bare = q Then MatchesQuery = True: Exit Function
+    Next q
+End Function
+
+Private Function MatchesKeyword(ByVal text As String, kws As Variant) As Boolean
+    Dim w As Variant, t As String: t = UCase$(text)
+    For Each w In kws
+        If InStr(t, CStr(w)) > 0 Then MatchesKeyword = True: Exit Function
+    Next w
+End Function
+
+' Targets of one section, ordered by latest call (newest first) or A-Z.
+Private Function OrderedTargets(shown As Object, latest As Object, kind As Object, ByVal sec As String, ByVal mode As String) As Variant
+    OrderedTargets = Empty
+    Dim ks() As String, n As Long, k As Variant
+    ReDim ks(1 To shown.count + 1)
+    For Each k In shown.keys
+        If kind(k) = sec Then n = n + 1: ks(n) = CStr(k)
+    Next k
+    If n = 0 Then Exit Function
+    Dim i As Long, j As Long, tmp As String, swap As Boolean
+    For i = 1 To n - 1
+        For j = i + 1 To n
+            If mode = "ticker" Then
+                swap = (ks(j) < ks(i))
+            Else
+                swap = (latest(ks(j)) > latest(ks(i)))
+                If latest(ks(j)) = latest(ks(i)) Then swap = (ks(j) < ks(i))
+            End If
+            If swap Then tmp = ks(i): ks(i) = ks(j): ks(j) = tmp
+        Next j
+    Next i
+    ReDim Preserve ks(1 To n)
+    OrderedTargets = ks
+End Function
+
+' ================================================================
+'  Reading panel: the archived six-section thesis of a target
+' ================================================================
 Private Sub EnsurePanel(ws As Worksheet)
     Dim shp As Shape
     On Error Resume Next
     Set shp = ws.Shapes("TH_PANEL")
     On Error GoTo 0
-    Dim topRow As Long: topRow = TH_HDR + NavOffset(ws)
     If shp Is Nothing Then
-        Set shp = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, ws.Columns(PANEL_COL).Left, ws.Rows(topRow).Top, PANEL_W, PANEL_H)
+        Set shp = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, ws.Columns(C_BEHAV).Left, ws.Rows(PG_HDR).Top, PANEL_W, PANEL_H)
         shp.Name = "TH_PANEL"
-    Else
-        shp.Left = ws.Columns(PANEL_COL).Left: shp.Top = ws.Rows(topRow).Top
-        shp.Width = PANEL_W: shp.Height = PANEL_H
     End If
+    shp.Width = PANEL_W
     shp.Placement = xlMove
     shp.Fill.Visible = msoTrue
     shp.Fill.ForeColor.RGB = RGB(12, 12, 12)
@@ -264,60 +690,56 @@ Private Sub EnsurePanel(ws As Worksheet)
     With shp.TextFrame2
         .MarginLeft = 12: .MarginRight = 12: .MarginTop = 10: .MarginBottom = 10
         .WordWrap = msoTrue
-        .AutoSize = msoAutoSizeShapeToFitText      ' a long thesis grows the panel instead of being clipped
+        .AutoSize = msoAutoSizeShapeToFitText
         .VerticalAnchor = msoAnchorTop
     End With
+    shp.Visible = msoFalse                           ' shown on demand by ShowArchive
 End Sub
 
-' Fill the panel from a table row (Nothing / a row outside the table ->
-' the hint).  Called by the sheet's SelectionChange.
-Public Sub ShowThesis(ws As Worksheet, Target As Range)
-    Dim lc As Long: lc = NavLeft(ws)                 ' blank column A once the bar is on
+Private Sub ShowArchive(ws As Worksheet, ByVal key As String)
     Dim shp As Shape
     On Error Resume Next
     Set shp = ws.Shapes("TH_PANEL")
     On Error GoTo 0
     If shp Is Nothing Then Exit Sub
-    Dim lo As ListObject
-    On Error Resume Next
-    Set lo = ws.ListObjects(THESIS_TABLE)
-    On Error GoTo 0
-    If lo Is Nothing Then Exit Sub
+    If key = "" Then shp.Visible = msoFalse: Exit Sub
+    ' float over BEHAVIOR / EVIDENCE, from the header row down (a reading overlay)
+    shp.Left = ws.Columns(C_BEHAV + NavLeft(ws)).Left
+    shp.Top = ws.Rows(PG_HDR + NavOffset(ws)).Top
+    shp.Visible = msoTrue
+    Dim tr As Object: Set tr = shp.TextFrame2.TextRange
 
-    Dim r As Long: r = 0
-    If Not Target Is Nothing Then
-        If Not lo.DataBodyRange Is Nothing Then
-            If Not Intersect(Target.cells(1, 1), lo.DataBodyRange) Is Nothing Then r = Target.cells(1, 1).Row
-        End If
-    End If
-    Dim tr As Object: Set tr = shp.TextFrame2.TextRange     ' TextRange2 late-bound: no Office type-library dependency
-    ' VBA's Or does not short-circuit: cells(0, 3) would blow up, so test r first
-    Dim blank As Boolean: blank = (r = 0)
-    If Not blank Then blank = (Trim(CStr(ws.cells(r, 3 + lc).Value)) = "")
-    If blank Then
-        tr.Text = L("PANEL_EMPTY")
-        tr.Font.Name = ZH_FONT: tr.Font.NameFarEast = ZH_FONT: tr.Font.Size = 10
-        tr.Font.Fill.ForeColor.RGB = RGB(110, 110, 110): tr.Font.Bold = msoFalse
+    Dim lo As ListObject, row As Long
+    On Error Resume Next
+    Set lo = ThisWorkbook.Worksheets(ARCHIVE_SHEET).ListObjects(THESIS_TABLE)
+    On Error GoTo 0
+    If Not lo Is Nothing Then row = ArchiveRow(lo, key)
+
+    If row = 0 Then
+        tr.Text = key & vbCr & "No archived thesis for this target - its notes are all there is." & vbCr & _
+                  "(double-click the page title to close)"
+        tr.Font.Name = MONO: tr.Font.NameFarEast = ZH_FONT: tr.Font.Size = 10
+        tr.Font.Bold = msoFalse: tr.Font.Fill.ForeColor.RGB = RGB(120, 120, 120)
         Exit Sub
     End If
 
-    ' ---- compose: head line, meta line, six sections ----
+    Dim b As Range: Set b = lo.DataBodyRange
     Dim secKeys As Variant: secKeys = Array("S1", "S2", "S3", "S4", "S5", "S6")
     Dim txt As String, starts(0 To 7) As Long, lens(0 To 7) As Long
-    Dim head As String: head = CStr(ws.cells(r, 3 + lc).Value) & "   " & CStr(ws.cells(r, 4 + lc).Value)
+    Dim head As String: head = CStr(b.cells(row, 3).Value) & "   " & CStr(b.cells(row, 4).Value)
     starts(0) = 1: lens(0) = Len(head)
     txt = head & vbCr
     Dim meta As String
-    meta = CStr(ws.cells(r, 2 + lc).Value) & "  .  " & CStr(ws.cells(r, 5 + lc).Value) & "  .  " & CStr(ws.cells(r, 13 + lc).Value) & _
-           "  .  " & Format(ws.cells(r, 1 + lc).Value, "yyyy/mm/dd") & _
-           IIf(ws.cells(r, 12 + lc).Value <> "", "  .  " & L("NEXT") & " " & Format(ws.cells(r, 12 + lc).Value, "yyyy/mm/dd"), "")
+    meta = CStr(b.cells(row, 2).Value) & "  .  " & CStr(b.cells(row, 5).Value) & "  .  " & CStr(b.cells(row, 13).Value) & _
+           "  .  " & Format(b.cells(row, 1).Value, "yyyy/mm/dd")
+    If CStr(b.cells(row, 12).Value) <> "" Then meta = meta & "  .  " & L("NEXT") & " " & Format(b.cells(row, 12).Value, "yyyy/mm/dd")
     starts(1) = Len(txt) + 1: lens(1) = Len(meta)
     txt = txt & meta & vbCr & vbCr
     Dim k As Long
     For k = 0 To 5
         Dim h As String: h = (k + 1) & "  " & L(CStr(secKeys(k)))
         starts(k + 2) = Len(txt) + 1: lens(k + 2) = Len(h)
-        Dim body As String: body = Trim(CStr(ws.cells(r, 6 + k + lc).Value))
+        Dim body As String: body = Trim$(CStr(b.cells(row, 6 + k).Value))
         If body = "" Then body = "-"
         txt = txt & h & vbCr & body & vbCr & vbCr
     Next k
@@ -339,195 +761,25 @@ Public Sub ShowThesis(ws As Worksheet, Target As Range)
     Next k
 End Sub
 
-' Sheet events (RR4/SheetThesis_Code.txt): double-click a row -> panel; a
-' new row gets today's date and ACTIVE when its target is typed.
-Public Sub ThesisDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
-    Dim lo As ListObject
-    On Error Resume Next
-    Set lo = ws.ListObjects(THESIS_TABLE)
-    On Error GoTo 0
-    If lo Is Nothing Then Exit Sub
-    Dim lc As Long: lc = NavLeft(ws)
-    ' page title -> drop the sort; header -> sort by that column
-    If Target.cells(1, 1).Row = 2 + NavOffset(ws) And Target.cells(1, 1).Column = 1 + lc Then
-        Cancel = True
-        Call ClearThesisSort(ws, lo)
-        Exit Sub
-    End If
-    If Not Intersect(Target.cells(1, 1), lo.HeaderRowRange) Is Nothing Then
-        Cancel = True
-        Call ThesisSortClick(ws, lo, Target.cells(1, 1).Column - lo.HeaderRowRange.Column + 1)
-        Exit Sub
-    End If
-    If lo.DataBodyRange Is Nothing Then Exit Sub
-    If Intersect(Target.cells(1, 1), lo.DataBodyRange) Is Nothing Then Exit Sub
-    Cancel = True                                    ' no in-cell edit on a double-click
-    Dim r As Long: r = Target.cells(1, 1).Row
-    ' Excel has no triple-click event (click 3 is just a click), so "double-
-    ' click again within DEL_WINDOW seconds on the same row" is the delete gesture
-    Dim el As Double: el = Timer - m_lastDblAt: If el < 0 Then el = el + 86400
-    If r = m_lastDblRow And el <= DEL_WINDOW Then
-        m_lastDblRow = 0
-        Dim nm As String: nm = CStr(ws.cells(r, 3 + lc).Value) & "  " & CStr(ws.cells(r, 4 + lc).Value)
-        If MsgBox(L("DEL_ASK") & vbCrLf & vbCrLf & nm, vbYesNo + vbQuestion, "Thesis Library") = vbYes Then
-            Dim prevEv As Boolean: prevEv = Application.EnableEvents
-            Application.EnableEvents = False
-            On Error Resume Next
-            lo.ListRows(r - lo.HeaderRowRange.Row).Delete
-            On Error GoTo 0
-            Application.EnableEvents = prevEv
-            Call ShowThesis(ws, Nothing)
-            Call NavNotify("Thesis Library: " & L("DEL_DONE") & " - " & nm)
+' Latest archived thesis row for key (ties: the lower row, i.e. added later).
+Private Function ArchiveRow(lo As ListObject, ByVal key As String) As Long
+    If lo.DataBodyRange Is Nothing Then Exit Function
+    Dim v As Variant: v = lo.DataBodyRange.Value
+    Dim i As Long, bestD As Double, d As Double
+    For i = 1 To UBound(v, 1)
+        If UCase$(Trim$(CStr(v(i, 3)))) = key Then
+            d = 0
+            If IsDate(v(i, 1)) Then d = CDbl(CDate(v(i, 1)))
+            If ArchiveRow = 0 Or d >= bestD Then ArchiveRow = i: bestD = d
         End If
-        Exit Sub
-    End If
-    m_lastDblRow = r: m_lastDblAt = Timer
-    Call ShowThesis(ws, Target)
-End Sub
-
-Public Sub ThesisChange(ws As Worksheet, ByVal Target As Range)
-    Dim lc As Long: lc = NavLeft(ws)
-    Dim lo As ListObject
-    On Error Resume Next
-    Set lo = ws.ListObjects(THESIS_TABLE)
-    On Error GoTo 0
-    If lo Is Nothing Then Exit Sub
-    If lo.DataBodyRange Is Nothing Then Exit Sub
-    If Intersect(Target, lo.DataBodyRange) Is Nothing Then Exit Sub
-    Dim prevEv As Boolean: prevEv = Application.EnableEvents
-    Application.EnableEvents = False
-    On Error Resume Next
-    Dim c As Range, typedTarget As Boolean
-    For Each c In Intersect(Target, lo.ListColumns(3).DataBodyRange).cells
-        If Trim(CStr(c.Value)) <> "" Then
-            typedTarget = True
-            If ws.cells(c.Row, 1 + lc).Value = "" Then ws.cells(c.Row, 1 + lc).Value = Date
-            If ws.cells(c.Row, 13 + lc).Value = "" Then ws.cells(c.Row, 13 + lc).Value = "ACTIVE"
-        End If
-    Next c
-    If typedTarget Then Call ApplyThesisSort(ws, lo)   ' a new / renamed thesis falls into the kept sort
-    Call FormatThesisRows(lo)
-    Call SetList(lo.ListColumns(2).DataBodyRange, "macro,stock")
-    Call SetList(lo.ListColumns(5).DataBodyRange, "LONG,SHORT,NEUTRAL,WATCH")
-    Call SetList(lo.ListColumns(13).DataBodyRange, "ACTIVE,CONFIRMED,FALSIFIED,CLOSED")
-    Application.EnableEvents = prevEv
-End Sub
-
-' ----------------------------------------------------------------
-' Sorting (header double-click).  Long text columns 6-11 are not sortable.
-Private Function IsSortableCol(ByVal col As Long) As Boolean
-    Select Case col
-        Case 1, 2, 3, 4, 5, 12, 13: IsSortableCol = True
-    End Select
+    Next i
 End Function
 
-Private Sub ThesisSortClick(ws As Worksheet, lo As ListObject, ByVal col As Long)
-    If Not IsSortableCol(col) Then Exit Sub
-    Dim curCol As Long, curDir As Long
-    Call ReadSortMark(ws, curCol, curDir)
-    Dim newDir As Long: newDir = 2
-    If curCol = col Then newDir = 3 - curDir
-    On Error Resume Next
-    ws.Names(SORT_MARK).Delete
-    On Error GoTo 0
-    ws.Names.Add Name:=SORT_MARK, RefersTo:="=""" & col & "|" & newDir & """", Visible:=False
-    m_lastDblRow = 0                                 ' rows moved: a follow-up double-click must not delete
-    Call ApplyThesisSort(ws, lo)
-    Call NavNotify("Thesis Library sorted by column " & col & IIf(newDir = 2, " (first order)", " (reversed)"))
-End Sub
-
-Private Sub ClearThesisSort(ws As Worksheet, lo As ListObject)
-    On Error Resume Next
-    ws.Names(SORT_MARK).Delete
-    On Error GoTo 0
-    m_lastDblRow = 0
-    Dim prevEv As Boolean: prevEv = Application.EnableEvents
-    Application.EnableEvents = False
-    If Not lo.DataBodyRange Is Nothing Then
-        Call SortTable(lo, 1, xlAscending, "")       ' date oldest -> newest
-        Call FormatThesisRows(lo)
-    End If
-    Call WriteHeaderArrows(lo, 0, 0)
-    Application.EnableEvents = prevEv
-    Call NavNotify("Thesis Library: sort cleared (date oldest first)")
-End Sub
-
-' Re-apply the kept sort (if any) and redraw the header arrows.
-Public Sub ApplyThesisSort(ws As Worksheet, lo As ListObject)
-    Dim col As Long, dir As Long
-    Call ReadSortMark(ws, col, dir)
-    If Not IsSortableCol(col) Then col = 0
-    Dim prevEv As Boolean: prevEv = Application.EnableEvents
-    Application.EnableEvents = False
-    On Error GoTo Fin
-    If col > 0 And Not lo.DataBodyRange Is Nothing Then
-        Dim lst As String
-        Select Case col
-            Case 5: lst = "LONG,WATCH,NEUTRAL,SHORT"
-            Case 13: lst = "ACTIVE,CONFIRMED,FALSIFIED,CLOSED"
-        End Select
-        ' first click (dir 2): descending, except the enum columns which start in their own order
-        Dim ord As Long
-        If lst <> "" Then
-            ord = IIf(dir = 2, xlAscending, xlDescending)
-        Else
-            ord = IIf(dir = 2, xlDescending, xlAscending)
-        End If
-        Call SortTable(lo, col, ord, lst)
-        Call FormatThesisRows(lo)
-    End If
-    Call WriteHeaderArrows(lo, col, dir)
-Fin:
-    Application.EnableEvents = prevEv
-End Sub
-
-Private Sub SortTable(lo As ListObject, ByVal col As Long, ByVal ord As Long, ByVal customList As String)
-    With lo.Sort
-        .SortFields.Clear
-        If customList <> "" Then
-            ' CVar: a plain String variable here raises error 13 (type mismatch); literals and CVar work
-            .SortFields.Add Key:=lo.ListColumns(col).DataBodyRange, SortOn:=xlSortOnValues, Order:=ord, CustomOrder:=CVar(customList)
-        Else
-            .SortFields.Add Key:=lo.ListColumns(col).DataBodyRange, SortOn:=xlSortOnValues, Order:=ord
-        End If
-        .Header = xlYes
-        .MatchCase = False
-        .Orientation = xlTopToBottom
-        .Apply
-    End With
-End Sub
-
-' Headers back to their labels; the sorted one gets a down (first order) or up (reversed) arrow.
-Private Sub WriteHeaderArrows(lo As ListObject, ByVal col As Long, ByVal dir As Long)
-    Dim hdr As Variant: hdr = Headers()
-    Dim j As Long, s As String
-    For j = 0 To TH_NCOL - 1
-        s = hdr(j)
-        If j + 1 = col Then s = s & " " & IIf(dir = 2, ChrW(&H25BC), ChrW(&H25B2))
-        If CStr(lo.HeaderRowRange.cells(1, j + 1).Value) <> s Then lo.HeaderRowRange.cells(1, j + 1).Value = s
-    Next j
-End Sub
-
-' Walk ws.Names instead of ws.Names(SORT_MARK): after a reopen the sheet-level
-' name can fail to resolve by its short name (same as modNav.NavGeom).
-Private Sub ReadSortMark(ws As Worksheet, ByRef col As Long, ByRef dir As Long)
-    col = 0: dir = 2
-    Dim nm As Name
-    For Each nm In ws.Names
-        If Right(nm.Name, Len(SORT_MARK) + 1) = "!" & SORT_MARK Then
-            Dim v As String: v = Replace(Replace(nm.RefersTo, "=", ""), """", "")
-            If InStr(v, "|") > 0 Then
-                col = CLng(Val(Split(v, "|")(0))): dir = CLng(Val(Split(v, "|")(1)))
-                If dir <> 1 Then dir = 2
-            End If
-            Exit Sub
-        End If
-    Next nm
-End Sub
-
-' Write the sheet's event code into its document module (same approach as
-' RRG.EnsureSheetCode; needs "Trust access to the VBA project object model").
-Private Sub EnsureThesisSheetCode(ws As Worksheet)
+' ================================================================
+' Sheet event code, written into the document module (needs "Trust access to
+' the VBA project object model").  code = "" empties the module.  marker: skip
+' when the module already contains it.
+Private Sub WriteSheetCode(ws As Worksheet, ByVal code As String, Optional ByVal marker As String = "")
     On Error GoTo Skip
     Dim comp As Object
     For Each comp In ThisWorkbook.VBProject.VBComponents
@@ -535,22 +787,17 @@ Private Sub EnsureThesisSheetCode(ws As Worksheet)
             If comp.Properties("Name").Value = ws.Name Then
                 Dim cm As Object: Set cm = comp.CodeModule
                 If cm.CountOfLines > 0 Then
-                    If InStr(cm.Lines(1, cm.CountOfLines), "ThesisDoubleClick") > 0 Then Exit Sub
+                    If marker <> "" Then
+                        If InStr(cm.Lines(1, cm.CountOfLines), marker) > 0 Then Exit Sub
+                    End If
                     cm.DeleteLines 1, cm.CountOfLines
                 End If
-                cm.AddFromString "Option Explicit" & vbCrLf & vbCrLf & _
-                    "' Thesis Library: double-click a row to read it in the panel (see modThesis.bas)" & vbCrLf & _
-                    "Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)" & vbCrLf & _
-                    "    Call ThesisDoubleClick(Me, Target, Cancel)" & vbCrLf & _
-                    "End Sub" & vbCrLf & vbCrLf & _
-                    "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
-                    "    Call ThesisChange(Me, Target)" & vbCrLf & _
-                    "End Sub" & vbCrLf
+                If code <> "" Then cm.AddFromString code
                 Exit Sub
             End If
         End If
     Next comp
     Exit Sub
 Skip:
-    Call NavNotify("Thesis Library built, but the sheet event code could not be written (enable Trust access to the VBA project object model, or paste RR4/SheetThesis_Code.txt)", True)
+    Call NavNotify("Thesis Library: sheet event code for '" & ws.Name & "' could not be written (Trust access to the VBA project object model)", True)
 End Sub
