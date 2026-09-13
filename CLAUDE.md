@@ -395,6 +395,21 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   TRAIL 資料塊、Y 欄 `seq`（建置順序）三塊用同一組索引一起重排（尾巴資料塊是每檔一組欄，不動）；`RRG_FLOW`
   的 series 指向表格儲存格，排完要**依代號重新綁定** XValues/Values；N 欄的 CMF/OBV 註解要重建；I 欄 sparkline
   不寫值（來源列跟著 TRAIL 資料塊一起換）。目前排序記在隱藏名稱 `RRGSORT`（`col|dir`）。
+- **RRG Industry（RI）頁（2026-09-13）**：`RRG.bas` 一般化成 `BuildRRGCore(kind)`，`BuildRRG`＝ETF 版
+  （頁 `RRG`、`RG!`）、`BuildRRGIndustry`＝產業版（頁 `RRG Industry`、`RI!`），算法／繪圖／雙擊聚焦／排序
+  全部共用，只差宇宙與價格來源。宇宙＝`IndustryMap` 資料頁（`IMAP` 動作碼→`ImportIndustryMap` 讀
+  `projects/moomoo-plate-list/moomoo_us_plate_stocks.csv`，145 個 moomoo 美股產業板塊、5,812 檔成分股，
+  用 ADODB.Stream 讀 UTF-8、只留 ASCII 欄）。**每個產業＝全部成分股的市值加權合成指數**（使用者指定
+  「每一檔成分股都要」，不是前 N 檔）：由日報酬鏈接，`idx[t]=idx[t-1]×(1+Σw·r/Σw)`，只算當天與前一天都有
+  資料的股票，所以年中上市的股票從有資料那天起加入；高低價用同一組權重套 `high[t]/close[t-1]−1`；成交量
+  改用**金額**（Σclose×volume），CMF／OBV 才不會把不同股票的股數加在一起。A 欄是板塊代碼（BK2072，
+  series／聚焦鍵）、B 欄產業名（圖上標籤走 `DisplayName()` 顯示名稱）、C 欄 STOCKS「有資料/總數」
+  （**要先設 `@` 文字格式再寫，否則「8/8」會被 Excel 轉成日期**）。一趟 `RI!` 約 5,800 次 Yahoo 請求
+  （40–60 分鐘）：`FetchOhlcv` 加了 429／斷線退避重試；每做完一個產業就把合成序列寫進隱藏的 `IndustryPx`
+  資料頁（每產業一列：code／asof／ok／fail／npts＋五個各 270 欄的區塊），同一天再跑 `RI!` 直接讀快取，
+  `Application.EnableCancelKey = xlErrorHandler` 讓 Esc（錯誤 18）變成「已完成的產業留著、下次續抓」。
+  `IMAP` 重匯會清掉快取。圖尺寸依 kind 走 `gChartW/gChartH`（產業版 1000×820，145 個標籤字級 7）。
+  測試用 `BuildRRGIndustry 2` 只做前 2 個產業。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
