@@ -281,7 +281,12 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     仍從 A1 畫（strip 之後），**建好後還會讀格子的程式一律加 `NavLeft(ws)` 欄位位移**（公開函式，對應
     列位移的 `NavOffset`）：RRG 三頁的排序／聚焦／雙擊（`RrgDoubleClick` 先把 `Target.Column - lc` 轉成
     表格欄）、`DataCol` 加 `NavLeft`、VT／CC 工作表事件碼的 `Range("B2").Offset(NavOffset, NavLeft)`、
-    Thesis 面板的讀取。**RR4（P）頁例外**（`RR4_TOP`／寫死位址 T1/T2/B4/C5/E5/K4/L20/X1，未搬版）。
+    Thesis 面板的讀取。**RR4（P）頁走自己的路（v4.13，2026-09-13）**：`RR4_TOP` 3→4，bar 在第 2–4 列，
+    所有絕對列常數 +1（`RR4_CHART_TOP` 27、WATCHLIST 26–39、持倉表 42/43/44、TickerInsight `TI_HHDR/H1/HLAST/BOTTOM`
+    8/9/24/25），位址常數 `T1/T2→T2/T3`、`B4→B5`、`C5→C6`、`E5→E6`、`K4→K5`、`L20→L21`、`X1→X2`；
+    `modNav.NavGeom` 對 P 回 `top = RR4_TOP - NAV_ROWS`。**`MigrateRR4TopRow`**（`RebuildPortfolioDashboard` 開頭、
+    任何讀取之前）偵測 B1 還是「P」徽章就 `Rows(1).Insert` 一次——整張表連同手打值、圖、名稱、隱藏排序欄一起
+    下移，read-before-clear 才對得上格子；實測總值／FX／WATCHLIST 5 筆／8 持倉／panel 代號都保住。
     重開活頁簿後 `ws.Names.Item("RR4NAV")` 可能取不到，改用 `wb.Names` 篩 `'<sheet>'!RR4NAV`。
   - **資料頁（Realized/Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
     模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。
@@ -294,7 +299,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   - **收尾訊息一律 `NavNotify(msg, isErr)`（只寫 Excel 底部狀態列；v4.4 起 bar 第 1 列
     不再放頁面標題與狀態文字），不再 MsgBox**；只有
     真正的錯誤與 CLEARALL 的 Yes/No 確認保留 MsgBox。
-- **RR4 頁版面 v4.2（`PortfolioDashboard_v3.bas` 檔頭有完整表）**：`RR4_TOP = 3`（bar）、
+- **RR4 頁版面 v4.2（`PortfolioDashboard_v3.bas` 檔頭有完整表；⚠️ v4.13 起全部列號 +1、`RR4_TOP = 4`，見下方 2026-09-13 條目，本段列號是 v4.12 的）**：`RR4_TOP = 3`（bar）、
   `RR4_LEFT = 1`（A 欄留白）。總值 B4、USD/TWD 輸入 C5、ARRANGE 輸入 E5、設定格 T1/T2
   （`InceptionDate`/`StartingCapital` 兩個名稱由 `PointConfigNames` 重新指向；舊 S1/S2
   會被一次性搬過來）、**圖表帶 rows 26–39**（甜甜圈在 F、實現損益折線在 J:S，上下各留一列空白，v4.7.1；ticker
