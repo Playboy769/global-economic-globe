@@ -16,6 +16,10 @@ Option Explicit
 ' bar; the row numbers in the layout below are the v2 ones + 3.
 ' v2.2 (2026-09-12): and one column right (RR4_LEFT = 1, column A is now a
 ' blank spacer), so the panel sits in J:S and its cells are K4 / L20.
+' v2.4 (2026-09-13): ResolveTicker - a bare TW code ("3374") takes the
+' .TW/.TWO suffix of its Transactions rows before any FX decision; typed
+' without the suffix it used to be classified US and every TWD aggregate
+' was multiplied by USD/TWD.
 '
 ' ENTRY POINTS:
 '   Sub OpenTickerInsight()            - jump to the panel's ticker cell
@@ -281,7 +285,7 @@ End Sub
 ' FULL REFRESH: rebuild every section for a ticker
 ' ================================================================
 Public Sub RefreshTickerInsight(ByVal ticker As String)
-    ticker = UCase(Trim(ticker))
+    ticker = ResolveTicker(ticker)
     Dim ws As Worksheet: Set ws = PanelSheet()
 
     Dim prevEvents As Boolean: prevEvents = Application.EnableEvents
@@ -355,7 +359,7 @@ End Sub
 Public Sub RefreshTickerProjection()
     Dim ws As Worksheet: Set ws = PanelSheet()
 
-    Dim ticker As String: ticker = UCase(Trim(CStr(ws.Range(TI_TICKER_CELL).Value)))
+    Dim ticker As String: ticker = ResolveTicker(CStr(ws.Range(TI_TICKER_CELL).Value))
     If ticker = "" Then Exit Sub
 
     Dim prevEvents As Boolean: prevEvents = Application.EnableEvents
@@ -1046,13 +1050,45 @@ Private Function NormalizeTicker(t As String) As String
     NormalizeTicker = n
 End Function
 
+' Canonical ticker for a typed value (v2.4, 2026-09-13): the market is
+' decided by what the Transactions log actually holds, not by how the
+' code was typed. "3374" typed bare matched its 3374.TWO rows through
+' NormalizeTicker, but IsTWTicker saw no suffix and every aggregate got
+' multiplied by USD/TWD (816 -> 25,808). So: a bare code takes the suffix
+' of its first Transactions row; with no rows at all, an all-digit code
+' (optionally one trailing letter, e.g. 00981A) is assumed TW (.TW).
+Private Function ResolveTicker(ByVal ticker As String) As String
+    Dim t As String: t = UCase(Trim(CStr(ticker)))
+    ResolveTicker = t
+    If t = "" Then Exit Function
+    If InStr(t, ".TW") > 0 Then Exit Function
+    Dim wsTr As Worksheet
+    On Error Resume Next: Set wsTr = ThisWorkbook.Sheets(SH_TR): On Error GoTo 0
+    If Not wsTr Is Nothing Then
+        Dim lastRow As Long: lastRow = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
+        Dim r As Long, raw As String
+        For r = 2 To lastRow
+            raw = UCase(Trim(CStr(wsTr.cells(r, COL_TICKER).Value)))
+            If NormalizeTicker(raw) = t Then
+                If InStr(raw, ".TW") > 0 Then ResolveTicker = raw
+                Exit Function
+            End If
+        Next r
+    End If
+    ' no log rows: TW codes are digits (+ optional one letter), US codes are letters
+    Dim core As String: core = t
+    If Len(core) > 1 Then
+        If Right(core, 1) Like "[A-Z]" Then core = Left(core, Len(core) - 1)
+    End If
+    If Len(core) >= 4 And core Like String(Len(core), "#") Then ResolveTicker = t & ".TW"
+End Function
+
 ' Suffix-based classification:
 '   .TW or .TWO suffix -> TW (no FX conversion)
 '   Everything else    -> US (FX applied to aggregates)
 '
-' This is a STRICT rule. Special codes like "00981A" without a suffix
-' are treated as US. To classify a TW security correctly, the ticker
-' MUST be typed with its full suffix (e.g. "00981A.TWO", "2330.TW").
+' Tickers reaching this function have been through ResolveTicker, so a
+' bare TW code already carries the suffix its Transactions rows use.
 Private Function IsTWTicker(ticker As String) As Boolean
     Dim raw As String: raw = UCase(Trim(CStr(ticker)))
     IsTWTicker = (InStr(raw, ".TW") > 0)
