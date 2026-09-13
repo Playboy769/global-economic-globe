@@ -510,7 +510,13 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   都設），`ShowThesis` 由工作表 **`BeforeDoubleClick`**（`SheetThesis_Code.txt` → `ThesisDoubleClick`，由
   `EnsureThesisSheetCode` 寫入；點選不觸發，雙擊表格列才顯示、並 `Cancel` 掉儲存格編輯）觸發；**2 秒內
   再雙擊同一列＝刪除該篇**（Yes/No 確認後 `ListRows(n).Delete`）——使用者要的是「三下刪除」，但 Excel 沒有
-  三擊事件（第 3 下只是單擊），所以用「同列連續兩次雙擊」（`m_lastDblRow`／`m_lastDblAt`＋`Timer`）代替；`Worksheet_Change` 在標的填入時自動補今天日期與 ACTIVE。`TH!` 只重套版面不動資料。中文標籤全部用
+  三擊事件（第 3 下只是單擊），所以用「同列連續兩次雙擊」（`m_lastDblRow`／`m_lastDblAt`＋`Timer`）代替；`Worksheet_Change` 在標的填入時自動補今天日期與 ACTIVE。`TH!` 只重套版面不動資料。
+  **排序（2026-09-13）**：**雙擊表頭**依該欄排序、再雙擊同一表頭反向；只有短欄位可排（日期／類型／標的／標題／
+  立場／下次驗證日／狀態，六段長文欄雙擊無反應）。第一次一律降冪，但立場與狀態走自訂順序（LONG→WATCH→NEUTRAL→SHORT、
+  ACTIVE→CONFIRMED→FALSIFIED→CLOSED 在前）。表頭加 ▼（第一次）／▲（反向）；排序記在隱藏工作表名稱 `THSORT`
+  （`col|dir`），`TH!` 與標的欄填入時自動重套。**雙擊頁標題 THESIS LIBRARY＝清除排序並改依日期舊→新**——使用者選擇
+  不存輸入順序欄，所以同一天建立的多篇**回不到原本輸入順序**。排序後會清掉「2 秒內雙擊同列＝刪除」的計時，避免列位移後刪錯篇。
+  ⚠️ `SortFields.Add ... CustomOrder:=` 傳一般 String 變數會報錯 13（型態不符），字面量或 `CVar(變數)` 才行。中文標籤全部用
   `ChrW` 組（`L("S1")` 等，.bas 維持 ASCII）。**兩個踩過的坑**：① `If r = 0 Or cells(r, 3)…`——VBA `Or` 不短路，
   `cells(0, 3)` 直接炸出執行期對話框、COM 的 `Application.Run` 就卡死；② 建置中途出錯會把 `EnableEvents`
   留在 False，之後所有工作表事件都不動，重試前要先 `Application.EnableEvents = True`、VBE 用
