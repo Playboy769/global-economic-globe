@@ -24,6 +24,15 @@ Option Explicit
 '
 '  TH! never touches the data: it (re)builds the header, widths, dropdowns,
 '  the panel and the nav bar around whatever rows are already there.
+'
+'  Sorting: double-click a header of a short column (date / type / target /
+'  title / stance / next check / status) to sort by it; again = reverse.
+'  First click is descending (newest first); stance and status sort in their
+'  own order (LONG WATCH NEUTRAL SHORT / ACTIVE CONFIRMED FALSIFIED CLOSED)
+'  first.  The header shows an arrow; the sort is kept in the hidden sheet name
+'  THSORT ("col|dir") and re-applied by TH! and when a target is typed.
+'  Double-clicking the page title drops the sort and goes back to date
+'  oldest -> newest (no input-order column is kept).
 ' ================================================================
 
 Public Const THESIS_SHEET As String = "Thesis Library"
@@ -36,6 +45,7 @@ Private Const PANEL_W As Double = 620
 Private Const PANEL_H As Double = 760
 Private Const ZH_FONT As String = "Noto Sans TC"
 Private Const DEL_WINDOW As Double = 2#          ' seconds: a second double-click on the same row within this deletes it
+Private Const SORT_MARK As String = "THSORT"     ' "col|dir" of the current sort (dir 2 = first click, 1 = reversed)
 Private m_lastDblRow As Long                     ' row of the last double-click (0 = none)
 Private m_lastDblAt As Double                    ' Timer of that double-click
 
@@ -137,6 +147,7 @@ Sub BuildThesisLibrary()
     For j = 0 To TH_NCOL - 1: ws.Columns(j + 1 + TH_LEFT).ColumnWidth = widths(j): Next j
     ws.Columns(TH_NCOL + 1 + TH_LEFT).ColumnWidth = 2
     If Not lo.DataBodyRange Is Nothing Then Call FormatThesisRows(lo)
+    Call ApplyThesisSort(ws, lo)                     ' re-sort + header arrow (headers were just rewritten)
 
     ' ---- dropdowns on the whole columns of the table (they extend with it) ----
     Call SetList(lo.ListColumns(2).DataBodyRange, "macro,stock")
@@ -336,11 +347,22 @@ Public Sub ThesisDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cance
     Set lo = ws.ListObjects(THESIS_TABLE)
     On Error GoTo 0
     If lo Is Nothing Then Exit Sub
+    Dim lc As Long: lc = NavLeft(ws)
+    ' page title -> drop the sort; header -> sort by that column
+    If Target.cells(1, 1).Row = 2 + NavOffset(ws) And Target.cells(1, 1).Column = 1 + lc Then
+        Cancel = True
+        Call ClearThesisSort(ws, lo)
+        Exit Sub
+    End If
+    If Not Intersect(Target.cells(1, 1), lo.HeaderRowRange) Is Nothing Then
+        Cancel = True
+        Call ThesisSortClick(ws, lo, Target.cells(1, 1).Column - lo.HeaderRowRange.Column + 1)
+        Exit Sub
+    End If
     If lo.DataBodyRange Is Nothing Then Exit Sub
     If Intersect(Target.cells(1, 1), lo.DataBodyRange) Is Nothing Then Exit Sub
     Cancel = True                                    ' no in-cell edit on a double-click
     Dim r As Long: r = Target.cells(1, 1).Row
-    Dim lc As Long: lc = NavLeft(ws)
     ' Excel has no triple-click event (click 3 is just a click), so "double-
     ' click again within DEL_WINDOW seconds on the same row" is the delete gesture
     Dim el As Double: el = Timer - m_lastDblAt: If el < 0 Then el = el + 86400
@@ -375,18 +397,132 @@ Public Sub ThesisChange(ws As Worksheet, ByVal Target As Range)
     Dim prevEv As Boolean: prevEv = Application.EnableEvents
     Application.EnableEvents = False
     On Error Resume Next
-    Dim c As Range
+    Dim c As Range, typedTarget As Boolean
     For Each c In Intersect(Target, lo.ListColumns(3).DataBodyRange).cells
         If Trim(CStr(c.Value)) <> "" Then
+            typedTarget = True
             If ws.cells(c.Row, 1 + lc).Value = "" Then ws.cells(c.Row, 1 + lc).Value = Date
             If ws.cells(c.Row, 13 + lc).Value = "" Then ws.cells(c.Row, 13 + lc).Value = "ACTIVE"
         End If
     Next c
+    If typedTarget Then Call ApplyThesisSort(ws, lo)   ' a new / renamed thesis falls into the kept sort
     Call FormatThesisRows(lo)
     Call SetList(lo.ListColumns(2).DataBodyRange, "macro,stock")
     Call SetList(lo.ListColumns(5).DataBodyRange, "LONG,SHORT,NEUTRAL,WATCH")
     Call SetList(lo.ListColumns(13).DataBodyRange, "ACTIVE,CONFIRMED,FALSIFIED,CLOSED")
     Application.EnableEvents = prevEv
+End Sub
+
+' ----------------------------------------------------------------
+' Sorting (header double-click).  Long text columns 6-11 are not sortable.
+Private Function IsSortableCol(ByVal col As Long) As Boolean
+    Select Case col
+        Case 1, 2, 3, 4, 5, 12, 13: IsSortableCol = True
+    End Select
+End Function
+
+Private Sub ThesisSortClick(ws As Worksheet, lo As ListObject, ByVal col As Long)
+    If Not IsSortableCol(col) Then Exit Sub
+    Dim curCol As Long, curDir As Long
+    Call ReadSortMark(ws, curCol, curDir)
+    Dim newDir As Long: newDir = 2
+    If curCol = col Then newDir = 3 - curDir
+    On Error Resume Next
+    ws.Names(SORT_MARK).Delete
+    On Error GoTo 0
+    ws.Names.Add Name:=SORT_MARK, RefersTo:="=""" & col & "|" & newDir & """", Visible:=False
+    m_lastDblRow = 0                                 ' rows moved: a follow-up double-click must not delete
+    Call ApplyThesisSort(ws, lo)
+    Call NavNotify("Thesis Library sorted by column " & col & IIf(newDir = 2, " (first order)", " (reversed)"))
+End Sub
+
+Private Sub ClearThesisSort(ws As Worksheet, lo As ListObject)
+    On Error Resume Next
+    ws.Names(SORT_MARK).Delete
+    On Error GoTo 0
+    m_lastDblRow = 0
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    If Not lo.DataBodyRange Is Nothing Then
+        Call SortTable(lo, 1, xlAscending, "")       ' date oldest -> newest
+        Call FormatThesisRows(lo)
+    End If
+    Call WriteHeaderArrows(lo, 0, 0)
+    Application.EnableEvents = prevEv
+    Call NavNotify("Thesis Library: sort cleared (date oldest first)")
+End Sub
+
+' Re-apply the kept sort (if any) and redraw the header arrows.
+Public Sub ApplyThesisSort(ws As Worksheet, lo As ListObject)
+    Dim col As Long, dir As Long
+    Call ReadSortMark(ws, col, dir)
+    If Not IsSortableCol(col) Then col = 0
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error GoTo Fin
+    If col > 0 And Not lo.DataBodyRange Is Nothing Then
+        Dim lst As String
+        Select Case col
+            Case 5: lst = "LONG,WATCH,NEUTRAL,SHORT"
+            Case 13: lst = "ACTIVE,CONFIRMED,FALSIFIED,CLOSED"
+        End Select
+        ' first click (dir 2): descending, except the enum columns which start in their own order
+        Dim ord As Long
+        If lst <> "" Then
+            ord = IIf(dir = 2, xlAscending, xlDescending)
+        Else
+            ord = IIf(dir = 2, xlDescending, xlAscending)
+        End If
+        Call SortTable(lo, col, ord, lst)
+        Call FormatThesisRows(lo)
+    End If
+    Call WriteHeaderArrows(lo, col, dir)
+Fin:
+    Application.EnableEvents = prevEv
+End Sub
+
+Private Sub SortTable(lo As ListObject, ByVal col As Long, ByVal ord As Long, ByVal customList As String)
+    With lo.Sort
+        .SortFields.Clear
+        If customList <> "" Then
+            ' CVar: a plain String variable here raises error 13 (type mismatch); literals and CVar work
+            .SortFields.Add Key:=lo.ListColumns(col).DataBodyRange, SortOn:=xlSortOnValues, Order:=ord, CustomOrder:=CVar(customList)
+        Else
+            .SortFields.Add Key:=lo.ListColumns(col).DataBodyRange, SortOn:=xlSortOnValues, Order:=ord
+        End If
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .Apply
+    End With
+End Sub
+
+' Headers back to their labels; the sorted one gets a down (first order) or up (reversed) arrow.
+Private Sub WriteHeaderArrows(lo As ListObject, ByVal col As Long, ByVal dir As Long)
+    Dim hdr As Variant: hdr = Headers()
+    Dim j As Long, s As String
+    For j = 0 To TH_NCOL - 1
+        s = hdr(j)
+        If j + 1 = col Then s = s & " " & IIf(dir = 2, ChrW(&H25BC), ChrW(&H25B2))
+        If CStr(lo.HeaderRowRange.cells(1, j + 1).Value) <> s Then lo.HeaderRowRange.cells(1, j + 1).Value = s
+    Next j
+End Sub
+
+' Walk ws.Names instead of ws.Names(SORT_MARK): after a reopen the sheet-level
+' name can fail to resolve by its short name (same as modNav.NavGeom).
+Private Sub ReadSortMark(ws As Worksheet, ByRef col As Long, ByRef dir As Long)
+    col = 0: dir = 2
+    Dim nm As Name
+    For Each nm In ws.Names
+        If Right(nm.Name, Len(SORT_MARK) + 1) = "!" & SORT_MARK Then
+            Dim v As String: v = Replace(Replace(nm.RefersTo, "=", ""), """", "")
+            If InStr(v, "|") > 0 Then
+                col = CLng(Val(Split(v, "|")(0))): dir = CLng(Val(Split(v, "|")(1)))
+                If dir <> 1 Then dir = 2
+            End If
+            Exit Sub
+        End If
+    Next nm
 End Sub
 
 ' Write the sheet's event code into its document module (same approach as
