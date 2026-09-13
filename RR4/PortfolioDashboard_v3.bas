@@ -55,22 +55,26 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 ' belongs to the page is written as RR4_TOP + <its v4 row>, and the cell
 ' constants below are the moved addresses. Other modules must read the
 ' page through these constants / RR4FxRate(), never by literal address.
-Public Const RR4_TOP       As Long = 3
+' v4.13 (2026-09-13): row 1 is now a blank spacer above the bar (like column
+' A), so the bar sits in rows 2-4 and RR4_TOP went 3 -> 4; every absolute
+' row constant below moved down by one and the config cells T1/T2 -> T2/T3.
+' MigrateRR4TopRow inserts that row once on a sheet still on the v4.12 layout.
+Public Const RR4_TOP       As Long = 4
 ' v4.2 (2026-09-12): column A is a blank spacer for breathing room, so the
 ' page also moved one column right - body columns are B:Q, the ticker panel
 ' J:S, the hidden order key V, and the config cells T1/T2 (they were S1/S2,
 ' which the panel now covers; RebuildPortfolioDashboard migrates them).
 Public Const RR4_LEFT      As Long = 1
-Public Const RR4_CFG_INC   As String = "T1"
-Public Const RR4_CFG_CAP   As String = "T2"
-Public Const RR4_TOTAL_CELL As String = "B4"
-Public Const RR4_FX_CELL   As String = "C5"
-Public Const RR4_ARR_CELL  As String = "E5"
+Public Const RR4_CFG_INC   As String = "T2"
+Public Const RR4_CFG_CAP   As String = "T3"
+Public Const RR4_TOTAL_CELL As String = "B5"
+Public Const RR4_FX_CELL   As String = "C6"
+Public Const RR4_ARR_CELL  As String = "E6"
 ' v4.7 (2026-09-12): a 14-row chart band (RR4_CHART_TOP..) sits between the
 ' upper blocks and the position log, which moved down from 27/28/29.
 ' v4.7.1: one blank row above (25) and below (40) the band; the ticker
 ' panel was shortened to row 24 to make room (TickerInsight TI_BOTTOM).
-Public Const RR4_CHART_TOP As Long = 26
+Public Const RR4_CHART_TOP As Long = 27
 Public Const RR4_CHART_ROWS As Long = 14
 ' WATCHLIST (v4.9, 2026-09-12; v4.9.1 entry-row flow): B:E of the chart
 ' band, left of the donut. Title row 25, header 26.
@@ -82,14 +86,14 @@ Public Const RR4_CHART_ROWS As Long = 14
 '            whose last <= target is lit. Double-click a saved row to
 '            delete it (WatchlistDeleteRow, from Worksheet_BeforeDoubleClick).
 ' Saved rows survive the clear (ReadWatchlist / DrawWatchlist).
-Public Const RR4_WL_TITLE  As Long = 25
-Public Const RR4_WL_HDR    As Long = 26
-Public Const RR4_WL_ENTRY  As Long = 27
-Public Const RR4_WL_FIRST  As Long = 28
-Public Const RR4_WL_LAST   As Long = 38
-Public Const RR4_POS_TITLE As Long = 41
-Public Const RR4_POS_HDR   As Long = 42
-Public Const RR4_POS_FIRST As Long = 43
+Public Const RR4_WL_TITLE  As Long = 26
+Public Const RR4_WL_HDR    As Long = 27
+Public Const RR4_WL_ENTRY  As Long = 28
+Public Const RR4_WL_FIRST  As Long = 29
+Public Const RR4_WL_LAST   As Long = 39
+Public Const RR4_POS_TITLE As Long = 42
+Public Const RR4_POS_HDR   As Long = 43
+Public Const RR4_POS_FIRST As Long = 44
 Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
 Private Const RR4_RLPNL_NAME As String = "RR4_RLPNL"   ' realized-PnL line chart (v4.6)
 Private Const RR4_NCOL      As Long = 19    ' last body column, B:S (R:S = NOTE, v4.11)
@@ -127,6 +131,7 @@ Sub RebuildPortfolioDashboard()
     Set wsP = ThisWorkbook.Sheets(SH_PORT)
     Set wsTr = ThisWorkbook.Sheets(SH_TRANS)
     Set wsR = ThisWorkbook.Sheets(SH_REAL)
+    Call MigrateRR4TopRow(wsP)          ' v4.13: one-time shift onto the blank-row-1 layout (before any read)
 
     If Not g_PriceCache Is Nothing Then
         g_PriceCache.RemoveAll
@@ -3621,4 +3626,24 @@ Private Sub WriteKV2(ws As Worksheet, r As Long, c As Long, label As String, _
     ws.cells(r, c + 1).Font.Color = RGB(221, 221, 221)
 End Sub
 
-
+' v4.13: a sheet still on the v4.12 layout has the bar's "P" badge in B1
+' (with the blank row it sits in B2).  Inserting one row at the top moves
+' EVERYTHING - hand-typed cells, the config cells T1/T2 -> T2/T3, charts
+' (xlMove), the watchlist, the hidden order column - onto the new row
+' numbers in one step, so the read-before-clear code finds it all.
+Public Sub MigrateRR4TopRow(ws As Worksheet)
+    If UCase(Trim(CStr(ws.cells(1, RR4_LEFT + 1).Value))) <> "P" Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error Resume Next
+    Call ShapesMoveOnly(ws)
+    ws.Rows(1).Insert Shift:=xlDown
+    ws.Rows(1).ClearFormats
+    ws.Rows(1).Interior.Color = RGB(0, 0, 0)
+    ws.Rows(1).RowHeight = 14
+    ' names that pointed at T1/T2 followed the insert; repoint by constant anyway
+    ThisWorkbook.names.Add "InceptionDate", ws.Range(RR4_CFG_INC)
+    ThisWorkbook.names.Add "StartingCapital", ws.Range(RR4_CFG_CAP)
+    On Error GoTo 0
+    Application.EnableEvents = prevEv
+End Sub

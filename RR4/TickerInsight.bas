@@ -45,17 +45,17 @@ Option Explicit
 Private Const SH_RR4 As String = "RR4"
 Private Const SH_TR  As String = "Transactions"
 
-Public Const TI_TICKER_CELL As String = "K4"
-Public Const TI_TARGET_CELL As String = "L20"
-Private Const TI_TRACK_CELL As String = "X1"   ' clear of the page and the config cells
+Public Const TI_TICKER_CELL As String = "K5"
+Public Const TI_TARGET_CELL As String = "L21"
+Private Const TI_TRACK_CELL As String = "X2"   ' clear of the page and the config cells (row 1 stays blank, v4.13)
 
 Private Const TI_LBL    As Long = 10    ' J - labels
 Private Const TI_VAL    As Long = 12    ' L - values
 Private Const TI_HCOL   As Long = 14    ' N - first trade-history column
-Private Const TI_HHDR   As Long = 7     ' trade-history header row
-Private Const TI_H1     As Long = 8     ' first trade-history row
-Private Const TI_HLAST  As Long = 23    ' last trade-history row (v2.3: was 25)
-Private Const TI_BOTTOM As Long = 24    ' last panel row (v2.3: was 26 - the chart band starts at 26)
+Private Const TI_HHDR   As Long = 8     ' trade-history header row (v4.13: +1, blank row 1)
+Private Const TI_H1     As Long = 9     ' first trade-history row
+Private Const TI_HLAST  As Long = 24    ' last trade-history row (v2.3: was 25; v4.13: 24)
+Private Const TI_BOTTOM As Long = 25    ' last panel row (the chart band starts at RR4_CHART_TOP = 27)
 Private Const TI_RIGHT  As Long = 19    ' S - last panel column
 
 ' Transaction column letters (from existing schema)

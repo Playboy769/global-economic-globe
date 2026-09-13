@@ -72,7 +72,7 @@ End Function
 ' Geometry currently ON the sheet, from the mark (0/0 when no bar rows).
 Private Sub NavGeom(ByVal ws As Worksheet, ByRef top As Long, ByRef left As Long)
     top = 0: left = 0
-    If NavPageCode(ws) = "P" Then left = RR4_LEFT: Exit Sub
+    If NavPageCode(ws) = "P" Then top = RR4_TOP - NAV_ROWS: left = RR4_LEFT: Exit Sub   ' RR4 v4.13: blank row 1, bar in 2-4
     Dim nm As Name
     For Each nm In ws.Names
         If Right(nm.Name, Len(NAV_MARK) + 1) = "!" & NAV_MARK Then
@@ -242,8 +242,8 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     Dim top As Long: top = NavTop(ws)
     Dim area As Range
     If code = "P" Then
-        ' stop short of T1/T2 (the inception / capital config cells)
-        Set area = ws.Range(ws.cells(1, 1), ws.cells(3, 19))
+        ' stop short of T2/T3 (the inception / capital config cells)
+        Set area = ws.Range(ws.cells(1 + top, 1), ws.cells(3 + top, 19))
     Else
         Set area = ws.Range(ws.cells(1 + top, 1), ws.cells(3 + top, 26))
     End If

@@ -9,7 +9,7 @@
 '    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
 '    B27:D27 WATCHLIST entry row -> PortfolioDashboard_v3.WatchlistCommitEntry
 '                        (appends to rows 28-38 once ticker + target are in)
-'  Worksheet_BeforeDoubleClick: B28:E38 -> WatchlistDeleteRow (v4.9.1)
+'  Worksheet_BeforeDoubleClick: B29:E39 -> WatchlistDeleteRow (v4.9.1)
 '  (addresses come from the RR4_* / TI_* constants). The nav command
 '  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
 '  The CmdBtn0-7 click handlers were removed with the ActiveX buttons
