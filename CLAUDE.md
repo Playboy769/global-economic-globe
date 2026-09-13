@@ -463,7 +463,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `TH_LEFT = 1`、page row 1 留白、標題 page row 2、表頭 page row 5 → 實際表頭在**第 9 列 B 欄**。⚠️ 改了
   `NavTop` 之後既有的 TH 頁要**刪掉重建**（`NavStrip` 會照新的 block 高度砍掉舊 bar＋一列頁面內容）。面板是文字方塊 `TH_PANEL`（P 欄起、620×760、Noto Sans TC，`Name` 與 `NameFarEast`
   都設），`ShowThesis` 由工作表 **`BeforeDoubleClick`**（`SheetThesis_Code.txt` → `ThesisDoubleClick`，由
-  `EnsureThesisSheetCode` 寫入；點選不觸發，雙擊表格列才顯示、並 `Cancel` 掉儲存格編輯）觸發；`Worksheet_Change` 在標的填入時自動補今天日期與 ACTIVE。`TH!` 只重套版面不動資料。中文標籤全部用
+  `EnsureThesisSheetCode` 寫入；點選不觸發，雙擊表格列才顯示、並 `Cancel` 掉儲存格編輯）觸發；**2 秒內
+  再雙擊同一列＝刪除該篇**（Yes/No 確認後 `ListRows(n).Delete`）——使用者要的是「三下刪除」，但 Excel 沒有
+  三擊事件（第 3 下只是單擊），所以用「同列連續兩次雙擊」（`m_lastDblRow`／`m_lastDblAt`＋`Timer`）代替；`Worksheet_Change` 在標的填入時自動補今天日期與 ACTIVE。`TH!` 只重套版面不動資料。中文標籤全部用
   `ChrW` 組（`L("S1")` 等，.bas 維持 ASCII）。**兩個踩過的坑**：① `If r = 0 Or cells(r, 3)…`——VBA `Or` 不短路，
   `cells(0, 3)` 直接炸出執行期對話框、COM 的 `Application.Run` 就卡死；② 建置中途出錯會把 `EnableEvents`
   留在 False，之後所有工作表事件都不動，重試前要先 `Application.EnableEvents = True`、VBE 用
