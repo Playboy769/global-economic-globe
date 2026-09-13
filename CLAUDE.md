@@ -524,6 +524,30 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `cells(0, 3)` 直接炸出執行期對話框、COM 的 `Application.Run` 就卡死；② 建置中途出錯會把 `EnableEvents`
   留在 False，之後所有工作表事件都不動，重試前要先 `Application.EnableEvents = True`、VBE 用
   `CommandBars.FindControl(1, 228).Execute` 離開中斷模式。
+- **Earnings（E）頁（2026-09-13）**：`modEarnings.bas`，單一代號的財報頁，取代 Company research 下半部的深挖
+  （`CompanyResearchSEC.bas` 瘦身成轉送：CR 頁 D2 打代號或雙擊掃描表代號 → `ShowEarnings(tk, mkt, True)` 跳到 E 頁，
+  並清掉 CR 第 40 列以下的舊深挖殘留）。頁面（頁面座標，掛 bar 後 +4 列 +1 欄）：row 1 標題、**row 2 標籤／row 3 輸入格
+  上下排**（TICKER <GO> A、MKT C：空白=自動／US／TW；`EarningsChange` 用 `NavOffset/NavLeft` 找格子，實際在 B7／D7）、
+  rows 5–7 **EARNINGS DATES**（下次財報日、倒數天數、CONFIRMED／ESTIMATE、上次法說日、最新申報）、row 9 起 **12 季
+  QUARTERLY SNAPSHOT**（期末日／申報日／表單列＋與 SEC-Filing-Fetcher `QuarterlySnapshot` 同一套區段與公式，去掉季度永遠
+  N/A 的 3Y/5Y CAGR，另補 CR 深挖原有的毛利／毛利率、營益率、淨利、總負債、利息費用與保障倍數、CFO；右側 P/E、P/S
+  區間帶），台股再加 24 個月月營收。`E!` 用頁面上的輸入重抓。資料：美股 `modSECData`、台股 `modMOPSData`、股價
+  `modPrices`。
+  - **下次財報日走 Yahoo `quoteSummary?modules=calendarEvents`，需要 cookie＋crumb**：先 GET `fc.yahoo.com`（關掉
+    redirect，從 `Set-Cookie` 取值）→ `/v1/test/getcrumb` → 帶 cookie 與 `crumb=` 查。沒 crumb 直接打會回
+    `Invalid Crumb`，v7 quote 也被擋。台股代號用 `.TW`／`.TWO`（跟股價抓取同一個成功的後綴）。抓不到時標
+    PROJECTED：美股＝去年同季申報日＋364 天、台股＝下一個法定期限（5/15、8/14、11/14、3/31）。
+  - **刻意與 SEC Fetcher 不同的兩處（那邊是 bug）**：① **10-Q 現金流量表科目是年初至今（YTD）**，
+    `LookupConceptValue` 取不到 3 個月期間就回 YTD——Fetcher 把 YTD 當單季、Q4＝FY−Q1−Q2−Q3 就變負數（NVDA CFO
+    −28,549M）。E 頁自己讀 fact 的 start/end（`UsFact`），期間 >120 天視為 YTD、減掉前一季 YTD；Q4＝FY − Q3 YTD。
+    實測 NVDA FY2025Q3／Q4 CFO 17,627M／16,629M 與財報一致。② **股票分割**：分割前申報的 EPS、每股股利、股數是
+    舊基準，Yahoo 股價已還原——用 Yahoo chart `events=splits` 依**申報日**早於分割日調整（NVDA 10:1 2024-06-10：
+    FY2025Q1 EPS 5.98→0.60、市值不再差 10 倍）。
+  - 台股 CFO／CapEx／D&A 只有 Q1 有值（MOPS 年中只標 YTD context，modMOPSData 只抽單季），頁面註記；TW Q4 只有在
+    MOPS 沒有單季 Q4 營收時才用 FY−Q1−Q3 反推（2330 實測有單季 Q4，不需要）。TW「Filed」是法定期限不是實際申報日。
+  - 事件碼由 `EnsureSheetCode` 寫進工作表模組（紀錄在 `RR4/SheetEarnings_Code.txt`）。⚠️ 踩過的坑：傳 Dictionary
+    項目（Variant）給 `ByRef x As Object` 參數是**編譯錯誤「ByRef 引數型態不符」**，lint 抓不到、COM `Run` 會卡在
+    VBE 對話框且把 `EnableEvents` 留在 False——物件參數一律 `ByVal`。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
