@@ -310,6 +310,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   寫死位址**（Attach.bas 舊的 `C22`/`A1`/`B2` 全在搬版後讀錯格）。`ResetSheetStyle`
   會清整張表，所有手打值（FX、ARRANGE 碼、SWING RISK Q 欄與 NOTE R 欄［v4.11，依表頭文字定位、以代號為鍵］、panel 的代號/目標價、T1/T2、WATCHLIST）
   要在清除**前**讀出、之後寫回。
+- **USD/TWD 改為線上即時（v4.14，2026-09-13，使用者選「純自動」）**：`UP` 開頭 `FetchLiveFx()` 抓 Yahoo
+  chart API `TWD=X` 的 `meta.regularMarketPrice`（＝1 USD 兌多少 TWD），成功就覆蓋 C6（`RR4_FX_CELL`）並在
+  儲存格註解標「live from Yahoo TWD=X ＋時間」、狀態列印「USD/TWD 31.63 live」；抓不到才沿用 C6 手打值、再退
+  31.6。所以 C6 的手打只在離線時有效，不是鎖定值。HistoryLog 的美股 PnL 因此每天隨匯率微動，屬預期。
 - **ARRANGE 碼** UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF：只重排已在表上的列、不重抓價；
   權重橫條（`RR4W_*` shapes）與甜甜圈圖（`RR4_DONUT`）每次 arrange 都重建。DEF 排序曾
   觸發「`Range.Sort` Key1=Key2 → 存檔後永遠打不開」，`ApplyArrange` 已只在鍵不同時才傳 Key2。
