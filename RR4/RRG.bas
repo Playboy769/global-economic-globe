@@ -98,8 +98,8 @@ Private Const BENCH As String = "SPY"
 
 Private Const TBL_HDR As Long = 4
 Private Const TBL_FIRST As Long = 5
-Private Const DATA_COL As Long = 27          ' AA
-Private Const DATE_COL As Long = 26          ' Z
+Private Const DATA_COL_MIN As Long = 27      ' AA: data block start on the ETF page (chart 560 wide fits before it)
+Private Const DATA_COL_MARK As String = "RRGDATACOL"   ' hidden sheet name: where this page's data block starts
 Private Const CHART_COL As Long = 16         ' P  (table is A:N, O is the gap)
 Private Const TBL_NCOL As Long = 14
 Private Const ETF_CHART_W As Double = 560
@@ -127,7 +127,7 @@ Private Const CMF_DEADZONE As Double = 0.05
 Private Const OBV_DEADZONE As Double = 0.5
 Private Const FOCUS_MARK As String = "RRGFOCUS"
 Private Const SORT_MARK As String = "RRGSORT"      ' "col|dir" of the current table sort
-Private Const SEQ_COL As Long = 25           ' Y: build order, restored by double-clicking the title
+' SEQ (build order) and DATE columns sit just left of the data block: DataCol - 2 / DataCol - 1
 Private Const DIM_GREY As Long = 4210752     ' RGB(64,64,64)
 
 Private Const NAN As Double = -1E+300
@@ -616,26 +616,31 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         ws.cells(nr + 1 + j, 1).Font.Size = 8
     Next j
 
-    ' ---- tail data block (chart source) ----
-    With ws.cells(TBL_HDR - 1, DATA_COL)
+    ' ---- tail data block (chart source): starts past the charts' right edge ----
+    Dim dcol As Long: dcol = DATA_COL_MIN
+    Do While ws.Columns(dcol - 2).Left < ws.Columns(CHART_COL).Left + gChartW + 12
+        dcol = dcol + 1
+    Loop
+    Call SetMark(ws, DATA_COL_MARK, CStr(dcol))
+    With ws.cells(TBL_HDR - 1, dcol)
         .Value = "TAIL DATA (chart source, oldest -> newest)": .Font.Color = RGB(90, 90, 90): .Font.Size = 8
     End With
     ' tail dates: every ETF is aligned to SPY's days and sampled backwards
     ' from the same last day, so one date column serves all of them
-    ws.cells(TBL_HDR, SEQ_COL).Value = "seq": ws.cells(TBL_HDR, SEQ_COL).Font.Color = RGB(90, 90, 90)
-    For i = 0 To n - 1: ws.cells(TBL_FIRST + i, SEQ_COL).Value = i + 1: Next i
-    ws.Range(ws.cells(TBL_FIRST, SEQ_COL), ws.cells(TBL_FIRST + n - 1, SEQ_COL)).Font.Color = RGB(90, 90, 90)
-    ws.Columns(SEQ_COL).ColumnWidth = 4
-    ws.cells(TBL_HDR, DATE_COL).Value = "date": ws.cells(TBL_HDR, DATE_COL).Font.Color = RGB(90, 90, 90)
+    ws.cells(TBL_HDR, SeqCol(ws)).Value = "seq": ws.cells(TBL_HDR, SeqCol(ws)).Font.Color = RGB(90, 90, 90)
+    For i = 0 To n - 1: ws.cells(TBL_FIRST + i, SeqCol(ws)).Value = i + 1: Next i
+    ws.Range(ws.cells(TBL_FIRST, SeqCol(ws)), ws.cells(TBL_FIRST + n - 1, SeqCol(ws))).Font.Color = RGB(90, 90, 90)
+    ws.Columns(SeqCol(ws)).ColumnWidth = 4
+    ws.cells(TBL_HDR, DateCol(ws)).Value = "date": ws.cells(TBL_HDR, DateCol(ws)).Font.Color = RGB(90, 90, 90)
     For k = 0 To TAIL_POINTS - 1
         Dim di As Long: di = nb - 1 - TAIL_SPACING * (TAIL_POINTS - 1 - k)
-        If di >= 0 Then ws.cells(TBL_FIRST + k, DATE_COL).Value = DateSerial(1970, 1, 1) + bDays(di)
+        If di >= 0 Then ws.cells(TBL_FIRST + k, DateCol(ws)).Value = DateSerial(1970, 1, 1) + bDays(di)
     Next k
-    ws.Range(ws.cells(TBL_FIRST, DATE_COL), ws.cells(TBL_FIRST + TAIL_POINTS - 1, DATE_COL)).NumberFormat = "mm/dd"
-    ws.Range(ws.cells(TBL_FIRST, DATE_COL), ws.cells(TBL_FIRST + TAIL_POINTS - 1, DATE_COL)).Font.Color = RGB(90, 90, 90)
-    ws.Columns(DATE_COL).ColumnWidth = 7
+    ws.Range(ws.cells(TBL_FIRST, DateCol(ws)), ws.cells(TBL_FIRST + TAIL_POINTS - 1, DateCol(ws))).NumberFormat = "mm/dd"
+    ws.Range(ws.cells(TBL_FIRST, DateCol(ws)), ws.cells(TBL_FIRST + TAIL_POINTS - 1, DateCol(ws))).Font.Color = RGB(90, 90, 90)
+    ws.Columns(DateCol(ws)).ColumnWidth = 7
     For i = 0 To n - 1
-        Dim cx As Long: cx = DATA_COL + 2 * i
+        Dim cx As Long: cx = DataCol(ws) + 2 * i
         ws.cells(TBL_HDR, cx).Value = tickers(i): ws.cells(TBL_HDR, cx + 1).Value = "mom"
         ws.Range(ws.cells(TBL_HDR, cx), ws.cells(TBL_HDR, cx + 1)).Font.Color = RGB(90, 90, 90)
         For k = 0 To TAIL_POINTS - 1
@@ -650,7 +655,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     Next i
 
     ' ---- TRAIL: weekly RS-RATIO changes, one row per ETF, column sparkline in I ----
-    Dim trCol As Long: trCol = DATA_COL + 2 * n + 1
+    Dim trCol As Long: trCol = DataCol(ws) + 2 * n + 1
     With ws.cells(TBL_HDR - 1, trCol)
         .Value = "TRAIL (weekly dRS-RATIO, sparkline source)": .Font.Color = RGB(90, 90, 90): .Font.Size = 8
     End With
@@ -765,7 +770,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     Dim i As Long, k As Long
     For i = 0 To n - 1
         If tailN(i) > 0 Then
-            Dim cx As Long: cx = DATA_COL + 2 * i
+            Dim cx As Long: cx = DataCol(ws) + 2 * i
             Dim firstRow As Long: firstRow = TBL_FIRST + NavOffset(ws) + (TAIL_POINTS - tailN(i))
             Dim lastRow As Long: lastRow = TBL_FIRST + NavOffset(ws) + TAIL_POINTS - 1
             Dim s As Series: Set s = ch.SeriesCollection.NewSeries
@@ -850,7 +855,7 @@ Private Sub StyleSeries(ws As Worksheet, s As Series, ByVal qc As Long, ByVal np
         Dim off As Long: off = NavOffset(ws)
         For k = 1 To np
             Dim dr As Long: dr = TBL_FIRST + off + TAIL_POINTS - np + k - 1
-            Dim txt As String: txt = Format(ws.cells(dr, DATE_COL).Value, "mm/dd")
+            Dim txt As String: txt = Format(ws.cells(dr, DateCol(ws)).Value, "mm/dd")
             If k = np Then txt = disp & " " & txt
             Call PointLabel(s.Points(k), txt, IIf(k = np, RGB(255, 255, 255), RGB(190, 190, 190)), IIf(k = np, 9, 7), PageFont(ws))
         Next k
@@ -1131,7 +1136,7 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
 
     ' dead-zone lines at +/- CMF_DEADZONE: two helper series from the data block
     Dim dzRow As Long: dzRow = TBL_FIRST + off + TAIL_POINTS + 2
-    Dim dzCol As Long: dzCol = DATA_COL
+    Dim dzCol As Long: dzCol = DataCol(ws)
     ws.cells(dzRow - 1, dzCol).Value = "dead zone": ws.cells(dzRow - 1, dzCol).Font.Color = RGB(90, 90, 90)
     ws.cells(dzRow, dzCol).Value = x0: ws.cells(dzRow, dzCol + 1).Value = CMF_DEADZONE
     ws.cells(dzRow + 1, dzCol).Value = x1: ws.cells(dzRow + 1, dzCol + 1).Value = CMF_DEADZONE
@@ -1273,7 +1278,7 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
     Loop
     If n < 2 Then Exit Sub
     Application.ScreenUpdating = False
-    Dim trCol As Long: trCol = DATA_COL + 2 * n + 1
+    Dim trCol As Long: trCol = DataCol(ws) + 2 * n + 1
     Dim tw As Long: tw = TAIL_POINTS - 1
 
     ' --- direction: same column again flips it ---
@@ -1291,7 +1296,7 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
     ' --- read everything that moves ---
     Dim tbl As Variant: tbl = ws.Range(ws.cells(r0, 1), ws.cells(r0 + n - 1, TBL_NCOL)).Value
     Dim trl As Variant: trl = ws.Range(ws.cells(r0, trCol), ws.cells(r0 + n - 1, trCol + tw - 1)).Value
-    Dim seq As Variant: seq = ws.Range(ws.cells(r0, SEQ_COL), ws.cells(r0 + n - 1, SEQ_COL)).Value
+    Dim seq As Variant: seq = ws.Range(ws.cells(r0, SeqCol(ws)), ws.cells(r0 + n - 1, SeqCol(ws))).Value
     Dim notes() As String: ReDim notes(1 To n)
     Dim i As Long, j As Long
     For i = 1 To n
@@ -1332,7 +1337,7 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
     ws.Range(ws.cells(r0, 1), ws.cells(r0 + n - 1, 8)).Value = lv
     ws.Range(ws.cells(r0, 10), ws.cells(r0 + n - 1, TBL_NCOL)).Value = rv
     ws.Range(ws.cells(r0, trCol), ws.cells(r0 + n - 1, trCol + tw - 1)).Value = trl2
-    ws.Range(ws.cells(r0, SEQ_COL), ws.cells(r0 + n - 1, SEQ_COL)).Value = seq2
+    ws.Range(ws.cells(r0, SeqCol(ws)), ws.cells(r0 + n - 1, SeqCol(ws))).Value = seq2
     ' number formats were set per cell at build time (rows without data had none)
     ws.Range(ws.cells(r0, 4), ws.cells(r0 + n - 1, 5)).NumberFormat = "0.00"
     ws.Range(ws.cells(r0, 7), ws.cells(r0 + n - 1, 8)).NumberFormat = "+0.00;-0.00;0.00"
@@ -1939,4 +1944,20 @@ End Function
 ' The table cells and the corner / quadrant captions stay Consolas everywhere.
 Private Function PageFont(ws As Worksheet) As String
     If ws.Name = TWG_SHEET Then PageFont = "Noto Sans TC" Else PageFont = "Consolas"
+End Function
+
+' First column of the tail data block on a page (set by BuildRRGCore so the
+' block clears the charts, which are wider on the industry / TW pages);
+' AA when the page predates the mark.  DATE and SEQ sit just left of it.
+Private Function DataCol(ws As Worksheet) As Long
+    DataCol = CLng(Val(GetMark(ws, DATA_COL_MARK)))
+    If DataCol < DATA_COL_MIN Then DataCol = DATA_COL_MIN
+End Function
+
+Private Function DateCol(ws As Worksheet) As Long
+    DateCol = DataCol(ws) - 1
+End Function
+
+Private Function SeqCol(ws As Worksheet) As Long
+    SeqCol = DataCol(ws) - 2
 End Function
