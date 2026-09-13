@@ -449,6 +449,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         Dim r As Long: r = TBL_FIRST + i
         ws.cells(r, 1).Value = tickers(i)
         ws.cells(r, 2).Value = labels(i)
+        If isInd Then ws.cells(r, 3).NumberFormat = "@"       ' "8/8" would otherwise become a date
         ws.cells(r, 3).Value = groups(i)
         If tailN(i) = 0 Then
             ws.cells(r, 6).Value = "NO DATA"
