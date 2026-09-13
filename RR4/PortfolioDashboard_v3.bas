@@ -67,7 +67,8 @@ Public Const RR4_TOP       As Long = 4
 Public Const RR4_LEFT      As Long = 1
 Public Const RR4_CFG_INC   As String = "T2"
 Public Const RR4_CFG_CAP   As String = "T3"
-Public Const RR4_TOTAL_CELL As String = "B5"
+' (v4.15, 2026-09-13: the big total that sat in B5 is gone - NET EXPOSURE in
+'  the summary is the same number; page row 1 is blank at normal height)
 Public Const RR4_FX_CELL   As String = "C6"
 Public Const RR4_ARR_CELL  As String = "E6"
 ' v4.7 (2026-09-12): a 14-row chart band (RR4_CHART_TOP..) sits between the
@@ -210,7 +211,7 @@ Sub RebuildPortfolioDashboard()
     ' rewrites / appends today's HistoryLog row
     Dim prevPnL As Variant: prevPnL = PrevDayCumPnL()
 
-    Call DrawHeader(wsP, totalMktTWD, exRate, arrCode)
+    Call DrawHeader(wsP, exRate, arrCode)
     Call DrawDailyLog(wsP, posData, exRate, totalMktTWD, totalUnrlTWD + realPnL, realPnL, prevPnL)
     Call DrawSummary(wsP, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount)
     Call DrawColumnHeaders(wsP)
@@ -839,25 +840,13 @@ Private Sub ResetSheetStyle(ws As Worksheet)
     For r = 1 To 200
         ws.Rows(r).RowHeight = 18
     Next r
-    ws.Rows(RR4_TOP + 1).RowHeight = 28
 End Sub
 
 ' ================================================================
-'  Header (page rows 1-4 = sheet rows 4-7): total, USD/TWD, ARRANGE <GO>,
-'  weight-bar label
+'  Header (page rows 1-4 = sheet rows 5-8): USD/TWD, ARRANGE <GO>,
+'  weight-bar label. Page row 1 is blank (v4.15 dropped the big total).
 ' ================================================================
-Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
-                       arrCode As String)
-    With ws.cells(RR4_TOP + 1, RR4_LEFT + 1)
-        .Value = totalMkt
-        .NumberFormat = "$#,##0"
-        .Font.Color = RR4_ACCENT
-        .Font.Size = 16
-        .Font.Bold = True
-        .HorizontalAlignment = xlCenter
-    End With
-    ' (v4.4: the " <- TOTAL MKT" caption next to the figure is gone)
-
+Private Sub DrawHeader(ws As Worksheet, exRate As Double, arrCode As String)
     ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Value = "USD/TWD"
     ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Font.Color = RGB(150, 150, 150)
     ws.cells(RR4_TOP + 2, RR4_LEFT + 1).HorizontalAlignment = xlCenter
@@ -1945,6 +1934,13 @@ End Sub
 
 Public Function RR4FxRate() As Double
     RR4FxRate = GetExRate(ThisWorkbook.Sheets(SH_PORT))
+End Function
+
+' NET EXPOSURE from the summary block (the page's total market value, TWD)
+Public Function RR4NetExposure() As Double
+    On Error Resume Next
+    RR4NetExposure = CDbl(ThisWorkbook.Sheets(SH_PORT).cells(RR4_TOP + 16, RR4_LEFT + 6).Value)
+    On Error GoTo 0
 End Function
 
 Public Function RR4PositionCount() As Long

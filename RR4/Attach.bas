@@ -1251,9 +1251,8 @@ Sub RunSystemDebug()
             IIf(exRate > 20 And exRate < 50, RGB(0, 210, 100), RGB(255, 140, 0)))
         wr = wr + 1
 
-        Dim totalMkt As Double: totalMkt = 0
-        On Error Resume Next: totalMkt = CDbl(wsP.Range(RR4_TOTAL_CELL).Value): On Error GoTo 0
-        Call DB_Row(wsDB, wr, "RR4", "Total market value (" & RR4_TOTAL_CELL & ")", _
+        Dim totalMkt As Double: totalMkt = RR4NetExposure()
+        Call DB_Row(wsDB, wr, "RR4", "Total market value (SUMMARY NET EXPOSURE)", _
             IIf(totalMkt > 0, "OK", "ERROR"), _
             IIf(totalMkt > 0, Format(totalMkt, "#,##0") & " TWD", "No value or zero"), _
             IIf(totalMkt > 0, RGB(0, 210, 100), RGB(255, 80, 80)))
