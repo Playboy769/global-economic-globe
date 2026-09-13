@@ -275,6 +275,14 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   轉給 `RunNavCommand`。頁面碼 P/R/T/H/V/VT/C/CC/RG/CR（**A Analysis 頁已於 v4.6 刪除、D DrawdownChart 與 `DrawDownShadow.bas` 於同日刪除**，
   幣別占比併進 Summary，`RR4_RLPNL` 實現損益折線圖放在甜甜圈下方、資料直接指向 HistoryLog A/D 欄），動作碼 UP/ADD/DEL/V!/C!/RG!/DBG/
   CLEARALL；跳頁不重算，只有 `!` 碼會重算。
+  - ⚠️ **代碼全面改名（2026-09-13 深夜，已注入活頁簿並實測 13 個跳頁）——本節其他段落提到的舊碼一律換算**：
+    頁面碼 **E** Earnings／**H** HistoryLog／**HC** HoldingsCorr（原 C）／**L** Library（原 TH，分頁名「Thesis Library」與頁標題
+    也改成 Library／LIBRARY，`modThesis.THESIS_SHEET`；`EnsureViewSheet` 遇到舊分頁名會自動改名，`MigrateV1ToArchive` 仍認舊名
+    `THESIS_SHEET_OLD` 找 v1 表）／**P** RR4／**R** Company research（原 CR）／**RGE**・**RGI**・**RGT** 三個 RRG 頁（原 RG/RI/TG）／
+    **RL** Realized（原 R，讓位給 RESEARCH）／**SC** Correlation（原 CC）／**T** Transactions／**V**・**VT**。動作碼跟著改
+    HC!/L!/RGE!/RGI!/RGT!（其餘 UP/ADD/DEL/V!/E!/IMAP/DBG/CLEARALL 不變）。bar 兩列標籤改 TRANSACTION／VOLITILITY（使用者原拼法）
+    ／HOLDCORR／SECTORCORR／RRG ETF／RRG IND／RRG TW／LIBRARY／RESEARCH，**兩列都依代碼字母排序**。舊碼直接廢除、沒有別名
+    （打 TH 會回 `UNKNOWN CODE`）。各模組 `NavAdd(ws, "…")` 與 RRG 的 `navCode` 已全數換成新碼。
   - **每個報表頁都留空第 1 列與 A 欄（2026-09-13）**：`NavAdd` 在第一次掛 bar 時一起插入 1 個空白列＋
     1 個空白欄（A 寬 3），bar 因此在**第 2–4 列、B 欄起，指令格 C2**；幾何寫在隱藏名稱 `RR4NAV`（`"top|left"`，
     舊頁面的 `TRUE` ＝ 3 列 0 欄），`NavStrip` 照標記拆，所以舊版面的頁第一次重建會正確過渡。各頁繪製程序
