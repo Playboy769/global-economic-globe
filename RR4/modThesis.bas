@@ -16,8 +16,8 @@ Option Explicit
 '    L next check date | M status (ACTIVE / CONFIRMED / FALSIFIED / CLOSED)
 '
 '  New theses are typed straight into the row under the table (the
-'  ListObject grows; type / stance / status carry dropdowns).  Selecting a
-'  row shows its six sections in the reading panel (text box TH_PANEL to
+'  ListObject grows; type / stance / status carry dropdowns).  Double-
+'  clicking a row shows its six sections in the reading panel (text box TH_PANEL to
 '  the right of the table) - see RR4/SheetThesis_Code.txt, written into the
 '  sheet module by EnsureThesisSheetCode.  Chinese text uses Noto Sans TC;
 '  the labels are ChrW-built so this file stays ASCII (VBE import rule).
@@ -51,7 +51,7 @@ Private Function L(ByVal key As String) As String
         Case "S6": L = ChrW(&H6C7A) & ChrW(&H7B56) & ChrW(&H8207) & ChrW(&H4E0B) & ChrW(&H4E00) & ChrW(&H500B) & ChrW(&H9A57) & ChrW(&H8B49) & ChrW(&H9EDE)
         Case "NEXT": L = ChrW(&H4E0B) & ChrW(&H6B21) & ChrW(&H9A57) & ChrW(&H8B49) & ChrW(&H65E5)
         Case "STATUS": L = ChrW(&H72C0) & ChrW(&H614B)
-        Case "PANEL_EMPTY": L = ChrW(&H9EDE) & ChrW(&H9078) & ChrW(&H5DE6) & ChrW(&H5074) & ChrW(&H4EFB) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF0C) & ChrW(&H9019) & ChrW(&H88E1) & ChrW(&H986F) & ChrW(&H793A) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H7684) & ChrW(&H516D) & ChrW(&H6BB5) & ChrW(&H5168) & ChrW(&H6587)
+        Case "PANEL_EMPTY": L = ChrW(&H96D9) & ChrW(&H64CA) & ChrW(&H5DE6) & ChrW(&H5074) & ChrW(&H4EFB) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF0C) & ChrW(&H9019) & ChrW(&H88E1) & ChrW(&H986F) & ChrW(&H793A) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H7684) & ChrW(&H516D) & ChrW(&H6BB5) & ChrW(&H5168) & ChrW(&H6587)
         Case "TITLE_ZH": L = ChrW(&H7E3D) & ChrW(&H7D93) & ChrW(&H8207) & ChrW(&H500B) & ChrW(&H80A1) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H8CC7) & ChrW(&H6599) & ChrW(&H5EAB)
     End Select
 End Function
@@ -323,9 +323,17 @@ Public Sub ShowThesis(ws As Worksheet, Target As Range)
     Next k
 End Sub
 
-' Sheet events (RR4/SheetThesis_Code.txt): selection -> panel; a new row
-' gets today's date and ACTIVE when its target is typed.
-Public Sub ThesisSelectionChange(ws As Worksheet, ByVal Target As Range)
+' Sheet events (RR4/SheetThesis_Code.txt): double-click a row -> panel; a
+' new row gets today's date and ACTIVE when its target is typed.
+Public Sub ThesisDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = ws.ListObjects(THESIS_TABLE)
+    On Error GoTo 0
+    If lo Is Nothing Then Exit Sub
+    If lo.DataBodyRange Is Nothing Then Exit Sub
+    If Intersect(Target.cells(1, 1), lo.DataBodyRange) Is Nothing Then Exit Sub
+    Cancel = True                                    ' no in-cell edit on a double-click
     Call ShowThesis(ws, Target)
 End Sub
 
@@ -352,7 +360,6 @@ Public Sub ThesisChange(ws As Worksheet, ByVal Target As Range)
     Call SetList(lo.ListColumns(2).DataBodyRange, "macro,stock")
     Call SetList(lo.ListColumns(5).DataBodyRange, "LONG,SHORT,NEUTRAL,WATCH")
     Call SetList(lo.ListColumns(13).DataBodyRange, "ACTIVE,CONFIRMED,FALSIFIED,CLOSED")
-    Call ShowThesis(ws, Target)
     Application.EnableEvents = prevEv
 End Sub
 
@@ -366,13 +373,13 @@ Private Sub EnsureThesisSheetCode(ws As Worksheet)
             If comp.Properties("Name").Value = ws.Name Then
                 Dim cm As Object: Set cm = comp.CodeModule
                 If cm.CountOfLines > 0 Then
-                    If InStr(cm.Lines(1, cm.CountOfLines), "ThesisSelectionChange") > 0 Then Exit Sub
+                    If InStr(cm.Lines(1, cm.CountOfLines), "ThesisDoubleClick") > 0 Then Exit Sub
                     cm.DeleteLines 1, cm.CountOfLines
                 End If
                 cm.AddFromString "Option Explicit" & vbCrLf & vbCrLf & _
-                    "' Thesis Library: selecting a row shows it in the reading panel (see modThesis.bas)" & vbCrLf & _
-                    "Private Sub Worksheet_SelectionChange(ByVal Target As Range)" & vbCrLf & _
-                    "    Call ThesisSelectionChange(Me, Target)" & vbCrLf & _
+                    "' Thesis Library: double-click a row to read it in the panel (see modThesis.bas)" & vbCrLf & _
+                    "Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)" & vbCrLf & _
+                    "    Call ThesisDoubleClick(Me, Target, Cancel)" & vbCrLf & _
                     "End Sub" & vbCrLf & vbCrLf & _
                     "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
                     "    Call ThesisChange(Me, Target)" & vbCrLf & _

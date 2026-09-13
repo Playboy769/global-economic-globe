@@ -6,9 +6,9 @@ Option Explicit
 '  written there by modThesis.EnsureThesisSheetCode when TH! builds the page.
 ' ============================================================================
 
-' Thesis Library: selecting a row shows it in the reading panel (see modThesis.bas)
-Private Sub Worksheet_SelectionChange(ByVal Target As Range)
-    Call ThesisSelectionChange(Me, Target)
+' Thesis Library: double-click a row to read it in the panel (see modThesis.bas)
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call ThesisDoubleClick(Me, Target, Cancel)
 End Sub
 
 Private Sub Worksheet_Change(ByVal Target As Range)
