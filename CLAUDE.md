@@ -410,6 +410,17 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `Application.EnableCancelKey = xlErrorHandler` 讓 Esc（錯誤 18）變成「已完成的產業留著、下次續抓」。
   `IMAP` 重匯會清掉快取。圖尺寸依 kind 走 `gChartW/gChartH`（產業版 1000×820，145 個標籤字級 7）。
   測試用 `BuildRRGIndustry 2` 只做前 2 個產業。
+- **RRG TW Groups（TG）頁（2026-09-13）**：`BuildRRGCore` 的第三種宇宙 `TWG`（`BuildRRGTwGroups`、頁
+  `RRG TW Groups`、`TG!`）：拿 `Groups` 頁 `tblGroups` 的 **Market=TW 全部族群**（透過 `Sanner.GetGroupNames`／
+  `GetSectorTickers`，跟 Company research 掃描器同一份，實測 50 組 372 檔），每組＝成分股市值加權合成指數對
+  `^TWII`（Yahoo 網址要把 `^` 編成 `%5E`）。**tblGroups 沒市值，權重＝發行股數 × Yahoo 最新收盤**：股數由
+  `TwSharesMap` 抓兩處——上市 TWSE openapi `t187ap03_L`（每筆最後一欄；**記錄用「`},`＋換行＋`{`」分隔，split
+  前要先把換行去掉**，否則整包只切成一筆、全部股票權重 0、STOCKS 命中率剩 1/3）、上櫃 **TPEx 每日收盤行情**
+  `www.tpex.org.tw/www/zh-tw/afterTrading/otc?date=yyyy/mm/dd&type=EW&response=json`（第 15 欄發行股數，往前
+  找最近有資料的交易日）。⚠️ **TPEx openapi `mopsfin_t187ap03_O` 會隨機截斷**（實測 5 次全部斷在不同位置、
+  最多 177/800 筆），不能用。代號可以是純數字或帶 `.TW/.TWO`：後綴依股數表歸屬決定，都查不到就 `.TW` 失敗
+  再試 `.TWO`（`YahooSymbol` 對 `.TW/.TWO` 不做 `.`→`-` 轉換）。A 欄＝族群名（series／聚焦鍵，中文可）、
+  B 欄前 4 個代號＋「+N」、C 欄 STOCKS。快取共用 `IndustryPx`（以族群名為 key）。一趟 `TG!` 約 2 分鐘。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
