@@ -288,9 +288,20 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     任何讀取之前）偵測 B1 還是「P」徽章就 `Rows(1).Insert` 一次——整張表連同手打值、圖、名稱、隱藏排序欄一起
     下移，read-before-clear 才對得上格子；實測總值／FX／WATCHLIST 5 筆／8 持倉／panel 代號都保住。
     重開活頁簿後 `ws.Names.Item("RR4NAV")` 可能取不到，改用 `wb.Names` 篩 `'<sheet>'!RR4NAV`。
-  - **資料頁（HistoryLog/Company research）刻意沒有 bar**——很多
-    模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。（使用者 2026-09-13 決定分三階段
-    全部掛上：Realized、Transactions 已做，HistoryLog 待做。）
+  - **只剩 Company research（CR）沒有 bar**（`Sanner.bas` 從第 1 列自畫輸入條）。Realized／Transactions／HistoryLog
+    三張資料頁 2026-09-13 起都掛了（使用者決定，分三階段完成），各自的幾何函式見下面三條；**任何新程式讀這三頁一律走
+    那組函式，不要再寫死 row 2／欄字母**。
+  - **HistoryLog（H）頁 2026-09-13 起有 bar**：版面同 Realized（表頭第 5 列 B 欄起，A:M → B:N）。讀寫走
+    `Attach.HistHdrRow(ws)`／`HistCol(ws, n)`／`HistLastRow(ws)`；`HistPriceCols`／`HistRetCols` 改成頁面欄號
+    （6/8/10/12、7/9/11/13），**`WriteHistoryRowFormulas` 的公式改用 `Cells(r, HistCol(…)).Address` 組**（原本是
+    「欄字母＋列號」字串，插欄後會指錯）。已改的地方：`LogHistory`、`RebuildRealizedHistory`、`EnsureHistoryHeaders`
+    （順便改 RR4 深橘、每次 UP 重畫 bar）、`BackfillHistory`、`RepairHistoryLog`、`DrawRealizedChart`（`RR4_RLPNL` 現在指
+    `HistoryLog!B6:B33 / E6:E33`）、`PrevDayCumPnL`、`ClearAllData`、`RunSystemDebug`。`MigrateHistoryLogNav`
+    （`RebuildPortfolioDashboard` 開頭；Backfill／Repair 也會叫）一次性清掉使用者選擇不留的殘留——Q171:Q185 十五條
+    `=(O-$O$2)/$O$2` #DIV/0! 公式、R171 一條備註、X1:X2「Avg. of Cost devotes／600000」、H:L 兩條「=0」條件格式——
+    再 `NavAdd`、重寫全部列的公式。YTD 基準在 `HistoryRaw` 表（不是舊文件寫的 P1:R6），不受影響。
+    **GitHub token 格 Z3 連同 `QueryCoverageReport` 整段（Attach.bas，孤兒功能、沒有任何入口）已刪除**（`d707575`）；
+    台股券商報告解析走 `TW_Coverage_Parser.bas`，它有自己的 `Settings!B1` token，不相干。
   - **Transactions（T）頁 2026-09-13 起有 bar**：版面同 Realized（表頭第 5 列 B 欄起，A:N → B:O）。讀寫一律走
     `Attach.TrHdrRow(ws)`／`TrCol(ws, n)`／`TrLastRow(ws)`（n 是頁面欄 A=1…N=14），**不要再寫 `End(xlUp)` on "A"、
     `Range("B2:N…")`、`cells(r, "D")`**——已改的地方：`CalculateRealizedPnL`、`ClearAllData`、`RunSystemDebug`、
