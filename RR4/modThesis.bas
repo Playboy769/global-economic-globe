@@ -28,7 +28,7 @@ Option Explicit
 
 Public Const THESIS_SHEET As String = "Thesis Library"
 Public Const THESIS_TABLE As String = "tblThesis"
-Private Const TH_HDR As Long = 5                 ' page row of the header (bar adds 3); page row 1 is left blank
+Private Const TH_HDR As Long = 4                 ' page row of the header (title row 2, row 3 blank); bar block adds 4
 Private Const TH_LEFT As Long = 0                ' draw from column A; NavAdd inserts the blank column A afterwards (modNav)
 Private Const TH_NCOL As Long = 13
 Private Const PANEL_COL As Long = 15             ' O at draw time (table A:M, N the gap); P once NavAdd adds column A
@@ -106,13 +106,6 @@ Sub BuildThesisLibrary()
     With ws.cells(2, 4 + TH_LEFT)
         .Value = L("TITLE_ZH") & "  .  one row per thesis, six sections of the 500-word checklist  .  formatted " & Format(Now, "yyyy/mm/dd hh:mm")
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9: .Font.Name = ZH_FONT
-    End With
-    With ws.cells(3, 1 + TH_LEFT)
-        .Value = "type a new thesis into the row under the table (it grows)  .  select a row to read it in the panel  .  TH! reapplies the layout without touching data  .  table headers: filter / sort"
-        .Font.Color = RGB(120, 120, 120): .Font.Size = 9
-    End With
-    With ws.Range(ws.cells(3, 1 + TH_LEFT), ws.cells(3, TH_NCOL + TH_LEFT)).Borders(xlEdgeBottom)
-        .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
     End With
 
     ' ---- table ----
