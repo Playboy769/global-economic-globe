@@ -13,7 +13,8 @@
 '
 '  1. B2 GROUP <GO>: one or more group names (dropdown fed by the GroupList
 '     name; several separated by commas) -> Sanner.RunGroupKeyword scans them.
-'  2. D2 TICKER (or the F2 market override) -> CompanyResearchSEC.RunDeepDive.
+'  2. D2 TICKER (or the F2 market override) -> CompanyResearchSEC.RunDeepDive,
+'     which since 2026-09-13 forwards to the Earnings page (modEarnings, nav E).
 '  3. Double-click: a group name in the panel -> B2 (scan); a ticker in the
 '     scan table -> D2 (deep-dive).
 '  All three addresses come from the constants below, never typed literally.

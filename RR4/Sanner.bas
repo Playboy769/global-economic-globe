@@ -29,7 +29,8 @@ Public Const GROUP_LIST_COL    As Long = 8          ' column H of the Groups she
 '    column M on  group database panel (RebuildGroupDb) - group name and
 '                 ticker count only; the TICKERS column was dropped in v4,
 '                 it was always clipped by the column width anyway
-'    row 40+      financial deep-dive (CompanyResearchSEC)
+'    row 40+      (empty since 2026-09-13 - the deep-dive moved to the Earnings
+'                 page, modEarnings; CompanyResearchSEC only forwards the ticker)
 '  Double-click a ticker in the scan table -> deep-dive; double-click a
 '  group in the panel -> scan. Status text goes to the Excel status bar.
 '  v4 also dropped the 1-year sparkline column (it sat in L and never drew
