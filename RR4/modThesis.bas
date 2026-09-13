@@ -248,7 +248,7 @@ Private Sub EnsurePanel(ws As Worksheet)
     With shp.TextFrame2
         .MarginLeft = 12: .MarginRight = 12: .MarginTop = 10: .MarginBottom = 10
         .WordWrap = msoTrue
-        .AutoSize = msoAutoSizeNone
+        .AutoSize = msoAutoSizeShapeToFitText      ' a long thesis grows the panel instead of being clipped
         .VerticalAnchor = msoAnchorTop
     End With
 End Sub
