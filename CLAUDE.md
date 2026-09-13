@@ -275,6 +275,14 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   轉給 `RunNavCommand`。頁面碼 P/R/T/H/V/VT/C/CC/RG/CR（**A Analysis 頁已於 v4.6 刪除、D DrawdownChart 與 `DrawDownShadow.bas` 於同日刪除**，
   幣別占比併進 Summary，`RR4_RLPNL` 實現損益折線圖放在甜甜圈下方、資料直接指向 HistoryLog A/D 欄），動作碼 UP/ADD/DEL/V!/C!/RG!/DBG/
   CLEARALL；跳頁不重算，只有 `!` 碼會重算。
+  - **每個報表頁都留空第 1 列與 A 欄（2026-09-13）**：`NavAdd` 在第一次掛 bar 時一起插入 1 個空白列＋
+    1 個空白欄（A 寬 3），bar 因此在**第 2–4 列、B 欄起，指令格 C2**；幾何寫在隱藏名稱 `RR4NAV`（`"top|left"`，
+    舊頁面的 `TRUE` ＝ 3 列 0 欄），`NavStrip` 照標記拆，所以舊版面的頁第一次重建會正確過渡。各頁繪製程序
+    仍從 A1 畫（strip 之後），**建好後還會讀格子的程式一律加 `NavLeft(ws)` 欄位位移**（公開函式，對應
+    列位移的 `NavOffset`）：RRG 三頁的排序／聚焦／雙擊（`RrgDoubleClick` 先把 `Target.Column - lc` 轉成
+    表格欄）、`DataCol` 加 `NavLeft`、VT／CC 工作表事件碼的 `Range("B2").Offset(NavOffset, NavLeft)`、
+    Thesis 面板的讀取。**RR4（P）頁例外**（`RR4_TOP`／寫死位址 T1/T2/B4/C5/E5/K4/L20/X1，未搬版）。
+    重開活頁簿後 `ws.Names.Item("RR4NAV")` 可能取不到，改用 `wb.Names` 篩 `'<sheet>'!RR4NAV`。
   - **資料頁（Realized/Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
     模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。
   - V/VT/C/CC 各自的繪製程序從第 1 列開始畫，所以進場先 `NavStrip(ws)`、收尾
