@@ -426,9 +426,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   留前者（實例：`02. 半導體 - IC設計 (IC Design)`→`IC設計`、`被動元件族群`→`被動元件`、`航空 Air transportation`
   →`航空`、`貨櫃航運 集裝箱`→`貨櫃航運`）；撞名自動加「 (2)」。因為 A 欄鍵＝標準化後名稱，快取 key 也跟著變，
   改規則後第一次 `TG!` 會全部重抓。`.bas` 要維持純 ASCII，所以「族群」二字用 `ChrW(&H65CF) & ChrW(&H7FA4)`、
-  全形括號用 regex `（`／`）` 表示。**TG 頁字型一律 `Noto Sans TC`**（`PageFont(ws)`：只有
-  `RRG TW Groups` 回 Noto Sans TC，其他頁 Consolas；表格、圖標題、軸、資料標籤、角落象限字都走它，字型名稱
-  用參數一路傳進 `PointLabel`／`CornerLabel`／`QuadLabel`——不要從 `Point.Parent.Parent` 反推圖表，型別會不符）。
+  全形括號用 regex `（`／`）` 表示。**TG 頁只有圖表文字用 `Noto Sans TC`**——兩張圖的標題、
+  座標軸刻度與軸標題、資料點標籤（`PageFont(ws)`：只有 `RRG TW Groups` 回 Noto Sans TC）；**表格儲存格與
+  四角象限／訊號說明字維持 Consolas**（使用者指定，2026-09-13）。字型名稱用參數一路傳進 `PointLabel`／
+  `CornerLabel`／`QuadLabel`——不要從 `Point.Parent.Parent` 反推圖表，型別會不符。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
