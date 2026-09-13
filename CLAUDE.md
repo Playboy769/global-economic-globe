@@ -429,7 +429,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   全形括號用 regex `（`／`）` 表示。**TG 頁只有圖表文字用 `Noto Sans TC`**——兩張圖的標題、
   座標軸刻度與軸標題、資料點標籤（`PageFont(ws)`：只有 `RRG TW Groups` 回 Noto Sans TC）；**表格儲存格與
   四角象限／訊號說明字維持 Consolas**（使用者指定，2026-09-13）。字型名稱用參數一路傳進 `PointLabel`／
-  `CornerLabel`／`QuadLabel`——不要從 `Point.Parent.Parent` 反推圖表，型別會不符。
+  `CornerLabel`／`QuadLabel`——不要從 `Point.Parent.Parent` 反推圖表，型別會不符。⚠️ **`TextRange.Font.Name`
+  只管拉丁字，中文字走 `Font.NameFarEast`**：第一版只設 `.Name`，COM 讀回來是 Noto Sans TC、畫面上中文卻還是
+  舊字型；資料標籤、圖標題、軸標題三處都要 `.Name` 與 `.NameFarEast` 一起設。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
