@@ -55,6 +55,9 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 ' belongs to the page is written as RR4_TOP + <its v4 row>, and the cell
 ' constants below are the moved addresses. Other modules must read the
 ' page through these constants / RR4FxRate(), never by literal address.
+' v4.16 (2026-09-13): USD/TWD and ARRANGE <GO> labels sit ABOVE their input
+' cells (row RR4_TOP+1, orange) instead of left of them; the inputs did not
+' move (RR4_FX_CELL C6 / RR4_ARR_CELL E6), so no reader changed.
 ' v4.13 (2026-09-13): row 1 is now a blank spacer above the bar (like column
 ' A), so the bar sits in rows 2-4 and RR4_TOP went 3 -> 4; every absolute
 ' row constant below moved down by one and the config cells T1/T2 -> T2/T3.
@@ -847,10 +850,9 @@ End Sub
 '  weight-bar label. Page row 1 is blank (v4.15 dropped the big total).
 ' ================================================================
 Private Sub DrawHeader(ws As Worksheet, exRate As Double, arrCode As String)
-    ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Value = "USD/TWD"
-    ws.cells(RR4_TOP + 2, RR4_LEFT + 1).Font.Color = RGB(150, 150, 150)
-    ws.cells(RR4_TOP + 2, RR4_LEFT + 1).HorizontalAlignment = xlCenter
-    With ws.cells(RR4_TOP + 2, RR4_LEFT + 2)
+    ' v4.16 (2026-09-13): label ABOVE its input (page row 1), input cells stay C6 / E6
+    Call StackedLabel(ws.Range(RR4_FX_CELL).Offset(-1, 0), "USD/TWD")
+    With ws.Range(RR4_FX_CELL)
         .Value = exRate
         .NumberFormat = "0.00"
         .Interior.Color = RR4_INPUT_BG
@@ -865,12 +867,7 @@ Private Sub DrawHeader(ws As Worksheet, exRate As Double, arrCode As String)
         On Error GoTo 0
     End With
 
-    With ws.cells(RR4_TOP + 2, RR4_LEFT + 3)
-        .Value = "ARRANGE"
-        .Font.Color = RR4_ACCENT
-        .Font.Bold = True
-        .HorizontalAlignment = xlCenter
-    End With
+    Call StackedLabel(ws.Range(RR4_ARR_CELL).Offset(-1, 0), "ARRANGE <GO>")
     With ws.Range(RR4_ARR_CELL)
         .NumberFormat = "@"
         .Value = arrCode
@@ -891,6 +888,20 @@ Private Sub DrawHeader(ws As Worksheet, exRate As Double, arrCode As String)
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Color = RR4_ACCENT
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).Font.Bold = True
     ws.cells(RR4_TOP + 4, RR4_LEFT + 1).HorizontalAlignment = xlRight
+End Sub
+
+' Orange bold label sitting on the row above its input cell, left-aligned with it
+' and allowed to overflow to the right (ShrinkToFit off).
+Private Sub StackedLabel(cell As Range, ByVal txt As String)
+    With cell
+        .Value = txt
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 9
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+    End With
 End Sub
 
 ' ================================================================
