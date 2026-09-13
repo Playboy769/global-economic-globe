@@ -421,6 +421,12 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   最多 177/800 筆），不能用。代號可以是純數字或帶 `.TW/.TWO`：後綴依股數表歸屬決定，都查不到就 `.TW` 失敗
   再試 `.TWO`（`YahooSymbol` 對 `.TW/.TWO` 不做 `.`→`-` 轉換）。A 欄＝族群名（series／聚焦鍵，中文可）、
   B 欄前 4 個代號＋「+N」、C 欄 STOCKS。快取共用 `IndustryPx`（以族群名為 key）。一趟 `TG!` 約 2 分鐘。
+  **族群名只在 TG 頁做顯示層標準化**（`NormalizeGroupName`，VBScript.RegExp；tblGroups 本身不動）：去「NN. 」
+  編號、去括號、「中文大類 - 子類」只留子類、去「族群」尾綴、「中文＋英文翻譯」只留中文、「中文＋中文同義詞」
+  留前者（實例：`02. 半導體 - IC設計 (IC Design)`→`IC設計`、`被動元件族群`→`被動元件`、`航空 Air transportation`
+  →`航空`、`貨櫃航運 集裝箱`→`貨櫃航運`）；撞名自動加「 (2)」。因為 A 欄鍵＝標準化後名稱，快取 key 也跟著變，
+  改規則後第一次 `TG!` 會全部重抓。`.bas` 要維持純 ASCII，所以「族群」二字用 `ChrW(&H65CF) & ChrW(&H7FA4)`、
+  全形括號用 regex `（`／`）` 表示。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
