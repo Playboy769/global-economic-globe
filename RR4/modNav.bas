@@ -48,7 +48,8 @@ Private m_lastIsErr As Boolean
 ' The bar starts in column A on every page except RR4, whose own layout keeps
 ' column A as a blank spacer (RR4_LEFT), so there it starts in B.
 Private Function NavLeft(ByVal ws As Worksheet) As Long
-    If NavPageCode(ws) = "P" Then NavLeft = RR4_LEFT
+    ' RR4 and Thesis Library keep column A blank, so their bar starts in B too
+    If NavPageCode(ws) = "P" Or NavPageCode(ws) = "TH" Then NavLeft = RR4_LEFT
 End Function
 
 ' Address of the page's command cell - B1, or C1 on RR4.
@@ -71,6 +72,7 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "RG": NavSheetName = "RRG"
         Case "RI": NavSheetName = "RRG Industry"
         Case "TG": NavSheetName = "RRG TW Groups"
+        Case "TH": NavSheetName = "Thesis Library"
         Case "CR": NavSheetName = "Company research"
     End Select
 End Function
@@ -79,7 +81,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "V", "VT", "C", "CC", "RG", "RI", "TG")
+    For Each c In Array("P", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -217,13 +219,13 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     Dim pages As Variant
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
                   "V", "VOL", "VT", "TKRVOL", _
-                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "CR", "RESEARCH")
+                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "TH", "THESIS", "CR", "RESEARCH")
     Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
     acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
-                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
+                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "TH!", "THESIS", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
     Call WriteCodeLine(ws.cells(3, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
@@ -322,7 +324,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "CR"
+        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH", "CR"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -342,6 +344,8 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
             Call BuildRRGIndustry
         Case "TG!"
             Call BuildRRGTwGroups
+        Case "TH!"
+            Call BuildThesisLibrary
         Case "IMAP"
             Call ImportIndustryMap
         Case "DBG"
@@ -364,7 +368,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI" Or code = "TG", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI" Or code = "TG" Or code = "TH", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible
