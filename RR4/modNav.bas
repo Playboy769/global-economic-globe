@@ -47,15 +47,57 @@ Private m_lastIsErr As Boolean
 
 ' The bar starts in column A on every page except RR4, whose own layout keeps
 ' column A as a blank spacer (RR4_LEFT), so there it starts in B.
-Private Function NavLeft(ByVal ws As Worksheet) As Long
-    ' RR4 and Thesis Library keep column A blank, so their bar starts in B too
-    If NavPageCode(ws) = "P" Or NavPageCode(ws) = "TH" Then NavLeft = RR4_LEFT
+' ----------------------------------------------------------------
+' Breathing room (2026-09-13): every report page keeps row 1 and column A
+' blank - the bar sits in rows 2-4 from column B, the page's own content
+' one column right of where its routine drew it.  RR4 (P) has its own
+' layout (RR4_LEFT already blanks column A; its rows are counted by
+' RR4_TOP) and is left alone here.
+'
+' NavAdd inserts the blank row + column together with the 3 bar rows and
+' records the geometry in the RR4NAV mark ("top|left"); NavStrip removes
+' exactly what the mark says, so a page built under the old layout (mark
+' "TRUE" = 3 rows, no column) is stripped correctly the first time.
+' Post-build readers (sort / focus / input cells) must add NavLeft to
+' their column numbers, the same way they add NavOffset to their rows.
+' ----------------------------------------------------------------
+Private Function NavWantTop(ByVal ws As Worksheet) As Long
+    If NavPageCode(ws) <> "P" And NavPageCode(ws) <> "" Then NavWantTop = 1
 End Function
 
-' Blank rows ABOVE the bar: the Thesis Library keeps row 1 empty (the bar
-' sits in rows 2-4 there), every other page starts the bar in row 1.
+Private Function NavWantLeft(ByVal ws As Worksheet) As Long
+    If NavPageCode(ws) = "P" Then NavWantLeft = RR4_LEFT Else NavWantLeft = 1
+End Function
+
+' Geometry currently ON the sheet, from the mark (0/0 when no bar rows).
+Private Sub NavGeom(ByVal ws As Worksheet, ByRef top As Long, ByRef left As Long)
+    top = 0: left = 0
+    If NavPageCode(ws) = "P" Then left = RR4_LEFT: Exit Sub
+    Dim nm As Name
+    For Each nm In ws.Names
+        If Right(nm.Name, Len(NAV_MARK) + 1) = "!" & NAV_MARK Then
+            Dim v As String: v = Replace(Replace(nm.RefersTo, "=", ""), """", "")
+            If InStr(v, "|") > 0 Then
+                top = CLng(Val(Split(v, "|")(0))): left = CLng(Val(Split(v, "|")(1)))
+            End If                                   ' "TRUE" = the pre-2026-09-13 layout: 0 / 0
+            Exit Sub
+        End If
+    Next nm
+End Sub
+
+' Columns the page content sits right of (blank column A) - PUBLIC so the
+' page modules can offset their post-build cell reads.
+Public Function NavLeft(ByVal ws As Worksheet) As Long
+    Dim t As Long, l As Long
+    Call NavGeom(ws, t, l)
+    NavLeft = l
+End Function
+
+' Blank rows above the bar on this sheet right now.
 Private Function NavTop(ByVal ws As Worksheet) As Long
-    If NavPageCode(ws) = "TH" Then NavTop = 1
+    Dim t As Long, l As Long
+    Call NavGeom(ws, t, l)
+    NavTop = t
 End Function
 
 ' Rows the bar block takes in total (blank rows above + the 3 bar rows).
@@ -128,7 +170,10 @@ Public Sub NavStrip(ByVal ws As Worksheet)
     Application.EnableEvents = False
     On Error GoTo Fin
     Call ShapesMoveOnly(ws)         ' see ShapesMoveOnly: charts anchored in rows 1-3
-    ws.Rows("1:" & NavBlock(ws)).Delete
+    Dim gt As Long, gl As Long
+    Call NavGeom(ws, gt, gl)
+    ws.Rows("1:" & (NAV_ROWS + gt)).Delete
+    If gl > 0 Then ws.Range(ws.Columns(1), ws.Columns(gl)).Delete
     Dim k As Long
     For k = ws.Names.count To 1 Step -1
         If Right(ws.Names(k).Name, Len(NAV_MARK) + 1) = "!" & NAV_MARK Then ws.Names(k).Delete
@@ -159,14 +204,22 @@ Public Sub NavAdd(ByVal ws As Worksheet, Optional ByVal code As String = "")
     On Error GoTo Fin
     If code <> "P" And Not NavHasRows(ws) Then
         Call ShapesMoveOnly(ws)
-        ws.Rows("1:" & NavBlock(ws)).Insert Shift:=xlDown
-        ws.Names.Add Name:=NAV_MARK, RefersTo:="=TRUE", Visible:=False
+        Dim wt As Long, wl As Long
+        wt = NavWantTop(ws): wl = NavWantLeft(ws)
+        ws.Rows("1:" & (NAV_ROWS + wt)).Insert Shift:=xlDown
+        If wl > 0 Then
+            ws.Range(ws.Columns(1), ws.Columns(wl)).Insert Shift:=xlToRight
+            Dim ci As Long
+            For ci = 1 To wl: ws.Columns(ci).ColumnWidth = 3: Next ci
+        End If
+        ws.Names.Add Name:=NAV_MARK, RefersTo:="=""" & wt & "|" & wl & """", Visible:=False
     End If
     Call DrawNavRows(ws, code)
-    ' VT / CC keep a typed input in B2 (B5 with the bar): paint it like every
+    ' VT / CC keep a typed input in B2 (page address; with the bar it moves
+    ' down by the block and right by the blank column): paint it like every
     ' other input cell (RR4_INPUT_BG dark grey, white text)
     If code = "VT" Or code = "CC" Then
-        With ws.Range("B2").Offset(NAV_ROWS, 0)
+        With ws.Range("B2").Offset(NavBlock(ws), NavLeft(ws))
             .Interior.Color = RR4_INPUT_BG
             .Font.Color = RR4_INPUT_FG
             .Font.Bold = True
@@ -206,7 +259,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     End With
     ' rows 2/3 are taller than the text needs and vertically centred, so the
     ' three lines sit apart without extra rows (v4.3 - was 16 / 18)
-    If top > 0 Then ws.Rows(top).RowHeight = 14
+    If top > 0 Then ws.Rows(top).RowHeight = 14      ' the blank row above the bar
     ws.Rows(1 + top).RowHeight = 24
     ws.Rows(2 + top).RowHeight = 22
     ws.Rows(3 + top).RowHeight = 22

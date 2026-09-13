@@ -884,14 +884,15 @@ End Sub
 ' Table colours for every ETF row.  focusTk = "" -> normal look; otherwise
 ' that row gets the orange background and every other row goes dim.
 Private Sub PaintTableRows(ws As Worksheet, ByVal focusTk As String)
+    Dim lc As Long: lc = NavLeft(ws)             ' blank column A (nav bar) shifts every table column
     Dim off As Long: off = NavOffset(ws)
     Dim r As Long, i As Long
     i = 0
     r = TBL_FIRST + off
-    Do While ws.cells(r, 1).Value <> ""
-        Dim rng As Range: Set rng = ws.Range(ws.cells(r, 1), ws.cells(r, TBL_NCOL))
-        Dim tk As String: tk = CStr(ws.cells(r, 1).Value)
-        Dim q As String: q = CStr(ws.cells(r, 6).Value)
+    Do While ws.cells(r, 1 + lc).Value <> ""
+        Dim rng As Range: Set rng = ws.Range(ws.cells(r, 1 + lc), ws.cells(r, TBL_NCOL + lc))
+        Dim tk As String: tk = CStr(ws.cells(r, 1 + lc).Value)
+        Dim q As String: q = CStr(ws.cells(r, 6 + lc).Value)
         rng.Font.Bold = False
         If focusTk <> "" And InSet(focusTk, tk) Then
             rng.Interior.Color = RR4_ACCENT
@@ -903,24 +904,24 @@ Private Sub PaintTableRows(ws As Worksheet, ByVal focusTk As String)
         Else
             rng.Interior.Color = IIf(i Mod 2 = 0, RGB(8, 8, 8), RGB(14, 14, 14))
             rng.Font.Color = RGB(221, 221, 221)
-            ws.cells(r, 1).Font.Color = RR4_ACCENT: ws.cells(r, 1).Font.Bold = True
-            ws.cells(r, 3).Font.Color = RGB(150, 150, 150)
+            ws.cells(r, 1 + lc).Font.Color = RR4_ACCENT: ws.cells(r, 1 + lc).Font.Bold = True
+            ws.cells(r, 3 + lc).Font.Color = RGB(150, 150, 150)
             If q = "NO DATA" Then
-                ws.cells(r, 6).Font.Color = RGB(120, 120, 120)
+                ws.cells(r, 6 + lc).Font.Color = RGB(120, 120, 120)
             Else
-                ws.cells(r, 6).Font.Color = QuadColor(q): ws.cells(r, 6).Font.Bold = True
+                ws.cells(r, 6 + lc).Font.Color = QuadColor(q): ws.cells(r, 6 + lc).Font.Bold = True
             End If
-            If ws.cells(r, 7).Value <> "" Then
-                ws.cells(r, 7).Font.Color = IIf(ws.cells(r, 7).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
-                ws.cells(r, 8).Font.Color = IIf(ws.cells(r, 8).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+            If ws.cells(r, 7 + lc).Value <> "" Then
+                ws.cells(r, 7 + lc).Font.Color = IIf(ws.cells(r, 7 + lc).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+                ws.cells(r, 8 + lc).Font.Color = IIf(ws.cells(r, 8 + lc).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
             End If
-            ws.cells(r, 10).Font.Color = RGB(120, 120, 120)
-            If ws.cells(r, 11).Value <> "" Then
-                ws.cells(r, 11).Font.Color = IIf(ws.cells(r, 11).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
-                ws.cells(r, 12).Font.Color = IIf(ws.cells(r, 12).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
-                ws.cells(r, 13).Font.Color = IIf(ws.cells(r, 13).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+            ws.cells(r, 10 + lc).Font.Color = RGB(120, 120, 120)
+            If ws.cells(r, 11 + lc).Value <> "" Then
+                ws.cells(r, 11 + lc).Font.Color = IIf(ws.cells(r, 11 + lc).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+                ws.cells(r, 12 + lc).Font.Color = IIf(ws.cells(r, 12 + lc).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
+                ws.cells(r, 13 + lc).Font.Color = IIf(ws.cells(r, 13 + lc).Value >= 0, RGB(220, 80, 80), RGB(80, 200, 120))
             End If
-            ws.cells(r, 14).Font.Color = SigColor(CStr(ws.cells(r, 14).Value)): ws.cells(r, 14).Font.Bold = True
+            ws.cells(r, 14 + lc).Font.Color = SigColor(CStr(ws.cells(r, 14 + lc).Value)): ws.cells(r, 14 + lc).Font.Bold = True
         End If
         i = i + 1: r = r + 1
     Loop
@@ -931,6 +932,7 @@ End Sub
 ' separated set) stay lit - one ticker also gets its dates, several only
 ' their names.
 Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
+    Dim lc As Long: lc = NavLeft(ws)             ' blank column A (nav bar) shifts every table column
     tk = NormSet(tk)
     Dim litMode As Long: litMode = IIf(SetCount(tk) = 1, 2, 3)
     Dim co As ChartObject
@@ -943,8 +945,8 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
     Dim off As Long: off = NavOffset(ws)
     Dim quadOf As Object: Set quadOf = CreateObject("Scripting.Dictionary")
     Dim r As Long: r = TBL_FIRST + off
-    Do While ws.cells(r, 1).Value <> ""
-        quadOf(CStr(ws.cells(r, 1).Value)) = CStr(ws.cells(r, 6).Value)
+    Do While ws.cells(r, 1 + lc).Value <> ""
+        quadOf(CStr(ws.cells(r, 1 + lc).Value)) = CStr(ws.cells(r, 6 + lc).Value)
         r = r + 1
     Loop
     Dim s As Series
@@ -961,9 +963,9 @@ Public Sub RrgFocus(ws As Worksheet, ByVal tk As String)
         Dim sigOf As Object: Set sigOf = CreateObject("Scripting.Dictionary")
         Dim obvOf As Object: Set obvOf = CreateObject("Scripting.Dictionary")
         r = TBL_FIRST + off
-        Do While ws.cells(r, 1).Value <> ""
-            sigOf(CStr(ws.cells(r, 1).Value)) = CStr(ws.cells(r, 14).Value)
-            obvOf(CStr(ws.cells(r, 1).Value)) = Val(ws.cells(r, 13).Value)
+        Do While ws.cells(r, 1 + lc).Value <> ""
+            sigOf(CStr(ws.cells(r, 1 + lc).Value)) = CStr(ws.cells(r, 14 + lc).Value)
+            obvOf(CStr(ws.cells(r, 1 + lc).Value)) = Val(ws.cells(r, 13 + lc).Value)
             r = r + 1
         Loop
         For Each s In cf.Chart.SeriesCollection
@@ -992,16 +994,18 @@ End Sub
 ' Sheet double-click handler (called from SheetRRG_Code.txt).
 Public Sub RrgDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
     Dim off As Long: off = NavOffset(ws)
-    If Target.Row = 1 + off And Target.Column = 1 Then          ' page title: reset everything
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim tcol As Long: tcol = Target.Column - lc                 ' table column (1 = ticker)
+    If Target.Row = 1 + off And tcol = 1 Then                   ' page title: reset everything
         Cancel = True
         Call RrgFocus(ws, "")
         Call RrgSort(ws, 0)
-    ElseIf Target.Row = TBL_HDR + off And Target.Column >= 1 And Target.Column <= TBL_NCOL Then
+    ElseIf Target.Row = TBL_HDR + off And tcol >= 1 And tcol <= TBL_NCOL Then
         Cancel = True
-        Call RrgSort(ws, Target.Column)
-    ElseIf Target.Column = 1 And Target.Row > TBL_HDR + off Then
+        Call RrgSort(ws, tcol)
+    ElseIf tcol = 1 And Target.Row > TBL_HDR + off Then
         Dim tk As String: tk = Trim(CStr(Target.Value))
-        If tk = "" Or ws.cells(Target.Row, 6).Value = "" Then Exit Sub        ' below the table
+        If tk = "" Or ws.cells(Target.Row, 6 + lc).Value = "" Then Exit Sub    ' below the table
         Cancel = True
         Call RrgFocus(ws, ToggleSet(GetFocusMark(ws), tk))
     End If
@@ -1233,12 +1237,13 @@ End Sub
 ' industry name (table column B) on the industry page - column A there is
 ' the plate code, which is the series / focus key but says nothing.
 Private Function DisplayName(ws As Worksheet, ByVal key As String) As String
+    Dim lc As Long: lc = NavLeft(ws)             ' blank column A (nav bar) shifts every table column
     DisplayName = key
     If ws.Name <> IND_SHEET Then Exit Function
     Dim r As Long: r = TBL_FIRST + NavOffset(ws)
-    Do While ws.cells(r, 1).Value <> ""
-        If StrComp(CStr(ws.cells(r, 1).Value), key, vbTextCompare) = 0 Then
-            If ws.cells(r, 2).Value <> "" Then DisplayName = CStr(ws.cells(r, 2).Value)
+    Do While ws.cells(r, 1 + lc).Value <> ""
+        If StrComp(CStr(ws.cells(r, 1 + lc).Value), key, vbTextCompare) = 0 Then
+            If ws.cells(r, 2 + lc).Value <> "" Then DisplayName = CStr(ws.cells(r, 2 + lc).Value)
             Exit Function
         End If
         r = r + 1
@@ -1270,10 +1275,11 @@ End Sub
 ' the tail data block is per-ticker columns so it is untouched, and the
 ' RRG_FLOW series (which point at table cells) are re-bound by ticker.
 Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
+    Dim lc As Long: lc = NavLeft(ws)             ' blank column A (nav bar) shifts every table column
     Dim off As Long: off = NavOffset(ws)
     Dim r0 As Long: r0 = TBL_FIRST + off
     Dim n As Long: n = 0
-    Do While ws.cells(r0 + n, 1).Value <> ""
+    Do While ws.cells(r0 + n, 1 + lc).Value <> ""
         n = n + 1
     Loop
     If n < 2 Then Exit Sub
@@ -1294,13 +1300,13 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
     End If
 
     ' --- read everything that moves ---
-    Dim tbl As Variant: tbl = ws.Range(ws.cells(r0, 1), ws.cells(r0 + n - 1, TBL_NCOL)).Value
+    Dim tbl As Variant: tbl = ws.Range(ws.cells(r0, 1 + lc), ws.cells(r0 + n - 1, TBL_NCOL + lc)).Value
     Dim trl As Variant: trl = ws.Range(ws.cells(r0, trCol), ws.cells(r0 + n - 1, trCol + tw - 1)).Value
     Dim seq As Variant: seq = ws.Range(ws.cells(r0, SeqCol(ws)), ws.cells(r0 + n - 1, SeqCol(ws))).Value
     Dim notes() As String: ReDim notes(1 To n)
     Dim i As Long, j As Long
     For i = 1 To n
-        If Not ws.cells(r0 + i - 1, TBL_NCOL).Comment Is Nothing Then notes(i) = ws.cells(r0 + i - 1, TBL_NCOL).Comment.Text
+        If Not ws.cells(r0 + i - 1, TBL_NCOL + lc).Comment Is Nothing Then notes(i) = ws.cells(r0 + i - 1, TBL_NCOL + lc).Comment.Text
     Next i
 
     ' --- order (insertion sort on n ~ 26 rows; blanks always last) ---
@@ -1334,19 +1340,19 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
         For c = 1 To 8: lv(i, c) = tbl2(i, c): Next c
         For c = 10 To TBL_NCOL: rv(i, c - 9) = tbl2(i, c): Next c
     Next i
-    ws.Range(ws.cells(r0, 1), ws.cells(r0 + n - 1, 8)).Value = lv
-    ws.Range(ws.cells(r0, 10), ws.cells(r0 + n - 1, TBL_NCOL)).Value = rv
+    ws.Range(ws.cells(r0, 1 + lc), ws.cells(r0 + n - 1, 8 + lc)).Value = lv
+    ws.Range(ws.cells(r0, 10 + lc), ws.cells(r0 + n - 1, TBL_NCOL + lc)).Value = rv
     ws.Range(ws.cells(r0, trCol), ws.cells(r0 + n - 1, trCol + tw - 1)).Value = trl2
     ws.Range(ws.cells(r0, SeqCol(ws)), ws.cells(r0 + n - 1, SeqCol(ws))).Value = seq2
     ' number formats were set per cell at build time (rows without data had none)
-    ws.Range(ws.cells(r0, 4), ws.cells(r0 + n - 1, 5)).NumberFormat = "0.00"
-    ws.Range(ws.cells(r0, 7), ws.cells(r0 + n - 1, 8)).NumberFormat = "+0.00;-0.00;0.00"
-    ws.Range(ws.cells(r0, 11), ws.cells(r0 + n - 1, 11)).NumberFormat = "+0.0%;-0.0%;0.0%"
-    ws.Range(ws.cells(r0, 12), ws.cells(r0 + n - 1, 12)).NumberFormat = "+0.000;-0.000;0.000"
-    ws.Range(ws.cells(r0, 13), ws.cells(r0 + n - 1, 13)).NumberFormat = "+0.0;-0.0;0.0"
-    ws.Range(ws.cells(r0, TBL_NCOL), ws.cells(r0 + n - 1, TBL_NCOL)).ClearComments
+    ws.Range(ws.cells(r0, 4 + lc), ws.cells(r0 + n - 1, 5 + lc)).NumberFormat = "0.00"
+    ws.Range(ws.cells(r0, 7 + lc), ws.cells(r0 + n - 1, 8 + lc)).NumberFormat = "+0.00;-0.00;0.00"
+    ws.Range(ws.cells(r0, 11 + lc), ws.cells(r0 + n - 1, 11 + lc)).NumberFormat = "+0.0%;-0.0%;0.0%"
+    ws.Range(ws.cells(r0, 12 + lc), ws.cells(r0 + n - 1, 12 + lc)).NumberFormat = "+0.000;-0.000;0.000"
+    ws.Range(ws.cells(r0, 13 + lc), ws.cells(r0 + n - 1, 13 + lc)).NumberFormat = "+0.0;-0.0;0.0"
+    ws.Range(ws.cells(r0, TBL_NCOL + lc), ws.cells(r0 + n - 1, TBL_NCOL + lc)).ClearComments
     For i = 1 To n
-        If notes(idx(i)) <> "" Then ws.cells(r0 + i - 1, TBL_NCOL).AddComment notes(idx(i))
+        If notes(idx(i)) <> "" Then ws.cells(r0 + i - 1, TBL_NCOL + lc).AddComment notes(idx(i))
     Next i
 
     ' --- RRG_FLOW series point at table cells: re-bind by ticker ---
@@ -1361,8 +1367,8 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
         For Each s In cf.Chart.SeriesCollection
             If Left(s.Name, 1) <> "_" Then
                 If rowOf.Exists(s.Name) Then
-                    s.XValues = ws.Range(ws.cells(rowOf(s.Name), 11), ws.cells(rowOf(s.Name), 11))
-                    s.Values = ws.Range(ws.cells(rowOf(s.Name), 12), ws.cells(rowOf(s.Name), 12))
+                    s.XValues = ws.Range(ws.cells(rowOf(s.Name), 11 + lc), ws.cells(rowOf(s.Name), 11 + lc))
+                    s.Values = ws.Range(ws.cells(rowOf(s.Name), 12 + lc), ws.cells(rowOf(s.Name), 12 + lc))
                 End If
             End If
         Next s
@@ -1370,15 +1376,15 @@ Public Sub RrgSort(ws As Worksheet, ByVal col As Long)
 
     ' --- header marker + colours ---
     Dim hr As Long: hr = TBL_HDR + off
-    ws.Range(ws.cells(hr, 1), ws.cells(hr, TBL_NCOL)).Font.Underline = xlUnderlineStyleNone
-    If col > 0 Then ws.cells(hr, col).Font.Underline = xlUnderlineStyleSingle
+    ws.Range(ws.cells(hr, 1 + lc), ws.cells(hr, TBL_NCOL + lc)).Font.Underline = xlUnderlineStyleNone
+    If col > 0 Then ws.cells(hr, col + lc).Font.Underline = xlUnderlineStyleSingle
     Call SetMark(ws, SORT_MARK, IIf(col = 0, "", col & "|" & dir))
     Call PaintTableRows(ws, GetMark(ws, FOCUS_MARK))
     Application.ScreenUpdating = True
     If col = 0 Then
         Call NavNotify("RRG: build order restored")
     Else
-        Call NavNotify("RRG: sorted by " & ws.cells(hr, col).Value & IIf(dir > 0, " ascending", " descending") & "  -  double-click the header again to flip, the title to restore")
+        Call NavNotify("RRG: sorted by " & ws.cells(hr, col + lc).Value & IIf(dir > 0, " ascending", " descending") & "  -  double-click the header again to flip, the title to restore")
     End If
 End Sub
 
@@ -1952,6 +1958,7 @@ End Function
 Private Function DataCol(ws As Worksheet) As Long
     DataCol = CLng(Val(GetMark(ws, DATA_COL_MARK)))
     If DataCol < DATA_COL_MIN Then DataCol = DATA_COL_MIN
+    DataCol = DataCol + NavLeft(ws)                  ' the mark is the build-time column; NavAdd inserts column A after
 End Function
 
 Private Function DateCol(ws As Worksheet) As Long

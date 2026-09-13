@@ -10,7 +10,7 @@
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
-    Dim inp As Range: Set inp = Me.Range("B2").Offset(NavOffset(Me), 0)
+    Dim inp As Range: Set inp = Me.Range("B2").Offset(NavOffset(Me), NavLeft(Me))
     If Intersect(Target, inp) Is Nothing Then Exit Sub
     If Trim(CStr(inp.Value)) = "" Then Exit Sub
 

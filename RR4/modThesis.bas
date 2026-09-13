@@ -29,9 +29,9 @@ Option Explicit
 Public Const THESIS_SHEET As String = "Thesis Library"
 Public Const THESIS_TABLE As String = "tblThesis"
 Private Const TH_HDR As Long = 5                 ' page row of the header (bar adds 3); page row 1 is left blank
-Private Const TH_LEFT As Long = 1                ' column A is left blank (breathing room, like the RR4 page)
+Private Const TH_LEFT As Long = 0                ' draw from column A; NavAdd inserts the blank column A afterwards (modNav)
 Private Const TH_NCOL As Long = 13
-Private Const PANEL_COL As Long = 16             ' P: the reading panel starts here (table B:N, O is the gap)
+Private Const PANEL_COL As Long = 15             ' O at draw time (table A:M, N the gap); P once NavAdd adds column A
 Private Const PANEL_W As Double = 620
 Private Const PANEL_H As Double = 760
 Private Const ZH_FONT As String = "Noto Sans TC"
@@ -98,7 +98,6 @@ Sub BuildThesisLibrary()
     ActiveWindow.DisplayGridlines = False
     ActiveWindow.FreezePanes = False
 
-    ws.Columns(1).ColumnWidth = 3
     With ws.cells(2, 1 + TH_LEFT)
         .Value = "THESIS LIBRARY"
         .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 14
@@ -264,6 +263,7 @@ End Sub
 ' Fill the panel from a table row (Nothing / a row outside the table ->
 ' the hint).  Called by the sheet's SelectionChange.
 Public Sub ShowThesis(ws As Worksheet, Target As Range)
+    Dim lc As Long: lc = NavLeft(ws)                 ' blank column A once the bar is on
     Dim shp As Shape
     On Error Resume Next
     Set shp = ws.Shapes("TH_PANEL")
@@ -284,7 +284,7 @@ Public Sub ShowThesis(ws As Worksheet, Target As Range)
     Dim tr As Object: Set tr = shp.TextFrame2.TextRange     ' TextRange2 late-bound: no Office type-library dependency
     ' VBA's Or does not short-circuit: cells(0, 3) would blow up, so test r first
     Dim blank As Boolean: blank = (r = 0)
-    If Not blank Then blank = (Trim(CStr(ws.cells(r, 3 + TH_LEFT).Value)) = "")
+    If Not blank Then blank = (Trim(CStr(ws.cells(r, 3 + lc).Value)) = "")
     If blank Then
         tr.Text = L("PANEL_EMPTY")
         tr.Font.Name = ZH_FONT: tr.Font.NameFarEast = ZH_FONT: tr.Font.Size = 10
@@ -295,20 +295,20 @@ Public Sub ShowThesis(ws As Worksheet, Target As Range)
     ' ---- compose: head line, meta line, six sections ----
     Dim secKeys As Variant: secKeys = Array("S1", "S2", "S3", "S4", "S5", "S6")
     Dim txt As String, starts(0 To 7) As Long, lens(0 To 7) As Long
-    Dim head As String: head = CStr(ws.cells(r, 3 + TH_LEFT).Value) & "   " & CStr(ws.cells(r, 4 + TH_LEFT).Value)
+    Dim head As String: head = CStr(ws.cells(r, 3 + lc).Value) & "   " & CStr(ws.cells(r, 4 + lc).Value)
     starts(0) = 1: lens(0) = Len(head)
     txt = head & vbCr
     Dim meta As String
-    meta = CStr(ws.cells(r, 2 + TH_LEFT).Value) & "  .  " & CStr(ws.cells(r, 5 + TH_LEFT).Value) & "  .  " & CStr(ws.cells(r, 13 + TH_LEFT).Value) & _
-           "  .  " & Format(ws.cells(r, 1 + TH_LEFT).Value, "yyyy/mm/dd") & _
-           IIf(ws.cells(r, 12 + TH_LEFT).Value <> "", "  .  " & L("NEXT") & " " & Format(ws.cells(r, 12 + TH_LEFT).Value, "yyyy/mm/dd"), "")
+    meta = CStr(ws.cells(r, 2 + lc).Value) & "  .  " & CStr(ws.cells(r, 5 + lc).Value) & "  .  " & CStr(ws.cells(r, 13 + lc).Value) & _
+           "  .  " & Format(ws.cells(r, 1 + lc).Value, "yyyy/mm/dd") & _
+           IIf(ws.cells(r, 12 + lc).Value <> "", "  .  " & L("NEXT") & " " & Format(ws.cells(r, 12 + lc).Value, "yyyy/mm/dd"), "")
     starts(1) = Len(txt) + 1: lens(1) = Len(meta)
     txt = txt & meta & vbCr & vbCr
     Dim k As Long
     For k = 0 To 5
         Dim h As String: h = (k + 1) & "  " & L(CStr(secKeys(k)))
         starts(k + 2) = Len(txt) + 1: lens(k + 2) = Len(h)
-        Dim body As String: body = Trim(CStr(ws.cells(r, 6 + k + TH_LEFT).Value))
+        Dim body As String: body = Trim(CStr(ws.cells(r, 6 + k + lc).Value))
         If body = "" Then body = "-"
         txt = txt & h & vbCr & body & vbCr & vbCr
     Next k
@@ -337,6 +337,7 @@ Public Sub ThesisSelectionChange(ws As Worksheet, ByVal Target As Range)
 End Sub
 
 Public Sub ThesisChange(ws As Worksheet, ByVal Target As Range)
+    Dim lc As Long: lc = NavLeft(ws)
     Dim lo As ListObject
     On Error Resume Next
     Set lo = ws.ListObjects(THESIS_TABLE)
@@ -350,8 +351,8 @@ Public Sub ThesisChange(ws As Worksheet, ByVal Target As Range)
     Dim c As Range
     For Each c In Intersect(Target, lo.ListColumns(3).DataBodyRange).cells
         If Trim(CStr(c.Value)) <> "" Then
-            If ws.cells(c.Row, 1 + TH_LEFT).Value = "" Then ws.cells(c.Row, 1 + TH_LEFT).Value = Date
-            If ws.cells(c.Row, 13 + TH_LEFT).Value = "" Then ws.cells(c.Row, 13 + TH_LEFT).Value = "ACTIVE"
+            If ws.cells(c.Row, 1 + lc).Value = "" Then ws.cells(c.Row, 1 + lc).Value = Date
+            If ws.cells(c.Row, 13 + lc).Value = "" Then ws.cells(c.Row, 13 + lc).Value = "ACTIVE"
         End If
     Next c
     Call FormatThesisRows(lo)
