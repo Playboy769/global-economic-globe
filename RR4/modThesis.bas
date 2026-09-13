@@ -2,7 +2,8 @@ Attribute VB_Name = "modThesis"
 Option Explicit
 
 ' ================================================================
-'  THESIS LIBRARY v2 - notes workbench (nav code TH, TH! = rebuild)
+'  LIBRARY v2 - thesis notes workbench (nav code L, L! = rebuild)
+'  (sheet + code renamed 2026-09-13 late: "Thesis Library" / TH -> "Library" / L)
 ' ----------------------------------------------------------------
 '  2026-09-13 (evening).  v1 kept one row per 500-word thesis; v2 keeps one
 '  row per THEME note and shows them grouped by ticker, latest call only;
@@ -38,7 +39,8 @@ Option Explicit
 '  Chinese labels are ChrW-built so this file stays ASCII (VBE import rule).
 ' ================================================================
 
-Public Const THESIS_SHEET As String = "Thesis Library"
+Public Const THESIS_SHEET As String = "Library"
+Public Const THESIS_SHEET_OLD As String = "Thesis Library"   ' v1 / early-v2 tab name, migrated by EnsureViewSheet
 Public Const NOTES_SHEET As String = "ThesisNotes"
 Public Const NOTES_TABLE As String = "tblNotes"
 Public Const ARCHIVE_SHEET As String = "ThesisArchive"
@@ -130,7 +132,7 @@ Sub BuildThesisLibrary()
     Exit Sub
 Fail:
     Application.EnableEvents = prevEv
-    Call NavNotify("Thesis Library failed: " & Err.Description, True)
+    Call NavNotify("Library failed: " & Err.Description, True)
 End Sub
 
 ' v1 kept tblThesis on the "Thesis Library" sheet itself.  Rename that sheet to
@@ -138,7 +140,7 @@ End Sub
 Private Sub MigrateV1ToArchive()
     Dim ws As Worksheet
     On Error Resume Next
-    Set ws = ThisWorkbook.Worksheets(THESIS_SHEET)
+    Set ws = ThisWorkbook.Worksheets(THESIS_SHEET_OLD)
     On Error GoTo 0
     If ws Is Nothing Then Exit Sub
     Dim lo As ListObject
@@ -168,6 +170,12 @@ Private Function EnsureViewSheet() As Worksheet
     On Error Resume Next
     Set ws = ThisWorkbook.Worksheets(THESIS_SHEET)
     On Error GoTo 0
+    If ws Is Nothing Then                              ' a v2 view still under the old tab name: just rename it
+        On Error Resume Next
+        Set ws = ThisWorkbook.Worksheets(THESIS_SHEET_OLD)
+        On Error GoTo 0
+        If Not ws Is Nothing Then ws.Name = THESIS_SHEET
+    End If
     If ws Is Nothing Then
         Dim prev As Object: Set prev = ActiveSheet
         Set ws = ThisWorkbook.Worksheets.Add(After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
@@ -399,7 +407,7 @@ Public Sub DrawThesisView(ws As Worksheet)
 
     ' ---- title + inputs (label above input) ----
     With ws.cells(PG_TITLE, 1)
-        .Value = "THESIS LIBRARY"
+        .Value = "LIBRARY"
         .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 12
     End With
     ws.Rows(PG_TITLE).RowHeight = 22
@@ -501,14 +509,14 @@ Public Sub DrawThesisView(ws As Worksheet)
     End If
 
     Call EnsurePanel(ws)
-    Call NavAdd(ws, "TH")
+    Call NavAdd(ws, "L")
     Application.ScreenUpdating = prevScr
     Application.EnableEvents = prevEv
     Exit Sub
 Fail:
     Dim msg As String: msg = Err.Description
     On Error Resume Next
-    Call NavAdd(ws, "TH")
+    Call NavAdd(ws, "L")
     Application.ScreenUpdating = prevScr
     Application.EnableEvents = prevEv
     Call NavNotify("Thesis Library draw failed: " & msg, True)

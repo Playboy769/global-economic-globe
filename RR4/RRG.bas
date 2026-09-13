@@ -291,9 +291,9 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     Dim isComp As Boolean: isComp = isInd Or isTwg           ' composite universes
     Dim sheetNm As String, navCode As String
     Select Case kind
-        Case "IND": sheetNm = IND_SHEET: navCode = "RI": gChartW = IND_CHART_W: gChartH = IND_CHART_H: gBench = BENCH
-        Case "TWG": sheetNm = TWG_SHEET: navCode = "TG": gChartW = TWG_CHART_W: gChartH = TWG_CHART_H: gBench = TW_BENCH
-        Case Else:  sheetNm = ETF_SHEET: navCode = "RG": gChartW = ETF_CHART_W: gChartH = ETF_CHART_H: gBench = BENCH
+        Case "IND": sheetNm = IND_SHEET: navCode = "RGI": gChartW = IND_CHART_W: gChartH = IND_CHART_H: gBench = BENCH
+        Case "TWG": sheetNm = TWG_SHEET: navCode = "RGT": gChartW = TWG_CHART_W: gChartH = TWG_CHART_H: gBench = TW_BENCH
+        Case Else:  sheetNm = ETF_SHEET: navCode = "RGE": gChartW = ETF_CHART_W: gChartH = ETF_CHART_H: gBench = BENCH
     End Select
     Dim ws As Worksheet
     On Error Resume Next
@@ -586,7 +586,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
             "Price     = cap-weighted index chain-linked from daily returns: idx[t] = idx[t-1] x (1 + sum w x r / sum w) over the", _
             "            stocks that have both days; a stock that listed mid-year joins when its data starts.  Weights = market cap.", _
             "High/Low  = same weights on high[t]/close[t-1] - 1 and low[t]/close[t-1] - 1;  Volume = sum(close x volume) in dollars", _
-            "Cache     = hidden IndustryPx sheet, one composite per industry keyed by as-of day; RI! reuses it the same day (Esc resumes)", _
+            "Cache     = hidden IndustryPx sheet, one composite per industry keyed by as-of day; RGI! reuses it the same day (Esc resumes)", _
             "STOCKS    = constituents with data / total in the plate")
         Dim tmpN As Variant: tmpN = notes
         ReDim Preserve tmpN(0 To UBound(notes) + UBound(indNotes) + 1)
@@ -603,7 +603,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
             "            shares: TWSE openapi t187ap03_L for listed, TPEx daily close table for OTC; a code in neither gets weight 0", _
             "High/Low  = same weights on high[t]/close[t-1] - 1 and low[t]/close[t-1] - 1;  Volume = sum(close x volume) in TWD", _
             "Benchmark = " & gBench & " (Yahoo);  tickers try .TW then .TWO like the scanner", _
-            "Cache     = hidden IndustryPx sheet keyed by group name + as-of day; TG! reuses it the same day", _
+            "Cache     = hidden IndustryPx sheet keyed by group name + as-of day; RGT! reuses it the same day", _
             "STOCKS    = members with data / total in the group")
         Dim tmpT As Variant: tmpT = notes
         ReDim Preserve tmpT(0 To UBound(notes) + UBound(twNotes) + 1)
@@ -1764,7 +1764,7 @@ Public Sub ImportIndustryMap(Optional ByVal csvPath As String = "")
     ' a new universe invalidates the composites
     Dim wc As Worksheet: Set wc = CacheSheet(False)
     If Not wc Is Nothing Then wc.cells.Clear: wc.cells(1, 1).Value = "code"
-    Call NavNotify("IMAP: " & n & " constituents imported into " & IND_MAP & " - run RI! to build the industry RRG")
+    Call NavNotify("IMAP: " & n & " constituents imported into " & IND_MAP & " - run RGI! to build the industry RRG")
 End Sub
 
 ' RFC-4180 style split: quoted fields may hold commas and doubled quotes.

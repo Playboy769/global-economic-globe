@@ -1,5 +1,5 @@
 ' ============================================================================
-'  Worksheet code-behind for the "Thesis Library" view sheet (RR4 workbook),
+'  Worksheet code-behind for the "Library" view sheet (nav L; was "Thesis Library") (RR4 workbook),
 '  Thesis Library v2 (2026-09-13).  modThesis.EnsureViewSheet writes this into
 '  the sheet module itself; this file is the record / manual fallback.
 '  The v1 code (ThesisDoubleClick / ThesisChange on tblThesis) is gone - that

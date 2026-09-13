@@ -2603,7 +2603,7 @@ Sub BuildHoldingsCorrelation()
 
     Dim tickerCount As Long: tickerCount = uniqTickers.count
     If tickerCount < 2 Then
-        Call NavNotify("C!: need at least 2 holdings", True)
+        Call NavNotify("HC!: need at least 2 holdings", True)
         Application.ScreenUpdating = True: Exit Sub
     End If
 
@@ -2696,7 +2696,7 @@ Sub BuildHoldingsCorrelation()
         Next dIdx
         diagMsg = diagMsg & vbCr & "Tip: re-import Attach module, save / close / reopen workbook, retry."
         Debug.Print diagMsg
-        Call NavNotify("C!: only " & usedCount & " common trading days - per-ticker counts in the Immediate window", True)
+        Call NavNotify("HC!: only " & usedCount & " common trading days - per-ticker counts in the Immediate window", True)
         Application.ScreenUpdating = True: Exit Sub
     End If
 
@@ -2734,7 +2734,7 @@ Sub BuildHoldingsCorrelation()
 
     Application.ScreenUpdating = True
     Application.StatusBar = "HoldingsCorr updated: " & Format(Now, "hh:mm:ss")
-    Call NavNotify("C! done " & Format(Now, "hh:mm:ss") & " - holdings correlation updated")
+    Call NavNotify("HC! done " & Format(Now, "hh:mm:ss") & " - holdings correlation updated")
 End Sub
 
 ' ------------------------------------------------------------
@@ -3003,7 +3003,7 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
         End With
     Next k
 
-    Call NavAdd(wsC, "C")
+    Call NavAdd(wsC, "HC")
     wsC.Activate
 End Sub
 

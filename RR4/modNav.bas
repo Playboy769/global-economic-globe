@@ -13,15 +13,22 @@ Option Explicit
 '  Type a code into that grey cell and press Enter; Workbook_SheetChange
 '  hands it to RunNavCommand, which clears the cell again.
 '
-'  Pages   P RR4 . R Realized . T Transactions . H HistoryLog
+'  Pages   P RR4 . RL Realized . T Transactions . H HistoryLog
 '          V Volatility180D . VT Tickers Volatility
 '          (D DrawdownChart removed 2026-09-12 with DrawDownShadow.bas)
-'          C HoldingsCorr . CC Correlation . CR Company research
+'          HC HoldingsCorr . SC Correlation . R Company research
+'          RGE / RGI / RGT the three RRG pages . L Library (thesis notes)
 '          E Earnings (2026-09-13, modEarnings; E! refetches its ticker)
-'  Actions UP update dashboard . ADD / DEL trade forms . V! D! C! recalc
-'          and show that page . DBG system debug . CLEARALL wipe all data
+'  Actions UP update dashboard . ADD / DEL trade forms . V! HC! RGE! RGI!
+'          RGT! L! E! recalc and show that page . IMAP industry map
+'          DBG system debug . CLEARALL wipe all data
 '          (ClearAllData keeps its own Yes/No confirmation)
 '  Jumping to a page never recalculates it - the "!" codes do that.
+'
+'  Code rename (2026-09-13 late): C->HC, CC->SC, RG->RGE, RI->RGI, TG->RGT,
+'  TH->L (sheet "Thesis Library" -> "Library"), CR->R and REALIZED R->RL to
+'  make room. The old codes are gone, not aliased; both code lines on the
+'  bar are listed in alphabetical order.
 '
 '  Which pages carry the bar:
 '    RR4 reserves rows 1-3 in its own layout (PortfolioDashboard_v3,
@@ -34,9 +41,9 @@ Option Explicit
 '    VT and CC keep a typed input in B2; their sheet code finds it with
 '    NavOffset (B5 while the bar is there). Those pages are not column-
 '    shifted - only RR4 has the blank column A.
-'    Company research (CR) gets no bar on purpose: Sanner.bas draws it
+'    Company research (R) gets no bar on purpose: Sanner.bas draws it
 '    from row 1 with its own input strip.
-'    Realized (R) got the bar on 2026-09-13: its readers / writer go
+'    Realized (RL) got the bar on 2026-09-13: its readers / writer go
 '    through Attach.RealHdrRow / RealCol / RealLastRow, and the hand-typed
 '    Caption column is re-attached by ticker + exit date on every UP
 '    (Attach.CalculateRealizedPnL), so the bar rows do not disturb it.
@@ -127,19 +134,19 @@ End Function
 Public Function NavSheetName(ByVal code As String) As String
     Select Case UCase(code)
         Case "P":  NavSheetName = "RR4"
-        Case "R":  NavSheetName = "Realized"
+        Case "RL": NavSheetName = "Realized"
         Case "T":  NavSheetName = "Transactions"
         Case "H":  NavSheetName = "HistoryLog"
         Case "V":  NavSheetName = "Volatility180D"
         Case "VT": NavSheetName = "Tickers Volatility"
-        Case "C":  NavSheetName = "HoldingsCorr"
-        Case "CC": NavSheetName = "Correlation"
-        Case "RG": NavSheetName = "RRG"
-        Case "RI": NavSheetName = "RRG Industry"
-        Case "TG": NavSheetName = "RRG TW Groups"
-        Case "TH": NavSheetName = "Thesis Library"
+        Case "HC": NavSheetName = "HoldingsCorr"
+        Case "SC": NavSheetName = "Correlation"
+        Case "RGE": NavSheetName = "RRG"
+        Case "RGI": NavSheetName = "RRG Industry"
+        Case "RGT": NavSheetName = "RRG TW Groups"
+        Case "L":  NavSheetName = "Library"
         Case "E":  NavSheetName = "Earnings"
-        Case "CR": NavSheetName = "Company research"
+        Case "R":  NavSheetName = "Company research"
     End Select
 End Function
 
@@ -147,7 +154,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH", "E")
+    For Each c In Array("P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -231,7 +238,7 @@ Public Sub NavAdd(ByVal ws As Worksheet, Optional ByVal code As String = "")
     ' VT / CC keep a typed input in B2 (page address; with the bar it moves
     ' down by the block and right by the blank column): paint it like every
     ' other input cell (RR4_INPUT_BG dark grey, white text)
-    If code = "VT" Or code = "CC" Then
+    If code = "VT" Or code = "SC" Then
         With ws.Range("B2").Offset(NavBlock(ws), NavLeft(ws))
             .Interior.Color = RR4_INPUT_BG
             .Font.Color = RR4_INPUT_FG
@@ -296,15 +303,16 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
 
     ' row 2: pages
     Dim pages As Variant
-    pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
-                  "V", "VOL", "VT", "TKRVOL", _
-                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "TH", "THESIS", "E", "EARNINGS", "CR", "RESEARCH")
+    pages = Array("E", "EARNINGS", "H", "HISTORY", "HC", "HOLDCORR", "L", "LIBRARY", _
+                  "P", "PORTFOLIO", "R", "RESEARCH", "RGE", "RRG ETF", "RGI", "RRG IND", "RGT", "RRG TW", _
+                  "RL", "REALIZED", "SC", "SECTORCORR", "T", "TRANSACTION", "V", "VOLITILITY", "VT", "TKRVOL")
     Call WriteCodeLine(ws.cells(2 + top, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
-    acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
-                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "TH!", "THESIS", "E!", "EARNINGS", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
+    acts = Array("ADD", "TRADE", "CLEARALL", "WIPE ALL DATA", "DBG", "DEBUG", "DEL", "DELETE", _
+                 "E!", "EARNINGS", "HC!", "HOLDCORR", "IMAP", "IND MAP", "L!", "LIBRARY", _
+                 "RGE!", "RRG ETF", "RGI!", "RRG IND", "RGT!", "RRG TW", "UP", "UPDATE", "V!", "RECALC VOL")
     Call WriteCodeLine(ws.cells(3 + top, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
@@ -374,7 +382,7 @@ End Sub
 
 ' ================================================================
 '  NavNotify replaces the old "done" / "nothing to do" MsgBoxes of the
-'  routines the nav commands run (UP, V!, D!, C!, DBG, CLEARALL, the VT
+'  routines the nav commands run (UP, V!, HC!, DBG, CLEARALL, the VT
 '  and CC inputs): the message goes to the Excel status bar and to the
 '  status line of the page in front - no dialog to click away. Real
 '  errors and the CLEARALL Yes/No confirmation still use MsgBox.
@@ -403,7 +411,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH", "E", "CR"
+        Case "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "R"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -415,15 +423,15 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
         Case "V!"
             Call UpdatePortfolioVolatility
             Call NavGoto("V", src)
-        Case "C!"
+        Case "HC!"
             Call BuildHoldingsCorrelation
-        Case "RG!"
+        Case "RGE!"
             Call BuildRRG
-        Case "RI!"
+        Case "RGI!"
             Call BuildRRGIndustry
-        Case "TG!"
+        Case "RGT!"
             Call BuildRRGTwGroups
-        Case "TH!"
+        Case "L!"
             Call BuildThesisLibrary
         Case "E!"
             Call RefreshEarnings
@@ -449,7 +457,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI" Or code = "TG" Or code = "TH" Or code = "E", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible

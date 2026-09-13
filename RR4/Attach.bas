@@ -681,7 +681,7 @@ Public Sub MigrateRealizedNav()
     ws.Names("_FilterDatabase").Delete
     On Error GoTo 0
     ws.Range(ws.Cells(2, REAL_LOAN_COL), ws.Cells(ws.Rows.Count, REAL_LOAN_COL + 1)).Clear
-    Call NavAdd(ws, "R")
+    Call NavAdd(ws, "RL")
 End Sub
 
 Sub CalculateRealizedPnL()
@@ -691,7 +691,7 @@ Sub CalculateRealizedPnL()
     Set wsPort = ThisWorkbook.Sheets("RR4")
     Application.ScreenUpdating = False
     Call MigrateRealizedNav                       ' first UP on the old layout: insert the bar
-    Call NavAdd(wsReal, "R")                      ' afterwards: just repaint the bar
+    Call NavAdd(wsReal, "RL")                      ' afterwards: just repaint the bar
     Dim r0 As Long: r0 = RealHdrRow(wsReal)
     Dim caps As Object: Set caps = ReadRealizedCaptions(wsReal)
     wsReal.Range(wsReal.Cells(r0 + 1, RealCol(wsReal, 1)), _

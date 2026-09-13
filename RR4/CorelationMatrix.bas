@@ -461,7 +461,7 @@ Sub BuildCorrelationMatrix()
     Next k
 
     Application.ScreenUpdating = True
-    Call NavAdd(wsC, "CC")
+    Call NavAdd(wsC, "SC")
     ' no frozen panes on this page (2026-09-12) - the FreezePanes = False at
     ' the top also clears any left over from the v1 layout
     wsC.cells(1, 1).Select
