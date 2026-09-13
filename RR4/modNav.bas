@@ -70,6 +70,7 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "CC": NavSheetName = "Correlation"
         Case "RG": NavSheetName = "RRG"
         Case "RI": NavSheetName = "RRG Industry"
+        Case "TG": NavSheetName = "RRG TW Groups"
         Case "CR": NavSheetName = "Company research"
     End Select
 End Function
@@ -78,7 +79,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "V", "VT", "C", "CC", "RG", "RI")
+    For Each c In Array("P", "V", "VT", "C", "CC", "RG", "RI", "TG")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -216,13 +217,13 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     Dim pages As Variant
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
                   "V", "VOL", "VT", "TKRVOL", _
-                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "CR", "RESEARCH")
+                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "CR", "RESEARCH")
     Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
     acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
-                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
+                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
     Call WriteCodeLine(ws.cells(3, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
@@ -321,7 +322,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "CR"
+        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "CR"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -339,6 +340,8 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
             Call BuildRRG
         Case "RI!"
             Call BuildRRGIndustry
+        Case "TG!"
+            Call BuildRRGTwGroups
         Case "IMAP"
             Call ImportIndustryMap
         Case "DBG"
@@ -361,7 +364,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI" Or code = "TG", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible

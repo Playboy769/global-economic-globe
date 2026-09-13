@@ -74,6 +74,18 @@ Option Explicit
 '    is written to the hidden IndustryPx sheet keyed by plate code + as-of
 '    day, so Esc (or a network drop) loses at most one industry: run RI!
 '    again the same day and it continues from the cache.
+'
+'  TW GROUPS RRG (nav code TG, recalc TG!) - sheet "RRG TW Groups" (2026-09-13)
+'    Third universe: the Market = TW rows of the Groups sheet (tblGroups,
+'    the same thematic groups the Company research scanner uses - CCL,
+'    CoWoS, MOSFET, ...), one cap-weighted composite per group vs ^TWII.
+'    tblGroups has no market cap, so weights are shares outstanding x last
+'    close: shares come from TWSE openapi t187ap03_L (listed) and the TPEx
+'    daily close table (OTC - its openapi company table truncates at random,
+'    do not use it), see TwSharesMap.  Tickers may be bare codes; the
+'    exchange suffix is decided by which shares table lists the code, with
+'    a .TW -> .TWO retry on a 404 as a fallback.  Everything else (maths,
+'    composite, cache, focus, sort) is the industry page's.
 ' ================================================================
 
 Private Const RS_WINDOW As Long = 65
@@ -99,6 +111,11 @@ Private gChartH As Double
 
 Private Const ETF_SHEET As String = "RRG"
 Private Const IND_SHEET As String = "RRG Industry"
+Private Const TWG_SHEET As String = "RRG TW Groups"
+Private Const TWG_CHART_W As Double = 720
+Private Const TWG_CHART_H As Double = 600
+Private Const TW_BENCH As String = "^TWII"
+Private gBench As String                     ' benchmark of the current build (SPY / ^TWII)
 Private Const IND_MAP As String = "IndustryMap"      ' plateCode / plateName / symbol / rank / marketCap / plateType
 Private Const IND_PX As String = "IndustryPx"        ' hidden cache: one composite series per industry row
 Private Const PX_MAXN As Long = 270                  ' points per array in the cache (1y ~ 252 days)
@@ -192,7 +209,7 @@ Private Function FetchOhlcv(ByVal Ticker As String, ByRef days() As Long, ByRef 
     Dim http As Object
     Set http = CreateObject("MSXML2.XMLHTTP")
     Dim url As String
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/" & Ticker & "?interval=1d&range=1y"
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/" & Replace(Ticker, "^", "%5E") & "?interval=1d&range=1y"
     ' a few thousand requests in a row (the industry page) do hit 429s /
     ' dropped connections now and then: back off and retry before giving up
     Dim attempt As Long, status As Long
@@ -261,14 +278,23 @@ Sub BuildRRGIndustry(Optional ByVal limitN As Long = 0)
     Call BuildRRGCore("IND", limitN)
 End Sub
 
+' TG!: the Taiwan groups page (tblGroups, Market = TW).
+Sub BuildRRGTwGroups(Optional ByVal limitN As Long = 0)
+    Call BuildRRGCore("TWG", limitN)
+End Sub
+
 ' kind = "ETF" (sheet RRG, SectorList universe, one Yahoo series per ETF)
 '     or "IND" (sheet RRG Industry, IndustryMap universe, composites)
 Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0)
     Dim isInd As Boolean: isInd = (kind = "IND")
-    Dim sheetNm As String: sheetNm = IIf(isInd, IND_SHEET, ETF_SHEET)
-    Dim navCode As String: navCode = IIf(isInd, "RI", "RG")
-    gChartW = IIf(isInd, IND_CHART_W, ETF_CHART_W)
-    gChartH = IIf(isInd, IND_CHART_H, ETF_CHART_H)
+    Dim isTwg As Boolean: isTwg = (kind = "TWG")
+    Dim isComp As Boolean: isComp = isInd Or isTwg           ' composite universes
+    Dim sheetNm As String, navCode As String
+    Select Case kind
+        Case "IND": sheetNm = IND_SHEET: navCode = "RI": gChartW = IND_CHART_W: gChartH = IND_CHART_H: gBench = BENCH
+        Case "TWG": sheetNm = TWG_SHEET: navCode = "TG": gChartW = TWG_CHART_W: gChartH = TWG_CHART_H: gBench = TW_BENCH
+        Case Else:  sheetNm = ETF_SHEET: navCode = "RG": gChartW = ETF_CHART_W: gChartH = ETF_CHART_H: gBench = BENCH
+    End Select
     Dim ws As Worksheet
     On Error Resume Next
     Set ws = ThisWorkbook.Sheets(sheetNm)
@@ -293,6 +319,10 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         n = IndustryUniverse(tickers, labels, groups, indSyms, indCaps, nStocks)
         If n = 0 Then Err.Raise vbObjectError + 2, , IND_MAP & " sheet is empty - run IMAP (ImportIndustryMap) first"
         If limitN > 0 And limitN < n Then n = limitN
+    ElseIf isTwg Then
+        n = TwGroupUniverse(tickers, labels, groups, indSyms, indCaps, nStocks)
+        If n = 0 Then Err.Raise vbObjectError + 3, , "Groups sheet has no Market = TW rows"
+        If limitN > 0 And limitN < n Then n = limitN
     Else
         ' SPY last in the list is the benchmark
         Dim lst As Variant: lst = SectorList()
@@ -307,14 +337,14 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         Next i
         ReDim Preserve tickers(0 To n - 1): ReDim Preserve labels(0 To n - 1): ReDim Preserve groups(0 To n - 1)
     End If
-    Dim unitNm As String: unitNm = IIf(isInd, "industries", "ETFs")
+    Dim unitNm As String: unitNm = IIf(isInd, "industries", IIf(isTwg, "groups", "ETFs"))
 
     ' ---- benchmark ----
     Dim bDays() As Long, bPx() As Double, nb As Long
     Dim bH() As Double, bL() As Double, bV() As Double
-    Application.StatusBar = "RRG: fetching " & BENCH
-    nb = FetchOhlcv(BENCH, bDays, bPx, bH, bL, bV)
-    If nb < RS_WINDOW + MOM_WINDOW + 5 Then Err.Raise vbObjectError + 1, , "not enough " & BENCH & " data (" & nb & " days)"
+    Application.StatusBar = "RRG: fetching " & gBench
+    nb = FetchOhlcv(gBench, bDays, bPx, bH, bL, bV)
+    If nb < RS_WINDOW + MOM_WINDOW + 5 Then Err.Raise vbObjectError + 1, , "not enough " & gBench & " data (" & nb & " days)"
     Dim bIdx As Object: Set bIdx = CreateObject("Scripting.Dictionary")
     For i = 0 To nb - 1: bIdx(bDays(i)) = i: Next i
 
@@ -336,9 +366,9 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     For i = 0 To n - 1
         Application.StatusBar = "RRG: fetching [" & (i + 1) & "/" & n & "] " & tickers(i)
         DoEvents
-        If isInd Then
+        If isComp Then
             Dim okThis As Long
-            nt = IndustryComposite(tickers(i), labels(i), indSyms(i), indCaps(i), bDays, nb, bIdx, i + 1, n, t0, _
+            nt = IndustryComposite(tickers(i), labels(i), indSyms(i), indCaps(i), isTwg, bDays, nb, bIdx, i + 1, n, t0, _
                                    tDays, tPx, tH, tL, tV, okC, failC, okThis)
             groups(i) = okThis & "/" & (UBound(indSyms(i)) + 1)
         Else
@@ -394,7 +424,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     ActiveWindow.DisplayGridlines = False
     Dim rr As Long
     For rr = 1 To TBL_FIRST + n + 40: ws.Rows(rr).RowHeight = 18: Next rr
-    ws.Columns(1).ColumnWidth = 8: ws.Columns(2).ColumnWidth = IIf(isInd, 34, 9): ws.Columns(3).ColumnWidth = IIf(isInd, 8, 15)
+    ws.Columns(1).ColumnWidth = IIf(isTwg, 22, 8): ws.Columns(2).ColumnWidth = IIf(isInd, 34, IIf(isTwg, 26, 9))
+    ws.Columns(3).ColumnWidth = IIf(isComp, 8, 15)
     ws.Columns(4).ColumnWidth = 9: ws.Columns(5).ColumnWidth = 9: ws.Columns(6).ColumnWidth = 11
     ws.Columns(7).ColumnWidth = 9: ws.Columns(8).ColumnWidth = 9: ws.Columns(9).ColumnWidth = 10
     ws.Columns(10).ColumnWidth = 5: ws.Columns(11).ColumnWidth = 9: ws.Columns(12).ColumnWidth = 8
@@ -402,20 +433,20 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
 
     Dim asOf As Date: asOf = DateSerial(1970, 1, 1) + bDays(nb - 1)
     With ws.cells(1, 1)
-        .Value = IIf(isInd, "RRG  INDUSTRIES", "RELATIVE ROTATION GRAPH")
+        .Value = IIf(isInd, "RRG  INDUSTRIES", IIf(isTwg, "RRG  TW GROUPS", "RELATIVE ROTATION GRAPH"))
         .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 14
     End With
     ws.Rows(1).RowHeight = 24
     With ws.cells(1, 4)
-        .Value = n & " " & unitNm & IIf(isInd, " (" & okC & " stocks, cap-weighted composites" & IIf(failC > 0, ", " & failC & " no data", "") & ")", "") & _
-                 " vs " & BENCH & "  .  daily adjclose  .  RS " & RS_WINDOW & "d / MOM " & MOM_WINDOW & _
+        .Value = n & " " & unitNm & IIf(isComp, " (" & okC & " stocks, cap-weighted composites" & IIf(failC > 0, ", " & failC & " no data", "") & ")", "") & _
+                 " vs " & gBench & "  .  daily adjclose  .  RS " & RS_WINDOW & "d / MOM " & MOM_WINDOW & _
                  "d / EWM " & EWM_SPAN & "  .  " & TAIL_WEEKS & "-week tail  .  as of " & Format(asOf, "yyyy/mm/dd") & _
                  "  .  built " & Format(Now, "yyyy/mm/dd hh:mm")
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.cells(2, 1)
         .Value = navCode & "! <GO> refetches and redraws" & IIf(isInd, " (~5,800 requests, 40-60 min; Esc stops, the same-day cache resumes)", "") & _
-                 "  .  double-click " & IIf(isInd, "codes", "tickers") & " to focus them (again to remove, title to show all)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
+                 "  .  double-click " & IIf(isInd, "codes", IIf(isTwg, "groups", "tickers")) & " to focus them (again to remove, title to show all)  .  double-click a header to sort (again to flip)  .  double-click the title to reset"
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
     With ws.Range(ws.cells(2, 1), ws.cells(2, TBL_NCOL)).Borders(xlEdgeBottom)
@@ -424,7 +455,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
 
     ' ---- table ----
     Dim hdr As Variant
-    hdr = Array(IIf(isInd, "CODE", "TICKER"), IIf(isInd, "INDUSTRY", "LABEL"), IIf(isInd, "STOCKS", "GROUP"), _
+    hdr = Array(IIf(isInd, "CODE", IIf(isTwg, "GROUP", "TICKER")), IIf(isInd, "INDUSTRY", IIf(isTwg, "MEMBERS", "LABEL")), IIf(isComp, "STOCKS", "GROUP"), _
                 "RS-RATIO", "RS-MOM", "QUADRANT", "1W dRAT", "1W dMOM", "TRAIL", "PTS", _
                 "20D PX%", "CMF", "OBV(d)", "SIGNAL")
     For j = 0 To UBound(hdr)
@@ -449,7 +480,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         Dim r As Long: r = TBL_FIRST + i
         ws.cells(r, 1).Value = tickers(i)
         ws.cells(r, 2).Value = labels(i)
-        If isInd Then ws.cells(r, 3).NumberFormat = "@"       ' "8/8" would otherwise become a date
+        If isComp Then ws.cells(r, 3).NumberFormat = "@"      ' "8/8" would otherwise become a date
         ws.cells(r, 3).Value = groups(i)
         If tailN(i) = 0 Then
             ws.cells(r, 6).Value = "NO DATA"
@@ -529,7 +560,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     End With
     Dim notes As Variant
     notes = Array( _
-        "RS-RATIO  = 100 x (px / SPY) / SMA65(px / SPY), then EWM span 3  -  relative strength vs its own quarter trend", _
+        "RS-RATIO  = 100 x (px / " & gBench & ") / SMA65(px / " & gBench & "), then EWM span 3  -  relative strength vs its own quarter trend", _
         "RS-MOM    = 100 x RS-RATIO / SMA20(RS-RATIO), then EWM span 3  -  is that strength accelerating (>100) or fading", _
         "TAIL      = the last 13 weeks, one dot per 5 trading days; the big dot is today, older dots fade", _
         "QUADRANT  = LEADING (both >= 100) / WEAKENING (ratio >= 100, mom < 100) / LAGGING (both < 100) / IMPROVING (ratio < 100, mom >= 100)", _
@@ -561,6 +592,23 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         ReDim Preserve tmpN(0 To UBound(notes) + UBound(indNotes) + 1)
         For j = 0 To UBound(indNotes): tmpN(UBound(notes) + 1 + j) = indNotes(j): Next j
         notes = tmpN
+    End If
+    If isTwg Then
+        Dim twNotes As Variant
+        twNotes = Array( _
+            "", _
+            "TW GROUP COMPOSITES (this page)", _
+            "Universe  = the Market = TW rows of the Groups sheet (tblGroups) - the Company research scanner's thematic groups", _
+            "Price     = cap-weighted index chain-linked from daily returns (see RRG.bas); weight = shares outstanding x last close", _
+            "            shares: TWSE openapi t187ap03_L for listed, TPEx daily close table for OTC; a code in neither gets weight 0", _
+            "High/Low  = same weights on high[t]/close[t-1] - 1 and low[t]/close[t-1] - 1;  Volume = sum(close x volume) in TWD", _
+            "Benchmark = " & gBench & " (Yahoo);  tickers try .TW then .TWO like the scanner", _
+            "Cache     = hidden IndustryPx sheet keyed by group name + as-of day; TG! reuses it the same day", _
+            "STOCKS    = members with data / total in the group")
+        Dim tmpT As Variant: tmpT = notes
+        ReDim Preserve tmpT(0 To UBound(notes) + UBound(twNotes) + 1)
+        For j = 0 To UBound(twNotes): tmpT(UBound(notes) + 1 + j) = twNotes(j): Next j
+        notes = tmpT
     End If
     For j = 0 To UBound(notes)
         ws.cells(nr + 1 + j, 1).Value = notes(j)
@@ -637,8 +685,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     Application.ScreenUpdating = True
     Application.EnableEvents = prevEv
     Application.EnableCancelKey = prevCancel
-    Call NavNotify("RRG rebuilt: " & n & " " & unitNm & " vs " & BENCH & " as of " & Format(asOf, "yyyy/mm/dd") & _
-                   IIf(isInd, "  (" & Format((Timer - t0) / 60, "0") & " min)", ""))
+    Call NavNotify("RRG rebuilt: " & n & " " & unitNm & " vs " & gBench & " as of " & Format(asOf, "yyyy/mm/dd") & _
+                   IIf(isComp, "  (" & Format((Timer - t0) / 60, "0") & " min)", ""))
     Exit Sub
 Fail:
     Dim failMsg As String: failMsg = Err.Description
@@ -709,7 +757,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ch.PlotArea.Format.Fill.ForeColor.RGB = RGB(8, 8, 8)
     ch.PlotArea.Format.Line.Visible = msoFalse
     ch.HasTitle = True
-    ch.ChartTitle.Text = "RRG  vs " & BENCH & "   as of " & Format(asOf, "yyyy/mm/dd")
+    ch.ChartTitle.Text = "RRG  vs " & gBench & "   as of " & Format(asOf, "yyyy/mm/dd")
     With ch.ChartTitle.Format.TextFrame2.TextRange.Font
         .Name = "Consolas": .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
     End With
@@ -1443,7 +1491,12 @@ End Function
 
 ' moomoo symbol -> Yahoo symbol (BRK.B -> BRK-B).
 Private Function YahooSymbol(ByVal sym As String) As String
-    YahooSymbol = Replace(Trim(sym), ".", "-")
+    sym = Trim(sym)
+    If Right(UCase(sym), 3) = ".TW" Or Right(UCase(sym), 4) = ".TWO" Then
+        YahooSymbol = UCase(sym)                     ' exchange suffix stays
+    Else
+        YahooSymbol = Replace(sym, ".", "-")         ' BRK.B -> BRK-B
+    End If
 End Function
 
 ' One industry's composite OHLCV on the benchmark's days.  Served from the
@@ -1452,6 +1505,7 @@ End Function
 ' (see the module header), then cached.  Returns the number of points.
 ' okC / failC accumulate the constituents with / without data over the run.
 Private Function IndustryComposite(ByVal code As String, ByVal nm As String, ByVal syms As Variant, ByVal caps As Variant, _
+                                   ByVal capIsShares As Boolean, _
                                    ByRef bDays() As Long, ByVal nb As Long, ByVal bIdx As Object, _
                                    ByVal iNo As Long, ByVal nInd As Long, ByVal t0 As Double, _
                                    ByRef days() As Long, ByRef c() As Double, ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, _
@@ -1475,12 +1529,25 @@ Private Function IndustryComposite(ByVal code As String, ByVal nm As String, ByV
         w = caps(j)
         If w > 0 Then
             Dim el As Double: el = Timer - t0: If el < 0 Then el = el + 86400
-            Application.StatusBar = "RRG-IND [" & iNo & "/" & nInd & "] " & nm & "  stock " & (j + 1) & "/" & m & " " & syms(j) & _
+            Application.StatusBar = "RRG [" & iNo & "/" & nInd & "] " & nm & "  stock " & (j + 1) & "/" & m & " " & syms(j) & _
                                     "  .  fetched " & okC & " ok / " & failC & " none  .  " & Format(el / 60, "0") & " min"
             DoEvents
-            ns = FetchOhlcv(YahooSymbol(CStr(syms(j))), sDays, sC, sH, sL, sV)
+            Dim ysym As String: ysym = YahooSymbol(CStr(syms(j)))
+            ns = FetchOhlcv(ysym, sDays, sC, sH, sL, sV)
+            ' TW: a bare or wrongly suffixed code - try the other exchange
+            If ns < 2 And capIsShares Then
+                If Right(ysym, 4) = "-TWO" Or Right(ysym, 4) = ".TWO" Then
+                    ns = FetchOhlcv(Left(ysym, Len(ysym) - 4) & ".TW", sDays, sC, sH, sL, sV)
+                ElseIf Right(ysym, 3) = ".TW" Then
+                    ns = FetchOhlcv(ysym & "O", sDays, sC, sH, sL, sV)
+                Else
+                    ns = FetchOhlcv(ysym & ".TW", sDays, sC, sH, sL, sV)
+                    If ns < 2 Then ns = FetchOhlcv(ysym & ".TWO", sDays, sC, sH, sL, sV)
+                End If
+            End If
             If ns >= 2 Then
                 nOk = nOk + 1
+                If capIsShares Then w = w * sC(ns - 1)          ' shares x last close = market cap
                 If bIdx.Exists(sDays(0)) Then
                     t = bIdx(sDays(0)): anyD(t) = True: dv(t) = dv(t) + sC(0) * sV(0)
                 End If
@@ -1705,4 +1772,125 @@ Private Function SplitCsv(ByVal line As String) As String()
     Next i
     ReDim Preserve out(0 To n): out(n) = cur
     SplitCsv = out
+End Function
+
+' ================================================================
+'  TW GROUPS UNIVERSE  (TG page)
+' ================================================================
+
+' The Market = TW groups of tblGroups (Sanner.GetGroupNames / GetSectorTickers),
+' one entry per group: tickers(i) = group name (series / focus key), labels(i)
+' = the first few member codes, indSyms(i) = members with their exchange
+' suffix resolved from the shares tables, indCaps(i) = shares outstanding
+' (IndustryComposite multiplies by the last close).  Returns the group count.
+Private Function TwGroupUniverse(ByRef tickers() As String, ByRef labels() As String, ByRef groups() As String, _
+                                 ByRef indSyms As Variant, ByRef indCaps As Variant, ByRef nStocks As Long) As Long
+    Dim gNames As Variant: gNames = Sanner.GetGroupNames("TW")
+    If IsEmpty(gNames) Then Exit Function
+    Dim n As Long: n = UBound(gNames) + 1
+    ReDim tickers(0 To n - 1): ReDim labels(0 To n - 1): ReDim groups(0 To n - 1)
+    Dim syms() As Variant, caps() As Variant
+    ReDim syms(0 To n - 1): ReDim caps(0 To n - 1)
+    Application.StatusBar = "RRG-TW: fetching shares outstanding (TWSE + TPEx)"
+    DoEvents
+    Dim shares As Object, mkt As Object
+    Call TwSharesMap(shares, mkt)
+    Dim i As Long, j As Long
+    For i = 0 To n - 1
+        tickers(i) = CStr(gNames(i))
+        groups(i) = ""
+        Dim tks As Variant: tks = Sanner.GetSectorTickers("TW", CStr(gNames(i)))
+        Dim m As Long: m = 0
+        If Not IsEmpty(tks) Then m = UBound(tks) + 1
+        Dim sArr() As String, cArr() As Double
+        ReDim sArr(0 To IIf(m > 0, m - 1, 0)): ReDim cArr(0 To IIf(m > 0, m - 1, 0))
+        Dim lbl As String: lbl = ""
+        For j = 0 To m - 1
+            Dim code As String: code = UCase(Trim(CStr(tks(j))))
+            code = Replace(Replace(code, ".TWO", ""), ".TW", "")
+            If mkt.Exists(code) Then
+                sArr(j) = code & "." & mkt(code)
+            Else
+                sArr(j) = code                       ' unknown: composite tries .TW then .TWO
+            End If
+            cArr(j) = IIf(shares.Exists(code), CDbl(shares(code)), 0)
+            If j < 4 Then lbl = lbl & IIf(lbl = "", "", " ") & code
+            nStocks = nStocks + 1
+        Next j
+        If m > 4 Then lbl = lbl & " +" & (m - 4)
+        labels(i) = lbl
+        syms(i) = sArr: caps(i) = cArr
+    Next i
+    indSyms = syms: indCaps = caps
+    TwGroupUniverse = n
+End Function
+
+' Shares outstanding for every listed / OTC Taiwan stock:
+'   shares(code) = issued shares,  mkt(code) = "TW" (TWSE) / "TWO" (TPEx)
+' TWSE: openapi t187ap03_L (company basics; the last field of each record
+'   is the issued share count).  TPEx: the daily close table of the last
+'   trading day (field 15 = issued shares) - the TPEx openapi company table
+'   truncates at random (177 of ~800 records, 2026-09-13), so it is not used.
+Private Sub TwSharesMap(ByRef shares As Object, ByRef mkt As Object)
+    Set shares = CreateObject("Scripting.Dictionary")
+    Set mkt = CreateObject("Scripting.Dictionary")
+    Dim http As Object, resp As String, recs() As String, i As Long, f() As String, code As String, v As String
+    ' ---- TWSE ----
+    On Error Resume Next
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://openapi.twse.com.tw/v1/opendata/t187ap03_L", False
+    http.setRequestHeader "User-Agent", "Mozilla/5.0"
+    http.send
+    If http.Status = 200 Then resp = http.responseText Else resp = ""
+    On Error GoTo 0
+    If resp <> "" Then
+        resp = Replace(Replace(resp, vbCr, ""), vbLf, "")   ' records are separated by "}," + newline + "{"
+        recs = Split(resp, "},{")
+        For i = 0 To UBound(recs)
+            f = Split(recs(i), """,""")                 ' key":"value pieces
+            If UBound(f) >= 2 Then
+                code = JsonPieceValue(f(1))              ' 2nd field = company code
+                v = JsonPieceValue(f(UBound(f)))         ' last field = issued shares
+                If code <> "" And IsNumeric(v) Then
+                    shares(code) = CDbl(v): mkt(code) = "TW"
+                End If
+            End If
+        Next i
+    End If
+    ' ---- TPEx: last trading day's close table ----
+    Dim d As Long
+    For d = 0 To 7
+        resp = ""
+        On Error Resume Next
+        Set http = CreateObject("MSXML2.XMLHTTP")
+        http.Open "GET", "https://www.tpex.org.tw/www/zh-tw/afterTrading/otc?date=" & Format(Date - d, "yyyy/mm/dd") & "&type=EW&response=json", False
+        http.setRequestHeader "User-Agent", "Mozilla/5.0"
+        http.send
+        If http.Status = 200 Then resp = http.responseText
+        On Error GoTo 0
+        If InStr(resp, """totalCount"":0") = 0 And InStr(resp, "],[") > 0 Then Exit For
+        resp = ""
+    Next d
+    If resp <> "" Then
+        recs = Split(resp, "],[")
+        For i = 0 To UBound(recs)
+            f = Split(recs(i), """,""")
+            If UBound(f) >= 14 Then
+                code = Replace(Replace(f(0), "[", ""), """", "")
+                code = Trim(Mid(code, InStrRev(code, ":") + 1))
+                v = Replace(Trim(f(14)), ",", "")
+                If IsNumeric(v) And code <> "" And Not mkt.Exists(code) Then
+                    shares(code) = CDbl(v): mkt(code) = "TWO"
+                End If
+            End If
+        Next i
+    End If
+End Sub
+
+' value part of a  key":"value  piece (quotes, braces and brackets stripped)
+Private Function JsonPieceValue(ByVal piece As String) As String
+    Dim p As Long: p = InStrRev(piece, """:""")
+    If p > 0 Then piece = Mid(piece, p + 3)
+    piece = Replace(Replace(Replace(Replace(piece, """", ""), "}", ""), "]", ""), ",", "")
+    JsonPieceValue = Trim(piece)
 End Function
