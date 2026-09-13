@@ -410,6 +410,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `Application.EnableCancelKey = xlErrorHandler` 讓 Esc（錯誤 18）變成「已完成的產業留著、下次續抓」。
   `IMAP` 重匯會清掉快取。圖尺寸依 kind 走 `gChartW/gChartH`（產業版 1000×820，145 個標籤字級 7）。
   測試用 `BuildRRGIndustry 2` 只做前 2 個產業。
+- **RRG 三頁的尾巴資料塊位置不再固定在 AA 欄**（2026-09-13）：產業版／台股版的圖比 ETF 版寬（1000／720 vs 560），
+  會蓋到 AA 起的 TAIL DATA。`BuildRRGCore` 建表時從 AA 往右找到第一個 `Left` 超過「圖表右緣＋12」的欄當
+  SEQ 欄，資料塊＝SEQ＋2，起始欄寫進隱藏工作表名稱 `RRGDATACOL`；`DataCol(ws)`／`DateCol(ws)`／`SeqCol(ws)`
+  讀該名稱（沒有就退回 AA），排序、聚焦、dead-zone 輔助 series 都走這三個函式，**不要再用寫死的 27/26/25**。
+  實測落點：ETF 頁 AE、台股頁 AH、產業頁 AN。
 - **RRG TW Groups（TG）頁（2026-09-13）**：`BuildRRGCore` 的第三種宇宙 `TWG`（`BuildRRGTwGroups`、頁
   `RRG TW Groups`、`TG!`）：拿 `Groups` 頁 `tblGroups` 的 **Market=TW 全部族群**（透過 `Sanner.GetGroupNames`／
   `GetSectorTickers`，跟 Company research 掃描器同一份，實測 50 組 372 檔），每組＝成分股市值加權合成指數對
