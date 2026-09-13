@@ -415,7 +415,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
         .Font.Color = RGB(221, 221, 221)
-        .Font.Name = PageFont(ws)
+        .Font.Name = "Consolas"                 ' table stays Consolas on every page
         .Font.Size = 9
         .VerticalAlignment = xlCenter
     End With
@@ -806,10 +806,10 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     Dim pl As Double, pt As Double, pw As Double, ph As Double
     pl = ch.PlotArea.InsideLeft: pt = ch.PlotArea.InsideTop
     pw = ch.PlotArea.InsideWidth: ph = ch.PlotArea.InsideHeight
-    Call QuadLabel(ch, "LEADING", pl + pw - 78, pt + 4, msoAnchorTop, PageFont(ws))
-    Call QuadLabel(ch, "WEAKENING", pl + pw - 78, pt + ph - 18, msoAnchorBottom, PageFont(ws))
-    Call QuadLabel(ch, "LAGGING", pl + 4, pt + ph - 18, msoAnchorBottom, PageFont(ws))
-    Call QuadLabel(ch, "IMPROVING", pl + 4, pt + 4, msoAnchorTop, PageFont(ws))
+    Call QuadLabel(ch, "LEADING", pl + pw - 78, pt + 4, msoAnchorTop, "Consolas")
+    Call QuadLabel(ch, "WEAKENING", pl + pw - 78, pt + ph - 18, msoAnchorBottom, "Consolas")
+    Call QuadLabel(ch, "LAGGING", pl + 4, pt + ph - 18, msoAnchorBottom, "Consolas")
+    Call QuadLabel(ch, "IMPROVING", pl + 4, pt + 4, msoAnchorTop, "Consolas")
 End Sub
 
 ' ----------------------------------------------------------------
@@ -1189,10 +1189,10 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     Dim pl As Double, pt As Double, pw As Double, ph As Double
     pl = ch.PlotArea.InsideLeft: pt = ch.PlotArea.InsideTop
     pw = ch.PlotArea.InsideWidth: ph = ch.PlotArea.InsideHeight
-    Call CornerLabel(ch, "CONFIRMED INFLOW", SigColor("INFLOW"), pl + pw - 124, pt + 4, True, PageFont(ws))
-    Call CornerLabel(ch, "BEARISH DIVERGENCE", SigColor("BEAR DIV"), pl + pw - 124, pt + ph - 18, True, PageFont(ws))
-    Call CornerLabel(ch, "CONFIRMED OUTFLOW", SigColor("OUTFLOW"), pl + 4, pt + ph - 18, False, PageFont(ws))
-    Call CornerLabel(ch, "BULLISH DIVERGENCE", SigColor("BULL DIV"), pl + 4, pt + 4, False, PageFont(ws))
+    Call CornerLabel(ch, "CONFIRMED INFLOW", SigColor("INFLOW"), pl + pw - 124, pt + 4, True, "Consolas")
+    Call CornerLabel(ch, "BEARISH DIVERGENCE", SigColor("BEAR DIV"), pl + pw - 124, pt + ph - 18, True, "Consolas")
+    Call CornerLabel(ch, "CONFIRMED OUTFLOW", SigColor("OUTFLOW"), pl + 4, pt + ph - 18, False, "Consolas")
+    Call CornerLabel(ch, "BULLISH DIVERGENCE", SigColor("BULL DIV"), pl + 4, pt + 4, False, "Consolas")
 End Sub
 
 ' mode 0 normal / 1 dimmed / 2 focused, same meaning as StyleSeries.
@@ -1927,9 +1927,10 @@ Private Function NormalizeGroupName(ByVal nm As String) As String
     NormalizeGroupName = Trim(nm)
 End Function
 
-' Font of a page: the TW groups page carries Chinese names, which Consolas
-' has no glyphs for (Excel falls back per character and the labels look
-' ragged), so it uses Noto Sans TC; the other pages stay on Consolas.
+' Chart text font of a page (titles, axes, point labels): the TW groups page
+' carries Chinese names, which Consolas has no glyphs for (Excel falls back
+' per character and the labels look ragged), so its charts use Noto Sans TC.
+' The table cells and the corner / quadrant captions stay Consolas everywhere.
 Private Function PageFont(ws As Worksheet) As String
     If ws.Name = TWG_SHEET Then PageFont = "Noto Sans TC" Else PageFont = "Consolas"
 End Function
