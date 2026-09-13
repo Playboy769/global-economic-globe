@@ -415,7 +415,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
         .Font.Color = RGB(221, 221, 221)
-        .Font.Name = "Consolas"
+        .Font.Name = PageFont(ws)
         .Font.Size = 9
         .VerticalAlignment = xlCenter
     End With
@@ -759,7 +759,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ch.HasTitle = True
     ch.ChartTitle.Text = "RRG  vs " & gBench & "   as of " & Format(asOf, "yyyy/mm/dd")
     With ch.ChartTitle.Format.TextFrame2.TextRange.Font
-        .Name = "Consolas": .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
+        .Name = PageFont(ws): .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
     End With
 
     Dim i As Long, k As Long
@@ -783,10 +783,10 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ax.HasMajorGridlines = False
     ax.TickLabelPosition = xlTickLabelPositionLow
     ax.Format.Line.ForeColor.RGB = RGB(110, 110, 110)
-    ax.TickLabels.Font.Name = "Consolas": ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
+    ax.TickLabels.Font.Name = PageFont(ws): ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
     ax.TickLabels.NumberFormat = "0"
     ax.HasTitle = True: ax.AxisTitle.Text = "RS-RATIO"
-    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = "Consolas"
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
     Set ax = ch.Axes(xlValue)
@@ -795,10 +795,10 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ax.HasMajorGridlines = False
     ax.TickLabelPosition = xlTickLabelPositionLow
     ax.Format.Line.ForeColor.RGB = RGB(110, 110, 110)
-    ax.TickLabels.Font.Name = "Consolas": ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
+    ax.TickLabels.Font.Name = PageFont(ws): ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
     ax.TickLabels.NumberFormat = "0"
     ax.HasTitle = True: ax.AxisTitle.Text = "RS-MOMENTUM"
-    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = "Consolas"
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
 
@@ -806,10 +806,10 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     Dim pl As Double, pt As Double, pw As Double, ph As Double
     pl = ch.PlotArea.InsideLeft: pt = ch.PlotArea.InsideTop
     pw = ch.PlotArea.InsideWidth: ph = ch.PlotArea.InsideHeight
-    Call QuadLabel(ch, "LEADING", pl + pw - 78, pt + 4, msoAnchorTop)
-    Call QuadLabel(ch, "WEAKENING", pl + pw - 78, pt + ph - 18, msoAnchorBottom)
-    Call QuadLabel(ch, "LAGGING", pl + 4, pt + ph - 18, msoAnchorBottom)
-    Call QuadLabel(ch, "IMPROVING", pl + 4, pt + 4, msoAnchorTop)
+    Call QuadLabel(ch, "LEADING", pl + pw - 78, pt + 4, msoAnchorTop, PageFont(ws))
+    Call QuadLabel(ch, "WEAKENING", pl + pw - 78, pt + ph - 18, msoAnchorBottom, PageFont(ws))
+    Call QuadLabel(ch, "LAGGING", pl + 4, pt + ph - 18, msoAnchorBottom, PageFont(ws))
+    Call QuadLabel(ch, "IMPROVING", pl + 4, pt + 4, msoAnchorTop, PageFont(ws))
 End Sub
 
 ' ----------------------------------------------------------------
@@ -841,21 +841,21 @@ Private Sub StyleSeries(ws As Worksheet, s As Series, ByVal qc As Long, ByVal np
     End With
     Dim disp As String: disp = DisplayName(ws, s.Name)
     If mode = 0 Then
-        Call PointLabel(s.Points(np), disp, RGB(210, 210, 210), IIf(ws.Name = IND_SHEET, 7, 8))
+        Call PointLabel(s.Points(np), disp, RGB(210, 210, 210), IIf(ws.Name = IND_SHEET, 7, 8), PageFont(ws))
     ElseIf mode = 3 Then
-        Call PointLabel(s.Points(np), disp, RGB(255, 255, 255), 9)
+        Call PointLabel(s.Points(np), disp, RGB(255, 255, 255), 9, PageFont(ws))
     ElseIf mode = 2 Then
         Dim off As Long: off = NavOffset(ws)
         For k = 1 To np
             Dim dr As Long: dr = TBL_FIRST + off + TAIL_POINTS - np + k - 1
             Dim txt As String: txt = Format(ws.cells(dr, DATE_COL).Value, "mm/dd")
             If k = np Then txt = disp & " " & txt
-            Call PointLabel(s.Points(k), txt, IIf(k = np, RGB(255, 255, 255), RGB(190, 190, 190)), IIf(k = np, 9, 7))
+            Call PointLabel(s.Points(k), txt, IIf(k = np, RGB(255, 255, 255), RGB(190, 190, 190)), IIf(k = np, 9, 7), PageFont(ws))
         Next k
     End If
 End Sub
 
-Private Sub PointLabel(p As Point, ByVal txt As String, ByVal col As Long, ByVal sz As Long, Optional ByVal pos As Long = xlLabelPositionRight)
+Private Sub PointLabel(p As Point, ByVal txt As String, ByVal col As Long, ByVal sz As Long, ByVal fnt As String, Optional ByVal pos As Long = xlLabelPositionRight)
     p.HasDataLabel = True
     With p.DataLabel
         ' turning every Show* flag off deletes the label (and .Text then
@@ -866,7 +866,7 @@ Private Sub PointLabel(p As Point, ByVal txt As String, ByVal col As Long, ByVal
         .ShowSeriesName = True
         .Text = txt
         .Position = pos
-        .Format.TextFrame2.TextRange.Font.Name = "Consolas"
+        .Format.TextFrame2.TextRange.Font.Name = fnt
         .Format.TextFrame2.TextRange.Font.Size = sz
         .Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = col
     End With
@@ -1101,7 +1101,7 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     ch.ChartTitle.Text = "MONEY FLOW  price change vs Chaikin Money Flow   as of " & Format(asOf, "yyyy/mm/dd") & _
                          "   (CMF " & CMF_WINDOW & "d, lookback " & FLOW_LOOKBACK & "d)"
     With ch.ChartTitle.Format.TextFrame2.TextRange.Font
-        .Name = "Consolas": .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
+        .Name = PageFont(ws): .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
     End With
 
     ' axis range (money_flow_chart.build_figure: 15% pad, at least 2% / 0.02)
@@ -1167,10 +1167,10 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     ax.HasMajorGridlines = False
     ax.TickLabelPosition = xlTickLabelPositionLow
     ax.Format.Line.ForeColor.RGB = RGB(110, 110, 110)
-    ax.TickLabels.Font.Name = "Consolas": ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
+    ax.TickLabels.Font.Name = PageFont(ws): ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
     ax.TickLabels.NumberFormat = "0%"
     ax.HasTitle = True: ax.AxisTitle.Text = "PRICE CHANGE " & FLOW_LOOKBACK & "D"
-    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = "Consolas"
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
     Set ax = ch.Axes(xlValue)
@@ -1179,20 +1179,20 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     ax.HasMajorGridlines = False
     ax.TickLabelPosition = xlTickLabelPositionLow
     ax.Format.Line.ForeColor.RGB = RGB(110, 110, 110)
-    ax.TickLabels.Font.Name = "Consolas": ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
+    ax.TickLabels.Font.Name = PageFont(ws): ax.TickLabels.Font.Size = 8: ax.TickLabels.Font.Color = RGB(150, 150, 150)
     ax.TickLabels.NumberFormat = "0.00"
     ax.HasTitle = True: ax.AxisTitle.Text = "CHAIKIN MONEY FLOW"
-    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = "Consolas"
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
 
     Dim pl As Double, pt As Double, pw As Double, ph As Double
     pl = ch.PlotArea.InsideLeft: pt = ch.PlotArea.InsideTop
     pw = ch.PlotArea.InsideWidth: ph = ch.PlotArea.InsideHeight
-    Call CornerLabel(ch, "CONFIRMED INFLOW", SigColor("INFLOW"), pl + pw - 124, pt + 4, True)
-    Call CornerLabel(ch, "BEARISH DIVERGENCE", SigColor("BEAR DIV"), pl + pw - 124, pt + ph - 18, True)
-    Call CornerLabel(ch, "CONFIRMED OUTFLOW", SigColor("OUTFLOW"), pl + 4, pt + ph - 18, False)
-    Call CornerLabel(ch, "BULLISH DIVERGENCE", SigColor("BULL DIV"), pl + 4, pt + 4, False)
+    Call CornerLabel(ch, "CONFIRMED INFLOW", SigColor("INFLOW"), pl + pw - 124, pt + 4, True, PageFont(ws))
+    Call CornerLabel(ch, "BEARISH DIVERGENCE", SigColor("BEAR DIV"), pl + pw - 124, pt + ph - 18, True, PageFont(ws))
+    Call CornerLabel(ch, "CONFIRMED OUTFLOW", SigColor("OUTFLOW"), pl + 4, pt + ph - 18, False, PageFont(ws))
+    Call CornerLabel(ch, "BULLISH DIVERGENCE", SigColor("BULL DIV"), pl + 4, pt + 4, False, PageFont(ws))
 End Sub
 
 ' mode 0 normal / 1 dimmed / 2 focused, same meaning as StyleSeries.
@@ -1212,9 +1212,9 @@ Private Sub StyleFlowSeries(ws As Worksheet, s As Series, ByVal col As Long, ByV
     s.MarkerForegroundColor = c
     s.HasDataLabels = False
     If mode = 0 Then
-        Call PointLabel(s.Points(1), disp, RGB(210, 210, 210), IIf(ws.Name = IND_SHEET, 7, 8), xlLabelPositionAbove)
+        Call PointLabel(s.Points(1), disp, RGB(210, 210, 210), IIf(ws.Name = IND_SHEET, 7, 8), PageFont(ws), xlLabelPositionAbove)
     ElseIf mode >= 2 Then
-        Call PointLabel(s.Points(1), disp, RGB(255, 255, 255), 10, xlLabelPositionAbove)
+        Call PointLabel(s.Points(1), disp, RGB(255, 255, 255), 10, PageFont(ws), xlLabelPositionAbove)
     End If
 End Sub
 
@@ -1234,13 +1234,13 @@ Private Function DisplayName(ws As Worksheet, ByVal key As String) As String
     Loop
 End Function
 
-Private Sub CornerLabel(ch As Chart, ByVal txt As String, ByVal col As Long, ByVal l As Double, ByVal t As Double, ByVal alignRight As Boolean)
+Private Sub CornerLabel(ch As Chart, ByVal txt As String, ByVal col As Long, ByVal l As Double, ByVal t As Double, ByVal alignRight As Boolean, ByVal fnt As String)
     Dim shp As Shape
     Set shp = ch.Shapes.AddTextbox(msoTextOrientationHorizontal, l, t, 120, 14)
     shp.Name = "RRG_Q_" & txt
     With shp.TextFrame2
         .TextRange.Text = txt
-        .TextRange.Font.Name = "Consolas"
+        .TextRange.Font.Name = fnt
         .TextRange.Font.Size = 9
         .TextRange.Font.Bold = msoTrue
         .TextRange.Font.Fill.ForeColor.RGB = col
@@ -1428,8 +1428,8 @@ Private Function Dim2(ByVal c As Long, ByVal f As Double) As Long
     Dim2 = RGB(Int((c Mod 256) * f), Int(((c \ 256) Mod 256) * f), Int(((c \ 65536) Mod 256) * f))
 End Function
 
-Private Sub QuadLabel(ch As Chart, ByVal txt As String, ByVal l As Double, ByVal t As Double, ByVal anchor As Long)
-    Call CornerLabel(ch, txt, QuadColor(txt), l, t, (txt = "LEADING" Or txt = "WEAKENING"))
+Private Sub QuadLabel(ch As Chart, ByVal txt As String, ByVal l As Double, ByVal t As Double, ByVal anchor As Long, ByVal fnt As String)
+    Call CornerLabel(ch, txt, QuadColor(txt), l, t, (txt = "LEADING" Or txt = "WEAKENING"), fnt)
 End Sub
 
 ' ================================================================
@@ -1925,4 +1925,11 @@ Private Function NormalizeGroupName(ByVal nm As String) As String
     re.Pattern = "^([^\x00-\x7F]+)\s+[A-Za-z]+(\s+[A-Za-z]+)+$": nm = re.Replace(nm, "$1")
     re.Pattern = "^([^\x00-\x7F]+)\s+([^\x00-\x7F]+)$": nm = re.Replace(nm, "$1")
     NormalizeGroupName = Trim(nm)
+End Function
+
+' Font of a page: the TW groups page carries Chinese names, which Consolas
+' has no glyphs for (Excel falls back per character and the labels look
+' ragged), so it uses Noto Sans TC; the other pages stay on Consolas.
+Private Function PageFont(ws As Worksheet) As String
+    If ws.Name = TWG_SHEET Then PageFont = "Noto Sans TC" Else PageFont = "Consolas"
 End Function
