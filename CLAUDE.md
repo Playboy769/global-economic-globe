@@ -310,6 +310,12 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   寫死位址**（Attach.bas 舊的 `C22`/`A1`/`B2` 全在搬版後讀錯格）。`ResetSheetStyle`
   會清整張表，所有手打值（FX、ARRANGE 碼、SWING RISK Q 欄與 NOTE R 欄［v4.11，依表頭文字定位、以代號為鍵］、panel 的代號/目標價、T1/T2、WATCHLIST）
   要在清除**前**讀出、之後寫回。
+- **Ticker panel 的市場判斷以 Transactions 為準（TickerInsight v2.4，2026-09-13）**：`IsTWTicker` 只看代號字串有沒有
+  `.TW`，而 FIFO 配對走 `NormalizeTicker`（去後綴），所以在 K5 打裸碼 `3374` 會配到 `3374.TWO` 的交易、卻被當成美股，
+  REALIZED PNL／VELOCITY／NET EXPOSURE 全部乘上 USD/TWD（816 → 25,808），RETURN % 與逐筆日期不受影響——看起來像
+  「金額膨風、比率正確」就是這個。`RefreshTickerInsight`／`RefreshTickerProjection` 開頭先過 `ResolveTicker`：裸碼取
+  Transactions 第一筆配到的原始代號（含 `.TW/.TWO`），完全沒交易的全數字碼預設 `.TW`；K5 與追蹤格 X2 因此會顯示解析後的
+  代號。實測 3374／1303／2330.tw／BE／AMAT／8046.TW 六檔與 Realized 表一致（美股差幾十元是當日匯率 vs 今日 live 匯率）。
 - **USD/TWD 改為線上即時（v4.14，2026-09-13，使用者選「純自動」）**：`UP` 開頭 `FetchLiveFx()` 抓 Yahoo
   chart API `TWD=X` 的 `meta.regularMarketPrice`（＝1 USD 兌多少 TWD），成功就覆蓋 C6（`RR4_FX_CELL`）並在
   儲存格註解標「live from Yahoo TWD=X ＋時間」、狀態列印「USD/TWD 31.63 live」；抓不到才沿用 C6 手打值、再退
