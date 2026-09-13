@@ -288,8 +288,21 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     任何讀取之前）偵測 B1 還是「P」徽章就 `Rows(1).Insert` 一次——整張表連同手打值、圖、名稱、隱藏排序欄一起
     下移，read-before-clear 才對得上格子；實測總值／FX／WATCHLIST 5 筆／8 持倉／panel 代號都保住。
     重開活頁簿後 `ws.Names.Item("RR4NAV")` 可能取不到，改用 `wb.Names` 篩 `'<sheet>'!RR4NAV`。
-  - **資料頁（Realized/Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
-    模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。
+  - **資料頁（Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
+    模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。（使用者 2026-09-13 決定分三階段
+    全部掛上：Realized 已做，Transactions、HistoryLog 待做。）
+  - **Realized（R）頁 2026-09-13 起有 bar**：頁碼 R 進 `NavPageCode`，版面同其他報表頁（第 1 列／A 欄空白、
+    bar 第 2–4 列、表頭第 5 列 B 欄起）。所有讀寫一律走 `Attach.RealHdrRow(ws)`／`RealCol(ws, n)`／
+    `RealLastRow(ws)`（n 是頁面欄：A=1…J=10、K=11 Caption、L=12 LOAN），**不要再寫 `"A2:J10000"`、
+    `Columns("H")`、`cells(r, "I")`**——`CalculateRealizedPnL`、`ClearAllData`、儀表板的實現損益加總、
+    `RebuildRealizedHistory`、`RealizedBefore` 都已改。**K 欄 Caption 是手打的、以「代號｜出場日」為鍵重掛**：
+    `CalculateRealizedPnL` 清表前 `ReadRealizedCaptions` 讀成字典、重寫每列時依鍵寫回（同一天同一檔多列共用
+    同一條——使用者指定），找不到對應交易的 Caption 停在表格下方寫成 `[TICKER yyyy-mm-dd] 文字`（A 欄空，
+    `End(xlUp)` 不會把它算成資料），下次 UP 再照前綴讀回。表頭改 RR4 深橘、CAPTION／LOAN DISTRIBUTION 一起畫。
+    `MigrateRealizedNav`（`CalculateRealizedPnL` 開頭呼叫，有 bar 就跳過）做一次性遷移：清掉 L168:L467 三百條
+    `=IF(G>0,…)` 死公式、M211:M213 三條孤兒備註、`_FilterDatabase` 舊名稱，再 `NavAdd`——整列／整欄插入會把手打格
+    連同資料一起位移，這就是為什麼不用搬格子。實測遷移＋UP 後 15 條 Caption 全部回到原交易列、HistoryLog D 欄
+    66,612 不變。
   - V/VT/C/CC 各自的繪製程序從第 1 列開始畫，所以進場先 `NavStrip(ws)`、收尾
     （含提早 exit 的路徑）`NavAdd(ws, code)`；隱藏的工作表層級名稱 `RR4NAV` 標記
     「目前有那 3 列」，靠它避免重畫時疊出第二條 bar。VT/CC 的打字輸入格用
