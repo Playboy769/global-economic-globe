@@ -1796,8 +1796,18 @@ Private Function TwGroupUniverse(ByRef tickers() As String, ByRef labels() As St
     Dim shares As Object, mkt As Object
     Call TwSharesMap(shares, mkt)
     Dim i As Long, j As Long
+    Dim used As Object: Set used = CreateObject("Scripting.Dictionary")
+    used.CompareMode = vbTextCompare
     For i = 0 To n - 1
-        tickers(i) = CStr(gNames(i))
+        ' display / series key = the normalised name; tblGroups keeps its own
+        Dim nrm As String: nrm = NormalizeGroupName(CStr(gNames(i)))
+        If used.Exists(nrm) Then
+            used(nrm) = used(nrm) + 1
+            tickers(i) = nrm & " (" & used(nrm) & ")"
+        Else
+            used(nrm) = 1
+            tickers(i) = nrm
+        End If
         groups(i) = ""
         Dim tks As Variant: tks = Sanner.GetSectorTickers("TW", CStr(gNames(i)))
         Dim m As Long: m = 0
@@ -1893,4 +1903,26 @@ Private Function JsonPieceValue(ByVal piece As String) As String
     If p > 0 Then piece = Mid(piece, p + 3)
     piece = Replace(Replace(Replace(Replace(piece, """", ""), "}", ""), "]", ""), ",", "")
     JsonPieceValue = Trim(piece)
+End Function
+
+' tblGroups names are a mix of styles ("02. <cjk> - IC<cjk> (IC Design)",
+' "<cjk>", "<cjk> Air transportation" ...).  For the TG page only,
+' normalise for display (the table itself is untouched):
+'   1. drop a leading "NN. " number          2. drop any (parenthetical)
+'   3. "CJK category - sub" -> sub            4. drop a trailing U+65CF U+7FA4 ("group")
+'   5. "CJK + English translation" -> CJK     6. "CJK + CJK synonym" -> first
+Private Function NormalizeGroupName(ByVal nm As String) As String
+    Dim re As Object: Set re = CreateObject("VBScript.RegExp")
+    re.Global = True
+    nm = Replace(nm, ChrW(&H3000), " ")
+    re.Pattern = "^\s*\d+\s*[.\uFF0E]\s*": nm = re.Replace(nm, "")
+    re.Pattern = "\s*[(\uFF08][^)\uFF09]*[)\uFF09]": nm = re.Replace(nm, "")
+    re.Pattern = "\s+": nm = Trim(re.Replace(nm, " "))
+    re.Pattern = "^([^\x00-\x7F]+)\s*-\s*(.+)$": nm = re.Replace(nm, "$2")
+    nm = Trim(nm)
+    Dim tail As String: tail = ChrW(&H65CF) & ChrW(&H7FA4)          ' "group" suffix
+    If Len(nm) > 2 And Right(nm, 2) = tail Then nm = Trim(Left(nm, Len(nm) - 2))
+    re.Pattern = "^([^\x00-\x7F]+)\s+[A-Za-z]+(\s+[A-Za-z]+)+$": nm = re.Replace(nm, "$1")
+    re.Pattern = "^([^\x00-\x7F]+)\s+([^\x00-\x7F]+)$": nm = re.Replace(nm, "$1")
+    NormalizeGroupName = Trim(nm)
 End Function
