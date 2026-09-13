@@ -30,6 +30,11 @@ End Type
 Public g_PriceCache As Object
 Public g_CacheTime As Date
 
+' Realized page columns (page coordinates; see RealHdrRow / RealCol below)
+Public Const REAL_NCOL     As Long = 10   ' generated columns A:J
+Public Const REAL_CAP_COL  As Long = 11   ' hand-typed Caption (page column K)
+Public Const REAL_LOAN_COL As Long = 12   ' hand-typed LOAN Distribution header (page column L)
+
 Function GetCompanyName(Ticker As String) As String
     Dim url As String, http As Object, response As String
     Dim nameStr As String, startPos As Long, endPos As Long
@@ -507,13 +512,102 @@ Function GetHistoryPrices(Ticker As String) As Object
     Set GetHistoryPrices = dict
 End Function
 
+' ================================================================
+' Realized page geometry (2026-09-13): the page carries the nav bar now
+' (page code R), so like every report page it keeps row 1 and column A
+' blank with the bar in rows 2-4. Its own layout is still "header row 1,
+' data from row 2, columns A:J" in PAGE coordinates; every reader and
+' writer goes through these so the sheet coordinates follow the bar.
+'   RealHdrRow(ws)   sheet row of the header (5 with the bar, 1 without)
+'   RealCol(ws, n)   sheet column of page column n (A=1 .. J=10,
+'                    K=11 Caption, L=12 LOAN Distribution)
+' ================================================================
+Public Function RealHdrRow(ByVal ws As Worksheet) As Long
+    RealHdrRow = 1 + NavOffset(ws)
+End Function
+
+Public Function RealCol(ByVal ws As Worksheet, ByVal n As Long) As Long
+    RealCol = n + NavLeft(ws)
+End Function
+
+' Last sheet row holding a realized trade (the header row when there are none).
+Public Function RealLastRow(ByVal ws As Worksheet) As Long
+    RealLastRow = ws.Cells(ws.Rows.Count, RealCol(ws, 1)).End(xlUp).Row
+    If RealLastRow < RealHdrRow(ws) Then RealLastRow = RealHdrRow(ws)
+End Function
+
+' Caption key: ticker + exit date. Every FIFO row of the same ticker sold
+' on the same day shares one caption (owner's choice, 2026-09-13).
+Private Function RealCapKey(ByVal Ticker As String, ByVal d As Variant) As String
+    If IsDate(d) Then
+        RealCapKey = UCase(Trim(Ticker)) & "|" & Format(CDate(d), "yyyy-mm-dd")
+    Else
+        RealCapKey = UCase(Trim(Ticker)) & "|"
+    End If
+End Function
+
+' Hand-typed captions (page column K) keyed by ticker|exit date, read
+' before the table is cleared. Captions whose trade no longer exists are
+' parked below the table as "[TICKER yyyy-mm-dd] text" in the same column
+' (no ticker in column A, so the readers' End(xlUp) never sees them); such
+' parked lines are picked up again here by their prefix.
+Private Function ReadRealizedCaptions(ByVal ws As Worksheet) As Object
+    Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
+    Dim r0 As Long: r0 = RealHdrRow(ws)
+    Dim cCap As Long: cCap = RealCol(ws, REAL_CAP_COL)
+    Dim lastCap As Long: lastCap = ws.Cells(ws.Rows.Count, cCap).End(xlUp).Row
+    Dim r As Long, k As String, txt As String
+    For r = r0 + 1 To lastCap
+        txt = Trim(CStr(ws.Cells(r, cCap).Value))
+        If txt <> "" Then
+            k = ""
+            If CStr(ws.Cells(r, RealCol(ws, 1)).Value) <> "" Then
+                k = RealCapKey(CStr(ws.Cells(r, RealCol(ws, 1)).Value), ws.Cells(r, RealCol(ws, 9)).Value)
+            ElseIf Left(txt, 1) = "[" And InStr(txt, "]") > 2 Then
+                k = Replace(Mid(txt, 2, InStr(txt, "]") - 2), " ", "|")
+                txt = Trim(Mid(txt, InStr(txt, "]") + 1))
+            End If
+            If k <> "" Then
+                If Not d.Exists(k) Then d.Add k, txt
+            End If
+        End If
+    Next r
+    Set ReadRealizedCaptions = d
+End Function
+
+' One-off move onto the nav-bar layout (2026-09-13). NavAdd does the real
+' work - inserting the blank row + column and the 3 bar rows shifts the
+' hand-typed Caption / LOAN columns together with the table, exactly like
+' a manual insert. Before that this clears what the owner chose to drop:
+' the 300 dead "=IF(G>0, ...)" LOAN formulas and three stranded notes below
+' the table in page columns L:M (only the L1 header stays), and the stale
+' _FilterDatabase name. Safe to call again: a page that has the bar is
+' left alone. CalculateRealizedPnL calls it, so the first UP migrates.
+Public Sub MigrateRealizedNav()
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Sheets("Realized"): On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
+    If NavHasRows(ws) Then Exit Sub
+    On Error Resume Next
+    ws.AutoFilterMode = False
+    ws.Names("_FilterDatabase").Delete
+    On Error GoTo 0
+    ws.Range(ws.Cells(2, REAL_LOAN_COL), ws.Cells(ws.Rows.Count, REAL_LOAN_COL + 1)).Clear
+    Call NavAdd(ws, "R")
+End Sub
+
 Sub CalculateRealizedPnL()
     Dim wsTrans As Worksheet, wsReal As Worksheet, wsPort As Worksheet
     Set wsTrans = ThisWorkbook.Sheets("Transactions")
     Set wsReal = ThisWorkbook.Sheets("Realized")
     Set wsPort = ThisWorkbook.Sheets("RR4")
     Application.ScreenUpdating = False
-    wsReal.Range("A2:J10000").ClearContents
+    Call MigrateRealizedNav                       ' first UP on the old layout: insert the bar
+    Call NavAdd(wsReal, "R")                      ' afterwards: just repaint the bar
+    Dim r0 As Long: r0 = RealHdrRow(wsReal)
+    Dim caps As Object: Set caps = ReadRealizedCaptions(wsReal)
+    wsReal.Range(wsReal.Cells(r0 + 1, RealCol(wsReal, 1)), _
+                 wsReal.Cells(r0 + 10000, RealCol(wsReal, REAL_CAP_COL))).ClearContents
 
     ' 2026-08-14: RET% inserted as column B (realized return on the FIFO cost
     ' basis of the shares sold), so everything from the old column B rightwards
@@ -525,14 +619,16 @@ Sub CalculateRealizedPnL()
     ' MigrateRealizedLayout once to shift them to K:M before the first UPDATE
     ' on the new layout. The old J1:L6 date-filter panel was removed with the
     ' same change; see the comment on MigrateRealizedLayout.
+    ' Header (RR4 palette since 2026-09-13): the 10 generated columns plus
+    ' the two hand-kept ones, so they read as one table.
     Dim hdrs As Variant
     hdrs = Array("TICKER", "RET%", "PNL", "SHARES", "AVG COST", "NET AMT", _
-                 "STRATEGY", "PNL(TWD)", "DATE", "BROKER")
+                 "STRATEGY", "PNL(TWD)", "DATE", "BROKER", "CAPTION", "LOAN DISTRIBUTION")
     Dim hc As Integer
-    For hc = 0 To 9
-        With wsReal.Cells(1, hc + 1)
+    For hc = 0 To REAL_LOAN_COL - 1
+        With wsReal.Cells(r0, RealCol(wsReal, hc + 1))
             .Value = hdrs(hc)
-            .Font.Color = RGB(255, 192, 0)
+            .Font.Color = RR4_ACCENT
             .Font.Bold = True
             .Font.Size = 9
             .Font.Name = "Consolas"
@@ -540,9 +636,9 @@ Sub CalculateRealizedPnL()
             .HorizontalAlignment = xlCenter
         End With
     Next hc
-    With wsReal.Range(wsReal.Cells(1, 1), wsReal.Cells(1, 10)).Borders(xlEdgeBottom)
+    With wsReal.Range(wsReal.Cells(r0, RealCol(wsReal, 1)), wsReal.Cells(r0, RealCol(wsReal, REAL_LOAN_COL))).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
-        .Color = RGB(255, 192, 0)
+        .Color = RR4_LINE
         .Weight = xlThin
     End With
 
@@ -553,7 +649,8 @@ Sub CalculateRealizedPnL()
     exRate = RR4FxRate()
 
     Dim lastRow As Long: lastRow = wsTrans.Cells(wsTrans.Rows.Count, "A").End(xlUp).Row
-    Dim writeRow As Long: writeRow = 2
+    Dim writeRow As Long: writeRow = r0 + 1
+    Dim c0 As Long: c0 = NavLeft(wsReal)          ' page column n -> sheet column c0 + n
     Dim rr As Long
 
     For rr = 2 To lastRow
@@ -645,26 +742,32 @@ Sub CalculateRealizedPnL()
                 If IsDate(tDate) Then finalDate = CDate(tDate) Else finalDate = Date
 
                 With wsReal
-                    .Cells(writeRow, 1) = Ticker
+                    .Cells(writeRow, c0 + 1) = Ticker
                     ' RET% = realized PnL / FIFO cost basis of the shares sold.
                     ' A zero cost basis (free shares, incomplete history) would
                     ' divide by zero, so those rows show "-" instead.
                     If totalCostBasis > 0.00001 Then
-                        .Cells(writeRow, 2) = rlPnl / totalCostBasis
-                        .Cells(writeRow, 2).NumberFormat = "0.00%"
+                        .Cells(writeRow, c0 + 2) = rlPnl / totalCostBasis
+                        .Cells(writeRow, c0 + 2).NumberFormat = "0.00%"
                     Else
-                        .Cells(writeRow, 2) = "-"
-                        .Cells(writeRow, 2).NumberFormat = "General"
+                        .Cells(writeRow, c0 + 2) = "-"
+                        .Cells(writeRow, c0 + 2).NumberFormat = "General"
                     End If
-                    .Cells(writeRow, 2).HorizontalAlignment = xlRight
-                    .Cells(writeRow, 3) = rlPnl: .Cells(writeRow, 3).NumberFormat = "#,##0.00"
-                    .Cells(writeRow, 4) = shares
-                    .Cells(writeRow, 5) = fifoAvgC
-                    .Cells(writeRow, 6) = NetAmount
-                    .Cells(writeRow, 7) = strat
-                    .Cells(writeRow, 8) = rlTWD: .Cells(writeRow, 8).NumberFormat = "#,##0"
-                    .Cells(writeRow, 9) = finalDate: .Cells(writeRow, 9).NumberFormat = "yyyy/m/d"
-                    .Cells(writeRow, 10) = broker
+                    .Cells(writeRow, c0 + 2).HorizontalAlignment = xlRight
+                    .Cells(writeRow, c0 + 3) = rlPnl: .Cells(writeRow, c0 + 3).NumberFormat = "#,##0.00"
+                    .Cells(writeRow, c0 + 4) = shares
+                    .Cells(writeRow, c0 + 5) = fifoAvgC
+                    .Cells(writeRow, c0 + 6) = NetAmount
+                    .Cells(writeRow, c0 + 7) = strat
+                    .Cells(writeRow, c0 + 8) = rlTWD: .Cells(writeRow, c0 + 8).NumberFormat = "#,##0"
+                    .Cells(writeRow, c0 + 9) = finalDate: .Cells(writeRow, c0 + 9).NumberFormat = "yyyy/m/d"
+                    .Cells(writeRow, c0 + 10) = broker
+                    ' caption follows the trade, not the row (keyed ticker|exit date)
+                    Dim capKey As String: capKey = RealCapKey(Ticker, finalDate)
+                    If caps.Exists(capKey) Then
+                        .Cells(writeRow, c0 + REAL_CAP_COL) = Replace(caps(capKey), vbNullChar, "")
+                        caps(capKey) = Replace(caps(capKey), vbNullChar, "") & vbNullChar   ' used (orphan pass)
+                    End If
                     ' Gains (and flat trades) grey, losses red - RET% / PNL /
                     ' PNL(TWD) only, the descriptive columns keep sheet default.
                     Dim pnlClr As Long
@@ -673,9 +776,9 @@ Sub CalculateRealizedPnL()
                     Else
                         pnlClr = RGB(200, 200, 200)
                     End If
-                    .Cells(writeRow, 2).Font.Color = pnlClr
-                    .Cells(writeRow, 3).Font.Color = pnlClr
-                    .Cells(writeRow, 8).Font.Color = pnlClr
+                    .Cells(writeRow, c0 + 2).Font.Color = pnlClr
+                    .Cells(writeRow, c0 + 3).Font.Color = pnlClr
+                    .Cells(writeRow, c0 + 8).Font.Color = pnlClr
                 End With
                 writeRow = writeRow + 1
 
@@ -689,7 +792,20 @@ Sub CalculateRealizedPnL()
     ' column 9 is LAST - a match would have overwritten the live price.
     ' RebuildPortfolioDashboard writes ENTRY PX from the same FIFO lots.
 
-    wsReal.Columns("A:J").AutoFit
+    ' Captions whose trade is gone (deleted / re-dated transaction): park
+    ' them under the table with their key so nothing typed is lost.
+    Dim orphanRow As Long: orphanRow = writeRow + 1
+    Dim ck As Variant, cv As String
+    For Each ck In caps.keys
+        cv = CStr(caps(ck))
+        If Right(cv, 1) <> vbNullChar Then
+            wsReal.Cells(orphanRow, c0 + REAL_CAP_COL) = "[" & Replace(CStr(ck), "|", " ") & "] " & cv
+            wsReal.Cells(orphanRow, c0 + REAL_CAP_COL).Font.Color = RGB(150, 150, 150)
+            orphanRow = orphanRow + 1
+        End If
+    Next ck
+
+    wsReal.Range(wsReal.Columns(c0 + 1), wsReal.Columns(c0 + REAL_NCOL)).AutoFit
     Application.ScreenUpdating = True
 End Sub
 
@@ -710,8 +826,10 @@ Sub ClearAllData()
         If LR > 1 Then wsTrans.Range("A2:N" & LR).ClearContents
     End If
     If Not wsReal Is Nothing Then
-        LR = wsReal.Cells(wsReal.Rows.Count, "A").End(xlUp).Row
-        If LR > 1 Then wsReal.Range("A2:J" & LR).ClearContents
+        ' page A:K (the captions go with their trades); header row and bar stay
+        LR = RealLastRow(wsReal)
+        If LR > RealHdrRow(wsReal) Then wsReal.Range(wsReal.Cells(RealHdrRow(wsReal) + 1, RealCol(wsReal, 1)), _
+                                                     wsReal.Cells(LR, RealCol(wsReal, REAL_CAP_COL))).ClearContents
     End If
     If Not wsHist Is Nothing Then
         ' Layout v2 runs A:M; P1:R6 (YTD baselines) and Z3 (token) stay put

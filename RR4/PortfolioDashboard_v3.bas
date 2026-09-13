@@ -195,8 +195,9 @@ Sub RebuildPortfolioDashboard()
 
     Dim realPnL As Double
     On Error Resume Next
-    ' PNL(TWD) moved G -> H when RET% was inserted as column B (Attach.bas)
-    realPnL = Application.WorksheetFunction.Sum(wsR.Columns("H"))
+    ' PNL(TWD) moved G -> H when RET% was inserted as column B (Attach.bas);
+    ' page column 8, wherever the nav bar puts it (Attach.RealCol)
+    realPnL = Application.WorksheetFunction.Sum(wsR.Columns(RealCol(wsR, 8)))
     On Error GoTo Fail
 
     Dim portBeta As Double
@@ -354,18 +355,19 @@ Public Sub RebuildRealizedHistory(Optional ByVal wsH As Worksheet = Nothing)
     On Error Resume Next: Set wsR = ThisWorkbook.Sheets(SH_REAL): On Error GoTo 0
     If wsR Is Nothing Then Exit Sub
 
-    ' realized trades: (exit date, PnL TWD)
-    Dim lastR As Long: lastR = wsR.cells(wsR.Rows.count, "A").End(xlUp).row
+    ' realized trades: (exit date, PnL TWD) - page columns I / H via Attach.RealCol
+    Dim r0 As Long: r0 = RealHdrRow(wsR)
+    Dim lastR As Long: lastR = RealLastRow(wsR)
     Dim n As Long, r As Long
     Dim exD() As Long, exP() As Double
-    If lastR >= 2 Then
-        ReDim exD(1 To lastR - 1): ReDim exP(1 To lastR - 1)
-        For r = 2 To lastR
-            Dim dv As Variant: dv = wsR.cells(r, "I").Value
+    If lastR > r0 Then
+        ReDim exD(1 To lastR - r0): ReDim exP(1 To lastR - r0)
+        For r = r0 + 1 To lastR
+            Dim dv As Variant: dv = wsR.cells(r, RealCol(wsR, 9)).Value
             If IsDate(dv) Then
                 n = n + 1
                 exD(n) = Int(CDbl(CDate(dv)))
-                exP(n) = NumOr0(wsR.cells(r, "H").Value)
+                exP(n) = NumOr0(wsR.cells(r, RealCol(wsR, 8)).Value)
             End If
         Next r
     End If
@@ -1954,11 +1956,11 @@ Private Function RealizedBefore(ByVal d As Date) As Double
     On Error Resume Next: Set wsR = ThisWorkbook.Sheets(SH_REAL): On Error GoTo 0
     If wsR Is Nothing Then Exit Function
     Dim r As Long, lastR As Long
-    lastR = wsR.cells(wsR.Rows.count, "A").End(xlUp).row
-    For r = 2 To lastR
-        Dim dv As Variant: dv = wsR.cells(r, "I").Value
+    lastR = RealLastRow(wsR)
+    For r = RealHdrRow(wsR) + 1 To lastR
+        Dim dv As Variant: dv = wsR.cells(r, RealCol(wsR, 9)).Value
         If IsDate(dv) Then
-            If Int(CDate(dv)) < d Then RealizedBefore = RealizedBefore + NumOr0(wsR.cells(r, "H").Value)
+            If Int(CDate(dv)) < d Then RealizedBefore = RealizedBefore + NumOr0(wsR.cells(r, RealCol(wsR, 8)).Value)
         End If
     Next r
 End Function
