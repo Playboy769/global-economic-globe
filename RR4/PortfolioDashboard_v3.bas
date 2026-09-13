@@ -120,6 +120,7 @@ Public Const RR4_LINE      As Long = 4605510    ' RGB(70,70,70)
 ' Donut slice palette (v4.3): one colour per position, cycled. Chosen to
 ' stay apart from each other on the black chart background.
 Private Const RR4_PALETTE_N As Long = 12
+Private m_fxLive As Boolean                 ' v4.14: was the last UP's USD/TWD fetched live (Yahoo TWD=X)
 
 ' ================================================================
 '  MAIN ENTRY
@@ -146,7 +147,12 @@ Sub RebuildPortfolioDashboard()
     On Error GoTo Fail
 
     ' --- hand-entered values: read BEFORE the sheet is cleared ---
+    ' USD/TWD (v4.14, 2026-09-13): live from Yahoo TWD=X on every UP; the
+    ' typed C6 value only carries the rate across when the fetch fails
     Dim exRate As Double: exRate = GetExRate(wsP)
+    Dim liveFx As Double: liveFx = FetchLiveFx()
+    m_fxLive = (liveFx > 20 And liveFx < 50)
+    If m_fxLive Then exRate = liveFx
     Dim arrCode As String: arrCode = UCase(CellStr(wsP.Range(RR4_ARR_CELL).Value))
     Dim tiTicker As String: tiTicker = UCase(CellStr(wsP.Range(TI_TICKER_CELL).Value))
     Dim tiTarget As Variant: tiTarget = wsP.Range(TI_TARGET_CELL).Value
@@ -218,7 +224,7 @@ Sub RebuildPortfolioDashboard()
     ' currency split lives in the Summary, the rest was not used)
     Application.EnableEvents = prevEvents
     Application.StatusBar = "Dashboard updated: " & Format(Now, "hh:mm:ss")
-    Call NavNotify("UP done " & Format(Now, "hh:mm:ss") & " - " & posCount & " positions")
+    Call NavNotify("UP done " & Format(Now, "hh:mm:ss") & " - " & posCount & " positions  .  USD/TWD " & Format(exRate, "0.00") & IIf(m_fxLive, " live", " (typed / default - Yahoo fetch failed)"))
     Exit Sub
 
 Fail:
@@ -811,6 +817,12 @@ Private Sub DrawHeader(ws As Worksheet, totalMkt As Double, exRate As Double, _
         .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .HorizontalAlignment = xlLeft
+        ' where the rate came from (hover): live Yahoo TWD=X, or the typed / default fallback
+        On Error Resume Next
+        .ClearComments
+        .AddComment IIf(m_fxLive, "USD/TWD live from Yahoo TWD=X, " & Format(Now, "yyyy/mm/dd hh:mm"), _
+                        "USD/TWD: Yahoo fetch failed - using the typed value (31.6 default)")
+        On Error GoTo 0
     End With
 
     With ws.cells(RR4_TOP + 2, RR4_LEFT + 3)
@@ -2414,8 +2426,32 @@ Private Function PnLColorMuted(v As Double) As Long
     End If
 End Function
 
-' USD/TWD from the page's input cell. B2 is where v4 kept it - read once
-' as a fallback so the first v4.1 rebuild carries a typed rate across.
+' v4.14: USD/TWD spot from the Yahoo chart API (TWD=X = 1 USD in TWD).
+' meta.regularMarketPrice is the latest quote; 0 when anything fails, so
+' the caller falls back to the typed C6 value.
+Private Function FetchLiveFx() As Double
+    Dim http As Object, resp As String
+    On Error Resume Next
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://query1.finance.yahoo.com/v8/finance/chart/TWD=X?interval=1d&range=5d", False
+    http.setRequestHeader "User-Agent", "Mozilla/5.0"
+    http.send
+    If http.Status = 200 Then resp = http.responseText
+    On Error GoTo 0
+    If resp = "" Then Exit Function
+    Dim key As String: key = Chr(34) & "regularMarketPrice" & Chr(34) & ":"
+    Dim p As Long: p = InStr(resp, key)
+    If p = 0 Then Exit Function
+    p = p + Len(key)
+    Dim q As Long: q = p
+    Do While q <= Len(resp)
+        If InStr("0123456789.", Mid(resp, q, 1)) = 0 Then Exit Do
+        q = q + 1
+    Loop
+    If q > p Then FetchLiveFx = Val(Mid(resp, p, q - p))
+End Function
+
+' USD/TWD from the page's input cell (fallback when the live fetch fails).
 Private Function GetExRate(ws As Worksheet) As Double
     ' (the v4 "read B2 as well" fallback is gone: B2 is a nav-bar cell now)
     Dim v As Double
