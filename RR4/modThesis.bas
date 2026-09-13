@@ -35,6 +35,9 @@ Private Const PANEL_COL As Long = 15             ' O at draw time (table A:M, N 
 Private Const PANEL_W As Double = 620
 Private Const PANEL_H As Double = 760
 Private Const ZH_FONT As String = "Noto Sans TC"
+Private Const DEL_WINDOW As Double = 2#          ' seconds: a second double-click on the same row within this deletes it
+Private m_lastDblRow As Long                     ' row of the last double-click (0 = none)
+Private m_lastDblAt As Double                    ' Timer of that double-click
 
 Private Function L(ByVal key As String) As String
     Select Case key
@@ -51,7 +54,9 @@ Private Function L(ByVal key As String) As String
         Case "S6": L = ChrW(&H6C7A) & ChrW(&H7B56) & ChrW(&H8207) & ChrW(&H4E0B) & ChrW(&H4E00) & ChrW(&H500B) & ChrW(&H9A57) & ChrW(&H8B49) & ChrW(&H9EDE)
         Case "NEXT": L = ChrW(&H4E0B) & ChrW(&H6B21) & ChrW(&H9A57) & ChrW(&H8B49) & ChrW(&H65E5)
         Case "STATUS": L = ChrW(&H72C0) & ChrW(&H614B)
-        Case "PANEL_EMPTY": L = ChrW(&H96D9) & ChrW(&H64CA) & ChrW(&H5DE6) & ChrW(&H5074) & ChrW(&H4EFB) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF0C) & ChrW(&H9019) & ChrW(&H88E1) & ChrW(&H986F) & ChrW(&H793A) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H7684) & ChrW(&H516D) & ChrW(&H6BB5) & ChrW(&H5168) & ChrW(&H6587)
+        Case "PANEL_EMPTY": L = ChrW(&H96D9) & ChrW(&H64CA) & ChrW(&H5DE6) & ChrW(&H5074) & ChrW(&H4EFB) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF0C) & ChrW(&H9019) & ChrW(&H88E1) & ChrW(&H986F) & ChrW(&H793A) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H7684) & ChrW(&H516D) & ChrW(&H6BB5) & ChrW(&H5168) & ChrW(&H6587) & ChrW(&HFF1B) & ChrW(&H0032) & ChrW(&H0020) & ChrW(&H79D2) & ChrW(&H5167) & ChrW(&H518D) & ChrW(&H96D9) & ChrW(&H64CA) & ChrW(&H540C) & ChrW(&H4E00) & ChrW(&H5217) & ChrW(&HFF1D) & ChrW(&H522A) & ChrW(&H9664) & ChrW(&H8A72) & ChrW(&H7BC7) & ChrW(&HFF08) & ChrW(&H6703) & ChrW(&H5148) & ChrW(&H78BA) & ChrW(&H8A8D) & ChrW(&HFF09)
+        Case "DEL_ASK": L = ChrW(&H522A) & ChrW(&H9664) & ChrW(&H9019) & ChrW(&H7BC7) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&HFF1F)
+        Case "DEL_DONE": L = ChrW(&H5DF2) & ChrW(&H522A) & ChrW(&H9664)
         Case "TITLE_ZH": L = ChrW(&H7E3D) & ChrW(&H7D93) & ChrW(&H8207) & ChrW(&H500B) & ChrW(&H80A1) & ChrW(&H0020) & ChrW(&H0074) & ChrW(&H0068) & ChrW(&H0065) & ChrW(&H0073) & ChrW(&H0069) & ChrW(&H0073) & ChrW(&H0020) & ChrW(&H8CC7) & ChrW(&H6599) & ChrW(&H5EAB)
     End Select
 End Function
@@ -334,6 +339,27 @@ Public Sub ThesisDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cance
     If lo.DataBodyRange Is Nothing Then Exit Sub
     If Intersect(Target.cells(1, 1), lo.DataBodyRange) Is Nothing Then Exit Sub
     Cancel = True                                    ' no in-cell edit on a double-click
+    Dim r As Long: r = Target.cells(1, 1).Row
+    Dim lc As Long: lc = NavLeft(ws)
+    ' Excel has no triple-click event (click 3 is just a click), so "double-
+    ' click again within DEL_WINDOW seconds on the same row" is the delete gesture
+    Dim el As Double: el = Timer - m_lastDblAt: If el < 0 Then el = el + 86400
+    If r = m_lastDblRow And el <= DEL_WINDOW Then
+        m_lastDblRow = 0
+        Dim nm As String: nm = CStr(ws.cells(r, 3 + lc).Value) & "  " & CStr(ws.cells(r, 4 + lc).Value)
+        If MsgBox(L("DEL_ASK") & vbCrLf & vbCrLf & nm, vbYesNo + vbQuestion, "Thesis Library") = vbYes Then
+            Dim prevEv As Boolean: prevEv = Application.EnableEvents
+            Application.EnableEvents = False
+            On Error Resume Next
+            lo.ListRows(r - lo.HeaderRowRange.Row).Delete
+            On Error GoTo 0
+            Application.EnableEvents = prevEv
+            Call ShowThesis(ws, Nothing)
+            Call NavNotify("Thesis Library: " & L("DEL_DONE") & " - " & nm)
+        End If
+        Exit Sub
+    End If
+    m_lastDblRow = r: m_lastDblAt = Timer
     Call ShowThesis(ws, Target)
 End Sub
 
