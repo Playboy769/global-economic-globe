@@ -52,10 +52,21 @@ Private Function NavLeft(ByVal ws As Worksheet) As Long
     If NavPageCode(ws) = "P" Or NavPageCode(ws) = "TH" Then NavLeft = RR4_LEFT
 End Function
 
+' Blank rows ABOVE the bar: the Thesis Library keeps row 1 empty (the bar
+' sits in rows 2-4 there), every other page starts the bar in row 1.
+Private Function NavTop(ByVal ws As Worksheet) As Long
+    If NavPageCode(ws) = "TH" Then NavTop = 1
+End Function
+
+' Rows the bar block takes in total (blank rows above + the 3 bar rows).
+Private Function NavBlock(ByVal ws As Worksheet) As Long
+    NavBlock = NAV_ROWS + NavTop(ws)
+End Function
+
 ' Address of the page's command cell - B1, or C1 on RR4.
 Public Function NavCmdCell(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
-    NavCmdCell = ws.cells(1, 2 + NavLeft(ws)).Address(False, False)
+    NavCmdCell = ws.cells(1 + NavTop(ws), 2 + NavLeft(ws)).Address(False, False)
 End Function
 
 ' --- code -> sheet tab name ---------------------------------------
@@ -106,7 +117,7 @@ End Function
 ' Rows the bar currently pushes a page's own layout down by.
 Public Function NavOffset(ByVal ws As Worksheet) As Long
     If NavPageCode(ws) = "P" Then Exit Function     ' RR4 layout already counts them
-    If NavHasRows(ws) Then NavOffset = NAV_ROWS
+    If NavHasRows(ws) Then NavOffset = NavBlock(ws)
 End Function
 
 ' Take the bar rows off so a routine can redraw its page from row 1.
@@ -117,7 +128,7 @@ Public Sub NavStrip(ByVal ws As Worksheet)
     Application.EnableEvents = False
     On Error GoTo Fin
     Call ShapesMoveOnly(ws)         ' see ShapesMoveOnly: charts anchored in rows 1-3
-    ws.Rows("1:" & NAV_ROWS).Delete
+    ws.Rows("1:" & NavBlock(ws)).Delete
     Dim k As Long
     For k = ws.Names.count To 1 Step -1
         If Right(ws.Names(k).Name, Len(NAV_MARK) + 1) = "!" & NAV_MARK Then ws.Names(k).Delete
@@ -148,7 +159,7 @@ Public Sub NavAdd(ByVal ws As Worksheet, Optional ByVal code As String = "")
     On Error GoTo Fin
     If code <> "P" And Not NavHasRows(ws) Then
         Call ShapesMoveOnly(ws)
-        ws.Rows("1:" & NAV_ROWS).Insert Shift:=xlDown
+        ws.Rows("1:" & NavBlock(ws)).Insert Shift:=xlDown
         ws.Names.Add Name:=NAV_MARK, RefersTo:="=TRUE", Visible:=False
     End If
     Call DrawNavRows(ws, code)
@@ -175,12 +186,13 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     On Error GoTo Fin
 
     Dim off As Long: off = NavLeft(ws)
+    Dim top As Long: top = NavTop(ws)
     Dim area As Range
     If code = "P" Then
         ' stop short of T1/T2 (the inception / capital config cells)
         Set area = ws.Range(ws.cells(1, 1), ws.cells(3, 19))
     Else
-        Set area = ws.Range("A1:Z3")
+        Set area = ws.Range(ws.cells(1 + top, 1), ws.cells(3 + top, 26))
     End If
     With area
         .Clear
@@ -194,12 +206,13 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     End With
     ' rows 2/3 are taller than the text needs and vertically centred, so the
     ' three lines sit apart without extra rows (v4.3 - was 16 / 18)
-    ws.Rows(1).RowHeight = 24
-    ws.Rows(2).RowHeight = 22
-    ws.Rows(3).RowHeight = 22
+    If top > 0 Then ws.Rows(top).RowHeight = 14
+    ws.Rows(1 + top).RowHeight = 24
+    ws.Rows(2 + top).RowHeight = 22
+    ws.Rows(3 + top).RowHeight = 22
 
     ' row 1: badge | command cell | title
-    With ws.cells(1, 1 + off)
+    With ws.cells(1 + top, 1 + off)
         .Value = code
         .Interior.Color = RR4_ACCENT
         .Font.Color = RGB(0, 0, 0)
@@ -207,7 +220,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
-    With ws.cells(1, 2 + off)
+    With ws.cells(1 + top, 2 + off)
         .NumberFormat = "@"
         .Interior.Color = RR4_INPUT_BG
         .Font.Color = RR4_INPUT_FG
@@ -220,17 +233,17 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
                   "V", "VOL", "VT", "TKRVOL", _
                   "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "TH", "THESIS", "CR", "RESEARCH")
-    Call WriteCodeLine(ws.cells(2, 1 + off), pages, code, RR4_ACCENT)
+    Call WriteCodeLine(ws.cells(2 + top, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
     acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
                  "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "TH!", "THESIS", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
-    Call WriteCodeLine(ws.cells(3, 1 + off), acts, "", RGB(0, 200, 255))
+    Call WriteCodeLine(ws.cells(3 + top, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
     ' (B on RR4, so the blank spacer column A carries no line)
-    With ws.Range(ws.cells(3, 1 + off), area.cells(3, area.Columns.count)).Borders(xlEdgeBottom)
+    With ws.Range(ws.cells(3 + top, 1 + off), area.cells(3, area.Columns.count)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
         .Color = RR4_LINE
         .Weight = xlThin
@@ -319,7 +332,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     ' empty the command cell so the next code can be typed straight in
     Dim prevEv As Boolean: prevEv = Application.EnableEvents
     Application.EnableEvents = False
-    src.cells(1, 2 + NavLeft(src)).Value = ""
+    src.cells(1 + NavTop(src), 2 + NavLeft(src)).Value = ""
     Application.EnableEvents = prevEv
     If cmd = "" Then Exit Sub
 
@@ -377,7 +390,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     End If
     ws.Activate
     If NavPageCode(ws) <> "" Then
-        ws.cells(1, 2 + NavLeft(ws)).Select
+        ws.cells(1 + NavTop(ws), 2 + NavLeft(ws)).Select
     Else
         ws.Range("A1").Select
     End If
