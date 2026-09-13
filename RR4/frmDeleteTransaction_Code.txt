@@ -1,0 +1,99 @@
+﻿Option Explicit
+
+'--- 初始化：開啟表單時載入資料 ---
+Private Sub UserForm_Initialize()
+    Call LoadTransactions
+End Sub
+
+'--- 核心功能：載入交易紀錄到 ListBox ---
+Private Sub LoadTransactions()
+    Dim wsTrans As Worksheet
+    Dim lastRow As Long, i As Long
+    
+    Set wsTrans = ThisWorkbook.Sheets("Transactions")
+    ' 2026-09-13: the page carries the nav bar - rows / columns via Attach.TrHdrRow / TrLastRow / TrCol
+    lastRow = TrLastRow(wsTrans)
+    Dim hdr As Long: hdr = TrHdrRow(wsTrans)
+    Dim tc As Long: tc = NavLeft(wsTrans)
+    
+    ' 清空列表
+    lstTransactions.Clear
+    
+    ' 設定標題列 (非必要，但若 ListBox 有開 ColumnHeads 則需要)
+    ' 這裡我們直接讀取資料
+    
+    If lastRow <= hdr Then
+        lstTransactions.AddItem "無交易紀錄"
+        Exit Sub
+    End If
+    
+   ' 迴圈讀取資料 (從第 2 列開始)
+    ' 修正後的假設：
+    ' A欄(1)=ID, B欄(2)=日期, C欄(3)=代號, D欄(4)=動作, E欄(5)=股數, I欄(9)=總金額
+    
+    For i = hdr + 1 To lastRow
+        With lstTransactions
+            ' .AddItem 新增第一欄 (ListBox Column 0) -> 放日期
+            .AddItem wsTrans.cells(i, tc + 2).Value               ' 原本是 1，改為 2 (B欄: 日期)
+            
+            ' 依序填入後續欄位
+            .list(.ListCount - 1, 1) = wsTrans.cells(i, tc + 3).Value ' 原本是 2，改為 3 (C欄: 代號)
+            .list(.ListCount - 1, 2) = wsTrans.cells(i, tc + 4).Value ' 原本是 3，改為 4 (D欄: 動作)
+            .list(.ListCount - 1, 3) = wsTrans.cells(i, tc + 5).Value ' 原本是 4，改為 5 (E欄: 股數)
+            
+            ' 金額原本在 H欄(8)，因為前面多一欄 ID，推測現在移到 I欄(9)
+            ' 如果您的金額還是在 H欄，請改回 8
+            .list(.ListCount - 1, 4) = wsTrans.cells(i, tc + 9).Value
+            
+            ' 隱藏的列號 (用於刪除功能)，保持 i 不變
+            .list(.ListCount - 1, 5) = i
+        End With
+    Next i
+End Sub
+
+'--- 按鈕動作：刪除選取項目 ---
+Private Sub btnDelete_Click()
+    Dim wsTrans As Worksheet
+    Dim i As Long
+    Dim rowToDelete As Long
+    Dim selectedIndex As Long
+    Dim response As VbMsgBoxResult
+    Dim tickerInfo As String
+    
+    selectedIndex = lstTransactions.ListIndex
+    
+    ' 1. 防呆：檢查有無選取
+    If selectedIndex = -1 Then
+        MsgBox "請先點選一筆要刪除的交易！", vbExclamation
+        Exit Sub
+    End If
+    
+    ' 讀取隱藏的列號 (第6欄，索引為5)
+    rowToDelete = lstTransactions.list(selectedIndex, 5)
+    
+    ' 讀取資訊做確認提示
+    tickerInfo = lstTransactions.list(selectedIndex, 0) & " - " & _
+                 lstTransactions.list(selectedIndex, 1) & " " & _
+                 lstTransactions.list(selectedIndex, 2)
+                 
+    ' 2. 二次確認
+    response = MsgBox("確定要刪除這筆紀錄嗎？" & vbCrLf & vbCrLf & _
+                      "內容: " & tickerInfo & vbCrLf & _
+                      "Excel 列號: " & rowToDelete & vbCrLf & vbCrLf & _
+                      "此動作無法復原！", vbYesNo + vbCritical, "刪除確認")
+                      
+    If response = vbNo Then Exit Sub
+    
+    ' 3. 執行刪除
+    Set wsTrans = ThisWorkbook.Sheets("Transactions")
+    wsTrans.rows(rowToDelete).Delete
+    
+    ' 4. 刪除後動作
+    MsgBox "刪除成功！系統將自動重新計算 Dashboard。", vbInformation
+    
+    ' 重新載入列表 (因為列號變了，必須重抓)
+    Call LoadTransactions
+    
+    ' 呼叫主程式更新 Dashboard (確保 Portfolio 準確)
+    Call RebuildPortfolioDashboard
+End Sub

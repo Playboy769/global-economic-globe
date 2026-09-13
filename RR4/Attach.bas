@@ -34,6 +34,8 @@ Public g_CacheTime As Date
 Public Const REAL_NCOL     As Long = 10   ' generated columns A:J
 Public Const REAL_CAP_COL  As Long = 11   ' hand-typed Caption (page column K)
 Public Const REAL_LOAN_COL As Long = 12   ' hand-typed LOAN Distribution header (page column L)
+' Transactions page (page coordinates; see TrHdrRow / TrCol below)
+Public Const TR_NCOL       As Long = 14   ' A Transaction_ID .. N Broker
 
 Function GetCompanyName(Ticker As String) As String
     Dim url As String, http As Object, response As String
@@ -575,6 +577,71 @@ Private Function ReadRealizedCaptions(ByVal ws As Worksheet) As Object
     Set ReadRealizedCaptions = d
 End Function
 
+' ================================================================
+' Transactions page geometry (2026-09-13): page code T carries the nav
+' bar too. Page layout stays "header row 1, data from row 2, A:N"; the
+' ADD / DEL forms, the FIFO builders and the dashboard all address the
+' sheet through these three.
+'   TrHdrRow(ws)   sheet row of the header (5 with the bar)
+'   TrCol(ws, n)   sheet column of page column n (A=1 .. N=14)
+'   TrLastRow(ws)  last sheet row with a Transaction_ID (header when none)
+' ================================================================
+Public Function TrHdrRow(ByVal ws As Worksheet) As Long
+    TrHdrRow = 1 + NavOffset(ws)
+End Function
+
+Public Function TrCol(ByVal ws As Worksheet, ByVal n As Long) As Long
+    TrCol = n + NavLeft(ws)
+End Function
+
+Public Function TrLastRow(ByVal ws As Worksheet) As Long
+    TrLastRow = ws.Cells(ws.Rows.Count, TrCol(ws, 1)).End(xlUp).Row
+    If TrLastRow < TrHdrRow(ws) Then TrLastRow = TrHdrRow(ws)
+End Function
+
+' One-off move of Transactions onto the nav-bar layout: drop the old
+' AutoFilter (its stale _FilterDatabase name pointed at C1:C528) so the
+' inserted rows do not drag a half-height filter along, then let NavAdd
+' insert the blank row / column and the bar. No-op once the bar is there.
+Public Sub MigrateTransactionsNav()
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Sheets("Transactions"): On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
+    If NavHasRows(ws) Then Exit Sub
+    On Error Resume Next
+    ws.AutoFilterMode = False
+    ws.Names("_FilterDatabase").Delete
+    On Error GoTo 0
+    Call NavAdd(ws, "T")
+End Sub
+
+' Header row in the RR4 palette + a fresh AutoFilter over the table
+' (owner's choice, 2026-09-13). Called on every UP; only the header row
+' and the filter range are touched, never the data.
+Public Sub DrawTransactionsHeader(ByVal ws As Worksheet)
+    Call NavAdd(ws, "T")                         ' repaint the bar (inserts it on a bar-less page)
+    Dim r0 As Long: r0 = TrHdrRow(ws)
+    Dim c As Long
+    For c = 1 To TR_NCOL
+        With ws.Cells(r0, TrCol(ws, c))
+            .Font.Color = RR4_ACCENT
+            .Font.Bold = True
+            .Font.Size = 9
+            .Font.Name = "Consolas"
+            .Interior.Color = RGB(10, 10, 10)
+            .HorizontalAlignment = xlCenter
+        End With
+    Next c
+    With ws.Range(ws.Cells(r0, TrCol(ws, 1)), ws.Cells(r0, TrCol(ws, TR_NCOL))).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+    ' Range.AutoFilter toggles - switch off first so this never turns it off
+    If ws.AutoFilterMode Then ws.AutoFilterMode = False
+    ws.Range(ws.Cells(r0, TrCol(ws, 1)), ws.Cells(TrLastRow(ws), TrCol(ws, TR_NCOL))).AutoFilter
+End Sub
+
 ' One-off move onto the nav-bar layout (2026-09-13). NavAdd does the real
 ' work - inserting the blank row + column and the 3 bar rows shifts the
 ' hand-typed Caption / LOAN columns together with the table, exactly like
@@ -648,19 +715,20 @@ Sub CalculateRealizedPnL()
     ' the RR4 page's USD/TWD input (cell moves with the layout - ask the owner)
     exRate = RR4FxRate()
 
-    Dim lastRow As Long: lastRow = wsTrans.Cells(wsTrans.Rows.Count, "A").End(xlUp).Row
+    Dim lastRow As Long: lastRow = TrLastRow(wsTrans)
     Dim writeRow As Long: writeRow = r0 + 1
     Dim c0 As Long: c0 = NavLeft(wsReal)          ' page column n -> sheet column c0 + n
+    Dim t0 As Long: t0 = NavLeft(wsTrans)         ' same for the Transactions page
     Dim rr As Long
 
-    For rr = 2 To lastRow
-        Dim tDate As Variant: tDate = wsTrans.Cells(rr, 2).Value
-        Dim Ticker As String: Ticker = UCase(Trim(wsTrans.Cells(rr, 3).Value))
-        Dim Action As String: Action = UCase(Trim(wsTrans.Cells(rr, 4).Value))
-        Dim shares As Double: shares = Val(wsTrans.Cells(rr, 5).Value)
-        Dim NetAmount As Double: NetAmount = Val(wsTrans.Cells(rr, 9).Value)
-        Dim strat As String: strat = CStr(wsTrans.Cells(rr, 12).Value)
-        Dim broker As String: broker = Trim(CStr(wsTrans.Cells(rr, 14).Value))
+    For rr = TrHdrRow(wsTrans) + 1 To lastRow
+        Dim tDate As Variant: tDate = wsTrans.Cells(rr, t0 + 2).Value
+        Dim Ticker As String: Ticker = UCase(Trim(wsTrans.Cells(rr, t0 + 3).Value))
+        Dim Action As String: Action = UCase(Trim(wsTrans.Cells(rr, t0 + 4).Value))
+        Dim shares As Double: shares = Val(wsTrans.Cells(rr, t0 + 5).Value)
+        Dim NetAmount As Double: NetAmount = Val(wsTrans.Cells(rr, t0 + 9).Value)
+        Dim strat As String: strat = CStr(wsTrans.Cells(rr, t0 + 12).Value)
+        Dim broker As String: broker = Trim(CStr(wsTrans.Cells(rr, t0 + 14).Value))
         If broker = "" Then broker = "Default"
 
         Dim currType As String
@@ -822,8 +890,9 @@ Sub ClearAllData()
 
     Dim LR As Long
     If Not wsTrans Is Nothing Then
-        LR = wsTrans.Cells(wsTrans.Rows.Count, "A").End(xlUp).Row
-        If LR > 1 Then wsTrans.Range("A2:N" & LR).ClearContents
+        LR = TrLastRow(wsTrans)
+        If LR > TrHdrRow(wsTrans) Then wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, 1)), _
+                                                     wsTrans.Cells(LR, TrCol(wsTrans, TR_NCOL))).ClearContents
     End If
     If Not wsReal Is Nothing Then
         ' page A:K (the captions go with their trades); header row and bar stay
@@ -1204,19 +1273,21 @@ Sub RunSystemDebug()
     Dim wsTr As Worksheet
     On Error Resume Next: Set wsTr = ThisWorkbook.Sheets("Transactions"): On Error GoTo 0
     If Not wsTr Is Nothing Then
-        Dim trLR As Long: trLR = wsTr.Cells(wsTr.Rows.Count, "A").End(xlUp).Row
-        Dim trCount As Long: trCount = trLR - 1
+        Dim trLR As Long: trLR = TrLastRow(wsTr)
+        Dim trH As Long: trH = TrHdrRow(wsTr)
+        Dim trC As Long: trC = NavLeft(wsTr)
+        Dim trCount As Long: trCount = trLR - trH
 
         Call DB_Row(wsDB, wr, "Transactions", "Total rows", "INFO", trCount & " records", RGB(255, 192, 0))
         wr = wr + 1
 
         Dim blankDate As Long, blankTicker As Long, blankAction As Long, blankAmt As Long
         Dim tr As Long
-        For tr = 2 To trLR
-            If Trim(CStr(wsTr.Cells(tr, 2).Value)) = "" Then blankDate = blankDate + 1
-            If Trim(CStr(wsTr.Cells(tr, 3).Value)) = "" Then blankTicker = blankTicker + 1
-            If Trim(CStr(wsTr.Cells(tr, 4).Value)) = "" Then blankAction = blankAction + 1
-            If Not IsNumeric(wsTr.Cells(tr, 9).Value) Then blankAmt = blankAmt + 1
+        For tr = trH + 1 To trLR
+            If Trim(CStr(wsTr.Cells(tr, trC + 2).Value)) = "" Then blankDate = blankDate + 1
+            If Trim(CStr(wsTr.Cells(tr, trC + 3).Value)) = "" Then blankTicker = blankTicker + 1
+            If Trim(CStr(wsTr.Cells(tr, trC + 4).Value)) = "" Then blankAction = blankAction + 1
+            If Not IsNumeric(wsTr.Cells(tr, trC + 9).Value) Then blankAmt = blankAmt + 1
         Next tr
 
         Call DB_Row(wsDB, wr, "Transactions", "Blank dates (Col B)", _
@@ -1237,8 +1308,8 @@ Sub RunSystemDebug()
         wr = wr + 1
 
         Dim invalidAction As Long
-        For tr = 2 To trLR
-            Dim act As String: act = UCase(Trim(CStr(wsTr.Cells(tr, 4).Value)))
+        For tr = trH + 1 To trLR
+            Dim act As String: act = UCase(Trim(CStr(wsTr.Cells(tr, trC + 4).Value)))
             If act <> "BUY" And act <> "SELL" And act <> "ADJUSTCOST" And act <> "" Then
                 invalidAction = invalidAction + 1
             End If

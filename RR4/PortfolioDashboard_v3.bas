@@ -133,6 +133,8 @@ Sub RebuildPortfolioDashboard()
     Set wsTr = ThisWorkbook.Sheets(SH_TRANS)
     Set wsR = ThisWorkbook.Sheets(SH_REAL)
     Call MigrateRR4TopRow(wsP)          ' v4.13: one-time shift onto the blank-row-1 layout (before any read)
+    Call MigrateTransactionsNav         ' 2026-09-13: Transactions carries the bar too (no-op once it does)
+    Call DrawTransactionsHeader(wsTr)   ' header in the RR4 palette + AutoFilter over the table
 
     If Not g_PriceCache Is Nothing Then
         g_PriceCache.RemoveAll
@@ -889,23 +891,24 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
     Next i
 
     Dim wsTr As Worksheet: Set wsTr = ThisWorkbook.Sheets(SH_TRANS)
-    Dim lastR As Long: lastR = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
+    Dim lastR As Long: lastR = TrLastRow(wsTr)
+    Dim tc As Long: tc = NavLeft(wsTr)             ' Transactions page column n -> tc + n
     Dim tRows() As Long: ReDim tRows(1 To IIf(lastR > 1, lastR, 1))
     Dim cnt As Long
 
     ' pass 1: today's rows, and today's net shares per ticker
     Dim todayNet As Object: Set todayNet = CreateObject("Scripting.Dictionary")
     Dim r As Long, act As String, tk As String, sh As Double
-    For r = 2 To lastR
-        Dim dv As Variant: dv = wsTr.cells(r, "B").Value
+    For r = TrHdrRow(wsTr) + 1 To lastR
+        Dim dv As Variant: dv = wsTr.cells(r, tc + 2).Value
         If IsDate(dv) Then
             If Int(CDate(dv)) = Date Then
-                act = UCase(CellStr(wsTr.cells(r, "D").Value))
+                act = UCase(CellStr(wsTr.cells(r, tc + 4).Value))
                 If act = "BUY" Or act = "SELL" Then
                     cnt = cnt + 1
                     tRows(cnt) = r
-                    tk = UCase(CellStr(wsTr.cells(r, "C").Value))
-                    sh = NumOr0(wsTr.cells(r, "E").Value)
+                    tk = UCase(CellStr(wsTr.cells(r, tc + 3).Value))
+                    sh = NumOr0(wsTr.cells(r, tc + 5).Value)
                     If act = "BUY" Then
                         todayNet(tk) = todayNet(tk) + sh
                     Else
@@ -920,11 +923,11 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
     Dim flowTWD As Double, k As Long, outRow As Long: outRow = RR4_TOP + 7
     For k = 1 To cnt
         r = tRows(k)
-        act = UCase(CellStr(wsTr.cells(r, "D").Value))
-        tk = UCase(CellStr(wsTr.cells(r, "C").Value))
-        sh = NumOr0(wsTr.cells(r, "E").Value)
-        Dim px As Double: px = NumOr0(wsTr.cells(r, "F").Value)
-        Dim amt As Double: amt = NumOr0(wsTr.cells(r, "I").Value)
+        act = UCase(CellStr(wsTr.cells(r, tc + 4).Value))
+        tk = UCase(CellStr(wsTr.cells(r, tc + 3).Value))
+        sh = NumOr0(wsTr.cells(r, tc + 5).Value)
+        Dim px As Double: px = NumOr0(wsTr.cells(r, tc + 6).Value)
+        Dim amt As Double: amt = NumOr0(wsTr.cells(r, tc + 9).Value)
         Dim fx As Double
         If GetCurrencyType(CStr(tk)) = "USD" Then fx = exRate Else fx = 1
         Dim amtTWD As Double: amtTWD = amt * fx
@@ -2257,11 +2260,11 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
     Set dict = CreateObject("Scripting.Dictionary")
 
     Dim lastRow As Long
-    lastRow = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
-    If lastRow < 2 Then Set BuildPositions = dict: Exit Function
+    lastRow = TrLastRow(wsTr)
+    If lastRow <= TrHdrRow(wsTr) Then Set BuildPositions = dict: Exit Function
 
-    Dim data As Variant
-    data = wsTr.Range("B2:N" & lastRow).Value   ' B..N
+    Dim data As Variant                         ' page columns B..N, wherever the bar puts them
+    data = wsTr.Range(wsTr.cells(TrHdrRow(wsTr) + 1, TrCol(wsTr, 2)), wsTr.cells(lastRow, TrCol(wsTr, 14))).Value
 
     Dim i As Long
     For i = 1 To UBound(data, 1)

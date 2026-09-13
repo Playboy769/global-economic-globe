@@ -1,0 +1,299 @@
+﻿Option Explicit
+
+' ==========================================
+'  表單初始化：設定下拉選單與預設值
+' ==========================================
+Private Sub UserForm_Initialize()
+    Me.txtDate.Value = Format(Date, "yyyy/mm/dd")
+    
+    With Me.cmbAction
+        .AddItem "Buy"
+        .AddItem "Sell"
+        .AddItem "UpdateInfo"
+        .ListIndex = 0
+    End With
+    
+    With Me.cmbSector
+        .AddItem "資訊科技 (Information Technology)"
+        .AddItem "金融 (Financials)"
+        .AddItem "醫療保健 (Health Care)"
+        .AddItem "非必需消費 (Consumer Discretionary)"
+        .AddItem "必需消費 (Consumer Staples)"
+        .AddItem "工業 (Industrials)"
+        .AddItem "能源 (Energy)"
+        .AddItem "公用事業 (Utilities)"
+        .AddItem "房地產 (Real Estate)"
+        .AddItem "原物料 (Materials)"
+        .AddItem "通訊服務 (Communication Services)"
+        .AddItem "ETF / 指數"
+    End With
+    
+    With Me.cmbStrategy
+        .AddItem "EMA6 ADD - EMA 13 CUT"
+        .AddItem "EMA13 ADD - EMA 30 CUT"
+        .AddItem "EMA30 ADD - EMA 30 CUT"
+        .AddItem "SMA60 ADD Mid-term Holdings"
+        .AddItem "Long-term Holdings"
+    End With
+    
+    With Me.cmbCurrency
+        .Clear
+        .AddItem "TWD"
+        .AddItem "USD"
+        .ListIndex = 0
+    End With
+    
+    ' ★ 新增：券商選單
+    With Me.cmbBroker
+        .AddItem "國泰世華"
+        .AddItem "元大證券"
+        .ListIndex = 0
+    End With
+    
+    Me.txtShares.Value = "0"
+    Me.txtPrice.Value = "0"
+    Me.txtFee.Value = "0"
+    Me.txtTax.Value = "0"
+    Me.txtTarget.Value = "0"
+    Me.txtBeta.Value = "0"
+End Sub
+
+' ==========================================
+'  [按鈕] 計算 Beta
+' ==========================================
+Private Sub btnCalcBeta_Click()
+    Dim Ticker As String
+    Dim Sector As String
+    Dim benchmark As String
+    Dim betaVal As Double
+    
+    Ticker = Trim(Me.txtTicker.Value)
+    Sector = Me.cmbSector.Value
+    
+    If Ticker = "" Then
+        MsgBox "請先輸入股票代號 (Ticker)！", vbExclamation
+        Exit Sub
+    End If
+    
+    Me.btnCalcBeta.Caption = "計算中..."
+    DoEvents
+    
+    benchmark = GetBenchmarkTicker(Sector, Ticker)
+    betaVal = CalculateBeta30D(Ticker, benchmark)
+    
+    If betaVal = -999 Then
+        MsgBox "Beta 計算失敗 (可能資料不足或代號錯誤)", vbExclamation
+        Me.txtBeta.Value = "0"
+    Else
+        Me.txtBeta.Value = Format(betaVal, "0.00")
+    End If
+    
+    Me.btnCalcBeta.Caption = "CalcBeta"
+End Sub
+
+' ==========================================
+'  [按鈕] 儲存交易
+' ==========================================
+Private Sub btnSave_Click()
+    Dim wsLog As Worksheet
+    Dim NextRow As Long
+    Dim tDate As Date
+    Dim tShares As Double, tPrice As Double
+    Dim tFee As Double, tTax As Double, tNetAmount As Double
+    Dim estSellFee As Double
+    Dim estSellTax As Double
+    Dim estSellAmount As Double
+    
+    If Me.txtTicker.Value = "" Then
+        MsgBox "請輸入股票代號 (Ticker)", vbExclamation
+        Me.txtTicker.SetFocus
+        Exit Sub
+    End If
+    
+    If Not IsDate(Me.txtDate.Value) Then
+        MsgBox "日期格式錯誤，請輸入 yyyy/mm/dd", vbExclamation
+        Exit Sub
+    End If
+    
+    Set wsLog = ThisWorkbook.Sheets("Transactions")
+    ' 2026-09-13: the page carries the nav bar - row / column via Attach.TrLastRow / TrCol
+    NextRow = TrLastRow(wsLog) + 1
+    Dim tc As Long: tc = NavLeft(wsLog)
+    
+    tDate = CDate(Me.txtDate.Value)
+    tShares = val(Me.txtShares.Value)
+    tPrice = val(Me.txtPrice.Value)
+    tFee = val(Me.txtFee.Value)
+    tTax = val(Me.txtTax.Value)
+    
+    If Me.cmbAction.Value = "Buy" Then
+        estSellAmount = tShares * tPrice
+        
+        If Me.cmbCurrency.Value = "USD" Then
+            If InStr(1, Me.cmbSector.Value, "ETF", vbTextCompare) > 0 Then
+                estSellFee = 3
+            Else
+                estSellFee = Round(estSellAmount * 0.001, 2)
+                ' ★ 元大美股個股低消 $1 USD
+                If Me.cmbBroker.Value = "元大證券" Then
+                    If estSellFee < 1 Then estSellFee = 1
+                End If
+            End If
+            estSellTax = 0
+        Else
+            ' ★ 台股：依券商折扣率計算預估賣出手續費
+            Dim dBrokerRateSave As Double
+            If Me.cmbBroker.Value = "元大證券" Then
+                dBrokerRateSave = 0.1
+            Else
+                dBrokerRateSave = 0.08
+            End If
+            estSellFee = Int(estSellAmount * 0.001425 * dBrokerRateSave)
+            If estSellFee < 1 Then estSellFee = 1
+            
+            If InStr(1, Me.cmbSector.Value, "ETF", vbTextCompare) > 0 Then
+                estSellTax = Int(estSellAmount * 0.001)
+            Else
+                estSellTax = Int(estSellAmount * 0.003)
+            End If
+        End If
+        
+        tNetAmount = (tShares * tPrice) + tFee + tTax + estSellFee + estSellTax
+        
+    ElseIf Me.cmbAction.Value = "Sell" Then
+        tNetAmount = (tShares * tPrice) - tFee - tTax
+    Else
+        tNetAmount = 0
+    End If
+    
+    With wsLog
+        .cells(NextRow, tc + 1).Value = "T-" & Format(Now, "yyyymmdd-HHmmss")
+        .cells(NextRow, tc + 2).Value = tDate
+        .cells(NextRow, tc + 3).Value = UCase(Trim(Me.txtTicker.Value))
+        .cells(NextRow, tc + 4).Value = Me.cmbAction.Value
+        .cells(NextRow, tc + 5).Value = tShares
+        .cells(NextRow, tc + 6).Value = tPrice
+        .cells(NextRow, tc + 7).Value = tFee
+        .cells(NextRow, tc + 8).Value = tTax
+        .cells(NextRow, tc + 9).Value = tNetAmount
+        .cells(NextRow, tc + 10).Value = Me.cmbSector.Value
+        .cells(NextRow, tc + 11).Value = val(Me.txtTarget.Value)
+        .cells(NextRow, tc + 12).Value = Me.cmbStrategy.Value
+        .cells(NextRow, tc + 13).Value = val(Me.txtBeta.Value)
+        .cells(NextRow, tc + 14).Value = Me.cmbBroker.Value  ' ★ 新增券商欄
+    End With
+    
+    MsgBox "交易儲存成功！(買入成本已包含預估賣出費稅)", vbInformation
+    
+    Me.txtTicker.Value = ""
+    Me.txtShares.Value = "0"
+    Me.txtPrice.Value = "0"
+    Me.txtFee.Value = "0"
+    Me.txtTax.Value = "0"
+    Me.txtTarget.Value = "0"
+    Me.txtBeta.Value = "0"
+    Me.cmbBroker.ListIndex = 0  ' ★ 重設為國泰世華
+    Me.txtTicker.SetFocus
+End Sub
+
+' ==========================================
+'  [按鈕] 關閉視窗
+' ==========================================
+Private Sub btnClose_Click()
+    Unload Me
+End Sub
+
+' ==========================================
+'  [核心功能] 自動計算手續費與證交稅
+' ==========================================
+Private Sub AutoCalculateCosts()
+    On Error Resume Next
+    
+    Dim dShares As Double
+    Dim dPrice As Double
+    Dim dAmount As Double
+    Dim dFee As Double
+    Dim dTax As Double
+    Dim sCurrency As String
+    Dim sAction As String
+    Dim sSector As String
+    
+    dShares = val(Me.txtShares.Value)
+    dPrice = val(Me.txtPrice.Value)
+    sCurrency = Me.cmbCurrency.Value
+    sAction = Me.cmbAction.Value
+    sSector = Me.cmbSector.Value
+    
+    dAmount = dShares * dPrice
+    
+    If dAmount <= 0 Then
+        Me.txtFee.Value = "0"
+        Me.txtTax.Value = "0"
+        Exit Sub
+    End If
+    
+    If sCurrency = "TWD" Then
+        ' ★ 依券商套用對應折扣率
+        Dim dBrokerRate As Double
+        If Me.cmbBroker.Value = "元大證券" Then
+            dBrokerRate = 0.1
+        Else
+            dBrokerRate = 0.08  ' 國泰世華
+        End If
+        dFee = Int(dAmount * 0.001425 * dBrokerRate)
+        If dFee < 1 Then dFee = 1
+        
+        If sAction = "Sell" Then
+            If InStr(1, sSector, "ETF", vbTextCompare) > 0 Then
+                dTax = Int(dAmount * 0.001)
+            Else
+                dTax = Int(dAmount * 0.003)
+            End If
+        Else
+            dTax = 0
+        End If
+        
+    ElseIf sCurrency = "USD" Then
+        If InStr(1, sSector, "ETF", vbTextCompare) > 0 Then
+            dFee = 3
+        Else
+            dFee = Round(dAmount * 0.001, 2)
+            ' ★ 元大美股個股低消 $1 USD
+            If Me.cmbBroker.Value = "元大證券" Then
+                If dFee < 1 Then dFee = 1
+            End If
+        End If
+        dTax = 0
+    End If
+    
+    Me.txtFee.Value = CStr(dFee)
+    Me.txtTax.Value = CStr(dTax)
+End Sub
+
+' ==========================================
+'  [事件觸發] 當數值改變時自動計算
+' ==========================================
+Private Sub txtShares_Change()
+    Call AutoCalculateCosts
+End Sub
+
+Private Sub txtPrice_Change()
+    Call AutoCalculateCosts
+End Sub
+
+Private Sub cmbAction_Change()
+    Call AutoCalculateCosts
+End Sub
+
+Private Sub cmbSector_Change()
+    Call AutoCalculateCosts
+End Sub
+
+Private Sub cmbCurrency_Change()
+    Call AutoCalculateCosts
+End Sub
+
+' ★ 新增：券商變更時重新計算
+Private Sub cmbBroker_Change()
+    Call AutoCalculateCosts
+End Sub

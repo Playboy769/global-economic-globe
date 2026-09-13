@@ -62,13 +62,15 @@ Private Const TI_HLAST  As Long = 24    ' last trade-history row (v2.3: was 25; 
 Private Const TI_BOTTOM As Long = 25    ' last panel row (the chart band starts at RR4_CHART_TOP = 27)
 Private Const TI_RIGHT  As Long = 19    ' S - last panel column
 
-' Transaction column letters (from existing schema)
-Private Const COL_DATE   As String = "B"
-Private Const COL_TICKER As String = "C"
-Private Const COL_ACTION As String = "D"
-Private Const COL_SHARES As String = "E"
-Private Const COL_NETAMT As String = "I"
-Private Const COL_BROKER As String = "N"
+' Transactions PAGE columns (A=1 ..); the sheet column is TrCol(wsTr, n)
+' and the first data row TrHdrRow(wsTr) + 1 - the page carries the nav
+' bar since 2026-09-13 (Attach.bas geometry helpers).
+Private Const COL_DATE   As Long = 2
+Private Const COL_TICKER As Long = 3
+Private Const COL_ACTION As Long = 4
+Private Const COL_SHARES As Long = 5
+Private Const COL_NETAMT As Long = 9
+Private Const COL_BROKER As Long = 14
 
 ' Fallback USD -> TWD rate when RR4!B2 holds no usable rate. All aggregate
 ' PnL / exposure values for US tickers are converted; per-share prices
@@ -159,24 +161,24 @@ Public Sub DiagnoseTicker(Optional ByVal forcedTicker As String = "")
     ' --- 3. Transactions scan ---
     msg = msg & lf & "=== TRANSACTIONS SCAN ===" & lf
     Dim lastRow As Long
-    lastRow = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
-    msg = msg & "Total rows    : " & (lastRow - 1) & lf
+    lastRow = TrLastRow(wsTr)
+    msg = msg & "Total rows    : " & (lastRow - TrHdrRow(wsTr)) & lf
 
     Dim normT As String: normT = NormalizeTicker(ticker)
     Dim matchCount As Long, sample As String, samples As Long
     Dim r As Long
-    For r = 2 To lastRow
-        Dim cellT As String: cellT = CStr(wsTr.cells(r, COL_TICKER).Value)
+    For r = TrHdrRow(wsTr) + 1 To lastRow
+        Dim cellT As String: cellT = CStr(wsTr.cells(r, TrCol(wsTr, COL_TICKER)).Value)
         If NormalizeTicker(cellT) = normT Then
             matchCount = matchCount + 1
             If samples < 5 Then
                 sample = sample & "  R" & r & ":  " & _
-                    CStr(wsTr.cells(r, COL_DATE).Value) & "  " & _
+                    CStr(wsTr.cells(r, TrCol(wsTr, COL_DATE)).Value) & "  " & _
                     "[" & cellT & "]  " & _
-                    CStr(wsTr.cells(r, COL_ACTION).Value) & "  " & _
-                    "sh=" & CStr(wsTr.cells(r, COL_SHARES).Value) & "  " & _
-                    "net=" & CStr(wsTr.cells(r, COL_NETAMT).Value) & "  " & _
-                    "brk=" & CStr(wsTr.cells(r, COL_BROKER).Value) & lf
+                    CStr(wsTr.cells(r, TrCol(wsTr, COL_ACTION)).Value) & "  " & _
+                    "sh=" & CStr(wsTr.cells(r, TrCol(wsTr, COL_SHARES)).Value) & "  " & _
+                    "net=" & CStr(wsTr.cells(r, TrCol(wsTr, COL_NETAMT)).Value) & "  " & _
+                    "brk=" & CStr(wsTr.cells(r, TrCol(wsTr, COL_BROKER)).Value) & lf
                 samples = samples + 1
             End If
         End If
@@ -189,9 +191,9 @@ Public Sub DiagnoseTicker(Optional ByVal forcedTicker As String = "")
         msg = msg & "(none -- check ticker spelling and column C of Transactions)" & lf
         msg = msg & "Hint: Transactions C column normalised forms of first 10 tickers:" & lf
         Dim cnt As Long: cnt = 0
-        For r = 2 To lastRow
+        For r = TrHdrRow(wsTr) + 1 To lastRow
             If cnt < 10 Then
-                Dim t2 As String: t2 = CStr(wsTr.cells(r, COL_TICKER).Value)
+                Dim t2 As String: t2 = CStr(wsTr.cells(r, TrCol(wsTr, COL_TICKER)).Value)
                 If t2 <> "" Then
                     msg = msg & "  [" & t2 & "] -> [" & NormalizeTicker(t2) & "]" & lf
                     cnt = cnt + 1
@@ -538,16 +540,16 @@ Private Sub BuildFIFOHistory(ByVal ticker As String, _
     If wsTr Is Nothing Then Exit Sub
 
     Dim lastRow As Long
-    lastRow = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
-    If lastRow < 2 Then Exit Sub
+    lastRow = TrLastRow(wsTr)
+    If lastRow <= TrHdrRow(wsTr) Then Exit Sub
 
     ' Collect rows for this ticker (normalised so 2330 / 2330.TW / 2330.TWO match)
     Dim tickerNorm As String: tickerNorm = NormalizeTicker(ticker)
     Dim tRows() As Long, tCount As Long
     ReDim tRows(1 To lastRow)
     Dim r As Long
-    For r = 2 To lastRow
-        If NormalizeTicker(CStr(wsTr.cells(r, COL_TICKER).Value)) = tickerNorm Then
+    For r = TrHdrRow(wsTr) + 1 To lastRow
+        If NormalizeTicker(CStr(wsTr.cells(r, TrCol(wsTr, COL_TICKER)).Value)) = tickerNorm Then
             tCount = tCount + 1
             tRows(tCount) = r
         End If
@@ -558,8 +560,8 @@ Private Sub BuildFIFOHistory(ByVal ticker As String, _
     Dim i As Long, j As Long, tmp As Long
     For i = 1 To tCount - 1
         For j = i + 1 To tCount
-            If SafeDate(wsTr.cells(tRows(i), COL_DATE).Value) > _
-               SafeDate(wsTr.cells(tRows(j), COL_DATE).Value) Then
+            If SafeDate(wsTr.cells(tRows(i), TrCol(wsTr, COL_DATE)).Value) > _
+               SafeDate(wsTr.cells(tRows(j), TrCol(wsTr, COL_DATE)).Value) Then
                 tmp = tRows(i): tRows(i) = tRows(j): tRows(j) = tmp
             End If
         Next j
@@ -571,11 +573,11 @@ Private Sub BuildFIFOHistory(ByVal ticker As String, _
     Dim k As Long
     For k = 1 To tCount
         r = tRows(k)
-        Dim tDate As Date: tDate = SafeDate(wsTr.cells(r, COL_DATE).Value)
-        Dim Action As String: Action = UCase(Trim(CStr(wsTr.cells(r, COL_ACTION).Value)))
-        Dim shares As Double: shares = SafeNum(wsTr.cells(r, COL_SHARES).Value)
-        Dim netAmt As Double: netAmt = SafeNum(wsTr.cells(r, COL_NETAMT).Value)
-        Dim broker As String: broker = Trim(CStr(wsTr.cells(r, COL_BROKER).Value))
+        Dim tDate As Date: tDate = SafeDate(wsTr.cells(r, TrCol(wsTr, COL_DATE)).Value)
+        Dim Action As String: Action = UCase(Trim(CStr(wsTr.cells(r, TrCol(wsTr, COL_ACTION)).Value)))
+        Dim shares As Double: shares = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_SHARES)).Value)
+        Dim netAmt As Double: netAmt = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_NETAMT)).Value)
+        Dim broker As String: broker = Trim(CStr(wsTr.cells(r, TrCol(wsTr, COL_BROKER)).Value))
         If broker = "" Then broker = "Default"
 
         If shares <= 0 And Action <> "ADJUSTCOST" Then GoTo NextTx
@@ -1065,10 +1067,10 @@ Private Function ResolveTicker(ByVal ticker As String) As String
     Dim wsTr As Worksheet
     On Error Resume Next: Set wsTr = ThisWorkbook.Sheets(SH_TR): On Error GoTo 0
     If Not wsTr Is Nothing Then
-        Dim lastRow As Long: lastRow = wsTr.cells(wsTr.Rows.count, "A").End(xlUp).row
+        Dim lastRow As Long: lastRow = TrLastRow(wsTr)
         Dim r As Long, raw As String
-        For r = 2 To lastRow
-            raw = UCase(Trim(CStr(wsTr.cells(r, COL_TICKER).Value)))
+        For r = TrHdrRow(wsTr) + 1 To lastRow
+            raw = UCase(Trim(CStr(wsTr.cells(r, TrCol(wsTr, COL_TICKER)).Value)))
             If NormalizeTicker(raw) = t Then
                 If InStr(raw, ".TW") > 0 Then ResolveTicker = raw
                 Exit Function

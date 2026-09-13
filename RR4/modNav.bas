@@ -33,12 +33,16 @@ Option Explicit
 '    VT and CC keep a typed input in B2; their sheet code finds it with
 '    NavOffset (B5 while the bar is there). Those pages are not column-
 '    shifted - only RR4 has the blank column A.
-'    Data pages (T / H / CR) get no bar on purpose: many modules read
+'    Data pages (H / CR) get no bar on purpose: many modules read
 '    them by fixed row (header row 1, data from row 2).
 '    Realized (R) got the bar on 2026-09-13: its readers / writer go
 '    through Attach.RealHdrRow / RealCol / RealLastRow, and the hand-typed
 '    Caption column is re-attached by ticker + exit date on every UP
 '    (Attach.CalculateRealizedPnL), so the bar rows do not disturb it.
+'    Transactions (T) likewise (same day): Attach.TrHdrRow / TrCol /
+'    TrLastRow for the ADD / DEL forms, both FIFO builders, the today's-
+'    trades list and the debug scan; DrawTransactionsHeader repaints the
+'    header + AutoFilter on every UP.
 ' ================================================================
 Public Const NAV_ROWS     As Long = 3
 Private Const NAV_MARK    As String = "RR4NAV"
@@ -138,7 +142,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "R", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH")
+    For Each c In Array("P", "R", "T", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
