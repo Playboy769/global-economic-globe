@@ -288,9 +288,21 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     任何讀取之前）偵測 B1 還是「P」徽章就 `Rows(1).Insert` 一次——整張表連同手打值、圖、名稱、隱藏排序欄一起
     下移，read-before-clear 才對得上格子；實測總值／FX／WATCHLIST 5 筆／8 持倉／panel 代號都保住。
     重開活頁簿後 `ws.Names.Item("RR4NAV")` 可能取不到，改用 `wb.Names` 篩 `'<sheet>'!RR4NAV`。
-  - **資料頁（Transactions/HistoryLog/Company research）刻意沒有 bar**——很多
+  - **資料頁（HistoryLog/Company research）刻意沒有 bar**——很多
     模組用固定列讀它們（表頭第 1 列、資料第 2 列起），不要幫它們加。（使用者 2026-09-13 決定分三階段
-    全部掛上：Realized 已做，Transactions、HistoryLog 待做。）
+    全部掛上：Realized、Transactions 已做，HistoryLog 待做。）
+  - **Transactions（T）頁 2026-09-13 起有 bar**：版面同 Realized（表頭第 5 列 B 欄起，A:N → B:O）。讀寫一律走
+    `Attach.TrHdrRow(ws)`／`TrCol(ws, n)`／`TrLastRow(ws)`（n 是頁面欄 A=1…N=14），**不要再寫 `End(xlUp)` on "A"、
+    `Range("B2:N…")`、`cells(r, "D")`**——已改的地方：`CalculateRealizedPnL`、`ClearAllData`、`RunSystemDebug`、
+    儀表板今日交易清單、`BuildPositions`、`TickerInsight`（`COL_*` 常數改成頁面欄號、用 `TrCol` 轉）、兩個表單。
+    **`frmTransaction`／`frmDeleteTransaction` 的程式碼以前不在 repo**，現在存成 `RR4/frmTransaction_Code.txt`／
+    `frmDeleteTransaction_Code.txt`（照原樣、含中文字面量，跟 Sheet*_Code.txt 一樣用 CodeModule 注入，不走 VBE 匯入）；
+    ADD 寫入列＝`TrLastRow + 1`、欄＝`NavLeft + n`，DEL 清單從 `TrHdrRow + 1` 讀、仍整列刪除。
+    `MigrateTransactionsNav`（`RebuildPortfolioDashboard` 開頭、在任何讀取前）做一次性遷移：先關掉舊自動篩選並刪
+    `_FilterDatabase`（否則插列會拖著半截篩選範圍），再 `NavAdd`；`DrawTransactionsHeader` 每次 UP 重畫表頭
+    （RR4 深橘）並重新套 AutoFilter 到 `B5:O<last>`——注意 `Range.AutoFilter` 是切換式，套之前要先 `AutoFilterMode = False`
+    否則會把它關掉。欄寬整欄插入自然保留，A 欄寬 3。實測遷移＋UP 後總值／8 持倉／Realized／HistoryLog 全部不變，
+    模擬表單寫入落在第 64 列 B 欄起、整列刪除後復原。
   - **Realized（R）頁 2026-09-13 起有 bar**：頁碼 R 進 `NavPageCode`，版面同其他報表頁（第 1 列／A 欄空白、
     bar 第 2–4 列、表頭第 5 列 B 欄起）。所有讀寫一律走 `Attach.RealHdrRow(ws)`／`RealCol(ws, n)`／
     `RealLastRow(ws)`（n 是頁面欄：A=1…J=10、K=11 Caption、L=12 LOAN），**不要再寫 `"A2:J10000"`、
