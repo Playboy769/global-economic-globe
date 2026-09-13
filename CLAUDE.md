@@ -352,6 +352,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   「金額膨風、比率正確」就是這個。`RefreshTickerInsight`／`RefreshTickerProjection` 開頭先過 `ResolveTicker`：裸碼取
   Transactions 第一筆配到的原始代號（含 `.TW/.TWO`），完全沒交易的全數字碼預設 `.TW`；K5 與追蹤格 X2 因此會顯示解析後的
   代號。實測 3374／1303／2330.tw／BE／AMAT／8046.TW 六檔與 Realized 表一致（美股差幾十元是當日匯率 vs 今日 live 匯率）。
+- **v4.15（2026-09-13）：RR4 頁 B5 的大字總市值拿掉了**（跟 SUMMARY 的 NET EXPOSURE 重複）。頁面第 1 列（第 5 列）留空、
+  列高退回 18，其他列號常數不動；`RR4_TOTAL_CELL` 已刪，要總市值改呼叫 `RR4NetExposure()`（讀 SUMMARY 區
+  `RR4_TOP+16 / RR4_LEFT+6`），DBG 的「Total market value」檢查已改走它。
 - **USD/TWD 改為線上即時（v4.14，2026-09-13，使用者選「純自動」）**：`UP` 開頭 `FetchLiveFx()` 抓 Yahoo
   chart API `TWD=X` 的 `meta.regularMarketPrice`（＝1 USD 兌多少 TWD），成功就覆蓋 C6（`RR4_FX_CELL`）並在
   儲存格註解標「live from Yahoo TWD=X ＋時間」、狀態列印「USD/TWD 31.63 live」；抓不到才沿用 C6 手打值、再退
