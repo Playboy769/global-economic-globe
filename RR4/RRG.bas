@@ -759,7 +759,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ch.HasTitle = True
     ch.ChartTitle.Text = "RRG  vs " & gBench & "   as of " & Format(asOf, "yyyy/mm/dd")
     With ch.ChartTitle.Format.TextFrame2.TextRange.Font
-        .Name = PageFont(ws): .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
+        .Name = PageFont(ws): .NameFarEast = PageFont(ws): .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
     End With
 
     Dim i As Long, k As Long
@@ -787,6 +787,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ax.TickLabels.NumberFormat = "0"
     ax.HasTitle = True: ax.AxisTitle.Text = "RS-RATIO"
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.NameFarEast = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
     Set ax = ch.Axes(xlValue)
@@ -799,6 +800,7 @@ Private Sub DrawRrgChart(ws As Worksheet, tickers() As String, tailX() As Double
     ax.TickLabels.NumberFormat = "0"
     ax.HasTitle = True: ax.AxisTitle.Text = "RS-MOMENTUM"
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.NameFarEast = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
 
@@ -866,7 +868,9 @@ Private Sub PointLabel(p As Point, ByVal txt As String, ByVal col As Long, ByVal
         .ShowSeriesName = True
         .Text = txt
         .Position = pos
+        ' CJK glyphs take the East Asian font, not .Name - set both
         .Format.TextFrame2.TextRange.Font.Name = fnt
+        .Format.TextFrame2.TextRange.Font.NameFarEast = fnt
         .Format.TextFrame2.TextRange.Font.Size = sz
         .Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = col
     End With
@@ -1101,7 +1105,7 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     ch.ChartTitle.Text = "MONEY FLOW  price change vs Chaikin Money Flow   as of " & Format(asOf, "yyyy/mm/dd") & _
                          "   (CMF " & CMF_WINDOW & "d, lookback " & FLOW_LOOKBACK & "d)"
     With ch.ChartTitle.Format.TextFrame2.TextRange.Font
-        .Name = PageFont(ws): .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
+        .Name = PageFont(ws): .NameFarEast = PageFont(ws): .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
     End With
 
     ' axis range (money_flow_chart.build_figure: 15% pad, at least 2% / 0.02)
@@ -1171,6 +1175,7 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     ax.TickLabels.NumberFormat = "0%"
     ax.HasTitle = True: ax.AxisTitle.Text = "PRICE CHANGE " & FLOW_LOOKBACK & "D"
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.NameFarEast = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
     Set ax = ch.Axes(xlValue)
@@ -1183,6 +1188,7 @@ Private Sub DrawFlowChart(ws As Worksheet, tickers() As String, fPchg() As Doubl
     ax.TickLabels.NumberFormat = "0.00"
     ax.HasTitle = True: ax.AxisTitle.Text = "CHAIKIN MONEY FLOW"
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Name = PageFont(ws)
+    ax.AxisTitle.Format.TextFrame2.TextRange.Font.NameFarEast = PageFont(ws)
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Size = 8
     ax.AxisTitle.Format.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(180, 180, 180)
 
