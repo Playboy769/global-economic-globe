@@ -17,6 +17,7 @@ Option Explicit
 '          V Volatility180D . VT Tickers Volatility
 '          (D DrawdownChart removed 2026-09-12 with DrawDownShadow.bas)
 '          C HoldingsCorr . CC Correlation . CR Company research
+'          E Earnings (2026-09-13, modEarnings; E! refetches its ticker)
 '  Actions UP update dashboard . ADD / DEL trade forms . V! D! C! recalc
 '          and show that page . DBG system debug . CLEARALL wipe all data
 '          (ClearAllData keeps its own Yes/No confirmation)
@@ -137,6 +138,7 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "RI": NavSheetName = "RRG Industry"
         Case "TG": NavSheetName = "RRG TW Groups"
         Case "TH": NavSheetName = "Thesis Library"
+        Case "E":  NavSheetName = "Earnings"
         Case "CR": NavSheetName = "Company research"
     End Select
 End Function
@@ -145,7 +147,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH")
+    For Each c In Array("P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH", "E")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -296,13 +298,13 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     Dim pages As Variant
     pages = Array("P", "PORTFOLIO", "R", "REALIZED", "T", "TRANS", "H", "HISTORY", _
                   "V", "VOL", "VT", "TKRVOL", _
-                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "TH", "THESIS", "CR", "RESEARCH")
+                  "C", "HOLDCORR", "CC", "SECTORCORR", "RG", "RRG", "RI", "RRG-IND", "TG", "RRG-TW", "TH", "THESIS", "E", "EARNINGS", "CR", "RESEARCH")
     Call WriteCodeLine(ws.cells(2 + top, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
     acts = Array("UP", "UPDATE", "ADD", "TRADE", "DEL", "DELETE", "V!", "RECALC VOL", _
-                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "TH!", "THESIS", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
+                 "C!", "CORR", "RG!", "RRG", "RI!", "RRG-IND", "TG!", "RRG-TW", "TH!", "THESIS", "E!", "EARNINGS", "IMAP", "IND MAP", "DBG", "DEBUG", "CLEARALL", "WIPE ALL DATA")
     Call WriteCodeLine(ws.cells(3 + top, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
@@ -401,7 +403,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH", "CR"
+        Case "P", "R", "T", "H", "V", "VT", "C", "CC", "RG", "RI", "TG", "TH", "E", "CR"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -423,6 +425,8 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
             Call BuildRRGTwGroups
         Case "TH!"
             Call BuildThesisLibrary
+        Case "E!"
+            Call RefreshEarnings
         Case "IMAP"
             Call ImportIndustryMap
         Case "DBG"
@@ -445,7 +449,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI" Or code = "TG" Or code = "TH", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "C" Or code = "RG" Or code = "RI" Or code = "TG" Or code = "TH" Or code = "E", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible

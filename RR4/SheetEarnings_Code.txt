@@ -1,0 +1,18 @@
+' ============================================================================
+'  Worksheet code-behind for the "Earnings" sheet (RR4 workbook).
+' ----------------------------------------------------------------------------
+'  Not a .bas module - it lives in the sheet's own code module.  modEarnings
+'  writes it there itself (EnsureSheetCode) the first time the page is built;
+'  this file is the record / manual fallback (paste via VBE > View Code, or
+'  CodeModule.AddFromString).
+'
+'  TICKER <GO> / MKT inputs sit under their labels on page row 3 (with the nav
+'  bar: row 7, columns B and D) - EarningsChange locates them through
+'  NavOffset / NavLeft and runs modEarnings.ShowEarnings.
+' ============================================================================
+Option Explicit
+
+' Earnings page: TICKER / MKT input -> modEarnings.ShowEarnings (see modEarnings.bas)
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call EarningsChange(Me, Target)
+End Sub
