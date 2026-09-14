@@ -369,6 +369,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **v4.17／TickerInsight v2.5（2026-09-14）**：`TICKER <GO>` 也改上下排——標籤 J5、**輸入格 `TI_TICKER_CELL` 改為 J6**
   （原 K5），公司名在 K6；`ClearTickerData` 的清除範圍跟著改，`RebuildPortfolioDashboard` 讀不到 J6 時會退回讀舊的 K5 一次
   （一次性過渡）。**USD/TWD 輸入格 C6 不再塗灰底**（匯率已線上抓取，改黑底白字；離線時仍可手打）。
+- **TickerInsight v2.6（2026-09-14）**：面板本體整體下移一列——四個區塊改佔 **rows 8–24**（`TI_BODY = 1` 加在所有
+  `RR4_TOP + n` 的本體列上；`TI_HHDR` 9、`TI_H1` 10、`TI_HLAST` 24 不變所以交易紀錄少一列、`TI_BOTTOM` 25 放「+n older」），
+  **目標價輸入格 `TI_TARGET_CELL` 改 L22**（原 L21，UP 讀不到 L22 時退回讀 L21 一次）。row 7 留空當標題與本體的間隔，
+  `ClearTickerData` 仍從 row 7 清起。
 - **USD/TWD 改為線上即時（v4.14，2026-09-13，使用者選「純自動」）**：`UP` 開頭 `FetchLiveFx()` 抓 Yahoo
   chart API `TWD=X` 的 `meta.regularMarketPrice`（＝1 USD 兌多少 TWD），成功就覆蓋 C6（`RR4_FX_CELL`）並在
   儲存格註解標「live from Yahoo TWD=X ＋時間」、狀態列印「USD/TWD 31.63 live」；抓不到才沿用 C6 手打值、再退
