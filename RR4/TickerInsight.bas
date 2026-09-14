@@ -32,7 +32,8 @@ Option Explicit
 '
 ' PANEL LAYOUT (RR4 sheet):
 '   (sheet rows; the page rows they came from are these minus RR4_TOP = 3)
-'   J4 TICKER <GO>   K4 [ticker input]   L4 company name
+'   J5 TICKER <GO> label, J6 [ticker input], K6 company name
+'   (v2.5, 2026-09-14: stacked label-over-input like USD/TWD / ARRANGE; was J5 / K5 / L5)
 '   J6  1) ACTIVE POSITION      J7:J11  labels, L7:L11  values
 '   J13 2) LIFETIME METRICS     J14:J16 labels, L14:L16 values
 '   J18 3) PROJECTION           J19:J22 labels, L19:L22 values
@@ -49,7 +50,7 @@ Option Explicit
 Private Const SH_RR4 As String = "RR4"
 Private Const SH_TR  As String = "Transactions"
 
-Public Const TI_TICKER_CELL As String = "K5"
+Public Const TI_TICKER_CELL As String = "J6"   ' v2.5: under the TICKER <GO> label (was K5)
 Public Const TI_TARGET_CELL As String = "L21"
 Private Const TI_TRACK_CELL As String = "X2"   ' clear of the page and the config cells (row 1 stays blank, v4.13)
 
@@ -404,12 +405,15 @@ End Function
 ' Draw* sections below.
 ' ----------------------------------------------------------------
 Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
-    ' --- Row 1: TICKER <GO> input + company name ---
+    ' --- Row 1/2: TICKER <GO> label ABOVE its input (v2.5), company name beside the input ---
     With ws.cells(RR4_TOP + 1, TI_LBL)
         .Value = "TICKER <GO>"
         .Font.Color = RR4_ACCENT
         .Font.Bold = True
-        .ShrinkToFit = True
+        .Font.Size = 9
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlBottom
+        .ShrinkToFit = False
     End With
     With ws.Range(TI_TICKER_CELL)
         .NumberFormat = "@"
@@ -421,7 +425,7 @@ Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
         .HorizontalAlignment = xlCenter
     End With
     If ticker <> "" Then
-        With ws.cells(RR4_TOP + 1, TI_VAL)
+        With ws.cells(RR4_TOP + 2, TI_LBL + 1)
             .Value = PanelCompanyName(ws, ticker)
             .Font.Color = RGB(221, 221, 221)
             .HorizontalAlignment = xlLeft
@@ -497,12 +501,12 @@ Private Function PanelCompanyName(ws As Worksheet, ticker As String) As String
     On Error GoTo 0
 End Function
 
-' Wipe the panel block only (J4:S24 minus the K4 input cell).
+' Wipe the panel block only (J5:S25 minus the J6 input cell).
 Private Sub ClearTickerData(ws As Worksheet)
     Dim blk As Range
-    Set blk = Union(ws.cells(RR4_TOP + 1, TI_LBL), _
-                    ws.Range(ws.cells(RR4_TOP + 1, TI_VAL), ws.cells(RR4_TOP + 1, TI_RIGHT)), _
-                    ws.Range(ws.cells(RR4_TOP + 2, TI_LBL), ws.cells(TI_BOTTOM, TI_RIGHT)))
+    Set blk = Union(ws.Range(ws.cells(RR4_TOP + 1, TI_LBL), ws.cells(RR4_TOP + 1, TI_RIGHT)), _
+                    ws.Range(ws.cells(RR4_TOP + 2, TI_LBL + 1), ws.cells(RR4_TOP + 2, TI_RIGHT)), _
+                    ws.Range(ws.cells(RR4_TOP + 3, TI_LBL), ws.cells(TI_BOTTOM, TI_RIGHT)))
     With blk
         .ClearContents
         .Interior.Color = RGB(0, 0, 0)

@@ -162,6 +162,7 @@ Sub RebuildPortfolioDashboard()
     If m_fxLive Then exRate = liveFx
     Dim arrCode As String: arrCode = UCase(CellStr(wsP.Range(RR4_ARR_CELL).Value))
     Dim tiTicker As String: tiTicker = UCase(CellStr(wsP.Range(TI_TICKER_CELL).Value))
+    If tiTicker = "" Then tiTicker = UCase(CellStr(wsP.Range("K5").Value))   ' one-time: pre-v2.5 panel kept it in K5
     Dim tiTarget As Variant: tiTarget = wsP.Range(TI_TARGET_CELL).Value
     ' config (SetupPortfolioConfig): T1/T2 since v4.2, S1/S2 before it - the
     ' panel covers S now, so carry the old pair over once
@@ -855,7 +856,9 @@ Private Sub DrawHeader(ws As Worksheet, exRate As Double, arrCode As String)
     With ws.Range(RR4_FX_CELL)
         .Value = exRate
         .NumberFormat = "0.00"
-        .Interior.Color = RR4_INPUT_BG
+        ' v4.17 (2026-09-14): the rate is fetched live (FetchLiveFx), so the cell is
+        ' no longer painted as an input - black like the page; typing still works offline
+        .Interior.Color = RGB(0, 0, 0)
         .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .HorizontalAlignment = xlLeft
