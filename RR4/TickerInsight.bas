@@ -34,12 +34,13 @@ Option Explicit
 '   (sheet rows; the page rows they came from are these minus RR4_TOP = 3)
 '   J5 TICKER <GO> label, J6 [ticker input], K6 company name
 '   (v2.5, 2026-09-14: stacked label-over-input like USD/TWD / ARRANGE; was J5 / K5 / L5)
-'   J6  1) ACTIVE POSITION      J7:J11  labels, L7:L11  values
-'   J13 2) LIFETIME METRICS     J14:J16 labels, L14:L16 values
-'   J18 3) PROJECTION           J19:J22 labels, L19:L22 values
-'                               L20 = PRICE TARGET [input]
-'   N6  4) RECENT TRADE HISTORY N7:S7 header, N8:S23 newest first,
-'                               N24 "+n older" when it does not fit
+'   J8  1) ACTIVE POSITION      J9:J13  labels, L9:L13  values
+'   J15 2) LIFETIME METRICS     J16:J18 labels, L16:L18 values
+'   J20 3) PROJECTION           J21:J24 labels, L21:L24 values
+'                               L22 = PRICE TARGET [input]
+'   N8  4) RECENT TRADE HISTORY N9:S9 header, N10:S24 newest first,
+'                               N25 "+n older" when it does not fit
+'   (v2.6, 2026-09-14: the body sits one row lower than v2.5 - rows 8-24)
 '   X1  (hidden) ticker of the last render - keeps L20 when the same
 '       ticker is refreshed, clears it when the ticker changes
 '
@@ -51,14 +52,15 @@ Private Const SH_RR4 As String = "RR4"
 Private Const SH_TR  As String = "Transactions"
 
 Public Const TI_TICKER_CELL As String = "J6"   ' v2.5: under the TICKER <GO> label (was K5)
-Public Const TI_TARGET_CELL As String = "L21"
+Public Const TI_TARGET_CELL As String = "L22"   ' v2.6: body shifted one row down (was L21)
 Private Const TI_TRACK_CELL As String = "X2"   ' clear of the page and the config cells (row 1 stays blank, v4.13)
 
 Private Const TI_LBL    As Long = 10    ' J - labels
 Private Const TI_VAL    As Long = 12    ' L - values
 Private Const TI_HCOL   As Long = 14    ' N - first trade-history column
-Private Const TI_HHDR   As Long = 8     ' trade-history header row (v4.13: +1, blank row 1)
-Private Const TI_H1     As Long = 9     ' first trade-history row
+Private Const TI_BODY   As Long = 1     ' v2.6 (2026-09-14): sections 1-4 start one row lower (row 8, ending row 24)
+Private Const TI_HHDR   As Long = 9     ' trade-history header row (v4.13: 8; v2.6: 9)
+Private Const TI_H1     As Long = 10    ' first trade-history row
 Private Const TI_HLAST  As Long = 24    ' last trade-history row (v2.3: was 25; v4.13: 24)
 Private Const TI_BOTTOM As Long = 25    ' last panel row (the chart band starts at RR4_CHART_TOP = 27)
 Private Const TI_RIGHT  As Long = 19    ' S - last panel column
@@ -321,7 +323,7 @@ Public Sub RefreshTickerInsight(ByVal ticker As String)
     Call BuildFIFOHistory(ticker, records, recCount, lots, lotCount)
 
     If recCount = 0 And lotCount = 0 Then
-        With ws.cells(RR4_TOP + 4, TI_LBL)
+        With ws.cells(RR4_TOP + TI_BODY + 4, TI_LBL)
             .Value = "No transactions found for [" & ticker & "]"
             .Font.Color = RGB(255, 80, 80)
             .Font.Bold = True
@@ -433,26 +435,26 @@ Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
     End If
 
     ' --- section titles ---
-    Call WriteTitle(ws, RR4_TOP + 3, TI_LBL, "1) ACTIVE POSITION")
-    Call WriteTitle(ws, RR4_TOP + 10, TI_LBL, "2) LIFETIME METRICS")
-    Call WriteTitle(ws, RR4_TOP + 15, TI_LBL, "3) PROJECTION")
-    Call WriteTitle(ws, RR4_TOP + 3, TI_HCOL, "4) RECENT TRADE HISTORY")
+    Call WriteTitle(ws, RR4_TOP + TI_BODY + 3, TI_LBL, "1) ACTIVE POSITION")
+    Call WriteTitle(ws, RR4_TOP + TI_BODY + 10, TI_LBL, "2) LIFETIME METRICS")
+    Call WriteTitle(ws, RR4_TOP + TI_BODY + 15, TI_LBL, "3) PROJECTION")
+    Call WriteTitle(ws, RR4_TOP + TI_BODY + 3, TI_HCOL, "4) RECENT TRADE HISTORY")
 
     ' --- metric labels (cyan); values go in column K ---
-    Call WriteLabel(ws, RR4_TOP + 4, TI_LBL, "NET EXPOSURE")
-    Call WriteLabel(ws, RR4_TOP + 5, TI_LBL, "ENTRY PRICE (W.AP)")
-    Call WriteLabel(ws, RR4_TOP + 6, TI_LBL, "LAST PRICE")
-    Call WriteLabel(ws, RR4_TOP + 7, TI_LBL, "UNREALIZED PNL")
-    Call WriteLabel(ws, RR4_TOP + 8, TI_LBL, "RETURN %")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 4, TI_LBL, "NET EXPOSURE")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 5, TI_LBL, "ENTRY PRICE (W.AP)")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 6, TI_LBL, "LAST PRICE")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 7, TI_LBL, "UNREALIZED PNL")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 8, TI_LBL, "RETURN %")
 
-    Call WriteLabel(ws, RR4_TOP + 11, TI_LBL, "REALIZED PNL")
-    Call WriteLabel(ws, RR4_TOP + 12, TI_LBL, "LIFETIME EFF")
-    Call WriteLabel(ws, RR4_TOP + 13, TI_LBL, "VELOCITY/DAY")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 11, TI_LBL, "REALIZED PNL")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 12, TI_LBL, "LIFETIME EFF")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 13, TI_LBL, "VELOCITY/DAY")
 
-    Call WriteLabel(ws, RR4_TOP + 16, TI_LBL, "LAST PRICE")
-    Call WriteLabel(ws, RR4_TOP + 17, TI_LBL, "PRICE TARGET")
-    Call WriteLabel(ws, RR4_TOP + 18, TI_LBL, "PROJECTED PNL")
-    Call WriteLabel(ws, RR4_TOP + 19, TI_LBL, "PROJECTED RET %")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 16, TI_LBL, "LAST PRICE")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 17, TI_LBL, "PRICE TARGET")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 18, TI_LBL, "PROJECTED PNL")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 19, TI_LBL, "PROJECTED RET %")
 
     ' --- trade-history table header ---
     Dim hdrs As Variant
@@ -506,7 +508,7 @@ Private Sub ClearTickerData(ws As Worksheet)
     Dim blk As Range
     Set blk = Union(ws.Range(ws.cells(RR4_TOP + 1, TI_LBL), ws.cells(RR4_TOP + 1, TI_RIGHT)), _
                     ws.Range(ws.cells(RR4_TOP + 2, TI_LBL + 1), ws.cells(RR4_TOP + 2, TI_RIGHT)), _
-                    ws.Range(ws.cells(RR4_TOP + 3, TI_LBL), ws.cells(TI_BOTTOM, TI_RIGHT)))
+                    ws.Range(ws.cells(RR4_TOP + 3, TI_LBL), ws.cells(TI_BOTTOM, TI_RIGHT)))   ' from row 7: the blank row above the body too
     With blk
         .ClearContents
         .Interior.Color = RGB(0, 0, 0)
@@ -713,10 +715,10 @@ Private Sub DrawActivePosition(ws As Worksheet, ticker As String, _
 
     ' NOTE: labels are drawn by DrawShellHeaders. We only fill values here.
     If totalShares > 0 Then
-        Call WriteValueMoney(ws, RR4_TOP + 4, TI_VAL, netExp, "NT$")
-        Call WriteValuePrice(ws, RR4_TOP + 5, TI_VAL, wap)           ' per-share native (no fx)
+        Call WriteValueMoney(ws, RR4_TOP + TI_BODY + 4, TI_VAL, netExp, "NT$")
+        Call WriteValuePrice(ws, RR4_TOP + TI_BODY + 5, TI_VAL, wap)           ' per-share native (no fx)
     Else
-        With ws.cells(RR4_TOP + 4, TI_VAL)
+        With ws.cells(RR4_TOP + TI_BODY + 4, TI_VAL)
             .Value = "NO ACTIVE POSITION"
             .Font.Color = RGB(150, 150, 150)
             .Font.Italic = True
@@ -724,17 +726,17 @@ Private Sub DrawActivePosition(ws As Worksheet, ticker As String, _
             .Borders.LineStyle = xlNone
             .ShrinkToFit = False
         End With
-        Call WriteDash(ws, RR4_TOP + 5, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 5, TI_VAL)
     End If
 
     If totalShares > 0 And lastPx > 0 Then
-        Call WriteValuePrice(ws, RR4_TOP + 6, TI_VAL, lastPx)        ' per-share native (no fx)
-        Call WriteValuePnL(ws, RR4_TOP + 7, TI_VAL, unrl, "NT$")
-        Call WriteValuePct(ws, RR4_TOP + 8, TI_VAL, retPct)
+        Call WriteValuePrice(ws, RR4_TOP + TI_BODY + 6, TI_VAL, lastPx)        ' per-share native (no fx)
+        Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 7, TI_VAL, unrl, "NT$")
+        Call WriteValuePct(ws, RR4_TOP + TI_BODY + 8, TI_VAL, retPct)
     Else
-        Call WriteDash(ws, RR4_TOP + 6, TI_VAL)
-        Call WriteDash(ws, RR4_TOP + 7, TI_VAL)
-        Call WriteDash(ws, RR4_TOP + 8, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 6, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 7, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 8, TI_VAL)
     End If
 End Sub
 
@@ -760,13 +762,13 @@ Private Sub DrawLifetimeMetrics(ws As Worksheet, ticker As String, _
     Dim fx As Double: fx = GetFXToTWD(ticker)
 
     ' --- REALIZED PNL (TWD-converted) ---
-    Call WriteValuePnL(ws, RR4_TOP + 11, TI_VAL, totalPnL * fx, "NT$")
+    Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 11, TI_VAL, totalPnL * fx, "NT$")
 
     ' --- LIFETIME EFF (Profit Factor) ---
     ' Defensive: clear borders/background, set NumberFormat BEFORE Value,
     ' and Round the value so even if format application fails the cell
     ' still displays 2 decimals max.
-    With ws.cells(RR4_TOP + 12, TI_VAL)
+    With ws.cells(RR4_TOP + TI_BODY + 12, TI_VAL)
         .Borders.LineStyle = xlNone
         .Interior.Color = RGB(0, 0, 0)
         .HorizontalAlignment = xlLeft
@@ -795,7 +797,7 @@ Private Sub DrawLifetimeMetrics(ws As Worksheet, ticker As String, _
     ' --- VELOCITY/DAY (TWD-converted, PnL per holding day) ---
     Dim velocity As Double
     If totalDays > 0 Then velocity = totalPnL / totalDays
-    Call WriteValuePnL(ws, RR4_TOP + 13, TI_VAL, velocity * fx, "NT$")
+    Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 13, TI_VAL, velocity * fx, "NT$")
 End Sub
 
 ' ================================================================
@@ -813,9 +815,9 @@ Private Sub DrawProjection(ws As Worksheet, ticker As String, _
 
     ' LAST PRICE (per-share native)
     If lastPx > 0 Then
-        Call WriteValuePrice(ws, RR4_TOP + 16, TI_VAL, lastPx)
+        Call WriteValuePrice(ws, RR4_TOP + TI_BODY + 16, TI_VAL, lastPx)
     Else
-        Call WriteDash(ws, RR4_TOP + 16, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 16, TI_VAL)
     End If
 
     ' PRICE TARGET (per-share native input) - preserve existing value
@@ -829,17 +831,17 @@ Private Sub DrawProjection(ws As Worksheet, ticker As String, _
     ' PROJECTED PNL (TWD-converted)
     If totalShares > 0 And tgt > 0 And lastPx > 0 Then
         Dim projPnL As Double: projPnL = (tgt - lastPx) * totalShares * fx
-        Call WriteValuePnL(ws, RR4_TOP + 18, TI_VAL, projPnL, "NT$")
+        Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 18, TI_VAL, projPnL, "NT$")
     Else
-        Call WriteDash(ws, RR4_TOP + 18, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 18, TI_VAL)
     End If
 
     ' PROJECTED RETURN %
     If tgt > 0 And lastPx > 0 Then
         Dim projRet As Double: projRet = (tgt / lastPx) - 1
-        Call WriteValuePct(ws, RR4_TOP + 19, TI_VAL, projRet)
+        Call WriteValuePct(ws, RR4_TOP + TI_BODY + 19, TI_VAL, projRet)
     Else
-        Call WriteDash(ws, RR4_TOP + 19, TI_VAL)
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 19, TI_VAL)
     End If
 End Sub
 

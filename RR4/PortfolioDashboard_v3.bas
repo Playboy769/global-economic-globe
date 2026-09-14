@@ -164,6 +164,7 @@ Sub RebuildPortfolioDashboard()
     Dim tiTicker As String: tiTicker = UCase(CellStr(wsP.Range(TI_TICKER_CELL).Value))
     If tiTicker = "" Then tiTicker = UCase(CellStr(wsP.Range("K5").Value))   ' one-time: pre-v2.5 panel kept it in K5
     Dim tiTarget As Variant: tiTarget = wsP.Range(TI_TARGET_CELL).Value
+    If IsEmpty(tiTarget) Then tiTarget = wsP.Range("L21").Value   ' one-time: pre-v2.6 panel kept it in L21
     ' config (SetupPortfolioConfig): T1/T2 since v4.2, S1/S2 before it - the
     ' panel covers S now, so carry the old pair over once
     Dim cfgInc As Variant: cfgInc = wsP.Range(RR4_CFG_INC).Value
