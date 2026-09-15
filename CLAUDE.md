@@ -551,6 +551,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `EnsureNotesSheet` 遇到 8 欄舊表會原地升級（EVIDENCE 改名 T1L FILING、前後插入其他五欄），內容不搬；一次性回溯是照
   `RR4/evidence-tiers-2026-09-15.md` 的清單（1,721 筆：T0 88／T1 579／T1L 648／T2 178／T3 18／Δ 210，依行尾括號的來源
   字串規則判定）用 COM 搬到對應欄。KEYWORD 搜尋涵蓋六欄；`ReadNotes` 的 `ev` 改成 `ev(i, tier)` 二維陣列。
+- **Library 區塊內筆記排序（2026-09-15）**：雙擊表頭 **STATUS** 或 **ROLE** ＝ 每個區塊內的筆記依該欄排序，循環
+  正向→反向→取消（表頭加 ▼／▲）。STATUS 正向照下拉清單順序 Robust>Solid>Growing>Slowing>Sluggish>Challenging>
+  Contraction>Warning，ROLE 正向 MOAT>RISK>CATALYST；**空白永遠排最後**（反向只翻轉已知值），同值保留資料頁順序。
+  排序開啟時**整個區塊一起排、法說日分組取消**（舊法說的筆記混進來、不再標日期），關閉後恢復。狀態存隱藏名稱
+  `THNOTESORT`（`status|asc` 等，空字串＝關），跨重畫與 `L!` 保留；區塊（代號）順序仍只由雙擊 TICKER 表頭的 `THSORT` 決定。
 - **Thesis Library（TH）頁 v1（2026-09-13，已被 v2 取代，資料在 ThesisArchive）**：`modThesis.bas`，總經＋個股 thesis 資料庫（使用者指定：Excel、同一庫用
   類型標籤、直接在表末打字新增、點列右側面板讀全文、掛導覽列）。`ListObject tblThesis`，一列一篇 13 欄：
   日期／類型(macro|stock)／標的／標題／立場(LONG|SHORT|NEUTRAL|WATCH)／500 字 thesis 六段各一欄／下次驗證日／
