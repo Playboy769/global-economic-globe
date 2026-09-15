@@ -6,7 +6,8 @@ Option Explicit
 '  (sheet + code renamed 2026-09-13 late: "Thesis Library" / TH -> "Library" / L)
 ' ----------------------------------------------------------------
 '  2026-09-13 (evening).  v1 kept one row per 500-word thesis; v2 keeps one
-'  row per THEME note and shows them grouped by ticker, latest call only;
+'  row per THEME note and shows them grouped by ticker. Nothing is drawn until
+'  QUERY or KEYWORD is typed; KEYWORD alone searches each ticker's latest call,
 '  a QUERY shows every call of the queried tickers, newest first:
 '
 '    ThesisNotes (data sheet)  ListObject tblNotes, one note per row:
@@ -460,7 +461,13 @@ Public Sub DrawThesisView(ws As Worksheet)
     Dim drawnNotes As Long
     For i = 1 To n
         k = UCase$(tg(i))
-        If IsEmpty(qs) Then keep(i) = (dt(i) = latest(k)) Else keep(i) = MatchesQuery(k, qs)
+        If IsEmpty(qs) And IsEmpty(kws) Then
+            keep(i) = False                                 ' nothing typed: draw no blocks (2026-09-15, user)
+        ElseIf IsEmpty(qs) Then
+            keep(i) = (dt(i) = latest(k))
+        Else
+            keep(i) = MatchesQuery(k, qs)
+        End If
         If keep(i) And Not IsEmpty(kws) Then keep(i) = MatchesKeyword(th(i) & " " & be(i) & " " & ev(i), kws)
         If keep(i) Then
             shown(k) = shown(k) + 1
@@ -513,7 +520,13 @@ Public Sub DrawThesisView(ws As Worksheet)
         Next wrapRow
     End If
     If shown.count = 0 Then
-        ws.cells(r, 1).Value = IIf(n = 0, "No notes yet - add them on the ThesisNotes sheet.", "Nothing matches QUERY / KEYWORD.")
+        If n = 0 Then
+            ws.cells(r, 1).Value = "No notes yet - add them on the ThesisNotes sheet."
+        ElseIf IsEmpty(qs) And IsEmpty(kws) Then
+            ws.cells(r, 1).Value = "Type a ticker in QUERY (comma = several) or a word in KEYWORD to show notes."
+        Else
+            ws.cells(r, 1).Value = "Nothing matches QUERY / KEYWORD."
+        End If
         ws.cells(r, 1).Font.Color = CLR_MUTED
     End If
 
