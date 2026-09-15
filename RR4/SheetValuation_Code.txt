@@ -1,0 +1,18 @@
+' ============================================================================
+'  Worksheet code-behind for the "Valuation" sheet (RR4 workbook).
+' ----------------------------------------------------------------------------
+'  Not a .bas module - it lives in the sheet's own code module.  modValuationPage
+'  writes it there itself (EnsureSheetCode) the first time the page is built;
+'  this file is the record / manual fallback (paste via VBE > View Code, or
+'  CodeModule.AddFromString).
+'
+'  TICKER <GO> / MKT / GROUP inputs sit under their labels on page row 3 (with
+'  the nav bar: row 7, columns B / D / F) - ValuationChange locates them through
+'  NavOffset / NavLeft and runs modValuationPage.ShowValuation.
+' ============================================================================
+Option Explicit
+
+' Valuation page: TICKER / MKT / GROUP input -> modValuationPage.ShowValuation
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call ValuationChange(Me, Target)
+End Sub

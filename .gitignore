@@ -22,3 +22,4 @@ analytics.db-shm
 # generated output regenerated on every run, only the newest per ticker is
 # even kept locally (see modCharts.ExportTickerSnapshot), not something to track.
 SEC-Filing-Fetcher/exports/
+RR4/.valuation-cache/

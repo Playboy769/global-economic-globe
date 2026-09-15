@@ -19,6 +19,8 @@ Option Explicit
 '          HC HoldingsCorr . SC Correlation . R Company research
 '          RGE / RGI / RGT the three RRG pages . L Library (thesis notes)
 '          E Earnings (2026-09-13, modEarnings; E! refetches its ticker)
+'          VA Valuation (2026-09-15, modValuationPage; VA! refetches - ROIC
+'             relative valuation via RR4/valuation.py, no WACC)
 '  Actions UP update dashboard . ADD / DEL trade forms . V! HC! RGE! RGI!
 '          RGT! L! E! recalc and show that page . IMAP industry map
 '          DBG system debug . CLEARALL wipe all data
@@ -146,6 +148,7 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "RGT": NavSheetName = "RRG TW Groups"
         Case "L":  NavSheetName = "Library"
         Case "E":  NavSheetName = "Earnings"
+        Case "VA": NavSheetName = "Valuation"
         Case "R":  NavSheetName = "Company research"
     End Select
 End Function
@@ -154,7 +157,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E")
+    For Each c In Array("P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "VA")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -305,14 +308,14 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     Dim pages As Variant
     pages = Array("E", "EARNINGS", "H", "HISTORY", "HC", "HOLDCORR", "L", "LIBRARY", _
                   "P", "PORTFOLIO", "R", "RESEARCH", "RGE", "RRG ETF", "RGI", "RRG IND", "RGT", "RRG TW", _
-                  "RL", "REALIZED", "SC", "SECTORCORR", "T", "TRANSACTION", "V", "VOLITILITY", "VT", "TKRVOL")
+                  "RL", "REALIZED", "SC", "SECTORCORR", "T", "TRANSACTION", "V", "VOLITILITY", "VA", "VALUATION", "VT", "TKRVOL")
     Call WriteCodeLine(ws.cells(2 + top, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
     acts = Array("ADD", "TRADE", "CLEARALL", "WIPE ALL DATA", "DBG", "DEBUG", "DEL", "DELETE", _
                  "E!", "EARNINGS", "HC!", "HOLDCORR", "IMAP", "IND MAP", "L!", "LIBRARY", _
-                 "RGE!", "RRG ETF", "RGI!", "RRG IND", "RGT!", "RRG TW", "UP", "UPDATE", "V!", "RECALC VOL")
+                 "RGE!", "RRG ETF", "RGI!", "RRG IND", "RGT!", "RRG TW", "UP", "UPDATE", "V!", "RECALC VOL", "VA!", "VALUATION")
     Call WriteCodeLine(ws.cells(3 + top, 1 + off), acts, "", RGB(0, 200, 255))
 
     ' divider under the bar: dark grey, starting at the bar's first column
@@ -411,7 +414,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "R"
+        Case "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "R", "VA"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -435,6 +438,8 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
             Call BuildThesisLibrary
         Case "E!"
             Call RefreshEarnings
+        Case "VA!"
+            Call RefreshValuation
         Case "IMAP"
             Call ImportIndustryMap
         Case "DBG"
@@ -457,7 +462,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E" Or code = "VA", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible
