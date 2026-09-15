@@ -541,6 +541,16 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `RR4/SheetThesisNotes_Code.txt`。坑：代號是數字（1303）要先設 `@` 並 `Errors(xlNumberAsText).Ignore`，否則靠右＋綠色三角；
   `Format$(日期)` 寫進格子前也要 `@`，不然 Excel 又轉回日期格式。18 篇 v1 thesis 正逐篇拆成筆記（先做 1303，法說日規則：
   美股 Yahoo earningsCallDate、台股最新季報法定期限、總經用建檔日）。
+- **Library 證據六層（2026-09-15）**：`tblNotes` 的 EVIDENCE 一欄拆成六欄 `T0 Q&A | T1 CALL | T1L FILING | T2 RESEARCH |
+  T3 MEDIA | D OWN`（表頭 ASCII，畫面上第六欄顯示 Δ OWN），**一筆 note 的證據只放在其中一欄**，其他欄留白——畫面
+  `THEME | BEHAVIOR | T0 | T1 | T1L | T2 | T3 | Δ` 橫向並排，空白多寡就是那筆 note 的證據結構。層級＝離原始訊號幾手：
+  T0 法說 Q&A 即席回應（含未回答／拒答，留白反推）＞T1 公司正式陳述（法說稿、財測、簡報、新聞稿、8-K）＞T1L 法定申報與
+  官方數據（年報／10-Q/K／6-K／月營收／MOPS／官方統計／收盤價，**標示為 Lag information**）＞T2 第三方研究（券商、buy-side、
+  BBG 共識、TrendForce、資料站）＞T3 媒體／傳聞；Δ＝自己算的（互證對照表、估值頁、報告 tab 引用、框架主張、推估）。
+  括號列多個來源取最強（`（10-Q/法說）`→T1）；層級≠重要性。使用者刻意**不**把這套規則推到 500 字 thesis。
+  `EnsureNotesSheet` 遇到 8 欄舊表會原地升級（EVIDENCE 改名 T1L FILING、前後插入其他五欄），內容不搬；一次性回溯是照
+  `RR4/evidence-tiers-2026-09-15.md` 的清單（1,721 筆：T0 88／T1 579／T1L 648／T2 178／T3 18／Δ 210，依行尾括號的來源
+  字串規則判定）用 COM 搬到對應欄。KEYWORD 搜尋涵蓋六欄；`ReadNotes` 的 `ev` 改成 `ev(i, tier)` 二維陣列。
 - **Thesis Library（TH）頁 v1（2026-09-13，已被 v2 取代，資料在 ThesisArchive）**：`modThesis.bas`，總經＋個股 thesis 資料庫（使用者指定：Excel、同一庫用
   類型標籤、直接在表末打字新增、點列右側面板讀全文、掛導覽列）。`ListObject tblThesis`，一列一篇 13 欄：
   日期／類型(macro|stock)／標的／標題／立場(LONG|SHORT|NEUTRAL|WATCH)／500 字 thesis 六段各一欄／下次驗證日／
