@@ -322,7 +322,17 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     （RR4 深橘）並重新套 AutoFilter 到 `B5:O<last>`——注意 `Range.AutoFilter` 是切換式，套之前要先 `AutoFilterMode = False`
     否則會把它關掉。欄寬整欄插入自然保留，A 欄寬 3。實測遷移＋UP 後總值／8 持倉／Realized／HistoryLog 全部不變，
     模擬表單寫入落在第 64 列 B 欄起、整列刪除後復原。
-  - **Realized（R）頁 2026-09-13 起有 bar**：頁碼 R 進 `NavPageCode`，版面同其他報表頁（第 1 列／A 欄空白、
+  - **Transactions 買單按月合併（2026-09-15，使用者決定「只合併 Buy」）**：同一檔（2330＝2330.TW）同一個月的 Buy 只留一列——
+  股數／手續費／稅／Net_Amount 加總、Price 改股數加權平均、Date 與 Transaction_ID 保留該月第一筆、Sector／Target／Strategy／Beta／
+  Broker 保留既有列的值。ADD 表單（`frmTransaction_Code.txt`）遇 Buy 先 `Attach.FindMonthlyBuyRow`，命中就 `MergeBuyIntoRow`
+  併入不新增列，沒命中才 append；**Sell 刻意維持逐筆**——Realized 每個出場一列＋以「代號｜出場日」掛的手打 Caption 會被
+  合併毀掉，且同月「先用舊庫存賣→月中買→月底再賣」合併後賣列會被搬到月初而找不到 FIFO 庫存。一次性回溯 `Attach.MergeMonthlyBuys`
+  已跑過（65 列→40 列，Realized 總額 41,721.92→41,630.98，差額 −90.94 全部是 3532 未出清部位的已實現↔未實現搬動，
+  總損益不變；已出清標的逐筆 FIFO 損益會重新分配但合計不變，例 NBIS 8/14 那筆 +353→+176、9/9 −17→+160）。
+  ⚠️ **`MergeBuyIntoRow` 一律先把舊值全部讀完再寫**：實際有一列 Net_Amount 是手打公式 `=G*F`，先寫股數再讀 Net 會讓公式
+  用新股數重算、多加一次毛額（3532 曾因此變 59,733 而非 49,358）；合併後該列公式變成值。FIFO（`CalculateRealizedPnL`）
+  是照工作表列序、不是照日期跑的，這點沒改。
+- **Realized（R）頁 2026-09-13 起有 bar**：頁碼 R 進 `NavPageCode`，版面同其他報表頁（第 1 列／A 欄空白、
     bar 第 2–4 列、表頭第 5 列 B 欄起）。所有讀寫一律走 `Attach.RealHdrRow(ws)`／`RealCol(ws, n)`／
     `RealLastRow(ws)`（n 是頁面欄：A=1…J=10、K=11 Caption、L=12 LOAN），**不要再寫 `"A2:J10000"`、
     `Columns("H")`、`cells(r, "I")`**——`CalculateRealizedPnL`、`ClearAllData`、儀表板的實現損益加總、
