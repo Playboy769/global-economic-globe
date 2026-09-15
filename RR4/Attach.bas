@@ -894,8 +894,25 @@ Sub CalculateRealizedPnL()
         End If
     Next ck
 
-    wsReal.Range(wsReal.Columns(c0 + 1), wsReal.Columns(c0 + REAL_NCOL)).AutoFit
+    ' AutoFit only the header + data rows: whole-column AutoFit also measures
+    ' the nav bar's code line (one long text in the TICKER column's row 3)
+    ' and blew column B up to the full bar width (2026-09-15).
+    wsReal.Range(wsReal.Cells(r0, c0 + 1), wsReal.Cells(IIf(orphanRow > r0 + 1, orphanRow - 1, r0 + 1), c0 + REAL_NCOL)).Columns.AutoFit
+    Call SetColumnPixels(wsReal, c0 + 1, 150)  ' TICKER column: fixed 150 px (user spec)
     Application.ScreenUpdating = True
+End Sub
+
+' Column width in pixels (Excel's ColumnWidth is in default-font characters;
+' .Width reads back in points, 4/3 px per point at 96 dpi). Two passes get
+' within a pixel.
+Public Sub SetColumnPixels(ByVal ws As Worksheet, ByVal col As Long, ByVal px As Long)
+    Dim k As Long, target As Double: target = px * 0.75
+    ws.Columns(col).ColumnWidth = px / 7
+    For k = 1 To 3
+        Dim w As Double: w = ws.Columns(col).Width
+        If Abs(w - target) < 0.75 Then Exit For
+        ws.Columns(col).ColumnWidth = ws.Columns(col).ColumnWidth * target / w
+    Next k
 End Sub
 
 Sub ClearAllData()
