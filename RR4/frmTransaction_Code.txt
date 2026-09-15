@@ -166,6 +166,16 @@ Private Sub btnSave_Click()
         tNetAmount = 0
     End If
     
+    ' 2026-09-15: one Buy row per ticker per month - a later fill in the same
+    ' month folds into the existing row (Attach.MergeBuyIntoRow) instead of
+    ' appending. Sells stay one row per trade.
+    Dim mergeRow As Long
+    If Me.cmbAction.Value = "Buy" Then mergeRow = FindMonthlyBuyRow(wsLog, UCase(Trim(Me.txtTicker.Value)), tDate)
+    If mergeRow > 0 Then
+        Call MergeBuyIntoRow(wsLog, mergeRow, tDate, tShares, tPrice, tFee, tTax, tNetAmount)
+        GoTo Saved
+    End If
+
     With wsLog
         .cells(NextRow, tc + 1).Value = "T-" & Format(Now, "yyyymmdd-HHmmss")
         .cells(NextRow, tc + 2).Value = tDate
@@ -183,6 +193,7 @@ Private Sub btnSave_Click()
         .cells(NextRow, tc + 14).Value = Me.cmbBroker.Value  ' ★ 新增券商欄
     End With
     
+Saved:
     MsgBox "交易儲存成功！(買入成本已包含預估賣出費稅)", vbInformation
     
     Me.txtTicker.Value = ""
