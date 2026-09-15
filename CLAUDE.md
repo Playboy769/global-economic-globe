@@ -279,7 +279,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     頁面碼 **E** Earnings／**H** HistoryLog／**HC** HoldingsCorr（原 C）／**L** Library（原 TH，分頁名「Thesis Library」與頁標題
     也改成 Library／LIBRARY，`modThesis.THESIS_SHEET`；`EnsureViewSheet` 遇到舊分頁名會自動改名，`MigrateV1ToArchive` 仍認舊名
     `THESIS_SHEET_OLD` 找 v1 表）／**P** RR4／**R** Company research（原 CR）／**RGE**・**RGI**・**RGT** 三個 RRG 頁（原 RG/RI/TG）／
-    **RL** Realized（原 R，讓位給 RESEARCH）／**SC** Correlation（原 CC）／**T** Transactions／**V**・**VT**。動作碼跟著改
+    **RL** Realized（原 R，讓位給 RESEARCH）／**SC** Correlation（原 CC）／**T** Transactions／**V**・**VT**／**VA** Valuation（2026-09-15 新增，動作碼 VA!）。動作碼跟著改
     HC!/L!/RGE!/RGI!/RGT!（其餘 UP/ADD/DEL/V!/E!/IMAP/DBG/CLEARALL 不變）。bar 兩列標籤改 TRANSACTION／VOLITILITY（使用者原拼法）
     ／HOLDCORR／SECTORCORR／RRG ETF／RRG IND／RRG TW／LIBRARY／RESEARCH，**兩列都依代碼字母排序**。舊碼直接廢除、沒有別名
     （打 TH 會回 `UNKNOWN CODE`）。各模組 `NavAdd(ws, "…")` 與 RRG 的 `navCode` 已全數換成新碼。
@@ -577,6 +577,30 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   - 事件碼由 `EnsureSheetCode` 寫進工作表模組（紀錄在 `RR4/SheetEarnings_Code.txt`）。⚠️ 踩過的坑：傳 Dictionary
     項目（Variant）給 `ByRef x As Object` 參數是**編譯錯誤「ByRef 引數型態不符」**，lint 抓不到、COM `Run` 會卡在
     VBE 對話框且把 `EnableEvents` 留在 False——物件參數一律 `ByVal`。
+- **Valuation（VA）頁（2026-09-15）**：`modValuationPage.bas` ＋ **`RR4/valuation.py`**——不用技術分析、**不用 WACC**
+  的 ROIC 相對估值頁（使用者決定拿掉 WACC，只留 ROIC：絕對門檻美股 10%／台股 8% 固定不調、自身歷史中位、
+  tblGroups 族群分位三個相對基準）。**分工：Python 抓資料＋算數、VBA 只畫頁**——VBA 寫 `%TEMP%\rr4-valuation\request.json`
+  （ticker／market／group／peers，非 ASCII 用 `\uXXXX` 逃逸），`WScript.Shell.Run` 隱藏視窗同步跑
+  `python valuation.py --req … --out result.txt`，再用 ADODB.Stream 讀 UTF-8 的 tab 分隔區塊檔
+  （`#META/#SUMMARY/#RELATIVE/#FAIR/#HISTORY/#PEERS/#THESIS/#LOG`，VBA 沒有 JSON 解析器所以刻意不用 JSON）。
+  口徑照 `SEC-Filing-Fetcher/modValuation.bas`（IC＝總資產−流動負債、NOPAT＝營業利益×(1−有效稅率)，稅率超出 0–40% 退
+  21%／20%），另並列 **ex-cash**（IC 扣現金與短投；低於 IC 的 10% 就標 n/a，否則會出現 487% 這種數字）與 **std**
+  （IC 加回短期借款）兩口徑。流量用 **TTM**（同業表與合理價），歷史表同時列「單季 ×4」（Excel 欄位慣例）與滾動 TTM；
+  ROIC 再拆 NOPAT 利潤率 × IC 週轉率，再投資率＝(capex−D&A)/NOPAT（不含營運資金）→ 內生成長。
+  **同業＝tblGroups 裡含該代號的第一個族群**（TW 先於 US；GROUP 輸入格可覆寫——3017 目前會配到「02. 半導體 - IC設計」，
+  那是 tblGroups 的內容不是程式判斷），只抓每家 TTM 一輪；EV＝市值＋有息負債＋租賃負債＋少數股權−現金與短投；
+  EBIT 為負或 EV/EBIT ≥ 100 的同業列出但不進倍數帶與回歸。合理價＝族群 EV/EBIT P25/P50/P75 × EBIT TTM − 淨負債 ÷ 股數，
+  本股 ROIC 分位 ≥75% 取 P75、<25% 取 P25、其餘 P50，安全邊際 ≥25% 才亮綠；同業回歸斜率為負時溢價欄留空並註記。
+  頁尾直接產出 500 字 thesis 第 4–6 段文字。`VA_SCATTER` 散布圖（EV/EBIT vs ROIC，一檔一 series，本股橘、排除者空心、
+  絕對門檻虛線）錨在 O 欄。事件碼 `RR4/SheetValuation_Code.txt`。
+  - **資料來源與坑**：美股 SEC companyfacts（**UA 沿用 `modHttp.SEC_USER_AGENT` 那組，`www.sec.gov/files/company_tickers.json`
+    對其他 UA 回 403**；10-Q 現金流量科目是 YTD，同一 start 日期的連續 end 逐段相減還原單季，Q4＝FY−前三季；股數 dei →
+    `CommonStockSharesOutstanding` → 稀釋加權平均三段退階，GOOGL／META 只有後兩者；NVDA 的 capex 標的是
+    `PaymentsToAcquireProductiveAssets` 不是 `…PropertyPlantAndEquipment`）。台股 MOPS t164sb01 iXBRL（cp950；TTM＝本年 YTD
+    ＋去年全年−去年同期 YTD，季度用 3 個月 context、Q4＝FY−Q3 YTD；股數＝普通股股本÷10）。Yahoo 4xx 不重試（`.TW` 404 就換
+    `.TWO`）。回應快取在 `RR4/.valuation-cache/`（MOPS 30 天、SEC 1 天、Yahoo 半天，已進 .gitignore），3017＋14 家同業首跑
+    134 秒、快取後 7 秒。
+  - 可離開 Excel 單獨測：`python RR4/valuation.py --ticker 3017 --market TW --peers 2421,6230 --out out.txt`。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
