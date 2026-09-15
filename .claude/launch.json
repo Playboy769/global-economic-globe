@@ -767,6 +767,18 @@
         "research/nsit-analysis-2026q2/NSIT_FY2026Q2_Analysis"
       ],
       "port": 8187
+    },
+    {
+      "name": "amkr-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8188",
+        "--directory",
+        "research/amkr-analysis-2026q2/AMKR_FY2026Q2_Analysis"
+      ],
+      "port": 8188
     }
   ]
 }
