@@ -400,7 +400,7 @@ Public Sub DrawThesisView(ws As Worksheet)
         .VerticalAlignment = xlCenter
         .RowHeight = 17
     End With
-    Dim widths As Variant: widths = Array(18, 13, 10, 34, 50, 50, 2)
+    Dim widths As Variant: widths = Array(18, 13, 10, 34, 72, 88, 2)   ' BEHAVIOR / EVIDENCE wrap (up to ~100 / 120 chars)
     Dim j As Long
     For j = 0 To 6: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
     ws.Columns(C_KEY).Hidden = True
@@ -503,6 +503,15 @@ Public Sub DrawThesisView(ws As Worksheet)
             Next ti
         End If
     Next sec
+    If r > PG_LIST Then                                     ' long BEHAVIOR / EVIDENCE wrap: let the rows grow
+        ws.Range(ws.cells(PG_LIST, C_BEHAV), ws.cells(r, C_EVID)).WrapText = True
+        ws.Range(ws.cells(PG_LIST, 1), ws.cells(r, C_EVID)).VerticalAlignment = xlTop
+        ws.Range(ws.Rows(PG_LIST), ws.Rows(r)).AutoFit
+        Dim wrapRow As Long
+        For wrapRow = PG_LIST To r
+            If ws.Rows(wrapRow).RowHeight < 17 Then ws.Rows(wrapRow).RowHeight = 17
+        Next wrapRow
+    End If
     If shown.count = 0 Then
         ws.cells(r, 1).Value = IIf(n = 0, "No notes yet - add them on the ThesisNotes sheet.", "Nothing matches QUERY / KEYWORD.")
         ws.cells(r, 1).Font.Color = CLR_MUTED
