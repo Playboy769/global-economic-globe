@@ -12,7 +12,22 @@ Option Explicit
 '
 '    ThesisNotes (data sheet)  ListObject tblNotes, one note per row:
 '      TARGET | TYPE (stock / macro) | CALL DATE | STATUS | ROLE |
-'      THEME | BEHAVIOR | EVIDENCE
+'      THEME | BEHAVIOR | T0 Q&A | T1 CALL | T1L FILING | T2 RESEARCH |
+'      T3 MEDIA | D OWN
+'      (2026-09-15: the single EVIDENCE column became six evidence TIERS,
+'      one note's evidence sits in exactly one of them:
+'        T0  earnings-call Q&A (unscripted answers, refusals, dodges)
+'        T1  the company's scripted statements (prepared remarks, guidance,
+'            decks, press releases)
+'        T1L statutory filings and official data - lag information
+'            (annual report, 10-Q/K, monthly sales, MOPS, official stats)
+'        T2  third-party research (sell side, buy side, consensus, industry
+'            research houses, data sites)
+'        T3  media, rumours, unattributed reports
+'        D   own derivations (cross-check tables, valuation page, report
+'            tabs, framework claims) - drawn as a Greek delta
+'      EnsureNotesSheet upgrades an 8-column table in place: EVIDENCE is
+'      renamed T1L FILING and the other five tiers are inserted around it.)
 '      STATUS  Robust Solid Growing (green) / Slowing Sluggish Challenging
 '              Contraction Warning (red)
 '      ROLE    MOAT / RISK / CATALYST / blank
@@ -22,12 +37,13 @@ Option Explicit
 '    Thesis Library (view, carries the nav bar)
 '      page row 1  title
 '      row 2/3     QUERY (tickers, comma = several, blank = all) and KEYWORD
-'                  (searched in THEME / BEHAVIOR / EVIDENCE, comma = OR)
+'                  (searched in THEME / BEHAVIOR / all six tiers, comma = OR)
 '                  labels above their inputs; "N calls drawn . M notes"
 '      row 5       totals over all data (notes . calls . tickers)
 '      row 7       header; double-click its TICKER cell = sort blocks by
 '                  latest call date (newest first) <-> ticker A-Z (THSORT)
-'      row 8+      STOCK section, then MACRO: one block per target with the
+'      row 8+      STOCK section, then MACRO (THEME | BEHAVIOR | T0 | T1 |
+'                  T1L | T2 | T3 | D side by side): one block per target with the
 '                  target bold and its latest call date under it, one line
 '                  per note; notes of older calls follow, each call's date
 '                  on its first row.  Double-click a target -> the
@@ -54,8 +70,9 @@ Private Const NT_STATUS As Long = 4
 Private Const NT_ROLE As Long = 5
 Private Const NT_THEME As Long = 6
 Private Const NT_BEHAV As Long = 7
-Private Const NT_EVID As Long = 8
-Private Const NT_NCOL As Long = 8
+Private Const NT_T0 As Long = 8                          ' first tier column; tiers are NT_T0 .. NT_T0 + NTIER - 1
+Private Const NTIER As Long = 6
+Private Const NT_NCOL As Long = 13
 
 ' view geometry (page coordinates; the bar adds NavOffset rows / NavLeft columns)
 Private Const PG_TITLE As Long = 1
@@ -69,7 +86,8 @@ Private Const C_STATUS As Long = 2
 Private Const C_ROLE As Long = 3
 Private Const C_THEME As Long = 4
 Private Const C_BEHAV As Long = 5
-Private Const C_EVID As Long = 6
+Private Const C_T0 As Long = 6                           ' six tier columns F..K
+Private Const C_LAST As Long = 11
 Private Const C_KEY As Long = 30                         ' hidden: the block's target on every row
 Private Const PANEL_COL As Long = 8                      ' H at draw time
 Private Const PANEL_W As Double = 560
@@ -114,6 +132,29 @@ Private Function RoleColor(ByVal s As String) As Long
         Case "RISK": RoleColor = RGB(230, 90, 90)
         Case "CATALYST": RoleColor = RGB(0, 190, 240)
         Case Else: RoleColor = CLR_MUTED
+    End Select
+End Function
+
+' Tier column headers (data sheet and view share them).  The D tier shows as a
+' Greek capital delta on the view; the data-sheet header stays ASCII "D OWN".
+Private Function TierName(ByVal t As Long, ByVal forView As Boolean) As String
+    Select Case t
+        Case 1: TierName = "T0 Q&A"
+        Case 2: TierName = "T1 CALL"
+        Case 3: TierName = "T1L FILING"
+        Case 4: TierName = "T2 RESEARCH"
+        Case 5: TierName = "T3 MEDIA"
+        Case 6: TierName = IIf(forView, ChrW(&H394) & " OWN", "D OWN")
+    End Select
+End Function
+
+Private Function TierColor(ByVal t As Long) As Long
+    Select Case t
+        Case 1: TierColor = RGB(245, 245, 245)           ' Q&A: the brightest
+        Case 2, 3: TierColor = CLR_SOFT
+        Case 4: TierColor = RGB(170, 170, 170)
+        Case 5: TierColor = CLR_MUTED
+        Case Else: TierColor = RGB(200, 170, 120)        ' own derivations: warm tint
     End Select
 End Function
 
@@ -223,7 +264,7 @@ Private Sub EnsureNotesSheet()
         .VerticalAlignment = xlCenter
     End With
     With ws.cells(1, 1)
-        .Value = "THESIS NOTES  .  data for Thesis Library (TH) - one theme note per row; type below the table to add, delete a row to remove"
+        .Value = "THESIS NOTES  .  data for Library (L) - one theme note per row, its evidence in ONE tier column (T0 Q&A > T1 CALL > T1L FILING lag > T2 RESEARCH > T3 MEDIA > D OWN); type below the table to add, delete a row to remove"
         .Font.Color = RR4_ACCENT: .Font.Bold = True
     End With
 
@@ -232,12 +273,23 @@ Private Sub EnsureNotesSheet()
     Set lo = ws.ListObjects(NOTES_TABLE)
     On Error GoTo 0
     Dim hdr As Variant
-    hdr = Array("TARGET", "TYPE", "CALL DATE", "STATUS", "ROLE", "THEME", "BEHAVIOR", "EVIDENCE")
+    hdr = Array("TARGET", "TYPE", "CALL DATE", "STATUS", "ROLE", "THEME", "BEHAVIOR", _
+                TierName(1, False), TierName(2, False), TierName(3, False), TierName(4, False), TierName(5, False), TierName(6, False))
     Dim j As Long
     If lo Is Nothing Then
         For j = 0 To NT_NCOL - 1: ws.cells(3, j + 1).Value = hdr(j): Next j
         Set lo = ws.ListObjects.Add(xlSrcRange, ws.Range(ws.cells(3, 1), ws.cells(4, NT_NCOL)), , xlYes)
         lo.Name = NOTES_TABLE
+    ElseIf lo.ListColumns.count = 8 Then
+        ' 2026-09-15 upgrade: the old EVIDENCE column becomes T1L FILING (col 10);
+        ' T0 / T1 go in front of it, T2 / T3 / D after.  Existing evidence stays
+        ' where it is - re-sorting it into the right tier is a one-off outside job.
+        lo.ListColumns.Add(NT_T0).Name = TierName(1, False)
+        lo.ListColumns.Add(NT_T0 + 1).Name = TierName(2, False)
+        lo.ListColumns(NT_T0 + 2).Name = TierName(3, False)
+        lo.ListColumns.Add.Name = TierName(4, False)
+        lo.ListColumns.Add.Name = TierName(5, False)
+        lo.ListColumns.Add.Name = TierName(6, False)
     End If
     lo.TableStyle = ""
     With lo.HeaderRowRange
@@ -245,7 +297,7 @@ Private Sub EnsureNotesSheet()
         .Interior.Color = RGB(0, 0, 0)
         .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Color = RR4_LINE
     End With
-    Dim widths As Variant: widths = Array(16, 8, 12, 13, 10, 36, 56, 56)
+    Dim widths As Variant: widths = Array(16, 8, 12, 13, 10, 36, 56, 44, 44, 44, 44, 36, 44)
     For j = 0 To NT_NCOL - 1: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
     If Not lo.DataBodyRange Is Nothing Then
         With lo.DataBodyRange
@@ -253,7 +305,7 @@ Private Sub EnsureNotesSheet()
         End With
         lo.ListColumns(NT_DATE).DataBodyRange.NumberFormat = "yyyy/mm/dd"
         lo.ListColumns(NT_TARGET).DataBodyRange.Font.Name = ZH_FONT
-        For j = NT_THEME To NT_EVID: lo.ListColumns(j).DataBodyRange.Font.Name = ZH_FONT: Next j
+        For j = NT_THEME To NT_NCOL: lo.ListColumns(j).DataBodyRange.Font.Name = ZH_FONT: Next j
         Call SetList(lo.ListColumns(NT_TYPE).DataBodyRange, "stock,macro")
         Call SetList(lo.ListColumns(NT_STATUS).DataBodyRange, StatusList())
         Call SetList(lo.ListColumns(NT_ROLE).DataBodyRange, "MOAT,RISK,CATALYST")
@@ -401,9 +453,9 @@ Public Sub DrawThesisView(ws As Worksheet)
         .VerticalAlignment = xlCenter
         .RowHeight = 17
     End With
-    Dim widths As Variant: widths = Array(18, 13, 10, 34, 72, 88, 2)   ' BEHAVIOR / EVIDENCE wrap (up to ~100 / 120 chars)
+    Dim widths As Variant: widths = Array(18, 13, 10, 30, 52, 40, 40, 40, 40, 32, 40, 2)   ' BEHAVIOR + six tiers wrap
     Dim j As Long
-    For j = 0 To 6: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
+    For j = 0 To 11: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
     ws.Columns(C_KEY).Hidden = True
 
     ' ---- title + inputs (label above input) ----
@@ -424,6 +476,7 @@ Public Sub DrawThesisView(ws As Worksheet)
     Dim lo As ListObject: Set lo = NotesTable()
     Dim n As Long
     Dim tg() As String, ty() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String
+    ' ev(i, t) = note i's evidence in tier t (1..NTIER); at most one tier is filled
     n = ReadNotes(lo, tg, ty, dt, st, ro, th, be, ev)
 
     ' totals over everything
@@ -447,7 +500,7 @@ Public Sub DrawThesisView(ws As Worksheet)
                  "      (double-click a ticker = its archived thesis, the title = close)"
         .Font.Color = CLR_SOFT: .Font.Bold = True
     End With
-    With ws.Range(ws.cells(PG_TOTAL, 1), ws.cells(PG_TOTAL, C_EVID)).Borders(xlEdgeBottom)
+    With ws.Range(ws.cells(PG_TOTAL, 1), ws.cells(PG_TOTAL, C_LAST)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous: .Color = RR4_LINE
     End With
 
@@ -468,14 +521,14 @@ Public Sub DrawThesisView(ws As Worksheet)
         Else
             keep(i) = MatchesQuery(k, qs)
         End If
-        If keep(i) And Not IsEmpty(kws) Then keep(i) = MatchesKeyword(th(i) & " " & be(i) & " " & ev(i), kws)
+        If keep(i) And Not IsEmpty(kws) Then keep(i) = MatchesKeyword(th(i) & " " & be(i) & " " & AllTiers(ev, i), kws)
         If keep(i) Then
             shown(k) = shown(k) + 1
             shownCalls(k & "|" & CLng(dt(i))) = True
             drawnNotes = drawnNotes + 1
         End If
     Next i
-    With ws.cells(PG_IN, C_EVID)
+    With ws.cells(PG_IN, C_T0)
         .Value = shownCalls.count & " calls drawn . " & drawnNotes & " notes"
         .Font.Color = RGB(80, 200, 120): .Font.Bold = True
     End With
@@ -486,10 +539,13 @@ Public Sub DrawThesisView(ws As Worksheet)
     ws.cells(PG_HDR, C_ROLE).Value = "ROLE"
     ws.cells(PG_HDR, C_THEME).Value = "THEME"
     ws.cells(PG_HDR, C_BEHAV).Value = "BEHAVIOR"
-    ws.cells(PG_HDR, C_EVID).Value = "EVIDENCE"
-    With ws.Range(ws.cells(PG_HDR, 1), ws.cells(PG_HDR, C_EVID))
+    Dim t As Long
+    For t = 1 To NTIER: ws.cells(PG_HDR, C_T0 + t - 1).Value = TierName(t, True): Next t
+    With ws.Range(ws.cells(PG_HDR, 1), ws.cells(PG_HDR, C_LAST))
         .Font.Color = RR4_ACCENT: .Font.Bold = True
     End With
+    ws.cells(PG_HDR, C_T0 + 2).AddComment "Lag information: statutory filings / official data - true but already old when published"
+    ws.cells(PG_HDR, C_LAST).AddComment "Own derivations: cross-check tables, valuation page, report tabs, framework claims"
     ws.cells(PG_HDR, C_TGT).AddComment "Double-click: sort blocks by latest call date <-> ticker A-Z"
 
     ' ---- blocks ----
@@ -498,7 +554,7 @@ Public Sub DrawThesisView(ws As Worksheet)
     For Each sec In Array("stock", "macro")
         Dim order As Variant: order = OrderedTargets(shown, latest, kind, CStr(sec), mode)
         If Not IsEmpty(order) Then
-            With ws.Range(ws.cells(r, 1), ws.cells(r, C_EVID))
+            With ws.Range(ws.cells(r, 1), ws.cells(r, C_LAST))
                 .Interior.Color = CLR_BANNER
                 .Font.Color = RR4_ACCENT: .Font.Bold = True
             End With
@@ -511,8 +567,8 @@ Public Sub DrawThesisView(ws As Worksheet)
         End If
     Next sec
     If r > PG_LIST Then                                     ' long BEHAVIOR / EVIDENCE wrap: let the rows grow
-        ws.Range(ws.cells(PG_LIST, C_BEHAV), ws.cells(r, C_EVID)).WrapText = True
-        ws.Range(ws.cells(PG_LIST, 1), ws.cells(r, C_EVID)).VerticalAlignment = xlTop
+        ws.Range(ws.cells(PG_LIST, C_BEHAV), ws.cells(r, C_LAST)).WrapText = True
+        ws.Range(ws.cells(PG_LIST, 1), ws.cells(r, C_LAST)).VerticalAlignment = xlTop
         ws.Range(ws.Rows(PG_LIST), ws.Rows(r)).AutoFit
         Dim wrapRow As Long
         For wrapRow = PG_LIST To r
@@ -583,7 +639,10 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
             End With
             Call TextCell(ws.cells(r, C_THEME), th(i), RGB(245, 245, 245))
             Call TextCell(ws.cells(r, C_BEHAV), be(i), CLR_SOFT)
-            Call TextCell(ws.cells(r, C_EVID), ev(i), CLR_SOFT)
+            Dim tt As Long                                 ' evidence in its tier column, the others stay blank
+            For tt = 1 To NTIER
+                If Trim$(ev(i, tt)) <> "" Then Call TextCell(ws.cells(r, C_T0 + tt - 1), ev(i, tt), TierColor(tt))
+            Next tt
             ws.cells(r, C_KEY).Value = key
             r = r + 1
         End If
@@ -651,13 +710,14 @@ End Sub
 Private Function ReadNotes(lo As ListObject, tg() As String, ty() As String, dt() As Date, st() As String, _
         ro() As String, th() As String, be() As String, ev() As String) As Long
     ReDim tg(0 To 0): ReDim ty(0 To 0): ReDim dt(0 To 0): ReDim st(0 To 0)
-    ReDim ro(0 To 0): ReDim th(0 To 0): ReDim be(0 To 0): ReDim ev(0 To 0)
+    ReDim ro(0 To 0): ReDim th(0 To 0): ReDim be(0 To 0): ReDim ev(0 To 0, 1 To NTIER)
     If lo Is Nothing Then Exit Function
     If lo.DataBodyRange Is Nothing Then Exit Function
     Dim v As Variant: v = lo.DataBodyRange.Value
     Dim rows As Long: rows = UBound(v, 1)
     ReDim tg(0 To rows): ReDim ty(0 To rows): ReDim dt(0 To rows): ReDim st(0 To rows)
-    ReDim ro(0 To rows): ReDim th(0 To rows): ReDim be(0 To rows): ReDim ev(0 To rows)
+    ReDim ro(0 To rows): ReDim th(0 To rows): ReDim be(0 To rows): ReDim ev(0 To rows, 1 To NTIER)
+    Dim ncol As Long: ncol = UBound(v, 2)
     Dim i As Long, n As Long
     For i = 1 To rows
         If Trim$(CStr(v(i, NT_TARGET))) <> "" Then
@@ -670,10 +730,19 @@ Private Function ReadNotes(lo As ListObject, tg() As String, ty() As String, dt(
             ro(n) = UCase$(Trim$(CStr(v(i, NT_ROLE))))
             th(n) = CStr(v(i, NT_THEME))
             be(n) = CStr(v(i, NT_BEHAV))
-            ev(n) = CStr(v(i, NT_EVID))
+            Dim t As Long
+            For t = 1 To NTIER
+                If NT_T0 + t - 1 <= ncol Then ev(n, t) = CStr(v(i, NT_T0 + t - 1))
+            Next t
         End If
     Next i
     ReadNotes = n
+End Function
+
+' All tiers of one note joined, for KEYWORD matching.
+Private Function AllTiers(ev() As String, ByVal i As Long) As String
+    Dim t As Long
+    For t = 1 To NTIER: AllTiers = AllTiers & " " & ev(i, t): Next t
 End Function
 
 Private Function SplitList(ByVal s As String) As Variant
