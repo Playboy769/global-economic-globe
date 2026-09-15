@@ -41,7 +41,16 @@ Option Explicit
 '                  labels above their inputs; "N calls drawn . M notes"
 '      row 5       totals over all data (notes . calls . tickers)
 '      row 7       header; double-click its TICKER cell = sort blocks by
-'                  latest call date (newest first) <-> ticker A-Z (THSORT)
+'                  latest call date (newest first) <-> ticker A-Z (THSORT).
+'                  Double-click STATUS or ROLE = sort the notes INSIDE every
+'                  block by that column (2026-09-15): first click list order
+'                  (STATUS green Robust..Growing then red Slowing..Warning;
+'                  ROLE MOAT > RISK > CATALYST), second click reversed, third
+'                  click off; blanks always last, ties keep data-sheet order.
+'                  While a note sort is on the call-date grouping of a block
+'                  is dropped (older calls mix in, no date labels).  Kept in
+'                  the hidden name THNOTESORT ("status|asc" etc.), header
+'                  shows a down / up triangle.
 '      row 8+      STOCK section, then MACRO (THEME | BEHAVIOR | T0 | T1 |
 '                  T1L | T2 | T3 | D side by side): one block per target with the
 '                  target bold and its latest call date under it, one line
@@ -100,6 +109,7 @@ Private Const CLR_SOFT As Long = 12632256                ' 192,192,192
 Private Const CLR_MUTED As Long = 8421504                ' 128,128,128
 Private Const CLR_BANNER As Long = 1842204               ' 28,28,28
 Private Const SORT_MARK As String = "THSORT"             ' "date" (default) / "ticker"
+Private Const NOTESORT_MARK As String = "THNOTESORT"     ' "" / "status|asc" / "status|desc" / "role|asc" / "role|desc"
 
 ' ----------------------------------------------------------------
 Private Function L(ByVal key As String) As String
@@ -398,6 +408,21 @@ Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef C
         Call DrawThesisView(ws)
         Exit Sub
     End If
+    If t.Row = PG_HDR + off And (t.Column = C_STATUS + lc Or t.Column = C_ROLE + lc) Then
+        Cancel = True
+        Dim nk As String: nk = IIf(t.Column = C_STATUS + lc, "status", "role")
+        Dim ns As String: ns = NoteSort(ws)
+        If ns = nk & "|asc" Then
+            ns = nk & "|desc"
+        ElseIf ns = nk & "|desc" Then
+            ns = ""
+        Else
+            ns = nk & "|asc"
+        End If
+        Call SetNoteSort(ws, ns)
+        Call DrawThesisView(ws)
+        Exit Sub
+    End If
     If t.Row = PG_TITLE + off Then
         Cancel = True
         Call ShowArchive(ws, "")
@@ -426,6 +451,55 @@ End Function
 Private Sub SetSortMode(ws As Worksheet, ByVal mode As String)
     ws.Names.Add Name:=SORT_MARK, RefersTo:="=""" & mode & """", Visible:=False
 End Sub
+
+' Note sort inside the blocks: "" (data-sheet order) or "status|asc" etc.
+Private Function NoteSort(ws As Worksheet) As String
+    Dim nm As Name
+    For Each nm In ws.Names
+        If Right$(nm.Name, Len(NOTESORT_MARK) + 1) = "!" & NOTESORT_MARK Then
+            NoteSort = Replace(Replace(nm.RefersTo, "=", ""), """", "")
+            Exit Function
+        End If
+    Next nm
+End Function
+
+Private Sub SetNoteSort(ws As Worksheet, ByVal mode As String)
+    ws.Names.Add Name:=NOTESORT_MARK, RefersTo:="=""" & mode & """", Visible:=False
+End Sub
+
+' Rank of one note under the note sort (lower = higher on the page).  Blank /
+' unknown values rank last whichever direction; the reverse direction flips
+' only the known values.
+Private Function NoteRank(ByVal mode As String, ByVal status As String, ByVal role As String) As Long
+    Dim r As Long, nKnown As Long
+    If Left$(mode, 6) = "status" Then
+        nKnown = 8
+        Select Case LCase$(Trim$(status))
+            Case "robust": r = 1
+            Case "solid": r = 2
+            Case "growing": r = 3
+            Case "slowing": r = 4
+            Case "sluggish": r = 5
+            Case "challenging": r = 6
+            Case "contraction": r = 7
+            Case "warning": r = 8
+        End Select
+    Else
+        nKnown = 3
+        Select Case UCase$(Trim$(role))
+            Case "MOAT": r = 1
+            Case "RISK": r = 2
+            Case "CATALYST": r = 3
+        End Select
+    End If
+    If r = 0 Then
+        NoteRank = 99
+    ElseIf Right$(mode, 4) = "desc" Then
+        NoteRank = nKnown + 1 - r
+    Else
+        NoteRank = r
+    End If
+End Function
 
 ' ================================================================
 '  View
@@ -535,8 +609,13 @@ Public Sub DrawThesisView(ws As Worksheet)
 
     ' ---- header ----
     ws.cells(PG_HDR, C_TGT).Value = IIf(mode = "ticker", "TICKER A-Z", "LATEST CALL")
-    ws.cells(PG_HDR, C_STATUS).Value = "STATUS"
-    ws.cells(PG_HDR, C_ROLE).Value = "ROLE"
+    Dim ns As String: ns = NoteSort(ws)
+    Dim mark As String
+    If Right$(ns, 3) = "asc" Then mark = " " & ChrW(&H25BC) Else mark = " " & ChrW(&H25B2)
+    ws.cells(PG_HDR, C_STATUS).Value = "STATUS" & IIf(Left$(ns, 6) = "status", mark, "")
+    ws.cells(PG_HDR, C_ROLE).Value = "ROLE" & IIf(Left$(ns, 4) = "role", mark, "")
+    ws.cells(PG_HDR, C_STATUS).AddComment "Double-click: sort notes in every block by STATUS (green > red), again = reversed, again = off"
+    ws.cells(PG_HDR, C_ROLE).AddComment "Double-click: sort notes in every block by ROLE (MOAT > RISK > CATALYST), again = reversed, again = off"
     ws.cells(PG_HDR, C_THEME).Value = "THEME"
     ws.cells(PG_HDR, C_BEHAV).Value = "BEHAVIOR"
     Dim t As Long
@@ -562,7 +641,7 @@ Public Sub DrawThesisView(ws As Worksheet)
             r = r + 2
             Dim ti As Long
             For ti = LBound(order) To UBound(order)
-                r = DrawBlock(ws, r, CStr(order(ti)), latest(order(ti)), n, tg, dt, st, ro, th, be, ev, keep) + 1
+                r = DrawBlock(ws, r, CStr(order(ti)), latest(order(ti)), n, tg, dt, st, ro, th, be, ev, keep, ns) + 1
             Next ti
         End If
     Next sec
@@ -601,7 +680,8 @@ Fail:
 End Sub
 
 Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String, ByVal callDate As Date, ByVal n As Long, _
-        tg() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String, keep() As Boolean) As Long
+        tg() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String, keep() As Boolean, _
+        ByVal noteSort As String) As Long
     Dim top As Long: top = r
     Dim i As Long, shownName As String
     ' every kept note of this target, newest call first (stable: sheet order within one date)
@@ -611,6 +691,7 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
         If keep(i) And UCase$(tg(i)) = key Then
             m = m + 1: idx(m) = i
             b = m
+            If noteSort <> "" Then b = 1                    ' note sort on: ties keep plain data-sheet order, not date order
             Do While b > 1
                 If dt(idx(b - 1)) >= dt(idx(b)) Then Exit Do
                 t = idx(b - 1): idx(b - 1) = idx(b): idx(b) = t
@@ -618,11 +699,24 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
             Loop
         End If
     Next i
+    If noteSort <> "" Then                                 ' note sort on: stable insertion sort by rank over the whole block
+        Dim rk() As Long: ReDim rk(1 To m + 1)
+        For a = 1 To m: rk(a) = NoteRank(noteSort, st(idx(a)), ro(idx(a))): Next a
+        For a = 2 To m
+            b = a
+            Do While b > 1
+                If rk(b - 1) <= rk(b) Then Exit Do
+                t = idx(b - 1): idx(b - 1) = idx(b): idx(b) = t
+                t = rk(b - 1): rk(b - 1) = rk(b): rk(b) = t
+                b = b - 1
+            Loop
+        Next a
+    End If
     Dim prevDt As Date, firstGroup As Boolean: firstGroup = True
     For a = 1 To m
         i = idx(a)
         If shownName = "" Then shownName = tg(i)
-        If a > 1 And dt(i) <> prevDt Then                  ' a new (older) call starts: label it on its first row
+        If a > 1 And dt(i) <> prevDt And noteSort = "" Then    ' a new (older) call starts: label it on its first row
             If firstGroup And r = top + 1 Then             ' first call had a single note: keep a row for its date
                 ws.cells(r, C_KEY).Value = key
                 r = r + 1
