@@ -12,8 +12,9 @@ Option Explicit
 '  NOPAT = EBIT x (1 - tax)); see the script header for the rest.
 '
 '  Peer group = the tblGroups group that contains the ticker (Sanner.
-'  GetGroupNames / GetSectorTickers, TW then US); the GROUP input can
-'  override it.  Page layout (page rows; the bar adds a blank row, 3 bar
+'  GetGroupNames / GetSectorTickers): theme groups first (>= 4 members),
+'  then the numbered sector groups, TW before US; the GROUP input can
+'  override it, and with no group at all only the ROIC side is filled.  Page layout (page rows; the bar adds a blank row, 3 bar
 '  rows and a blank column A - read inputs through NavOffset / NavLeft):
 '    row 1     VALUATION title | context
 '    row 2-3   TICKER <GO> (A) . MKT (C) . GROUP (E)   label above input
@@ -81,16 +82,21 @@ Public Sub ShowValuation(ByVal rawTicker As String, Optional ByVal marketOverrid
     Else
         gMkt = GroupMarketOf(grp)
     End If
-    If mkt = "" Then mkt = IIf(gMkt <> "", gMkt, IIf(IsNumeric(bare), "TW", "US"))
+    ' an all-digit code is a TW stock whatever the group table says
+    If IsNumeric(bare) Then mkt = "TW"
+    If mkt = "" Then mkt = IIf(gMkt <> "", gMkt, "US")
     If grp <> "" Then peers = GetSectorTickers(mkt, grp)
+    ' no group = ROIC side only; the relative / fair-value blocks read n/a
+    Dim nPeers As Long
     If IsEmpty(peers) Then
-        Call WriteFlag(ws, PG_BODY, "No tblGroups group contains " & bare & " (market " & mkt & ") - add it on the Groups sheet or type a GROUP name")
-        Call NavNotify("VALUATION: no peer group for " & bare, True)
-        GoTo Done
+        peers = Array()
+        grp = ""
+    Else
+        nPeers = UBound(peers) - LBound(peers)
     End If
     ws.cells(PG_IN, COL_GRP).Value = grp
 
-    Call NavNotify("VALUATION fetching " & bare & " + " & (UBound(peers) - LBound(peers)) & " peers (" & mkt & ") ...")
+    Call NavNotify("VALUATION fetching " & bare & IIf(nPeers > 0, " + " & nPeers & " peers", " (no peer group)") & " (" & mkt & ") ...")
     Dim outPath As String, errMsg As String
     If Not RunScript(bare, mkt, grp, peers, outPath, errMsg) Then
         Call WriteFlag(ws, PG_BODY, "valuation.py failed: " & errMsg)
@@ -153,31 +159,47 @@ Private Function BareTicker(ByVal s As String) As String
     BareTicker = s
 End Function
 
-' First group (TW first, then US, or only the given market) whose ticker
-' list contains the ticker.  gMkt returns the market it was found in.
+' Group whose ticker list contains the ticker.  Theme groups (names that do
+' not start with "NN. ") win over the numbered sector groups, and a theme
+' group with fewer than 4 members is skipped so the multiple band has
+' something to stand on.  TW is scanned before US when no market is given;
+' gMkt returns the market it was found in.
 Private Function FindGroupOf(ByVal bare As String, ByVal mkt As String, ByRef gMkt As String) As String
     Dim mkts As Variant
     If mkt = "" Then mkts = Array("TW", "US") Else mkts = Array(mkt)
-    Dim m As Variant, g As Variant, t As Variant, names As Variant, tks As Variant
-    For Each m In mkts
-        Dim mm As String: mm = CStr(m)
-        names = GetGroupNames(mm)
-        If Not IsEmpty(names) Then
-            For Each g In names
-                Dim gg As String: gg = CStr(g)
-                tks = GetSectorTickers(mm, gg)
-                If Not IsEmpty(tks) Then
-                    For Each t In tks
-                        If BareTicker(CStr(t)) = bare Then
-                            gMkt = mm
-                            FindGroupOf = gg
-                            Exit Function
+    Dim pass As Long, m As Variant, g As Variant, t As Variant, names As Variant, tks As Variant
+    For pass = 1 To 2                      ' 1 = theme groups, 2 = numbered groups
+        For Each m In mkts
+            Dim mm As String: mm = CStr(m)
+            names = GetGroupNames(mm)
+            If Not IsEmpty(names) Then
+                For Each g In names
+                    Dim gg As String: gg = CStr(g)
+                    If IsNumberedGroup(gg) = (pass = 2) Then
+                        tks = GetSectorTickers(mm, gg)
+                        If Not IsEmpty(tks) Then
+                            If pass = 2 Or UBound(tks) - LBound(tks) + 1 >= 4 Then
+                                For Each t In tks
+                                    If BareTicker(CStr(t)) = bare Then
+                                        gMkt = mm
+                                        FindGroupOf = gg
+                                        Exit Function
+                                    End If
+                                Next t
+                            End If
                         End If
-                    Next t
-                End If
-            Next g
-        End If
-    Next m
+                    End If
+                Next g
+            End If
+        Next m
+    Next pass
+End Function
+
+' "02. ..." style sector group (two digits, a dot, a space)
+Private Function IsNumberedGroup(ByVal g As String) As Boolean
+    g = Trim$(g)
+    If Len(g) < 4 Then Exit Function
+    IsNumberedGroup = (Mid$(g, 1, 1) Like "#" And Mid$(g, 2, 1) Like "#" And Mid$(g, 3, 2) = ". ")
 End Function
 
 Private Function GroupMarketOf(ByVal grp As String) As String
@@ -235,11 +257,13 @@ Private Function RunScript(ByVal tk As String, ByVal mkt As String, ByVal grp As
 
     Dim j As String, p As Variant, first As Boolean: first = True
     j = "{""ticker"": " & JsonStr(tk) & ", ""market"": " & JsonStr(mkt) & ", ""group"": " & JsonStr(grp) & ", ""peers"": ["
-    For Each p In peers
-        If Not first Then j = j & ", "
-        j = j & JsonStr(CStr(p))
-        first = False
-    Next p
+    If Not IsEmpty(peers) Then
+        For Each p In peers
+            If Not first Then j = j & ", "
+            j = j & JsonStr(CStr(p))
+            first = False
+        Next p
+    End If
     j = j & "]}"
     Dim fn As Integer: fn = FreeFile
     Open reqPath For Output As #fn
@@ -545,7 +569,7 @@ Private Sub RenderPage(ws As Worksheet)
     r = r + 2
 
     ' ---- peers
-    Call Section(ws, r, 1, "PEER GROUP  " & Meta("group") & "  (tblGroups, " & Meta("peers_used") & " usable for the multiple band)", 13)
+    Call Section(ws, r, 1, "PEER GROUP  " & IIf(Meta("group") = "", "(none - type a GROUP name to compare)", Meta("group")) & "  (tblGroups, " & Meta("peers_used") & " usable for the multiple band)", 13)
     r = r + 1
     Call HeaderRow(ws, r, 1, Array("TICKER", "NAME", "PERIOD", "ROIC", "EV/EBIT", "P/B", "NOPAT MGN", "IC TURN", "MCAP", "EV", "EBIT TTM", "IC", "NOTE"))
     r = r + 1

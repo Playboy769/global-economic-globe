@@ -719,10 +719,10 @@ def build(target, market, peers, group):
     peers_ok = [c for c in companies[1:] if num(c["ev_ebit"]) and 0 < c["ev_ebit"] < 100 and num(c["roic"])]
     # ---- relative position
     roic_all = [c["roic"] for c in companies if num(c["roic"])]
-    tgt["roic_pct_rank"] = pct_rank(roic_all, tgt["roic"])
+    tgt["roic_pct_rank"] = pct_rank(roic_all, tgt["roic"]) if len(companies) > 1 else None
     mult = sorted(c["ev_ebit"] for c in peers_ok)
     p25, p50, p75 = percentile(mult, 0.25), percentile(mult, 0.5), percentile(mult, 0.75)
-    reg = ols([c["roic"] for c in peers_ok], [c["ev_ebit"] for c in peers_ok])
+    reg = ols([c["roic"] for c in peers_ok], [c["ev_ebit"] for c in peers_ok]) if peers_ok else None
     pred = None
     if reg and num(tgt["roic"]):
         pred = reg[0] + reg[1] * tgt["roic"]
@@ -935,8 +935,10 @@ def main():
         if ticker.endswith(suf):
             ticker, market = ticker[: -len(suf)], "TW"
     peers = [p.upper().replace(".TWO", "").replace(".TW", "") if market.upper() == "TW" else p.upper() for p in peers]
+    if ticker.isdigit():
+        market = "TW"              # an all-digit code is a TW stock whatever was passed
     if not market:
-        market = "TW" if ticker.isdigit() else "US"
+        market = "US"
     t0 = time.time()
     try:
         res = build(ticker, market, peers, group)
