@@ -779,6 +779,18 @@
         "research/amkr-analysis-2026q2/AMKR_FY2026Q2_Analysis"
       ],
       "port": 8188
+    },
+    {
+      "name": "amat-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8189",
+        "--directory",
+        "research/amat-analysis-fy2026q3/AMAT_FY2026Q3_Analysis"
+      ],
+      "port": 8189
     }
   ]
 }
