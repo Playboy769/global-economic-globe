@@ -62,6 +62,26 @@ Option Explicit
 '      after this change renames the old "Thesis Library" sheet to it and
 '      strips its v1 event code.
 '
+'  2026-09-16 (workbench pass, three user-picked items):
+'    1. Rows are a fixed three lines high (NOTE_ROW_H); long BEHAVIOR /
+'       evidence is clipped, not auto-fitted.  Double-click any cell of a
+'       note row -> the reading panel (same TH_PANEL, same spot) shows that
+'       note in full: header, THEME, BEHAVIOR, its tier + evidence, then the
+'       target's archived thesis one-liner and next-check section as a
+'       reminder.  Double-click the target cell still shows the whole archive.
+'       Hidden column C_ROW carries the note's tblNotes body row.
+'    2. Empty state (nothing typed) draws an INDEX instead of a hint: every
+'       target in four column groups (target . notes . latest call), STOCK
+'       then MACRO, newest call first (THSORT "ticker" = A-Z).  The date is
+'       greyed after FRESH_GREY days and orange after FRESH_ORANGE days.
+'       Double-click a target in the index = put it in QUERY and draw it.
+'    3. Third input FILTER (F3:G3, space or comma separated, tokens are OR-ed,
+'       i.e. a note passes if ANY token matches): STATUS words, GREEN / RED,
+'       ROLE words, tiers T0 T1 T1L T2 T3 D, >yyyy-mm-dd / <yyyy-mm-dd,
+'       or a yyyy-mm / yyyy prefix of the call date.  It narrows whatever
+'       QUERY / KEYWORD produced (AND against them).  QUERY also takes
+'       @PORT (tickers in the RR4 position log) and @WATCH (the WATCHLIST).
+'
 '  Chinese labels are ChrW-built so this file stays ASCII (VBE import rule).
 ' ================================================================
 
@@ -97,7 +117,14 @@ Private Const C_THEME As Long = 4
 Private Const C_BEHAV As Long = 5
 Private Const C_T0 As Long = 6                           ' six tier columns F..K
 Private Const C_LAST As Long = 11
+Private Const C_FILTER As Long = 6                       ' FILTER input F3:G3; "N calls drawn" moved to H3
+Private Const C_COUNT As Long = 8
 Private Const C_KEY As Long = 30                         ' hidden: the block's target on every row
+Private Const C_ROW As Long = 31                         ' hidden: the note's tblNotes body row (note rows only)
+Private Const NOTE_ROW_H As Double = 42                  ' three 9pt lines, clipped beyond that
+Private Const FRESH_GREY As Long = 60                    ' index: latest call older than this = grey
+Private Const FRESH_ORANGE As Long = 120                 ' ... older than this = orange
+Private Const IDX_GROUPS As Long = 4                     ' index column groups (target . notes . latest) across the page
 Private Const PANEL_COL As Long = 8                      ' H at draw time
 Private Const PANEL_W As Double = 560
 Private Const PANEL_H As Double = 640
@@ -392,10 +419,19 @@ Public Sub ThesisViewChange(ws As Worksheet, ByVal Target As Range)
     Dim r As Long: r = PG_IN + NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
     Dim inputs As Range
-    Set inputs = Union(ws.cells(r, C_TGT + lc), ws.cells(r, C_THEME + lc))
+    Set inputs = Union(ws.cells(r, C_TGT + lc), ws.cells(r, C_THEME + lc), ws.cells(r, C_FILTER + lc))
     If Intersect(Target, inputs) Is Nothing Then Exit Sub
     Call DrawThesisView(ws)
 End Sub
+
+' True while the page shows the index (all three inputs blank).
+Private Function InIndexMode(ws As Worksheet) As Boolean
+    If Not NavHasRows(ws) Then Exit Function
+    Dim r As Long: r = PG_IN + NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    InIndexMode = (Trim$(CStr(ws.cells(r, C_TGT + lc).Value)) = "" And Trim$(CStr(ws.cells(r, C_THEME + lc).Value)) = "" _
+                   And Trim$(CStr(ws.cells(r, C_FILTER + lc).Value)) = "")
+End Function
 
 Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
     Dim t As Range: Set t = Target.cells(1, 1)
@@ -428,11 +464,36 @@ Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef C
         Call ShowArchive(ws, "")
         Exit Sub
     End If
-    If t.Row >= PG_LIST + off And t.Column = C_TGT + lc Then
-        Dim key As String: key = CStr(ws.cells(t.Row, C_KEY + lc).Value)
-        If key <> "" Then
+    If t.Row < PG_LIST + off Then Exit Sub
+    ' index: double-click a target = query it
+    If InIndexMode(ws) Then
+        Dim g As Long
+        For g = 0 To IDX_GROUPS - 1
+            If t.Column = 1 + g * 3 + lc Then
+                Dim tk As String: tk = Trim$(CStr(t.Value))
+                If tk <> "" And ws.cells(t.Row, C_KEY + lc).Value <> "" Then
+                    Cancel = True
+                    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+                    Application.EnableEvents = False
+                    ws.cells(PG_IN + off, C_TGT + lc).Value = tk
+                    Application.EnableEvents = prevEv
+                    Call DrawThesisView(ws)
+                End If
+                Exit Sub
+            End If
+        Next g
+        Exit Sub
+    End If
+    Dim key As String: key = CStr(ws.cells(t.Row, C_KEY + lc).Value)
+    If key = "" Then Exit Sub
+    If t.Column = C_TGT + lc Then
+        Cancel = True
+        Call ShowArchive(ws, key)
+    ElseIf t.Column > C_TGT + lc And t.Column <= C_LAST + lc Then
+        Dim body As String: body = CStr(ws.cells(t.Row, C_ROW + lc).Value)
+        If body <> "" Then
             Cancel = True
-            Call ShowArchive(ws, key)
+            Call ShowNote(ws, key, CLng(body))
         End If
     End If
 End Sub
@@ -512,12 +573,15 @@ Public Sub DrawThesisView(ws As Worksheet)
     On Error GoTo Fail
 
     ' keep the typed filters across the redraw
-    Dim q As String, kw As String
+    Dim q As String, kw As String, fl As String
     If NavHasRows(ws) Then
         q = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_TGT + NavLeft(ws)).Value))
         kw = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_THEME + NavLeft(ws)).Value))
+        fl = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_FILTER + NavLeft(ws)).Value))
+        If fl Like "* calls drawn *" Then fl = ""            ' pre-2026-09-16 pages had the count text in this cell
     End If
     Dim mode As String: mode = SortMode(ws)
+    Dim indexMode As Boolean: indexMode = (q = "" And kw = "" And fl = "")
 
     Call NavStrip(ws)
     ws.cells.Clear
@@ -528,9 +592,11 @@ Public Sub DrawThesisView(ws As Worksheet)
         .RowHeight = 17
     End With
     Dim widths As Variant: widths = Array(18, 13, 10, 30, 52, 40, 40, 40, 40, 32, 40, 2)   ' BEHAVIOR + six tiers wrap
+    If indexMode Then widths = Array(18, 8, 12, 18, 8, 12, 18, 8, 12, 18, 8, 12)     ' four (target . notes . latest) groups
     Dim j As Long
     For j = 0 To 11: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
     ws.Columns(C_KEY).Hidden = True
+    ws.Columns(C_ROW).Hidden = True
 
     ' ---- title + inputs (label above input) ----
     With ws.cells(PG_TITLE, 1)
@@ -540,18 +606,25 @@ Public Sub DrawThesisView(ws As Worksheet)
     ws.Rows(PG_TITLE).RowHeight = 22
     Call Lbl(ws.cells(PG_LBL, C_TGT), "QUERY")
     Call Lbl(ws.cells(PG_LBL, C_THEME), "KEYWORD")
+    Call Lbl(ws.cells(PG_LBL, C_FILTER), "FILTER")
     ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)).Merge
     ws.Range(ws.cells(PG_IN, C_THEME), ws.cells(PG_IN, C_BEHAV)).Merge
+    ws.Range(ws.cells(PG_IN, C_FILTER), ws.cells(PG_IN, C_FILTER + 1)).Merge
     Call InputBox_(ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)), q)
     Call InputBox_(ws.Range(ws.cells(PG_IN, C_THEME), ws.cells(PG_IN, C_BEHAV)), kw)
+    Call InputBox_(ws.Range(ws.cells(PG_IN, C_FILTER), ws.cells(PG_IN, C_FILTER + 1)), fl)
+    ws.cells(PG_LBL, C_TGT).AddComment "Tickers, comma = several.  @PORT = RR4 position log, @WATCH = WATCHLIST"
+    ws.cells(PG_LBL, C_FILTER).AddComment "Space / comma separated, any one matching keeps the note (OR):" & vbLf & _
+        "STATUS words, GREEN, RED, MOAT RISK CATALYST, tiers T0 T1 T1L T2 T3 D," & vbLf & ">2026-08-01, <2026-06-30, 2026-08 or 2026 (call-date prefix)"
     ws.Rows(PG_IN).RowHeight = 20
 
     ' ---- data ----
     Dim lo As ListObject: Set lo = NotesTable()
     Dim n As Long
     Dim tg() As String, ty() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String
+    Dim rw() As Long                                        ' rw(i) = note i's tblNotes body row (for the reading panel)
     ' ev(i, t) = note i's evidence in tier t (1..NTIER); at most one tier is filled
-    n = ReadNotes(lo, tg, ty, dt, st, ro, th, be, ev)
+    n = ReadNotes(lo, tg, ty, dt, st, ro, th, be, ev, rw)
 
     ' totals over everything
     Dim calls As Object: Set calls = CreateObject("Scripting.Dictionary")
@@ -571,38 +644,50 @@ Public Sub DrawThesisView(ws As Worksheet)
     Next i
     With ws.cells(PG_TOTAL, 1)
         .Value = Format(n, "#,##0") & " notes . " & calls.count & " calls . " & tickers.count & " tickers" & _
-                 "      (double-click a ticker = its archived thesis, the title = close)"
+                 IIf(indexMode, "      (index: double-click a target = query it; date grey > " & FRESH_GREY & "d, orange > " & FRESH_ORANGE & "d)", _
+                                "      (double-click a note = full text, a ticker = its archived thesis, the title = close)")
         .Font.Color = CLR_SOFT: .Font.Bold = True
     End With
     With ws.Range(ws.cells(PG_TOTAL, 1), ws.cells(PG_TOTAL, C_LAST)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous: .Color = RR4_LINE
     End With
 
+    ' ---- index: nothing typed -> every target with its note count and latest call ----
+    If indexMode Then
+        Dim perTarget As Object: Set perTarget = CreateObject("Scripting.Dictionary")
+        For i = 1 To n: perTarget(UCase$(tg(i))) = perTarget(UCase$(tg(i))) + 1: Next i
+        Call DrawIndex(ws, perTarget, latest, kind, mode, n)
+        Call EnsurePanel(ws)
+        Call NavAdd(ws, "L")
+        Application.ScreenUpdating = prevScr
+        Application.EnableEvents = prevEv
+        Exit Sub
+    End If
+
     ' ---- filter: latest call per target; with a QUERY every call of the queried
-    '      targets is drawn (newest first); KEYWORD narrows either way ----
-    Dim qs As Variant, kws As Variant
-    qs = SplitList(q): kws = SplitList(kw)
+    '      targets is drawn (newest first); KEYWORD and FILTER narrow either way ----
+    Dim qs As Variant, kws As Variant, fs As Variant
+    qs = ExpandQuery(SplitList(q)): kws = SplitList(kw): fs = SplitTokens(fl)
     Dim keep() As Boolean: ReDim keep(0 To n)
     Dim shown As Object: Set shown = CreateObject("Scripting.Dictionary")   ' target -> note count
     Dim shownCalls As Object: Set shownCalls = CreateObject("Scripting.Dictionary")
     Dim drawnNotes As Long
     For i = 1 To n
         k = UCase$(tg(i))
-        If IsEmpty(qs) And IsEmpty(kws) Then
-            keep(i) = False                                 ' nothing typed: draw no blocks (2026-09-15, user)
-        ElseIf IsEmpty(qs) Then
+        If IsEmpty(qs) Then
             keep(i) = (dt(i) = latest(k))
         Else
             keep(i) = MatchesQuery(k, qs)
         End If
         If keep(i) And Not IsEmpty(kws) Then keep(i) = MatchesKeyword(th(i) & " " & be(i) & " " & AllTiers(ev, i), kws)
+        If keep(i) And Not IsEmpty(fs) Then keep(i) = MatchesFilter(st(i), ro(i), dt(i), ev, i, fs)
         If keep(i) Then
             shown(k) = shown(k) + 1
             shownCalls(k & "|" & CLng(dt(i))) = True
             drawnNotes = drawnNotes + 1
         End If
     Next i
-    With ws.cells(PG_IN, C_T0)
+    With ws.cells(PG_IN, C_COUNT)
         .Value = shownCalls.count & " calls drawn . " & drawnNotes & " notes"
         .Font.Color = RGB(80, 200, 120): .Font.Bold = True
     End With
@@ -641,26 +726,23 @@ Public Sub DrawThesisView(ws As Worksheet)
             r = r + 2
             Dim ti As Long
             For ti = LBound(order) To UBound(order)
-                r = DrawBlock(ws, r, CStr(order(ti)), latest(order(ti)), n, tg, dt, st, ro, th, be, ev, keep, ns) + 1
+                r = DrawBlock(ws, r, CStr(order(ti)), latest(order(ti)), n, tg, dt, st, ro, th, be, ev, rw, keep, ns) + 1
             Next ti
         End If
     Next sec
-    If r > PG_LIST Then                                     ' long BEHAVIOR / EVIDENCE wrap: let the rows grow
-        ws.Range(ws.cells(PG_LIST, C_BEHAV), ws.cells(r, C_LAST)).WrapText = True
+    If r > PG_LIST Then                                     ' 2026-09-16: fixed three-line rows, text beyond that is clipped
+        ws.Range(ws.cells(PG_LIST, C_THEME), ws.cells(r, C_LAST)).WrapText = True
         ws.Range(ws.cells(PG_LIST, 1), ws.cells(r, C_LAST)).VerticalAlignment = xlTop
-        ws.Range(ws.Rows(PG_LIST), ws.Rows(r)).AutoFit
-        Dim wrapRow As Long
-        For wrapRow = PG_LIST To r
-            If ws.Rows(wrapRow).RowHeight < 17 Then ws.Rows(wrapRow).RowHeight = 17
-        Next wrapRow
+        Dim noteRow As Long
+        For noteRow = PG_LIST To r
+            If CStr(ws.cells(noteRow, C_KEY).Value) <> "" Then ws.Rows(noteRow).RowHeight = NOTE_ROW_H
+        Next noteRow
     End If
     If shown.count = 0 Then
         If n = 0 Then
             ws.cells(r, 1).Value = "No notes yet - add them on the ThesisNotes sheet."
-        ElseIf IsEmpty(qs) And IsEmpty(kws) Then
-            ws.cells(r, 1).Value = "Type a ticker in QUERY (comma = several) or a word in KEYWORD to show notes."
         Else
-            ws.cells(r, 1).Value = "Nothing matches QUERY / KEYWORD."
+            ws.cells(r, 1).Value = "Nothing matches QUERY / KEYWORD / FILTER." & NearestTargets(q, tickers)
         End If
         ws.cells(r, 1).Font.Color = CLR_MUTED
     End If
@@ -680,8 +762,8 @@ Fail:
 End Sub
 
 Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String, ByVal callDate As Date, ByVal n As Long, _
-        tg() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String, keep() As Boolean, _
-        ByVal noteSort As String) As Long
+        tg() As String, dt() As Date, st() As String, ro() As String, th() As String, be() As String, ev() As String, rw() As Long, _
+        keep() As Boolean, ByVal noteSort As String) As Long
     Dim top As Long: top = r
     Dim i As Long, shownName As String
     ' every kept note of this target, newest call first (stable: sheet order within one date)
@@ -738,6 +820,7 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
                 If Trim$(ev(i, tt)) <> "" Then Call TextCell(ws.cells(r, C_T0 + tt - 1), ev(i, tt), TierColor(tt))
             Next tt
             ws.cells(r, C_KEY).Value = key
+            ws.cells(r, C_ROW).Value = rw(i)
             r = r + 1
         End If
     Next a
@@ -802,20 +885,21 @@ End Sub
 
 ' Reads tblNotes into parallel 1-based arrays; rows without a TARGET are skipped.
 Private Function ReadNotes(lo As ListObject, tg() As String, ty() As String, dt() As Date, st() As String, _
-        ro() As String, th() As String, be() As String, ev() As String) As Long
+        ro() As String, th() As String, be() As String, ev() As String, rw() As Long) As Long
     ReDim tg(0 To 0): ReDim ty(0 To 0): ReDim dt(0 To 0): ReDim st(0 To 0)
-    ReDim ro(0 To 0): ReDim th(0 To 0): ReDim be(0 To 0): ReDim ev(0 To 0, 1 To NTIER)
+    ReDim ro(0 To 0): ReDim th(0 To 0): ReDim be(0 To 0): ReDim ev(0 To 0, 1 To NTIER): ReDim rw(0 To 0)
     If lo Is Nothing Then Exit Function
     If lo.DataBodyRange Is Nothing Then Exit Function
     Dim v As Variant: v = lo.DataBodyRange.Value
     Dim rows As Long: rows = UBound(v, 1)
     ReDim tg(0 To rows): ReDim ty(0 To rows): ReDim dt(0 To rows): ReDim st(0 To rows)
-    ReDim ro(0 To rows): ReDim th(0 To rows): ReDim be(0 To rows): ReDim ev(0 To rows, 1 To NTIER)
+    ReDim ro(0 To rows): ReDim th(0 To rows): ReDim be(0 To rows): ReDim ev(0 To rows, 1 To NTIER): ReDim rw(0 To rows)
     Dim ncol As Long: ncol = UBound(v, 2)
     Dim i As Long, n As Long
     For i = 1 To rows
         If Trim$(CStr(v(i, NT_TARGET))) <> "" Then
             n = n + 1
+            rw(n) = i
             tg(n) = Trim$(CStr(v(i, NT_TARGET)))
             ty(n) = LCase$(Trim$(CStr(v(i, NT_TYPE))))
             If ty(n) <> "macro" Then ty(n) = "stock"
@@ -894,6 +978,277 @@ Private Function OrderedTargets(shown As Object, latest As Object, kind As Objec
     ReDim Preserve ks(1 To n)
     OrderedTargets = ks
 End Function
+
+' ================================================================
+'  2026-09-16: index, FILTER, @PORT / @WATCH, note reading panel
+' ================================================================
+' Empty state: every target as (target . notes . latest call) in IDX_GROUPS
+' column groups, STOCK then MACRO, ordered like the blocks (THSORT).
+Private Sub DrawIndex(ws As Worksheet, perTarget As Object, latest As Object, kind As Object, ByVal mode As String, ByVal n As Long)
+    Dim r As Long: r = PG_LIST
+    Dim g As Long
+    If n = 0 Then
+        ws.cells(r, 1).Value = "No notes yet - add them on the ThesisNotes sheet."
+        ws.cells(r, 1).Font.Color = CLR_MUTED
+        Exit Sub
+    End If
+    ' header row: repeat the three labels per group
+    For g = 0 To IDX_GROUPS - 1
+        ws.cells(PG_HDR, 1 + g * 3).Value = IIf(mode = "ticker", "TICKER A-Z", "LATEST CALL")
+        ws.cells(PG_HDR, 2 + g * 3).Value = "NOTES"
+        ws.cells(PG_HDR, 3 + g * 3).Value = "LAST CALL"
+        ws.cells(PG_HDR, 2 + g * 3).HorizontalAlignment = xlRight
+    Next g
+    With ws.Range(ws.cells(PG_HDR, 1), ws.cells(PG_HDR, IDX_GROUPS * 3))
+        .Font.Color = RR4_ACCENT: .Font.Bold = True
+    End With
+    ws.cells(PG_HDR, 1).AddComment "Double-click: sort the index by latest call date <-> ticker A-Z"
+    Dim sec As Variant
+    For Each sec In Array("stock", "macro")
+        Dim order As Variant: order = OrderedTargets(perTarget, latest, kind, CStr(sec), mode)
+        If Not IsEmpty(order) Then
+            With ws.Range(ws.cells(r, 1), ws.cells(r, IDX_GROUPS * 3))
+                .Interior.Color = CLR_BANNER
+                .Font.Color = RR4_ACCENT: .Font.Bold = True
+            End With
+            ws.cells(r, 1).Value = UCase$(CStr(sec)) & "   " & (UBound(order) - LBound(order) + 1) & " targets"
+            r = r + 2
+            Dim cnt As Long: cnt = UBound(order) - LBound(order) + 1
+            Dim perCol As Long: perCol = (cnt + IDX_GROUPS - 1) \ IDX_GROUPS   ' fill down, then across
+            Dim ti As Long
+            For ti = 0 To cnt - 1
+                Dim rr As Long: rr = r + (ti Mod perCol)
+                Dim cc As Long: cc = 1 + (ti \ perCol) * 3
+                Dim key As String: key = CStr(order(LBound(order) + ti))
+                Dim age As Long: age = Date - CDate(latest(key))
+                Dim clr As Long
+                If age > FRESH_ORANGE Then
+                    clr = RGB(230, 140, 40)
+                ElseIf age > FRESH_GREY Then
+                    clr = CLR_MUTED
+                Else
+                    clr = CLR_SOFT
+                End If
+                With ws.cells(rr, cc)
+                    .NumberFormat = "@"
+                    .Value = key
+                    On Error Resume Next
+                    .Errors(xlNumberAsText).Ignore = True
+                    On Error GoTo 0
+                    .Font.Name = ZH_FONT: .Font.Bold = True: .Font.Size = 10
+                    .Font.Color = IIf(age > FRESH_ORANGE, clr, RGB(245, 245, 245))
+                    .HorizontalAlignment = xlLeft
+                End With
+                With ws.cells(rr, cc + 1)
+                    .Value = perTarget(key): .Font.Color = CLR_SOFT: .HorizontalAlignment = xlRight
+                End With
+                Call DateCell(ws.cells(rr, cc + 2), CDate(latest(key)))
+                ws.cells(rr, cc + 2).Font.Color = clr
+                ws.cells(rr, C_KEY).Value = key                 ' marks the row as index data for the double-click
+            Next ti
+            r = r + perCol + 1
+        End If
+    Next sec
+End Sub
+
+' Space / comma separated tokens, upper-cased.
+Private Function SplitTokens(ByVal s As String) As Variant
+    SplitTokens = SplitList(Replace(Replace(s, " ", ","), vbTab, ","))
+End Function
+
+' FILTER: the note passes when ANY token matches (user: union).
+Private Function MatchesFilter(ByVal status As String, ByVal role As String, ByVal d As Date, ev() As String, ByVal i As Long, fs As Variant) As Boolean
+    Dim w As Variant, tok As String, t As Long
+    Dim tier As String
+    For t = 1 To NTIER
+        If Trim$(ev(i, t)) <> "" Then tier = UCase$(Split(TierName(t, False), " ")(0)): Exit For
+    Next t
+    Dim su As String: su = UCase$(Trim$(status))
+    Dim ru As String: ru = UCase$(Trim$(role))
+    Dim isGreen As Boolean: isGreen = (su = "ROBUST" Or su = "SOLID" Or su = "GROWING")
+    Dim isRed As Boolean: isRed = (su = "SLOWING" Or su = "SLUGGISH" Or su = "CHALLENGING" Or su = "CONTRACTION" Or su = "WARNING")
+    Dim ds As String: ds = Format$(d, "yyyy-mm-dd")
+    For Each w In fs
+        tok = CStr(w)
+        Select Case True
+            Case tok = "GREEN": If isGreen Then MatchesFilter = True
+            Case tok = "RED": If isRed Then MatchesFilter = True
+            Case tok = su And su <> "": MatchesFilter = True
+            Case tok = ru And ru <> "": MatchesFilter = True
+            Case tok = "DELTA" Or tok = ChrW(&H394): If tier = "D" Then MatchesFilter = True
+            Case tok = tier And tier <> "": MatchesFilter = True
+            Case Left$(tok, 2) = ">=": If ds >= NormDate(Mid$(tok, 3)) Then MatchesFilter = True
+            Case Left$(tok, 2) = "<=": If ds <= NormDate(Mid$(tok, 3)) Then MatchesFilter = True
+            Case Left$(tok, 1) = ">": If ds > NormDate(Mid$(tok, 2)) Then MatchesFilter = True
+            Case Left$(tok, 1) = "<": If ds < NormDate(Mid$(tok, 2)) Then MatchesFilter = True
+            Case Len(tok) >= 4 And IsNumeric(Left$(tok, 4)): If Left$(ds, Len(tok)) = NormDate(tok) Then MatchesFilter = True
+        End Select
+        If MatchesFilter Then Exit Function
+    Next w
+End Function
+
+' "2026/8/1" / "2026-08-01" / "2026-08" -> "2026-08-01" / "2026-08" (zero-padded, dashes)
+Private Function NormDate(ByVal s As String) As String
+    Dim p As Variant: p = Split(Replace(s, "/", "-"), "-")
+    Dim i As Long, out As String
+    For i = 0 To UBound(p)
+        If i = 0 Then out = p(i) Else out = out & "-" & Right$("0" & p(i), 2)
+    Next i
+    NormDate = out
+End Function
+
+' QUERY tokens with @PORT / @WATCH expanded to the RR4 page's tickers (bare, no .TW).
+Private Function ExpandQuery(qs As Variant) As Variant
+    ExpandQuery = qs
+    If IsEmpty(qs) Then Exit Function
+    Dim out As Object: Set out = CreateObject("Scripting.Dictionary")
+    Dim q As Variant, t As Variant
+    For Each q In qs
+        If q = "@PORT" Or q = "@WATCH" Then
+            For Each t In RR4Tickers(CStr(q) = "@PORT")
+                out(BareTicker(CStr(t))) = True
+            Next t
+        ElseIf Trim$(CStr(q)) <> "" Then
+            out(BareTicker(CStr(q))) = True
+        End If
+    Next q
+    If out.count = 0 Then ExpandQuery = Empty Else ExpandQuery = out.keys
+End Function
+
+Private Function BareTicker(ByVal s As String) As String
+    BareTicker = UCase$(Trim$(s))
+    If Right$(BareTicker, 4) = ".TWO" Then BareTicker = Left$(BareTicker, Len(BareTicker) - 4)
+    If Right$(BareTicker, 3) = ".TW" Then BareTicker = Left$(BareTicker, Len(BareTicker) - 3)
+End Function
+
+' Tickers typed on the RR4 page: the position log (B44 down, until blank) or
+' the WATCHLIST saved rows (B29:B39).  Read straight off the sheet so this
+' module does not depend on PortfolioDashboard's private readers.
+Private Function RR4Tickers(ByVal positions As Boolean) As Variant
+    Dim out As Object: Set out = CreateObject("Scripting.Dictionary")
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets("RR4")
+    On Error GoTo 0
+    If Not ws Is Nothing Then
+        Dim r As Long, tk As String
+        If positions Then
+            r = RR4_POS_FIRST
+            Do While r < RR4_POS_FIRST + 200
+                tk = Trim$(CStr(ws.cells(r, RR4_LEFT + 1).Value))
+                If tk = "" Then Exit Do
+                out(UCase$(tk)) = True
+                r = r + 1
+            Loop
+        Else
+            For r = RR4_WL_FIRST To RR4_WL_LAST
+                tk = Trim$(CStr(ws.cells(r, RR4_LEFT + 1).Value))
+                If tk <> "" Then out(UCase$(tk)) = True
+            Next r
+        End If
+    End If
+    RR4Tickers = out.keys
+End Function
+
+' "Nothing matches" helper: targets starting with any typed QUERY token.
+Private Function NearestTargets(ByVal q As String, tickers As Object) As String
+    If Trim$(q) = "" Then Exit Function
+    Dim qs As Variant: qs = SplitList(q)
+    If IsEmpty(qs) Then Exit Function
+    Dim k As Variant, w As Variant, hits As String, nHits As Long
+    For Each k In tickers.keys
+        For Each w In qs
+            If Left$(CStr(w), 1) <> "@" And Len(CStr(w)) >= 2 Then
+                If Left$(CStr(k), Len(CStr(w))) = CStr(w) Or InStr(CStr(k), CStr(w)) > 0 Then
+                    hits = hits & IIf(hits = "", "", ", ") & CStr(k): nHits = nHits + 1
+                    Exit For
+                End If
+            End If
+        Next w
+        If nHits >= 8 Then Exit For
+    Next k
+    If hits <> "" Then NearestTargets = "   Did you mean: " & hits
+End Function
+
+' Reading panel for one note (tblNotes body row), plus the target's archived
+' one-liner (S1) and next-check section (S6) as a reminder of the thesis.
+Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long)
+    Dim shp As Shape
+    On Error Resume Next
+    Set shp = ws.Shapes("TH_PANEL")
+    On Error GoTo 0
+    If shp Is Nothing Then Exit Sub
+    Dim lo As ListObject: Set lo = NotesTable()
+    If lo Is Nothing Then Exit Sub
+    If lo.DataBodyRange Is Nothing Then Exit Sub
+    If bodyRow < 1 Or bodyRow > lo.ListRows.count Then Exit Sub
+    Dim v As Variant: v = lo.DataBodyRange.Rows(bodyRow).Value
+    shp.Left = ws.Columns(C_BEHAV + NavLeft(ws)).Left
+    shp.Top = ws.Rows(PG_HDR + NavOffset(ws)).Top
+    shp.Visible = msoTrue
+    Dim tr As Object: Set tr = shp.TextFrame2.TextRange
+
+    Dim tier As Long, t As Long
+    For t = 1 To NTIER
+        If Trim$(CStr(v(1, NT_T0 + t - 1))) <> "" Then tier = t: Exit For
+    Next t
+    Dim head As String: head = CStr(v(1, NT_TARGET)) & "   " & CStr(v(1, NT_THEME))
+    Dim meta As String
+    meta = Format$(v(1, NT_DATE), "yyyy/mm/dd") & "  .  " & Dash(CStr(v(1, NT_STATUS))) & "  .  " & Dash(CStr(v(1, NT_ROLE))) & _
+           "  .  " & IIf(tier > 0, TierName(tier, True), "no evidence")
+    Dim txt As String
+    Dim starts(0 To 5) As Long, lens(0 To 5) As Long
+    starts(0) = 1: lens(0) = Len(head): txt = head & vbCr
+    starts(1) = Len(txt) + 1: lens(1) = Len(meta): txt = txt & meta & vbCr & vbCr
+    Dim h As String
+    h = "BEHAVIOR": starts(2) = Len(txt) + 1: lens(2) = Len(h)
+    txt = txt & h & vbCr & Dash(CStr(v(1, NT_BEHAV))) & vbCr & vbCr
+    h = IIf(tier > 0, TierName(tier, True), "EVIDENCE"): starts(3) = Len(txt) + 1: lens(3) = Len(h)
+    txt = txt & h & vbCr & IIf(tier > 0, CStr(v(1, NT_T0 + tier - 1)), "-") & vbCr & vbCr
+
+    ' archived thesis reminder
+    Dim la As ListObject, row As Long
+    On Error Resume Next
+    Set la = ThisWorkbook.Worksheets(ARCHIVE_SHEET).ListObjects(THESIS_TABLE)
+    On Error GoTo 0
+    If Not la Is Nothing Then row = ArchiveRow(la, key)
+    h = "ARCHIVE  " & L("S1"): starts(4) = Len(txt) + 1: lens(4) = Len(h)
+    If row = 0 Then
+        txt = txt & h & vbCr & "(no archived thesis for " & key & ")" & vbCr
+        starts(5) = Len(txt): lens(5) = 0
+    Else
+        Dim b As Range: Set b = la.DataBodyRange
+        txt = txt & h & vbCr & Dash(Trim$(CStr(b.cells(row, 6).Value))) & vbCr & vbCr
+        h = "ARCHIVE  " & L("S6"): starts(5) = Len(txt) + 1: lens(5) = Len(h)
+        txt = txt & h & vbCr & Dash(Trim$(CStr(b.cells(row, 11).Value))) & vbCr
+    End If
+    txt = txt & vbCr & "(double-click the page title to close)"
+
+    tr.Text = txt
+    tr.Font.Name = ZH_FONT: tr.Font.NameFarEast = ZH_FONT
+    tr.Font.Size = 10: tr.Font.Bold = msoFalse
+    tr.Font.Fill.ForeColor.RGB = RGB(215, 215, 215)
+    tr.ParagraphFormat.SpaceAfter = 2
+    With tr.Characters(starts(0), lens(0)).Font
+        .Size = 12: .Bold = msoTrue: .Fill.ForeColor.RGB = RR4_ACCENT
+    End With
+    With tr.Characters(starts(1), lens(1)).Font
+        .Size = 9: .Fill.ForeColor.RGB = RGB(140, 140, 140)
+    End With
+    Dim k As Long
+    For k = 2 To 5
+        If lens(k) > 0 Then
+            With tr.Characters(starts(k), lens(k)).Font
+                .Bold = msoTrue: .Size = 10
+                .Fill.ForeColor.RGB = IIf(k >= 4, RGB(140, 140, 140), RR4_ACCENT)
+            End With
+        End If
+    Next k
+    Dim tail As Long: tail = Len(txt) - Len("(double-click the page title to close)")
+    With tr.Characters(tail + 1, Len(txt) - tail).Font
+        .Size = 8: .Fill.ForeColor.RGB = RGB(110, 110, 110)
+    End With
+End Sub
 
 ' ================================================================
 '  Reading panel: the archived six-section thesis of a target

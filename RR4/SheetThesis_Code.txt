@@ -7,7 +7,7 @@
 ' ============================================================================
 Option Explicit
 
-' Thesis Library view (modThesis): QUERY / KEYWORD inputs, double-click header / target
+' Thesis Library view (modThesis): QUERY / KEYWORD / FILTER inputs, double-click header / target / note row / index entry
 Private Sub Worksheet_Change(ByVal Target As Range)
     Call ThesisViewChange(Me, Target)
 End Sub
