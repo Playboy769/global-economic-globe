@@ -1,0 +1,7172 @@
+
+ 6488 2026Q2 Financial report 
+ body,html {height: 100%;} 
+ body {font-size: 15px;font-family: Arial;color: #000;background: #4E5869;margin: 0;padding: 0;background-color: #FFF;} 
+ td,th {border: 1px solid #dddddd;padding: 5px;color: #333;background-color: #FFF;} 
+ th#t1 {color: #165c98 !important;} 
+ ul,ol,dl {padding: 0;margin: 0;} 
+ h3 {color: #165c98;font-size: 18px;} 
+ pre {font-size: 15px;font-family: Arial;} 
+ .container {width: 100%;background: #FFF;margin: 0 auto;background-color: #999;} 
+ .header {text-align: center;background: #165c98;margin-right: auto;color: #fff;} 
+ .header > div:first-of-type {position: absolute;right: 15px;top: 15px;} 
+ .header > div:nth-of-type(2) {font-size: 25px;text-align: center;line-height: 35px;} 
+ .header a {text-decoration: none;margin:0 10px;color: #ffffff;} 
+ .nav {float: left;width: 200px;height: calc(100% - 85px);overflow: auto;background: #fff;padding-bottom: 15px;} 
+ .nav > div {padding: 10px;color: #165c98;font-size: 20px;font-weight: bold;} 
+ .nav > ul {list-style: none;border-top: 1px solid #666;margin-bottom: 15px;} 
+ .nav > ul li{border-bottom: 1px solid #666;} 
+ .nav > ul a{padding: 5px 2px 5px 10px;display: block;text-decoration: none;background: #fff;color: #333;} 
+ .nav > ul a:hover{background: #165c98;color: #fff;} 
+ .content {width: calc(100% - 200px);height: calc(100% - 70px); float: left;background: #efefef;overflow: auto;} 
+ .content > div[id*="link"] {height: 15px;} 
+ .content table {border-collapse: collapse;margin: 0 20px;} 
+ .content ul, 
+ .content ol {padding: 15px 10px 10px 15px;} 
+ .content table tr th {background: #7fcef5;color: #165c98;} 
+ .content table tr:first-child th {background: #165c98;color: #fff;font-size: 15px;text-align: left;} 
+ .content table tr:nth-of-type(odd) > td {background-color: #d3edfa;} 
+ .title {font-size: 18px;font-weight: bold;margin-left: 20px;} 
+ .rptidx {color: #000;margin-left: 20px;} 
+ .amt {text-align: right} 
+ .note {font-family: 細明體} 
+ @media print{ 
+ .header a{display: none;} 
+ .nav{display: none;} 
+ .content{width: 100%;height:auto;float: inherit;overflow: inherit;background: #fff!important;} 
+ .content table{width: 100%!important;margin: 0;} 
+ body{color: #000;} 
+ td,th{color: #000;border: 1px solid #000;} 
+ } 
+ 6488 
+ 環球晶圓股份有限公司 
+ GlobalWafers Co., Ltd 
+ 2026 
+ 2 
+ Financial report (general) 
+ Consolidated report 
+ Over-the-counter 
+ Commercial and industrial 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2025-06-30 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2026-01-01 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2026-01-01 
+ tifrs-notes:Total3 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2026-06-30 
+ tifrs-notes:Total3 
+ 6488 
+ 2026-01-01 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2026-06-30 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2025-06-30 
+ 6488 
+ 2025-01-01 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2025-01-01 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2025-06-30 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2026-06-30 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2025-12-31 
+ 6488 
+ 2026-01-01 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2025-01-01 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2026-04-01 
+ 2026-06-30 
+ 6488 
+ 2026-01-01 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2026-06-30 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:EquityAttributableToOwnersOfParentMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:NoncontrollingInterestsMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2025-06-30 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-04-01 
+ 2025-06-30 
+ 6488 
+ 2026-01-01 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-notes:Total3 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-notes:Total3 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2025-06-30 
+ ifrs-full:RetainedEarningsMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-notes:Total3 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2026-06-30 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2025-01-01 
+ tifrs-notes:Total3 
+ 6488 
+ 2025-06-30 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ ifrs-full:CapitalReserveMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:RevaluationSurplusMember 
+ 6488 
+ 2025-06-30 
+ tifrs-notes:Total3 
+ 6488 
+ 2025-01-01 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2026-06-30 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2026-08-04 
+ 6488 
+ 2025-01-01 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2025-06-30 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2025-01-01 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-01-01 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-notes:Total3 
+ 6488 
+ 2026-06-30 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:EquityAttributableToFomerOwnerOfBusinessCombinationUnderCommonControl 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:EquityRelatedToNoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForDistributionToOwnersMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:ReserveOfExchangeDifferencesOnTranslationMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-06-30 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-01-01 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:SpecialReserveMember 
+ 6488 
+ 2025-06-30 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:PreferenceShareMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:OrdinaryShareMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:AdvanceReceiptsForShareCapitalMember 
+ 6488 
+ 2025-06-30 
+ ifrs-full:ReserveOfChangeInFairValueOfFinancialLiabilityAttributableToChangeInCreditRiskOfLiabilityMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-es:StockDividendToBeDistributedMember 
+ 6488 
+ 2026-06-30 
+ tifrs-es:FinanceIncomeOrExpensesFromReinsuranceContractsHeldRecognizedInOtherComprehensiveIncome 
+ 6488 
+ 2025-01-01 
+ ifrs-full:ReserveOfGainsAndLossesOnFinancialAssetsMeasuredAtFairValueThroughOtherComprehensiveIncomeMember 
+ 6488 
+ 2025-01-01 
+ 2025-06-30 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:Others-OtherEquityInterestMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:TreasurySharesMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:ReserveOfOverlayApproachMember1 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ ifrs-full:StatutoryReserveMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:TotalEquityMember 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:InsuranceFinanceIncomeOrExpensesRecognisedInOtherComprehensiveIncome 
+ 6488 
+ 2025-06-30 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-notes:Total3 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ tifrs-es:CertificateOfEntitlementToNewSharesFromConvertibleBondMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ ifrs-full:AmountRecognisedInOtherComprehensiveIncomeAndAccumulatedInEquityRelatingToNoncurrentAssetsOrDisposalGroupsHeldForSaleMember 
+ 6488 
+ 2026-01-01 
+ tifrs-es:Other-ShareCapitalMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ tifrs-es:GainsLossesOnHedgingInstrumentsMember 
+ 6488 
+ 2026-01-01 
+ 2026-01-01 
+ ifrs-full:OtherEquityInterestMember 
+ 6488 
+ 2025-06-30 
+ 2025-06-30 
+ tifrs-es:UnappropriatedRetainedEarningsAccumulatedDeficitMember 
+ 6488 
+ 2025-01-01 
+ ifrs-full:ReserveOfRemeasurementsOfDefinedBenefitPlansMember 
+ 6488 
+ 2025-01-01 
+ 2025-01-01 
+ ifrs-full:IssuedCapitalMember 
+ 6488 
+ 2026-06-30 
+ 2026-06-30 
+ tifrs-es:SecurityTokenOffer 
+ 6488 
+ 2026-01-01 
+ 2026-06-30 
+ tifrs-notes:Total3 
+ iso4217:TWD 
+ xbrli:shares 
+ iso4217:TWD 
+ xbrli:shares 
+ xbrli:pure 
+ 中文|English 
+ 6488 環球晶圓股份有限公司
+2026年第2季合併財務報告 
+ 6488 GlobalWafers Co., Ltd
+2026Q2 Consolidated Financial Report 
+ 財務報表索引
+ Report Index
+ 資產負債表
+ Balance Sheet
+ 綜合損益表
+ Statement of Comprehensive Income
+ 現金流量表
+ Statements of Cash Flows
+ 權益變動表 
+ Statements of Change in Equity
+ 會計師查核（核閱）報告
+ Independent Auditors' (Review) Report
+ 財務報表附註
+ 公司沿革及業務範圍
+ 通過財報之日期及程序
+ 新發布及修訂準則及解釋之適用
+ 重大會計政策之彙總說明
+ 重大會計判斷、假設及估計不確定性之主要來源
+ 重大事項
+ 其它財報附註
+ 應收款項
+ 關係人交易
+ 資金貸與他人
+ 為他人背書保證
+ 母子公司間業務關係及重要交易往來情形
+ 被投資公司名稱、所在地區…等相關資訊（不包含大陸被投資公司）
+ 大陸地區投資
+ 營業外收入及支出
+ 單位：新臺幣仟元Unit: NT$ thousands
+ 資產負債表Balance Sheet | 
+ 代號Code | 
+ 會計項目Accounting Title | 
+ 2026年6月30日2026/6/30 | 
+ 2025年12月31日2025/12/31 | 
+ 2025年6月30日2025/6/30 | 
+ | 
+ 資產Assets | 
+ | 
+ | 
+ | 
+ | 
+ 　流動資產　Current assets | 
+ | 
+ | 
+ | 
+ 1100 | 
+ 　　現金及約當現金　　Cash and cash equivalents | 
+ 23,776,098 
+ | 
+ 19,484,156 
+ | 
+ 22,220,325 
+ | 
+ 1110 | 
+ 　　透過損益按公允價值衡量之金融資產－流動　　Current financial assets at fair value through profit or loss | 
+ 2,090 
+ | 
+ 1,433 
+ | 
+ 34,473 
+ | 
+ 1170 | 
+ 　　應收帳款淨額　　Accounts receivable, net | 
+ 10,436,226 
+ | 
+ 10,062,969 
+ | 
+ 9,990,601 
+ | 
+ 1180 | 
+ 　　應收帳款－關係人淨額　　Accounts receivable due from related parties, net | 
+ 111,784 
+ | 
+ 50,301 
+ | 
+ 149,771 
+ | 
+ 130X | 
+ 　　存貨　　Current inventories | 
+ 12,015,151 
+ | 
+ 10,398,696 
+ | 
+ 10,303,174 
+ | 
+ 1470 | 
+ 　　其他流動資產　　Other current assets | 
+ 36,045,746 
+ | 
+ 46,631,901 
+ | 
+ 26,841,931 
+ | 
+ 1476 | 
+ 　　　其他金融資產－流動　　　Other current financial assets | 
+ 33,464,089 
+ | 
+ 44,079,682 
+ | 
+ 24,434,507 
+ | 
+ 1479 | 
+ 　　　其他流動資產－其他　　　Other current assets, others | 
+ 2,581,657 
+ | 
+ 2,552,219 
+ | 
+ 2,407,424 
+ | 
+ 11XX | 
+ 　　流動資產合計　　Total current assets | 
+ 82,387,095 
+ | 
+ 86,629,456 
+ | 
+ 69,540,275 
+ | 
+ | 
+ 　非流動資產　Non-current assets | 
+ | 
+ | 
+ | 
+ 1510 | 
+ 　　透過損益按公允價值衡量之金融資產－非流動　　Non-current financial assets at fair value through profit or loss | 
+ 12,529,116 
+ | 
+ 7,729,367 
+ | 
+ 6,029,709 
+ | 
+ 1513 | 
+ 　　　強制透過損益按公允價值衡量之金融資產－非流動　　　Non-current financial assets at fair value through profit or loss, mandatorily measured at fair value | 
+ 12,529,116 
+ | 
+ 7,729,367 
+ | 
+ 6,029,709 
+ | 
+ 1517 | 
+ 　　透過其他綜合損益按公允價值衡量之金融資產－非流動　　Non-current financial assets at fair value through other comprehensive income | 
+ 190,863 
+ | 
+ 135,062 
+ | 
+ 129,784 
+ | 
+ 1535 | 
+ 　　按攤銷後成本衡量之金融資產－非流動　　Non-current financial assets at amortised cost | 
+ 6,338,150 
+ | 
+ 6,254,570 
+ | 
+ 5,830,700 
+ | 
+ 1550 | 
+ 　　採用權益法之投資　　Investments accounted for using equity method | 
+ 1,226,008 
+ | 
+ 692,333 
+ | 
+ 548,497 
+ | 
+ 1600 | 
+ 　　不動產、廠房及設備　　Property, plant and equipment | 
+ 107,864,332 
+ | 
+ 107,241,239 
+ | 
+ 114,496,221 
+ | 
+ 1755 | 
+ 　　使用權資產　　Right-of-use assets | 
+ 725,126 
+ | 
+ 785,882 
+ | 
+ 824,293 
+ | 
+ 1780 | 
+ 　　無形資產　　Intangible assets | 
+ 2,314,329 
+ | 
+ 2,318,929 
+ | 
+ 2,131,980 
+ | 
+ 1840 | 
+ 　　遞延所得稅資產　　Deferred tax assets | 
+ 4,778,662 
+ | 
+ 5,015,996 
+ | 
+ 3,875,290 
+ | 
+ 1900 | 
+ 　　其他非流動資產　　Other non-current assets | 
+ 866,745 
+ | 
+ 1,539,983 
+ | 
+ 2,954,456 
+ | 
+ 1980 | 
+ 　　　其他金融資產－非流動　　　Other non-current financial assets | 
+ 145,415 
+ | 
+ 139,975 
+ | 
+ 174,721 
+ | 
+ 1990 | 
+ 　　　其他非流動資產－其他　　　Other non-current assets, others | 
+ 721,330 
+ | 
+ 1,400,008 
+ | 
+ 2,779,735 
+ | 
+ 15XX | 
+ 　　非流動資產合計　　Total non-current assets | 
+ 136,833,331 
+ | 
+ 131,713,361 
+ | 
+ 136,820,930 
+ | 
+ 1XXX | 
+ 　資產總計　Total assets | 
+ 219,220,426 
+ | 
+ 218,342,817 
+ | 
+ 206,361,205 
+ | 
+ | 
+ 負債及權益Liabilities and equity | 
+ | 
+ | 
+ | 
+ | 
+ 　負債　Liabilities | 
+ | 
+ | 
+ | 
+ | 
+ 　　流動負債　　Current liabilities | 
+ | 
+ | 
+ | 
+ 2100 | 
+ 　　　短期借款　　　Current borrowings | 
+ 21,568,738 
+ | 
+ 18,571,145 
+ | 
+ 16,258,783 
+ | 
+ 2120 | 
+ 　　　透過損益按公允價值衡量之金融負債－流動　　　Current financial liabilities at fair value through profit or loss | 
+ 2,419,700 
+ | 
+ 3,567 
+ | 
+ 61,507 
+ | 
+ 2130 | 
+ 　　　合約負債－流動　　　Current contract liabilities | 
+ 6,958,047 
+ | 
+ 8,022,772 
+ | 
+ 8,609,524 
+ | 
+ 2170 | 
+ 　　　應付帳款　　　Accounts payable | 
+ 4,403,943 
+ | 
+ 3,686,456 
+ | 
+ 3,605,114 
+ | 
+ 2180 | 
+ 　　　應付帳款－關係人　　　Accounts payable to related parties | 
+ 293,069 
+ | 
+ 474,225 
+ | 
+ 198,902 
+ | 
+ 2200 | 
+ 　　　其他應付款　　　Other payables | 
+ 6,055,422 
+ | 
+ 3,612,817 
+ | 
+ 5,657,563 
+ | 
+ 2201 | 
+ 　　　　應付薪資　　　　Wages and salaries payable | 
+ 3,330,174 
+ | 
+ 2,656,590 
+ | 
+ 2,788,881 
+ | 
+ 2216 | 
+ 　　　　應付股利　　　　Dividends payable, non-cash assets distributions | 
+ 2,725,248 
+ | 
+ 956,227 
+ | 
+ 2,868,682 
+ | 
+ 2230 | 
+ 　　　本期所得稅負債　　　Current tax liabilities | 
+ 1,822,826 
+ | 
+ 1,801,514 
+ | 
+ 1,949,850 
+ | 
+ 2270 | 
+ 　　　與待分配予業主之非流動資產（或處分群組）直接相關之負債　　　Liabilities related to non-current assets or disposal groups classified as held for distribution to owners | 
+ 11,294,290 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 2300 | 
+ 　　　其他流動負債　　　Other current liabilities | 
+ 9,477,015 
+ | 
+ 17,936,229 
+ | 
+ 15,270,261 
+ | 
+ 2320 | 
+ 　　　　一年或一營業週期內到期長期負債　　　　Long-term liabilities, current portion | 
+ 5,419,458 
+ | 
+ 12,439,157 
+ | 
+ 8,028,509 
+ | 
+ 2321 | 
+ 　　　　　一年或一營業週期內到期或執行賣回權公司債　　　　　Bonds payable, current portion | 
+ 5,399,845 
+ | 
+ 11,898,668 
+ | 
+ 6,498,599 
+ | 
+ 2322 | 
+ 　　　　　一年或一營業週期內到期長期借款　　　　　Long-term borrowings, current portion | 
+ 19,613 
+ | 
+ 540,489 
+ | 
+ 1,529,910 
+ | 
+ 2399 | 
+ 　　　　其他流動負債－其他　　　　Other current liabilities, others | 
+ 4,057,557 
+ | 
+ 5,497,072 
+ | 
+ 7,241,752 
+ | 
+ 21XX | 
+ 　　　流動負債合計　　　Total current liabilities | 
+ 64,293,050 
+ | 
+ 54,108,725 
+ | 
+ 51,611,504 
+ | 
+ | 
+ 　　非流動負債　　Non-current liabilities | 
+ | 
+ | 
+ | 
+ 2500 | 
+ 　　　透過損益按公允價值衡量之金融負債－非流動　　　Non-current financial liabilities at fair value through profit or loss | 
+ 0 
+ | 
+ 998,169 
+ | 
+ 423,317 
+ | 
+ 2527 | 
+ 　　　合約負債－非流動　　　Non-current contract liabilities | 
+ 13,889,396 
+ | 
+ 15,452,436 
+ | 
+ 17,354,449 
+ | 
+ 2530 | 
+ 　　　應付公司債　　　Bonds payable | 
+ 24,479,299 
+ | 
+ 35,679,196 
+ | 
+ 28,383,426 
+ | 
+ 2531 | 
+ 　　　　應付公司債　　　　Bonds payable | 
+ 24,479,299 
+ | 
+ 24,476,317 
+ | 
+ 17,885,657 
+ | 
+ 2532 | 
+ 　　　　應付公司債溢（折）價　　　　Premium (discount) on bonds payable | 
+ 0 
+ | 
+ 11,202,879 
+ | 
+ 10,497,769 
+ | 
+ 2540 | 
+ 　　　長期借款　　　Non-current portion of non-current borrowings | 
+ 8,708,409 
+ | 
+ 7,564,868 
+ | 
+ 14,671,872 
+ | 
+ 2570 | 
+ 　　　遞延所得稅負債　　　Deferred tax liabilities | 
+ 7,508,899 
+ | 
+ 7,667,021 
+ | 
+ 5,344,075 
+ | 
+ 2600 | 
+ 　　　其他非流動負債　　　Other non-current liabilities | 
+ 3,620,876 
+ | 
+ 3,577,344 
+ | 
+ 3,691,740 
+ | 
+ 2640 | 
+ 　　　　淨確定福利負債－非流動　　　　Net defined benefit liability, non-current | 
+ 1,255,650 
+ | 
+ 1,246,002 
+ | 
+ 1,478,248 
+ | 
+ 2670 | 
+ 　　　　其他非流動負債－其他　　　　Other non-current liabilities, others | 
+ 2,365,226 
+ | 
+ 2,331,342 
+ | 
+ 2,213,492 
+ | 
+ 25XX | 
+ 　　　非流動負債合計　　　Total non-current liabilities | 
+ 58,206,879 
+ | 
+ 70,939,034 
+ | 
+ 69,868,879 
+ | 
+ 2XXX | 
+ 　　負債總計　　Total liabilities | 
+ 122,499,929 
+ | 
+ 125,047,759 
+ | 
+ 121,480,383 
+ | 
+ | 
+ 　權益　Equity | 
+ | 
+ | 
+ | 
+ | 
+ 　　歸屬於母公司業主之權益　　Equity attributable to owners of parent | 
+ | 
+ | 
+ | 
+ | 
+ 　　　股本　　　Share capital | 
+ | 
+ | 
+ | 
+ 3110 | 
+ 　　　　普通股股本　　　　Ordinary share | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 3100 | 
+ 　　　　股本合計　　　　Total Share Capital | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ | 
+ 　　　資本公積　　　Capital surplus | 
+ | 
+ | 
+ | 
+ 3200 | 
+ 　　　　資本公積合計　　　　Total capital surplus | 
+ 44,763,934 
+ | 
+ 44,763,934 
+ | 
+ 45,720,158 
+ | 
+ | 
+ 　　　保留盈餘　　　Retained earnings | 
+ | 
+ | 
+ | 
+ 3300 | 
+ 　　　　保留盈餘合計　　　　Total retained earnings | 
+ 55,088,756 
+ | 
+ 52,139,099 
+ | 
+ 47,910,365 
+ | 
+ | 
+ 　　　其他權益　　　Other equity interest | 
+ | 
+ | 
+ | 
+ 3400 | 
+ 　　　　其他權益合計　　　　Total other equity interest | 
+ (7,909,731)
+ | 
+ (8,385,625)
+ | 
+ (13,527,547)
+ | 
+ 31XX | 
+ 　　　歸屬於母公司業主之權益合計　　　Total equity attributable to owners of parent | 
+ 96,724,096 
+ | 
+ 93,298,545 
+ | 
+ 84,884,113 
+ | 
+ 36XX | 
+ 　　非控制權益　　Non-controlling interests | 
+ (3,599)
+ | 
+ (3,487)
+ | 
+ (3,291)
+ | 
+ 3XXX | 
+ 　　權益總計　　Total equity | 
+ 96,720,497 
+ | 
+ 93,295,058 
+ | 
+ 84,880,822 
+ | 
+ 3X2X | 
+ 　負債及權益總計　Total liabilities and equity | 
+ 219,220,426 
+ | 
+ 218,342,817 
+ | 
+ 206,361,205 
+ | 
+ 3997 | 
+ 　待註銷股本股數　Number of share capital awaiting retirement | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 3998 | 
+ 　預收股款（權益項下）之約當發行股數　Equivalent issue shares of advance receipts for ordinary share | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 3999 | 
+ 　母公司暨子公司所持有之母公司庫藏股股數（單位：股）　Number of shares in entity held by entity and by its subsidiaries | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 單位：新臺幣仟元　每股盈餘單位：新台幣元Unit: NT$ thousands　EPS Unit: NT$
+ 綜合損益表Statement of Comprehensive Income | 
+ 代號Code | 
+ 會計項目Accounting Title | 
+ 2026年4月1日至6月30日2026/4/1To6/30 | 
+ 2025年4月1日至6月30日2025/4/1To6/30 | 
+ 2026年1月1日至6月30日2026/1/1To6/30 | 
+ 2025年1月1日至6月30日2025/1/1To6/30 | 
+ | 
+ 營業收入Operating revenue | 
+ | 
+ | 
+ | 
+ | 
+ 4000 | 
+ 　營業收入合計　Total operating revenue | 
+ 15,214,310 
+ | 
+ 16,007,909 
+ | 
+ 29,199,108 
+ | 
+ 31,602,431 
+ | 
+ | 
+ 營業成本Operating costs | 
+ | 
+ | 
+ | 
+ | 
+ 5000 | 
+ 　營業成本合計　Total operating costs | 
+ 12,073,871 
+ | 
+ 11,884,906 
+ | 
+ 23,145,169 
+ | 
+ 23,367,569 
+ | 
+ 5900 | 
+ 營業毛利（毛損）Gross profit (loss) from operations | 
+ 3,140,439 
+ | 
+ 4,123,003 
+ | 
+ 6,053,939 
+ | 
+ 8,234,862 
+ | 
+ 5950 | 
+ 營業毛利（毛損）淨額Gross profit (loss) from operations | 
+ 3,140,439 
+ | 
+ 4,123,003 
+ | 
+ 6,053,939 
+ | 
+ 8,234,862 
+ | 
+ | 
+ 營業費用Operating expenses | 
+ | 
+ | 
+ | 
+ | 
+ 6100 | 
+ 　推銷費用　Selling expenses | 
+ 438,037 
+ | 
+ 495,984 
+ | 
+ 813,437 
+ | 
+ 879,087 
+ | 
+ 6200 | 
+ 　管理費用　Administrative expenses | 
+ 754,036 
+ | 
+ 618,424 
+ | 
+ 1,345,548 
+ | 
+ 1,139,029 
+ | 
+ 6300 | 
+ 　研究發展費用　Research and development expenses | 
+ 526,145 
+ | 
+ 576,018 
+ | 
+ 997,259 
+ | 
+ 1,187,448 
+ | 
+ 6450 | 
+ 　預期信用減損損失（利益）　Impairment loss (impairment gain and reversal of impairment loss) determined in accordance with IFRS 9 | 
+ (590)
+ | 
+ (5,660)
+ | 
+ (489)
+ | 
+ 1,944 
+ | 
+ 6000 | 
+ 　營業費用合計　Total operating expenses | 
+ 1,717,628 
+ | 
+ 1,684,766 
+ | 
+ 3,155,755 
+ | 
+ 3,207,508 
+ | 
+ 6900 | 
+ 營業利益（損失）Net operating income (loss) | 
+ 1,422,811 
+ | 
+ 2,438,237 
+ | 
+ 2,898,184 
+ | 
+ 5,027,354 
+ | 
+ | 
+ 營業外收入及支出Non-operating income and expenses | 
+ | 
+ | 
+ | 
+ | 
+ | 
+ 　利息收入　Interest income | 
+ | 
+ | 
+ | 
+ | 
+ 7100 | 
+ 　　利息收入合計　　Total interest income | 
+ 761,616 
+ | 
+ 487,455 
+ | 
+ 1,677,260 
+ | 
+ 1,063,458 
+ | 
+ | 
+ 　其他利益及損失　Other gains and losses | 
+ | 
+ | 
+ | 
+ | 
+ 7020 | 
+ 　　其他利益及損失淨額　　Other gains and losses, net | 
+ 3,132,860 
+ | 
+ (411,627)
+ | 
+ 3,512,910 
+ | 
+ (1,223,116)
+ | 
+ | 
+ 　財務成本　Finance costs | 
+ | 
+ | 
+ | 
+ | 
+ 7050 | 
+ 　　財務成本淨額　　Finance costs, net | 
+ 732,390 
+ | 
+ 225,508 
+ | 
+ 1,156,726 
+ | 
+ 445,734 
+ | 
+ 7000 | 
+ 　營業外收入及支出合計　Total non-operating income and expenses | 
+ 3,162,086 
+ | 
+ (149,680)
+ | 
+ 4,033,444 
+ | 
+ (605,392)
+ | 
+ 7900 | 
+ 繼續營業單位稅前淨利（淨損）Profit (loss) from continuing operations before tax | 
+ 4,584,897 
+ | 
+ 2,288,557 
+ | 
+ 6,931,628 
+ | 
+ 4,421,962 
+ | 
+ | 
+ 所得稅費用（利益）Tax expense (income) | 
+ | 
+ | 
+ | 
+ | 
+ 7950 | 
+ 　所得稅費用（利益）合計　Total tax expense (income) | 
+ 805,810 
+ | 
+ 606,704 
+ | 
+ 1,256,685 
+ | 
+ 1,284,404 
+ | 
+ 8000 | 
+ 繼續營業單位本期淨利（淨損）Profit (loss) from continuing operations | 
+ 3,779,087 
+ | 
+ 1,681,853 
+ | 
+ 5,674,943 
+ | 
+ 3,137,558 
+ | 
+ 8200 | 
+ 本期淨利（淨損）Profit (loss) | 
+ 3,779,087 
+ | 
+ 1,681,853 
+ | 
+ 5,674,943 
+ | 
+ 3,137,558 
+ | 
+ | 
+ 其他綜合損益（淨額）Other comprehensive income | 
+ | 
+ | 
+ | 
+ | 
+ | 
+ 　不重分類至損益之項目　Components of other comprehensive income that will not be reclassified to profit or loss | 
+ | 
+ | 
+ | 
+ | 
+ 8316 | 
+ 　　透過其他綜合損益按公允價值衡量之權益工具投資未實現評價損益　　Unrealised gains (losses) from investments in equity instruments measured at fair value through other comprehensive income | 
+ (1,863)
+ | 
+ 19,099 
+ | 
+ 47,808 
+ | 
+ 11,462 
+ | 
+ 8320 | 
+ 　　採用權益法認列之關聯企業及合資之其他綜合損益之份額－不重分類至損益之項目　　Share of other comprehensive income of associates and joint ventures accounted for using equity method, components of other comprehensive income that will not be reclassified to profit or loss | 
+ 562,563 
+ | 
+ (164,507)
+ | 
+ 570,322 
+ | 
+ (335,210)
+ | 
+ 8310 | 
+ 　　不重分類至損益之項目總額　　Components of other comprehensive income that will not be reclassified to profit or loss | 
+ 560,700 
+ | 
+ (145,408)
+ | 
+ 618,130 
+ | 
+ (323,748)
+ | 
+ | 
+ 　後續可能重分類至損益之項目　Components of other comprehensive income that will be reclassified to profit or loss | 
+ | 
+ | 
+ | 
+ | 
+ 8361 | 
+ 　　國外營運機構財務報表換算之兌換差額　　Exchange differences on translation | 
+ (1,249,863)
+ | 
+ (10,414,495)
+ | 
+ (179,755)
+ | 
+ (7,614,300)
+ | 
+ 8399 | 
+ 　　與可能重分類之項目相關之所得稅　　Income tax related to components of other comprehensive income that will be reclassified to profit or loss | 
+ (251,115)
+ | 
+ (2,082,080)
+ | 
+ (37,369)
+ | 
+ (1,522,203)
+ | 
+ 8360 | 
+ 　　後續可能重分類至損益之項目總額　　Components of other comprehensive income that will be reclassified to profit or loss | 
+ (998,748)
+ | 
+ (8,332,415)
+ | 
+ (142,386)
+ | 
+ (6,092,097)
+ | 
+ 8300 | 
+ 　其他綜合損益（淨額）　Total other comprehensive income | 
+ (438,048)
+ | 
+ (8,477,823)
+ | 
+ 475,744 
+ | 
+ (6,415,845)
+ | 
+ 8500 | 
+ 本期綜合損益總額Total comprehensive income | 
+ 3,341,039 
+ | 
+ (6,795,970)
+ | 
+ 6,150,687 
+ | 
+ (3,278,287)
+ | 
+ | 
+ 淨利（損）歸屬於：Profit (loss), attributable to: | 
+ | 
+ | 
+ | 
+ | 
+ 8610 | 
+ 　母公司業主（淨利／損）　Profit (loss), attributable to owners of parent | 
+ 3,779,084 
+ | 
+ 1,681,745 
+ | 
+ 5,674,905 
+ | 
+ 3,138,025 
+ | 
+ 8620 | 
+ 　非控制權益（淨利／損）　Profit (loss), attributable to non-controlling interests | 
+ 3 
+ | 
+ 108 
+ | 
+ 38 
+ | 
+ (467)
+ | 
+ | 
+ 綜合損益總額歸屬於：Comprehensive income attributable to: | 
+ | 
+ | 
+ | 
+ | 
+ 8710 | 
+ 　母公司業主（綜合損益）　Comprehensive income, attributable to owners of parent | 
+ 3,341,083 
+ | 
+ (6,796,453)
+ | 
+ 6,150,799 
+ | 
+ (3,278,121)
+ | 
+ 8720 | 
+ 　非控制權益（綜合損益）　Comprehensive income, attributable to non-controlling interests | 
+ (44)
+ | 
+ 483 
+ | 
+ (112)
+ | 
+ (166)
+ | 
+ | 
+ 基本每股盈餘Basic earnings per share | 
+ | 
+ | 
+ | 
+ | 
+ 9750 | 
+ 　基本每股盈餘合計　Total basic earnings per share | 
+ 7.90 
+ | 
+ 3.52 
+ | 
+ 11.87 
+ | 
+ 6.56 
+ | 
+ | 
+ 稀釋每股盈餘Diluted earnings per share | 
+ | 
+ | 
+ | 
+ | 
+ 9850 | 
+ 　稀釋每股盈餘合計　Total diluted earnings per share | 
+ 7.90 
+ | 
+ 3.51 
+ | 
+ 11.85 
+ | 
+ 6.55 
+ | 
+ 單位：新臺幣仟元Unit: NT$ thousands
+ 現金流量表Statements of Cash Flows | 
+ 代號Code | 
+ 會計項目Accounting Title | 
+ 2026年1月1日至6月30日2026/1/1To6/30 | 
+ 2025年1月1日至6月30日2025/1/1To6/30 | 
+ | 
+ 營業活動之現金流量－間接法Cash flows from (used in) operating activities, indirect method | 
+ | 
+ | 
+ A00010 | 
+ 　繼續營業單位稅前淨利（淨損）　Profit (loss) from continuing operations before tax | 
+ 6,931,628 
+ | 
+ 4,421,962 
+ | 
+ A10000 | 
+ 　本期稅前淨利（淨損）　Profit (loss) before tax | 
+ 6,931,628 
+ | 
+ 4,421,962 
+ | 
+ | 
+ 　調整項目　Adjustments | 
+ | 
+ | 
+ | 
+ 　　收益費損項目　　Adjustments to reconcile profit (loss) | 
+ | 
+ | 
+ A20100 | 
+ 　　　折舊費用　　　Depreciation expense | 
+ 4,607,108 
+ | 
+ 4,689,493 
+ | 
+ A20200 | 
+ 　　　攤銷費用　　　Amortization expense | 
+ 11,120 
+ | 
+ 10,785 
+ | 
+ A20300 | 
+ 　　　預期信用減損損失（利益）數／呆帳費用提列（轉列收入）數　　　Expected credit loss (gain) / Provision (reversal of provision) for bad debt expense | 
+ (489)
+ | 
+ 1,944 
+ | 
+ A20400 | 
+ 　　　透過損益按公允價值衡量金融資產及負債之淨損失（利益）　　　Net loss (gain) on financial assets or liabilities at fair value through profit or loss | 
+ (3,484,102)
+ | 
+ 779,373 
+ | 
+ A20900 | 
+ 　　　利息費用　　　Interest expense | 
+ 1,156,726 
+ | 
+ 445,734 
+ | 
+ A21200 | 
+ 　　　利息收入　　　Interest income | 
+ (1,677,260)
+ | 
+ (1,063,458)
+ | 
+ A21300 | 
+ 　　　股利收入　　　Dividend income | 
+ (46,461)
+ | 
+ (44,205)
+ | 
+ A22300 | 
+ 　　　採用權益法認列之關聯企業及合資損失（利益）之份額　　　Share of loss (profit) of associates and joint ventures accounted for using equity method | 
+ (6,561)
+ | 
+ (22,118)
+ | 
+ A22500 | 
+ 　　　處分及報廢不動產、廠房及設備損失（利益）　　　Loss (gain) on disposal of property, plan and equipment | 
+ (9,385)
+ | 
+ (11,121)
+ | 
+ A29900 | 
+ 　　　其他項目　　　Other adjustments to reconcile profit (loss) | 
+ (23,962)
+ | 
+ 200,592 
+ | 
+ A20010 | 
+ 　　　收益費損項目合計　　　Total adjustments to reconcile profit (loss) | 
+ 526,734 
+ | 
+ 4,987,019 
+ | 
+ | 
+ 　　與營業活動相關之資產／負債變動數　　Changes in operating assets and liabilities | 
+ | 
+ | 
+ | 
+ 　　　與營業活動相關之資產之淨變動　　　Changes in operating assets | 
+ | 
+ | 
+ A31150 | 
+ 　　　　應收帳款（增加）減少　　　　Decrease (increase) in accounts receivable | 
+ (391,136)
+ | 
+ 182,641 
+ | 
+ A31200 | 
+ 　　　　存貨（增加）減少　　　　Adjustments for decrease (increase) in inventories | 
+ (1,566,276)
+ | 
+ 756,940 
+ | 
+ A31230 | 
+ 　　　　預付款項（增加）減少　　　　Decrease (increase) in prepayments | 
+ (31,310)
+ | 
+ 140,899 
+ | 
+ A31250 | 
+ 　　　　其他金融資產（增加）減少　　　　Decrease (increase) in other financial assets | 
+ (371,136)
+ | 
+ 245,022 
+ | 
+ A31990 | 
+ 　　　　其他營業資產（增加）減少　　　　Decrease (increase) in other operating assets | 
+ (155,017)
+ | 
+ 34,755 
+ | 
+ A31000 | 
+ 　　　　與營業活動相關之資產之淨變動合計　　　　Total changes in operating assets | 
+ (2,514,875)
+ | 
+ 1,360,257 
+ | 
+ | 
+ 　　　與營業活動相關之負債之淨變動　　　Changes in operating liabilities | 
+ | 
+ | 
+ A32125 | 
+ 　　　　合約負債增加（減少）　　　　Increase (decrease) in contract liabilities | 
+ (2,760,393)
+ | 
+ (2,851,956)
+ | 
+ A32150 | 
+ 　　　　應付帳款增加（減少）　　　　Increase (decrease) in accounts payable | 
+ 567,421 
+ | 
+ (1,290,564)
+ | 
+ A32240 | 
+ 　　　　淨確定福利負債增加（減少）　　　　Increase (decrease) in net defined benefit liability | 
+ 9,648 
+ | 
+ (33,900)
+ | 
+ A32990 | 
+ 　　　　其他營業負債增加（減少）　　　　Increase (decrease) in other operating liabilities | 
+ 922,564 
+ | 
+ 838,974 
+ | 
+ A32000 | 
+ 　　　　與營業活動相關之負債之淨變動合計　　　　Total changes in operating liabilities | 
+ (1,260,760)
+ | 
+ (3,337,446)
+ | 
+ A30000 | 
+ 　　　與營業活動相關之資產及負債之淨變動合計　　　Total changes in operating assets and liabilities | 
+ (3,775,635)
+ | 
+ (1,977,189)
+ | 
+ A20000 | 
+ 　　調整項目合計　　Total adjustments | 
+ (3,248,901)
+ | 
+ 3,009,830 
+ | 
+ A33000 | 
+ 　營運產生之現金流入（流出）　Cash inflow (outflow) generated from operations | 
+ 3,682,727 
+ | 
+ 7,431,792 
+ | 
+ A33100 | 
+ 　收取之利息　Interest received | 
+ 1,681,376 
+ | 
+ 1,661,327 
+ | 
+ A33200 | 
+ 　收取之股利　Dividends received | 
+ 46,461 
+ | 
+ 44,205 
+ | 
+ A33300 | 
+ 　支付之利息　Interest paid | 
+ (1,595,222)
+ | 
+ (1,363,780)
+ | 
+ A33500 | 
+ 　退還（支付）之所得稅　Income taxes refund (paid) | 
+ (1,003,276)
+ | 
+ (1,438,370)
+ | 
+ AAAA | 
+ 營業活動之淨現金流入（流出）Net cash flows from (used in) operating activities | 
+ 2,812,066 
+ | 
+ 6,335,174 
+ | 
+ | 
+ 投資活動之現金流量Cash flows from (used in) investing activities | 
+ | 
+ | 
+ B00010 | 
+ 　取得透過其他綜合損益按公允價值衡量之金融資產　Acquisition of financial assets at fair value through other comprehensive income | 
+ (7,993)
+ | 
+ (50,000)
+ | 
+ B00030 | 
+ 　透過其他綜合損益按公允價值衡量之金融資產減資退回股款　Proceeds from capital reduction of financial assets at fair value through other comprehensive income | 
+ 29,093 
+ | 
+ 8,537 
+ | 
+ B00100 | 
+ 　取得透過損益按公允價值衡量之金融資產　Acquisition of financial assets at fair value through profit or loss | 
+ (28,374)
+ | 
+ (46,999)
+ | 
+ B02700 | 
+ 　取得不動產、廠房及設備　Acquisition of property, plant and equipment | 
+ (5,661,847)
+ | 
+ (19,094,477)
+ | 
+ B02800 | 
+ 　處分不動產、廠房及設備　Proceeds from disposal of property, plant and equipment | 
+ 36,863 
+ | 
+ 2,360 
+ | 
+ B04500 | 
+ 　取得無形資產　Acquisition of intangible assets | 
+ (85)
+ | 
+ (3,566)
+ | 
+ B06500 | 
+ 　其他金融資產增加　Increase in other financial assets | 
+ 0 
+ | 
+ (7,680,070)
+ | 
+ B06600 | 
+ 　其他金融資產減少　Decrease in other financial assets | 
+ 9,674,926 
+ | 
+ 0 
+ | 
+ B09900 | 
+ 　其他投資活動　Other investing activities | 
+ 1,479,733 
+ | 
+ 6,329,971 
+ | 
+ BBBB | 
+ 　投資活動之淨現金流入（流出）　Net cash flows from (used in) investing activities | 
+ 5,522,316 
+ | 
+ (20,534,244)
+ | 
+ | 
+ 籌資活動之現金流量Cash flows from (used in) financing activities | 
+ | 
+ | 
+ C00100 | 
+ 　短期借款增加　Increase in short-term loans | 
+ 2,997,593 
+ | 
+ 0 
+ | 
+ C00200 | 
+ 　短期借款減少　Decrease in short-term loans | 
+ 0 
+ | 
+ (9,117,997)
+ | 
+ C00600 | 
+ 　應付短期票券減少　Decrease in short-term notes and bills payable | 
+ 0 
+ | 
+ (1,399,930)
+ | 
+ C01200 | 
+ 　發行公司債　Proceeds from issuing bonds | 
+ 0 
+ | 
+ 7,502,334 
+ | 
+ C01300 | 
+ 　償還公司債　Repayments of bonds | 
+ (6,727,606)
+ | 
+ 0 
+ | 
+ C01600 | 
+ 　舉借長期借款　Proceeds from long-term debt | 
+ 10,465,553 
+ | 
+ 6,143,125 
+ | 
+ C01700 | 
+ 　償還長期借款　Repayments of long-term debt | 
+ (9,814,178)
+ | 
+ (1,032,344)
+ | 
+ C03100 | 
+ 　存入保證金減少　Decrease in guarantee deposits received | 
+ (89,241)
+ | 
+ (123,229)
+ | 
+ C03800 | 
+ 　其他應付款－關係人減少　Decrease in other payables to related parties | 
+ 0 
+ | 
+ (340,000)
+ | 
+ C04020 | 
+ 　租賃本金償還　Payments of lease liabilities | 
+ (87,753)
+ | 
+ (93,952)
+ | 
+ C04500 | 
+ 　發放現金股利　Cash dividends paid | 
+ (956,227)
+ | 
+ (2,390,569)
+ | 
+ CCCC | 
+ 　籌資活動之淨現金流入（流出）　Net cash flows from (used in) financing activities | 
+ (4,211,859)
+ | 
+ (852,562)
+ | 
+ DDDD | 
+ 匯率變動對現金及約當現金之影響Effect of exchange rate changes on cash and cash equivalents | 
+ 169,419 
+ | 
+ (1,657,380)
+ | 
+ EEEE | 
+ 本期現金及約當現金增加（減少）數Net increase (decrease) in cash and cash equivalents | 
+ 4,291,942 
+ | 
+ (16,709,012)
+ | 
+ E00100 | 
+ 期初現金及約當現金餘額Cash and cash equivalents at beginning of period | 
+ 19,484,156 
+ | 
+ 38,929,337 
+ | 
+ E00200 | 
+ 期末現金及約當現金餘額Cash and cash equivalents at end of period | 
+ 23,776,098 
+ | 
+ 22,220,325 
+ | 
+ E00210 | 
+ 　資產負債表帳列之現金及約當現金　Cash and cash equivalents reported in the statement of financial position | 
+ 23,776,098 
+ | 
+ 22,220,325 
+ | 
+ 單位：新臺幣仟元Unit: NT$ thousands
+ 當期權益變動表Statements of Change in Equity 
+ | 
+ | 
+ 3110 | 
+ 3100 | 
+ 3200 | 
+ 3310 | 
+ 3320 | 
+ 3350 | 
+ 3300 | 
+ 3410 | 
+ 3420 | 
+ 3490 | 
+ 3400 | 
+ 31XX | 
+ 36XX | 
+ 3XXX | 
+ 普通股股本 
+ 　　　　　Ordinary share 
+ | 
+ 股本合計 
+ 　　　　Total share capital 
+ | 
+ 資本公積 
+ 　　　　Capital surplus 
+ | 
+ 法定盈餘公積 
+ 　　　　　Legal reserve 
+ | 
+ 特別盈餘公積 
+ 　　　　　Special reserve 
+ | 
+ 未分配盈餘（或待彌補虧損） 
+ 　　　　　Unappropriated retained earnings (accumulated deficit) 
+ | 
+ 保留盈餘合計 
+ 　　　　Total retained earnings 
+ | 
+ 國外營運機構財務報表換算之兌換差額 
+ 　　　　　Exchange differences on translation of foreign financial statements 
+ | 
+ 透過其他綜合損益按公允價值衡量之金融資產未實現評價（損）益 
+ 　　　　　Unrealised gains (losses) on financial assets measured at fair value through other comprehensive income 
+ | 
+ 其他 
+ 　　　　　Others 
+ | 
+ 其他權益項目合計 
+ 　　　　Total other equity interest 
+ | 
+ 歸屬於母公司業主之權益總計 
+ 　　　Total equity attributable to owners of parent 
+ | 
+ 非控制權益 
+ 　　　Non-controlling interests 
+ | 
+ 權益總額 
+ 　　Total equity 
+ | 
+ A1 | 
+ 期初餘額 
+ 　Equity at beginning of period 
+ | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 44,763,934 
+ | 
+ 11,397,737 
+ | 
+ 13,527,975 
+ | 
+ 27,213,387 
+ | 
+ 52,139,099 
+ | 
+ (8,742,833)
+ | 
+ 356,780 
+ | 
+ 428 
+ | 
+ (8,385,625)
+ | 
+ 93,298,545 
+ | 
+ (3,487)
+ | 
+ 93,295,058 
+ | 
+ B1 | 
+ 提列法定盈餘公積 
+ 　　Legal reserve appropriated 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 422,874 
+ | 
+ 0 
+ | 
+ (422,874)
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ B3 | 
+ 提列特別盈餘公積 
+ 　　Special reserve appropriated 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (5,141,922)
+ | 
+ 5,141,922 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ B5 | 
+ 普通股現金股利 
+ 　　Cash dividends of ordinary share 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (2,725,248)
+ | 
+ (2,725,248)
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (2,725,248)
+ | 
+ 0 
+ | 
+ (2,725,248)
+ | 
+ D1 | 
+ 本期淨利（淨損） 
+ 　Profit (loss) 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 5,674,905 
+ | 
+ 5,674,905 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 5,674,905 
+ | 
+ 38 
+ | 
+ 5,674,943 
+ | 
+ D3 | 
+ 本期其他綜合損益 
+ 　Other comprehensive income 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (142,236)
+ | 
+ 618,130 
+ | 
+ 0 
+ | 
+ 475,894 
+ | 
+ 475,894 
+ | 
+ (150)
+ | 
+ 475,744 
+ | 
+ D5 | 
+ 本期綜合損益總額 
+ 　Total comprehensive income 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 5,674,905 
+ | 
+ 5,674,905 
+ | 
+ (142,236)
+ | 
+ 618,130 
+ | 
+ 0 
+ | 
+ 475,894 
+ | 
+ 6,150,799 
+ | 
+ (112)
+ | 
+ 6,150,687 
+ | 
+ Y1 | 
+ 權益增加(減少)總額 
+ 　Total increase (decrease) in equity 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 422,874 
+ | 
+ (5,141,922)
+ | 
+ 7,668,705 
+ | 
+ 2,949,657 
+ | 
+ (142,236)
+ | 
+ 618,130 
+ | 
+ 0 
+ | 
+ 475,894 
+ | 
+ 3,425,551 
+ | 
+ (112)
+ | 
+ 3,425,439 
+ | 
+ Z1 | 
+ 期末餘額 
+ 　Equity at end of period 
+ | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 44,763,934 
+ | 
+ 11,820,611 
+ | 
+ 8,386,053 
+ | 
+ 34,882,092 
+ | 
+ 55,088,756 
+ | 
+ (8,885,069)
+ | 
+ 974,910 
+ | 
+ 428 
+ | 
+ (7,909,731)
+ | 
+ 96,724,096 
+ | 
+ (3,599)
+ | 
+ 96,720,497 
+ | 
+ 單位：新臺幣仟元Unit: NT$ thousands
+ 去年同期權益變動表 Last year's Statements of Change in Equity 
+ | 
+ | 
+ 3110 | 
+ 3100 | 
+ 3200 | 
+ 3310 | 
+ 3320 | 
+ 3350 | 
+ 3300 | 
+ 3410 | 
+ 3420 | 
+ 3490 | 
+ 3400 | 
+ 31XX | 
+ 36XX | 
+ 3XXX | 
+ 普通股股本 
+ 　　　　　Ordinary share 
+ | 
+ 股本合計 
+ 　　　　Total share capital 
+ | 
+ 資本公積 
+ 　　　　Capital surplus 
+ | 
+ 法定盈餘公積 
+ 　　　　　Legal reserve 
+ | 
+ 特別盈餘公積 
+ 　　　　　Special reserve 
+ | 
+ 未分配盈餘（或待彌補虧損） 
+ 　　　　　Unappropriated retained earnings (accumulated deficit) 
+ | 
+ 保留盈餘合計 
+ 　　　　Total retained earnings 
+ | 
+ 國外營運機構財務報表換算之兌換差額 
+ 　　　　　Exchange differences on translation of foreign financial statements 
+ | 
+ 透過其他綜合損益按公允價值衡量之金融資產未實現評價（損）益 
+ 　　　　　Unrealised gains (losses) on financial assets measured at fair value through other comprehensive income 
+ | 
+ 其他 
+ 　　　　　Others 
+ | 
+ 其他權益項目合計 
+ 　　　　Total other equity interest 
+ | 
+ 歸屬於母公司業主之權益總計 
+ 　　　Total equity attributable to owners of parent 
+ | 
+ 非控制權益 
+ 　　　Non-controlling interests 
+ | 
+ 權益總額 
+ 　　Total equity 
+ | 
+ A1 | 
+ 期初餘額 
+ 　Equity at beginning of period 
+ | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 45,720,158 
+ | 
+ 10,741,767 
+ | 
+ 6,325,189 
+ | 
+ 30,574,066 
+ | 
+ 47,641,022 
+ | 
+ (7,669,397)
+ | 
+ 557,568 
+ | 
+ 428 
+ | 
+ (7,111,401)
+ | 
+ 91,030,916 
+ | 
+ (3,125)
+ | 
+ 91,027,791 
+ | 
+ B1 | 
+ 提列法定盈餘公積 
+ 　　Legal reserve appropriated 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 342,168 
+ | 
+ 0 
+ | 
+ (342,168)
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ B3 | 
+ 提列特別盈餘公積 
+ 　　Special reserve appropriated 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 787,509 
+ | 
+ (787,509)
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ B5 | 
+ 普通股現金股利 
+ 　　Cash dividends of ordinary share 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (2,868,682)
+ | 
+ (2,868,682)
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (2,868,682)
+ | 
+ 0 
+ | 
+ (2,868,682)
+ | 
+ D1 | 
+ 本期淨利（淨損） 
+ 　Profit (loss) 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 3,138,025 
+ | 
+ 3,138,025 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 3,138,025 
+ | 
+ (467)
+ | 
+ 3,137,558 
+ | 
+ D3 | 
+ 本期其他綜合損益 
+ 　Other comprehensive income 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (6,092,398)
+ | 
+ (323,748)
+ | 
+ 0 
+ | 
+ (6,416,146)
+ | 
+ (6,416,146)
+ | 
+ 301 
+ | 
+ (6,415,845)
+ | 
+ D5 | 
+ 本期綜合損益總額 
+ 　Total comprehensive income 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 3,138,025 
+ | 
+ 3,138,025 
+ | 
+ (6,092,398)
+ | 
+ (323,748)
+ | 
+ 0 
+ | 
+ (6,416,146)
+ | 
+ (3,278,121)
+ | 
+ (166)
+ | 
+ (3,278,287)
+ | 
+ Y1 | 
+ 權益增加(減少)總額 
+ 　Total increase (decrease) in equity 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 342,168 
+ | 
+ 787,509 
+ | 
+ (860,334)
+ | 
+ 269,343 
+ | 
+ (6,092,398)
+ | 
+ (323,748)
+ | 
+ 0 
+ | 
+ (6,416,146)
+ | 
+ (6,146,803)
+ | 
+ (166)
+ | 
+ (6,146,969)
+ | 
+ Z1 | 
+ 期末餘額 
+ 　Equity at end of period 
+ | 
+ 4,781,137 
+ | 
+ 4,781,137 
+ | 
+ 45,720,158 
+ | 
+ 11,083,935 
+ | 
+ 7,112,698 
+ | 
+ 29,713,732 
+ | 
+ 47,910,365 
+ | 
+ (13,761,795)
+ | 
+ 233,820 
+ | 
+ 428 
+ | 
+ (13,527,547)
+ | 
+ 84,884,113 
+ | 
+ (3,291)
+ | 
+ 84,880,822 
+ | 
+ 單位：新臺幣仟元
+ 會計師查核（核閱）報告 | 
+ 　 會計師事務所名稱 | 
+ 安侯建業聯合會計師事務所
+ | 
+ 　 簽證會計師名稱 1 | 
+ 吳　俊　源
+ | 
+ 　 簽證會計師名稱 2 | 
+ 黃　泳　華
+ | 
+ 　 核閱或查核日期 | 
+ 2026-08-04
+ | 
+ 　 報告類型 | 
+ | 
+ 　　 核閱報告 | 
+ Y
+ | 
+ 　 核閱或查核報告類型 | 
+ | 
+ 　　 無保留意見／結論 | 
+ Y
+ | 
+ 　 報告類型細分 | 
+ | 
+ 　 簡述強調事項內容 | 
+ | 
+ 　 簡述其他事項內容 | 
+ | 
+ 　 會計師查核（核閱）報告內容 | 
+ 會 計 師 核 閱 報 告
+環球晶圓股份有限公司董事會 公鑒：
+前言
+ 環球晶圓股份有限公司及其子公司民國一一五年及一一四年六月三十日之合併資產負債
+表，與民國一一五年及一一四年四月一日至六月三十日及一一五年及一一四年一月一日至六月
+三十日之合併綜合損益表，暨民國一一五年及一一四年一月一日至六月三十日之合併權益變動
+表及合併現金流量表，以及合併財務報告附註(包括重大會計政策彙總)，業經本會計師核閱竣
+事。依證券發行人財務報告編製準則及金融監督管理委員會認可並發布生效之國際會計準則第
+三十四號「期中財務報導」編製允當表達之合併財務報告係管理階層之責任，本會計師之責任
+係依據核閱結果對合併財務報告作成結論。
+範圍
+ 本會計師係依照核閱準則 2410號「財務報表之核閱」執行核閱工作。核閱合併財務報告時
+所執行之程序包括查詢(主要向負責財務與會計事務之人員查詢)、分析性程序及其他核閱程
+序。核閱工作之範圍明顯小於查核工作之範圍，因此本會計師可能無法察覺所有可藉由查核工
+作辨認之重大事項，故無法表示查核意見。
+結論
+ 依本會計師核閱結果，並未發現上開合併財務報告在所有重大方面有未依照證券發行人財
+務報告編製準則及金融監督管理委員會認可並發布生效之國際會計準則第三十四號「期中財務
+報導」編製，致無法允當表達環球晶圓股份有限公司及其子公司民國一一五年及一一四年六月
+三十日之合併財務狀況，與民國一一五年及一一四年四月一日至六月三十日及一一五年及一一
+四年一月一日至六月三十日之合併財務績效暨民國一一五年及一一四年一月一日至六月三十日
+之合併現金流量之情事。 
+ 安 侯 建 業 聯 合 會 計 師 事 務 所
+ 會 計 師：吳 俊 源
+ 黃 泳 華
+ 證券主管機關 金管證審字第1040007866號
+ ：
+ 核准簽證文號 金管證審字第1010004977號
+ 民 國 一一五 年 八 月 四 日
+ | 
+ 　 截至本季止採用其他會計師查核意見（核閱報告）之子公司期末資產總額 | 
+ 0 
+ | 
+ 　 截至本季止採用其他會計師查核意見（核閱報告）之子公司營業收入淨額 | 
+ 0 
+ | 
+ 　 本季採用其他會計師查核意見（核閱報告）之子公司營業收入淨額 | 
+ 0 
+ | 
+ 　 截至本季止採用其他會計師查核意見（核閱報告）之採用權益法之投資期末餘額 | 
+ 0 
+ | 
+ 　 截至本季止採用其他會計師查核意見（核閱報告）之採用權益法之投資當期認列關聯企業及合資損益之份額 | 
+ 0 
+ | 
+ 　 本季採用其他會計師查核意見（核閱報告）之採用權益法之投資當期認列關聯企業及合資損益之份額 | 
+ 0 
+ | 
+ 　 截至本季止未經會計師查核（核閱）之子公司期末資產總額 | 
+ 0 
+ | 
+ 　 截至本季止未經會計師查核（核閱）之子公司綜合損益金額 | 
+ 0 
+ | 
+ 　 本季未經會計師查核（核閱）之子公司綜合損益金額 | 
+ 0 
+ | 
+ 　 截至本季止未經會計師查核（核閱）之採用權益法之投資期末餘額 | 
+ 0 
+ | 
+ 　 截至本季止未經會計師查核（核閱）之採用權益法之投資當期認列關聯企業及合資損益之份額 | 
+ 0 
+ | 
+ 　 本季未經會計師查核（核閱）之採用權益法之投資當期認列關聯企業及合資損益之份額 | 
+ 0 
+ | 
+ 財務報表附註
+ 公司沿革及業務範圍 | 
+ 　 公司沿革及業務範圍 | 
+ 環球晶圓股份有限公司(以下稱本公司)係於民國一○○年十月一日由中美矽晶製品股
+份有限公司(以下稱中美矽晶公司)將其半導體事業部門相關營業、資產及負債分割予本公
+司，並於民國一○○年十月十八日經科學園區管理局核准設立，註冊地址為新竹科學園區
+工業東二路八號。本公司民國一一五年六月三十日之合併財務報告之組成包括本公司及本
+公司之子公司(以下併稱「合併公司」)。合併公司主要營業項目為半導體矽晶材料及其元
+件之研究開發、設計、製造及銷售，與前述相關產品之技術、管理資訊顧問業務服務。
+ 合併公司於民國一○五年十二月二日收購取得SunEdison Semiconductor Limited及其子
+公司(以下稱SunEdison)。透過此次購併，使合併公司研發、製造及銷售據點遍及美國、歐
+洲、亞洲等區域，得以提升全球市占率、客戶群及其他晶圓技術與產能。
+ 本公司之股票經財團法人中華民國證券櫃檯買賣中心准予辦理上櫃交易，於民國一○
+四年九月二十五日起上櫃掛牌買賣，並自同日起終止興櫃買賣。
+ | 
+ 通過財報之日期及程序 | 
+ 　 通過財報之日期及程序 | 
+本合併財務報告已於民國一一五年八月四日經董事會通過發布。
+ | 
+ 新發布及修訂準則及解釋之適用 | 
+ 　 新發布及修訂準則及解釋之適用 | 
+(一)已採用金融監督管理委員會(以下稱金管會)認可之新發布及修訂後準則及解釋之影響
+ 合併公司自民國一一五年一月一日起開始適用下列新修正之國際財務報導準則會
+ 計準則，且對合併財務報告未造成重大影響。
+ ．國際財務報導準則第十七號「保險合約」及國際財務報導準則第十七號之修正
+ ．國際財務報導準則第九號及國際財務報導準則第七號之修正「金融工具之分類與衡
+ 量之修正」
+ ．國際財務報導準則會計準則之年度改善
+ ．國際財務報導準則第九號及國際財務報導準則第七號之修正「涉及依賴自然電力之
+ 合約」
+(二)尚未採用金管會認可之國際財務報導準則會計準則之影響
+ 合併公司評估適用下列自民國一一六年一月一日起生效之新修正之國際財務報導
+ 準則會計準則，將不致對合併財務報告造成重大影響。
+ ．國際財務報導準則第十九號「不具公共課責性之子公司：揭露」及國際財務報導準
+ 則第十九號之修正
+ ．國際會計準則第二十一號之修正「換算為高度通貨膨脹之表達貨幣」
+ 合併公司預計自民國一一七年一月一日起開始適用下列新發布及新修正之國際財
+ 務報導準則會計準則：
+ 1.國際財務報導準則第十八號「財務報表中之表達與揭露」
+ 新準則引入三種類收益及費損、兩項損益表小計及一項關於管理階層績效衡量
+ 的單一附註。以下三項修正與強化在財務報表中如何對資訊細分之指引，為使用者
+ 提供更佳及更一致的資訊奠定基礎，並將影響所有公司。
+ ．更具結構化之損益表：根據現行準則，公司使用不同的格式來表達其經營成果，
+ 使投資者難以比較不同公司間的財務績效。新準則採用更具結構化的損益表，引
+ 入新定義之「營業利益」小計，並規定所有收益及費損，將依公司主要經營活動
+ 歸類於三個新的不同種類。
+ ．管理階層績效衡量(MPMs)：新準則引入管理階層績效衡量之定義，並要求公司
+ 於財務報表之單一附註中，對於每一衡量指標解釋其為何可提供有用之資訊、如
+ 何計算及如何將衡量指標與根據國際財務報導準則會計準則所認列的金額進行調
+ 節。
+ ．較細分之資訊：新準則包括公司如何於財務報表強化對資訊分組之指引。此包括
+ 資訊是否應列入主要財務報表或於附註中進一步細分之指引。
+ 國際會計準則第七號「現金流量表」已配合新準則修訂，要求公司採用間接法
+ 編製來自營業活動之現金流量時，應以新定義之「營業損益」小計為起始點。由於
+ 採用新的起始點，部分納入調節的調整項目將有所變動。此外，該配套修訂亦對利
+ 息及股利之現金收付分類提供具體指引。
+ 合併公司現正持續評估初次適用該準則對合併財務報告之影響。
+ 2.國際會計準則第二十八號之修正「對投資關聯企業及合資之公允價值選項」
+ 合併公司評估適用此新修正準則將不致對合併財務報告造成重大影響。
+(三)金管會尚未認可之新發布及修訂準則及解釋
+ 合併公司預期下列尚未認可之新發布及修正準則不致對合併財務報告造成重大影
+ 響。
+ ．國際財務報導準則第十號及國際會計準則第二十八號之修正「投資者與其關聯企業
+ 或合資間之資產出售或投入」
+ ．國際財務報導準則第二十號「管制資產及管制負債」
+ | 
+ 重大會計政策之彙總說明 | 
+ 　 遵循聲明 | 
+ 本合併財務報告係依照證券發行人財務報告編製準則(以下稱「編製準則」)及金
+管會認可並發布生效之國際會計準則第三十四號「期中財務報導」編製。本合併財務
+報告未包括依照金管會認可並發布生效之國際財務報導準則、國際會計準則、解釋及
+解釋公告(以下稱「金管會認可之國際財務報導準則會計準則」)所編製之整份年度合
+併財務報告應揭露之全部必要資訊。
+ 除下列所述外，本合併財務報告所採用之重大會計政策與民國一一四年度合併財
+務報告相同，相關資訊請參閱民國一一四年度合併財務報告附註四。
+ | 
+ 　　 合併報表編製原則 | 
+1.合併財務報告編製原則
+ 本合併財務報告編製原則與民國一一四年度合併財務報告一致，相關資訊請詳
+ 民國一一四年度合併財務報告附註四(三)。
+ | 
+ 列入合併財務報表之子公司 | 
+ 投資公司名稱 | 
+ 子公司名稱 | 
+ 業務性質 | 
+ 所持股權百分比 | 
+ 說明 | 
+ 本期 | 
+ 去年年底 | 
+ 去年同期 | 
+ 本公司
+ | 
+ GlobalSemiconductor Inc. (以下稱GSI)
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ GlobalWafers Japan Co., Ltd. (以下稱GWJ)
+ | 
+ 半導體矽晶圓製造及貿易
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ GlobalWafers Singapore Pte. Ltd. (以下稱GWS)
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ 旭愛能源股份有限公司(以下稱旭愛能源)
+ | 
+ 發電業務
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ 旭信電力股份有限公司(以下稱旭信電力)
+ | 
+ 發電業務
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ 寰球鑫投資股份有限公司(以下稱寰球鑫)
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ GlobalWafers GmbH (以下稱GW GmbH)
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ GlobalWafers B.V. (以下稱GWBV)
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ 兆遠科技股份有限公司(以下稱兆遠科技)
+ | 
+ 光電及通訊材料基板製造與銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 本公司
+ | 
+ 環球晶資本股份有限公司(以下稱環球晶資本)
+ | 
+ 投資各項事業
+ | 
+ 79.41% 
+ | 
+ 79.41% 
+ | 
+ 100.00% 
+ | 
+ 註(2)
+ | 
+ GSI
+ | 
+ 昆山中辰矽晶有限公司(以下稱昆山中辰)
+ | 
+ 矽晶棒、矽晶圓等加工貿易
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GWJ
+ | 
+ MEMC Japan Ltd. (以下稱MEMC Japan)
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 昆山中辰
+ | 
+ MEMC Electronic Materials Sdn Bhd (以下稱MEMC Sdn Bhd)
+ | 
+ 半導體矽晶圓研發、製造及貿易
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 昆山中辰
+ | 
+ 昆山辰巨電子科技有限公司(以下稱昆山辰巨)
+ | 
+ 銷售及行銷業務
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 昆山中辰
+ | 
+ 上海召業申凱電子材料有限公司(以下稱上海召凱)
+ | 
+ 鉭酸鋰及鈮酸鋰晶圓製造及銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 兆遠科技
+ | 
+ Crystalwise Technology (HK) Limited (以下稱Crystalwise (HK))
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ 兆遠科技
+ | 
+ 元鴻(山東)光電材料有限公司(以下稱山東元鴻)
+ | 
+ 光電及通訊材料基板製造與銷售
+ | 
+ 19.69% 
+ | 
+ 19.69% 
+ | 
+ 19.69% 
+ | 
+ | 
+ GWBV
+ | 
+ MEMC Electronic Materials S.p.A. (以下稱MEMC SpA)
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ MEMC SpA
+ | 
+ MEMC Electronic Materials France SarL (以下稱MEMC SarL)
+ | 
+ 貿易業務
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GWBV
+ | 
+ MEMC Korea Company (以下稱MEMC Korea)
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GWBV
+ | 
+ MEMC Ipoh Sdn Bhd (以下稱MEMC Ipoh)
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GWBV
+ | 
+ GlobiTech Incorporated (以下稱GTI)
+ | 
+ 磊晶、矽晶圓生產及磊晶代工等貿易
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GWBV
+ | 
+ Topsil Globalwafers A/S (以下稱Topsil A/S)
+ | 
+ 半導體矽晶圓製造及貿易
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ Crystalwise (HK)
+ | 
+ 山東元鴻
+ | 
+ 光電及通訊材料基板製造與銷售
+ | 
+ 80.31% 
+ | 
+ 80.31% 
+ | 
+ 80.31% 
+ | 
+ | 
+ GTI
+ | 
+ MEMC LLC
+ | 
+ 半導體矽晶圓研發、製造及貿易
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GTI
+ | 
+ GlobalWafers America, LLC (以下稱GWA)
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ | 
+ GTI
+ | 
+ GlobalWafers System Solutions, LLC(以下稱GWSS)
+ | 
+ 企業數位自動化管理系統平台整合服務
+ | 
+ 100.00% 
+ | 
+ 0.00% 
+ | 
+ 0.00% 
+ | 
+ 註(3)
+ | 
+ 上海召凱
+ | 
+ 忻州元鴻信息材料有限公司(以下稱忻州元鴻)
+ | 
+ 鉭酸鋰及鈮酸鋰晶圓製造及銷售
+ | 
+ 90.00% 
+ | 
+ 90.00% 
+ | 
+ 90.00% 
+ | 
+ | 
+ MEMC Korea
+ | 
+ 安科思資本股份有限公司(以下簡稱安科思資本)
+ | 
+ 投資各項事業
+ | 
+ 100.00% 
+ | 
+ 100.00% 
+ | 
+ 0.00% 
+ | 
+ 註(1)
+ | 
+ 安科思資本
+ | 
+ 環球晶資本
+ | 
+ 投資各項事業
+ | 
+ 20.59% 
+ | 
+ 20.59% 
+ | 
+ 0.00% 
+ | 
+ 註(2)
+ | 
+ 備註 | 
+ 註：合併公司組織架構調整及改變，變動如下：
+ 1.安科思資本於民國一一四年九月成立。
+ 2.安科思資本於民國一一四年九月十一日通過董事會決議，增資環球晶資本取
+ 得20.59%股權，民國一一四年九月二十四日為增資基準日，與本公司共計持
+ 有環球晶資本100%股權。
+ 3.GWSS於民國一一五年五月成立。
+ | 
+ 未列入合併財務報表之子公司
+ 無此情形／免揭露
+ 　 負債準備 | 
+碳 費
+ 依據我國氣候變遷因應法及其子法課徵之碳費係於評估全年溫室氣體排放量很有
+可能超過起徵點門檻時，按報導日已發生之溫室氣體排放量佔全年溫室氣體排放量之
+比例為基礎估列負債準備。
+ | 
+ 　 員工福利 | 
+ 期中期間之確定福利計畫退休金係採用前一年度報導日依精算決定退休金成本
+率，以年初至當期期末為基礎計算，並針對該報導日後之重大市場波動，及重大縮
+減、清償或其他重大一次性事項加以調整。
+ | 
+ 　 所得稅 | 
+ 合併公司係依國際會計準則公報第三十四號「期中財務報導」第B12段規定衡量
+及揭露期中期間之所得稅費用。
+ 所得稅費用係以期中報導期間之稅前淨利乘以管理階層對於全年度預計有效稅率
+之最佳估計衡量，並全數認列為當期所得稅費用。
+ 所得稅費用直接認列於權益項目或其他綜合損益項目者，係就相關資產及負債於
+財務報導目的之帳面金額與其課稅基礎之暫時性差異，以預期實現或清償時之適用稅
+率予以衡量。
+ | 
+ 　 其他 | 
+ 項目 | 
+ 說明 | 
+ 重大會計判斷、假設及估計不確定性之主要來源 | 
+ 　 重大會計判斷、假設及估計不確定性之主要來源 | 
+ 管理階層依編製準則及金管會認可之國際會計準則三十四號「期中財務報導」編製本
+合併財務報告時，必須對未來（包括氣候相關風險及機會）作出判斷及估計，其將對會計
+政策之採用及資產、負債、收益及費用之報導金額有所影響。實際結果可能與估計存有差
+異。
+ 編製合併財務報告時，管理階層於採用合併公司會計政策時所作之重大判斷以及估計
+不確定性之主要來源與民國一一四年度合併財務報告附註五一致。
+ | 
+ 重大事項 | 
+ 　 重大或有負債及未認列之合約承諾 | 
+ (一)重大未認列之合約承諾：
+ 1.截至民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止，合併公
+ 司依據現行有效合約尚未進貨之金額為8,032,347千元、10,846,028千元及11,395,029
+ 千元。
+ 2.截至民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止，合併公
+ 司已開立而未使用之信用狀金額分別為241,400千元、270,926千元及252,565千元。
+ 3.截至民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止，已簽約
+ 或訂購尚未交驗之重大建造工程款及廠房設備分別為4,950,198千元、7,105,140千元
+ 及9,670,973千元。
+ 4.民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止，合併公司請
+ 求銀行開立供關稅總局及研發計劃等之履約保證函金額分別為13,226千元、15,427
+ 千元及39,211千元。
+ 5.合併公司與特定客戶訂有長期銷售合約並收取預收貨款，客戶依約需履行最低訂貨
+ 數量，截至民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止，
+ 合併公司請求銀行開立供客戶之履約保證函金額分別為3,203,919千元、3,074,787千
+ 元及3,925,973千元。
+ 6.民國一一五年六月三十日、一一四年十二月三十一日及六月三十日，合併公司因取
+ 得銀行融資而存放於銀行之本票總額分別為75,938,733千元、88,026,141千元及
+ 103,125,147千元。
+ | 
+ 　 重大之期後事項 | 
+ (一)合併公司子公司位於義大利Novara廠8吋產線無塵室之機台於一一五年七月二十一日
+ 因故燃燒而致產線停止生產，當下人員全數安全撤離無人員傷亡。目前正在評估災後
+ 復原計劃，復工時程、設備損失及對營運之實際影響，仍待進一步評估確認。
+(二)合併公司為支應原幣購料及轉投資海外子公司所需之資金，於民國一一五年八月四日
+ 經董事會決議通過，擬辦理現金增資發行新股參與發行海外存託憑證。
+ | 
+ 應收款項
+ 單位：新臺幣仟元
+ 明細表 | 
+ 項目及金額 | 
+ 項目 | 
+ 金額 | 
+ 本期 | 
+ 去年年底 | 
+ 去年同期 | 
+ 應收票據
+ | 
+ 525,954 
+ | 
+ 687,069 
+ | 
+ 303,742 
+ | 
+ 應收帳款
+ | 
+ 9,919,752 
+ | 
+ 9,385,901 
+ | 
+ 9,699,049 
+ | 
+ 減：備抵損失
+ | 
+ (9,480)
+ | 
+ (10,001)
+ | 
+ (12,190)
+ | 
+ 合計 | 
+ 10,436,226 
+ | 
+ 10,062,969 
+ | 
+ 9,990,601 
+ | 
+ 說明 | 
+ | 
+ 應收款項之帳齡分析 | 
+ 帳齡區間及金額 | 
+ 帳齡區間 | 
+ 金額 | 
+ 本期 | 
+ 去年年底 | 
+ 去年同期 | 
+ 未逾期
+ | 
+ 10,185,859 
+ | 
+ 9,685,953 
+ | 
+ 9,594,604 
+ | 
+ 逾期1~30天
+ | 
+ 265,055 
+ | 
+ 230,754 
+ | 
+ 321,690 
+ | 
+ 逾期31~60天
+ | 
+ 51,441 
+ | 
+ 34,027 
+ | 
+ 33,094 
+ | 
+ 逾期61~90天
+ | 
+ 252 
+ | 
+ 9,788 
+ | 
+ 115,487 
+ | 
+ 逾期91~120天
+ | 
+ 2,069 
+ | 
+ 109,425 
+ | 
+ 287 
+ | 
+ 逾期121~150天
+ | 
+ 0 
+ | 
+ 44,458 
+ | 
+ 355 
+ | 
+ 逾期151~180天
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 1,750 
+ | 
+ 逾期181天以上
+ | 
+ 9,029 
+ | 
+ 7,902 
+ | 
+ 9,437 
+ | 
+ 合計 | 
+ 10,513,705 
+ | 
+ 10,122,307 
+ | 
+ 10,076,704 
+ | 
+ 說明 | 
+ | 
+ 應收款項之備抵損失變動資訊 | 
+ | 
+ 本期 | 
+ 去年同期 | 
+ | 
+ 金額 | 
+ 金額 | 
+ 　期初餘額 | 
+ 　10,001 
+ | 
+ 10,838 
+ | 
+ 　追溯適用IFRS 9影響數 | 
+ 　0 
+ | 
+ 0 
+ | 
+ 　提列減損損失 | 
+ 　0 
+ | 
+ 1,944 
+ | 
+ 　減損損失迴轉 | 
+ 　(489)
+ | 
+ 0 
+ | 
+ 　因無法收回而沖銷之款項 | 
+ 　(121)
+ | 
+ (123)
+ | 
+ 　折現轉回數 | 
+ 　0 
+ | 
+ 0 
+ | 
+ 　匯率影響數 | 
+ 　89 
+ | 
+ (469)
+ | 
+ 　其他 | 
+ 　0 
+ | 
+ 0 
+ | 
+ 　期末餘額 | 
+ 　9,480 
+ | 
+ 12,190 
+ | 
+ 說明 | 
+ | 
+ 關係人交易
+ 單位：新臺幣仟元
+ 　 母公司及最終控制者之名稱 | 
+ 中美矽晶公司為合併公司之母公司及所歸屬集團之最終控制者，截至民國一一五
+年六月三十日持有本公司流通在外普通股股份之46.64%，中美矽晶公司已編製供大眾
+使用之合併財務報告。
+ | 
+ 關係人名稱及關係 | 
+ 關係人名稱 | 
+ 關係人關係 | 
+ 中美矽晶公司(母公司)
+ | 
+ 合併公司之母公司
+ | 
+ 台灣特品化學股份有限公司
+ | 
+ 中美矽晶公司之子公司
+ | 
+ 續興股份有限公司
+ | 
+ 中美矽晶公司之子公司
+ | 
+ 朋程科技股份有限公司(以下稱朋程科技)
+ | 
+ 中美矽晶公司之子公司
+ | 
+ 台灣茂矽電子股份有限公司(以下稱茂矽電子)
+ | 
+ 朋程科技之子公司
+ | 
+ 弘望投資股份有限公司(以下稱弘望投資)
+ | 
+ 本公司之關聯企業
+ | 
+ 宏捷科技股份有限公司(以下稱宏捷科技)
+ | 
+ 中美矽晶公司之子公司
+ | 
+ 續升綠能股份有限公司旭鑫分公司
+ | 
+ 中美矽晶公司之子公司
+ | 
+ 與關係人間之重大交易事項
+ 單位：新臺幣仟元
+ 營業收入 | 
+ 關係人類別與金額 | 
+ 帳列項目 | 
+ 關係人類別／名稱 | 
+ 金額 | 
+ 本期 | 
+ 去年同期 | 
+ 本期累計 | 
+ 去年同期累計 | 
+ 營業收入
+ | 
+ 母公司
+ | 
+ 3,397 
+ | 
+ 18,054 
+ | 
+ 6,236 
+ | 
+ 22,046 
+ | 
+ 營業收入
+ | 
+ 其他關係人
+ | 
+ 79,200 
+ | 
+ 67,101 
+ | 
+ 139,045 
+ | 
+ 134,915 
+ | 
+ 合計 | 
+ 82,597 
+ | 
+ 85,155 
+ | 
+ 145,281 
+ | 
+ 156,961 
+ | 
+ 說明 | 
+ 合併公司銷貨予關係人之價格係以一般市場價格為基準，考量銷售區域、銷售
+數量不同等因素而酌予調整。
+ | 
+ 進貨 | 
+ 關係人類別與金額 | 
+ 關係人類別／名稱 | 
+ 金額 | 
+ 本期 | 
+ 去年同期 | 
+ 本期累計 | 
+ 去年同期累計 | 
+ 母公司
+ | 
+ 658,705 
+ | 
+ 33,140 
+ | 
+ 1,058,085 
+ | 
+ 88,369 
+ | 
+ 合計 | 
+ 658,705 
+ | 
+ 33,140 
+ | 
+ 1,058,085 
+ | 
+ 88,369 
+ | 
+ 說明 | 
+ 合併公司向關係人採購之貨物及委託加工係以一般市場價格為基準。
+ | 
+ 應收關係人款項 | 
+ 帳列項目及關係人類別與金額 | 
+ 帳列項目 | 
+ 關係人類別／名稱 | 
+ 金額 | 
+ 本期 | 
+ 去年年底 | 
+ 去年同期 | 
+ 應收關係人款項
+ | 
+ 母公司
+ | 
+ 2,226 
+ | 
+ 2,412 
+ | 
+ 17,546 
+ | 
+ 應收關係人款項
+ | 
+ 其他關係人
+ | 
+ 65,773 
+ | 
+ 46,929 
+ | 
+ 56,367 
+ | 
+ 合計 | 
+ 67,999 
+ | 
+ 49,341 
+ | 
+ 73,913 
+ | 
+ 說明 | 
+ 合併公司民國一一五年及一一四年一月一日至六月三十日售予一般客戶約定收
+款期間均為月結0～90天；對主要關係人約定收款期間均為月結30～90天。
+ | 
+ 應付關係人款項 | 
+ 帳列項目及關係人類別與金額 | 
+ 帳列項目 | 
+ 關係人類別／名稱 | 
+ 金額 | 
+ 本期 | 
+ 去年年底 | 
+ 去年同期 | 
+ 應付關係人款項
+ | 
+ 母公司
+ | 
+ 201,248 
+ | 
+ 385,689 
+ | 
+ 32,036 
+ | 
+ 應付關係人款項
+ | 
+ 其他關係人
+ | 
+ 2,266 
+ | 
+ 16,554 
+ | 
+ 308 
+ | 
+ 合計 | 
+ 203,514 
+ | 
+ 402,243 
+ | 
+ 32,344 
+ | 
+ 說明 | 
+ 合併公司民國一一五年及一一四年一月一日至六月三十日與一般廠商付款條件
+均為月結0天~次月結150天；向關係人進貨付款條件均為次月結30天~次月結90天。
+ | 
+ 預付款項
+ 無此情形／免揭露
+ 取得不動產、廠房及設備 | 
+ 關係人類別與取得價款 | 
+ 關係人類別／名稱 | 
+ 取得價款 | 
+ 本期 | 
+ 去年同期 | 
+ 本期累計 | 
+ 去年同期累計 | 
+ 其他關係人
+ | 
+ 29,996 
+ | 
+ 88,518 
+ | 
+ 36,016 
+ | 
+ 88,518 
+ | 
+ 合計 | 
+ 29,996 
+ | 
+ 88,518 
+ | 
+ 36,016 
+ | 
+ 88,518 
+ | 
+ 說明 | 
+ 截至民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止，
+未付之應付關係人款項分別為5,381千元、0千元及134,536千元。
+ | 
+ 處分不動產、廠房及設備
+ 無此情形／免揭露
+ 取得投資性不動產
+ 無此情形／免揭露
+ 處分投資性不動產
+ 無此情形／免揭露
+ 取得金融資產
+ 無此情形／免揭露
+ 處分金融資產
+ 無此情形／免揭露
+ 取得其他資產
+ 無此情形／免揭露
+ 處分其他資產
+ 無此情形／免揭露
+ 對關係人放款
+ 無此情形／免揭露
+ 背書保證
+ 無此情形／免揭露
+ 其它 | 
+1.各項墊款
+ 民國一一五年六月三十日、一一四年十二月三十一日及六月三十日，合併公司
+ 因與母公司中美矽晶公司及其他關係人間相互墊付購料款、保險、水電費及人力支
+ 援等款項而尚未結清之應收(付)關係人款項，彙列如下：
+ 115.6.30 114.12.31 114.6.30
+ ------------ ------------ ------------
+ 應收關係人款(母公司) $ 152 77 15,917
+ ------------ ------------ ------------
+ 應付關係人款(母公司) $ (310) (368) (667)
+ ------------ ------------ ------------
+2.租賃
+ 合併公司向母公司中美矽晶公司承租廠房及辦公室，合約總價值為11,290千
+ 元，民國一一五年及一一四年一月一日至六月三十日認列租賃負債產生之利息支出
+ 分別0千元及33千元，截至民國一一五年六月三十日、一一四年十二月三十一日及
+ 六月三十日止之租賃負債餘額分別為0千元、5,706千元及0千元。
+3.存出保證金
+ 合併公司因應永續綠能履行方案，透過其他關係人簽訂購買離岸風電及光電合
+ 約，截至民國一一五年六月三十日、一一四年十二月三十一日及六月三十日止之存
+ 出保證金分別為25,921千元、24,848千元及24,848千元，帳列其他金融資產－非流動
+ 項下。
+4.資金融通
+ 合併公司於民國一一五年一月一日至六月三十日並無資金融通；民國一一四年
+ 十二月三十一日及六月三十日之資金融通均已結清。民國一一五年及一一四年一月
+ 一日至六月三十日，因上述相關借款產生之利息支出分別為0千元及788千元。
+5.股利收入
+ 合併公司民國一一五年及一一四年一月一日至六月三十日獲配關係人現金股利
+ 43,208千元及59,336千元，上述現金股利帳列應收關係人款項下。
+6.其他
+ (1)合併公司提供關係人其他服務，包含服務收入、機台使用、人力資源及廠房出租
+ 等，相關其他收入及應收關係人款項明細如下：
+ 115年 114年 115年 114年
+ 關係人類別 4月至6月 4月至6月 1月至6月 1月至6月
+ ----------------------- ---------- --------- --------- ---------
+ 母公司及其他關係人 $ 2,061 1,282 4,697 2,482 
+ ---------- --------- --------- ---------
+ 帳列項目 關係人類別 115.6.30 114.12.31 114.6.30
+ --------------- -------------- ------------ ----------- ----------
+ 應收關係人款項 母公司 $ 402 326 601
+ 應收關係人款項 其他關係人 23 557 4
+ ----------- ----------- ----------
+ $ 425 883 605
+ ----------- ----------- ----------
+ (2)關係人提供合併公司其他服務，包含管理費用、技術服務費用、法律工作委任費
+ 及廠房租賃等，相關之其他費用及應付關係人款項明細如下：
+ 115年 114年 115年 114年
+ 關係人類別 4月至6月 4月至6月 1月至6月 1月至6月
+ ----------------------- ---------- --------- --------- ---------
+ 母公司及其他關係人 $ 147,525 49,246 171,813 84,606
+ ---------- --------- --------- ---------
+ 帳列項目 關係人類別 115.6.30 114.12.31 114.6.30
+ --------------- -------------- ------------ ----------- ---------
+ 應付關係人款項 母公司 $ 28,292 28,133 29,233
+ 應付關係人款項 其他關係人 55,572 43,481 2,122
+ ----------- ----------- ---------
+ $ 83,864 71,614 31,355
+ ----------- ----------- ---------
+ | 
+ 向關係人借款
+ 無此情形／免揭露
+ 主要管理階層薪酬 | 
+ | 
+ 本期 | 
+ 去年同期 | 
+ 本期累計 | 
+ 去年同期累計 | 
+ 短期員工福利 | 
+ 107,605 
+ | 
+ 54,667 
+ | 
+ 172,223 
+ | 
+ 108,843 
+ | 
+ 退職後福利 | 
+ 124 
+ | 
+ 132 
+ | 
+ 250 
+ | 
+ 286 
+ | 
+ 其他長期員工福利 | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 離職福利 | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 股份基礎給付 | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 合計 | 
+ 107,729 
+ | 
+ 54,799 
+ | 
+ 172,473 
+ | 
+ 109,129 
+ | 
+ 說明 | 
+ 合併公司於民國一一五年度及一一四年度提供成本計1,500千元汽車1輛，供主要
+管理人員使用。
+ | 
+ 資金貸與他人
+ 單位：新臺幣仟元
+ 資金貸與他人 | 
+ 編號 | 
+ 貸出資金之公司 | 
+ 貸與對象 | 
+ 往來項目 | 
+ 是否為關係人 | 
+ 本期最高餘額 | 
+ 期末餘額 | 
+ 實際動支金額 | 
+ 利率區間 | 
+ 資金貸與性質 | 
+ 業務往來金額 | 
+ 有短期融通資金必要之原因 | 
+ 提列備抵呆帳金額 | 
+ 擔保品 | 
+ 對個別對象資金貸與限額 | 
+ 資金貸與總限額 | 
+ 備註 | 
+ 名稱 | 
+ 價值 | 
+ 0
+ | 
+ 本公司
+ | 
+ 旭信電力
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 100,000 
+ | 
+ 100,000 
+ | 
+ 0 
+ | 
+ 0
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 38,689,638 
+ | 
+ 38,689,638 
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 旭愛能源
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 500,000 
+ | 
+ 500,000 
+ | 
+ 0 
+ | 
+ 0
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 38,689,638 
+ | 
+ 38,689,638 
+ | 
+ | 
+ 1
+ | 
+ GWJ
+ | 
+ MEMC Japan
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 13,592,080 
+ | 
+ 13,034,320 
+ | 
+ 8,715,720 
+ | 
+ 1.66664%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 18,987,003 
+ | 
+ 18,987,003 
+ | 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ GWBV
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 3,359,475 
+ | 
+ 3,344,250 
+ | 
+ 3,189,959 
+ | 
+ 3.976%~6.04%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 63,664,406 
+ | 
+ 63,664,406 
+ | 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ GW GmbH
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 4,697,500 
+ | 
+ 4,536,250 
+ | 
+ 4,536,250 
+ | 
+ 2.271%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 63,664,406 
+ | 
+ 63,664,406 
+ | 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ 本公司
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 7,390,845 
+ | 
+ 4,777,500 
+ | 
+ 4,669,210 
+ | 
+ 3.92%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 63,664,406 
+ | 
+ 63,664,406 
+ | 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC SpA
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 959,850 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 63,664,406 
+ | 
+ 63,664,406 
+ | 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ GWA
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 31,995,000 
+ | 
+ 31,850,000 
+ | 
+ 24,339,770 
+ | 
+ 3.947%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 63,664,406 
+ | 
+ 63,664,406 
+ | 
+ | 
+ 3
+ | 
+ GTI
+ | 
+ MEMC LLC
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 5,191,725 
+ | 
+ 2,070,250 
+ | 
+ 1,663,867 
+ | 
+ 3.89824%~3.97672%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 21,838,330 
+ | 
+ 21,838,330 
+ | 
+ | 
+ 4
+ | 
+ GWBV
+ | 
+ MEMC SpA
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 3,758,000 
+ | 
+ 3,629,000 
+ | 
+ 3,629,000 
+ | 
+ 2.393%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 57,559,327 
+ | 
+ 57,559,327 
+ | 
+ | 
+ 4
+ | 
+ GWBV
+ | 
+ GW GmbH
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 296,080 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 57,559,327 
+ | 
+ 57,559,327 
+ | 
+ | 
+ 5
+ | 
+ 上海召凱
+ | 
+ 忻州元鴻
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 43,976 
+ | 
+ 36,113 
+ | 
+ 36,113 
+ | 
+ 3.00%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 117,274 
+ | 
+ 117,274 
+ | 
+ | 
+ 6
+ | 
+ 環球晶資本
+ | 
+ GWA
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 11,198,250 
+ | 
+ 11,147,500 
+ | 
+ 11,147,500 
+ | 
+ 3.947%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 12,315,473 
+ | 
+ 12,315,473 
+ | 
+ | 
+ 6
+ | 
+ 環球晶資本
+ | 
+ 兆遠科技
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 735,885 
+ | 
+ 318,500 
+ | 
+ 222,950 
+ | 
+ 3.98%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 12,315,473 
+ | 
+ 12,315,473 
+ | 
+ | 
+ 7
+ | 
+ 兆遠科技
+ | 
+ 寰球鑫
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 85,000 
+ | 
+ 85,000 
+ | 
+ 34,000 
+ | 
+ 1.80%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 484,210 
+ | 
+ 484,210 
+ | 
+ | 
+ 7
+ | 
+ 兆遠科技
+ | 
+ 旭信電力
+ | 
+ 應收關係人款
+ | 
+ 是
+ | 
+ 30,000 
+ | 
+ 30,000 
+ | 
+ 30,000 
+ | 
+ 1.80%
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 營業週轉
+ | 
+ 0 
+ | 
+ -
+ | 
+ 0 
+ | 
+ 484,210 
+ | 
+ 484,210 
+ | 
+ | 
+ 母公司資金貸與他人餘額合計 | 
+ 600,000 
+ | 
+ 子公司資金貸與他人餘額合計 | 
+ 74,858,683 
+ | 
+ 母公司資金貸與他人實際動支金額合計 | 
+ 0 
+ | 
+ 子公司資金貸與他人實際動支金額合計 | 
+ 62,214,339 
+ | 
+ 備註 | 
+ 註1：資金貸與性質之填寫方法如下：
+ (1)有業務往來者請填1。
+ (2)有短期融通資金之必要者請填2。
+註2： 資金貸與有業務往來公司者，個別貸與金額以不超過雙方最近一年度業務往來金額為限；資金貸與有短期融通資金必要之公司，個別貸與金額以不超過本公司
+ 淨值的百分之四十為限；本公司直接及間接持有表決權股份百分之百之國內公司間從事資金貸與，或本公司直接及間接持有表決權百分之百之國內公司對本公
+ 司從事資金貸與以不超過貸出資金公司淨值的百分之四十為限；本公司直接及間接持有表決權股份百分之百之國外公司間從事資金貸與，或本公司直接及間接
+ 持有表決權股份百分之百之國外公司對本公司從事資金貸與，不受前項關於淨值之限制且不受第四條第一項資金貸與期限一年之限制，但仍應於其內部作業程
+ 序訂定資金貸與限額及期限。
+註3： 資金貸與有業務往來公司者，貸與總金額以不超過貸出資金公司淨值的百分之四十為限；資金貸與有短期融通資金必要之公司，該貸與總金額以不超過本公司
+ 淨值的百分之四十為限；本公司直接及間接持有表決權股份百分之百之國內公司間從事資金貸與，或本公司直接及間接持有表決權百分之百之國內公司對本公
+ 司從事資金貸與以不超過貸出資金公司淨值的百分之四十為限；本公司直接及間接持有表決權股份百分之百之國外公司間從事資金貸與，或本公司直接及間接
+ 持有表決權股份百分之百之國外公司對本公司從事資金貸與，不受前項關於淨值之限制且不受第四條第一項資金貸與期限一年之限制，但仍應於其內部作業程
+ 序訂定資金貸與限額及期限。
+註4： 上述與合併個體有關之交易於編製合併財務報告時業已沖銷。
+ | 
+ 為他人背書保證
+ 單位：新臺幣仟元
+ 為他人背書保證 | 
+ 編號 | 
+ 背書保證者公司名稱 | 
+ 被背書保證對象 | 
+ 對單一企業背書保證限額 | 
+ 本期最高背書保證餘額 | 
+ 期末背書保證餘額 | 
+ 實際動支金額 | 
+ 以財產擔保之背書保證金額 | 
+ 累計背書保證金額佔最近期財務報表淨值之比率 | 
+ 背書保證最高限額 | 
+ 屬母公司對子公司背書保證 | 
+ 屬子公司對母公司背書保證 | 
+ 屬對大陸地區背書保證 | 
+ 備註 | 
+ 公司名稱 | 
+ 關係 | 
+ 0
+ | 
+ 本公司
+ | 
+ GW GmbH
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 16,911,000 
+ | 
+ 16,330,500 
+ | 
+ 12,164,408 
+ | 
+ 0 
+ | 
+ 16.88% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 寰球鑫
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 800,000 
+ | 
+ 800,000 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0.83% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 旭愛能源
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 540,459 
+ | 
+ 505,459 
+ | 
+ 339,059 
+ | 
+ 0 
+ | 
+ 0.52% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 旭信電力
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 35,000 
+ | 
+ 35,000 
+ | 
+ 25,714 
+ | 
+ 0 
+ | 
+ 0.04% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GWS
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 5,534,965 
+ | 
+ 5,499,735 
+ | 
+ 3,982,752 
+ | 
+ 0 
+ | 
+ 5.69% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ MEMC SpA
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 4,810,240 
+ | 
+ 4,645,120 
+ | 
+ 2,758,040 
+ | 
+ 0 
+ | 
+ 4.80% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GWA
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 15,549,570 
+ | 
+ 15,479,100 
+ | 
+ 12,294,100 
+ | 
+ 0 
+ | 
+ 16.00% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ MEMC LLC
+ | 
+ 2
+ | 
+ 290,172,288 
+ | 
+ 639,900 
+ | 
+ 637,000 
+ | 
+ 637,000 
+ | 
+ 0 
+ | 
+ 0.66% 
+ | 
+ 290,172,288 
+ | 
+ Y
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 1
+ | 
+ GTI
+ | 
+ GWA
+ | 
+ 4
+ | 
+ 109,191,650 
+ | 
+ 7,678,800 
+ | 
+ 7,644,000 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 35.00% 
+ | 
+ 109,191,650 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 2
+ | 
+ 昆山中辰
+ | 
+ 昆山辰巨
+ | 
+ 4
+ | 
+ 17,417,270 
+ | 
+ 917,649 
+ | 
+ 917,649 
+ | 
+ 917,649 
+ | 
+ 0 
+ | 
+ 26.34% 
+ | 
+ 17,417,270 
+ | 
+ N
+ | 
+ N
+ | 
+ Y
+ | 
+ | 
+ 3
+ | 
+ GWS
+ | 
+ GWA
+ | 
+ 4
+ | 
+ 212,214,685 
+ | 
+ 31,995,000 
+ | 
+ 31,850,000 
+ | 
+ 2,898 
+ | 
+ 273,758 
+ | 
+ 75.04% 
+ | 
+ 212,214,685 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 4
+ | 
+ 環球晶資本
+ | 
+ GWA
+ | 
+ 4
+ | 
+ 153,943,410 
+ | 
+ 31,995,000 
+ | 
+ 31,850,000 
+ | 
+ 10,300,778 
+ | 
+ 17,695,995 
+ | 
+ 103.45% 
+ | 
+ 153,943,410 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 4
+ | 
+ 環球晶資本
+ | 
+ MEMC LLC
+ | 
+ 4
+ | 
+ 153,943,410 
+ | 
+ 9,598,500 
+ | 
+ 9,555,000 
+ | 
+ 6,051,650 
+ | 
+ 17,695,995 
+ | 
+ 31.03% 
+ | 
+ 153,943,410 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 4
+ | 
+ 環球晶資本
+ | 
+ GW GmbH
+ | 
+ 4
+ | 
+ 153,943,410 
+ | 
+ 5,637,000 
+ | 
+ 5,443,500 
+ | 
+ 0 
+ | 
+ 17,695,995 
+ | 
+ 17.68% 
+ | 
+ 153,943,410 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 4
+ | 
+ 環球晶資本
+ | 
+ Topsil A/S
+ | 
+ 4
+ | 
+ 153,943,410 
+ | 
+ 1,983,440 
+ | 
+ 1,942,120 
+ | 
+ 365,186 
+ | 
+ 17,695,995 
+ | 
+ 6.31% 
+ | 
+ 153,943,410 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 4
+ | 
+ 環球晶資本
+ | 
+ MEMC SpA
+ | 
+ 4
+ | 
+ 153,943,410 
+ | 
+ 7,402,000 
+ | 
+ 7,258,000 
+ | 
+ 945,503 
+ | 
+ 17,695,995 
+ | 
+ 23.57% 
+ | 
+ 153,943,410 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 5
+ | 
+ GWBV
+ | 
+ GWA
+ | 
+ 4
+ | 
+ 287,796,635 
+ | 
+ 63,700 
+ | 
+ 63,700 
+ | 
+ 49,386 
+ | 
+ 49,386 
+ | 
+ 0.11% 
+ | 
+ 287,796,635 
+ | 
+ N
+ | 
+ N
+ | 
+ N
+ | 
+ | 
+ 母公司背書保證餘額合計 | 
+ 43,931,914 
+ | 
+ 子公司背書保證餘額合計 | 
+ 96,523,969 
+ | 
+ 母公司背書保證實際動支金額合計 | 
+ 32,201,073 
+ | 
+ 子公司背書保證實際動支金額合計 | 
+ 18,633,050 
+ | 
+ 備註 | 
+ 註1：編號欄之說明如下：
+ (1)發行人填0。
+ (2)被投資公司按公司別由阿拉伯數字1開始依序編號，同一公司編號應相同。
+註2：背書保證者與被背書保證對象之關係如下：
+ (1)有業務往來之公司。
+ (2)公司直接及間接持有表決權之股份超過百分之五十之公司。
+ (3)直接及間接對公司持有表決權之股份超過百分之五十之公司。
+ (4)公司直接及間接持有表決權股份達百分之九十以上之公司間。
+ (5)基於承攬工程需要之同業間或共同起造人間依合約規定互保之公司。
+ (6)因共同投資關係由全體出資股東依其持股比率對其背書保證之公司。
+ (7)同業間依消費者保護法規範從事預售屋銷售合約之履約保證連帶擔保。
+註3：本公司累積對外背書保證之總額，以不超過本公司之最近期財務報表淨值的三倍為限。
+註4：本公司對單一企業背書保證之額度，以不超過最近期財務報表本公司淨值的百分之十為限。惟對子公司則以本公司淨值的三倍為限。
+註5：本公申報項目編號4為環球晶資本股份有限公司對GlobalWafers America, LLC、MEMC LLC、GlobalWafers GmbH、Topsil GlobalWafers A/S及
+ MEMC Electronic Materials, SpA之債務提供保證，上述保證金額以合控方式管理，五家被背書保證公司之總保證金額以環球晶資本股份有限公司於資金池之總
+ 存款為上限，其總存款金額揭示於「以財產擔保之背書保證金額」欄位。
+ | 
+ 母子公司間業務關係及重要交易往來情形
+ 單位：新臺幣仟元
+ 母子公司間業務關係及重要交易往來情形 | 
+ 編號 | 
+ 交易人名稱 | 
+ 交易往來對象 | 
+ 與交易人之關係 | 
+ 交易往來情形 | 
+ 科目 | 
+ 金額 | 
+ 交易條件 | 
+ 佔合併總營收或總資產之比率 | 
+ 0
+ | 
+ 本公司
+ | 
+ GTI
+ | 
+ 1
+ | 
+ 進貨
+ | 
+ 481,136 
+ | 
+ 月結六十天
+ | 
+ 1.65% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 昆山中辰
+ | 
+ 1
+ | 
+ 進貨
+ | 
+ 777,574 
+ | 
+ 月結六十天
+ | 
+ 2.66% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GWJ
+ | 
+ 1
+ | 
+ 進貨
+ | 
+ 3,364,691 
+ | 
+ 月結六十天至九十天
+ | 
+ 11.52% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ Topsil A/S
+ | 
+ 1
+ | 
+ 進貨
+ | 
+ 857,411 
+ | 
+ 月結三十天至六十天
+ | 
+ 2.94% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GWS
+ | 
+ 1
+ | 
+ 進貨
+ | 
+ 400,509 
+ | 
+ 月結六十天
+ | 
+ 1.37% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GTI
+ | 
+ 1
+ | 
+ 銷貨
+ | 
+ 1,408,526 
+ | 
+ 次月結九十天
+ | 
+ 4.82% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 昆山中辰
+ | 
+ 1
+ | 
+ 銷貨
+ | 
+ 429,502 
+ | 
+ 月結三十天
+ | 
+ 1.47% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GWJ
+ | 
+ 1
+ | 
+ 銷貨
+ | 
+ 882,777 
+ | 
+ 月結六十天至九十天
+ | 
+ 3.02% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ GWS
+ | 
+ 1
+ | 
+ 銷貨
+ | 
+ 3,323,686 
+ | 
+ 月結六十天
+ | 
+ 11.38% 
+ | 
+ 0
+ | 
+ 本公司
+ | 
+ 昆山辰巨
+ | 
+ 1
+ | 
+ 銷貨
+ | 
+ 429,556 
+ | 
+ 月結六十天
+ | 
+ 1.47% 
+ | 
+ 1
+ | 
+ 兆遠科技
+ | 
+ MEMC Korea
+ | 
+ 3
+ | 
+ 銷貨
+ | 
+ 1,558,120 
+ | 
+ 月結六十天
+ | 
+ 5.34% 
+ | 
+ 1
+ | 
+ 兆遠科技
+ | 
+ MEMC SpA
+ | 
+ 3
+ | 
+ 銷貨
+ | 
+ 474,785 
+ | 
+ 月結六十天
+ | 
+ 1.63% 
+ | 
+ 1
+ | 
+ 兆遠科技
+ | 
+ GWJ
+ | 
+ 3
+ | 
+ 銷貨
+ | 
+ 812,131 
+ | 
+ 月結六十天
+ | 
+ 2.78% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC LLC
+ | 
+ 3
+ | 
+ 進貨
+ | 
+ 1,411,699 
+ | 
+ 月結六十天
+ | 
+ 4.83% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC LLC
+ | 
+ 3
+ | 
+ 銷貨
+ | 
+ 462,578 
+ | 
+ 月結六十天
+ | 
+ 1.58% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC SpA
+ | 
+ 3
+ | 
+ 進貨
+ | 
+ 2,126,619 
+ | 
+ 月結六十天
+ | 
+ 7.28% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC SpA
+ | 
+ 3
+ | 
+ 銷貨
+ | 
+ 4,302,136 
+ | 
+ 月結六十天
+ | 
+ 14.73% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC Korea
+ | 
+ 3
+ | 
+ 進貨
+ | 
+ 1,280,546 
+ | 
+ 月結六十天
+ | 
+ 4.39% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC Japan
+ | 
+ 3
+ | 
+ 銷貨
+ | 
+ 1,413,388 
+ | 
+ 月結六十天
+ | 
+ 4.84% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC Japan
+ | 
+ 3
+ | 
+ 進貨
+ | 
+ 3,612,592 
+ | 
+ 月結六十天
+ | 
+ 12.37% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC Sdn Bhd
+ | 
+ 3
+ | 
+ 進貨
+ | 
+ 612,201 
+ | 
+ 月結六十天
+ | 
+ 2.10% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ 本公司
+ | 
+ 2
+ | 
+ 應收關係人融資款
+ | 
+ 4,686,496 
+ | 
+ -
+ | 
+ 2.14% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ GWBV
+ | 
+ 3
+ | 
+ 應收關係人融資款
+ | 
+ 3,269,577 
+ | 
+ -
+ | 
+ 1.49% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ GWA
+ | 
+ 3
+ | 
+ 應收關係人融資款
+ | 
+ 24,342,439 
+ | 
+ -
+ | 
+ 11.10% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ GmbH
+ | 
+ 3
+ | 
+ 應收關係人融資款
+ | 
+ 4,589,045 
+ | 
+ -
+ | 
+ 2.09% 
+ | 
+ 3
+ | 
+ GWJ
+ | 
+ MEMC Japan
+ | 
+ 3
+ | 
+ 應收關係人融資款
+ | 
+ 8,715,720 
+ | 
+ -
+ | 
+ 3.98% 
+ | 
+ 4
+ | 
+ GWBV
+ | 
+ MEMC SpA
+ | 
+ 3
+ | 
+ 應收關係人融資款
+ | 
+ 3,676,519 
+ | 
+ -
+ | 
+ 1.68% 
+ | 
+ 2
+ | 
+ GWS
+ | 
+ MEMC SpA
+ | 
+ 3
+ | 
+ 應收帳款
+ | 
+ 2,509,879 
+ | 
+ -
+ | 
+ 1.14% 
+ | 
+ 5
+ | 
+ 環球晶資本
+ | 
+ GWA
+ | 
+ 3
+ | 
+ 應收關係人融資款
+ | 
+ 11,148,722 
+ | 
+ -
+ | 
+ 5.09% 
+ | 
+ 備註 | 
+ 註1：母公司及子公司相互間之業務往來資訊應分別於編號欄註明，編號之填寫方法如下：
+ (1)母公司填0。
+ (2)子公司依公司別由阿拉伯數字1開始依序編號。
+註2：與交易人之關係有以下三種，標示種類即可(若係母子公司間或各子公司間之同一筆交易，則無須重複揭露。如：母公司對子公司之交易，若母公司已揭露，
+ 則子公司部分無須重複揭露；子公司對子公司之交易，若其一子公司已揭露，則另ㄧ子公司無須重複揭露)：
+ (1)母公司對子公司。
+ (2)子公司對母公司。
+ (3)子公司對子公司。
+註3：交易往來金額佔合併總營收或總資產比率之計算，若屬資產負債項目者，以期末餘額佔合併總資產之方式計算；若屬損益項目者，以期中累積金額佔合併總營
+ 收之方式計算。
+註4：本表之重要交易往來情形係達合併總營收或總資產比率之1%。
+ | 
+ 被投資公司名稱、所在地區…等相關資訊（不包含大陸被投資公司）
+ 單位：新臺幣仟元；股數：股
+ 被投資公司名稱、所在地區…等相關資訊（不包含大陸被投資公司） | 
+ 投資公司名稱 | 
+ 被投資公司名稱 | 
+ 地區別代號 | 
+ 所在地區 | 
+ 主要營業項目 | 
+ 原始投資金額 | 
+ 期末持股情形 | 
+ 被投資公司本期損益 | 
+ 本期認列之投資損益 | 
+ 備註 | 
+ 本期期末 | 
+ 去年年底 | 
+ 股數 | 
+ 比率 | 
+ 帳面金額 | 
+ 本公司
+ | 
+ GSI
+ | 
+ 32
+ | 
+ 開曼群島
+ | 
+ 投資各項事業及與大陸子公司之三角貿易中心
+ | 
+ 698,419 
+ | 
+ 698,419 
+ | 
+ 23,000,000 
+ | 
+ 100.00% 
+ | 
+ 3,515,720 
+ | 
+ 71,810 
+ | 
+ 66,306 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ GWJ
+ | 
+ 104
+ | 
+ 日本
+ | 
+ 半導體矽晶圓製造及貿易
+ | 
+ 5,448,015 
+ | 
+ 5,448,015 
+ | 
+ 128,000 
+ | 
+ 100.00% 
+ | 
+ 18,911,196 
+ | 
+ 423,759 
+ | 
+ 373,921 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ GWS
+ | 
+ 178
+ | 
+ 新加坡
+ | 
+ 投資各項事業
+ | 
+ 2,207,377 
+ | 
+ 2,207,377 
+ | 
+ 41,674,000 
+ | 
+ 100.00% 
+ | 
+ 40,874,264 
+ | 
+ 1,392,325 
+ | 
+ 1,385,546 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ GW GmbH
+ | 
+ 78
+ | 
+ 德國
+ | 
+ 貿易業務
+ | 
+ 1,952,235 
+ | 
+ 1,952,235 
+ | 
+ 48,025,000 
+ | 
+ 100.00% 
+ | 
+ (8,001,662)
+ | 
+ 1,863,977 
+ | 
+ 1,863,977 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ GWBV
+ | 
+ 145
+ | 
+ 荷蘭
+ | 
+ 投資各項事業
+ | 
+ 52,221,999 
+ | 
+ 52,221,999 
+ | 
+ 100 
+ | 
+ 100.00% 
+ | 
+ 57,559,327 
+ | 
+ (2,140,169)
+ | 
+ (2,140,169)
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ 弘望投資
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 投資各項事業
+ | 
+ 309,760 
+ | 
+ 309,760 
+ | 
+ 30,976,000 
+ | 
+ 30.98% 
+ | 
+ 1,226,008 
+ | 
+ 21,181 
+ | 
+ 6,561 
+ | 
+ 關聯企業
+ | 
+ 本公司
+ | 
+ 旭愛能源
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 發電業務
+ | 
+ 1,045,000 
+ | 
+ 1,045,000 
+ | 
+ 104,500,000 
+ | 
+ 100.00% 
+ | 
+ 1,081,977 
+ | 
+ 14,397 
+ | 
+ 13,046 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ 旭信電力
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 發電業務
+ | 
+ 141,340 
+ | 
+ 141,340 
+ | 
+ 14,134,000 
+ | 
+ 100.00% 
+ | 
+ 130,787 
+ | 
+ 2,521 
+ | 
+ 2,521 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ 寰球鑫
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 投資各項事業
+ | 
+ 250,000 
+ | 
+ 250,000 
+ | 
+ 25,000,000 
+ | 
+ 100.00% 
+ | 
+ 312,060 
+ | 
+ 53,645 
+ | 
+ 74,955 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ 兆遠科技
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 光電及通訊材料基板製造與銷售
+ | 
+ 437,924 
+ | 
+ 437,924 
+ | 
+ 43,836,000 
+ | 
+ 100.00% 
+ | 
+ 958,742 
+ | 
+ 892,143 
+ | 
+ 857,379 
+ | 
+ 子公司
+ | 
+ 本公司
+ | 
+ 環球晶資本
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 投資各項事業
+ | 
+ 23,315,300 
+ | 
+ 23,315,300 
+ | 
+ 93,261,000 
+ | 
+ 79.41% 
+ | 
+ 24,449,292 
+ | 
+ 452,749 
+ | 
+ 359,528 
+ | 
+ 子公司
+ | 
+ GWJ
+ | 
+ MEMC Japan
+ | 
+ 104
+ | 
+ 日本
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 373,413 
+ | 
+ 373,413 
+ | 
+ 750,000 
+ | 
+ 100.00% 
+ | 
+ 2,418,734 
+ | 
+ 52,598 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GWBV
+ | 
+ MEMC SpA
+ | 
+ 101
+ | 
+ 義大利
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 6,732,641 
+ | 
+ 6,732,641 
+ | 
+ 65,000,000 
+ | 
+ 100.00% 
+ | 
+ 10,136,386 
+ | 
+ (1,262,464)
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ MEMC SpA
+ | 
+ MEMC SarL
+ | 
+ 227
+ | 
+ 法國
+ | 
+ 貿易業務
+ | 
+ 1,316 
+ | 
+ 1,316 
+ | 
+ 500 
+ | 
+ 100.00% 
+ | 
+ 5,777 
+ | 
+ 327 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GWBV
+ | 
+ MEMC Korea
+ | 
+ 109
+ | 
+ 南韓
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 11,851,262 
+ | 
+ 11,851,262 
+ | 
+ 25,200,000 
+ | 
+ 100.00% 
+ | 
+ 22,038,277 
+ | 
+ 289,094 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GWBV
+ | 
+ GTI
+ | 
+ 211
+ | 
+ 美國
+ | 
+ 磊晶矽晶圓生產及磊晶代工等貿易
+ | 
+ 14,634,384 
+ | 
+ 14,634,384 
+ | 
+ 1,000 
+ | 
+ 100.00% 
+ | 
+ 23,149,337 
+ | 
+ (1,686,621)
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GWBV
+ | 
+ MEMC Ipoh
+ | 
+ 124
+ | 
+ 馬來西亞
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 93,907 
+ | 
+ 93,907 
+ | 
+ 612,300,000 
+ | 
+ 100.00% 
+ | 
+ 5,938 
+ | 
+ 173 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GWBV
+ | 
+ Topsil A/S
+ | 
+ 59
+ | 
+ 丹麥
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 1,843,604 
+ | 
+ 1,843,604 
+ | 
+ 1,000,000 
+ | 
+ 100.00% 
+ | 
+ 2,887,390 
+ | 
+ 6,084 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ 兆遠科技
+ | 
+ Crystalwise HK
+ | 
+ 92
+ | 
+ 香港
+ | 
+ 投資公司
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 47,650,000 
+ | 
+ 100.00% 
+ | 
+ 51,378 
+ | 
+ 15,505 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GTI
+ | 
+ MEMC LLC
+ | 
+ 211
+ | 
+ 美國
+ | 
+ 半導體矽晶圓研發、製造及銷售
+ | 
+ 543,384 
+ | 
+ 543,384 
+ | 
+ 0 
+ | 
+ 100.00% 
+ | 
+ 3,637,265 
+ | 
+ (396,260)
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ 昆山中辰
+ | 
+ MEMC Sdn Bhd
+ | 
+ 124
+ | 
+ 馬來西亞
+ | 
+ 半導體矽晶圓研發、製造及銷售
+ | 
+ 1,553,716 
+ | 
+ 1,553,716 
+ | 
+ 89,586,000 
+ | 
+ 100.00% 
+ | 
+ 2,085,949 
+ | 
+ 21,451 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GTI
+ | 
+ GWA
+ | 
+ 211
+ | 
+ 美國
+ | 
+ 半導體矽晶圓製造及銷售
+ | 
+ 15,171,535 
+ | 
+ 15,171,535 
+ | 
+ 1,000 
+ | 
+ 100.00% 
+ | 
+ 13,268,390 
+ | 
+ (1,278,979)
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ MEMC Korea
+ | 
+ 安科思資本
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 投資各項事業
+ | 
+ 6,241,055 
+ | 
+ 6,241,055 
+ | 
+ 635,720,000 
+ | 
+ 100.00% 
+ | 
+ 6,507,683 
+ | 
+ 94,042 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ 安科思資本
+ | 
+ 環球晶資本
+ | 
+ 0
+ | 
+ 台灣
+ | 
+ 投資各項事業
+ | 
+ 6,044,600 
+ | 
+ 6,044,600 
+ | 
+ 24,178,000 
+ | 
+ 20.59% 
+ | 
+ 6,339,390 
+ | 
+ 93,221 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ GTI
+ | 
+ GWSS
+ | 
+ 211
+ | 
+ 美國
+ | 
+ 企業數位自動化管理系統平台整合服務
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 1,000 
+ | 
+ 100.00% 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 註2及3
+ | 
+ 備註 | 
+ 註1：為有限公司。
+註2：均為間接持有之子公司。
+註3：該被投資公司之損益業已包含於其投資公司，為避免混淆，於此不再另行表達。
+註4：上述與合併個體有關之交易於編製合併財務報告時業已沖銷。
+ | 
+ 大陸地區投資
+ 單位：新臺幣仟元
+ 轉投資大陸地區之事業相關資訊 | 
+ 大陸被投資公司名稱 | 
+ 主要營業項目 | 
+ 實收資本額 | 
+ 投資方式 | 
+ 本期期初自台灣匯出累積投資金額 | 
+ 本期匯出或收回投資金額 | 
+ 本期期末自台灣匯出累積投資金額 | 
+ 被投資公司本期損益 | 
+ 本公司直接或間接投資之持股比例 | 
+ 本期認列投資損益 | 
+ 期末投資帳面價值 | 
+ 截至本期止已匯回台灣之投資收益 | 
+ 備註 | 
+ 匯出 | 
+ 收回 | 
+ 昆山中辰
+ | 
+ 矽晶棒矽晶圓等加工貿易
+ | 
+ 1,429,778 
+ | 
+ 2
+ | 
+ 713,300 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 713,300 
+ | 
+ 71,810 
+ | 
+ 100.00% 
+ | 
+ 71,810 
+ | 
+ 3,483,454 
+ | 
+ 0 
+ | 
+ | 
+ 昆山辰巨
+ | 
+ 銷售及行銷業務
+ | 
+ 26,587 
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 3,289 
+ | 
+ 100.00% 
+ | 
+ 3,289 
+ | 
+ 112,084 
+ | 
+ 0 
+ | 
+ | 
+ 上海召凱
+ | 
+ 鉭酸鋰及鈮酸鋰晶圓製造及銷售
+ | 
+ 102,776 
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ (1,249)
+ | 
+ 100.00% 
+ | 
+ (1,249)
+ | 
+ 293,184 
+ | 
+ 0 
+ | 
+ | 
+ 忻州元鴻
+ | 
+ 鉭酸鋰及鈮酸鋰晶圓製造及銷售
+ | 
+ 159,588 
+ | 
+ 2
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 379 
+ | 
+ 90.00% 
+ | 
+ 342 
+ | 
+ (32,392)
+ | 
+ 0 
+ | 
+ | 
+ 山東元鴻
+ | 
+ 光電及通訊材料基板製造與銷售
+ | 
+ 1,787,164 
+ | 
+ 2
+ | 
+ 1,786,779 
+ | 
+ 0 
+ | 
+ 0 
+ | 
+ 1,786,779 
+ | 
+ 19,304 
+ | 
+ 100.00% 
+ | 
+ 19,304 
+ | 
+ 63,147 
+ | 
+ 0 
+ | 
+ | 
+ 轉投資大陸地區限額 | 
+ 公司名稱 | 
+ 本期期末累計自台灣匯出赴大陸地區投資金額 | 
+ 經濟部投審會核准投資金額 | 
+ 依經濟部投審會規定赴大陸地區投資限額 | 
+ 本公司
+ | 
+ 2,479,138 
+ | 
+ 3,476,061 
+ | 
+ 58,034,458 
+ | 
+ 備註 | 
+ 註1：透過GSI再投資大陸公司。
+註2：係依經會計師核閱之財務報表認列投資損益。
+註3：按歷史匯率換算。
+註4：依據投審會民國九十七年八月二十九日「在大陸地區從事投資或技術合作審查原則」規定之限額60%乘民國一一五年六月三十日合併公司淨值計算。
+註5：係包含盈餘轉增資。
+註6：昆山辰巨係透過昆山中辰之自有資金投資設立，無自台灣匯出款，故不列入投資限額計算。
+註7：上海召凱係透過昆山中辰之自有資金投資設立，無自台灣匯出款，故不列入投資限額計算。
+註8：忻州元鴻係上海召凱再投資大陸公司。
+註9：山東元鴻係Crystalwise HK再投資大陸公司。民國一一三年三月減資59,438千元(美金1,900千元)匯回Crystalwise HK，並於一一三年六月減資59,823千元(美金
+ 1,850千元)匯回兆遠科技。
+註10：係由台灣地區投資事業直接投資。
+註11：係包含因民國一一二年十一月一日併入兆遠科技轉投資子公司山東元鴻等，累計赴大陸投資金額美金57,608千元及投審會核准金額美金57,838千元。
+ | 
+ 營業外收入及支出
+ 單位：新臺幣仟元
+ 　 利息收入 | 
+ 代號 | 
+ 會計項目 | 
+ 2026年4月1日至6月30日 | 
+ 2025年4月1日至6月30日 | 
+ 2026年1月1日至6月30日 | 
+ 2025年1月1日至6月30日 | 
+ N7101 | 
+ 　　 銀行存款利息 | 
+ 680,007 
+ | 
+ 416,297 
+ | 
+ 1,514,964 
+ | 
+ 911,393 
+ | 
+ N7102 | 
+ 　　 按攤銷後成本衡量之金融資產利息收入 | 
+ 81,609 
+ | 
+ 71,158 
+ | 
+ 162,296 
+ | 
+ 152,065 
+ | 
+ N7100 | 
+ 　　 利息收入合計 | 
+ 761,616 
+ | 
+ 487,455 
+ | 
+ 1,677,260 
+ | 
+ 1,063,458 
+ | 
+ 其他收入
+ 無此情形／免揭露
+ 　 其他利益及損失 | 
+ 代號 | 
+ 會計項目 | 
+ 2026年4月1日至6月30日 | 
+ 2025年4月1日至6月30日 | 
+ 2026年1月1日至6月30日 | 
+ 2025年1月1日至6月30日 | 
+ N7210 | 
+ 　　 處分不動產、廠房及設備利益（損失） | 
+ (28,721)
+ | 
+ 7,015 
+ | 
+ 9,385 
+ | 
+ 11,121 
+ | 
+ N7230 | 
+ 　　 外幣兌換利益（損失） | 
+ (61,981)
+ | 
+ (604,701)
+ | 
+ (289,250)
+ | 
+ (624,597)
+ | 
+ N7235 | 
+ 　　 透過損益按公允價值衡量之金融資產（負債）利益（損失） | 
+ 3,035,452 
+ | 
+ 111,564 
+ | 
+ 3,504,834 
+ | 
+ (778,560)
+ | 
+ N7600 | 
+ 　　 其他利益及損失 | 
+ 188,110 
+ | 
+ 74,495 
+ | 
+ 287,941 
+ | 
+ 168,920 
+ | 
+ N7020 | 
+ 　　 其他利益及損失淨額 | 
+ 3,132,860 
+ | 
+ (411,627)
+ | 
+ 3,512,910 
+ | 
+ (1,223,116)
+ | 
+ 　 財務成本 | 
+ 代號 | 
+ 會計項目 | 
+ 2026年4月1日至6月30日 | 
+ 2025年4月1日至6月30日 | 
+ 2026年1月1日至6月30日 | 
+ 2025年1月1日至6月30日 | 
+ N7510 | 
+ 　　 利息費用 | 
+ 380,235 
+ | 
+ 29,749 
+ | 
+ 506,064 
+ | 
+ 70,731 
+ | 
+ N7790 | 
+ 　　 其他財務費用 | 
+ 352,155 
+ | 
+ 195,759 
+ | 
+ 650,662 
+ | 
+ 375,003 
+ | 
+ N7050 | 
+ 　　 財務成本淨額 | 
+ 732,390 
+ | 
+ 225,508 
+ | 
+ 1,156,726 
+ | 
+ 445,734 
+ | 

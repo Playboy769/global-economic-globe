@@ -791,6 +791,18 @@
         "research/amat-analysis-fy2026q3/AMAT_FY2026Q3_Analysis"
       ],
       "port": 8189
+    },
+    {
+      "name": "6488-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8190",
+        "--directory",
+        "research/6488-analysis-2026q2"
+      ],
+      "port": 8190
     }
   ]
 }
