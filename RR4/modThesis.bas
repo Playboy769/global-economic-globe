@@ -1221,7 +1221,7 @@ Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long
         h = "ARCHIVE  " & L("S6"): starts(5) = Len(txt) + 1: lens(5) = Len(h)
         txt = txt & h & vbCr & Dash(Trim$(CStr(b.cells(row, 11).Value))) & vbCr
     End If
-    txt = txt & vbCr & "(double-click the page title to close)"
+    txt = txt & vbCr & "(click this panel to close)"
 
     tr.Text = txt
     tr.Font.Name = ZH_FONT: tr.Font.NameFarEast = ZH_FONT
@@ -1243,7 +1243,7 @@ Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long
             End With
         End If
     Next k
-    Dim tail As Long: tail = Len(txt) - Len("(double-click the page title to close)")
+    Dim tail As Long: tail = Len(txt) - Len("(click this panel to close)")
     With tr.Characters(tail + 1, Len(txt) - tail).Font
         .Size = 8: .Fill.ForeColor.RGB = RGB(110, 110, 110)
     End With
@@ -1274,7 +1274,15 @@ Private Sub EnsurePanel(ws As Worksheet)
         .AutoSize = msoAutoSizeShapeToFitText
         .VerticalAnchor = msoAnchorTop
     End With
-    shp.Visible = msoFalse                           ' shown on demand by ShowArchive
+    shp.OnAction = "modThesis.ThesisPanelClick"      ' a click on the panel closes it (and cannot enter text-edit)
+    shp.Visible = msoFalse                           ' shown on demand by ShowArchive / ShowNote
+End Sub
+
+' Click on TH_PANEL (its OnAction): hide it.  Double-clicking the page title still works too.
+Public Sub ThesisPanelClick()
+    On Error Resume Next
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets(THESIS_SHEET)
+    ws.Shapes("TH_PANEL").Visible = msoFalse
 End Sub
 
 Private Sub ShowArchive(ws As Worksheet, ByVal key As String)
@@ -1298,7 +1306,7 @@ Private Sub ShowArchive(ws As Worksheet, ByVal key As String)
 
     If row = 0 Then
         tr.Text = key & vbCr & "No archived thesis for this target - its notes are all there is." & vbCr & _
-                  "(double-click the page title to close)"
+                  "(click this panel to close)"
         tr.Font.Name = MONO: tr.Font.NameFarEast = ZH_FONT: tr.Font.Size = 10
         tr.Font.Bold = msoFalse: tr.Font.Fill.ForeColor.RGB = RGB(120, 120, 120)
         Exit Sub
