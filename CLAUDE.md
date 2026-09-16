@@ -551,6 +551,15 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `EnsureNotesSheet` 遇到 8 欄舊表會原地升級（EVIDENCE 改名 T1L FILING、前後插入其他五欄），內容不搬；一次性回溯是照
   `RR4/evidence-tiers-2026-09-15.md` 的清單（1,721 筆：T0 88／T1 579／T1L 648／T2 178／T3 18／Δ 210，依行尾括號的來源
   字串規則判定）用 COM 搬到對應欄。KEYWORD 搜尋涵蓋六欄；`ReadNotes` 的 `ev` 改成 `ev(i, tier)` 二維陣列。
+- **Library 工作台三項（2026-09-16，使用者從 UI 角度挑的）**：① **列高固定三行**（`NOTE_ROW_H` 42，超出裁掉、不再 AutoFit——
+  AutoFit 幾百列是重畫慢的主因）；**雙擊 note 列任一格＝右側面板顯示該筆全文**（THEME／BEHAVIOR／層級＋證據）＋該代號 archive 的
+  「一句話論點」與「決策與下一個驗證點」兩段；雙擊代號仍是整篇 archive、雙擊頁標題關閉。note 的 tblNotes 列號存隱藏欄 `C_ROW`（AE）。
+  ② **空白狀態畫索引**：三格都空時不再顯示提示句，改列全部 TARGET（四組 `代號｜筆數｜最新法說`，STOCK 後 MACRO，順序沿用 THSORT），
+  最新日期 >60 天灰、>120 天橘（`FRESH_GREY/FRESH_ORANGE`），**雙擊代號＝填進 QUERY 並畫出**。③ **第三個輸入格 FILTER**（F7:G7；
+  「N calls drawn」移到 H7）：空白或逗號分隔、**全部 token 取聯集（OR）**，認 STATUS 詞、GREEN/RED、MOAT/RISK/CATALYST、T0/T1/T1L/T2/T3/D、
+  `>yyyy-mm-dd`／`<yyyy-mm-dd`／`yyyy-mm` 前綴；對 QUERY/KEYWORD 的結果做 AND 收窄。QUERY 另認 **`@PORT`**（RR4 頁持倉表 B44 起）與
+  **`@WATCH`**（WATCHLIST B29:B39），直接讀格子、不依賴 PortfolioDashboard 的私有函式。查無結果時列出前綴相符的代號（Did you mean）。
+  ⚠️ 舊版把「N calls drawn」畫在 F7，升級後第一次會被當成 FILTER 讀進來，`DrawThesisView` 對 `* calls drawn *` 字樣一次性忽略。
 - **Library 區塊內筆記排序（2026-09-15）**：雙擊表頭 **STATUS** 或 **ROLE** ＝ 每個區塊內的筆記依該欄排序，循環
   正向→反向→取消（表頭加 ▼／▲）。STATUS 正向照下拉清單順序 Robust>Solid>Growing>Slowing>Sluggish>Challenging>
   Contraction>Warning，ROLE 正向 MOAT>RISK>CATALYST；**空白永遠排最後**（反向只翻轉已知值），同值保留資料頁順序。
