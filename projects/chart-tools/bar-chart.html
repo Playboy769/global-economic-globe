@@ -32,6 +32,8 @@
       <div class="section-title">標題與軸</div>
       <label>圖表標題（可留白）</label>
       <input type="text" id="title" placeholder="例如 各業務部門營收 QoQ">
+      <label>副標題（選填）</label>
+      <input type="text" id="subtitle" placeholder="例如 受營運支出增加影響，FCF 較去年同期下滑">
       <label>分類（逗號分隔）</label>
       <input type="text" id="cats" value="資料中心,行動裝置,車用與工業,消費性電子">
       <label>數值單位（選填）</label>
@@ -82,14 +84,15 @@
     <div class="section">
       <div class="section-title">顯示選項</div>
       <div class="check-row"><input type="checkbox" id="optGrid" checked><label for="optGrid">格線</label></div>
-      <div class="check-row"><input type="checkbox" id="optValues" checked><label for="optValues">標示數值</label></div>
+      <div class="check-row"><input type="checkbox" id="optValues"><label for="optValues">標示數值</label></div>
       <div class="check-row"><input type="checkbox" id="optLegend" checked><label for="optLegend">顯示圖例</label></div>
       <div class="check-row"><input type="checkbox" id="optSort"><label for="optSort">依總量由大到小排序</label></div>
     </div>
 
     <div class="section">
-      <div class="section-title">圖說（選填）</div>
+      <div class="section-title">來源（選填）</div>
       <input type="text" id="caption" placeholder="例如 資料來源：FY26Q3 10-Q 部門附註">
+      <div class="hint-text">會畫在圖片左下角，隨圖嵌入（不是另外浮動在圖表下方的置中文字）。</div>
     </div>
 
     <div class="section">
@@ -131,12 +134,17 @@
   var VB_W = 900;
   var DRAFT_KEY = 'chart-tools:bar';
   var LEG_FS = 11.5, LEG_SWATCH = 20, LEG_GAP = 22, LEG_LINE_H = 16;
+  var MARGIN_X = 22, MARGIN_R = 24;   // 標題/副標/圖例/來源共用的左右邊界
+  /* 赤陶橘 — 編輯風長條圖的預設強調色。只用在「第一個手動新增的系列」（通常就是
+     單一系列圖）；多系列仍走 CT.paletteAt()/colorFor()，不動搖「同名系列跨圖同色」
+     的既有規則。 */
+  var ACCENT = '#c2542c';
 
   var state = {
-    title: '', caption: '', unit: '',
+    title: '', subtitle: '', caption: '', unit: '',
     categories: [], series: [],
     mode: 'grouped', orient: 'v',
-    opts: { grid: true, values: true, legend: true, sort: false }
+    opts: { grid: true, values: false, legend: true, sort: false }
   };
 
   var svg = document.getElementById('chart');
@@ -223,10 +231,15 @@
       return t;
     }
 
-    /* --- 圖例版面先算（同折線圖：行數會推擠繪圖區） --- */
+    /* --- 標題區版面先算：編輯風＝標題／副標題靠左堆疊＋細分隔線，圖例貼在線下方 --- */
+    var titleY = 22;
+    var subtitleY = titleY + (state.title ? 19 : 0);
+    var ruleY = state.subtitle ? subtitleY + 15 : (state.title ? titleY + 14 : 6);
+
+    /* --- 圖例版面先算（靠左對齊，行數會推擠繪圖區） --- */
     var legendRows = [];
     if (state.opts.legend && series.length > 1) {
-      var legendMaxW = VB_W - 60;
+      var legendMaxW = VB_W - MARGIN_X - MARGIN_R;
       var row = [], w = 0;
       series.forEach(function (s) {
         var name = CT.truncateToWidth(s.name || '(未命名)', LEG_FS, legendMaxW - LEG_SWATCH - LEG_GAP);
@@ -238,23 +251,33 @@
       if (row.length) legendRows.push({ cells: row, w: w });
     }
 
-    var titleH = state.title ? 34 : 0;
     var legendH = legendRows.length * LEG_LINE_H;
-    var headH = titleH + legendH + 20;
+    var headH = ruleY + (legendRows.length ? legendH + 24 : 12);
 
-    /* --- 畫布尺寸：橫向時高度隨分類數長高 --- */
+    /* --- 畫布尺寸：橫向時高度隨分類數長高；直向多留空間給雙行月份標籤與左下來源 --- */
     var CAT_BAND_H = 46;   // 橫向每個分類的帶高
     var VB_H = horiz
       ? Math.max(300, headH + Math.max(1, cats.length) * CAT_BAND_H + 62)
-      : 500;
+      : 520;
     svg.setAttribute('viewBox', '0 0 ' + VB_W + ' ' + VB_H);
     svg.appendChild(el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
 
     if (state.title) {
       svg.appendChild(el('text', {
-        x: VB_W / 2, y: 26, 'text-anchor': 'middle',
-        'font-size': 15, 'font-weight': 600, fill: '#111111', 'font-family': 'sans-serif'
+        x: MARGIN_X, y: titleY, 'text-anchor': 'start',
+        'font-size': 16.5, 'font-weight': 700, fill: '#161616', 'font-family': 'sans-serif'
       }, state.title));
+    }
+    if (state.subtitle) {
+      svg.appendChild(el('text', {
+        x: MARGIN_X, y: subtitleY, 'text-anchor': 'start',
+        'font-size': 12.5, fill: '#6b6b6b', 'font-family': 'sans-serif'
+      }, state.subtitle));
+    }
+    if (state.title || state.subtitle) {
+      svg.appendChild(el('line', {
+        x1: MARGIN_X, y1: ruleY, x2: VB_W - MARGIN_R, y2: ruleY, stroke: '#dcdcdc', 'stroke-width': 1
+      }));
     }
 
     if (!cats.length || !series.length) {
@@ -266,14 +289,14 @@
       return;
     }
 
-    /* --- 圖例 --- */
-    var legendY = titleH + 16;
+    /* --- 圖例（靠左，緊貼分隔線下方） --- */
+    var legendY = ruleY + 24;
     legendRows.forEach(function (r) {
-      var lx = Math.max(30, (VB_W - r.w) / 2);
+      var lx = MARGIN_X;
       r.cells.forEach(function (c) {
-        svg.appendChild(el('rect', { x: lx, y: legendY - 9, width: 12, height: 12, rx: 2, fill: c.color }));
+        svg.appendChild(el('rect', { x: lx, y: legendY - 9, width: 10, height: 10, rx: 1, fill: c.color }));
         svg.appendChild(el('text', {
-          x: lx + LEG_SWATCH, y: legendY, 'font-size': LEG_FS, fill: '#333333', 'font-family': 'sans-serif'
+          x: lx + LEG_SWATCH - 2, y: legendY, 'font-size': LEG_FS, fill: '#333333', 'font-family': 'sans-serif'
         }, c.name));
         lx += c.w;
       });
@@ -284,9 +307,10 @@
     // 橫向時左側要留給分類名稱，直向時左側留給數值刻度
     var catLabelW = horiz ? 150 : 0;
     var plotL = (horiz ? 20 + catLabelW : 78);
-    var plotR = VB_W - (horiz ? 60 : 30);
+    var plotR = VB_W - (horiz ? 60 : MARGIN_R);
     var plotT = headH;
-    var plotB = VB_H - (horiz ? 42 : 66);
+    var sourceH = state.caption ? 24 : 8;   // 左下來源文字保留的高度
+    var plotB = VB_H - sourceH - (horiz ? 34 : 40);   // 直向多留給雙行季度/年份標籤
     var plotW = plotR - plotL, plotH = plotB - plotT;
 
     /* --- 值域 --- */
@@ -323,21 +347,19 @@
     ax.ticks.forEach(function (t) {
       var p = vPos(t);
       var zero = Math.abs(t) < 1e-9;
+      var atMax = Math.abs(t - ax.max) < 1e-9;
       if (state.opts.grid) {
         svg.appendChild(horiz
           ? el('line', { x1: p, y1: plotT, x2: p, y2: plotB, stroke: zero ? '#bbbbbb' : '#eeeeee', 'stroke-width': 1 })
           : el('line', { x1: plotL, y1: p, x2: plotR, y2: p, stroke: zero ? '#bbbbbb' : '#eeeeee', 'stroke-width': 1 }));
       }
+      /* 最上緣（橫向則最右）那個刻度直接把單位併進數字裡（例如「20 億美元」），
+         取代舊版浮在角落的單位小字——單位只在這裡出現一次，不必另立軸標題。 */
+      var label = fmt(t) + (pct ? '%' : (atMax && state.unit ? ' ' + state.unit : ''));
       svg.appendChild(horiz
-        ? el('text', { x: p, y: plotB + 16, 'text-anchor': 'middle', 'font-size': 11, fill: '#555555', 'font-family': 'sans-serif' }, fmt(t) + (pct ? '%' : ''))
-        : el('text', { x: plotL - 10, y: p + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#555555', 'font-family': 'sans-serif' }, fmt(t) + (pct ? '%' : '')));
+        ? el('text', { x: p, y: plotB + 16, 'text-anchor': 'middle', 'font-size': 11, fill: '#555555', 'font-family': 'sans-serif' }, label)
+        : el('text', { x: plotL - 10, y: p + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#555555', 'font-family': 'sans-serif' }, label));
     });
-
-    if (state.unit && !pct) {
-      svg.appendChild(horiz
-        ? el('text', { x: plotR, y: plotT - 8, 'text-anchor': 'end', 'font-size': 11, fill: '#777777', 'font-family': 'sans-serif' }, state.unit)
-        : el('text', { x: plotL - 10, y: plotT - 8, 'text-anchor': 'end', 'font-size': 11, fill: '#777777', 'font-family': 'sans-serif' }, state.unit));
-    }
 
     // 0 軸線
     svg.appendChild(horiz
@@ -378,8 +400,8 @@
         var off = stacked ? 0 : si * barW;
 
         var rect = horiz
-          ? el('rect', { x: lo, y: groupStart + off + 1, width: len, height: Math.max(2, barW - 2), fill: s.color, 'fill-opacity': 0.9, rx: 2 })
-          : el('rect', { x: groupStart + off + 1, y: lo, width: Math.max(2, barW - 2), height: len, fill: s.color, 'fill-opacity': 0.9, rx: 2 });
+          ? el('rect', { x: lo, y: groupStart + off + 1, width: len, height: Math.max(2, barW - 2), fill: s.color, rx: 1 })
+          : el('rect', { x: groupStart + off + 1, y: lo, width: Math.max(2, barW - 2), height: len, fill: s.color, rx: 1 });
         rect.setAttribute('data-dim', s.name);
         svg.appendChild(rect);
 
@@ -428,20 +450,42 @@
         }, CT.truncateToWidth(nm, 11.5, catLabelW - 4)));
       } else {
         var cx = bandStart + band / 2;
-        var rotate = CT.textWidth(nm, 11) > band;
-        var t3 = el('text', {
-          x: cx, y: plotB + (rotate ? 14 : 20), 'text-anchor': rotate ? 'end' : 'middle',
-          'font-size': 11, fill: '#333333', 'font-family': 'sans-serif'
-        }, rotate ? CT.truncateToWidth(nm, 11, 90) : nm);
-        if (rotate) t3.setAttribute('transform', 'rotate(-30 ' + cx + ' ' + (plotB + 14) + ')');
-        svg.appendChild(t3);
+        var spaceIdx = nm.lastIndexOf(' ');
+        // 含空白的分類名（例如「Q2 2024」）拆成兩行：季度在上、年份在下——編輯風
+        // 財經圖表的慣用排法。不含空白的分類名維持單行（太長就旋轉防碰撞，同舊版）。
+        if (spaceIdx > 0 && spaceIdx < nm.length - 1) {
+          svg.appendChild(el('text', {
+            x: cx, y: plotB + 16, 'text-anchor': 'middle',
+            'font-size': 11, fill: '#444444', 'font-family': 'sans-serif'
+          }, nm.slice(0, spaceIdx)));
+          svg.appendChild(el('text', {
+            x: cx, y: plotB + 29, 'text-anchor': 'middle',
+            'font-size': 10, fill: '#9a9a9a', 'font-family': 'sans-serif'
+          }, nm.slice(spaceIdx + 1)));
+        } else {
+          var rotate = CT.textWidth(nm, 11) > band;
+          var t3 = el('text', {
+            x: cx, y: plotB + (rotate ? 14 : 20), 'text-anchor': rotate ? 'end' : 'middle',
+            'font-size': 11, fill: '#333333', 'font-family': 'sans-serif'
+          }, rotate ? CT.truncateToWidth(nm, 11, 90) : nm);
+          if (rotate) t3.setAttribute('transform', 'rotate(-30 ' + cx + ' ' + (plotB + 14) + ')');
+          svg.appendChild(t3);
+        }
       }
     });
+
+    /* 來源文字：畫在圖片左下角、隨圖嵌入，取代舊版置於圖表外、置中顯示的圖說 */
+    if (state.caption) {
+      svg.appendChild(el('text', {
+        x: MARGIN_X, y: VB_H - 12, 'text-anchor': 'start',
+        'font-size': 10.5, fill: '#8a8a8a', 'font-family': 'sans-serif'
+      }, state.caption));
+    }
 
     /* 被濾掉的負值要講清楚，不能靜默吞掉 */
     if (droppedNeg > 0) {
       svg.appendChild(el('text', {
-        x: VB_W - 30, y: VB_H - 8, 'text-anchor': 'end',
+        x: VB_W - MARGIN_R, y: VB_H - 8, 'text-anchor': 'end',
         'font-size': 10, fill: '#c33', 'font-family': 'sans-serif'
       }, '⚠ 百分比堆疊已略過 ' + droppedNeg + ' 筆負值'));
     }
@@ -462,8 +506,10 @@
   function writeOutput() {
     $('outHint').innerHTML = HINTS[outMode];
     $('applyJson').style.display = outMode === 'json' ? '' : 'none';
-    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, state.caption);
-    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: state.caption });
+    // caption 已經畫進 SVG 左下角（見 render()），這裡不再重複傳給共用函式，
+    // 否則報告裡會同時看到「圖片內來源文字」與「圖片外置中圖說」兩份。
+    if (outMode === 'static') $('outText').value = CT.buildStaticEmbed(svg, null);
+    else if (outMode === 'interactive') $('outText').value = CT.buildInteractiveEmbed(svg, { caption: null });
     else $('outText').value = JSON.stringify(state, null, 2);
   }
 
@@ -494,13 +540,13 @@
 
   function normalize(o) {
     var s = {
-      title: o.title || '', caption: o.caption || '', unit: o.unit || '',
+      title: o.title || '', subtitle: o.subtitle || '', caption: o.caption || '', unit: o.unit || '',
       categories: Array.isArray(o.categories) ? o.categories.map(String) : [],
       mode: ['grouped', 'stacked', 'stacked100'].indexOf(o.mode) >= 0 ? o.mode : 'grouped',
       orient: o.orient === 'h' ? 'h' : 'v',
       series: [], opts: {}
     };
-    var d = { grid: true, values: true, legend: true, sort: false };
+    var d = { grid: true, values: false, legend: true, sort: false };
     for (var k in d) s.opts[k] = (o.opts && k in o.opts) ? !!o.opts[k] : d[k];
     (o.series || []).forEach(function (x, i) {
       s.series.push({
@@ -516,7 +562,8 @@
   }
 
   function syncToInputs() {
-    $('title').value = state.title; $('caption').value = state.caption; $('unit').value = state.unit;
+    $('title').value = state.title; $('subtitle').value = state.subtitle || '';
+    $('caption').value = state.caption; $('unit').value = state.unit;
     $('cats').value = state.categories.join(',');
     $('optGrid').checked = state.opts.grid; $('optValues').checked = state.opts.values;
     $('optLegend').checked = state.opts.legend; $('optSort').checked = state.opts.sort;
@@ -529,7 +576,7 @@
   }
 
   /* ================= 綁定 ================= */
-  ['title', 'caption', 'unit'].forEach(function (id) {
+  ['title', 'subtitle', 'caption', 'unit'].forEach(function (id) {
     $(id).addEventListener('input', function () { state[id] = this.value; render(); });
   });
   $('cats').addEventListener('input', function () {
@@ -549,8 +596,10 @@
 
   $('addSeries').addEventListener('click', function () {
     state.series.push({
+      // 第一個手動新增的系列（通常就是單一系列圖）預設用赤陶橘強調色；
+      // 第二個以後回到共用調色盤，不影響多系列的跨圖配色一致規則。
       name: '系列' + (state.series.length + 1),
-      color: CT.paletteAt(state.series.length),
+      color: state.series.length === 0 ? ACCENT : CT.paletteAt(state.series.length),
       values: state.categories.map(function () { return null; })
     });
     renderSeriesList(); render();
@@ -562,18 +611,20 @@
     CT.exportPng(svg, 'bar-chart.png', function (err) { CT.toast(err || '已匯出 PNG'); });
   });
 
-  /* ================= 範例 ================= */
+  /* ================= 範例 =================
+   * 示範新版編輯風極簡樣式：單一系列、雙行季度/年份標籤、單位併入頂端刻度、
+   * 來源文字畫在左下角。要看多系列＋並排/堆疊，改用「新增系列」自行加第二列。 */
   function seed() {
     state = normalize({
-      title: '各業務部門營收 QoQ（示意）',
-      caption: '資料來源：公司 10-Q 部門附註（示意數字）',
-      unit: '百萬美元',
-      categories: ['資料中心', '行動裝置', '車用與工業', '消費性電子'],
+      title: '自由現金流連續下滑（示意）',
+      subtitle: '營運支出攀升侵蝕現金流，FY26Q2 僅剩去年同期的一小部分',
+      caption: '資料來源：公司 10-Q（示意數字）',
+      unit: '億美元',
+      categories: ['Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025', 'Q1 2026', 'Q2 2026'],
       mode: 'grouped', orient: 'v',
-      opts: { grid: true, values: true, legend: true, sort: false },
+      opts: { grid: true, values: false, legend: true, sort: false },
       series: [
-        { name: 'FY26Q2', color: '#94a3b8', values: [5210, 2260, 1090, 780] },
-        { name: 'FY26Q3', color: '#2563eb', values: [5820, 2140, 1180, 720] }
+        { name: 'FCF', color: ACCENT, values: [110, 155, 132, 104, 85, 106, 141, 124, 9] }
       ]
     });
     syncToInputs(); renderSeriesList(); render();

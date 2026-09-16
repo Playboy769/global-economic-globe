@@ -608,10 +608,9 @@ Public Sub DrawThesisView(ws As Worksheet)
     Call Lbl(ws.cells(PG_LBL, C_THEME), "KEYWORD")
     Call Lbl(ws.cells(PG_LBL, C_FILTER), "FILTER")
     ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)).Merge
-    ws.Range(ws.cells(PG_IN, C_THEME), ws.cells(PG_IN, C_BEHAV)).Merge
     ws.Range(ws.cells(PG_IN, C_FILTER), ws.cells(PG_IN, C_FILTER + 1)).Merge
     Call InputBox_(ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)), q)
-    Call InputBox_(ws.Range(ws.cells(PG_IN, C_THEME), ws.cells(PG_IN, C_BEHAV)), kw)
+    Call InputBox_(ws.cells(PG_IN, C_THEME), kw)             ' one cell, not merged (user, 2026-09-16)
     Call InputBox_(ws.Range(ws.cells(PG_IN, C_FILTER), ws.cells(PG_IN, C_FILTER + 1)), fl)
     ws.cells(PG_LBL, C_TGT).AddComment "Tickers, comma = several.  @PORT = RR4 position log, @WATCH = WATCHLIST"
     ws.cells(PG_LBL, C_FILTER).AddComment "Space / comma separated, any one matching keeps the note (OR):" & vbLf & _
