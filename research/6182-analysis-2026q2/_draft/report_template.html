@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合晶科技（6182）— FY2026 Q2 財報完整分析</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif; background: #fff; color: #1a1a2e; font-size: 13px; }
+  .page-header { padding: 20px 24px 0; }
+  .page-header h1 { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+  .page-header p { font-size: 12px; color: #666; margin-top: 4px; line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 16px 24px 40px; }
+  .tabs { display: flex; border-bottom: 2px solid #e2e4ea; margin-bottom: 20px; gap: 0; flex-wrap: wrap; }
+  .tab { padding: 9px 13px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 500; color: #888; transition: all 0.2s; font-size: 12.5px; white-space: nowrap; }
+  .tab.active { border-bottom-color: #2563eb; color: #2563eb; }
+  .tab:hover:not(.active) { color: #1a1a2e; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; margin-bottom: 18px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
+  .card-title { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; margin-bottom: 8px; }
+  .card p { line-height: 1.7; color: #333; }
+  .card p + p { margin-top: 8px; }
+  .card ul, .card ol { padding-left: 16px; }
+  .card li { font-size: 12px; margin-bottom: 6px; line-height: 1.65; color: #333; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .stat-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat-box { flex: 1; min-width: 130px; background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 700; color: #2563eb; }
+  .stat-lbl { font-size: 11px; color: #666; margin-top: 3px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .kpi { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; text-align: center; }
+  .kpi-val { font-size: 20px; font-weight: 700; color: #2563eb; }
+  .kpi-lbl { font-size: 11px; color: #666; margin-top: 3px; }
+  .kpi-sub { font-size: 11px; color: #15803d; margin-top: 2px; }
+  .kpi-sub.neg { color: #b91c1c; }
+  .tbl-wrap { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; overflow-x: auto; margin-bottom: 18px; }
+  .tbl-title { padding: 10px 14px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; background: #f5f6fa; border-bottom: 1px solid #e2e4ea; }
+  table { color: #333; width: 100%; border-collapse: collapse; font-size: 12px; min-width: 520px; }
+  th { color: #666; background: #f5f6fa; padding: 8px 12px; text-align: right; border-bottom: 1px solid #e2e4ea; white-space: nowrap; }
+  th:first-child { text-align: left; }
+  td { color: #333; padding: 8px 12px; text-align: right; border-bottom: 1px solid #eee; vertical-align: top; }
+  td:first-child { text-align: left; color: #1a1a2e; }
+  tr:last-child td { border-bottom: none; }
+  tr.total td { font-weight: 700; color: #1a1a2e; background: #f5f6fa; border-top: 1px solid #ccc; }
+  tr.subtotal td { color: #888; font-style: italic; }
+  tr.section-head td { background: #f5f6fa; color: #2563eb; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 12px; text-align: left; }
+  td strong { color: #1a1a2e; }
+  td.l, th.l { text-align: left; }
+  .pos { color: #15803d; }
+  .neg { color: #b91c1c; }
+  .neu { color: #92400e; }
+  .quad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .quad-box { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; border-left: 4px solid; }
+  .quad-box.blue { border-left-color: #2563eb; }
+  .quad-box.green { border-left-color: #15803d; }
+  .quad-box.orange { border-left-color: #c2600a; }
+  .quad-box.red { border-left-color: #b91c4a; }
+  .quad-box h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .quad-box.blue h4 { color: #1d4ed8; }
+  .quad-box.green h4 { color: #15803d; }
+  .quad-box.orange h4 { color: #c2600a; }
+  .quad-box.red h4 { color: #b91c4a; }
+  .quad-box ul { padding-left: 15px; }
+  .quad-box li { margin-bottom: 5px; line-height: 1.6; color: #333; }
+  .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .tech-card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 12px; border-top: 3px solid #2563eb; }
+  .tech-card.g { border-top-color: #15803d; }
+  .tech-card.o { border-top-color: #c2600a; }
+  .tech-card.r { border-top-color: #b91c4a; }
+  .tech-card h4 { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .tech-card .meta { font-size: 11px; color: #666; margin-bottom: 6px; }
+  .tech-card p { font-size: 12px; line-height: 1.6; color: #333; }
+  .bu-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .bu-card { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; border-top: 3px solid; }
+  .bu-card.b { border-top-color: #2563eb; }
+  .bu-card.g { border-top-color: #15803d; }
+  .bu-card.o { border-top-color: #c2600a; }
+  .bu-card p { font-size: 12px; line-height: 1.65; color: #333; margin-top: 8px; }
+  .bu-name { font-weight: 700; font-size: 12px; color: #1a1a2e; margin-bottom: 2px; }
+  .bu-abbr { font-size: 11px; color: #666; margin-bottom: 10px; }
+  .bu-stat { display: flex; justify-content: space-between; margin-bottom: 6px; gap: 6px; }
+  .bu-stat-lbl { font-size: 12px; color: #666; }
+  .bu-stat-val { font-size: 12px; font-weight: 600; color: #1a1a2e; }
+  .cf-section { margin-bottom: 14px; }
+  .cf-header { font-size: 12px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding: 6px 12px; background: #f5f6fa; border-radius: 6px; }
+  .cf-row { display: flex; justify-content: space-between; padding: 5px 12px; font-size: 12px; border-bottom: 1px solid #eee; gap: 10px; }
+  .cf-row:last-child { border-bottom: none; }
+  .cf-row.total-row { font-weight: 700; background: #f5f6fa; border-radius: 4px; margin-top: 4px; padding: 7px 12px; }
+  .cf-lbl { color: #333; }
+  .cf-val { color: #1a1a2e; font-weight: 600; white-space: nowrap; }
+  .risk-item { display: flex; gap: 10px; margin-bottom: 18px; align-items: flex-start; }
+  .risk-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; margin-top: 2px; border: 1px solid; white-space: nowrap; }
+  .risk-badge.high { background: #fff; color: #b91c1c; border-color: #f0aaaa; }
+  .risk-badge.med { background: #fff; color: #92400e; border-color: #f0d090; }
+  .risk-badge.low { background: #fff; color: #15803d; border-color: #a3dab1; }
+  .risk-text { font-size: 12px; line-height: 1.65; color: #333; }
+  .risk-title { font-weight: 700; margin-bottom: 3px; color: #1a1a2e; }
+  .risk-source { font-size: 11px; color: #888; margin-top: 4px; }
+  .divider { border: none; border-top: 1px solid #e2e4ea; margin: 22px 0; }
+  .section-title { font-size: 13px; font-weight: 700; margin: 4px 0 12px; color: #1a1a2e; }
+  .note { font-size: 11px; color: #444; margin-top: 8px; margin-bottom: 18px; padding: 8px 12px; background: #fff; border: 1px solid #e2e4ea; border-radius: 6px; border-left: 3px solid #2563eb; line-height: 1.7; }
+  .note.yellow { border-left-color: #c2600a; }
+  .note.red { border-left-color: #b91c1c; }
+  .note.grey { border-left-color: #94a3b8; }
+  .chart-wrap { background: #fff; border: 1px solid #e2e4ea; border-radius: 8px; padding: 14px; margin-bottom: 18px; }
+  .chart-title { font-weight: 700; font-size: 12px; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .orig-box { font-size: 11.5px; color: #444; background: #f8f9fb; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-top: 8px; line-height: 1.7; }
+  .footer { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 24px; padding-top: 12px; border-top: 1px solid #eee; line-height: 1.7; }
+  @media (max-width: 700px) {
+    .quad-grid, .card-grid, .tech-grid { grid-template-columns: 1fr; }
+    .bu-grid { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>合晶科技股份有限公司（TPEx: 6182）— FY2026 Q2 財報完整分析</h1>
+  <!-- {{TEXT:header_subtitle}}：仿 6488 寫法，列出 10 個 tab 名稱、主軸期間（董事會通過日）、資料來源清單（MOPS t164sb01 iXBRL＋doc.twse 全文 PDF、幾季合併財報、月營收月數、年報刊印日、內部人持股月報涵蓋月份、法說會/公開新聞來源、Yahoo Finance 同業估值日期）、幣別與 IFRS 合併數說明、Fallback 模式說明（若無逐字稿，Q&amp;A 改「法說會重點 × 財報口徑檢核」；若有公開簡報則註明） -->
+  <p>{{TEXT:header_subtitle}}</p>
+</div>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="sw('qa',this)">法說會重點檢核</div>
+    <div class="tab" onclick="sw('deal',this)">特殊交易/事件</div>
+    <div class="tab" onclick="sw('tech',this)">技術與產品線</div>
+    <div class="tab" onclick="sw('chain',this)">供應鏈</div>
+    <div class="tab" onclick="sw('risk',this)">風險矩陣</div>
+    <div class="tab" onclick="sw('inc',this)">損益表</div>
+    <div class="tab" onclick="sw('bu',this)">業務部門</div>
+    <div class="tab" onclick="sw('bs',this)">資產負債表</div>
+    <div class="tab" onclick="sw('cf',this)">現金流量</div>
+    <div class="tab" onclick="sw('val',this)">估值觀察</div>
+  </div>
+
+  <!-- ============ TAB 1：法說會重點檢核（Q&A Fallback） ============ -->
+  <div id="panel-qa" class="panel active">
+    <!-- {{TEXT:qa_fallback_note}}：Fallback 模式說明框（.note grey），比照 6488：說明公司是否有法說會、有無逐字稿/簡報、本 tab 改採「管理層口徑 → 財報科目印證」對照法 -->
+    <div class="note grey">⚑ {{TEXT:qa_fallback_note}}</div>
+
+    <!-- {{TABLE:qa_stat_row}}：4 個 stat-box，仿 6488：本季 EPS 及其特殊性、關鍵一次性項目金額、毛利率及其相對位置（12 季高/低點）、季後最新月營收 YoY -->
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-val">{{TEXT:qa_stat1_val}}</div><div class="stat-lbl">{{TEXT:qa_stat1_lbl}}</div></div>
+      <div class="stat-box"><div class="stat-val">{{TEXT:qa_stat2_val}}</div><div class="stat-lbl">{{TEXT:qa_stat2_lbl}}</div></div>
+      <div class="stat-box"><div class="stat-val">{{TEXT:qa_stat3_val}}</div><div class="stat-lbl">{{TEXT:qa_stat3_lbl}}</div></div>
+      <div class="stat-box"><div class="stat-val">{{TEXT:qa_stat4_val}}</div><div class="stat-lbl">{{TEXT:qa_stat4_lbl}}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">一句話結論</div>
+      <!-- {{TEXT:qa_summary}}：本季獲利/營運狀況的一句話結論，含關鍵數字與矛盾點（仿 6488「獲利創新高與本業仍在谷底同時為真」的寫法） -->
+      <p>{{TEXT:qa_summary}}</p>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">管理層口徑 vs 財報印證</div>
+      <!-- {{TABLE:qa_verification}}：至少 6-10 列，欄位＝管理層說法(來源/信心度) | 財報對應科目 | 檢核結果(<span class="pos/neu/neg">)。含至少一列「法說會沒有被轉述提到的事」留白反推、一列月營收對展望的驗證 -->
+      <table>
+        <thead><tr><th class="l" style="width:34%">管理層說法（來源／信心度）</th><th class="l" style="width:40%">財報對應科目</th><th class="l">檢核結果</th></tr></thead>
+        <tbody>
+          {{TABLE:qa_verification}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:qa_verification_interp}}：⚑ 解讀，總結上表列數與支持/未支持/留白的比例，點出本季最關鍵的一個待驗證問題 -->
+    <div class="note">⚑ 解讀：{{TEXT:qa_verification_interp}}</div>
+
+    <div class="card">
+      <div class="card-title">法說會揭露原文（逐字引用媒體/公開簡報文字，供覆核）</div>
+      <!-- {{TEXT:qa_orig_quotes}}：一或多個 .orig-box，逐字貼公開轉述/簡報原文，附日期與來源；找不到逐字稿或簡報時本段可留白並在 header 說明無公開轉述 -->
+      {{TEXT:qa_orig_quotes}}
+    </div>
+  </div>
+
+  <!-- ============ TAB 2：特殊交易/事件 ============ -->
+  <div id="panel-deal" class="panel">
+    <div class="card">
+      <div class="card-title">{{TEXT:deal_title}}</div>
+      <!-- {{TEXT:deal_intro}}：由財報附註挑本季最重大事件（見 CLAUDE.md 6182 決策：「由財報附註挑本季最重大事件」），說明事件是什麼、為何重要、對未來損益的影響方向 -->
+      <p>{{TEXT:deal_intro}}</p>
+    </div>
+
+    <div class="quad-grid">
+      <div class="quad-box blue">
+        <h4>規模</h4>
+        <ul>{{TEXT:deal_scale_items}}</ul>
+        <!-- {{TEXT:deal_scale_items}}：<li> 列表，事件的金額規模、投資額、產能等 -->
+      </div>
+      <div class="quad-box green">
+        <h4>期限</h4>
+        <ul>{{TEXT:deal_timeline_items}}</ul>
+        <!-- {{TEXT:deal_timeline_items}}：<li> 列表，事件相關的期限、里程碑日期 -->
+      </div>
+      <div class="quad-box orange">
+        <h4>財務承諾</h4>
+        <ul>{{TEXT:deal_commitment_items}}</ul>
+        <!-- {{TEXT:deal_commitment_items}}：<li> 列表，資本化利息、已簽約未交驗金額、承諾性質等 -->
+      </div>
+      <div class="quad-box red">
+        <h4>尚待驗證</h4>
+        <ul>{{TEXT:deal_unverified_items}}</ul>
+        <!-- {{TEXT:deal_unverified_items}}：<li> 列表，何時入帳/轉盈/驗證點等留白反推問題 -->
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">資料中心專案融資條款（框架必備追蹤項，泛用）</div>
+      <!-- {{TABLE:datacenter_financing}}：合晶為晶圓材料廠，預期本表大多列「無此資料/不適用」，但仍需完整呈現表格結構（來源｜金額｜認列方式｜對FCF/負債影響 四欄），至少一列說明「本公司無重大資料中心/AI infra 資本支出承諾，此區塊不適用」 -->
+      <table>
+        <thead><tr><th class="l">來源</th><th>金額</th><th class="l">認列方式</th><th class="l">對 FCF／負債的影響</th></tr></thead>
+        <tbody>
+          {{TABLE:datacenter_financing}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:deal_financing_interp}}：⚑ 解讀，融資結構整體評語 -->
+    <div class="note">⚑ 解讀：{{TEXT:deal_financing_interp}}</div>
+
+    <div class="card">
+      <div class="card-title">核心疑問（盡職調查式追問）</div>
+      <!-- {{TEXT:deal_key_questions}}：<ol><li>...</li></ol> 至少 3-5 條盡職調查式追問，比照 6488 寫法（每條有具體推論鏈） -->
+      <ol>{{TEXT:deal_key_questions}}</ol>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">關鍵時程</div>
+      <!-- {{TABLE:deal_timeline_table}}：欄位＝時間｜事件｜對財報的預期影響 -->
+      <table>
+        <thead><tr><th class="l">時間</th><th class="l">事件</th><th class="l">對財報的預期影響</th></tr></thead>
+        <tbody>
+          {{TABLE:deal_timeline_table}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3：技術與產品線 ============ -->
+  <div id="panel-tech" class="panel">
+    <div class="card">
+      <div class="card-title">產品組合定位</div>
+      <!-- {{TEXT:tech_positioning}}：合晶在矽晶圓產業的市場定位（區域廠 vs 全球五強、利基品項）、產品組合與本季收入結構概述 -->
+      <p>{{TEXT:tech_positioning}}</p>
+    </div>
+
+    <div class="tech-grid">
+      <!-- {{TABLE:tech_cards}}：4-6 張 .tech-card（顏色類別可用 g/o/r 或無 class），每張含 h4 產品名、.meta 狀態列、p 段落（產品是什麼/用在哪/客戶為何需要）；比照 6488 的六張卡片深度 -->
+      {{TABLE:tech_cards}}
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">產品線營收（億元）</div>
+      {{CHART:bu_mix}}
+    </div>
+    <!-- {{TEXT:tech_bu_mix_interp}}：⚑ 解讀，附出處（哪份 filing 哪個附註） -->
+    <div class="note">⚑ 解讀：{{TEXT:tech_bu_mix_interp}}</div>
+
+    <div class="card">
+      <div class="card-title">長期需求場景的因果鏈</div>
+      <!-- {{TEXT:tech_causal_chain}}：AI/車用/功率等終端需求 → 矽晶圓耗用的因果鏈敘事，含正向與反向兩條鏈（比照 6488 寫法） -->
+      <p>{{TEXT:tech_causal_chain}}</p>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4：供應鏈 ============ -->
+  <div id="panel-chain" class="panel">
+    <div class="card">
+      <div class="card-title">供應鏈結構（來源：年報／財報附註／公司新聞稿）</div>
+      <!-- {{TEXT:chain_intro}}：上游供應商集中度、下游客戶集中度概述，附出處；台灣年報慣例匿名客戶/供應商的處理方式說明 -->
+      <p>{{TEXT:chain_intro}}</p>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">供應鏈結構圖（chain-diagram：誰供給誰、分幾層）</div>
+      {{CHART:chain_supply}}
+    </div>
+    <!-- {{TEXT:chain_structure_interp}}：⚑ 解讀，單一來源風險落在哪一層、出處 -->
+    <div class="note">⚑ 解讀：{{TEXT:chain_structure_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">供應鏈流量圖（Sankey：線寬＝金額，億元）</div>
+      {{CHART:sankey_supply}}
+    </div>
+    <!-- {{TEXT:chain_flow_interp}}：⚑ 解讀，兩張圖節點命名要一致；材料佔營收比重、資本/材料密集度判斷 -->
+    <div class="note">⚑ 解讀：{{TEXT:chain_flow_interp}}</div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">上下游關係明細（含出處）</div>
+      <!-- {{TABLE:chain_detail}}：欄位＝層級｜對象｜關係/金額｜集中度或風險｜出處；含 section-head 分「上游」「下游」兩段 -->
+      <table>
+        <thead><tr><th class="l">層級</th><th class="l">對象</th><th class="l">關係／金額</th><th class="l">集中度或風險</th><th class="l">出處</th></tr></thead>
+        <tbody>
+          {{TABLE:chain_detail}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:chain_crosslink_note}}：⚑ 交叉連結（.note yellow），指出本表數字與資產負債表 tab 採購承諾/客戶預付款、估值觀察 tab 互證對照表的對應關係 -->
+    <div class="note yellow">⚑ 交叉連結：{{TEXT:chain_crosslink_note}}</div>
+  </div>
+
+  <!-- ============ TAB 5：風險矩陣 ============ -->
+  <div id="panel-risk" class="panel">
+    <!-- {{TEXT:risk_fallback_note}}：資料限制說明（.note grey），同 tab1 -->
+    <div class="note grey">⚑ {{TEXT:risk_fallback_note}}</div>
+
+    <!-- {{TABLE:risk_items}}：至少 6-8 個 .risk-item，badge 分 high/med/low，至少一條標【獨創前瞻風險】；每條含 risk-title、內文、risk-source -->
+    {{TABLE:risk_items}}
+
+    <div class="chart-wrap">
+      <div class="chart-title">風險矩陣熱力圖（風險項 × 時間窗口，1–5）</div>
+      {{CHART:risk_heat}}
+    </div>
+    <!-- {{TEXT:risk_heat_interp}}：⚑ 解讀，指出風險集中在哪個時間窗口 -->
+    <div class="note">⚑ 解讀：{{TEXT:risk_heat_interp}}</div>
+  </div>
+
+  <!-- ============ TAB 6：損益表 ============ -->
+  <div id="panel-inc" class="panel">
+    <!-- {{TABLE:inc_kpi_row}}：4 個 .kpi，營收/毛利率/營業利益率/EPS，各含 QoQ、YoY -->
+    <div class="kpi-row">
+      {{TABLE:inc_kpi_row}}
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">合併綜合損益表（億元；單季）</div>
+      <!-- {{TABLE:inc_statement}}：完整逐行損益表，欄位＝項目｜本季｜上季｜去年同期｜QoQ｜YoY｜本年累計｜去年累計；資料來源 data/quarterly.json -->
+      <table>
+        <thead><tr><th class="l">項目</th><th>{{TEXT:q_curr}}</th><th>{{TEXT:q_prev}}</th><th>{{TEXT:q_yoy}}</th><th>QoQ</th><th>YoY</th><th>{{TEXT:ytd_curr}}</th><th>{{TEXT:ytd_prev}}</th></tr></thead>
+        <tbody>
+          {{TABLE:inc_statement}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:inc_statement_interp}}：⚑ 解讀，拆解本業線與非本業線 -->
+    <div class="note">⚑ 解讀：{{TEXT:inc_statement_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">近 12 季營收與利潤率趨勢（必備圖）</div>
+      {{CHART:income_trend}}
+    </div>
+    <!-- {{TEXT:income_trend_interp}}：⚑ 解讀，12 季趨勢的敘事（來源：quarterly.json） -->
+    <div class="note">⚑ 解讀：{{TEXT:income_trend_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">台股月營收輔助判斷：近 24 個月以上月營收與 YoY（台股必備圖）</div>
+      {{CHART:monthly_revenue}}
+    </div>
+    <!-- {{TEXT:monthly_revenue_interp}}：⚑ 解讀（.note yellow），回答框架問題「最新月營收動能支持還是打臉法說會展望」；資料來源 data/monthly_revenue.json，每月以累計欄反算驗證 -->
+    <div class="note yellow">⚑ 解讀（回答框架問題：最新月營收動能支持還是打臉法說會展望？）：{{TEXT:monthly_revenue_interp}}</div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">財測／口徑 vs 實際</div>
+      <!-- {{TABLE:guidance_vs_actual}}：欄位＝項目｜管理層口徑(時點)｜實際｜評語 -->
+      <table>
+        <thead><tr><th class="l">項目</th><th class="l">管理層口徑（時點）</th><th class="l">實際</th><th class="l">評語</th></tr></thead>
+        <tbody>
+          {{TABLE:guidance_vs_actual}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ TAB 7：業務部門 ============ -->
+  <div id="panel-bu" class="panel">
+    <div class="card">
+      <div class="card-title">部門揭露的限制與本 tab 的做法</div>
+      <!-- {{TEXT:bu_disclosure_note}}：說明合晶的部門揭露口徑與限制，本 tab 用哪些財報維度替代 BU -->
+      <p>{{TEXT:bu_disclosure_note}}</p>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">各 BU／產品線營收與利潤率對比（必備圖）</div>
+      {{CHART:bu_mix}}
+    </div>
+    <!-- {{TEXT:bu_chart_interp}}：⚑ 解讀 -->
+    <div class="note">⚑ 解讀：{{TEXT:bu_chart_interp}}</div>
+
+    <div class="bu-grid">
+      <!-- {{TABLE:bu_cards}}：2-4 張 .bu-card（class b/g/o），每張含 bu-name、bu-abbr（本季金額/占比/QoQ/YoY）、幾個 bu-stat、p 段落（產品是什麼/用在哪/客戶為何需要，深度比照 6488 的「材料/製程/認證門檻/下游應用場景」拆解） -->
+      {{TABLE:bu_cards}}
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">地區別／子公司損益（如有揭露）</div>
+      <!-- {{TABLE:bu_region_table}}：地區/子公司別損益或銷售地區分布表，無揭露則寫「無此資料/不適用」 -->
+      <table>
+        <thead><tr><th class="l">地區／子公司</th><th class="l">產品與角色</th><th>金額（億）</th><th class="l">解讀</th></tr></thead>
+        <tbody>
+          {{TABLE:bu_region_table}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:bu_quantity_price_interp}}：⚑ 解讀（量價拆分），比照 6488 從財報反推量/價貢獻 -->
+    <div class="note">⚑ 解讀（量價拆分）：{{TEXT:bu_quantity_price_interp}}</div>
+  </div>
+
+  <!-- ============ TAB 8：資產負債表 ============ -->
+  <div id="panel-bs" class="panel">
+    <div class="tbl-wrap">
+      <div class="tbl-title">合併資產負債表三期別（億元）</div>
+      <!-- {{TABLE:bs_statement}}：完整三期別資產負債表，含 section-head「資產」「負債」「權益」，欄位＝項目｜本期期末｜上年度期末｜去年同期｜vs 年底 -->
+      <table>
+        <thead><tr><th class="l">項目</th><th>{{TEXT:bs_curr_date}}</th><th>{{TEXT:bs_yearend_date}}</th><th>{{TEXT:bs_yoy_date}}</th><th>vs 年底</th></tr></thead>
+        <tbody>
+          {{TABLE:bs_statement}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:bs_statement_interp}}：⚑ 解讀，結構性變化 -->
+    <div class="note">⚑ 解讀：{{TEXT:bs_statement_interp}}</div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">框架必備追蹤四項（資產負債表）</div>
+      <!-- {{TABLE:bs_tracking_four}}：四列固定＝應收帳款天數 DSO｜未開始租賃｜採購承諾｜客戶預付款(合約負債)；欄位＝項目｜數字｜來源｜解讀；缺資料明確寫「無此資料/不適用」 -->
+      <table>
+        <thead><tr><th class="l">項目</th><th class="l">數字</th><th class="l">來源</th><th class="l">解讀</th></tr></thead>
+        <tbody>
+          <tr><td><strong>應收帳款天數 DSO</strong></td><td class="l">{{TEXT:dso_value}}</td><td class="l">{{TEXT:dso_source}}</td><td class="l">{{TEXT:dso_interp}}</td></tr>
+          <tr><td><strong>未開始租賃</strong></td><td class="l">{{TEXT:unstarted_lease_value}}</td><td class="l">{{TEXT:unstarted_lease_source}}</td><td class="l">{{TEXT:unstarted_lease_interp}}</td></tr>
+          <tr><td><strong>採購承諾</strong></td><td class="l">{{TEXT:purchase_commit_value}}</td><td class="l">{{TEXT:purchase_commit_source}}</td><td class="l">{{TEXT:purchase_commit_interp}}</td></tr>
+          <tr><td><strong>客戶預付款（合約負債）</strong></td><td class="l">{{TEXT:customer_prepay_value}}</td><td class="l">{{TEXT:customer_prepay_source}}</td><td class="l">{{TEXT:customer_prepay_interp}}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">合約負債／客戶預付款 12 季走勢</div>
+      {{CHART:contract_liab}}
+    </div>
+    <!-- {{TEXT:contract_liab_interp}}：⚑ 解讀 -->
+    <div class="note">⚑ 解讀：{{TEXT:contract_liab_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">DSO 與存貨天數趨勢</div>
+      {{CHART:dso}}
+    </div>
+    <!-- {{TEXT:dso_chart_interp}}：⚑ 解讀 -->
+    <div class="note">⚑ 解讀：{{TEXT:dso_chart_interp}}</div>
+
+    <div class="card">
+      <div class="card-title">附註：信評／股利／庫藏股／擔保</div>
+      <!-- {{TEXT:bs_misc_notes}}：<li> 列表，股利政策與配發率、庫藏股、員工酬勞、擔保質押、信評（多無揭露寫「無此資料」）、母公司持股 -->
+      <ul>{{TEXT:bs_misc_notes}}</ul>
+    </div>
+  </div>
+
+  <!-- ============ TAB 9：現金流量 ============ -->
+  <div id="panel-cf" class="panel">
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">{{TEXT:cf_curr_period_lbl}}單季（億元）</div>
+        <!-- {{TEXT:cf_quarter_block}}：三段 .cf-section（營業/投資/籌資活動）＋ 自由現金流總計行，逐項比照 6488 結構 -->
+        {{TEXT:cf_quarter_block}}
+      </div>
+      <div class="card">
+        <div class="card-title">{{TEXT:cf_ytd_period_lbl}} vs 去年同期（億元）</div>
+        <!-- {{TEXT:cf_ytd_block}}：四大類 + 現金相關兩段 .cf-section -->
+        {{TEXT:cf_ytd_block}}
+      </div>
+    </div>
+    <!-- {{TEXT:cf_interp}}：⚑ 解讀，現金增減的主要來源 -->
+    <div class="note">⚑ 解讀：{{TEXT:cf_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">自由現金流橋接（必備圖）</div>
+      {{CHART:fcf_waterfall}}
+    </div>
+    <!-- {{TEXT:fcf_waterfall_interp}}：⚑ 解讀 -->
+    <div class="note">⚑ 解讀：{{TEXT:fcf_waterfall_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">資本支出 vs 折舊 vs 營運現金流</div>
+      {{CHART:capex_dep}}
+    </div>
+    <!-- {{TEXT:capex_dep_interp}}：⚑ 解讀 -->
+    <div class="note">⚑ 解讀：{{TEXT:capex_dep_interp}}</div>
+  </div>
+
+  <!-- ============ TAB 10：估值觀察 ============ -->
+  <div id="panel-val" class="panel">
+    <!-- {{TABLE:val_stat_row}}：4 個 stat-box，收盤價/市值、Trailing P/E、核心 P/E（若有非經常性項目需剔除）、P/B -->
+    <div class="stat-row">
+      {{TABLE:val_stat_row}}
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">估值與體質比率（每項附意義）</div>
+      <!-- {{TABLE:val_ratios}}：欄位＝比率｜數值｜計算｜意義；必含「利息保障倍數」（框架必備）一列 -->
+      <table>
+        <thead><tr><th class="l">比率</th><th>數值</th><th class="l">計算</th><th class="l">意義</th></tr></thead>
+        <tbody>
+          {{TABLE:val_ratios}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:val_ratios_interp}}：⚑ 隱含 P/E 反推市場定價的懷疑程度 -->
+    <div class="note">⚑ {{TEXT:val_ratios_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">利息保障倍數趨勢</div>
+      {{CHART:int_cov}}
+    </div>
+    <!-- {{TEXT:int_cov_interp}}：⚑ 解讀 -->
+    <div class="note">⚑ 解讀：{{TEXT:int_cov_interp}}</div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">同業 Forward P/E vs 營收成長（必備圖）</div>
+      {{CHART:valuation_scatter}}
+    </div>
+    <!-- {{TEXT:valuation_scatter_interp}}：⚑ 解讀，若同業比較意義有限需說明理由並仍完整解讀（比照 6488 做法：先說明為何比較意義有限，仍照畫並標註「此圖為框架要求之必備圖表」） -->
+    <div class="note">⚑ 解讀：{{TEXT:valuation_scatter_interp}}</div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">同業估值明細（Yahoo Finance）</div>
+      <!-- {{TABLE:peer_valuation}}：欄位＝公司｜市值｜Trailing P/E｜Forward P/E｜P/B｜EV/EBITDA｜營收YoY｜營業利益率；含 6182 自己一列（粗體）與同業（6488、3532、3016、4063.T、3436.T 等，依 6182 決策的同業清單） -->
+      <table>
+        <thead><tr><th class="l">公司</th><th>市值</th><th>Trailing P/E</th><th>Forward P/E</th><th>P/B</th><th>EV/EBITDA</th><th>營收 YoY</th><th>營業利益率</th></tr></thead>
+        <tbody>
+          {{TABLE:peer_valuation}}
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="divider">
+    <div class="section-title">互證對照表（強制交付物）：管理層說法 ↔ 財報科目驗證</div>
+    <div class="tbl-wrap">
+      <div class="tbl-title">雙層互證</div>
+      <!-- {{TABLE:cross_verification}}：至少 10-13 列，欄位＝質化敘事(tab1-5) | 量化驗證(tab6-10) | 結論(pos/neu/neg)；必含一列左欄=管理層展望、右欄=月營收實績的對照（回應「台股月營收輔助判斷」要求）；可含一列「法說會未提」留白反推 -->
+      <table>
+        <thead><tr><th class="l" style="width:36%">質化敘事（tab 1–5）</th><th class="l" style="width:40%">量化驗證（tab 6–10）</th><th class="l">結論</th></tr></thead>
+        <tbody>
+          {{TABLE:cross_verification}}
+        </tbody>
+      </table>
+    </div>
+    <!-- {{TEXT:cross_verification_summary}}：⚑ 總結（.note yellow），列數統計、指出最重要的待驗項與驗證時點（下次財報日） -->
+    <div class="note yellow">⚑ 總結：{{TEXT:cross_verification_summary}}</div>
+  </div>
+
+  <div class="footer">
+    <!-- {{TEXT:footer_sources}}：完整資料來源清單（比照 6488 footer），列出 MOPS 財報來源、幾季範圍、月營收月數與驗證方式、年報刊印日、內部人持股月報涵蓋月份、重大訊息公告範圍、公開新聞來源、Yahoo Finance 同業估值日期、Fallback 模式與信心度標註說明、視覺化推估數字的免責聲明；結尾「僅供資訊參考，非投資建議。」 -->
+    {{TEXT:footer_sources}}
+  </div>
+</div>
+
+<script>
+function sw(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

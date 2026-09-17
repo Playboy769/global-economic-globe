@@ -805,6 +805,18 @@
       "port": 8190
     },
     {
+      "name": "6182-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8191",
+        "--directory",
+        "research/6182-analysis-2026q2"
+      ],
+      "port": 8191
+    },
+    {
       "name": "3532-analysis",
       "runtimeExecutable": "python",
       "runtimeArgs": [

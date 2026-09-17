@@ -1,0 +1,322 @@
+{
+ "2024-01": {
+  "revenue_thousand": 615310.0,
+  "prev_month": 681572.0,
+  "yoy_month": 905131.0,
+  "yoy_pct": -9.72,
+  "cum_thousand": 615310.0,
+  "cum_ly": 905131.0,
+  "cum_yoy_pct": -32.01,
+  "cross_check_ok": true
+ },
+ "2024-02": {
+  "revenue_thousand": 647954.0,
+  "prev_month": 615310.0,
+  "yoy_month": 893986.0,
+  "yoy_pct": 5.3,
+  "cum_thousand": 1263264.0,
+  "cum_ly": 1799117.0,
+  "cum_yoy_pct": -29.78,
+  "cross_check_ok": true
+ },
+ "2024-03": {
+  "revenue_thousand": 699100.0,
+  "prev_month": 647954.0,
+  "yoy_month": 898093.0,
+  "yoy_pct": 7.89,
+  "cum_thousand": 1962364.0,
+  "cum_ly": 2697210.0,
+  "cum_yoy_pct": -27.24,
+  "cross_check_ok": true
+ },
+ "2024-04": {
+  "revenue_thousand": 735532.0,
+  "prev_month": 699100.0,
+  "yoy_month": 870249.0,
+  "yoy_pct": 5.21,
+  "cum_thousand": 2697896.0,
+  "cum_ly": 3567459.0,
+  "cum_yoy_pct": -24.37,
+  "cross_check_ok": true
+ },
+ "2024-05": {
+  "revenue_thousand": 755674.0,
+  "prev_month": 735532.0,
+  "yoy_month": 870775.0,
+  "yoy_pct": 2.73,
+  "cum_thousand": 3453570.0,
+  "cum_ly": 4438234.0,
+  "cum_yoy_pct": -22.18,
+  "cross_check_ok": true
+ },
+ "2024-06": {
+  "revenue_thousand": 760976.0,
+  "prev_month": 755674.0,
+  "yoy_month": 809080.0,
+  "yoy_pct": 0.7,
+  "cum_thousand": 4214546.0,
+  "cum_ly": 5247314.0,
+  "cum_yoy_pct": -19.68,
+  "cross_check_ok": true
+ },
+ "2024-07": {
+  "revenue_thousand": 781003.0,
+  "prev_month": 760976.0,
+  "yoy_month": 876842.0,
+  "yoy_pct": 2.63,
+  "cum_thousand": 4995549.0,
+  "cum_ly": 6124156.0,
+  "cum_yoy_pct": -18.42,
+  "cross_check_ok": true
+ },
+ "2024-08": {
+  "revenue_thousand": 789616.0,
+  "prev_month": 781003.0,
+  "yoy_month": 863229.0,
+  "yoy_pct": 1.1,
+  "cum_thousand": 5785165.0,
+  "cum_ly": 6987385.0,
+  "cum_yoy_pct": -17.2,
+  "cross_check_ok": true
+ },
+ "2024-09": {
+  "revenue_thousand": 807417.0,
+  "prev_month": 789616.0,
+  "yoy_month": 895655.0,
+  "yoy_pct": 2.25,
+  "cum_thousand": 6592582.0,
+  "cum_ly": 7883040.0,
+  "cum_yoy_pct": -16.37,
+  "cross_check_ok": true
+ },
+ "2024-10": {
+  "revenue_thousand": 749416.0,
+  "prev_month": 807417.0,
+  "yoy_month": 725149.0,
+  "yoy_pct": -7.18,
+  "cum_thousand": 7341998.0,
+  "cum_ly": 8608189.0,
+  "cum_yoy_pct": -14.7,
+  "cross_check_ok": true
+ },
+ "2024-11": {
+  "revenue_thousand": 710123.0,
+  "prev_month": 749416.0,
+  "yoy_month": 709663.0,
+  "yoy_pct": -5.24,
+  "cum_thousand": 8052121.0,
+  "cum_ly": 9317852.0,
+  "cum_yoy_pct": -13.58,
+  "cross_check_ok": true
+ },
+ "2024-12": {
+  "revenue_thousand": 623395.0,
+  "prev_month": 710123.0,
+  "yoy_month": 681572.0,
+  "yoy_pct": -12.21,
+  "cum_thousand": 8675516.0,
+  "cum_ly": 9999424.0,
+  "cum_yoy_pct": -13.23,
+  "cross_check_ok": true
+ },
+ "2025-01": {
+  "revenue_thousand": 717396.0,
+  "prev_month": 623395.0,
+  "yoy_month": 615310.0,
+  "yoy_pct": 15.07,
+  "cum_thousand": 717396.0,
+  "cum_ly": 615310.0,
+  "cum_yoy_pct": 16.59,
+  "cross_check_ok": true
+ },
+ "2025-02": {
+  "revenue_thousand": 752314.0,
+  "prev_month": 717396.0,
+  "yoy_month": 647954.0,
+  "yoy_pct": 4.86,
+  "cum_thousand": 1469710.0,
+  "cum_ly": 1263264.0,
+  "cum_yoy_pct": 16.34,
+  "cross_check_ok": true
+ },
+ "2025-03": {
+  "revenue_thousand": 819812.0,
+  "prev_month": 752314.0,
+  "yoy_month": 699100.0,
+  "yoy_pct": 8.97,
+  "cum_thousand": 2289522.0,
+  "cum_ly": 1962364.0,
+  "cum_yoy_pct": 16.67,
+  "cross_check_ok": true
+ },
+ "2025-04": {
+  "revenue_thousand": 839795.0,
+  "prev_month": 819812.0,
+  "yoy_month": 735532.0,
+  "yoy_pct": 2.43,
+  "cum_thousand": 3129317.0,
+  "cum_ly": 2697896.0,
+  "cum_yoy_pct": 15.99,
+  "cross_check_ok": true
+ },
+ "2025-05": {
+  "revenue_thousand": 794368.0,
+  "prev_month": 839795.0,
+  "yoy_month": 755674.0,
+  "yoy_pct": -5.4,
+  "cum_thousand": 3923685.0,
+  "cum_ly": 3453570.0,
+  "cum_yoy_pct": 13.61,
+  "cross_check_ok": true
+ },
+ "2025-06": {
+  "revenue_thousand": 846838.0,
+  "prev_month": 794368.0,
+  "yoy_month": 760976.0,
+  "yoy_pct": 6.6,
+  "cum_thousand": 4770523.0,
+  "cum_ly": 4214546.0,
+  "cum_yoy_pct": 13.19,
+  "cross_check_ok": true
+ },
+ "2025-07": {
+  "revenue_thousand": 836314.0,
+  "prev_month": 846838.0,
+  "yoy_month": 781003.0,
+  "yoy_pct": -1.24,
+  "cum_thousand": 5606837.0,
+  "cum_ly": 4995549.0,
+  "cum_yoy_pct": 12.23,
+  "cross_check_ok": true
+ },
+ "2025-08": {
+  "revenue_thousand": 837265.0,
+  "prev_month": 836314.0,
+  "yoy_month": 789616.0,
+  "yoy_pct": 0.11,
+  "cum_thousand": 6444102.0,
+  "cum_ly": 5785165.0,
+  "cum_yoy_pct": 11.39,
+  "cross_check_ok": true
+ },
+ "2025-09": {
+  "revenue_thousand": 890224.0,
+  "prev_month": 837265.0,
+  "yoy_month": 807417.0,
+  "yoy_pct": 6.32,
+  "cum_thousand": 7334326.0,
+  "cum_ly": 6592582.0,
+  "cum_yoy_pct": 11.25,
+  "cross_check_ok": true
+ },
+ "2025-10": {
+  "revenue_thousand": 861710.0,
+  "prev_month": 890224.0,
+  "yoy_month": 749416.0,
+  "yoy_pct": -3.2,
+  "cum_thousand": 8196036.0,
+  "cum_ly": 7341998.0,
+  "cum_yoy_pct": 11.63,
+  "cross_check_ok": true
+ },
+ "2025-11": {
+  "revenue_thousand": 816608.0,
+  "prev_month": 861710.0,
+  "yoy_month": 710123.0,
+  "yoy_pct": -5.23,
+  "cum_thousand": 9012644.0,
+  "cum_ly": 8052121.0,
+  "cum_yoy_pct": 11.92,
+  "cross_check_ok": true
+ },
+ "2025-12": {
+  "revenue_thousand": 761015.0,
+  "prev_month": 816608.0,
+  "yoy_month": 623395.0,
+  "yoy_pct": -6.8,
+  "cum_thousand": 9773659.0,
+  "cum_ly": 8675516.0,
+  "cum_yoy_pct": 12.65,
+  "cross_check_ok": true
+ },
+ "2026-01": {
+  "revenue_thousand": 852700.0,
+  "prev_month": 761015.0,
+  "yoy_month": 717396.0,
+  "yoy_pct": 12.04,
+  "cum_thousand": 852700.0,
+  "cum_ly": 717396.0,
+  "cum_yoy_pct": 18.86,
+  "cross_check_ok": true
+ },
+ "2026-02": {
+  "revenue_thousand": 740530.0,
+  "prev_month": 852700.0,
+  "yoy_month": 752314.0,
+  "yoy_pct": -13.15,
+  "cum_thousand": 1593230.0,
+  "cum_ly": 1469710.0,
+  "cum_yoy_pct": 8.4,
+  "cross_check_ok": true
+ },
+ "2026-03": {
+  "revenue_thousand": 888445.0,
+  "prev_month": 740530.0,
+  "yoy_month": 819812.0,
+  "yoy_pct": 19.97,
+  "cum_thousand": 2481675.0,
+  "cum_ly": 2289522.0,
+  "cum_yoy_pct": 8.39,
+  "cross_check_ok": true
+ },
+ "2026-04": {
+  "revenue_thousand": 865025.0,
+  "prev_month": 888445.0,
+  "yoy_month": 839795.0,
+  "yoy_pct": -2.63,
+  "cum_thousand": 3346700.0,
+  "cum_ly": 3129317.0,
+  "cum_yoy_pct": 6.94,
+  "cross_check_ok": true
+ },
+ "2026-05": {
+  "revenue_thousand": 889185.0,
+  "prev_month": 865025.0,
+  "yoy_month": 794368.0,
+  "yoy_pct": 2.79,
+  "cum_thousand": 4235885.0,
+  "cum_ly": 3923685.0,
+  "cum_yoy_pct": 7.95,
+  "cross_check_ok": true
+ },
+ "2026-06": {
+  "revenue_thousand": 966318.0,
+  "prev_month": 889185.0,
+  "yoy_month": 846838.0,
+  "yoy_pct": 8.67,
+  "cum_thousand": 5202203.0,
+  "cum_ly": 4770523.0,
+  "cum_yoy_pct": 9.04,
+  "cross_check_ok": true
+ },
+ "2026-07": {
+  "revenue_thousand": 994362.0,
+  "prev_month": 966318.0,
+  "yoy_month": 836314.0,
+  "yoy_pct": 2.9,
+  "cum_thousand": 6196565.0,
+  "cum_ly": 5606837.0,
+  "cum_yoy_pct": 10.51,
+  "cross_check_ok": true
+ },
+ "2026-08": {
+  "revenue_thousand": 1004466.0,
+  "prev_month": 994362.0,
+  "yoy_month": 837265.0,
+  "yoy_pct": 1.01,
+  "cum_thousand": 7201031.0,
+  "cum_ly": 6444102.0,
+  "cum_yoy_pct": 11.74,
+  "cross_check_ok": true
+ }
+}

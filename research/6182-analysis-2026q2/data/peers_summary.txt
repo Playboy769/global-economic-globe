@@ -1,0 +1,6 @@
+6182.TWO mktcap=70034235392 price=112.0 trailingPE=466.6667 forwardPE=None PB=3.908704 revGrowth=0.074 grossMargins=0.23405 EV=79438036992
+6488.TWO mktcap=447992561664 price=937.0 trailingPE=45.573933 forwardPE=28.445719 PB=4.6316433 revGrowth=-0.05 grossMargins=0.21381001 EV=480655540224
+3532.TW mktcap=170653253632 price=440.0 trailingPE=338.46155 forwardPE=None PB=7.024378 revGrowth=0.206 grossMargins=0.08533 EV=176396353536
+3016.TW mktcap=33585090560 price=115.5 trailingPE=96.24999 forwardPE=None PB=6.4374094 revGrowth=0.371 grossMargins=0.15811 EV=31965120512
+4063.T mktcap=10563676536832 price=5820.0 trailingPE=23.024883 forwardPE=None PB=2.374288 revGrowth=0.054 grossMargins=0.33928 EV=9377688846336
+3436.T mktcap=1040978280448 price=2976.5 trailingPE=None forwardPE=None PB=1.8322053 revGrowth=0.104 grossMargins=0.09333 EV=1342881529856
