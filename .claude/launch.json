@@ -803,6 +803,18 @@
         "research/6488-analysis-2026q2"
       ],
       "port": 8190
+    },
+    {
+      "name": "3532-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8192",
+        "--directory",
+        "research/3532-analysis-2026q2"
+      ],
+      "port": 8192
     }
   ]
 }
