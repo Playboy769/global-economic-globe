@@ -1140,16 +1140,20 @@ Private Function GetFXToTWD(ticker As String) As Double
     GetFXToTWD = fx
 End Function
 
+' 2026-09-18: Yahoo first for EVERY market, so this panel and the RR4 page's
+' position log quote the same number - CalcPositions has always gone straight
+' to GetStockPrice. TW names used to be routed to the TWSE/TPEx OpenAPI feed
+' instead, which only publishes a close once the session has settled, so on
+' 2026-09-18 7610.TW read 1,770 here (the 9/17 close) against 1,945 on the
+' RR4 page. The OpenAPI feed stays as the fallback for names Yahoo can't
+' serve - that is what it was added for.
 Private Function GetStockPriceSafe(ticker As String) As Double
     GetStockPriceSafe = 0
     On Error Resume Next
-    Dim raw As String: raw = UCase(Trim(CStr(ticker)))
-    If InStr(raw, ".TW") > 0 Then
-        ' .TW / .TWO -> TWSE / TPEx OpenAPI (TaiwanPriceFetcher module)
-        GetStockPriceSafe = GetTWStockPrice(ticker)
-    Else
-        ' US stocks / ETFs / indices -> Yahoo Finance (Attach module)
-        GetStockPriceSafe = GetStockPrice(ticker)
+    GetStockPriceSafe = GetStockPrice(ticker)
+    If GetStockPriceSafe <= 0 Then
+        Dim raw As String: raw = UCase(Trim(CStr(ticker)))
+        If InStr(raw, ".TW") > 0 Then GetStockPriceSafe = GetTWStockPrice(ticker)
     End If
     On Error GoTo 0
 End Function

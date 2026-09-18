@@ -43,6 +43,7 @@ Private g_twseJson  As String
 Private g_tpexJson  As String
 Private g_twseReady As Boolean
 Private g_tpexReady As Boolean
+Private g_cacheDate As Date    ' 快取是哪一天抓的 (見 EnsureCacheFresh)
 
 ' ================================================================
 '  PUBLIC ENTRY POINT — 台股專用，非台股回傳 0
@@ -64,6 +65,19 @@ End Function
 Public Sub ClearPriceCache()
     g_twseJson = "":  g_twseReady = False
     g_tpexJson = "":  g_tpexReady = False
+    g_cacheDate = 0
+End Sub
+
+' 2026-09-18: 快取原本只有 ready 旗標、沒有日期，而上面那句「跨日後呼叫
+' ClearPriceCache」從來沒有任何呼叫點 —— 實際結果是活頁簿只要開著不關，
+' 台股報價就永遠停在開檔那天抓到的那份收盤行情。改成記下抓取日期，換日
+' 時自動失效。
+Private Sub EnsureCacheFresh()
+    If g_cacheDate <> Date Then
+        g_twseJson = "":  g_twseReady = False
+        g_tpexJson = "":  g_tpexReady = False
+        g_cacheDate = Date
+    End If
 End Sub
 
 ' ================================================================
@@ -72,6 +86,7 @@ End Sub
 ' ================================================================
 Private Function TWSEPrice(code As String) As Double
     On Error GoTo Bail
+    Call EnsureCacheFresh
     If Not g_twseReady Then
         Application.StatusBar = "TWSE: 抓取上市收盤行情..."
         g_twseJson = HttpGet(TWSE_URL)
@@ -92,6 +107,7 @@ End Function
 ' ================================================================
 Private Function TPExPrice(code As String) As Double
     On Error GoTo Bail
+    Call EnsureCacheFresh
     If Not g_tpexReady Then
         Application.StatusBar = "TPEx: 抓取上櫃收盤行情..."
         g_tpexJson = HttpGet(TPEX_URL)
