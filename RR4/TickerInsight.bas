@@ -72,6 +72,9 @@ Private Const COL_DATE   As Long = 2
 Private Const COL_TICKER As Long = 3
 Private Const COL_ACTION As Long = 4
 Private Const COL_SHARES As Long = 5
+Private Const COL_PRICE  As Long = 6
+Private Const COL_FEE    As Long = 7
+Private Const COL_TAX    As Long = 8
 Private Const COL_NETAMT As Long = 9
 Private Const COL_BROKER As Long = 14
 
@@ -582,6 +585,9 @@ Private Sub BuildFIFOHistory(ByVal ticker As String, _
         Dim tDate As Date: tDate = SafeDate(wsTr.cells(r, TrCol(wsTr, COL_DATE)).Value)
         Dim Action As String: Action = UCase(Trim(CStr(wsTr.cells(r, TrCol(wsTr, COL_ACTION)).Value)))
         Dim shares As Double: shares = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_SHARES)).Value)
+        Dim buyPx  As Double: buyPx = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_PRICE)).Value)
+        Dim buyFee As Double: buyFee = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_FEE)).Value)
+        Dim buyTax As Double: buyTax = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_TAX)).Value)
         Dim netAmt As Double: netAmt = SafeNum(wsTr.cells(r, TrCol(wsTr, COL_NETAMT)).Value)
         Dim broker As String: broker = Trim(CStr(wsTr.cells(r, TrCol(wsTr, COL_BROKER)).Value))
         If broker = "" Then broker = "Default"
@@ -593,8 +599,18 @@ Private Sub BuildFIFOHistory(ByVal ticker As String, _
 
         Select Case Action
             Case "BUY"
+                ' 2026-09-18 (owner's decision): cost basis is the ACQUISITION
+                ' cost - shares*price plus the BUY-side fee and tax - not
+                ' Net_Amount, which frmTransaction inflates with an ESTIMATE of
+                ' the future SELL-side fee/tax (and which the monthly-Buy merge
+                ' left mixing both conventions on some rows). Same rule as
+                ' PortfolioDashboard_v3.BuildPositions and
+                ' Attach.CalculateRealizedPnL. SELL below still divides
+                ' Net_Amount, where it is the cash actually received.
                 Dim cps As Double
-                If shares > 0 Then cps = netAmt / shares Else cps = 0
+                Dim acqCost As Double: acqCost = shares * buyPx + buyFee + buyTax
+                If shares * buyPx <= 0 Then acqCost = netAmt    ' row with no Price
+                If shares > 0 Then cps = acqCost / shares Else cps = 0
                 queue.Add Array(tDate, shares, cps)
 
             Case "SELL"

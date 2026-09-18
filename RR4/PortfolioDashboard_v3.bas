@@ -2366,6 +2366,9 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
         Dim Ticker As String: Ticker = CStr(data(i, 2))
         Dim Action As String: Action = CStr(data(i, 3))
         Dim shares As Double: shares = val(data(i, 4))
+        Dim price  As Double: price = val(data(i, 5))
+        Dim fee    As Double: fee = val(data(i, 6))
+        Dim tax    As Double: tax = val(data(i, 7))
         Dim netAmt As Double: netAmt = val(data(i, 8))
         Dim Sector As String: Sector = CStr(data(i, 9))
         Dim pTgt   As Double: pTgt = val(data(i, 10))
@@ -2378,6 +2381,13 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
         If broker = "" Then broker = "Default"
 
         If Ticker <> "" Then
+            ' The key keeps the ticker EXACTLY as logged, suffix and all.
+            ' Stripping .TW/.TWO here (tried 2026-09-18) looks harmless but
+            ' breaks the whole page: CalcPositions parses this key back out
+            ' and hands it to GetCurrencyType, which decides TWD vs USD
+            ' purely on the .TW suffix - so every TW position turned "USD"
+            ' and its market value got multiplied by USD/TWD, blowing up
+            ' NET EXPOSURE and every WT%. Same trap as TickerInsight v2.4.
             Dim posKey As String: posKey = Ticker & "|" & broker
             If Not dict.Exists(posKey) Then
                 dict.Add posKey, Array(0#, 0#, 0#, 0#, 0#, 0#, "", 0#, "", 0#, broker, New Collection)
@@ -2394,7 +2404,22 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
 
             Select Case UCase(Action)
                 Case "BUY"
-                    Dim cps As Double: If shares > 0 Then cps = netAmt / shares Else cps = 0
+                    ' 2026-09-18 (owner's decision): the cost basis is the
+                    ' ACQUISITION cost - shares*price plus the BUY-side fee
+                    ' and tax. It deliberately no longer reads Net_Amount,
+                    ' which frmTransaction inflates with an ESTIMATE of the
+                    ' future SELL-side fee and tax. That estimate pushed
+                    ' ENTRY PX above every fill price (3653 by 18.7/share,
+                    ' 7610 by 4.4) and understated UNRL PNL by the same
+                    ' amount. It is also the column the monthly-Buy merge
+                    ' made inconsistent: rows folding a pre-estimate fill
+                    ' into a post-estimate one (3374, 7610) carry a
+                    ' Net_Amount that matches neither convention.
+                    Dim buyCost As Double: buyCost = shares * price + fee + tax
+                    ' hand-typed row with no Price: fall back to Net_Amount
+                    ' rather than costing the lot at (almost) zero
+                    If shares * price <= 0 Then buyCost = netAmt
+                    Dim cps As Double: If shares > 0 Then cps = buyCost / shares Else cps = 0
                     Dim lotDateSer As Long: lotDateSer = IIf(IsDate(tDate), CLng(CDate(tDate)), 0)
                     lots.Add Array(lotDateSer, shares, cps)
 

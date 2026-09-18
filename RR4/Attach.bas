@@ -902,6 +902,9 @@ Sub CalculateRealizedPnL()
         Dim Ticker As String: Ticker = UCase(Trim(wsTrans.Cells(rr, t0 + 3).Value))
         Dim Action As String: Action = UCase(Trim(wsTrans.Cells(rr, t0 + 4).Value))
         Dim shares As Double: shares = Val(wsTrans.Cells(rr, t0 + 5).Value)
+        Dim buyPx  As Double: buyPx = Val(wsTrans.Cells(rr, t0 + 6).Value)
+        Dim buyFee As Double: buyFee = Val(wsTrans.Cells(rr, t0 + 7).Value)
+        Dim buyTax As Double: buyTax = Val(wsTrans.Cells(rr, t0 + 8).Value)
         Dim NetAmount As Double: NetAmount = Val(wsTrans.Cells(rr, t0 + 9).Value)
         Dim strat As String: strat = CStr(wsTrans.Cells(rr, t0 + 12).Value)
         Dim broker As String: broker = Trim(CStr(wsTrans.Cells(rr, t0 + 14).Value))
@@ -925,8 +928,20 @@ Sub CalculateRealizedPnL()
 
             Select Case Action
             Case "BUY"
+                ' 2026-09-18 (owner's decision): the lot's cost basis is the
+                ' ACQUISITION cost - shares*price plus the BUY-side fee and
+                ' tax - not Net_Amount, which frmTransaction inflates with an
+                ' ESTIMATE of the future SELL-side fee/tax. Net_Amount also
+                ' mixes conventions on rows where the monthly-Buy merge folded
+                ' a pre-estimate fill into a post-estimate one. Kept identical
+                ' to PortfolioDashboard_v3.BuildPositions and
+                ' TickerInsight.BuildFIFOHistory so the three FIFO walkers
+                ' agree - the whole point of the 2026-08-19 unification.
+                ' SELL still uses Net_Amount: there it IS the cash received.
                 Dim costPerShare As Double
-                costPerShare = NetAmount / shares
+                Dim acqCost As Double: acqCost = shares * buyPx + buyFee + buyTax
+                If shares * buyPx <= 0 Then acqCost = NetAmount   ' row with no Price
+                costPerShare = acqCost / shares
                 dictLots(posKey).Add Array(shares, costPerShare)
 
             Case "ADJUSTCOST"
