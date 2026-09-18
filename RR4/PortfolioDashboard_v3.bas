@@ -2858,16 +2858,46 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
 
     ' ---- per-holding average correlation + portfolio average ----------
     Dim avgCorr() As Double: ReDim avgCorr(0 To tickerCount - 1)
-    Dim sumAll As Double, nPairs As Long
     For i = 0 To tickerCount - 1
         Dim sRow As Double: sRow = 0
         For j = 0 To tickerCount - 1
             If i <> j Then sRow = sRow + corrMatrix(i, j)
-            If j > i Then sumAll = sumAll + corrMatrix(i, j): nPairs = nPairs + 1
         Next j
         If tickerCount > 1 Then avgCorr(i) = sRow / (tickerCount - 1)
     Next i
-    Dim portAvg As Double: If nPairs > 0 Then portAvg = sumAll / nPairs
+
+    ' 2026-09-18: the portfolio figure is WEIGHT-averaged, not a plain mean.
+    ' A plain mean lets a 0.2%-of-book holding move the headline number as
+    ' much as a 20% one, so it read "well spread" while the weight actually
+    ' sat in a few correlated names. Each pair is weighted by w_i*w_j, the
+    ' same product that drives portfolio variance:
+    '     sum(w_i*w_j*corr_ij) / sum(w_i*w_j)   over i<j
+    ' Weights come from the RR4 page's WT% column (summed across brokers),
+    ' so the number matches the weights on screen. With no usable weights
+    ' (RR4 page not built yet) it falls back to equal weights, which makes
+    ' this identical to the old plain mean.
+    Dim wmap As Object: Set wmap = RR4WeightMap()
+    Dim wArr() As Double: ReDim wArr(0 To tickerCount - 1)
+    Dim wSum As Double: wSum = 0
+    For i = 0 To tickerCount - 1
+        Dim wk As String: wk = UCase(Trim(tickers(i)))
+        If wmap.Exists(wk) Then wArr(i) = wmap(wk) Else wArr(i) = 0
+        If wArr(i) < 0 Then wArr(i) = 0              ' no shorts on this page
+        wSum = wSum + wArr(i)
+    Next i
+    If wSum <= 0 Then
+        For i = 0 To tickerCount - 1: wArr(i) = 1: Next i
+    End If
+
+    Dim wNum As Double, wDen As Double
+    For i = 0 To tickerCount - 1
+        For j = i + 1 To tickerCount - 1
+            Dim pw As Double: pw = wArr(i) * wArr(j)
+            wNum = wNum + pw * corrMatrix(i, j)
+            wDen = wDen + pw
+        Next j
+    Next i
+    Dim portAvg As Double: If wDen > 0 Then portAvg = wNum / wDen
 
     ' ---- matrix --------------------------------------------------
     Dim HDR As Long: HDR = 3
@@ -2998,7 +3028,7 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
         .Font.Size = 9
     End With
     r = r + 1
-    wsC.cells(r, 1).Value = "PORTFOLIO AVG PAIRWISE CORR"
+    wsC.cells(r, 1).Value = "PORTFOLIO WEIGHT-AVG PAIRWISE CORR"
     wsC.cells(r, 1).Font.Color = RGB(150, 150, 150)
     With wsC.cells(r, 4)
         .Value = portAvg
@@ -3055,7 +3085,7 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
         "HOW THESE ARE COMPUTED", _
         "CORRELATION   = Pearson correlation of daily LOG returns over the dates every holding has in common (" & retCount & " returns)", _
         "AVG CORR      = mean of a holding's correlations with the other holdings   - lowest (green) diversifies most, highest (red) is the most crowded", _
-        "PORTFOLIO AVG = mean of all pairwise correlations (each pair once)   - >= 0.5 crowded, <= 0.2 well spread", _
+        "PORTFOLIO WEIGHT-AVG = sum(w_i*w_j*corr_ij) / sum(w_i*w_j) over each pair once, w = WT% on the RR4 page   - >= 0.5 crowded, <= 0.2 well spread", _
         "PAIRS         = the same matrix ranked: top 5 pairs that move together, bottom 5 that move against each other")
     For k = 0 To UBound(notes)
         With wsC.cells(r + k, 1)
@@ -3072,6 +3102,25 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
     Call NavAdd(wsC, "HC")
     wsC.Activate
 End Sub
+
+' Ticker (as logged, upper-cased) -> its WT% on the RR4 page's position log,
+' summed over brokers because that page keeps one row per Ticker|Broker while
+' the correlation matrix has one row per ticker. Empty when the page has no
+' positions on it yet - callers fall back to equal weights.
+Private Function RR4WeightMap() As Object
+    Dim m As Object: Set m = CreateObject("Scripting.Dictionary")
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Sheets(SH_PORT): On Error GoTo 0
+    If Not ws Is Nothing Then
+        Dim lastR As Long: lastR = LastPositionRow(ws)
+        Dim r As Long
+        For r = RR4_POS_FIRST To lastR
+            Dim tk As String: tk = UCase(Trim(CellStr(ws.cells(r, RR4_LEFT + 1).Value)))
+            If tk <> "" Then m(tk) = m(tk) + NumOr0(ws.cells(r, RR4_LEFT + 12).Value)
+        Next r
+    End If
+    Set RR4WeightMap = m
+End Function
 
 ' "3653 x 7610    0.82" with the value in the heat colour
 Private Sub CorrPairLine(ws As Worksheet, r As Long, c As Long, t1 As String, t2 As String, v As Double)
