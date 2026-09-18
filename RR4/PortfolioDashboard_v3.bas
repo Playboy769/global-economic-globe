@@ -1111,7 +1111,7 @@ Private Sub WriteLogLine(ws As Worksheet, r As Long, lineTag As String, tk As St
 End Sub
 
 ' "HELD 9/7 > 9/18 (11d)" for a sell that consumed one lot; when it ate
-' several lots bought on different days: "HELD 8/7~8/12 > 9/10 (avg 29d)",
+' several lots bought on different days: "HELD 8/7-8/12 > 9/10 (avg 29d)",
 ' days weighted by the shares taken from each lot. The entry date carries
 ' the year only when it differs from the exit's.
 Private Function SellHeldText(ByVal firstIn As Long, ByVal lastIn As Long, _
@@ -1123,7 +1123,7 @@ Private Function SellHeldText(ByVal firstIn As Long, ByVal lastIn As Long, _
         If Year(CDate(firstIn)) <> Year(exitD) Then fmtIn = "yyyy/m/d"
     End If
     Dim s As String: s = "HELD " & Format(CDate(firstIn), fmtIn)
-    If lastIn <> firstIn Then s = s & "~" & Format(CDate(lastIn), fmtIn)
+    If lastIn <> firstIn Then s = s & "-" & Format(CDate(lastIn), fmtIn)
     If IsDate(exitV) Then s = s & " > " & Format(exitD, "m/d")
     If lastIn <> firstIn Then
         s = s & " (avg " & Format(avgDays, "0") & "d)"
