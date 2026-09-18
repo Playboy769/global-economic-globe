@@ -322,16 +322,21 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     （RR4 深橘）並重新套 AutoFilter 到 `B5:O<last>`——注意 `Range.AutoFilter` 是切換式，套之前要先 `AutoFilterMode = False`
     否則會把它關掉。欄寬整欄插入自然保留，A 欄寬 3。實測遷移＋UP 後總值／8 持倉／Realized／HistoryLog 全部不變，
     模擬表單寫入落在第 64 列 B 欄起、整列刪除後復原。
-  - **Transactions 買單按月合併（2026-09-15，使用者決定「只合併 Buy」）**：同一檔（2330＝2330.TW）同一個月的 Buy 只留一列——
-  股數／手續費／稅／Net_Amount 加總、Price 改股數加權平均、Date 與 Transaction_ID 保留該月第一筆、Sector／Target／Strategy／Beta／
-  Broker 保留既有列的值。ADD 表單（`frmTransaction_Code.txt`）遇 Buy 先 `Attach.FindMonthlyBuyRow`，命中就 `MergeBuyIntoRow`
-  併入不新增列，沒命中才 append；**Sell 刻意維持逐筆**——Realized 每個出場一列＋以「代號｜出場日」掛的手打 Caption 會被
-  合併毀掉，且同月「先用舊庫存賣→月中買→月底再賣」合併後賣列會被搬到月初而找不到 FIFO 庫存。一次性回溯 `Attach.MergeMonthlyBuys`
-  已跑過（65 列→40 列，Realized 總額 41,721.92→41,630.98，差額 −90.94 全部是 3532 未出清部位的已實現↔未實現搬動，
-  總損益不變；已出清標的逐筆 FIFO 損益會重新分配但合計不變，例 NBIS 8/14 那筆 +353→+176、9/9 −17→+160）。
-  ⚠️ **`MergeBuyIntoRow` 一律先把舊值全部讀完再寫**：實際有一列 Net_Amount 是手打公式 `=G*F`，先寫股數再讀 Net 會讓公式
-  用新股數重算、多加一次毛額（3532 曾因此變 59,733 而非 49,358）；合併後該列公式變成值。FIFO（`CalculateRealizedPnL`）
-  是照工作表列序、不是照日期跑的，這點沒改。
+  - ⛔ **Transactions 買單按月合併——2026-09-15 加入、2026-09-18 撤除並還原逐筆明細（使用者決定）**。**每筆成交一律獨立
+  一列，不要再加回任何形式的合併。** 它曾讓同一檔同月的 Buy 只留一列（股數加總、Price 改加權均價、Date 留該月第一筆），
+  一次性回溯 `MergeMonthlyBuys` 直接 `Rows.Delete` 掉 25 列，逐筆進場紀錄因此永久消失，且下游連帶壞掉：DAILY LOG 因
+  Date 不再是今天而漏掉當日併入的買單；`Net_Amount` 在跨越「預估賣出費稅」功能上線前後的合併列上混了兩種慣例；3374 那筆
+  9/10 賣出被配到加權均價 454.99 而非實際進場的 468.03。`frmTransaction` 的合併呼叫、`Attach` 的 `BuyKeyTicker`／
+  `FindMonthlyBuyRow`／`MergeBuyIntoRow`／`MergeMonthlyBuys`、以及為補救 DAILY LOG 加的隱藏欄 15-18 全數刪除（`8cf4ff6`）。
+  **還原過程**：`Portfolio\backup-pre-valuation-20260915-1349.xlsm`（合併前 65 列）原序寫回，接上備份之後才有的交易。
+  其中**備份時間點之後、合併執行之前**新增的 2 筆買入被合併吸收、在任何地方都沒有獨立紀錄，是從合併列的總額反推重建的——
+  3374.TWO 50 股 @438（手續費 2）與 7610.TW 15 股 @1850（手續費 3），兩筆 `Net_Amount` 都吻合到個位數；**日期
+  2026/9/15 是推定**（必在 9 月、必在備份 13:49 之後），Transaction_ID 用 `T-20260915-1355xx`。還原後 70 列；Realized
+  71,145→70,297，差額 −848 全數是 3374 那筆 9/10 賣出改配到 9/7 @468.03 的原始買入（未實現同步 +848，總損益不變）。
+  合併前後的明細都留有 CSV：`Portfolio\transactions-BACKUP-20260915.csv`（65 列原始）、`transactions-CURRENT-merged-*.csv`
+  （43 列合併態），外加 `…BEFORE-UNMERGE-*.xlsm` 整本備份。FIFO（`CalculateRealizedPnL`）照工作表列序、不照日期跑：
+  **補登過去日期的交易要插在正確的時序位置**，不能直接接在表尾（現有一例：9/14 補登的 9/9 3532 買入排在 9/14 列之後，
+  是還原時照原樣保留的）。
   - **成本基礎＝取得成本，不是 `Net_Amount`（2026-09-18，使用者決定）**：三處走 FIFO 的地方
     一律用 **`(股數×價格 + 買入手續費 + 買入稅) ÷ 股數`**——`PortfolioDashboard_v3.BuildPositions`
     （RR4 頁 ENTRY PX／UNRL PNL／%CHG）、`Attach.CalculateRealizedPnL`（Realized 頁）、
@@ -340,19 +345,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     ⚠️ **不要再拿 `Net_Amount` 當買入成本**：`frmTransaction` 的 `tNetAmount` 把「還沒發生的
     **預估賣出**手續費與證交稅」也加進去（`+ estSellFee + estSellTax`，表單的 MsgBox 自己有寫
     「買入成本已包含預估賣出費稅」），所以均價一律高於成交價——台股證交稅 0.3% 讓 3653 每股
-    虛增 18.7 元、7610 虛增 4.4 元，UNRL PNL 同步被低估。它同時也是**月合併把新舊慣例混在一起
-    的那一欄**：3374 那列 `net−gross` 只有 67，依公式應為約 161，是估算費稅功能上線前後的兩筆
-    被併進同一列，兩種慣例都對不上（改用取得成本後就不受它影響）。實測 3374 455.539→454.991、
-    7610 1952.614→1948.443、3653 5875.7→5857.6、8046 1187.727→1184.061，各等於成交均價加上
-    每股買入手續費；Realized 總額 69,806→71,145（成本降低使已實現獲利變大），權重不受影響。
-  - **DAILY LOG 靠 Transactions 隱藏欄 15-18 才看得到當日合併的買入（2026-09-18）**：月合併把
-    「該月第一筆的日期」留在 Date 欄，而 `DrawDailyLog` 只認 Date 欄等於今天的列，於是今天買進、
-    被併進既有月列的那筆會整個從 DAILY LOG 消失（賣單逐筆不合併，所以只有買單受害）。
-    新增 `TR_LASTFILL_DATE/SHARES/PRICE/AMT`（頁面欄 15-18，實體 P:S，原本空白）記錄「該列今天的
-    增量」：`MergeBuyIntoRow` 寫入當次 fill 的股數／加權均價／淨額，同一天多次併入會累加，換日
-    自動重置。`DrawDailyLog` 因此改成「Date 是今天，**或** LastFillDate 是今天」都算，並對後者
-    顯示增量而非整列累積值。⚠️ **這四欄刻意不併進 `TR_NCOL`**：`DrawTransactionsHeader` 的表頭
-    與 AutoFilter 範圍都靠 `1..TR_NCOL` 走訪，`ClearAllData` 則另外明確清掉 15-18。
+    虛增 18.7 元、7610 虛增 4.4 元，UNRL PNL 同步被低估。另外，`Net_Amount` 的「含預估賣出費稅」
+    慣例是後來才加的，較早的列沒有這段加成，所以不同時期的列 `net−gross` 口徑本來就不一致——改用
+    取得成本後就不受它影響。實測（當時仍是合併態）3374 455.539→454.991、7610 1952.614→1948.443、
+    3653 5875.7→5857.6、8046 1187.727→1184.061，各等於成交均價加上每股買入手續費；權重不受影響。
   - ⚠️ **`BuildPositions` 的 `posKey` 不可剝掉 `.TW/.TWO` 後綴**（2026-09-18 踩過）：看起來只是
     正規化，實際會炸掉整頁——`CalcPositions` 會把這個 key 拆回 ticker 交給 `GetCurrencyType`，
     而它**純靠 `.TW` 後綴**判斷台股／美股，後綴一剝所有台股都變「USD」、市值全部乘上 USD/TWD，
