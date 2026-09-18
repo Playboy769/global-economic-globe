@@ -945,50 +945,28 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
     Dim lastR As Long: lastR = TrLastRow(wsTr)
     Dim tc As Long: tc = NavLeft(wsTr)             ' Transactions page column n -> tc + n
     Dim tRows() As Long: ReDim tRows(1 To IIf(lastR > 1, lastR, 1))
-    Dim useLF() As Boolean: ReDim useLF(1 To IIf(lastR > 1, lastR, 1))
     Dim cnt As Long
 
-    ' pass 1: today's rows, and today's net shares per ticker
-    ' A row counts as "today" either because its own Date is today (a plain
-    ' new row, or a Sell - sells are never merged) or because its
-    ' TR_LASTFILL_DATE is today (a monthly Buy row that already existed
-    ' before today but took a fresh fill today - see Attach.MergeBuyIntoRow;
-    ' its own Date column keeps the month's earliest fill and no longer
-    ' says "today", so that column alone can't be trusted here).
+    ' pass 1: today's rows, and today's net shares per ticker.
+    ' Every fill is its own row (the 2026-09-15 monthly Buy consolidation was
+    ' withdrawn on 2026-09-18), so the Date column alone identifies them.
     Dim todayNet As Object: Set todayNet = CreateObject("Scripting.Dictionary")
     Dim r As Long, act As String, tk As String, sh As Double
     For r = TrHdrRow(wsTr) + 1 To lastR
         Dim dv As Variant: dv = wsTr.cells(r, tc + 2).Value
-        Dim isToday As Boolean: isToday = False
-        Dim lastFillToday As Boolean: lastFillToday = False
         If IsDate(dv) Then
-            If Int(CDate(dv)) = Date Then isToday = True
-        End If
-        If Not isToday Then
-            Dim lfd As Variant: lfd = wsTr.cells(r, tc + TR_LASTFILL_DATE).Value
-            If IsDate(lfd) Then
-                If Int(CDate(lfd)) = Date Then
-                    isToday = True
-                    lastFillToday = True
-                End If
-            End If
-        End If
-        If isToday Then
-            act = UCase(CellStr(wsTr.cells(r, tc + 4).Value))
-            If act = "BUY" Or act = "SELL" Then
-                cnt = cnt + 1
-                tRows(cnt) = r
-                useLF(cnt) = lastFillToday
-                tk = UCase(CellStr(wsTr.cells(r, tc + 3).Value))
-                If lastFillToday Then
-                    sh = NumOr0(wsTr.cells(r, tc + TR_LASTFILL_SHARES).Value)
-                Else
+            If Int(CDate(dv)) = Date Then
+                act = UCase(CellStr(wsTr.cells(r, tc + 4).Value))
+                If act = "BUY" Or act = "SELL" Then
+                    cnt = cnt + 1
+                    tRows(cnt) = r
+                    tk = UCase(CellStr(wsTr.cells(r, tc + 3).Value))
                     sh = NumOr0(wsTr.cells(r, tc + 5).Value)
-                End If
-                If act = "BUY" Then
-                    todayNet(tk) = todayNet(tk) + sh
-                Else
-                    todayNet(tk) = todayNet(tk) - sh
+                    If act = "BUY" Then
+                        todayNet(tk) = todayNet(tk) + sh
+                    Else
+                        todayNet(tk) = todayNet(tk) - sh
+                    End If
                 End If
             End If
         End If
@@ -1000,16 +978,9 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
         r = tRows(k)
         act = UCase(CellStr(wsTr.cells(r, tc + 4).Value))
         tk = UCase(CellStr(wsTr.cells(r, tc + 3).Value))
-        Dim px As Double, amt As Double
-        If useLF(k) Then
-            sh = NumOr0(wsTr.cells(r, tc + TR_LASTFILL_SHARES).Value)
-            px = NumOr0(wsTr.cells(r, tc + TR_LASTFILL_PRICE).Value)
-            amt = NumOr0(wsTr.cells(r, tc + TR_LASTFILL_AMT).Value)
-        Else
-            sh = NumOr0(wsTr.cells(r, tc + 5).Value)
-            px = NumOr0(wsTr.cells(r, tc + 6).Value)
-            amt = NumOr0(wsTr.cells(r, tc + 9).Value)
-        End If
+        sh = NumOr0(wsTr.cells(r, tc + 5).Value)
+        Dim px As Double: px = NumOr0(wsTr.cells(r, tc + 6).Value)
+        Dim amt As Double: amt = NumOr0(wsTr.cells(r, tc + 9).Value)
         Dim fx As Double
         If GetCurrencyType(CStr(tk)) = "USD" Then fx = exRate Else fx = 1
         Dim amtTWD As Double: amtTWD = amt * fx

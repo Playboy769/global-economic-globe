@@ -36,18 +36,10 @@ Public Const REAL_CAP_COL  As Long = 11   ' hand-typed Caption (page column K)
 Public Const REAL_LOAN_COL As Long = 12   ' hand-typed LOAN Distribution header (page column L)
 ' Transactions page (page coordinates; see TrHdrRow / TrCol below)
 Public Const TR_NCOL       As Long = 14   ' A Transaction_ID .. N Broker
-' Hidden columns 15-18 past the visible table (2026-09-18): today's
-' incremental fill on a row, kept separately from the row's own Date/
-' Shares/Price/Net_Amount because MergeBuyIntoRow below collapses those to
-' the month's cumulative figures. DrawDailyLog reads these to still show a
-' fill that landed on an already-merged monthly Buy row. Not part of
-' TR_NCOL: DrawTransactionsHeader's header formatting and AutoFilter range,
-' and ClearAllData's visible-column wipe, must not touch them by walking
-' 1..TR_NCOL (ClearAllData clears 15..18 explicitly instead).
-Public Const TR_LASTFILL_DATE   As Long = 15
-Public Const TR_LASTFILL_SHARES As Long = 16
-Public Const TR_LASTFILL_PRICE  As Long = 17
-Public Const TR_LASTFILL_AMT    As Long = 18
+' (Hidden columns 15-18 held a row's "today's incremental fill" while the
+' monthly Buy consolidation existed - removed with it on 2026-09-18. Every
+' fill is its own row again, so the Date column alone identifies today's
+' trades and DrawDailyLog needs no side channel.)
 ' HistoryLog page (page coordinates; see HistHdrRow / HistCol below)
 Public Const HIST_NCOL     As Long = 13   ' A Date .. M YTD Ret% (SOX)
 
@@ -614,147 +606,19 @@ Public Function TrLastRow(ByVal ws As Worksheet) As Long
 End Function
 
 ' ================================================================
-' Monthly BUY consolidation (2026-09-15, user decision: buys only).
-' A position is entered in several fills; the log keeps ONE Buy row per
-' ticker per calendar month: shares / fee / tax / net amount add up, the
-' price becomes the share-weighted average, the date and Transaction_ID
-' stay those of the month's first fill, and the descriptive columns
-' (Sector / Target / Strategy / Beta / Broker) keep the existing row's
-' values. Sells are deliberately left one row per trade: the Realized page
-' keys its hand-typed captions by ticker + exit date, and merging sells
-' would also move exits earlier than the buys they consumed.
-' 2330 and 2330.TW are the same ticker (suffix ignored), as in FIFO.
+' Monthly BUY consolidation - REMOVED 2026-09-18 (owner's decision).
+' Added 2026-09-15, it kept one Buy row per ticker per calendar month.
+' It was withdrawn because it destroys the per-fill record with no way
+' back: the one-off backfill DELETED 25 rows outright, and on every
+' surviving row Date became the month's first fill and Price a weighted
+' average. Downstream that broke the DAILY LOG (Date no longer reads
+' "today", so a fill merged into an existing month row vanished from it)
+' and left Net_Amount mixing the pre- and post-estimate fee conventions
+' on any row that folded fills from both eras.
+' Gone with it: BuyKeyTicker, FindMonthlyBuyRow, MergeBuyIntoRow and the
+' one-off MergeMonthlyBuys. frmTransaction appends every fill again.
+' Do not reintroduce this without a per-fill audit trail.
 ' ================================================================
-Private Function BuyKeyTicker(ByVal s As String) As String
-    s = UCase$(Trim$(s))
-    If Right$(s, 4) = ".TWO" Then s = Left$(s, Len(s) - 4)
-    If Right$(s, 3) = ".TW" Then s = Left$(s, Len(s) - 3)
-    BuyKeyTicker = s
-End Function
-
-' Row of the existing Buy for this ticker in the month of tDate, 0 if none.
-Public Function FindMonthlyBuyRow(ByVal ws As Worksheet, ByVal ticker As String, ByVal tDate As Date) As Long
-    Dim r As Long, key As String: key = BuyKeyTicker(ticker)
-    For r = TrHdrRow(ws) + 1 To TrLastRow(ws)
-        If UCase$(Trim$(CStr(ws.Cells(r, TrCol(ws, 4)).Value))) = "BUY" Then
-            If BuyKeyTicker(CStr(ws.Cells(r, TrCol(ws, 3)).Value)) = key Then
-                If IsDate(ws.Cells(r, TrCol(ws, 2)).Value) Then
-                    Dim d As Date: d = CDate(ws.Cells(r, TrCol(ws, 2)).Value)
-                    If Year(d) = Year(tDate) And Month(d) = Month(tDate) Then
-                        FindMonthlyBuyRow = r
-                        Exit Function
-                    End If
-                End If
-            End If
-        End If
-    Next r
-End Function
-
-' Add one fill into an existing Buy row (see the block comment above).
-' Every old value is read BEFORE anything is written: a hand-typed
-' Net_Amount formula (=Shares*Price was found on a live row) would otherwise
-' recalculate from the new share count before it is read and double up.
-' The row's formulas become plain values after the merge.
-Public Sub MergeBuyIntoRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tDate As Date, ByVal shares As Double, _
-                           ByVal price As Double, ByVal fee As Double, ByVal tax As Double, ByVal net As Double)
-    Dim oldSh As Double, oldPx As Double, oldFee As Double, oldTax As Double, oldNet As Double
-    oldSh = val(ws.Cells(r, TrCol(ws, 5)).Value)
-    oldPx = val(ws.Cells(r, TrCol(ws, 6)).Value)
-    oldFee = val(ws.Cells(r, TrCol(ws, 7)).Value)
-    oldTax = val(ws.Cells(r, TrCol(ws, 8)).Value)
-    oldNet = val(ws.Cells(r, TrCol(ws, 9)).Value)
-    Dim oldDate As Variant: oldDate = ws.Cells(r, TrCol(ws, 2)).Value
-    If oldSh + shares <= 0 Then Exit Sub
-    ws.Cells(r, TrCol(ws, 5)).Value = oldSh + shares
-    ws.Cells(r, TrCol(ws, 6)).Value = (oldSh * oldPx + shares * price) / (oldSh + shares)
-    ws.Cells(r, TrCol(ws, 7)).Value = oldFee + fee
-    ws.Cells(r, TrCol(ws, 8)).Value = oldTax + tax
-    ws.Cells(r, TrCol(ws, 9)).Value = oldNet + net
-    ' the row keeps the month's earliest fill date
-    If IsDate(oldDate) Then
-        If tDate < CDate(oldDate) Then ws.Cells(r, TrCol(ws, 2)).Value = tDate
-    End If
-
-    ' 2026-09-18: record today's increment separately (see TR_LASTFILL_*
-    ' above) so DrawDailyLog can still show this fill even though the merge
-    ' above just overwrote the row's own Date/Shares/Price with the whole
-    ' month's cumulative figures. Accumulates if this row already took a
-    ' fill earlier today; resets when the last-touched date isn't today.
-    Dim lfDate As Variant: lfDate = ws.Cells(r, TrCol(ws, TR_LASTFILL_DATE)).Value
-    Dim lfSh As Double, lfPx As Double, lfAmt As Double
-    If IsDate(lfDate) Then
-        If Int(CDate(lfDate)) = Int(tDate) Then
-            lfSh = val(ws.Cells(r, TrCol(ws, TR_LASTFILL_SHARES)).Value)
-            lfPx = val(ws.Cells(r, TrCol(ws, TR_LASTFILL_PRICE)).Value)
-            lfAmt = val(ws.Cells(r, TrCol(ws, TR_LASTFILL_AMT)).Value)
-        End If
-    End If
-    Dim newLfSh As Double: newLfSh = lfSh + shares
-    Dim newLfPx As Double
-    If newLfSh > 0 Then newLfPx = (lfSh * lfPx + shares * price) / newLfSh Else newLfPx = price
-    ws.Cells(r, TrCol(ws, TR_LASTFILL_DATE)).Value = Int(tDate)
-    ws.Cells(r, TrCol(ws, TR_LASTFILL_SHARES)).Value = newLfSh
-    ws.Cells(r, TrCol(ws, TR_LASTFILL_PRICE)).Value = newLfPx
-    ws.Cells(r, TrCol(ws, TR_LASTFILL_AMT)).Value = lfAmt + net
-End Sub
-
-' One-off backfill: fold every existing Buy into its month row, oldest fill
-' first, then delete the absorbed rows. Safe to re-run (nothing left to fold
-' returns 0). Returns the number of rows removed.
-Public Function MergeMonthlyBuys() As Long
-    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("Transactions")
-    Dim prevEv As Boolean: prevEv = Application.EnableEvents
-    Application.EnableEvents = False
-    Dim r0 As Long: r0 = TrHdrRow(ws)
-    Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary")
-    Dim kill As Collection: Set kill = New Collection
-    ' pass 1: visit rows in date order (stable on ties) so the survivor is the earliest fill
-    Dim n As Long: n = TrLastRow(ws) - r0
-    If n < 2 Then GoTo Fin
-    Dim idx() As Long, dts() As Double, i As Long, j As Long, t As Long
-    ReDim idx(1 To n): ReDim dts(1 To n)
-    For i = 1 To n
-        idx(i) = r0 + i
-        If IsDate(ws.Cells(r0 + i, TrCol(ws, 2)).Value) Then dts(i) = CDbl(CDate(ws.Cells(r0 + i, TrCol(ws, 2)).Value)) Else dts(i) = 0
-    Next i
-    For i = 2 To n                                  ' insertion sort by date, keeps entry order on ties
-        t = idx(i): j = i - 1
-        Do While j >= 1
-            If dts(idx(j) - r0) <= dts(t - r0) Then Exit Do
-            idx(j + 1) = idx(j): j = j - 1
-        Loop
-        idx(j + 1) = t
-    Next i
-    For i = 1 To n
-        Dim r As Long: r = idx(i)
-        If UCase$(Trim$(CStr(ws.Cells(r, TrCol(ws, 4)).Value))) = "BUY" And dts(r - r0) > 0 Then
-            Dim d As Date: d = CDate(ws.Cells(r, TrCol(ws, 2)).Value)
-            Dim key As String: key = BuyKeyTicker(CStr(ws.Cells(r, TrCol(ws, 3)).Value)) & "|" & Format$(d, "yyyymm")
-            If seen.Exists(key) Then
-                Call MergeBuyIntoRow(ws, CLng(seen(key)), d, val(ws.Cells(r, TrCol(ws, 5)).Value), _
-                                     val(ws.Cells(r, TrCol(ws, 6)).Value), val(ws.Cells(r, TrCol(ws, 7)).Value), _
-                                     val(ws.Cells(r, TrCol(ws, 8)).Value), val(ws.Cells(r, TrCol(ws, 9)).Value))
-                kill.Add r
-            Else
-                seen.Add key, r
-            End If
-        End If
-    Next i
-    ' pass 2: delete absorbed rows bottom-up so the remaining row numbers stay valid
-    Dim rows() As Long
-    If kill.count = 0 Then GoTo Fin
-    ReDim rows(1 To kill.count)
-    For i = 1 To kill.count: rows(i) = kill(i): Next i
-    For i = 1 To kill.count - 1
-        For j = i + 1 To kill.count
-            If rows(j) > rows(i) Then t = rows(i): rows(i) = rows(j): rows(j) = t
-        Next j
-    Next i
-    For i = 1 To kill.count: ws.Rows(rows(i)).Delete: Next i
-    MergeMonthlyBuys = kill.count
-Fin:
-    Application.EnableEvents = prevEv
-End Function
 
 ' ================================================================
 ' HistoryLog page geometry (2026-09-13): page code H carries the nav bar
@@ -1099,12 +963,8 @@ Sub ClearAllData()
     Dim LR As Long
     If Not wsTrans Is Nothing Then
         LR = TrLastRow(wsTrans)
-        If LR > TrHdrRow(wsTrans) Then
-            wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, 1)), _
-                          wsTrans.Cells(LR, TrCol(wsTrans, TR_NCOL))).ClearContents
-            wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, TR_LASTFILL_DATE)), _
-                          wsTrans.Cells(LR, TrCol(wsTrans, TR_LASTFILL_AMT))).ClearContents
-        End If
+        If LR > TrHdrRow(wsTrans) Then wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, 1)), _
+                                                     wsTrans.Cells(LR, TrCol(wsTrans, TR_NCOL))).ClearContents
     End If
     If Not wsReal Is Nothing Then
         ' page A:K (the captions go with their trades); header row and bar stay

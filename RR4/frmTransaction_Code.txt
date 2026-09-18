@@ -166,15 +166,13 @@ Private Sub btnSave_Click()
         tNetAmount = 0
     End If
     
-    ' 2026-09-15: one Buy row per ticker per month - a later fill in the same
-    ' month folds into the existing row (Attach.MergeBuyIntoRow) instead of
-    ' appending. Sells stay one row per trade.
-    Dim mergeRow As Long
-    If Me.cmbAction.Value = "Buy" Then mergeRow = FindMonthlyBuyRow(wsLog, UCase(Trim(Me.txtTicker.Value)), tDate)
-    If mergeRow > 0 Then
-        Call MergeBuyIntoRow(wsLog, mergeRow, tDate, tShares, tPrice, tFee, tTax, tNetAmount)
-        GoTo Saved
-    End If
+    ' 2026-09-18: the monthly Buy consolidation added on 2026-09-15 is GONE -
+    ' every fill is its own row again (owner's decision). It destroyed the
+    ' per-fill record: the one-off backfill deleted 25 rows, and each surviving
+    ' row's Date/Price became the month's first fill / weighted average, which
+    ' then broke the DAILY LOG (Date no longer says "today") and left
+    ' Net_Amount mixing pre- and post-estimate fee conventions on merged rows.
+    ' Do not reintroduce it.
 
     With wsLog
         .cells(NextRow, tc + 1).Value = "T-" & Format(Now, "yyyymmdd-HHmmss")
@@ -192,8 +190,7 @@ Private Sub btnSave_Click()
         .cells(NextRow, tc + 13).Value = val(Me.txtBeta.Value)
         .cells(NextRow, tc + 14).Value = Me.cmbBroker.Value  ' ★ 新增券商欄
     End With
-    
-Saved:
+
     MsgBox "交易儲存成功！(買入成本已包含預估賣出費稅)", vbInformation
     
     Me.txtTicker.Value = ""
