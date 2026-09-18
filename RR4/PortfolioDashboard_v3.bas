@@ -1366,15 +1366,21 @@ Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
     Dim keyCol As Long, ord As Long, desc As String, known As Boolean
     known = True
     Select Case code
+        ' 2026-09-18 fix: these were hardcoded as page-relative offsets (as if
+        ' RR4_LEFT were 0), one column short of the field named in each desc
+        ' string - e.g. "UNU" sorted by % CHG (col 11) while claiming UNRL
+        ' PNL (col 12). Rows did reorder, just by the wrong metric each time.
+        ' Written as RR4_LEFT+n to match WriteOnePositionRow/the header array
+        ' so a future row-shift can't silently reintroduce the same drift.
         Case "", "DEF": keyCol = RR4_ORD_COL: ord = xlAscending: desc = "DEFAULT (TW code, then US A-Z)"
-        Case "UNU": keyCol = 11: ord = xlAscending: desc = "UNRL PNL  low > high"
-        Case "UND": keyCol = 11: ord = xlDescending: desc = "UNRL PNL  high > low"
-        Case "PCU": keyCol = 10: ord = xlAscending: desc = "% CHG  low > high"
-        Case "PCD": keyCol = 10: ord = xlDescending: desc = "% CHG  high > low"
-        Case "DAU": keyCol = 4: ord = xlAscending: desc = "DAYS  short > long"
-        Case "DAD": keyCol = 4: ord = xlDescending: desc = "DAYS  long > short"
-        Case "WTU": keyCol = 12: ord = xlAscending: desc = "WT%  light > heavy"
-        Case "WTD": keyCol = 12: ord = xlDescending: desc = "WT%  heavy > light"
+        Case "UNU": keyCol = RR4_LEFT + 11: ord = xlAscending: desc = "UNRL PNL  low > high"
+        Case "UND": keyCol = RR4_LEFT + 11: ord = xlDescending: desc = "UNRL PNL  high > low"
+        Case "PCU": keyCol = RR4_LEFT + 10: ord = xlAscending: desc = "% CHG  low > high"
+        Case "PCD": keyCol = RR4_LEFT + 10: ord = xlDescending: desc = "% CHG  high > low"
+        Case "DAU": keyCol = RR4_LEFT + 4: ord = xlAscending: desc = "DAYS  short > long"
+        Case "DAD": keyCol = RR4_LEFT + 4: ord = xlDescending: desc = "DAYS  long > short"
+        Case "WTU": keyCol = RR4_LEFT + 12: ord = xlAscending: desc = "WT%  light > heavy"
+        Case "WTD": keyCol = RR4_LEFT + 12: ord = xlDescending: desc = "WT%  heavy > light"
         Case Else
             known = False
             keyCol = RR4_ORD_COL: ord = xlAscending
