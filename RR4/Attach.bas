@@ -36,6 +36,18 @@ Public Const REAL_CAP_COL  As Long = 11   ' hand-typed Caption (page column K)
 Public Const REAL_LOAN_COL As Long = 12   ' hand-typed LOAN Distribution header (page column L)
 ' Transactions page (page coordinates; see TrHdrRow / TrCol below)
 Public Const TR_NCOL       As Long = 14   ' A Transaction_ID .. N Broker
+' Hidden columns 15-18 past the visible table (2026-09-18): today's
+' incremental fill on a row, kept separately from the row's own Date/
+' Shares/Price/Net_Amount because MergeBuyIntoRow below collapses those to
+' the month's cumulative figures. DrawDailyLog reads these to still show a
+' fill that landed on an already-merged monthly Buy row. Not part of
+' TR_NCOL: DrawTransactionsHeader's header formatting and AutoFilter range,
+' and ClearAllData's visible-column wipe, must not touch them by walking
+' 1..TR_NCOL (ClearAllData clears 15..18 explicitly instead).
+Public Const TR_LASTFILL_DATE   As Long = 15
+Public Const TR_LASTFILL_SHARES As Long = 16
+Public Const TR_LASTFILL_PRICE  As Long = 17
+Public Const TR_LASTFILL_AMT    As Long = 18
 ' HistoryLog page (page coordinates; see HistHdrRow / HistCol below)
 Public Const HIST_NCOL     As Long = 13   ' A Date .. M YTD Ret% (SOX)
 
@@ -662,6 +674,28 @@ Public Sub MergeBuyIntoRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tDate A
     If IsDate(oldDate) Then
         If tDate < CDate(oldDate) Then ws.Cells(r, TrCol(ws, 2)).Value = tDate
     End If
+
+    ' 2026-09-18: record today's increment separately (see TR_LASTFILL_*
+    ' above) so DrawDailyLog can still show this fill even though the merge
+    ' above just overwrote the row's own Date/Shares/Price with the whole
+    ' month's cumulative figures. Accumulates if this row already took a
+    ' fill earlier today; resets when the last-touched date isn't today.
+    Dim lfDate As Variant: lfDate = ws.Cells(r, TrCol(ws, TR_LASTFILL_DATE)).Value
+    Dim lfSh As Double, lfPx As Double, lfAmt As Double
+    If IsDate(lfDate) Then
+        If Int(CDate(lfDate)) = Int(tDate) Then
+            lfSh = val(ws.Cells(r, TrCol(ws, TR_LASTFILL_SHARES)).Value)
+            lfPx = val(ws.Cells(r, TrCol(ws, TR_LASTFILL_PRICE)).Value)
+            lfAmt = val(ws.Cells(r, TrCol(ws, TR_LASTFILL_AMT)).Value)
+        End If
+    End If
+    Dim newLfSh As Double: newLfSh = lfSh + shares
+    Dim newLfPx As Double
+    If newLfSh > 0 Then newLfPx = (lfSh * lfPx + shares * price) / newLfSh Else newLfPx = price
+    ws.Cells(r, TrCol(ws, TR_LASTFILL_DATE)).Value = Int(tDate)
+    ws.Cells(r, TrCol(ws, TR_LASTFILL_SHARES)).Value = newLfSh
+    ws.Cells(r, TrCol(ws, TR_LASTFILL_PRICE)).Value = newLfPx
+    ws.Cells(r, TrCol(ws, TR_LASTFILL_AMT)).Value = lfAmt + net
 End Sub
 
 ' One-off backfill: fold every existing Buy into its month row, oldest fill
@@ -1050,8 +1084,12 @@ Sub ClearAllData()
     Dim LR As Long
     If Not wsTrans Is Nothing Then
         LR = TrLastRow(wsTrans)
-        If LR > TrHdrRow(wsTrans) Then wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, 1)), _
-                                                     wsTrans.Cells(LR, TrCol(wsTrans, TR_NCOL))).ClearContents
+        If LR > TrHdrRow(wsTrans) Then
+            wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, 1)), _
+                          wsTrans.Cells(LR, TrCol(wsTrans, TR_NCOL))).ClearContents
+            wsTrans.Range(wsTrans.Cells(TrHdrRow(wsTrans) + 1, TrCol(wsTrans, TR_LASTFILL_DATE)), _
+                          wsTrans.Cells(LR, TrCol(wsTrans, TR_LASTFILL_AMT))).ClearContents
+        End If
     End If
     If Not wsReal Is Nothing Then
         ' page A:K (the captions go with their trades); header row and bar stay
