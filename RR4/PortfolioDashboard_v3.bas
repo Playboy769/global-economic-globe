@@ -125,6 +125,11 @@ Public Const RR4_LINE      As Long = 4605510    ' RGB(70,70,70)
 ' stay apart from each other on the black chart background.
 Private Const RR4_PALETTE_N As Long = 12
 Private m_fxLive As Boolean                 ' v4.14: was the last UP's USD/TWD fetched live (Yahoo TWD=X)
+' Per-SELL FIFO detail recorded by BuildPositions, keyed by Transactions sheet
+' row: Array(firstEntrySer, lastEntrySer, shareWeightedDays, costBasis).
+' DrawDailyLog reads it so an EXIT/TRIM line can show what was held and for how
+' long without walking FIFO a second time (the three FIFO walkers must agree).
+Private m_sellInfo As Object
 
 ' ================================================================
 '  MAIN ENTRY
@@ -916,6 +921,12 @@ End Sub
 '    ADD  = a buy into an existing position
 '    TRIM = a sell that leaves shares
 '    EXIT = a sell that closes the position
+'  TRIM / EXIT lines also carry "HELD in > out (Nd)   RET x%": the entry
+'  date(s) of the FIFO lots the sell consumed, share-weighted holding days,
+'  and the return on their acquisition cost (= the Realized page's RET%).
+'  The detail comes from m_sellInfo, which BuildPositions fills - so this
+'  must run after BuildPositions in the same UP (RebuildPortfolioDashboard
+'  does).
 '  TODAY line:
 '    NET    = cumulative PnL now - HistoryLog col C on the last row dated
 '             before today (shows "-" when there is no earlier row)
@@ -995,8 +1006,20 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
             If nowSh <= 0.0001 Then lineTag = "EXIT" Else lineTag = "TRIM"
         End If
 
+        ' sells: what was held, for how long, and the return - FIFO detail
+        ' BuildPositions recorded for this sheet row (same rule as Realized RET%)
+        Dim heldTxt As String: heldTxt = ""
+        Dim retV As Variant: retV = Empty
+        If act = "SELL" And Not m_sellInfo Is Nothing Then
+            If m_sellInfo.Exists(r) Then
+                Dim si As Variant: si = m_sellInfo(r)
+                heldTxt = SellHeldText(CLng(si(0)), CLng(si(1)), CDbl(si(2)), wsTr.cells(r, tc + 2).Value)
+                If si(3) > 0 Then retV = (amt - si(3)) / si(3)
+            End If
+        End If
+
         If cnt <= RR4_LOG_ROWS Or k < RR4_LOG_ROWS Then
-            Call WriteLogLine(ws, outRow, lineTag, tk, sh, px, amtTWD)
+            Call WriteLogLine(ws, outRow, lineTag, tk, sh, px, amtTWD, heldTxt, retV)
             outRow = outRow + 1
         End If
     Next k
@@ -1048,8 +1071,11 @@ Private Sub DrawDailyLog(ws As Worksheet, posData() As Variant, exRate As Double
     End With
 End Sub
 
+' held / retV are only passed for sells: "HELD 9/7 > 9/18 (11d)   RET +7.72%",
+' RET% coloured like every other gain/loss on this page.
 Private Sub WriteLogLine(ws As Worksheet, r As Long, lineTag As String, tk As String, _
-                         sh As Double, px As Double, amtTWD As Double)
+                         sh As Double, px As Double, amtTWD As Double, _
+                         Optional ByVal held As String = "", Optional ByVal retV As Variant)
     With ws.cells(r, RR4_LEFT + 1)
         .Value = lineTag
         .Font.Bold = True
@@ -1059,12 +1085,53 @@ Private Sub WriteLogLine(ws As Worksheet, r As Long, lineTag As String, tk As St
             .Font.Color = RGB(0, 200, 255)
         End If
     End With
+    Dim txt As String
+    txt = tk & "   " & FormatShares(sh) & " sh   @ " & Format(px, "#,##0.00") & _
+          "   |   " & Format(amtTWD, "#,##0") & " TWD"
+    Dim retTxt As String
+    If held <> "" Then
+        txt = txt & "   |   " & held
+        If Not IsMissing(retV) Then
+            If Not IsEmpty(retV) Then
+                retTxt = Format(retV, "+0.00%;-0.00%;0.00%")
+                txt = txt & "   RET " & retTxt
+            End If
+        End If
+    End If
     With ws.cells(r, RR4_LEFT + 2)
-        .Value = tk & "   " & FormatShares(sh) & " sh   @ " & Format(px, "#,##0.00") & _
-                 "   |   " & Format(amtTWD, "#,##0") & " TWD"
+        .Value = txt
         .Font.Color = RGB(221, 221, 221)
+        If retTxt <> "" Then
+            With .Characters(Len(txt) - Len(retTxt) + 1, Len(retTxt)).Font
+                .Color = GainLossColor(CDbl(retV))
+                .Bold = True
+            End With
+        End If
     End With
 End Sub
+
+' "HELD 9/7 > 9/18 (11d)" for a sell that consumed one lot; when it ate
+' several lots bought on different days: "HELD 8/7~8/12 > 9/10 (avg 29d)",
+' days weighted by the shares taken from each lot. The entry date carries
+' the year only when it differs from the exit's.
+Private Function SellHeldText(ByVal firstIn As Long, ByVal lastIn As Long, _
+                              ByVal avgDays As Double, ByVal exitV As Variant) As String
+    If firstIn = 0 Then SellHeldText = "HELD ?": Exit Function
+    Dim exitD As Date: If IsDate(exitV) Then exitD = CDate(exitV)
+    Dim fmtIn As String: fmtIn = "m/d"
+    If IsDate(exitV) Then
+        If Year(CDate(firstIn)) <> Year(exitD) Then fmtIn = "yyyy/m/d"
+    End If
+    Dim s As String: s = "HELD " & Format(CDate(firstIn), fmtIn)
+    If lastIn <> firstIn Then s = s & "~" & Format(CDate(lastIn), fmtIn)
+    If IsDate(exitV) Then s = s & " > " & Format(exitD, "m/d")
+    If lastIn <> firstIn Then
+        s = s & " (avg " & Format(avgDays, "0") & "d)"
+    Else
+        s = s & " (" & Format(avgDays, "0") & "d)"
+    End If
+    SellHeldText = s
+End Function
 
 ' ================================================================
 '  SUMMARY (page rows 14-20 = sheet rows 17-23): labels B / F, values C / G
@@ -2324,6 +2391,7 @@ End Sub
 Private Function BuildPositions(wsTr As Worksheet) As Object
     Dim dict As Object
     Set dict = CreateObject("Scripting.Dictionary")
+    Set m_sellInfo = CreateObject("Scripting.Dictionary")
 
     Dim lastRow As Long
     lastRow = TrLastRow(wsTr)
@@ -2382,10 +2450,8 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
                     ' future SELL-side fee and tax. That estimate pushed
                     ' ENTRY PX above every fill price (3653 by 18.7/share,
                     ' 7610 by 4.4) and understated UNRL PNL by the same
-                    ' amount. It is also the column the monthly-Buy merge
-                    ' made inconsistent: rows folding a pre-estimate fill
-                    ' into a post-estimate one (3374, 7610) carry a
-                    ' Net_Amount that matches neither convention.
+                    ' amount. Older rows also predate the estimate, so the
+                    ' column is not even one convention across the log.
                     Dim buyCost As Double: buyCost = shares * price + fee + tax
                     ' hand-typed row with no Price: fall back to Net_Amount
                     ' rather than costing the lot at (almost) zero
@@ -2396,10 +2462,23 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
 
                 Case "SELL"
                     Dim remaining As Double: remaining = shares
+                    Dim exitSer As Long: exitSer = IIf(IsDate(tDate), CLng(CDate(tDate)), 0)
+                    Dim firstIn As Long, lastIn As Long, shDays As Double, usedSh As Double, usedCost As Double
+                    firstIn = 0: lastIn = 0: shDays = 0: usedSh = 0: usedCost = 0
                     Do While remaining > 0.0001 And lots.count > 0
                         Dim frontLot As Variant: frontLot = lots(1)
                         Dim lotSh As Double: lotSh = frontLot(1)
                         Dim lotCps As Double: lotCps = frontLot(2)
+                        Dim took As Double
+                        If lotSh <= remaining + 0.0001 Then took = lotSh Else took = remaining
+                        ' what this sell consumed, for the DAILY LOG line
+                        If frontLot(0) > 0 Then
+                            If firstIn = 0 Or frontLot(0) < firstIn Then firstIn = frontLot(0)
+                            If frontLot(0) > lastIn Then lastIn = frontLot(0)
+                            If exitSer > 0 Then shDays = shDays + took * (exitSer - frontLot(0))
+                        End If
+                        usedSh = usedSh + took
+                        usedCost = usedCost + took * lotCps
                         If lotSh <= remaining + 0.0001 Then
                             remaining = remaining - lotSh
                             lots.Remove 1
@@ -2409,6 +2488,8 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
                             remaining = 0
                         End If
                     Loop
+                    Dim avgDays As Double: If usedSh > 0 Then avgDays = shDays / usedSh
+                    m_sellInfo(TrHdrRow(wsTr) + i) = Array(firstIn, lastIn, avgDays, usedCost)
 
                 Case "ADJUSTCOST"
                     ' Spread proportionally across open lots by share count,
