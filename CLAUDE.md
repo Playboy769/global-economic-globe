@@ -332,6 +332,33 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   ⚠️ **`MergeBuyIntoRow` 一律先把舊值全部讀完再寫**：實際有一列 Net_Amount 是手打公式 `=G*F`，先寫股數再讀 Net 會讓公式
   用新股數重算、多加一次毛額（3532 曾因此變 59,733 而非 49,358）；合併後該列公式變成值。FIFO（`CalculateRealizedPnL`）
   是照工作表列序、不是照日期跑的，這點沒改。
+  - **成本基礎＝取得成本，不是 `Net_Amount`（2026-09-18，使用者決定）**：三處走 FIFO 的地方
+    一律用 **`(股數×價格 + 買入手續費 + 買入稅) ÷ 股數`**——`PortfolioDashboard_v3.BuildPositions`
+    （RR4 頁 ENTRY PX／UNRL PNL／%CHG）、`Attach.CalculateRealizedPnL`（Realized 頁）、
+    `TickerInsight.BuildFIFOHistory`（代號面板）。**賣出仍除 `Net_Amount`**，那裡它就是實收現金；
+    沒有 Price 的手打列退回用 `Net_Amount`，免得整個 lot 成本歸零。
+    ⚠️ **不要再拿 `Net_Amount` 當買入成本**：`frmTransaction` 的 `tNetAmount` 把「還沒發生的
+    **預估賣出**手續費與證交稅」也加進去（`+ estSellFee + estSellTax`，表單的 MsgBox 自己有寫
+    「買入成本已包含預估賣出費稅」），所以均價一律高於成交價——台股證交稅 0.3% 讓 3653 每股
+    虛增 18.7 元、7610 虛增 4.4 元，UNRL PNL 同步被低估。它同時也是**月合併把新舊慣例混在一起
+    的那一欄**：3374 那列 `net−gross` 只有 67，依公式應為約 161，是估算費稅功能上線前後的兩筆
+    被併進同一列，兩種慣例都對不上（改用取得成本後就不受它影響）。實測 3374 455.539→454.991、
+    7610 1952.614→1948.443、3653 5875.7→5857.6、8046 1187.727→1184.061，各等於成交均價加上
+    每股買入手續費；Realized 總額 69,806→71,145（成本降低使已實現獲利變大），權重不受影響。
+  - **DAILY LOG 靠 Transactions 隱藏欄 15-18 才看得到當日合併的買入（2026-09-18）**：月合併把
+    「該月第一筆的日期」留在 Date 欄，而 `DrawDailyLog` 只認 Date 欄等於今天的列，於是今天買進、
+    被併進既有月列的那筆會整個從 DAILY LOG 消失（賣單逐筆不合併，所以只有買單受害）。
+    新增 `TR_LASTFILL_DATE/SHARES/PRICE/AMT`（頁面欄 15-18，實體 P:S，原本空白）記錄「該列今天的
+    增量」：`MergeBuyIntoRow` 寫入當次 fill 的股數／加權均價／淨額，同一天多次併入會累加，換日
+    自動重置。`DrawDailyLog` 因此改成「Date 是今天，**或** LastFillDate 是今天」都算，並對後者
+    顯示增量而非整列累積值。⚠️ **這四欄刻意不併進 `TR_NCOL`**：`DrawTransactionsHeader` 的表頭
+    與 AutoFilter 範圍都靠 `1..TR_NCOL` 走訪，`ClearAllData` 則另外明確清掉 15-18。
+  - ⚠️ **`BuildPositions` 的 `posKey` 不可剝掉 `.TW/.TWO` 後綴**（2026-09-18 踩過）：看起來只是
+    正規化，實際會炸掉整頁——`CalcPositions` 會把這個 key 拆回 ticker 交給 `GetCurrencyType`，
+    而它**純靠 `.TW` 後綴**判斷台股／美股，後綴一剝所有台股都變「USD」、市值全部乘上 USD/TWD，
+    NET EXPOSURE 與每個 WT% 一起歪掉（8046 實際 72,600 卻顯示權重 24.46%）。跟 TickerInsight v2.4
+    是同一個坑。要處理混拼（同一檔有時記 `3374`、有時記 `3374.TWO`）得比照 `ResolveTicker` 保留
+    一個帶後綴的 canonical 代號，不能直接用去後綴的當 key。實測目前帳本沒有混拼，不需要處理。
 - **Realized（R）頁 2026-09-13 起有 bar**：頁碼 R 進 `NavPageCode`，版面同其他報表頁（第 1 列／A 欄空白、
     bar 第 2–4 列、表頭第 5 列 B 欄起）。所有讀寫一律走 `Attach.RealHdrRow(ws)`／`RealCol(ws, n)`／
     `RealLastRow(ws)`（n 是頁面欄：A=1…J=10、K=11 Caption、L=12 LOAN），**不要再寫 `"A2:J10000"`、
@@ -370,6 +397,16 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   「金額膨風、比率正確」就是這個。`RefreshTickerInsight`／`RefreshTickerProjection` 開頭先過 `ResolveTicker`：裸碼取
   Transactions 第一筆配到的原始代號（含 `.TW/.TWO`），完全沒交易的全數字碼預設 `.TW`；K5 與追蹤格 X2 因此會顯示解析後的
   代號。實測 3374／1303／2330.tw／BE／AMAT／8046.TW 六檔與 Realized 表一致（美股差幾十元是當日匯率 vs 今日 live 匯率）。
+- **股價一律 Yahoo 優先，台股 OpenAPI 只當備援（2026-09-18 修）**：`TickerInsight.GetStockPriceSafe` 原本把
+  `.TW/.TWO` 路由到 `TaiwanPriceFetcher.GetTWStockPrice`（TWSE `STOCK_DAY_ALL`／TPEx
+  `tpex_mainboard_daily_close_quotes`），而 `CalcPositions` 一向直接走 `Attach.GetStockPrice`（Yahoo）——
+  **同一檔股票因此在兩個頁面報不同價**：2026-09-18 當天 7610.TW 在 ticker panel 顯示 1,770（那是 9/17 收盤），
+  RR4 頁顯示 1,945（當日）。那兩支 OpenAPI 要等**當日盤後結算**才發布收盤價，盤中查到的必然是前一交易日。
+  現在所有市場都 Yahoo 優先、抓不到才退回 OpenAPI（它本來就是為了補 Yahoo 抓不到的代號而加的）。
+  ⚠️ **`TaiwanPriceFetcher` 的 session 快取原本永不過期**：只有 ready 旗標沒有日期，而模組註解要求
+  「跨日後呼叫 `ClearPriceCache`」的那個函式**全專案沒有任何呼叫點**——活頁簿只要開著不關，台股報價就
+  永遠停在開檔那天的那份行情。已加 `EnsureCacheFresh`（記抓取日期、換日自動失效），兩支 `*Price` 函式
+  進場都會呼叫。實測修正後 7610.TW 在 panel 與 RR4 頁同為 1,945.00、NET EXPOSURE 同為 136,150。
 - **v4.15（2026-09-13）：RR4 頁 B5 的大字總市值拿掉了**（跟 SUMMARY 的 NET EXPOSURE 重複）。頁面第 1 列（第 5 列）留空、
   列高退回 18，其他列號常數不動；`RR4_TOTAL_CELL` 已刪，要總市值改呼叫 `RR4NetExposure()`（讀 SUMMARY 區
   `RR4_TOP+16 / RR4_LEFT+6`），DBG 的「Total market value」檢查已改走它。
@@ -390,6 +427,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **ARRANGE 碼** UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF：只重排已在表上的列、不重抓價；
   權重橫條（`RR4W_*` shapes）與甜甜圈圖（`RR4_DONUT`）每次 arrange 都重建。DEF 排序曾
   觸發「`Range.Sort` Key1=Key2 → 存檔後永遠打不開」，`ApplyArrange` 已只在鍵不同時才傳 Key2。
+  ⚠️ **`keyCol` 一律寫成 `RR4_LEFT + n`，不可寫裸數字**（2026-09-18 修）：四組代碼原本都
+  寫成頁面相對偏移（當 `RR4_LEFT` 是 0），比實際欄號少 1，於是每個代碼都照**左邊那一欄**
+  排序——UNU 宣稱 UNRL PNL 卻排 % CHG、PCU 宣稱 % CHG 卻排 LAST、DAU 宣稱 DAYS 卻排
+  ENTRY DT、WTU 宣稱 WT% 卻排 UNRL PNL。列確實有重排，所以症狀是「排了但不對」而不是
+  「沒反應」，很難一眼看出。欄號基準要跟 `WriteOnePositionRow` 與表頭陣列同一套。
 - **配色慣例（v4.3–v4.5，2026-09-12）**：RR4 頁與導覽列的強調色是 `RR4_ACCENT`（深橘
   RGB 200,100,0），其他報表頁（Analysis/Vol/Corr）仍是琥珀 255,192,0；輸入格一律 `RR4_INPUT_BG`（RGB 40,40,40）底＋
   `RR4_INPUT_FG` 白字；區塊分隔線一律 `RR4_LINE`（RGB 70,70,70）深灰、從 B 欄起（A 欄是
@@ -425,7 +467,13 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   寫死的 `A4:F100 ClearContents`、台股代號 `.TW` 抓不到改試 `.TWO`、建置期間 `EnableEvents=False`。
 - **HoldingsCorr（C）頁 v2（2026-09-12）**：RR4 配色、連續紅綠熱圖（`CorrHeatBg/Fg`，0 = 近黑）取代
   7 級色階、對角線畫 —、右側 **AVG CORR** 欄（最低綠＝最分散、最高紅＝最擁擠）、色階列＋
-  **PORTFOLIO AVG PAIRWISE CORR**、**最相關／最不相關 5 對**、底部算法註解。仍由 `C!` 重算。
+  **PORTFOLIO WEIGHT-AVG PAIRWISE CORR**、**最相關／最不相關 5 對**、底部算法註解。仍由 `HC!` 重算。
+  **投組數字是權重加權平均（2026-09-18 改，原本是單純平均）**：`sum(w_i*w_j*corr_ij) /
+  sum(w_i*w_j)`，每對算一次，`w_i*w_j` 正是驅動投組變異數的那個乘積。權重取自 RR4 頁
+  **WT% 欄並跨 broker 加總**（`RR4WeightMap()`；那頁一列一個 Ticker|Broker，相關矩陣一列
+  一個 ticker），所以數字與畫面上的權重同源；RR4 頁還沒建置時退回等權重，結果等同舊的
+  單純平均。改的理由：單純平均讓佔 3.19% 的持倉與佔 21.79% 的持倉有同樣話語權，可能顯示
+  「well spread」而實際權重壓在少數幾檔相關標的上（實測 12 檔：加權 0.1295 vs 單純 0.1336）。
 - **Correlation（CC）頁 v2（2026-09-12）**：`CorelationMatrix.bas` 整支改寫成純 ASCII。ETF 宇宙改抄
   `sector-rotation-system/config.py` 的 `RotationConfig.universe`＋SPY（27 檔），依其
   `TICKER_CATEGORY` 分 SEMI / AI-TECH / INDEX-FACTOR / SECTOR SPDR / COMMODITY / SINGLE INDUSTRY /
