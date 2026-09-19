@@ -1,0 +1,1016 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+  <feed xmlns="http://www.w3.org/2005/Atom">
+    <author>
+      <email>webmaster@sec.gov</email>
+      <name>Webmaster</name>
+    </author>
+    <entry title="ARRAY(0x55d438559070)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d4382b1900)">
+          <addresses>
+            <address type="business">
+              <city>DOLTON</city>
+              <phone>7088419010</phone>
+              <state>IL</state>
+              <street1>1350 E SIBLEY BLVD</street1>
+              <zip>60419</zip>
+            </address>
+            <address type="mailing">
+              <city>DOLTON</city>
+              <state>IL</state>
+              <street1>1350 E SIBLEY BLVD</street1>
+              <zip>60419</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0000879694</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>363785272</irs-number>
+          <last-date>1999-03-26</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <sic>6035</sic>
+          <state>IL</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0000879694</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000879694&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0000879694, &lt;strong&gt;State:&lt;/strong&gt; IL&lt;br /&gt;&lt;strong&gt;SIC:&lt;/strong&gt; SAVINGS INSTITUTION, FEDERALLY CHARTERED</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4384bdff8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d4385367f0)">
+          <addresses>
+            <address type="business">
+              <city>DALLAS</city>
+              <phone>214-953-1722</phone>
+              <state>TX</state>
+              <street1>4849 GREENVILLE AVENUE, SUITE 1480</street1>
+              <zip>75206</zip>
+            </address>
+            <address type="mailing">
+              <city>DALLAS</city>
+              <state>TX</state>
+              <street1>4849 GREENVILLE AVENUE, SUITE 1480</street1>
+              <zip>75206</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001759014</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>832446137</irs-number>
+          <last-date>2018-11-14</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>TX</state>
+          <state-of-incorporation>TX</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001759014</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001759014&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001759014, &lt;strong&gt;State:&lt;/strong&gt; TX</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4384830e8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43847c950)">
+          <addresses>
+            <address type="business">
+              <city>IRVING</city>
+              <phone>214-812-0017</phone>
+              <state>TX</state>
+              <street1>6555 SIERRA DRIVE</street1>
+              <zip>75039</zip>
+            </address>
+            <address type="mailing">
+              <city>IRVING</city>
+              <state>TX</state>
+              <street1>6555 SIERRA DRIVE</street1>
+              <zip>75039</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001746449</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>263603010</irs-number>
+          <last-date>2018-09-10</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>TX</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001746449</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001746449&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001746449, &lt;strong&gt;State:&lt;/strong&gt; TX</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438482cc8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43847ca88)">
+          <addresses>
+            <address type="business">
+              <city>DOLTON</city>
+              <phone>7088419017</phone>
+              <state>IL</state>
+              <street1>1350 E SIBLEY BLVD</street1>
+              <zip>60419</zip>
+            </address>
+            <address type="mailing">
+              <city>CHICAGO</city>
+              <state>IL</state>
+              <street1>C/O LASALLE NATIONAL BANK</street1>
+              <street2>135 S LASALLE ST SUITE 1960</street2>
+              <zip>60603</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001079677</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>360865885</irs-number>
+          <last-date>1999-02-16</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IL</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001079677</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001079677&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001079677, &lt;strong&gt;State:&lt;/strong&gt; IL</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d43847f670)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43847f5c8)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410559</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>000000000</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410559</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410559&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410559, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d43847fa78)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43847fe68)">
+          <addresses>
+            <address type="business">
+              <city>HOUSTON</city>
+              <phone>7136541414</phone>
+              <state>TX</state>
+              <street1>1600 SMITH ST STE 1500</street1>
+              <zip>77002</zip>
+            </address>
+            <address type="mailing">
+              <city>HOUSTON</city>
+              <state>TX</state>
+              <street1>1600 SMITH STREET</street1>
+              <street2>SUITE 1500</street2>
+              <zip>77002</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001054184</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>351880416</irs-number>
+          <last-date>2001-02-02</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <sic>5172</sic>
+          <state>TX</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001054184</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001054184&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001054184, &lt;strong&gt;State:&lt;/strong&gt; TX&lt;br /&gt;&lt;strong&gt;SIC:&lt;/strong&gt; WHOLESALE-PETROLEUM &amp;amp; PETROLEUM PRODUCTS (NO BULK STATIONS)</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4384004e8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43847f7f0)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410560</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>113767452</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410560</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410560&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410560, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438481670)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438400380)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410561</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>351811116</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>IN</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410561</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410561&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410561, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4382d6818)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438481d18)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317) 328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>STE. 200</street2>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>STE. 200</street2>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001537261</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>383858705</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001537261</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001537261&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001537261, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438405160)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d437db4480)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317)328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001562644</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>861159502</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001562644</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001562644&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001562644, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d437a043d8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d437a03eb0)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317) 328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PARKWAY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PARKWAY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001576688</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>900935040</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001576688</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001576688&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001576688, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4385590b8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d4384be3d0)">
+          <addresses>
+            <address type="business">
+              <city>OKLAHOMA CITY</city>
+              <phone>405-478-8770</phone>
+              <state>OK</state>
+              <street1>701 CEDAR LAKE BLVD.</street1>
+              <zip>73114</zip>
+            </address>
+            <address type="mailing">
+              <city>OKLAHOMA CITY</city>
+              <state>OK</state>
+              <street1>701 CEDAR LAKE BLVD.</street1>
+              <zip>73114</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001382457</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>730652143</irs-number>
+          <last-date>2007-08-03</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>OK</state>
+          <state-of-incorporation>OK</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001382457</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001382457&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001382457, &lt;strong&gt;State:&lt;/strong&gt; OK</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4384dab58)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d437a040d8)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410562</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>113767449</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410562</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410562&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410562, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4381f38d8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43855dd08)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317) 328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001562642</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>203125542</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001562642</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001562642&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001562642, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d43850c528)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43850c270)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001504661</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>261547648</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001504661</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001504661&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001504661, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d437a04390)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438559790)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317)328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001562646</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>461054137</irs-number>
+          <last-date>2014-03-11</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001562646</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001562646&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001562646, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d43833c8d0)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43855de10)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317)328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001562649</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>800852706</irs-number>
+          <last-date>2014-03-11</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001562649</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001562649&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001562649, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d437a03d60)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438584740)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317)328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001562650</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>461060890</irs-number>
+          <last-date>2014-03-11</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001562650</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001562650&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001562650, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438524368)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d4384da8b8)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317)328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001562632</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>900890944</irs-number>
+          <last-date>2014-03-11</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001562632</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001562632&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001562632, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438539388)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d4385569b8)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410563</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>043833543</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410563</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410563&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410563, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438538d88)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d4385390b8)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317) 328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PARKWAY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PARKWAY E. DRIVE</street1>
+              <street2>SUITE 200</street2>
+              <zip>46214-2030</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001576689</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>800879732</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001576689</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001576689&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001576689, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d43844dc18)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438538c38)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410564</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>201717710</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>IN</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410564</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410564&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410564, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d43840c450)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43844e080)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410565</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>201717754</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>IN</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410565</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410565&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410565, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438539238)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43844dde0)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DRIVE, SUITE 200</street1>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001410566</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>201717330</irs-number>
+          <last-date>2014-03-11</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>IN</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001410566</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001410566&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001410566, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438559928)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438483880)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT</street1>
+              <street2>PARKWAY E. DRIVE, SUITE 200</street2>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT</street1>
+              <street2>PARKWAY E. DRIVE, SUITE 200</street2>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001340122</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>351811116</irs-number>
+          <last-date>2025-02-12</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <sic>2911</sic>
+          <state>IN</state>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001340122</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001340122&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001340122, &lt;strong&gt;State:&lt;/strong&gt; IN&lt;br /&gt;&lt;strong&gt;SIC:&lt;/strong&gt; PETROLEUM REFINING</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438556c28)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438536598)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317) 328-5660</phone>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DR.</street1>
+              <street2>STE. 200</street2>
+              <zip>46214</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>2780 WATERFRONT PKWY E. DR.</street1>
+              <street2>STE. 200</street2>
+              <zip>46214</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001535842</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>201717330</irs-number>
+          <last-date>2016-01-29</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>DE</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001535842</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001535842&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001535842, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d4382d67b8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d438556730)">
+          <addresses>
+            <address type="business" />
+            <address type="mailing">
+              <city>CALUMET</city>
+              <state>IN</state>
+              <street1>7847 CALUMET AVENUE</street1>
+              <zip>46321</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001272850</cik>
+          <last-date>2003-12-10</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001272850</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001272850&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001272850</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438267cc8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43850baa8)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>317-872-6010</phone>
+              <state>IN</state>
+              <street1>5400 W 86TH ST</street1>
+              <zip>46268</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>5400 W 86TH ST</street1>
+              <zip>46268</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0001513766</cik>
+          <fiscal-year-end>0531</fiscal-year-end>
+          <irs-number>351811118</irs-number>
+          <last-date>2011-02-22</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <state>IN</state>
+          <state-of-incorporation>IN</state-of-incorporation>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0001513766</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001513766&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0001513766, &lt;strong&gt;State:&lt;/strong&gt; IN</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <entry title="ARRAY(0x55d438542df8)">
+      <content type="text/xml">
+        <company-info name="ARRAY(0x55d43840c438)">
+          <addresses>
+            <address type="business">
+              <city>INDIANAPOLIS</city>
+              <phone>(317) 328-5660</phone>
+              <state>IN</state>
+              <street1>1060 N CAPITOL AVE</street1>
+              <street2>SUITE 6-401</street2>
+              <zip>46204</zip>
+            </address>
+            <address type="mailing">
+              <city>INDIANAPOLIS</city>
+              <state>IN</state>
+              <street1>1060 N CAPITOL AVE</street1>
+              <street2>SUITE 6-401</street2>
+              <zip>46204</zip>
+            </address>
+          </addresses>
+          <cancelled-ma-flag>N</cancelled-ma-flag>
+          <cik>0002013745</cik>
+          <fiscal-year-end>1231</fiscal-year-end>
+          <irs-number>365098520</irs-number>
+          <last-date>2026-09-15</last-date>
+          <revoke-flag>N</revoke-flag>
+          <revoked-ma-flag>N</revoked-ma-flag>
+          <sic>2911</sic>
+          <state>IN</state>
+        </company-info>
+      </content>
+      <id>urn:tag:www.sec.gov:cik=0002013745</id>
+      <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0002013745&amp;owner=exclude&amp;hidefilings=0" type="text/html" />
+      <summary type="html">&lt;strong&gt;CIK:&lt;/strong&gt; 0002013745, &lt;strong&gt;State:&lt;/strong&gt; IN&lt;br /&gt;&lt;strong&gt;SIC:&lt;/strong&gt; PETROLEUM REFINING</summary>
+      <updated>2026-09-18T08:05:45-04:00</updated>
+    </entry>
+    <id>https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;company=calumet&amp;owner=include&amp;count=100</id>
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;company=calumet&amp;owner=include&amp;count=100&amp;start=0&amp;output=atom" rel="self" type="application/atom+xml" />
+    <link href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;company=calumet&amp;owner=include&amp;count=100&amp;start=0" rel="alternate" type="text/html" />
+    <title>Company Search Feed</title>
+    <updated>2026-09-18T08:05:45-04:00</updated>
+  </feed>
