@@ -37,7 +37,7 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 '  Position log columns (BROKER column and broker group rows removed):
 '    A TICKER   B NAME      C ENTRY DT  D DAYS      E SECTOR   F NET EXPOS
 '    G SHARES   H ENTRY PX  I LAST      J % CHG     K UNRL PNL L WT%
-'    M W.BETA   N BETA 180D O P.TARGET  P SWING RISK (typed by hand)
+'    M W.BETA   N BETA 30D  O P.TARGET  P SWING RISK (typed by hand)
 '    T (hidden) default-order key, used by ARRANGE "DEF"
 '
 '  ARRANGE <GO> (D2): UNU/UND = UNRL PNL, PCU/PCD = % CHG, DAU/DAD = DAYS,
@@ -1227,7 +1227,7 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
     Dim headers As Variant
     headers = Array("TICKER", "NAME", "ENTRY DT", "DAYS", "SECTOR", _
                     "NET EXPOS", "SHARES", "ENTRY PX", "LAST", "% CHG", _
-                    "UNRL PNL", "WT%", "W.BETA", "BETA 180D", "P.TARGET", "SWING RISK", "NOTE")
+                    "UNRL PNL", "WT%", "W.BETA", "BETA 30D", "P.TARGET", "SWING RISK", "NOTE")
     Dim i As Integer
     For i = 0 To UBound(headers)
         With ws.cells(RR4_POS_HDR, RR4_LEFT + i + 1)

@@ -415,18 +415,17 @@ End Function
 ' ================================================================
 ' Beta Calculation
 ' ================================================================
+' 2026-09-20 (owner's decision): every non-TW ticker now benchmarks against
+' Nasdaq (^IXIC) regardless of Sector - the old per-sector routing (S&P for
+' "Else"/ETF, DJI for Industrials, XLF/XLV/XLE for Financials/Health Care/
+' Energy) made a 3x leveraged Nasdaq ETF's beta look inflated against the
+' wrong index. Sector is kept as a parameter only so callers (frmTransaction)
+' don't need to change; it no longer affects the result.
 Function GetBenchmarkTicker(Sector As String, stockTicker As String) As String
     If InStr(UCase(stockTicker), ".TW") > 0 Or InStr(UCase(stockTicker), ".TWO") > 0 Then
         GetBenchmarkTicker = "^TWII": Exit Function
     End If
-    Select Case Sector
-    Case ChrW(&H8CC7) & ChrW(&H8A0A) & ChrW(&H79D1) & ChrW(&H6280) & " (Information Technology)": GetBenchmarkTicker = "^IXIC"
-    Case ChrW(&H5DE5) & ChrW(&H696D) & " (Industrials)": GetBenchmarkTicker = "^DJI"
-    Case ChrW(&H91D1) & ChrW(&H878D) & " (Financials)": GetBenchmarkTicker = "XLF"
-    Case ChrW(&H91AB) & ChrW(&H7642) & ChrW(&H4FDD) & ChrW(&H5065) & " (Health Care)": GetBenchmarkTicker = "XLV"
-    Case ChrW(&H80FD) & ChrW(&H6E90) & " (Energy)": GetBenchmarkTicker = "XLE"
-    Case Else: GetBenchmarkTicker = "^GSPC"
-    End Select
+    GetBenchmarkTicker = "^IXIC"
 End Function
 
 Function CalculateBeta30D(stockTicker As String, marketTicker As String) As Double
