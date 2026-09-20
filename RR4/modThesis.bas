@@ -808,7 +808,7 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
         prevDt = dt(i)
         If True Then
             Dim sc As Range: Set sc = ws.cells(r, C_STATUS)
-            sc.Value = Dash(st(i)): sc.Font.Color = StatusColor(st(i))
+            sc.Value = UCase$(Dash(st(i))): sc.Font.Color = StatusColor(st(i))
             With ws.cells(r, C_ROLE)
                 .Value = Dash(ro(i)): .Font.Color = RoleColor(ro(i)): .HorizontalAlignment = xlCenter
             End With
@@ -1193,7 +1193,7 @@ Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long
     Next t
     Dim head As String: head = CStr(v(1, NT_TARGET)) & "   " & CStr(v(1, NT_THEME))
     Dim meta As String
-    meta = Format$(v(1, NT_DATE), "yyyy/mm/dd") & "  .  " & Dash(CStr(v(1, NT_STATUS))) & "  .  " & Dash(CStr(v(1, NT_ROLE))) & _
+    meta = Format$(v(1, NT_DATE), "yyyy/mm/dd") & "  .  " & UCase$(Dash(CStr(v(1, NT_STATUS)))) & "  .  " & Dash(CStr(v(1, NT_ROLE))) & _
            "  .  " & IIf(tier > 0, TierName(tier, True), "no evidence")
     Dim txt As String
     Dim starts(0 To 5) As Long, lens(0 To 5) As Long
