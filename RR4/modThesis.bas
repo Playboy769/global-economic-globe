@@ -138,8 +138,14 @@ Private Const C_TIER As Long = 4                         ' badge: which tier thi
 Private Const C_THEME As Long = 5
 Private Const C_BEHAV As Long = 6
 Private Const C_LAST As Long = 6
-Private Const C_FILTER As Long = 4                       ' FILTER input reuses TIER/THEME's row-3 slot, merged D3:E3; "N calls drawn" moved to F3 (BEHAVIOR's slot)
-Private Const C_COUNT As Long = 6
+Private Const C_FILTER As Long = 4                       ' FILTER input reuses TIER/THEME's row-3 slot, merged D3:E3
+' 2026-09-20: KEYWORD used to sit at C_THEME's column (page col 5 = sheet F),
+' but that's the second half of FILTER's D3:E3 merge above, so the two inputs
+' silently shared one cell.  Moved KEYWORD to BEHAVIOR's row-3 slot (page col
+' 6 = sheet G, a single cell, not merged) - "N calls drawn" that used to live
+' there shifted one column right to page col 7 (sheet H).
+Private Const C_KEYWORD As Long = 6
+Private Const C_COUNT As Long = 7
 Private Const C_KEY As Long = 30                         ' hidden: the block's target on every row
 Private Const C_ROW As Long = 31                         ' hidden: the note's tblNotes body row (note rows only)
 Private Const NOTE_ROW_H As Double = 20                  ' 2026-09-20: was 42 (3 lines); most notes only used 1-2, clipped beyond that
@@ -493,7 +499,7 @@ Public Sub ThesisViewChange(ws As Worksheet, ByVal Target As Range)
     Dim r As Long: r = PG_IN + NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
     Dim inputs As Range
-    Set inputs = Union(ws.cells(r, C_TGT + lc), ws.cells(r, C_THEME + lc), ws.cells(r, C_FILTER + lc))
+    Set inputs = Union(ws.cells(r, C_TGT + lc), ws.cells(r, C_KEYWORD + lc), ws.cells(r, C_FILTER + lc))
     If Intersect(Target, inputs) Is Nothing Then Exit Sub
     Call DrawThesisView(ws)
 End Sub
@@ -503,7 +509,7 @@ Private Function InIndexMode(ws As Worksheet) As Boolean
     If Not NavHasRows(ws) Then Exit Function
     Dim r As Long: r = PG_IN + NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
-    InIndexMode = (Trim$(CStr(ws.cells(r, C_TGT + lc).Value)) = "" And Trim$(CStr(ws.cells(r, C_THEME + lc).Value)) = "" _
+    InIndexMode = (Trim$(CStr(ws.cells(r, C_TGT + lc).Value)) = "" And Trim$(CStr(ws.cells(r, C_KEYWORD + lc).Value)) = "" _
                    And Trim$(CStr(ws.cells(r, C_FILTER + lc).Value)) = "")
 End Function
 
@@ -651,9 +657,10 @@ Public Sub DrawThesisView(ws As Worksheet)
     Dim q As String, kw As String, fl As String
     If NavHasRows(ws) Then
         q = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_TGT + NavLeft(ws)).Value))
-        kw = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_THEME + NavLeft(ws)).Value))
+        kw = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_KEYWORD + NavLeft(ws)).Value))
         fl = Trim$(CStr(ws.cells(PG_IN + NavOffset(ws), C_FILTER + NavLeft(ws)).Value))
         If fl Like "* calls drawn *" Then fl = ""            ' pre-2026-09-16 pages had the count text in this cell
+        If kw Like "* calls drawn *" Then kw = ""            ' pre-2026-09-20 pages had the count text in this cell
     End If
     Dim mode As String: mode = SortMode(ws)
     Dim indexMode As Boolean: indexMode = (q = "" And kw = "" And fl = "")
@@ -684,13 +691,13 @@ Public Sub DrawThesisView(ws As Worksheet)
     End With
     ws.Rows(PG_TITLE).RowHeight = 22
     Call Lbl(ws.cells(PG_LBL, C_TGT), "QUERY")
-    Call Lbl(ws.cells(PG_LBL, C_THEME), "KEYWORD")
     Call Lbl(ws.cells(PG_LBL, C_FILTER), "FILTER")
+    Call Lbl(ws.cells(PG_LBL, C_KEYWORD), "KEYWORD")
     ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)).Merge
     ws.Range(ws.cells(PG_IN, C_FILTER), ws.cells(PG_IN, C_FILTER + 1)).Merge
     Call InputBox_(ws.Range(ws.cells(PG_IN, C_TGT), ws.cells(PG_IN, C_STATUS)), q)
-    Call InputBox_(ws.cells(PG_IN, C_THEME), kw)             ' one cell, not merged (user, 2026-09-16)
     Call InputBox_(ws.Range(ws.cells(PG_IN, C_FILTER), ws.cells(PG_IN, C_FILTER + 1)), fl)
+    Call InputBox_(ws.cells(PG_IN, C_KEYWORD), kw)           ' one cell, not merged
     ws.cells(PG_LBL, C_TGT).AddComment "Tickers, comma = several.  @PORT = RR4 position log, @WATCH = WATCHLIST"
     ws.cells(PG_LBL, C_FILTER).AddComment "Space / comma separated, any one matching keeps the note (OR):" & vbLf & _
         "STATUS words, GREEN, RED, MOAT RISK CATALYST, tiers T0 T1 T1L T2 T3 D," & vbLf & ">2026-08-01, <2026-06-30, 2026-08 or 2026 (call-date prefix)"
