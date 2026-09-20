@@ -25,8 +25,10 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 '                              daily log, summary
 '  Upper-right I:R  rows 4-24  ticker panel (TickerInsight module)
 '  (row 25 blank)
-'  Chart band       rows 26-39 weight donut at F (RR4_DONUT) and the
-'                              realized-PnL line across J:S (RR4_RLPNL)
+'  Chart band       rows 26-39 weight donut at F (RR4_DONUT), a beta-
+'                              exposure funnel across I:K (RR4_FUNNEL,
+'                              v4.18) and the realized-PnL line across
+'                              L:S (RR4_RLPNL, narrowed from J:S in v4.18)
 '                              (v4.7 - both used to sit right of the panel)
 '  (row 40 blank)
 '  Position log                title row 41, headers row 42, data from 43
@@ -100,6 +102,8 @@ Public Const RR4_POS_HDR   As Long = 43
 Public Const RR4_POS_FIRST As Long = 44
 Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
 Private Const RR4_RLPNL_NAME As String = "RR4_RLPNL"   ' realized-PnL line chart (v4.6)
+Private Const RR4_FUNNEL_NAME As String = "RR4_FUNNEL" ' beta-exposure funnel chart (v4.18)
+Private Const RR4_FUN_PREFIX  As String = "RR4_FUN_"    ' shape-based funnel bars (see DrawFunnel)
 Private Const RR4_NCOL      As Long = 19    ' last body column, B:S (R:S = NOTE, v4.11)
 Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
 Private Const RR4_SWING_COL As Long = 17    ' Q
@@ -1479,6 +1483,7 @@ Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
     If lastR >= RR4_POS_FIRST Then Call RestripeRows(ws, lastR)
     Call DrawWeightBar(ws, lastR)
     Call DrawDonut(ws, lastR)
+    Call DrawFunnel(ws, lastR)
 
     Dim codeList As String: codeList = "UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF  >>  "
     With ws.cells(RR4_TOP + 2, RR4_LEFT + 5)
@@ -1730,10 +1735,125 @@ Private Sub DrawDonut(ws As Worksheet, lastR As Long)
 End Sub
 
 ' ================================================================
+'  BETA EXPOSURE FUNNEL (v4.18, 2026-09-19) - columns I:K of the chart
+'  band, between the weight donut (F) and the realized-PnL line (now
+'  narrowed to L:S to make room). One stage per position in the current
+'  ARRANGE order (same rows the donut and weight bar read), width =
+'  W.BETA (column RR4_LEFT+13, WT% x Beta - see WriteOnePositionRow) so
+'  the funnel reads as each position's share of the portfolio's
+'  systematic-risk exposure rather than raw dollar weight.
+'
+'  Drawn as shapes, not a real chart object - confirmed live via COM
+'  2026-09-19 that Excel's native Funnel chart type (123) has NO working
+'  VBA series API on this host (Excel 16.0 build 17932): ChartObjects.Add
+'  + ChartType=123 raises "Value does not fall within the expected
+'  range"; Shapes.AddChart2(-1, 123, ...) *does* create the chart object,
+'  but Series.Values/.XValues (Range OR literal array) silently collapse
+'  every position down to a single point, and Chart.SetSourceData throws
+'  "The method or operation is not implemented". This is a documented
+'  Microsoft limitation of the Funnel chart type's object model, not a
+'  fixable call-order bug - Waterfall/Treemap have real VBA support,
+'  Funnel does not. So this reads like the fake doughnut-hole trick in
+'  DrawDonut: one trapezoid shape per position (msoShapeTrapezoid, named
+'  RR4_FUN_n so only they are cleared on redraw), width scaled to
+'  |W.BETA| / max(|W.BETA|) and centred, all filled solid RR4_ACCENT on
+'  the black sheet background per the page's existing accent convention
+'  (not per-slice colours like the donut).
+' ================================================================
+Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
+    Dim k As Long
+    ' one-time cleanup: an earlier build of this sub created a (non-functional)
+    ' native Funnel ChartObject under this name - remove it if still present
+    For k = ws.ChartObjects.count To 1 Step -1
+        If ws.ChartObjects(k).Name = RR4_FUNNEL_NAME Then ws.ChartObjects(k).Delete
+    Next k
+    For k = ws.Shapes.count To 1 Step -1
+        If Left(ws.Shapes(k).Name, Len(RR4_FUN_PREFIX)) = RR4_FUN_PREFIX Then ws.Shapes(k).Delete
+    Next k
+    If lastR < RR4_POS_FIRST Then Exit Sub
+
+    ' band: columns I:K, same vertical extent as the donut / RL PnL chart
+    Dim bandL As Double, bandT As Double, bandW As Double, bandH As Double
+    bandL = ws.Columns(9).Left + 4        ' I
+    bandW = ws.Columns(12).Left - bandL - 4     ' up to (not incl.) L
+    bandT = ws.Rows(RR4_CHART_TOP).Top + 4
+    bandH = ws.Rows(RR4_CHART_TOP + RR4_CHART_ROWS).Top - bandT - 4
+    If bandH < 60 Then bandH = 60
+
+    Dim titleH As Double: titleH = 16
+    Dim lbl As Shape
+    Set lbl = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, bandL, bandT, bandW, titleH)
+    lbl.Name = RR4_FUN_PREFIX & "TITLE"
+    lbl.Fill.Visible = msoFalse
+    lbl.Line.Visible = msoFalse
+    lbl.Placement = xlMove
+    With lbl.TextFrame2
+        .MarginLeft = 0: .MarginRight = 0: .MarginTop = 0: .MarginBottom = 0
+        .TextRange.Text = "BETA EXPOSURE"
+        .TextRange.Font.Name = "Consolas"
+        .TextRange.Font.Size = 9
+        .TextRange.Font.Bold = msoTrue
+        .TextRange.Font.Fill.ForeColor.RGB = RR4_ACCENT
+        .TextRange.ParagraphFormat.Alignment = msoAlignCenter
+    End With
+
+    Dim n As Long: n = lastR - RR4_POS_FIRST + 1
+    Dim barAreaT As Double: barAreaT = bandT + titleH + 2
+    Dim barAreaH As Double: barAreaH = bandH - titleH - 2
+    Dim rowH As Double: rowH = barAreaH / n
+    Dim padV As Double: padV = IIf(rowH > 6, 1, 0)
+
+    ' scale bar widths off the largest |W.BETA| among the visible rows
+    Dim r As Long, maxAbs As Double
+    For r = RR4_POS_FIRST To lastR
+        Dim v0 As Double: v0 = Abs(NumOr0(ws.cells(r, RR4_LEFT + 13).Value))
+        If v0 > maxAbs Then maxAbs = v0
+    Next r
+    If maxAbs <= 0 Then Exit Sub
+
+    Dim i As Long, y As Double: y = barAreaT
+    For r = RR4_POS_FIRST To lastR
+        i = r - RR4_POS_FIRST + 1
+        Dim v As Double: v = Abs(NumOr0(ws.cells(r, RR4_LEFT + 13).Value))
+        Dim frac As Double: frac = v / maxAbs
+        If frac < 0.12 Then frac = 0.12    ' floor so a near-zero exposure still shows a sliver
+        Dim w As Double: w = bandW * frac
+        Dim h As Double: h = rowH - padV * 2
+        If h < 3 Then h = rowH
+        Dim x As Double: x = bandL + (bandW - w) / 2
+
+        Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
+        Dim shp As Shape
+        Set shp = ws.Shapes.AddShape(msoShapeTrapezoid, x, y + padV, w, h)
+        shp.Name = RR4_FUN_PREFIX & i
+        shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        shp.Line.Weight = 1
+        shp.Fill.ForeColor.RGB = RR4_ACCENT
+        shp.Placement = xlMove
+        shp.AlternativeText = tk & "  W.BETA " & Format(v, "0.000")
+        If w >= 46 And h >= 10 Then
+            With shp.TextFrame2
+                .MarginLeft = 2: .MarginRight = 2: .MarginTop = 0: .MarginBottom = 0
+                .WordWrap = msoFalse
+                .VerticalAnchor = msoAnchorMiddle
+                .TextRange.Text = ShortTicker(tk) & " " & Format(v, "0.00")
+                .TextRange.Font.Name = "Consolas"
+                .TextRange.Font.Size = 7
+                .TextRange.Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
+                .TextRange.ParagraphFormat.Alignment = msoAlignCenter
+            End With
+        End If
+        y = y + rowH
+    Next r
+End Sub
+
+' ================================================================
 '  REALIZED PNL LINE (v4.6) - under the weight donut, same width.
 '  One series: HistoryLog column D (cumulative realized PnL, TWD) against
 '  column A (date), rows 2..last. Points at the sheet cells, so the line
 '  follows whatever LogHistory / BackfillHistory write there.
+'  v4.18 (2026-09-19): narrowed from J:S to L:S so the new beta-exposure
+'  funnel (DrawFunnel) has I:K to itself.
 ' ================================================================
 Private Sub DrawRealizedChart(ws As Worksheet)
     Dim k As Long
@@ -1747,9 +1867,9 @@ Private Sub DrawRealizedChart(ws As Worksheet)
     Dim lastR As Long: lastR = HistLastRow(wsH)
     If lastR < HistHdrRow(wsH) + 2 Then Exit Sub          ' one point is not a line
 
-    ' chart band (v4.7): columns J:S, full band height, next to the donut
+    ' chart band (v4.18): columns L:S, full band height, right of the funnel
     Dim cL As Double, cT As Double, cW As Double, cH As Double
-    cL = ws.Columns(10).Left + 4
+    cL = ws.Columns(12).Left + 4
     cW = ws.Columns(20).Left - cL - 4
     cT = ws.Rows(RR4_CHART_TOP).Top + 4
     cH = ws.Rows(RR4_CHART_TOP + RR4_CHART_ROWS).Top - cT - 4
