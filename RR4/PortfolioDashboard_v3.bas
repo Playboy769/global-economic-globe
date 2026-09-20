@@ -1489,7 +1489,7 @@ Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
     With ws.cells(RR4_TOP + 2, RR4_LEFT + 5)
         .Value = codeList & desc
         .Font.Size = 9
-        .Font.Color = RGB(150, 150, 150)
+        .Font.Color = RGB(0, 200, 255)
         .Characters(Len(codeList) + 1, Len(desc)).Font.Color = IIf(known, RR4_ACCENT, RGB(255, 80, 80))
     End With
 
@@ -2803,7 +2803,7 @@ End Sub
 Private Sub WriteKV(ws As Worksheet, r As Long, label As String, _
                     val As Double, fmt As String, colorPnL As Boolean)
     ws.cells(r, 1).Value = label
-    ws.cells(r, 1).Font.Color = RGB(150, 150, 150)
+    ws.cells(r, 1).Font.Color = RGB(0, 200, 255)
     ws.cells(r, 2).Value = val
     ws.cells(r, 2).NumberFormat = fmt
     ws.cells(r, 2).Font.Bold = True
@@ -3202,7 +3202,7 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
     End With
     r = r + 1
     wsC.cells(r, 1).Value = "PORTFOLIO WEIGHT-AVG PAIRWISE CORR"
-    wsC.cells(r, 1).Font.Color = RGB(150, 150, 150)
+    wsC.cells(r, 1).Font.Color = RGB(0, 200, 255)
     With wsC.cells(r, 4)
         .Value = portAvg
         .NumberFormat = "0.00"
@@ -3839,7 +3839,7 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
     Call WriteKV(wsV, r + 1, "DAILY STD DEV", portDailyVol, "0.00%", False)
     Call WriteKV(wsV, r + 2, "1-DAY VAR 95% (TWD)", -var95, "#,##0", True)
     wsV.Cells(r + 3, 1).Value = "TRADING DAYS USED"
-    wsV.Cells(r + 3, 1).Font.Color = RGB(150, 150, 150)
+    wsV.Cells(r + 3, 1).Font.Color = RGB(0, 200, 255)
     wsV.Cells(r + 3, 2).Value = portDaysUsed & " / 180"
     wsV.Cells(r + 3, 2).Font.Color = IIf(portDaysUsed < 180, RR4_ACCENT, RGB(221, 221, 221))
     wsV.Cells(r + 3, 2).Font.Bold = True
@@ -3851,7 +3851,7 @@ Private Sub VolRenderSheet(tickers() As String, mktVals() As Double, totalMktTWD
     wsV.Cells(r + 1, 6).Font.Size = 9
     If usedCount >= 2 Then
         wsV.Cells(r + 2, 4).Value = "COMMON DATE RANGE"
-        wsV.Cells(r + 2, 4).Font.Color = RGB(150, 150, 150)
+        wsV.Cells(r + 2, 4).Font.Color = RGB(0, 200, 255)
         wsV.Cells(r + 2, 5).Value = Format(commonDates(0), "yyyy/m/d") & " ~ " & _
                                      Format(commonDates(usedCount - 1), "yyyy/m/d")
         wsV.Cells(r + 2, 5).Font.Color = RGB(221, 221, 221)
@@ -4002,7 +4002,7 @@ End Sub
 Private Sub WriteKV2(ws As Worksheet, r As Long, c As Long, label As String, _
                      val As Double, fmt As String)
     ws.cells(r, c).Value = label
-    ws.cells(r, c).Font.Color = RGB(150, 150, 150)
+    ws.cells(r, c).Font.Color = RGB(0, 200, 255)
     ws.cells(r, c + 1).Value = val
     ws.cells(r, c + 1).NumberFormat = fmt
     ws.cells(r, c + 1).Font.Bold = True
