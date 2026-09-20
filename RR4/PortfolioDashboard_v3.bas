@@ -1829,7 +1829,7 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
         shp.Name = RR4_FUN_PREFIX & i
         shp.Line.ForeColor.RGB = RGB(0, 0, 0)
         shp.Line.Weight = 1
-        shp.Fill.ForeColor.RGB = DonutColor(i)   ' 2026-09-20: match the WEIGHT donut's per-position palette
+        shp.Fill.ForeColor.RGB = FunnelColor(i)   ' 2026-09-20: same hue as the donut, darkened (less bright)
         shp.Placement = xlMove
         shp.AlternativeText = tk & "  W.BETA " & Format(v, "0.000")
         If w >= 46 And h >= 10 Then
@@ -2126,6 +2126,22 @@ Private Function DonutColor(ByVal n As Long) As Long
         Case 11: DonutColor = RGB(255, 220, 120)    ' pale gold
         Case 12: DonutColor = RGB(160, 160, 160)    ' grey
     End Select
+End Function
+
+' Darkened version of a colour, each channel scaled by factor (0..1).
+Private Function DarkenColor(ByVal clr As Long, ByVal factor As Double) As Long
+    Dim r As Long, g As Long, b As Long
+    r = clr Mod 256
+    g = (clr \ 256) Mod 256
+    b = (clr \ 65536) Mod 256
+    DarkenColor = RGB(r * factor, g * factor, b * factor)
+End Function
+
+' Funnel stage n's colour: same hue as the WEIGHT donut's slice n, darkened
+' (2026-09-20, user) - the donut's saturated palette looked too bright on
+' the taller funnel bars.
+Private Function FunnelColor(ByVal n As Long) As Long
+    FunnelColor = DarkenColor(DonutColor(n), 0.6)
 End Function
 
 ' ================================================================
