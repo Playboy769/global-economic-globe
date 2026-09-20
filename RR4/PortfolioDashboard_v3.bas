@@ -1756,9 +1756,10 @@ End Sub
 '  Funnel does not. So this reads like the fake doughnut-hole trick in
 '  DrawDonut: one trapezoid shape per position (msoShapeTrapezoid, named
 '  RR4_FUN_n so only they are cleared on redraw), width scaled to
-'  |W.BETA| / max(|W.BETA|) and centred, all filled solid RR4_ACCENT on
-'  the black sheet background per the page's existing accent convention
-'  (not per-slice colours like the donut).
+'  |W.BETA| / max(|W.BETA|) and centred.
+'  2026-09-20: each trapezoid is filled with DonutColor(i) using the same
+'  row index the WEIGHT donut reads, so a given position is the same
+'  colour in both charts (was solid RR4_ACCENT for every stage).
 ' ================================================================
 Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
     Dim k As Long
@@ -1792,7 +1793,7 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
         .TextRange.Text = "BETA EXPOSURE"
         .TextRange.Font.Name = "Consolas"
         .TextRange.Font.Size = 9
-        .TextRange.Font.Bold = msoTrue
+        .TextRange.Font.Bold = msoFalse
         .TextRange.Font.Fill.ForeColor.RGB = RR4_ACCENT
         .TextRange.ParagraphFormat.Alignment = msoAlignCenter
     End With
@@ -1828,7 +1829,7 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
         shp.Name = RR4_FUN_PREFIX & i
         shp.Line.ForeColor.RGB = RGB(0, 0, 0)
         shp.Line.Weight = 1
-        shp.Fill.ForeColor.RGB = RR4_ACCENT
+        shp.Fill.ForeColor.RGB = DonutColor(i)   ' 2026-09-20: match the WEIGHT donut's per-position palette
         shp.Placement = xlMove
         shp.AlternativeText = tk & "  W.BETA " & Format(v, "0.000")
         If w >= 46 And h >= 10 Then
