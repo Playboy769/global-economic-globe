@@ -13,7 +13,10 @@ Option Explicit
 '    ThesisNotes (data sheet)  ListObject tblNotes, one note per row:
 '      TARGET | TYPE (stock / macro) | CALL DATE | STATUS | ROLE |
 '      THEME | BEHAVIOR | T0 Q&A | T1 CALL | T1L FILING | T2 RESEARCH |
-'      T3 MEDIA | D OWN
+'      T3 MEDIA | D OWN | SOURCE | SUBTYPE
+'      (2026-09-19: SUBTYPE industry / macro splits TYPE = macro notes; the view
+'      draws STOCK, INDUSTRY, MACRO sections.  A macro note typed without a
+'      SUBTYPE prompts Yes = INDUSTRY / No = MACRO / Cancel = blank.)
 '      (2026-09-15: the single EVIDENCE column became six evidence TIERS,
 '      one note's evidence sits in exactly one of them:
 '        T0  earnings-call Q&A (unscripted answers, refusals, dodges)
@@ -28,6 +31,16 @@ Option Explicit
 '            tabs, framework claims) - drawn as a Greek delta
 '      EnsureNotesSheet upgrades an 8-column table in place: EVIDENCE is
 '      renamed T1L FILING and the other five tiers are inserted around it.)
+'      (2026-09-19: 14th column SOURCE added - a citation for wherever the
+'      note's content came from.  Most rows hold a local file path (a PDF
+'      under the user's Bloomberg folder, or a path into this repo's
+'      research/ reports); when there is no saved file (e.g. a note built
+'      from a pasted newsletter/Substack article) a free-text citation goes
+'      there instead - publication, date, title.  EnsureNotesSheet upgrades
+'      a 13-column table in place by appending SOURCE, same pattern as the
+'      2026-09-15 tier split; an 8-column table upgrades straight to 14 in
+'      one pass.  This column was added directly on the live workbook before
+'      modThesis.bas caught up - see CLAUDE.md's RR4 section for the story.)
 '      STATUS  Robust Solid Growing (green) / Slowing Sluggish Challenging
 '              Contraction Warning (red)
 '      ROLE    MOAT / RISK / CATALYST / blank
@@ -101,7 +114,9 @@ Private Const NT_THEME As Long = 6
 Private Const NT_BEHAV As Long = 7
 Private Const NT_T0 As Long = 8                          ' first tier column; tiers are NT_T0 .. NT_T0 + NTIER - 1
 Private Const NTIER As Long = 6
-Private Const NT_NCOL As Long = 13
+Private Const NT_SOURCE As Long = 14                      ' citation: local file path, or free text when there is none
+Private Const NT_SUBTYPE As Long = 15                     ' 2026-09-19: macro notes split into industry / macro
+Private Const NT_NCOL As Long = 15
 
 ' view geometry (page coordinates; the bar adds NavOffset rows / NavLeft columns)
 Private Const PG_TITLE As Long = 1
@@ -113,12 +128,18 @@ Private Const PG_LIST As Long = 8
 Private Const C_TGT As Long = 1
 Private Const C_STATUS As Long = 2
 Private Const C_ROLE As Long = 3
-Private Const C_THEME As Long = 4
-Private Const C_BEHAV As Long = 5
-Private Const C_T0 As Long = 6                           ' six tier columns F..K
-Private Const C_LAST As Long = 11
-Private Const C_FILTER As Long = 6                       ' FILTER input F3:G3; "N calls drawn" moved to H3
-Private Const C_COUNT As Long = 8
+' 2026-09-20: the six tier columns (T0..D) that used to sit side by side after
+' BEHAVIOR are gone from the grid - each note's evidence still lives in exactly
+' one of tblNotes' six tier columns (NT_T0..NT_T0+NTIER-1, unchanged), but the
+' view now only shows which one via a single narrow TIER badge (see TierShort),
+' and the full evidence text only surfaces in the reading panel (ShowNote).
+' BEHAVIOR takes the width that freed up.
+Private Const C_TIER As Long = 4                         ' badge: which tier this note's evidence sits in
+Private Const C_THEME As Long = 5
+Private Const C_BEHAV As Long = 6
+Private Const C_LAST As Long = 6
+Private Const C_FILTER As Long = 4                       ' FILTER input reuses TIER/THEME's row-3 slot, merged D3:E3; "N calls drawn" moved to F3 (BEHAVIOR's slot)
+Private Const C_COUNT As Long = 6
 Private Const C_KEY As Long = 30                         ' hidden: the block's target on every row
 Private Const C_ROW As Long = 31                         ' hidden: the note's tblNotes body row (note rows only)
 Private Const NOTE_ROW_H As Double = 20                  ' 2026-09-20: was 42 (3 lines); most notes only used 1-2, clipped beyond that
@@ -182,6 +203,19 @@ Private Function TierName(ByVal t As Long, ByVal forView As Boolean) As String
         Case 4: TierName = "T2 RESEARCH"
         Case 5: TierName = "T3 MEDIA"
         Case 6: TierName = IIf(forView, ChrW(&H394) & " OWN", "D OWN")
+    End Select
+End Function
+
+' Short code for the TIER badge column (2026-09-20) - just enough to tell tiers
+' apart at a glance; the full name only shows in the reading panel.
+Private Function TierShort(ByVal t As Long) As String
+    Select Case t
+        Case 1: TierShort = "T0"
+        Case 2: TierShort = "T1"
+        Case 3: TierShort = "T1L"
+        Case 4: TierShort = "T2"
+        Case 5: TierShort = "T3"
+        Case 6: TierShort = ChrW(&H394)
     End Select
 End Function
 
@@ -311,7 +345,8 @@ Private Sub EnsureNotesSheet()
     On Error GoTo 0
     Dim hdr As Variant
     hdr = Array("TARGET", "TYPE", "CALL DATE", "STATUS", "ROLE", "THEME", "BEHAVIOR", _
-                TierName(1, False), TierName(2, False), TierName(3, False), TierName(4, False), TierName(5, False), TierName(6, False))
+                TierName(1, False), TierName(2, False), TierName(3, False), TierName(4, False), TierName(5, False), TierName(6, False), _
+                "SOURCE", "SUBTYPE")
     Dim j As Long
     If lo Is Nothing Then
         For j = 0 To NT_NCOL - 1: ws.cells(3, j + 1).Value = hdr(j): Next j
@@ -327,6 +362,15 @@ Private Sub EnsureNotesSheet()
         lo.ListColumns.Add.Name = TierName(4, False)
         lo.ListColumns.Add.Name = TierName(5, False)
         lo.ListColumns.Add.Name = TierName(6, False)
+        lo.ListColumns.Add.Name = "SOURCE"
+    ElseIf lo.ListColumns.count = 13 Then
+        ' 2026-09-19 upgrade: append SOURCE (citation - local file path, or free
+        ' text when there is none), same append-only pattern as the tier split above.
+        lo.ListColumns.Add.Name = "SOURCE"
+    End If
+    If lo.ListColumns.count = 14 Then
+        ' 2026-09-19 upgrade: append SUBTYPE (industry / macro) for TYPE = macro notes
+        lo.ListColumns.Add.Name = "SUBTYPE"
     End If
     lo.TableStyle = ""
     With lo.HeaderRowRange
@@ -334,7 +378,7 @@ Private Sub EnsureNotesSheet()
         .Interior.Color = RGB(0, 0, 0)
         .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Color = RR4_LINE
     End With
-    Dim widths As Variant: widths = Array(16, 8, 12, 13, 10, 36, 56, 44, 44, 44, 44, 36, 44)
+    Dim widths As Variant: widths = Array(16, 8, 12, 13, 10, 36, 56, 44, 44, 44, 44, 36, 44, 50, 10)
     For j = 0 To NT_NCOL - 1: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
     If Not lo.DataBodyRange Is Nothing Then
         With lo.DataBodyRange
@@ -344,6 +388,7 @@ Private Sub EnsureNotesSheet()
         lo.ListColumns(NT_TARGET).DataBodyRange.Font.Name = ZH_FONT
         For j = NT_THEME To NT_NCOL: lo.ListColumns(j).DataBodyRange.Font.Name = ZH_FONT: Next j
         Call SetList(lo.ListColumns(NT_TYPE).DataBodyRange, "stock,macro")
+        Call SetList(lo.ListColumns(NT_SUBTYPE).DataBodyRange, "industry,macro")
         Call SetList(lo.ListColumns(NT_STATUS).DataBodyRange, StatusList())
         Call SetList(lo.ListColumns(NT_ROLE).DataBodyRange, "MOAT,RISK,CATALYST")
     End If
@@ -402,17 +447,46 @@ Public Sub ThesisNotesChange(ws As Worksheet, ByVal Target As Range)
                 If Trim$(CStr(.cells(rr, NT_TARGET).Value)) <> "" Then
                     If Trim$(CStr(.cells(rr, NT_TYPE).Value)) = "" Then .cells(rr, NT_TYPE).Value = "stock"
                     If Trim$(CStr(.cells(rr, NT_DATE).Value)) = "" Then .cells(rr, NT_DATE).Value = Date
+                    ' 2026-09-19: user wants to be asked every time a macro note has no SUBTYPE
+                    If LCase$(Trim$(CStr(.cells(rr, NT_TYPE).Value))) = "macro" _
+                       And Trim$(CStr(.cells(rr, NT_SUBTYPE).Value)) = "" Then
+                        Call AskSubtype(lo, rr)
+                    End If
                 End If
             End With
         End If
     Next c
     Call SetList(lo.ListColumns(NT_TYPE).DataBodyRange, "stock,macro")
+    Call SetList(lo.ListColumns(NT_SUBTYPE).DataBodyRange, "industry,macro")
     Call SetList(lo.ListColumns(NT_STATUS).DataBodyRange, StatusList())
     Call SetList(lo.ListColumns(NT_ROLE).DataBodyRange, "MOAT,RISK,CATALYST")
     lo.ListColumns(NT_DATE).DataBodyRange.NumberFormat = "yyyy/mm/dd"
     On Error GoTo 0
     Application.EnableEvents = prevEv
     If SheetExists(THESIS_SHEET) Then Call DrawThesisView(ThisWorkbook.Worksheets(THESIS_SHEET))
+End Sub
+
+' Asks whether macro note rr (tblNotes body row) is INDUSTRY or MACRO; the
+' hint is what other notes of the same target already use.  Cancel leaves it
+' blank (drawn under the target's existing section, else MACRO).
+Private Sub AskSubtype(lo As ListObject, ByVal rr As Long)
+    Dim tgt As String: tgt = UCase$(Trim$(CStr(lo.DataBodyRange.cells(rr, NT_TARGET).Value)))
+    Dim v As Variant: v = lo.DataBodyRange.Value
+    Dim i As Long, hint As String, s As String
+    For i = 1 To UBound(v, 1)
+        If i <> rr And UCase$(Trim$(CStr(v(i, NT_TARGET)))) = tgt Then
+            s = LCase$(Trim$(CStr(v(i, NT_SUBTYPE))))
+            If s = "industry" Or s = "macro" Then hint = UCase$(s): Exit For
+        End If
+    Next i
+    Dim msg As String
+    msg = "Macro note '" & tgt & "' has no SUBTYPE." & vbLf & vbLf & _
+          "Yes = INDUSTRY    No = MACRO    Cancel = leave blank"
+    If hint <> "" Then msg = msg & vbLf & vbLf & "Other notes of this target: " & hint
+    Select Case MsgBox(msg, vbYesNoCancel + vbQuestion, "Library SUBTYPE")
+        Case vbYes: lo.DataBodyRange.cells(rr, NT_SUBTYPE).Value = "industry"
+        Case vbNo: lo.DataBodyRange.cells(rr, NT_SUBTYPE).Value = "macro"
+    End Select
 End Sub
 
 Public Sub ThesisViewChange(ws As Worksheet, ByVal Target As Range)
@@ -439,6 +513,7 @@ Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef C
     Dim lc As Long: lc = NavLeft(ws)
     If t.Row = PG_HDR + off And t.Column = C_TGT + lc Then
         Cancel = True
+        If Trim$(CStr(t.Value)) = "" Then Exit Sub          ' index view has no header row (2026-09-19)
         Dim cur As String: cur = SortMode(ws)
         Call SetSortMode(ws, IIf(cur = "ticker", "date", "ticker"))
         Call DrawThesisView(ws)
@@ -461,7 +536,7 @@ Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef C
     End If
     If t.Row = PG_TITLE + off Then
         Cancel = True
-        Call ShowArchive(ws, "")
+        Call ShowArchive(ws, "", 0)
         Exit Sub
     End If
     If t.Row < PG_LIST + off Then Exit Sub
@@ -488,12 +563,12 @@ Public Sub ThesisViewDoubleClick(ws As Worksheet, ByVal Target As Range, ByRef C
     If key = "" Then Exit Sub
     If t.Column = C_TGT + lc Then
         Cancel = True
-        Call ShowArchive(ws, key)
+        Call ShowArchive(ws, key, t.Row)
     ElseIf t.Column > C_TGT + lc And t.Column <= C_LAST + lc Then
         Dim body As String: body = CStr(ws.cells(t.Row, C_ROW + lc).Value)
         If body <> "" Then
             Cancel = True
-            Call ShowNote(ws, key, CLng(body))
+            Call ShowNote(ws, key, CLng(body), t.Row)
         End If
     End If
 End Sub
@@ -591,7 +666,11 @@ Public Sub DrawThesisView(ws As Worksheet)
         .VerticalAlignment = xlCenter
         .RowHeight = 17
     End With
-    Dim widths As Variant: widths = Array(18, 13, 10, 30, 52, 40, 40, 40, 40, 32, 40, 2)   ' BEHAVIOR + six tiers wrap
+    ' 2026-09-20: TIER is a narrow badge (see TierShort); the six tier columns it
+    ' replaced free their width to BEHAVIOR. Columns 7-12 are unused spacers now,
+    ' kept at width 2 so the array stays 12 long (indexMode's own 12-wide layout
+    ' below reuses the same "For j = 0 To 11" loop).
+    Dim widths As Variant: widths = Array(18, 13, 10, 6, 30, 220, 2, 2, 2, 2, 2, 2)
     If indexMode Then widths = Array(18, 8, 12, 18, 8, 12, 18, 8, 12, 18, 8, 12)     ' four (target . notes . latest) groups
     Dim j As Long
     For j = 0 To 11: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
@@ -639,6 +718,12 @@ Public Sub DrawThesisView(ws As Worksheet)
             latest(k) = dt(i): kind(k) = ty(i)
         ElseIf dt(i) > latest(k) Then
             latest(k) = dt(i): kind(k) = ty(i)
+        End If
+    Next i
+    For i = 1 To n                                          ' a macro target with any INDUSTRY note sits under INDUSTRY
+        If ty(i) = "industry" Then
+            k = UCase$(tg(i))
+            If kind(k) = "macro" Then kind(k) = "industry"
         End If
     Next i
     With ws.cells(PG_TOTAL, 1)
@@ -700,27 +785,24 @@ Public Sub DrawThesisView(ws As Worksheet)
     ws.cells(PG_HDR, C_ROLE).Value = "ROLE" & IIf(Left$(ns, 4) = "role", mark, "")
     ws.cells(PG_HDR, C_STATUS).AddComment "Double-click: sort notes in every block by STATUS (green > red), again = reversed, again = off"
     ws.cells(PG_HDR, C_ROLE).AddComment "Double-click: sort notes in every block by ROLE (MOAT > RISK > CATALYST), again = reversed, again = off"
+    ws.cells(PG_HDR, C_TIER).Value = "TIER"
     ws.cells(PG_HDR, C_THEME).Value = "THEME"
     ws.cells(PG_HDR, C_BEHAV).Value = "BEHAVIOR"
-    Dim t As Long
-    For t = 1 To NTIER: ws.cells(PG_HDR, C_T0 + t - 1).Value = TierName(t, True): Next t
     With ws.Range(ws.cells(PG_HDR, 1), ws.cells(PG_HDR, C_LAST))
         .Font.Color = RR4_ACCENT: .Font.Bold = True
     End With
-    ws.cells(PG_HDR, C_T0 + 2).AddComment "Lag information: statutory filings / official data - true but already old when published"
-    ws.cells(PG_HDR, C_LAST).AddComment "Own derivations: cross-check tables, valuation page, report tabs, framework claims"
+    ws.cells(PG_HDR, C_TIER).AddComment "Which evidence tier this note's evidence sits in:" & vbLf & _
+        "T0 Q&A > T1 CALL > T1L FILING (lag info) > T2 RESEARCH > T3 MEDIA > " & ChrW(&H394) & " OWN (own derivation)." & vbLf & _
+        "Double-click the note row to read the full evidence text in the panel."
     ws.cells(PG_HDR, C_TGT).AddComment "Double-click: sort blocks by latest call date <-> ticker A-Z"
 
     ' ---- blocks ----
     Dim r As Long: r = PG_LIST
     Dim sec As Variant
-    For Each sec In Array("stock", "macro")
+    For Each sec In Array("stock", "industry", "macro")
         Dim order As Variant: order = OrderedTargets(shown, latest, kind, CStr(sec), mode)
         If Not IsEmpty(order) Then
-            With ws.Range(ws.cells(r, 1), ws.cells(r, C_LAST))
-                .Interior.Color = CLR_BANNER
-                .Font.Color = RR4_ACCENT: .Font.Bold = True
-            End With
+            Call SectionBanner(ws.Range(ws.cells(r, 1), ws.cells(r, C_LAST)))
             ws.cells(r, 1).Value = UCase$(CStr(sec))
             r = r + 2
             Dim ti As Long
@@ -814,10 +896,18 @@ Private Function DrawBlock(ws As Worksheet, ByVal r As Long, ByVal key As String
             End With
             Call TextCell(ws.cells(r, C_THEME), th(i), RGB(245, 245, 245))
             Call TextCell(ws.cells(r, C_BEHAV), be(i), CLR_SOFT)
-            Dim tt As Long                                 ' evidence in its tier column, the others stay blank
+            Dim tt As Long, foundTier As Long: foundTier = 0    ' which tier (if any) has this note's evidence
             For tt = 1 To NTIER
-                If Trim$(ev(i, tt)) <> "" Then Call TextCell(ws.cells(r, C_T0 + tt - 1), ev(i, tt), TierColor(tt))
+                If Trim$(ev(i, tt)) <> "" Then foundTier = tt: Exit For
             Next tt
+            With ws.cells(r, C_TIER)
+                .HorizontalAlignment = xlCenter
+                If foundTier > 0 Then
+                    .Value = TierShort(foundTier): .Font.Color = TierColor(foundTier)
+                Else
+                    .Value = "-": .Font.Color = CLR_MUTED
+                End If
+            End With
             ws.cells(r, C_KEY).Value = key
             ws.cells(r, C_ROW).Value = rw(i)
             r = r + 1
@@ -902,6 +992,9 @@ Private Function ReadNotes(lo As ListObject, tg() As String, ty() As String, dt(
             tg(n) = Trim$(CStr(v(i, NT_TARGET)))
             ty(n) = LCase$(Trim$(CStr(v(i, NT_TYPE))))
             If ty(n) <> "macro" Then ty(n) = "stock"
+            If ty(n) = "macro" And ncol >= NT_SUBTYPE Then          ' 2026-09-19: macro splits into industry / macro
+                If LCase$(Trim$(CStr(v(i, NT_SUBTYPE)))) = "industry" Then ty(n) = "industry"
+            End If
             If IsDate(v(i, NT_DATE)) Then dt(n) = CDate(v(i, NT_DATE)) Else dt(n) = 0
             st(n) = Trim$(CStr(v(i, NT_STATUS)))
             ro(n) = UCase$(Trim$(CStr(v(i, NT_ROLE))))
@@ -981,8 +1074,19 @@ End Function
 ' ================================================================
 '  2026-09-16: index, FILTER, @PORT / @WATCH, note reading panel
 ' ================================================================
+' Section banner (STOCK / INDUSTRY / MACRO): black like the page, orange bold
+' text, dark grey rule underneath (2026-09-19, was a grey CLR_BANNER fill).
+Private Sub SectionBanner(rng As Range)
+    With rng
+        .Interior.Color = RGB(0, 0, 0)
+        .Font.Color = RR4_ACCENT: .Font.Bold = True
+        .Borders(xlEdgeBottom).LineStyle = xlContinuous
+        .Borders(xlEdgeBottom).Color = RR4_LINE
+    End With
+End Sub
+
 ' Empty state: every target as (target . notes . latest call) in IDX_GROUPS
-' column groups, STOCK then MACRO, ordered like the blocks (THSORT).
+' column groups, STOCK / INDUSTRY / MACRO, always A-Z, no header row.
 Private Sub DrawIndex(ws As Worksheet, perTarget As Object, latest As Object, kind As Object, ByVal mode As String, ByVal n As Long)
     Dim r As Long: r = PG_LIST
     Dim g As Long
@@ -991,26 +1095,14 @@ Private Sub DrawIndex(ws As Worksheet, perTarget As Object, latest As Object, ki
         ws.cells(r, 1).Font.Color = CLR_MUTED
         Exit Sub
     End If
-    ' header row: repeat the three labels per group
-    For g = 0 To IDX_GROUPS - 1
-        ws.cells(PG_HDR, 1 + g * 3).Value = IIf(mode = "ticker", "TICKER A-Z", "LATEST CALL")
-        ws.cells(PG_HDR, 2 + g * 3).Value = "NOTES"
-        ws.cells(PG_HDR, 3 + g * 3).Value = "LAST CALL"
-        ws.cells(PG_HDR, 2 + g * 3).HorizontalAlignment = xlRight
-    Next g
-    With ws.Range(ws.cells(PG_HDR, 1), ws.cells(PG_HDR, IDX_GROUPS * 3))
-        .Font.Color = RR4_ACCENT: .Font.Bold = True
-    End With
-    ws.cells(PG_HDR, 1).AddComment "Double-click: sort the index by latest call date <-> ticker A-Z"
+    ' 2026-09-19 (user): no header row and no sort toggle - the index row PG_HDR
+    ' stays blank and targets are always A-Z; banners show the section name only.
     Dim sec As Variant
-    For Each sec In Array("stock", "macro")
-        Dim order As Variant: order = OrderedTargets(perTarget, latest, kind, CStr(sec), mode)
+    For Each sec In Array("stock", "industry", "macro")
+        Dim order As Variant: order = OrderedTargets(perTarget, latest, kind, CStr(sec), "ticker")
         If Not IsEmpty(order) Then
-            With ws.Range(ws.cells(r, 1), ws.cells(r, IDX_GROUPS * 3))
-                .Interior.Color = CLR_BANNER
-                .Font.Color = RR4_ACCENT: .Font.Bold = True
-            End With
-            ws.cells(r, 1).Value = UCase$(CStr(sec)) & "   " & (UBound(order) - LBound(order) + 1) & " targets"
+            Call SectionBanner(ws.Range(ws.cells(r, 1), ws.cells(r, IDX_GROUPS * 3)))
+            ws.cells(r, 1).Value = UCase$(CStr(sec))
             r = r + 2
             Dim cnt As Long: cnt = UBound(order) - LBound(order) + 1
             Dim perCol As Long: perCol = (cnt + IDX_GROUPS - 1) \ IDX_GROUPS   ' fill down, then across
@@ -1169,9 +1261,26 @@ Private Function NearestTargets(ByVal q As String, tickers As Object) As String
     If hits <> "" Then NearestTargets = "   Did you mean: " & hits
 End Function
 
+' Anchor TH_PANEL level with the row the user actually double-clicked (2026-09-20)
+' instead of always the fixed header row: on a long, scrolled list the fixed
+' anchor could sit above whatever part of the sheet was currently in view,
+' making the panel look like it "disappeared" upward. Clamped at the header row
+' so it can never climb above the inputs / nav bar either.
+Private Sub PositionPanelAt(ws As Worksheet, shp As Shape, ByVal clickRow As Long)
+    Dim minTop As Double: minTop = ws.Rows(PG_HDR + NavOffset(ws)).Top
+    Dim want As Double
+    If clickRow >= PG_HDR + NavOffset(ws) Then
+        want = ws.Rows(clickRow).Top
+    Else
+        want = minTop
+    End If
+    If want < minTop Then want = minTop
+    shp.Top = want
+End Sub
+
 ' Reading panel for one note (tblNotes body row), plus the target's archived
 ' one-liner (S1) and next-check section (S6) as a reminder of the thesis.
-Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long)
+Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long, ByVal clickRow As Long)
     Dim shp As Shape
     On Error Resume Next
     Set shp = ws.Shapes("TH_PANEL")
@@ -1183,7 +1292,7 @@ Private Sub ShowNote(ws As Worksheet, ByVal key As String, ByVal bodyRow As Long
     If bodyRow < 1 Or bodyRow > lo.ListRows.count Then Exit Sub
     Dim v As Variant: v = lo.DataBodyRange.Rows(bodyRow).Value
     shp.Left = ws.Columns(C_BEHAV + NavLeft(ws)).Left
-    shp.Top = ws.Rows(PG_HDR + NavOffset(ws)).Top
+    Call PositionPanelAt(ws, shp, clickRow)
     shp.Visible = msoTrue
     Dim tr As Object: Set tr = shp.TextFrame2.TextRange
 
@@ -1285,16 +1394,16 @@ Public Sub ThesisPanelClick()
     ws.Shapes("TH_PANEL").Visible = msoFalse
 End Sub
 
-Private Sub ShowArchive(ws As Worksheet, ByVal key As String)
+Private Sub ShowArchive(ws As Worksheet, ByVal key As String, Optional ByVal clickRow As Long = 0)
     Dim shp As Shape
     On Error Resume Next
     Set shp = ws.Shapes("TH_PANEL")
     On Error GoTo 0
     If shp Is Nothing Then Exit Sub
     If key = "" Then shp.Visible = msoFalse: Exit Sub
-    ' float over BEHAVIOR / EVIDENCE, from the header row down (a reading overlay)
+    ' float over BEHAVIOR, level with the clicked row (a reading overlay)
     shp.Left = ws.Columns(C_BEHAV + NavLeft(ws)).Left
-    shp.Top = ws.Rows(PG_HDR + NavOffset(ws)).Top
+    Call PositionPanelAt(ws, shp, clickRow)
     shp.Visible = msoTrue
     Dim tr As Object: Set tr = shp.TextFrame2.TextRange
 
