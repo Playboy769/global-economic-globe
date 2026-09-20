@@ -121,7 +121,7 @@ Private Const C_FILTER As Long = 6                       ' FILTER input F3:G3; "
 Private Const C_COUNT As Long = 8
 Private Const C_KEY As Long = 30                         ' hidden: the block's target on every row
 Private Const C_ROW As Long = 31                         ' hidden: the note's tblNotes body row (note rows only)
-Private Const NOTE_ROW_H As Double = 42                  ' three 9pt lines, clipped beyond that
+Private Const NOTE_ROW_H As Double = 20                  ' 2026-09-20: was 42 (3 lines); most notes only used 1-2, clipped beyond that
 Private Const FRESH_GREY As Long = 60                    ' index: latest call older than this = grey
 Private Const FRESH_ORANGE As Long = 120                 ' ... older than this = orange
 Private Const IDX_GROUPS As Long = 4                     ' index column groups (target . notes . latest) across the page
