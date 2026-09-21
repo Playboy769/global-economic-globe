@@ -1,0 +1,912 @@
+[
+ {
+  "seq": 1,
+  "name": "Amis Ace",
+  "build_year": "2013",
+  "dwt": "60830",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 2,
+  "name": "Amis Brave",
+  "build_year": "2013",
+  "dwt": "61467",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 3,
+  "name": "Amis Champion",
+  "build_year": "2014",
+  "dwt": "60830",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 4,
+  "name": "Amis Dolphin",
+  "build_year": "2015",
+  "dwt": "60830",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 5,
+  "name": "Amis Elegance",
+  "build_year": "2015",
+  "dwt": "55404",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 6,
+  "name": "Amis Fortune",
+  "build_year": "2015",
+  "dwt": "55468",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 7,
+  "name": "Amis Glory",
+  "build_year": "2016",
+  "dwt": "55474",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 8,
+  "name": "Amis Hero",
+  "build_year": "2017",
+  "dwt": "63469",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 9,
+  "name": "Amis Integrity",
+  "build_year": "2017",
+  "dwt": "62980",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 10,
+  "name": "Amis Justice",
+  "build_year": "2017",
+  "dwt": "63531",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 11,
+  "name": "Amis Kalon",
+  "build_year": "2010",
+  "dwt": "58107",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 12,
+  "name": "Amis Leader",
+  "build_year": "2010",
+  "dwt": "58107",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 13,
+  "name": "Amis Nature",
+  "build_year": "2018",
+  "dwt": "55472",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 14,
+  "name": "Amis Power",
+  "build_year": "2018",
+  "dwt": "64012",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 15,
+  "name": "Amis Queen",
+  "build_year": "2019",
+  "dwt": "63424",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 16,
+  "name": "Amis Respect",
+  "build_year": "2020",
+  "dwt": "63449",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 17,
+  "name": "Amis Star",
+  "build_year": "2019",
+  "dwt": "61123",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 18,
+  "name": "Amis Treasure",
+  "build_year": "2020",
+  "dwt": "61125",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 19,
+  "name": "Amis Unicorn",
+  "build_year": "2020",
+  "dwt": "60903",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 20,
+  "name": "Amis Victory",
+  "build_year": "2020",
+  "dwt": "63364",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 21,
+  "name": "Amis Wealth",
+  "build_year": "2021",
+  "dwt": "63364",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 22,
+  "name": "Amis Wisdom I",
+  "build_year": "2010",
+  "dwt": "61611",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 23,
+  "name": "Amis Wisdom II",
+  "build_year": "2010",
+  "dwt": "61611",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 24,
+  "name": "Amis Wisdom VI",
+  "build_year": "2011",
+  "dwt": "61456",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 25,
+  "name": "Amis Xcel",
+  "build_year": "2024",
+  "dwt": "63793",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 26,
+  "name": "Amis Youth",
+  "build_year": "2024",
+  "dwt": "63720",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 27,
+  "name": "Atayal Ace",
+  "build_year": "2013",
+  "dwt": "16805",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 28,
+  "name": "Atayal Mariner",
+  "build_year": "2012",
+  "dwt": "16813",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 29,
+  "name": "Atayal Star",
+  "build_year": "2012",
+  "dwt": "16806",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 30,
+  "name": "Bunun Ace",
+  "build_year": "2013",
+  "dwt": "37744",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 31,
+  "name": "Bunun Benefit",
+  "build_year": "2019",
+  "dwt": "37372",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 32,
+  "name": "Bunun Dynasty",
+  "build_year": "2014",
+  "dwt": "37795",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 33,
+  "name": "Bunun Fortune",
+  "build_year": "2015",
+  "dwt": "37790",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 34,
+  "name": "Bunun Infinity",
+  "build_year": "2016",
+  "dwt": "37654",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 35,
+  "name": "Bunun Justice",
+  "build_year": "2017",
+  "dwt": "37748",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 36,
+  "name": "Bunun Kalon",
+  "build_year": "2018",
+  "dwt": "37653",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 37,
+  "name": "Bunun Leader",
+  "build_year": "2019",
+  "dwt": "37650",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 38,
+  "name": "Bunun Miracle",
+  "build_year": "2020",
+  "dwt": "37060",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 39,
+  "name": "Bunun Noble",
+  "build_year": "2020",
+  "dwt": "37655",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 40,
+  "name": "Bunun Power",
+  "build_year": "2021",
+  "dwt": "37283",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 41,
+  "name": "Bunun Queen",
+  "build_year": "2022",
+  "dwt": "37299",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 42,
+  "name": "Bunun Respect",
+  "build_year": "2021",
+  "dwt": "37987",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 43,
+  "name": "Bunun Star",
+  "build_year": "2022",
+  "dwt": "37301",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 44,
+  "name": "Bunun Treasure",
+  "build_year": "2022",
+  "dwt": "37875",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 45,
+  "name": "Bunun Unicorn",
+  "build_year": "2023",
+  "dwt": "40045",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 46,
+  "name": "Bunun Victory",
+  "build_year": "2023",
+  "dwt": "40074",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 47,
+  "name": "Bunun Wisdom",
+  "build_year": "2012",
+  "dwt": "38168",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 48,
+  "name": "Bunun Xcel",
+  "build_year": "2023",
+  "dwt": "39697",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 49,
+  "name": "Bunun Youth",
+  "build_year": "2023",
+  "dwt": "39703",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 50,
+  "name": "Bunun Zest",
+  "build_year": "2023",
+  "dwt": "39601",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 51,
+  "name": "Daiwan Elegance",
+  "build_year": "2015",
+  "dwt": "35331",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 52,
+  "name": "Daiwan Fortune",
+  "build_year": "2015",
+  "dwt": "34893",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 53,
+  "name": "Daiwan Glory",
+  "build_year": "2015",
+  "dwt": "35531",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 54,
+  "name": "Daiwan Hero",
+  "build_year": "2016",
+  "dwt": "34376",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 55,
+  "name": "Daiwan Infinity",
+  "build_year": "2016",
+  "dwt": "34376",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 56,
+  "name": "Daiwan Justice",
+  "build_year": "2016",
+  "dwt": "34327",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 57,
+  "name": "Daiwan Kalon",
+  "build_year": "2016",
+  "dwt": "34327",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 58,
+  "name": "Daiwan Leader",
+  "build_year": "2018",
+  "dwt": "34442",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 59,
+  "name": "Daiwan Miracle",
+  "build_year": "2019",
+  "dwt": "34447",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 60,
+  "name": "Daiwan Wisdom",
+  "build_year": "2010",
+  "dwt": "31967",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 61,
+  "name": "Global Faith",
+  "build_year": "2010",
+  "dwt": "28386",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 62,
+  "name": "Golden Kiku",
+  "build_year": "2022",
+  "dwt": "82459",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 63,
+  "name": "Jacques",
+  "build_year": "2021",
+  "dwt": "4745",
+  "type": "液化石油氣船"
+ },
+ {
+  "seq": 64,
+  "name": "Kanavu Benefit",
+  "build_year": "2021",
+  "dwt": "37929",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 65,
+  "name": "Katagalan Ace",
+  "build_year": "2023",
+  "dwt": "82680",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 66,
+  "name": "Katagalan Brave",
+  "build_year": "2023",
+  "dwt": "82719",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 67,
+  "name": "Katagalan Champion",
+  "build_year": "2024",
+  "dwt": "84792",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 68,
+  "name": "Katagalan Wisdom",
+  "build_year": "2012",
+  "dwt": "98697",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 69,
+  "name": "Katagalan Wisdom III",
+  "build_year": "2012",
+  "dwt": "98697",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 70,
+  "name": "Ligulao",
+  "build_year": "2010",
+  "dwt": "5296",
+  "type": "其他-汽車滾裝船"
+ },
+ {
+  "seq": 71,
+  "name": "Mega Benefit",
+  "build_year": "2018",
+  "dwt": "80733",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 72,
+  "name": "Naluhu",
+  "build_year": "2010",
+  "dwt": "58107",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 73,
+  "name": "Ocean Victory",
+  "build_year": "2011",
+  "dwt": "28386",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 74,
+  "name": "Paiwan Ace",
+  "build_year": "2024",
+  "dwt": "40236",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 75,
+  "name": "Paiwan Brave",
+  "build_year": "2025",
+  "dwt": "39165",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 76,
+  "name": "Paiwan Champion",
+  "build_year": "2026",
+  "dwt": "39785",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 77,
+  "name": "Paiwan Diamond",
+  "build_year": "2026",
+  "dwt": "42846",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 78,
+  "name": "Paiwan Elegance",
+  "build_year": "2026",
+  "dwt": "40048",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 79,
+  "name": "Paiwan Fortune",
+  "build_year": "2026",
+  "dwt": "40048",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 80,
+  "name": "Paiwan Glory",
+  "build_year": "2026",
+  "dwt": "39632",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 81,
+  "name": "Paiwan Wisdom",
+  "build_year": "2010",
+  "dwt": "31967",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 82,
+  "name": "Papora Wisdom",
+  "build_year": "2009",
+  "dwt": "28344",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 83,
+  "name": "Pescadores",
+  "build_year": "1999",
+  "dwt": "44",
+  "type": "其他-客輪"
+ },
+ {
+  "seq": 84,
+  "name": "Poavosa Ace",
+  "build_year": "2013",
+  "dwt": "28208",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 85,
+  "name": "Poavosa Brave",
+  "build_year": "2009",
+  "dwt": "28367",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 86,
+  "name": "Poavosa Wisdom",
+  "build_year": "2009",
+  "dwt": "28234",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 87,
+  "name": "Poavosa Wisdom III",
+  "build_year": "2011",
+  "dwt": "28232",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 88,
+  "name": "Poavosa Wisdom VI",
+  "build_year": "2011",
+  "dwt": "28213",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 89,
+  "name": "Poavosa Wisdom VII",
+  "build_year": "2012",
+  "dwt": "28208",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 90,
+  "name": "Poavosa Wisdom VIII",
+  "build_year": "2013",
+  "dwt": "28208",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 91,
+  "name": "Qadris Benefit",
+  "build_year": "2026",
+  "dwt": "40433",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 92,
+  "name": "Qanux Benefit",
+  "build_year": "2025",
+  "dwt": "13394",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 93,
+  "name": "Rukai Benefit",
+  "build_year": "2019",
+  "dwt": "14040",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 94,
+  "name": "Sakizaya Ace",
+  "build_year": "2013",
+  "dwt": "74936",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 95,
+  "name": "Sakizaya Brave",
+  "build_year": "2013",
+  "dwt": "74940",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 96,
+  "name": "Sakizaya Champion",
+  "build_year": "2014",
+  "dwt": "78080",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 97,
+  "name": "Sakizaya Diamond",
+  "build_year": "2015",
+  "dwt": "81938",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 98,
+  "name": "Sakizaya Elegance",
+  "build_year": "2015",
+  "dwt": "81938",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 99,
+  "name": "Sakizaya Future",
+  "build_year": "2016",
+  "dwt": "81938",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 100,
+  "name": "Sakizaya Glory",
+  "build_year": "2016",
+  "dwt": "84883",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 101,
+  "name": "Sakizaya Hero",
+  "build_year": "2016",
+  "dwt": "81067",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 102,
+  "name": "Sakizaya Integrity",
+  "build_year": "2016",
+  "dwt": "81010",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 103,
+  "name": "Sakizaya Justice",
+  "build_year": "2017",
+  "dwt": "81691",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 104,
+  "name": "Sakizaya Kalon",
+  "build_year": "2017",
+  "dwt": "81691",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 105,
+  "name": "Sakizaya Leader",
+  "build_year": "2017",
+  "dwt": "81691",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 106,
+  "name": "Sakizaya Miracle",
+  "build_year": "2017",
+  "dwt": "81668",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 107,
+  "name": "Sakizaya Orchid",
+  "build_year": "2017",
+  "dwt": "81588",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 108,
+  "name": "Sakizaya Power",
+  "build_year": "2017",
+  "dwt": "81574",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 109,
+  "name": "Sakizaya Queen",
+  "build_year": "2018",
+  "dwt": "81858",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 110,
+  "name": "Sakizaya Respect",
+  "build_year": "2018",
+  "dwt": "81858",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 111,
+  "name": "Sakizaya Star",
+  "build_year": "2020",
+  "dwt": "82516",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 112,
+  "name": "Sakizaya Treasure",
+  "build_year": "2020",
+  "dwt": "82500",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 113,
+  "name": "Sakizaya Unicorn",
+  "build_year": "2021",
+  "dwt": "82527",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 114,
+  "name": "Sakizaya Victory",
+  "build_year": "2021",
+  "dwt": "82418",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 115,
+  "name": "Sakizaya Wisdom",
+  "build_year": "2011",
+  "dwt": "76457",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 116,
+  "name": "Sakizaya Xcel",
+  "build_year": "2022",
+  "dwt": "82446",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 117,
+  "name": "Sakizaya Youth",
+  "build_year": "2022",
+  "dwt": "82501",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 118,
+  "name": "Sakizaya Zest",
+  "build_year": "2022",
+  "dwt": "82501",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 119,
+  "name": "Scarlet Eagle",
+  "build_year": "2014",
+  "dwt": "81842",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 120,
+  "name": "Scarlet Falcon",
+  "build_year": "2014",
+  "dwt": "82260",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 121,
+  "name": "Scarlet Rosella",
+  "build_year": "2015",
+  "dwt": "82235",
+  "type": "巴拿馬極限型"
+ },
+ {
+  "seq": 122,
+  "name": "Seediq Benefit",
+  "build_year": "2021",
+  "dwt": "16920",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 123,
+  "name": "Taikli",
+  "build_year": "2011",
+  "dwt": "13139",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 124,
+  "name": "Tao Ace",
+  "build_year": "2013",
+  "dwt": "25037",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 125,
+  "name": "Tao Brave",
+  "build_year": "2011",
+  "dwt": "25065",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 126,
+  "name": "Tao Mariner",
+  "build_year": "2010",
+  "dwt": "25065",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 127,
+  "name": "Tao Star",
+  "build_year": "2010",
+  "dwt": "25065",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 128,
+  "name": "Tao Treasure",
+  "build_year": "2013",
+  "dwt": "25036",
+  "type": "輕便型船"
+ },
+ {
+  "seq": 129,
+  "name": "Tekung Benefit",
+  "build_year": "2024",
+  "dwt": "63553",
+  "type": "超級極限型船"
+ },
+ {
+  "seq": 130,
+  "name": "Yami Benefit",
+  "build_year": "2025",
+  "dwt": "63697",
+  "type": "超級極限型船"
+ }
+]
