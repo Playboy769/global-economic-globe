@@ -1832,16 +1832,42 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
         shp.Fill.ForeColor.RGB = FunnelColor(i)   ' 2026-09-20: same hue as the donut, darkened (less bright)
         shp.Placement = xlMove
         shp.AlternativeText = tk & "  W.BETA " & Format(v, "0.000")
-        If w >= 46 And h >= 10 Then
+        ' 2026-09-21: every stage gets a label. Wide stages keep it centred
+        ' inside; narrow ones (< 46pt) get a separate textbox just right of
+        ' the trapezoid, clamped so it never spills past the I:K band into
+        ' the realized-PnL chart.
+        Dim lblTxt As String: lblTxt = ShortTicker(tk) & " " & Format(v, "0.00")
+        If w >= 46 Then
             With shp.TextFrame2
                 .MarginLeft = 2: .MarginRight = 2: .MarginTop = 0: .MarginBottom = 0
                 .WordWrap = msoFalse
                 .VerticalAnchor = msoAnchorMiddle
-                .TextRange.Text = ShortTicker(tk) & " " & Format(v, "0.00")
+                .TextRange.Text = lblTxt
                 .TextRange.Font.Name = "Consolas"
                 .TextRange.Font.Size = 7
                 .TextRange.Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
                 .TextRange.ParagraphFormat.Alignment = msoAlignCenter
+            End With
+        Else
+            Dim sideW As Double: sideW = Len(lblTxt) * 4.2 + 4   ' Consolas 7pt ~4.2pt/char
+            Dim sideX As Double: sideX = x + w + 3
+            If sideX + sideW > bandL + bandW Then sideX = bandL + bandW - sideW
+            Dim sideH As Double: sideH = IIf(h < 10, 10, h)
+            Dim side As Shape
+            Set side = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, sideX, y + padV + (h - sideH) / 2, sideW, sideH)
+            side.Name = RR4_FUN_PREFIX & "L" & i
+            side.Fill.Visible = msoFalse
+            side.Line.Visible = msoFalse
+            side.Placement = xlMove
+            With side.TextFrame2
+                .MarginLeft = 0: .MarginRight = 0: .MarginTop = 0: .MarginBottom = 0
+                .WordWrap = msoFalse
+                .VerticalAnchor = msoAnchorMiddle
+                .TextRange.Text = lblTxt
+                .TextRange.Font.Name = "Consolas"
+                .TextRange.Font.Size = 7
+                .TextRange.Font.Fill.ForeColor.RGB = RGB(255, 255, 255)
+                .TextRange.ParagraphFormat.Alignment = msoAlignLeft
             End With
         End If
         y = y + rowH
