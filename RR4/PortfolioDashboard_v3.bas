@@ -1822,11 +1822,15 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
         .TextRange.ParagraphFormat.Alignment = msoAlignCenter
     End With
 
+    ' 2026-09-21: pixel-aligned (see PxSnap) - top, row pitch, stage
+    ' height and both edges are whole screen pixels, so every stage renders
+    ' the same height instead of being anti-aliased differently.
     Dim n As Long: n = lastR - RR4_POS_FIRST + 1
-    Dim barAreaT As Double: barAreaT = bandT + titleH + 2
+    Dim barAreaT As Double: barAreaT = PxSnap(bandT + titleH + 2)
     Dim barAreaH As Double: barAreaH = bandH - titleH - 2
-    Dim rowH As Double: rowH = barAreaH / n
-    Dim padV As Double: padV = IIf(rowH > 6, 1, 0)
+    Dim rowH As Double: rowH = Int(barAreaH / n / 0.75) * 0.75
+    If rowH < 0.75 Then rowH = 0.75
+    Dim padV As Double: padV = IIf(rowH > 6, 0.75, 0)
 
     ' scale bar widths off the largest |W.BETA| among the visible rows
     Dim r As Long, maxAbs As Double
@@ -1845,7 +1849,8 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
         Dim w As Double: w = bandW * frac
         Dim h As Double: h = rowH - padV * 2
         If h < 3 Then h = rowH
-        Dim x As Double: x = bandL + (bandW - w) / 2
+        Dim x As Double: x = PxSnap(bandL + (bandW - w) / 2)
+        w = PxSnap(bandL + (bandW + w) / 2) - x
 
         Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
         Dim shp As Shape
@@ -1876,6 +1881,7 @@ Private Sub DrawFunnel(ws As Worksheet, lastR As Long)
             Dim sideW As Double: sideW = Len(lblTxt) * 4.2 + 4   ' Consolas 7pt ~4.2pt/char
             Dim sideX As Double: sideX = x + w + 3
             If sideX + sideW > bandL + bandW Then sideX = bandL + bandW - sideW
+            sideX = PxSnap(sideX)
             Dim sideH As Double: sideH = IIf(h < 10, 10, h)
             Dim side As Shape
             Set side = ws.Shapes.AddTextbox(msoTextOrientationHorizontal, sideX, y + padV + (h - sideH) / 2, sideW, sideH)
