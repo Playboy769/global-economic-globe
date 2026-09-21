@@ -96,7 +96,16 @@ Public Const RR4_WL_TITLE  As Long = 26
 Public Const RR4_WL_HDR    As Long = 27
 Public Const RR4_WL_ENTRY  As Long = 28
 Public Const RR4_WL_FIRST  As Long = 29
-Public Const RR4_WL_LAST   As Long = 39
+Public Const RR4_WL_LAST   As Long = 35    ' 2026-09-21: 11 -> 7 rows to make room for TO-DO
+' TO-DO (2026-09-21): B:E under the WATCHLIST. Row 36 = title + column
+' names (TASK / DUE / DTE), row 37 = entry row (B ticker, C task, D due),
+' rows 38-39 = the saved list, sorted by due date (undated last), DTE =
+' due - today recomputed on every UP, lit orange once overdue.
+' Double-click a saved row = done (TodoDeleteRow).
+Public Const RR4_TD_TITLE  As Long = 36
+Public Const RR4_TD_ENTRY  As Long = 37
+Public Const RR4_TD_FIRST  As Long = 38
+Public Const RR4_TD_LAST   As Long = 39
 Public Const RR4_POS_TITLE As Long = 42
 Public Const RR4_POS_HDR   As Long = 43
 Public Const RR4_POS_FIRST As Long = 44
@@ -183,6 +192,7 @@ Sub RebuildPortfolioDashboard()
     Dim swingRiskMap As Object: Set swingRiskMap = ReadHandColumn(wsP, "SWING RISK")
     Dim noteMap As Object: Set noteMap = ReadHandColumn(wsP, "NOTE")
     Dim wl As Variant: wl = ReadWatchlist(wsP)
+    Dim td As Variant: td = ReadTodo(wsP)
     ' A sheet still on an older layout has other data sitting in these cells:
     ' keep only a real ARRANGE code and a numeric target for a real ticker.
     If Not IsArrangeCode(arrCode) Then arrCode = ""
@@ -233,6 +243,7 @@ Sub RebuildPortfolioDashboard()
     lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap, noteMap)
     Call ApplyArrange(arrCode)
     Call DrawWatchlist(wsP, wl)
+    Call DrawTodo(wsP, td)
     Call DrawDisclaimer(wsP, lastDataRow)
     Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
@@ -1986,14 +1997,12 @@ End Function
 
 ' Title, header, the entry row, then the saved rows with live price.
 Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
+    ' 2026-09-21: grey how-to hint dropped (user request) - title only
     With ws.cells(RR4_WL_TITLE, RR4_LEFT + 1)
-        .Value = "WATCHLIST     type in row " & RR4_WL_ENTRY & " + Enter to add  .  double-click a row to delete"
-        .Font.Color = RGB(120, 120, 120)
-        .Font.Size = 9
-        .Font.Bold = False
-        .Characters(1, 9).Font.Color = RR4_ACCENT
-        .Characters(1, 9).Font.Bold = True
-        .Characters(1, 9).Font.Size = 10
+        .Value = "WATCHLIST"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 10
     End With
     Dim hdr As Variant: hdr = Array("TICKER", "STRATEGY", "ENTRY TGT", "LAST")
     Dim c As Long
@@ -2024,6 +2033,12 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
         End If
         Call RefreshWatchlistRow(ws, r)
     Next r
+    ' closing rule under the last saved row, separating it from TO-DO
+    With ws.Range(ws.cells(RR4_WL_LAST, RR4_LEFT + 1), ws.cells(RR4_WL_LAST, RR4_LEFT + 4)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
 End Sub
 
 ' The entry row: three dark input cells, always empty after a commit.
@@ -2043,6 +2058,20 @@ Private Sub WatchlistPaintEntryRow(ws As Worksheet)
         .Value = ""
         .Interior.Color = RGB(0, 0, 0)
     End With
+    Call SeparateInputCells(ws, RR4_WL_ENTRY, 3)
+End Sub
+
+' Black vertical rules between adjacent grey input cells of an entry row
+' (B..B+n-1), so each field reads as its own box (2026-09-21).
+Private Sub SeparateInputCells(ws As Worksheet, ByVal r As Long, ByVal n As Long)
+    Dim c As Long
+    For c = 1 To n - 1
+        With ws.cells(r, RR4_LEFT + c).Borders(xlEdgeRight)
+            .LineStyle = xlContinuous
+            .Color = RGB(0, 0, 0)
+            .Weight = xlMedium
+        End With
+    Next c
 End Sub
 
 ' Called by the sheet code when B/C/D of the entry row changes. Commits
@@ -2134,6 +2163,201 @@ Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
         ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
         ws.cells(r, RR4_LEFT + 1).Font.Bold = True
     End If
+End Sub
+
+' ================================================================
+'  TO-DO (B36:E39, 2026-09-21) - see the RR4_TD_* constants
+' ================================================================
+' Saved rows, read BEFORE the sheet is cleared; only trusted when the
+' title is in place. Returns Variant(1..n, 1..3) = ticker / task / due
+' (due = Date or Empty), or Empty when there is nothing.
+Private Function ReadTodo(ws As Worksheet) As Variant
+    If UCase(CellStr(ws.cells(RR4_TD_TITLE, RR4_LEFT + 1).Value)) <> "TO-DO" Then Exit Function
+    Dim tmp(1 To 4, 1 To 3) As Variant, n As Long, r As Long
+    For r = RR4_TD_FIRST To RR4_TD_LAST
+        Dim tsk As String: tsk = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
+        If tsk <> "" Then
+            n = n + 1
+            tmp(n, 1) = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
+            tmp(n, 2) = tsk
+            tmp(n, 3) = TodoDue(ws.cells(r, RR4_LEFT + 3).Value)
+        End If
+    Next r
+    If n = 0 Then Exit Function
+    Dim out() As Variant: ReDim out(1 To n, 1 To 3)
+    For r = 1 To n
+        out(r, 1) = tmp(r, 1): out(r, 2) = tmp(r, 2): out(r, 3) = tmp(r, 3)
+    Next r
+    ReadTodo = out
+End Function
+
+' A due-date cell value as a Date, or Empty when it is not a date.
+Private Function TodoDue(ByVal v As Variant) As Variant
+    TodoDue = Empty
+    If IsEmpty(v) Or IsError(v) Then Exit Function
+    If IsDate(v) Then TodoDue = CDate(Int(CDbl(CDate(v)))): Exit Function
+    If IsNumeric(v) Then
+        If CDbl(v) > 30000 And CDbl(v) < 80000 Then TodoDue = CDate(Int(CDbl(v)))
+    End If
+End Function
+
+' Title + column names, the entry row, then the saved rows (sorted).
+Private Sub DrawTodo(ws As Worksheet, td As Variant)
+    With ws.cells(RR4_TD_TITLE, RR4_LEFT + 1)
+        .Value = "TO-DO"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 10
+        .HorizontalAlignment = xlLeft
+    End With
+    Dim hdr As Variant: hdr = Array("TASK", "DUE", "DTE")
+    Dim c As Long
+    For c = 0 To 2
+        With ws.cells(RR4_TD_TITLE, RR4_LEFT + 2 + c)
+            .Value = hdr(c)
+            .Font.Color = RGB(0, 200, 255)
+            .Font.Size = 9
+            .Font.Bold = False
+            .HorizontalAlignment = IIf(c = 0, xlLeft, xlCenter)
+        End With
+    Next c
+    Call TodoPaintEntryRow(ws)
+    Call TodoWriteList(ws, td)
+End Sub
+
+' The entry row: B ticker / C task / D due, three dark input cells.
+Private Sub TodoPaintEntryRow(ws As Worksheet)
+    Dim c As Long
+    For c = 1 To 3
+        With ws.cells(RR4_TD_ENTRY, RR4_LEFT + c)
+            .Value = ""
+            .Interior.Color = RR4_INPUT_BG
+            .Font.Color = RR4_INPUT_FG
+            .Font.Bold = (c = 1)
+            .HorizontalAlignment = IIf(c = 2, xlLeft, xlCenter)
+            .NumberFormat = IIf(c = 3, "yyyy/m/d", "@")
+        End With
+    Next c
+    With ws.cells(RR4_TD_ENTRY, RR4_LEFT + 4)
+        .Value = ""
+        .Interior.Color = RGB(0, 0, 0)
+    End With
+    Call SeparateInputCells(ws, RR4_TD_ENTRY, 3)
+End Sub
+
+' Sort by due date (undated last, ties keep order) and write rows 38-39;
+' DTE = due - today, orange once negative.
+Private Sub TodoWriteList(ws As Worksheet, td As Variant)
+    Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
+    Dim ord() As Long, i As Long, j As Long, t As Long
+    If n > 0 Then
+        ReDim ord(1 To n)
+        For i = 1 To n: ord(i) = i: Next i
+        For i = 2 To n
+            t = ord(i): j = i - 1
+            Do While j >= 1
+                If Not TodoBefore(td, t, ord(j)) Then Exit Do
+                ord(j + 1) = ord(j): j = j - 1
+            Loop
+            ord(j + 1) = t
+        Next i
+    End If
+
+    Dim r As Long, k As Long
+    For r = RR4_TD_FIRST To RR4_TD_LAST
+        k = r - RR4_TD_FIRST + 1
+        Dim row4 As Range
+        Set row4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
+        row4.ClearContents
+        row4.Interior.Color = RGB(0, 0, 0)
+        row4.Font.Color = RGB(221, 221, 221)
+        row4.Font.Bold = False
+        ws.cells(r, RR4_LEFT + 1).NumberFormat = "@"
+        ws.cells(r, RR4_LEFT + 2).NumberFormat = "@"
+        ws.cells(r, RR4_LEFT + 3).NumberFormat = "yyyy/m/d"
+        ws.cells(r, RR4_LEFT + 4).NumberFormat = "0"
+        ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlCenter
+        ws.cells(r, RR4_LEFT + 2).HorizontalAlignment = xlLeft
+        ws.cells(r, RR4_LEFT + 3).HorizontalAlignment = xlCenter
+        ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlCenter
+        If k <= n Then
+            i = ord(k)
+            ws.cells(r, RR4_LEFT + 1).Value = td(i, 1)
+            ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
+            ws.cells(r, RR4_LEFT + 1).Font.Bold = True
+            ws.cells(r, RR4_LEFT + 2).Value = td(i, 2)
+            If Not IsEmpty(td(i, 3)) Then
+                ws.cells(r, RR4_LEFT + 3).Value = td(i, 3)
+                Dim dte As Long: dte = CLng(CDbl(td(i, 3)) - CDbl(Date))
+                ws.cells(r, RR4_LEFT + 4).Value = dte
+                If dte < 0 Then
+                    ws.cells(r, RR4_LEFT + 4).Font.Color = RR4_ACCENT
+                    ws.cells(r, RR4_LEFT + 4).Font.Bold = True
+                End If
+            End If
+        End If
+    Next r
+End Sub
+
+' True when item a sorts before item b (earlier due; dated before undated).
+Private Function TodoBefore(td As Variant, ByVal a As Long, ByVal b As Long) As Boolean
+    If IsEmpty(td(a, 3)) Then Exit Function
+    If IsEmpty(td(b, 3)) Then TodoBefore = True: Exit Function
+    TodoBefore = (CDbl(td(a, 3)) < CDbl(td(b, 3)))
+End Function
+
+' Called by the sheet code when B/C/D of the TO-DO entry row changes.
+' Commits once the task (C) is in and the row is finished: Enter in the
+' due cell D (a date, or anything non-date such as "-" for no date), or
+' Enter in C when D already holds a date.
+Public Sub TodoCommitEntry(ws As Worksheet, ByVal changedCol As Long)
+    Dim tk As String: tk = UCase(Trim(CellStr(ws.cells(RR4_TD_ENTRY, RR4_LEFT + 1).Value)))
+    Dim tsk As String: tsk = Trim(CellStr(ws.cells(RR4_TD_ENTRY, RR4_LEFT + 2).Value))
+    Dim due As Variant: due = TodoDue(ws.cells(RR4_TD_ENTRY, RR4_LEFT + 3).Value)
+    If tsk = "" Then Exit Sub
+    If changedCol = RR4_LEFT + 1 Then Exit Sub
+    If changedCol = RR4_LEFT + 2 And IsEmpty(due) Then Exit Sub
+
+    Dim td As Variant: td = ReadTodo(ws)
+    Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
+    If n >= RR4_TD_LAST - RR4_TD_FIRST + 1 Then
+        Call NavNotify("TO-DO full (" & (RR4_TD_LAST - RR4_TD_FIRST + 1) & " rows) - double-click a row to mark it done", True)
+        Exit Sub
+    End If
+    Dim nw() As Variant: ReDim nw(1 To n + 1, 1 To 3)
+    Dim i As Long
+    For i = 1 To n
+        nw(i, 1) = td(i, 1): nw(i, 2) = td(i, 2): nw(i, 3) = td(i, 3)
+    Next i
+    nw(n + 1, 1) = tk: nw(n + 1, 2) = tsk: nw(n + 1, 3) = due
+    Call TodoWriteList(ws, nw)
+    Call TodoPaintEntryRow(ws)
+    ws.cells(RR4_TD_ENTRY, RR4_LEFT + 1).Select
+    Call NavNotify("TO-DO + " & tsk)
+End Sub
+
+' Called by the sheet code on a double-click inside the saved rows: the
+' task is done - drop it and close the gap.
+Public Sub TodoDeleteRow(ws As Worksheet, ByVal r As Long)
+    If r < RR4_TD_FIRST Or r > RR4_TD_LAST Then Exit Sub
+    Dim tsk As String: tsk = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
+    If tsk = "" Then Exit Sub
+    Dim td As Variant: td = ReadTodo(ws)
+    Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
+    Dim skip As Long: skip = r - RR4_TD_FIRST + 1
+    Dim nw As Variant, m As Long, i As Long
+    If n > 1 Then
+        Dim tmp() As Variant: ReDim tmp(1 To n - 1, 1 To 3)
+        For i = 1 To n
+            If i <> skip Then
+                m = m + 1
+                tmp(m, 1) = td(i, 1): tmp(m, 2) = td(i, 2): tmp(m, 3) = td(i, 3)
+            End If
+        Next i
+        nw = tmp
+    End If
+    Call TodoWriteList(ws, nw)
+    Call NavNotify("TO-DO done - " & tsk)
 End Sub
 
 ' Slice n of the donut (1-based, cycles after RR4_PALETTE_N).
