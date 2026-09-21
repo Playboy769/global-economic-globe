@@ -1584,6 +1584,10 @@ Private Sub DrawWeightBar(ws As Worksheet, lastR As Long)
     Next r
     If sumW <= 0 Then Exit Sub
 
+    ' 2026-09-21: snap every edge to whole screen pixels (0.75pt). With
+    ' fractional tops/lefts Excel anti-aliases each rectangle differently,
+    ' so identical-height boxes rendered visibly uneven.
+    barT = PxSnap(barT): barH = PxSnap(barH)
     Dim x As Double: x = barL
     For r = RR4_POS_FIRST To lastR
         Dim wt As Double: wt = Abs(NumOr0(ws.cells(r, RR4_LEFT + 12).Value))
@@ -1591,8 +1595,12 @@ Private Sub DrawWeightBar(ws As Worksheet, lastR As Long)
         If w >= 1 Then
             Dim pct As Double: pct = NumOr0(ws.cells(r, RR4_LEFT + 10).Value)
             Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
+            Dim sx As Double: sx = PxSnap(x)
+            Dim sw As Double: sw = PxSnap(x + w) - sx
+            If sw > 1.5 Then sw = sw - 0.75       ' 1px gap between boxes
+            If sw < 0.75 Then sw = 0.75
             Dim shp As Shape
-            Set shp = ws.Shapes.AddShape(msoShapeRectangle, x, barT, IIf(w > 2, w - 1, w), barH)
+            Set shp = ws.Shapes.AddShape(msoShapeRectangle, sx, barT, sw, barH)
             shp.Name = RR4_WBAR_PREFIX & (r - RR4_POS_FIRST + 1)
             shp.Line.Visible = msoFalse
             shp.Fill.ForeColor.RGB = WeightBarColor(pct)
@@ -1614,6 +1622,11 @@ Private Sub DrawWeightBar(ws As Worksheet, lastR As Long)
         x = x + w
     Next r
 End Sub
+
+' Round a point value to the nearest whole screen pixel (1px = 0.75pt).
+Private Function PxSnap(ByVal pt As Double) As Double
+    PxSnap = Round(pt / 0.75, 0) * 0.75
+End Function
 
 Private Function WeightBarColor(ByVal pct As Double) As Long
     Dim t As Double: t = Abs(pct) / 0.3
