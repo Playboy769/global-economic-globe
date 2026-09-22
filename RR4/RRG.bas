@@ -86,6 +86,12 @@ Option Explicit
 '    exchange suffix is decided by which shares table lists the code, with
 '    a .TW -> .TWO retry on a 404 as a fallback.  Everything else (maths,
 '    composite, cache, focus, sort) is the industry page's.
+'    Size floor (2026-09-22): a member whose market cap (shares x last
+'    close) is below TW_MIN_CAP (NT$10bn) gets no weight and its volume is
+'    left out of CMF / OBV too; a group with no member above the floor is
+'    dropped from the page.  STOCKS = members counted / total, column B
+'    lists the largest counted members.  The floor is part of the cache
+'    key, so changing it refetches instead of reading stale composites.
 ' ================================================================
 
 Private Const RS_WINDOW As Long = 65
@@ -115,6 +121,8 @@ Private Const TWG_SHEET As String = "RRG TW Groups"
 Private Const TWG_CHART_W As Double = 720
 Private Const TWG_CHART_H As Double = 600
 Private Const TW_BENCH As String = "^TWII"
+Private Const TW_MIN_CAP As Double = 10000000000#   ' TW groups: members below NT$10bn market cap get no weight
+Private gExclC As Long                       ' TW groups: members dropped by TW_MIN_CAP in the current build
 Private gBench As String                     ' benchmark of the current build (SPY / ^TWII)
 Private Const IND_MAP As String = "IndustryMap"      ' plateCode / plateName / symbol / rank / marketCap / plateType
 Private Const IND_PX As String = "IndustryPx"        ' hidden cache: one composite series per industry row
@@ -363,6 +371,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     ReDim fSig(0 To n - 1): ReDim fNote(0 To n - 1): ReDim fOk(0 To n - 1)
     Dim t0 As Double: t0 = Timer
     Dim okC As Long, failC As Long
+    gExclC = 0
+    Dim keep() As Boolean: ReDim keep(0 To n - 1)
     For i = 0 To n - 1
         Application.StatusBar = "RRG: fetching [" & (i + 1) & "/" & n & "] " & tickers(i)
         DoEvents
@@ -371,8 +381,10 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
             nt = IndustryComposite(tickers(i), labels(i), indSyms(i), indCaps(i), isTwg, bDays, nb, bIdx, i + 1, n, t0, _
                                    tDays, tPx, tH, tL, tV, okC, failC, okThis)
             groups(i) = okThis & "/" & (UBound(indSyms(i)) + 1)
+            keep(i) = Not (isTwg And okThis = 0)         ' TW: no member above TW_MIN_CAP -> drop the group
         Else
             nt = FetchOhlcv(tickers(i), tDays, tPx, tH, tL, tV)
+            keep(i) = True
         End If
         fOk(i) = MoneyFlow(tPx, tH, tL, tV, nt, fPchg(i), fCmf(i), fObv(i), fSig(i), fNote(i))
         ReDim rs(0 To nb - 1): ReDim ratio(0 To nb - 1): ReDim mom(0 To nb - 1)
@@ -404,6 +416,27 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         Next k
     Next i
     Application.StatusBar = False
+
+    ' ---- drop groups with nothing left (TW size floor) ----
+    Dim dropped As String, o As Long
+    o = 0
+    For i = 0 To n - 1
+        If keep(i) Then
+            If o <> i Then
+                tickers(o) = tickers(i): labels(o) = labels(i): groups(o) = groups(i)
+                tailN(o) = tailN(i)
+                For k = 0 To TAIL_POINTS - 1: tailX(o, k) = tailX(i, k): tailY(o, k) = tailY(i, k): Next k
+                fPchg(o) = fPchg(i): fCmf(o) = fCmf(i): fObv(o) = fObv(i)
+                fSig(o) = fSig(i): fNote(o) = fNote(i): fOk(o) = fOk(i)
+            End If
+            o = o + 1
+        Else
+            dropped = dropped & IIf(dropped = "", "", ", ") & tickers(i)
+        End If
+    Next i
+    Dim nDropped As Long: nDropped = n - o
+    n = o
+    If n = 0 Then Err.Raise vbObjectError + 4, , "no group has a member above the size floor"
 
     ' ---- page ----
     Application.ScreenUpdating = False
@@ -438,7 +471,10 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     End With
     ws.Rows(1).RowHeight = 24
     With ws.cells(1, 4)
-        .Value = n & " " & unitNm & IIf(isComp, " (" & okC & " stocks, cap-weighted composites" & IIf(failC > 0, ", " & failC & " no data", "") & ")", "") & _
+        .Value = n & " " & unitNm & IIf(isComp, " (" & okC & " stocks, cap-weighted composites" & _
+                 IIf(isTwg, ", " & gExclC & " below NT$" & Format(TW_MIN_CAP / 100000000#, "0") & "e" & _
+                     IIf(nDropped > 0, ", " & nDropped & " groups dropped", ""), "") & _
+                 IIf(failC > 0, ", " & failC & " no data", "") & ")", "") & _
                  " vs " & gBench & "  .  daily adjclose  .  RS " & RS_WINDOW & "d / MOM " & MOM_WINDOW & _
                  "d / EWM " & EWM_SPAN & "  .  " & TAIL_WEEKS & "-week tail  .  as of " & Format(asOf, "yyyy/mm/dd") & _
                  "  .  built " & Format(Now, "yyyy/mm/dd hh:mm")
@@ -601,10 +637,11 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
             "Universe  = the Market = TW rows of the Groups sheet (tblGroups) - the Company research scanner's thematic groups", _
             "Price     = cap-weighted index chain-linked from daily returns (see RRG.bas); weight = shares outstanding x last close", _
             "            shares: TWSE openapi t187ap03_L for listed, TPEx daily close table for OTC; a code in neither gets weight 0", _
+            "Size      = members below NT$" & Format(TW_MIN_CAP / 100000000#, "0") & "e market cap get no weight and no volume; a group with none above it is dropped", _
             "High/Low  = same weights on high[t]/close[t-1] - 1 and low[t]/close[t-1] - 1;  Volume = sum(close x volume) in TWD", _
             "Benchmark = " & gBench & " (Yahoo);  tickers try .TW then .TWO like the scanner", _
-            "Cache     = hidden IndustryPx sheet keyed by group name + as-of day; RGT! reuses it the same day", _
-            "STOCKS    = members with data / total in the group")
+            "Cache     = hidden IndustryPx sheet keyed by group name + size floor + as-of day; RGT! reuses it the same day", _
+            "STOCKS    = members counted (data and above the size floor) / total in the group;  B = largest counted members")
         Dim tmpT As Variant: tmpT = notes
         ReDim Preserve tmpT(0 To UBound(notes) + UBound(twNotes) + 1)
         For j = 0 To UBound(twNotes): tmpT(UBound(notes) + 1 + j) = twNotes(j): Next j
@@ -691,7 +728,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     Application.EnableEvents = prevEv
     Application.EnableCancelKey = prevCancel
     Call NavNotify("RRG rebuilt: " & n & " " & unitNm & " vs " & gBench & " as of " & Format(asOf, "yyyy/mm/dd") & _
-                   IIf(isComp, "  (" & Format((Timer - t0) / 60, "0") & " min)", ""))
+                   IIf(isComp, "  (" & Format((Timer - t0) / 60, "0") & " min)", "") & _
+                   IIf(nDropped > 0, "  .  dropped (no member >= NT$" & Format(TW_MIN_CAP / 100000000#, "0") & "e): " & dropped, ""))
     Exit Sub
 Fail:
     Dim failMsg As String: failMsg = Err.Description
@@ -1521,22 +1559,32 @@ End Function
 ' otherwise every constituent is fetched and the chain-linked index built
 ' (see the module header), then cached.  Returns the number of points.
 ' okC / failC accumulate the constituents with / without data over the run.
-Private Function IndustryComposite(ByVal code As String, ByVal nm As String, ByVal syms As Variant, ByVal caps As Variant, _
+' capIsShares (TW groups): caps are share counts, w = shares x last close,
+' members below TW_MIN_CAP are skipped and nm is rewritten to the largest
+' counted members.
+Private Function IndustryComposite(ByVal code As String, ByRef nm As String, ByVal syms As Variant, ByVal caps As Variant, _
                                    ByVal capIsShares As Boolean, _
                                    ByRef bDays() As Long, ByVal nb As Long, ByVal bIdx As Object, _
                                    ByVal iNo As Long, ByVal nInd As Long, ByVal t0 As Double, _
                                    ByRef days() As Long, ByRef c() As Double, ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, _
                                    ByRef okC As Long, ByRef failC As Long, ByRef okThis As Long) As Long
     Dim asOf As Long: asOf = bDays(nb - 1)
-    Dim nOk As Long, nFail As Long, npts As Long
-    npts = CacheRead(code, asOf, days, c, h, l, v, nOk, nFail)
-    If npts > 0 Then
+    Dim nOk As Long, nFail As Long, nExcl As Long, npts As Long
+    Dim ckey As String: ckey = code
+    If capIsShares Then ckey = code & "|cap" & Format(TW_MIN_CAP / 100000000#, "0") & "e"
+    Dim cLbl As String
+    npts = CacheRead(ckey, asOf, days, c, h, l, v, nOk, nFail, nExcl, cLbl)
+    If npts <> 0 Then                                   ' -1 = cached, but nothing counted
         okC = okC + nOk: failC = failC + nFail: okThis = nOk
-        IndustryComposite = npts
+        gExclC = gExclC + nExcl
+        If capIsShares And cLbl <> "" Then nm = cLbl
+        IndustryComposite = IIf(npts > 0, npts, 0)
         Exit Function
     End If
 
     Dim m As Long: m = UBound(syms) + 1
+    Dim incCode() As String, incCap() As Double, nInc As Long   ' counted members, for the column B label
+    ReDim incCode(0 To m): ReDim incCap(0 To m)
     Dim sumW() As Double, sumR() As Double, sumRh() As Double, sumRl() As Double, dv() As Double, anyD() As Boolean
     ReDim sumW(0 To nb - 1): ReDim sumR(0 To nb - 1): ReDim sumRh(0 To nb - 1): ReDim sumRl(0 To nb - 1)
     ReDim dv(0 To nb - 1): ReDim anyD(0 To nb - 1)
@@ -1563,8 +1611,13 @@ Private Function IndustryComposite(ByVal code As String, ByVal nm As String, ByV
                 End If
             End If
             If ns >= 2 Then
-                nOk = nOk + 1
                 If capIsShares Then w = w * sC(ns - 1)          ' shares x last close = market cap
+            End If
+            If ns >= 2 And capIsShares And w < TW_MIN_CAP Then
+                nExcl = nExcl + 1                               ' below the size floor: no weight, no volume
+            ElseIf ns >= 2 Then
+                nOk = nOk + 1
+                incCode(nInc) = Replace(Replace(UCase(CStr(syms(j))), ".TWO", ""), ".TW", ""): incCap(nInc) = w: nInc = nInc + 1
                 If bIdx.Exists(sDays(0)) Then
                     t = bIdx(sDays(0)): anyD(t) = True: dv(t) = dv(t) + sC(0) * sV(0)
                 End If
@@ -1611,8 +1664,28 @@ Private Function IndustryComposite(ByVal code As String, ByVal nm As String, ByV
             npts = npts + 1
         End If
     Next t
+    If capIsShares Then
+        ' column B: the four largest counted members (+N)
+        Dim a As Long, b As Long, tc As String, tw As Double, lbl As String
+        For a = 0 To nInc - 2
+            For b = a + 1 To nInc - 1
+                If incCap(b) > incCap(a) Then
+                    tc = incCode(a): incCode(a) = incCode(b): incCode(b) = tc
+                    tw = incCap(a): incCap(a) = incCap(b): incCap(b) = tw
+                End If
+            Next b
+        Next a
+        For a = 0 To nInc - 1
+            If a >= 4 Then Exit For
+            lbl = lbl & IIf(lbl = "", "", " ") & incCode(a)
+        Next a
+        If nInc > 4 Then lbl = lbl & " +" & (nInc - 4)
+        If lbl = "" Then lbl = "-"
+        nm = lbl
+    End If
     okC = okC + nOk: failC = failC + nFail: okThis = nOk
-    If npts > 0 Then Call CacheWrite(code, nm, asOf, days, c, h, l, v, npts, nOk, nFail)
+    gExclC = gExclC + nExcl
+    If npts > 0 Or capIsShares Then Call CacheWrite(ckey, nm, asOf, days, c, h, l, v, npts, nOk, nFail, nExcl)
     IndustryComposite = npts
 End Function
 
@@ -1643,15 +1716,19 @@ Private Function CacheRow(wc As Worksheet, ByVal code As String) As Long
 End Function
 
 Private Function CacheRead(ByVal code As String, ByVal asOf As Long, ByRef days() As Long, ByRef c() As Double, _
-                           ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByRef nOk As Long, ByRef nFail As Long) As Long
+                           ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByRef nOk As Long, ByRef nFail As Long, _
+                           ByRef nExcl As Long, ByRef lbl As String) As Long
     Dim wc As Worksheet: Set wc = CacheSheet(False)
     If wc Is Nothing Then Exit Function
     Dim r As Long: r = CacheRow(wc, code)
     If r = 0 Then Exit Function
     If CLng(Val(wc.cells(r, 2).Value)) <> asOf Then Exit Function
     Dim npts As Long: npts = CLng(Val(wc.cells(r, 5).Value))
-    If npts <= 0 Or npts > PX_MAXN Then Exit Function
+    If npts < 0 Or npts > PX_MAXN Then Exit Function
     nOk = CLng(Val(wc.cells(r, 3).Value)): nFail = CLng(Val(wc.cells(r, 4).Value))
+    nExcl = CLng(Val(wc.cells(r, PX_FIRST + 5 * PX_MAXN + 1).Value))
+    lbl = CStr(wc.cells(r, PX_FIRST + 5 * PX_MAXN).Value)
+    If npts = 0 Then CacheRead = -1: Exit Function      ' cached empty composite (every member below the floor)
     Dim blk As Variant: blk = wc.Range(wc.cells(r, PX_FIRST), wc.cells(r, PX_FIRST + 5 * PX_MAXN - 1)).Value
     ReDim days(0 To npts - 1): ReDim c(0 To npts - 1): ReDim h(0 To npts - 1): ReDim l(0 To npts - 1): ReDim v(0 To npts - 1)
     Dim k As Long
@@ -1666,7 +1743,8 @@ Private Function CacheRead(ByVal code As String, ByVal asOf As Long, ByRef days(
 End Function
 
 Private Sub CacheWrite(ByVal code As String, ByVal nm As String, ByVal asOf As Long, ByRef days() As Long, ByRef c() As Double, _
-                       ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByVal npts As Long, ByVal nOk As Long, ByVal nFail As Long)
+                       ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByVal npts As Long, ByVal nOk As Long, ByVal nFail As Long, _
+                       Optional ByVal nExcl As Long = 0)
     Dim wc As Worksheet: Set wc = CacheSheet(True)
     Dim r As Long: r = CacheRow(wc, code)
     If r = 0 Then r = wc.cells(wc.Rows.count, 1).End(xlUp).Row + 1
@@ -1684,6 +1762,7 @@ Private Sub CacheWrite(ByVal code As String, ByVal nm As String, ByVal asOf As L
     wc.cells(r, 3).Value = nOk: wc.cells(r, 4).Value = nFail: wc.cells(r, 5).Value = npts
     wc.Range(wc.cells(r, PX_FIRST), wc.cells(r, PX_FIRST + 5 * PX_MAXN - 1)).Value = blk
     wc.cells(r, PX_FIRST + 5 * PX_MAXN).Value = nm
+    wc.cells(r, PX_FIRST + 5 * PX_MAXN + 1).Value = nExcl
 End Sub
 
 ' ---- IMAP: import projects/moomoo-plate-list/moomoo_us_plate_stocks.csv ----

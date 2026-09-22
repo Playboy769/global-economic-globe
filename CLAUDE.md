@@ -572,6 +572,12 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   只管拉丁字，中文字走 `Font.NameFarEast`**：第一版只設 `.Name`，COM 讀回來是 Noto Sans TC、畫面上中文卻還是
   舊字型；資料標籤、圖標題、軸標題三處都要 `.Name` 與 `.NameFarEast` 一起設。
 - **Thesis Library v2 — 主題筆記工作台（2026-09-13 晚，取代下面的 v1）**：`modThesis.bas` 整支重寫，照使用者給的
+  **市值門檻（2026-09-22，使用者指定）**：成分股市值（股數×最新收盤，與權重同口徑、整段期間固定判斷一次）
+  **< NT$100 億**（常數 `TW_MIN_CAP`）者**不給權重、成交金額也不進 CMF/OBV**；整組都低於門檻的族群**從頁面移除**
+  （狀態列列出被移除的族群名）。C 欄 STOCKS 改為「計入/總數」、B 欄改列**計入者依市值排序的前 4 檔**，頁首註明
+  「N below NT$100e」。只套用 RGT 頁，RGI 美股產業頁不動。**快取 key 改為「族群名|cap100e」**，改門檻會自動重抓；
+  快取列另存排除數（`PX_FIRST+5*PX_MAXN+1`）與 B 欄標籤，全被排除的族群也寫一列 npts=0（`CacheRead` 回 −1）免得每次重抓。
+  實測 2026-09-22：50 組全數保留、300 檔計入、72 檔低於門檻、13 檔無資料。
   「Earnings Workbench」截圖改版。**資料**在 `ThesisNotes` 頁 `tblNotes`，一列一個主題筆記：TARGET｜TYPE（stock/macro）｜
   CALL DATE｜STATUS｜ROLE｜THEME｜BEHAVIOR｜EVIDENCE。STATUS 八詞下拉：綠 Robust/Solid/Growing、紅 Slowing/Sluggish/
   Challenging/Contraction/Warning（**照截圖綠好紅壞，跟 RR4 其他頁紅漲綠跌相反，是使用者選的**）；ROLE＝MOAT/RISK/CATALYST/空白。
