@@ -204,9 +204,11 @@ End Function
 ' ================================================================
 ' GET STOCK PRICE (with 5-min cache)
 '
-' Routing:
-'   .TW / .TWO  -> TWSE / TPEx OpenAPI  (TaiwanPriceFetcher module)
-'   US / others -> Yahoo Finance         (original path, Yahoo fallback)
+' Routing (2026-09-23):
+'   .TW / .TWO  -> MIS 即時報價 (modMISPrice, 批次 prefetch 於 UP 開頭)
+'                  抓不到才退 Yahoo；不再經 TWSE/TPEx OpenAPI
+'                  (TaiwanPriceFetcher 模組已無呼叫點、留存但孤兒化)
+'   US / others -> Yahoo Finance (原本的路徑)
 '
 ' Adding routing here fixes ALL callers automatically:
 '   PortfolioDashboard_v3, TickerInsight, CampaignSheet, etc.
@@ -235,7 +237,17 @@ Public Function GetStockPrice(Ticker As String) As Double
         fullTicker = fullTicker & ".TW"
     End If
 
-    ' ── STEP 2: Yahoo Finance (primary) ──────────────────────────────────
+    ' ── STEP 2: MIS 即時報價 (Taiwan only, primary for .TW/.TWO) ──────────
+    If InStr(fullTicker, ".TW") > 0 Then
+        Dim misPx As Double: misPx = modMISPrice.GetMISPrice(fullTicker)
+        If misPx > 0 Then
+            g_PriceCache(Ticker) = misPx
+            GetStockPrice = misPx
+            Exit Function
+        End If
+    End If
+
+    ' ── STEP 3: Yahoo Finance (primary for US, fallback for TW when MIS misses) ──
     Dim http As Object
     On Error Resume Next
     Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
@@ -273,18 +285,6 @@ Public Function GetStockPrice(Ticker As String) As Double
         px = ParseClosePrice(resp)
         If px > 0 Then fullTicker = Ticker & ".TWO"
     End If
-
-    ' ── STEP 3: TWSE / TPEx OpenAPI (backup when Yahoo returns 0) ────────
-    If px = 0 And InStr(fullTicker, ".TW") > 0 Then
-        Dim openApiPx As Double: openApiPx = GetTWStockPrice(fullTicker)
-        If openApiPx > 0 Then
-            g_PriceCache(Ticker) = openApiPx
-            GetStockPrice = openApiPx
-            Set http = Nothing
-            Exit Function
-        End If
-    End If
-    ' ─────────────────────────────────────────────────────────────────────
 
     If px > 0 Then g_PriceCache(Ticker) = px
     GetStockPrice = px

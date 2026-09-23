@@ -212,6 +212,13 @@ Sub RebuildPortfolioDashboard()
     Dim positions As Object
     Set positions = BuildPositions(wsTr)
 
+    ' 2026-09-23: 一次 UP 只發 1 次 MIS 批次請求，涵蓋持倉+watchlist+ticker
+    ' panel 全部台股代號，避免每檔各查一次撞到 MIS 的節流門檻。GetStockPrice
+    ' 內部會在這之後的每一次呼叫優先讀這批 prefetch 的快取。
+    Dim twTickers() As String
+    twTickers = CollectTWTickersForPrefetch(positions, wl, tiTicker)
+    modMISPrice.PrefetchMISPrices twTickers
+
     Dim posData()    As Variant
     Dim totalMktTWD  As Double
     Dim totalCostTWD As Double
@@ -2582,6 +2589,61 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     ws.cells(r, RR4_LEFT + 1).Font.Italic = True
     ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 End Sub
+
+' 2026-09-23: 收集這一輪 UP 需要報價的全部台股代號（持倉 + watchlist +
+' ticker panel），交給 modMISPrice.PrefetchMISPrices 一次批次查詢。正規化
+' 規則跟 Attach.GetStockPrice 的 STEP 1 一致（裸數字代號補 .TW），這樣這裡
+' 收集到的 key 才會跟 GetStockPrice 之後實際查快取用的 key 一致。
+Private Function CollectTWTickersForPrefetch(positions As Object, wl As Variant, tiTicker As String) As String()
+    Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary")
+
+    Dim tkv As Variant
+    For Each tkv In positions.keys
+        Dim pp As Long: pp = InStr(CStr(tkv), "|")
+        Dim t As String: t = IIf(pp > 0, Left(CStr(tkv), pp - 1), CStr(tkv))
+        t = NormalizeTWTicker(t)
+        If t <> "" And Not seen.Exists(t) Then seen(t) = 1
+    Next tkv
+
+    If Not IsEmpty(wl) Then
+        Dim r As Long
+        For r = LBound(wl, 1) To UBound(wl, 1)
+            Dim wt As String: wt = NormalizeTWTicker(CStr(wl(r, 1)))
+            If wt <> "" And Not seen.Exists(wt) Then seen(wt) = 1
+        Next r
+    End If
+
+    Dim tt As String: tt = NormalizeTWTicker(tiTicker)
+    If tt <> "" And Not seen.Exists(tt) Then seen(tt) = 1
+
+    Dim out() As String
+    If seen.Count = 0 Then
+        ReDim out(0 To -1)
+    Else
+        ReDim out(0 To seen.Count - 1)
+        Dim i As Long: i = 0
+        Dim k As Variant
+        For Each k In seen.keys
+            out(i) = CStr(k): i = i + 1
+        Next k
+    End If
+    CollectTWTickersForPrefetch = out
+End Function
+
+' 台股才回傳正規化後的代號（含 .TW/.TWO），美股/期貨代號一律回空字串跳過。
+Private Function NormalizeTWTicker(raw As String) As String
+    Dim u As String: u = UCase(Trim(raw))
+    If u = "" Then NormalizeTWTicker = "": Exit Function
+    If InStr(u, ".TW") = 0 And InStr(u, ".TWO") = 0 Then
+        If IsNumeric(u) Then
+            u = u & ".TW"
+        Else
+            NormalizeTWTicker = ""
+            Exit Function
+        End If
+    End If
+    NormalizeTWTicker = u
+End Function
 
 Private Sub CalcPositions(positions As Object, exRate As Double, _
                            ByRef posData() As Variant, _
