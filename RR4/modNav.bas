@@ -21,8 +21,11 @@ Option Explicit
 '          E Earnings (2026-09-13, modEarnings; E! refetches its ticker)
 '          VA Valuation (2026-09-15, modValuationPage; VA! refetches - ROIC
 '             relative valuation via RR4/valuation.py, no WACC)
+'          B Bias (2026-09-23, modBias; B! rebuilds the heatmap) - EMA20/
+'             EMA200 deviation heatmap over portfolio + WATCHLIST, plus an
+'             on-demand single-ticker chart from its own TICKER query box
 '  Actions UP update dashboard . ADD / DEL trade forms . V! HC! RGE! RGI!
-'          RGT! L! E! recalc and show that page . IMAP industry map
+'          RGT! L! E! B! recalc and show that page . IMAP industry map
 '          DBG system debug . CLEARALL wipe all data
 '          (ClearAllData keeps its own Yes/No confirmation)
 '  Jumping to a page never recalculates it - the "!" codes do that.
@@ -135,6 +138,7 @@ End Function
 ' --- code -> sheet tab name ---------------------------------------
 Public Function NavSheetName(ByVal code As String) As String
     Select Case UCase(code)
+        Case "B":  NavSheetName = "Bias"
         Case "P":  NavSheetName = "RR4"
         Case "RL": NavSheetName = "Realized"
         Case "T":  NavSheetName = "Transactions"
@@ -157,7 +161,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "VA")
+    For Each c In Array("B", "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "VA")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -306,14 +310,14 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
 
     ' row 2: pages
     Dim pages As Variant
-    pages = Array("E", "EARNINGS", "H", "HISTORY", "HC", "HOLDCORR", "L", "LIBRARY", _
+    pages = Array("B", "BIAS", "E", "EARNINGS", "H", "HISTORY", "HC", "HOLDCORR", "L", "LIBRARY", _
                   "P", "PORTFOLIO", "R", "RESEARCH", "RGE", "RRG ETF", "RGI", "RRG IND", "RGT", "RRG TW", _
                   "RL", "REALIZED", "SC", "SECTORCORR", "T", "TRANSACTION", "V", "VOLITILITY", "VA", "VALUATION", "VT", "TKRVOL")
     Call WriteCodeLine(ws.cells(2 + top, 1 + off), pages, code, RR4_ACCENT)
 
     ' row 3: actions
     Dim acts As Variant
-    acts = Array("ADD", "TRADE", "CLEARALL", "WIPE ALL DATA", "DBG", "DEBUG", "DEL", "DELETE", _
+    acts = Array("ADD", "TRADE", "B!", "BIAS", "CLEARALL", "WIPE ALL DATA", "DBG", "DEBUG", "DEL", "DELETE", _
                  "E!", "EARNINGS", "HC!", "HOLDCORR", "IMAP", "IND MAP", "L!", "LIBRARY", _
                  "RGE!", "RRG ETF", "RGI!", "RRG IND", "RGT!", "RRG TW", "UP", "UPDATE", "V!", "RECALC VOL", "VA!", "VALUATION")
     Call WriteCodeLine(ws.cells(3 + top, 1 + off), acts, "", RGB(0, 200, 255))
@@ -414,11 +418,13 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "R", "VA"
+        Case "B", "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "R", "VA"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
             Call RebuildPortfolioDashboard
+        Case "B!"
+            Call BuildBiasPage
         Case "ADD"
             Call OpenTransactionForm
         Case "DEL"
@@ -462,7 +468,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E" Or code = "VA", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E" Or code = "VA" Or code = "B", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible

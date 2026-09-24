@@ -55,13 +55,19 @@ Option Explicit
 '        bars (user's own cap, must not exceed 200). One outlier bar can
 '        no longer set the ceiling/floor for the whole window; K_THRESH
 '        =0.8 now reads as "today beats 90% of the last 200 days".
-'  Per the user's explicit request this does NOT replace the OLD HHV/LLV
-'  lines - ComputeOneLine/NormOne are UNCHANGED (same output as before)
-'  and still drive the HOLDINGS/WATCHLIST tables untouched. The chart
-'  (only) now draws BOTH: old line thin/muted, new (rank) line thick as
-'  the primary, plus SIGUP/SIGDN triangle markers on the new line only -
-'  so old vs new can be eyeballed side by side before retiring the old
-'  one. See ComputeOneLineRankSignal/NormRank/RightAlignDbl.
+'  Per the user's explicit request this did NOT initially replace the OLD
+'  HHV/LLV lines - both were drawn on the same per-ticker chart (old thin/
+'  muted, new thick) so they could be eyeballed side by side.
+'
+'  2026-09-23, third round (same day): after comparing both on the chart,
+'  the user chose the NEW (rank+trend) line only - the OLD HHV/LLV line is
+'  REMOVED from the chart (ComputeOneLine/NormOne are UNCHANGED and still
+'  drive the HOLDINGS/WATCHLIST tables, which were never part of this
+'  comparison and are untouched). RightAlignDbl/RightAlignBool, which only
+'  existed to line up the old and new series on one date axis, are gone
+'  too - the chart is now driven end to end by ComputeOneLineRankSignal.
+'  R1/R4 line weight simplified to 1pt now that there is only one line per
+'  side (no longer needs to out-weigh a muted comparison line).
 '
 '  Pure ASCII (VBE import rule).
 ' ================================================================
@@ -95,6 +101,8 @@ Private Const HEAT_COL_R4 As Long = 6
 
 Private Const CHART_COL As Long = 8          ' physical column I after the bar's +1 column shift
 Private Const CHART_DATA_COL As Long = 30    ' hidden data block the chart series point at
+Private Const BIAS_CHART_H As Double = 460      ' each of the two stacked charts
+Private Const BIAS_CHART_GAP As Double = 10
 
 Private Const FONT_FACE As String = "Consolas"
 Private Const CLR_TEXT As Long = 14540253            ' RGB(221,221,221)
@@ -183,22 +191,19 @@ Public Sub RefreshBiasQuery()
         Call NavNotify("BIAS " & tk & ": no price history", True)
         Exit Sub
     End If
-    Dim rr1() As Double, vc1 As Long
-    If Not ComputeOneLine(closeArr, cnt, N1, rr1, vc1) Or vc1 = 0 Then
-        Call NavNotify("BIAS " & tk & ": not enough history for the M=250 window", True)
+
+    ' 2026-09-23 third round: chart is driven end to end by the NEW
+    ' rank+trend line/signal - see ComputeOneLineRankSignal header note.
+    ' Its floor is shared between R1 and R4 (both gated on N4+MR_RANK, the
+    ' trend filter's own requirement), so vc1 and vc4 are always equal
+    ' whenever hasR4 is True - no alignment step needed between them.
+    Dim rr1() As Double, sigUp1() As Boolean, sigDn1() As Boolean, vc1 As Long
+    If Not ComputeOneLineRankSignal(closeArr, cnt, N1, rr1, sigUp1, sigDn1, vc1) Or vc1 = 0 Then
+        Call NavNotify("BIAS " & tk & ": not enough history for the rank+trend window", True)
         Exit Sub
     End If
-    Dim rr4() As Double, vc4 As Long, hasR4 As Boolean
-    hasR4 = ComputeOneLine(closeArr, cnt, N4, rr4, vc4) And vc4 > 0
-
-    ' NEW (2026-09-23 second round): rank+trend line/signal, computed at
-    ' full length then right-aligned to vc1 so old and new share one date
-    ' axis - see ComputeOneLineRankSignal and RightAlignDbl header notes.
-    Dim rr1n0() As Double, sigUp1_0() As Boolean, sigDn1_0() As Boolean, vc1n As Long
-    Dim okNew1 As Boolean: okNew1 = ComputeOneLineRankSignal(closeArr, cnt, N1, rr1n0, sigUp1_0, sigDn1_0, vc1n)
-    Dim rr4n0() As Double, sigUp4_0() As Boolean, sigDn4_0() As Boolean, vc4n As Long
-    Dim okNew4 As Boolean
-    If hasR4 Then okNew4 = ComputeOneLineRankSignal(closeArr, cnt, N4, rr4n0, sigUp4_0, sigDn4_0, vc4n)
+    Dim rr4() As Double, sigUp4() As Boolean, sigDn4() As Boolean, vc4 As Long, hasR4 As Boolean
+    hasR4 = ComputeOneLineRankSignal(closeArr, cnt, N4, rr4, sigUp4, sigDn4, vc4) And vc4 > 0
 
     Dim chartDates() As Date, i As Long
     ReDim chartDates(0 To vc1 - 1)
@@ -206,24 +211,7 @@ Public Sub RefreshBiasQuery()
         chartDates(i) = dateArr(cnt - vc1 + i)
     Next i
 
-    Dim rr1n() As Double, sigUp1() As Boolean, sigDn1() As Boolean
-    Dim rr4n() As Double, sigUp4() As Boolean, sigDn4() As Boolean
-    If okNew1 Then
-        Call RightAlignDbl(rr1n0, vc1, rr1n)
-        Call RightAlignBool(sigUp1_0, vc1, sigUp1)
-        Call RightAlignBool(sigDn1_0, vc1, sigDn1)
-    Else
-        ReDim rr1n(0 To vc1 - 1): ReDim sigUp1(0 To vc1 - 1): ReDim sigDn1(0 To vc1 - 1)
-    End If
-    If hasR4 And okNew4 Then
-        Call RightAlignDbl(rr4n0, vc1, rr4n)
-        Call RightAlignBool(sigUp4_0, vc1, sigUp4)
-        Call RightAlignBool(sigDn4_0, vc1, sigDn4)
-    Else
-        ReDim rr4n(0 To vc1 - 1): ReDim sigUp4(0 To vc1 - 1): ReDim sigDn4(0 To vc1 - 1)
-    End If
-
-    Call DrawBiasChart(ws, tk, chartDates, rr1, hasR4, rr4, rr1n, rr4n, sigUp1, sigDn1, sigUp4, sigDn4, vc1)
+    Call DrawBiasChart(ws, tk, chartDates, rr1, hasR4, rr4, sigUp1, sigDn1, sigUp4, sigDn4, vc1)
     Call NavNotify("BIAS " & tk & " done - " & vc1 & " points" & IIf(hasR4, "", " (short line only)"))
 End Sub
 
@@ -458,10 +446,10 @@ End Function
 ' always uses EMA(N4) regardless of which line is being signalled.
 ' outR/outSigUp/outSigDn are 0-based and aligned 1:1 (index i is the same
 ' calendar bar in each), anchored so the LAST element is always "today"
-' (c(cnt-1)) - same anchoring as ComputeOneLine, just a shorter window
-' (MR_RANK=200 < M_WIN=250) so outCount ends up larger by exactly
-' (M_WIN-MR_RANK); the caller right-aligns/truncates to ComputeOneLine's
-' length before charting both on the same date axis (RightAlignDbl/Bool).
+' (c(cnt-1)). The floor check below is the SAME for every linePeriod (it
+' is really the trend filter's N4+MR_RANK requirement, not the line's own
+' N+MR_RANK), which is what guarantees the R1 and R4 calls always agree on
+' outCount when both succeed - no alignment step needed by the caller.
 Private Function ComputeOneLineRankSignal(ByRef c() As Double, ByVal cnt As Long, ByVal linePeriod As Long, _
                                            ByRef outR() As Double, ByRef outSigUp() As Boolean, _
                                            ByRef outSigDn() As Boolean, ByRef outCount As Long) As Boolean
@@ -495,28 +483,6 @@ Private Function ComputeOneLineRankSignal(ByRef c() As Double, ByVal cnt As Long
     outCount = n
     ComputeOneLineRankSignal = True
 End Function
-
-' Right-aligns a longer 0-based array to length wantLen (both end at the
-' same most-recent bar) - the new MR_RANK=200 window warms up sooner than
-' the old M_WIN=250 window, so the two lines need trimming to the same
-' length before they can share one date axis on the chart.
-Private Sub RightAlignDbl(ByRef src() As Double, ByVal wantLen As Long, ByRef dst() As Double)
-    Dim have As Long: have = UBound(src) - LBound(src) + 1
-    ReDim dst(0 To wantLen - 1)
-    Dim i As Long
-    For i = 0 To wantLen - 1
-        dst(i) = src(have - wantLen + i)
-    Next i
-End Sub
-
-Private Sub RightAlignBool(ByRef src() As Boolean, ByVal wantLen As Long, ByRef dst() As Boolean)
-    Dim have As Long: have = UBound(src) - LBound(src) + 1
-    ReDim dst(0 To wantLen - 1)
-    Dim i As Long
-    For i = 0 To wantLen - 1
-        dst(i) = src(have - wantLen + i)
-    Next i
-End Sub
 
 Private Sub SortByR1(ByRef tk() As String, ByRef mkt() As String, ByRef lastPx() As Double, _
                       ByRef chgPct() As Double, ByRef r1() As Double, ByRef r4() As Double, _
@@ -640,14 +606,11 @@ End Function
 ' ----------------------------------------------------------------
 '  Single-ticker time series chart (all 5 reference lines)
 ' ----------------------------------------------------------------
-' NOTE (2026-09-23 second round): r1()/r4() are the OLD (HHV/LLV) line,
-' unchanged; r1n()/r4n() are the NEW (rank) line and sigUp*/sigDn* are its
-' signal markers (all already right-aligned to length n by the caller -
-' see RefreshBiasQuery). r4()/r4n()/sigUp4()/sigDn4() are only meaningful
-' when hasR4 is True, same convention the OLD code already used for r4().
+' NOTE (2026-09-23 third round): r1()/r4() are the rank+trend line (the
+' OLD HHV/LLV line was removed from the chart this round, see header
+' comment); r4()/sigUp4()/sigDn4() are only meaningful when hasR4 is True.
 Private Sub DrawBiasChart(ByVal ws As Worksheet, ByVal ticker As String, ByRef d() As Date, _
                            ByRef r1() As Double, ByVal hasR4 As Boolean, ByRef r4() As Double, _
-                           ByRef r1n() As Double, ByRef r4n() As Double, _
                            ByRef sigUp1() As Boolean, ByRef sigDn1() As Boolean, _
                            ByRef sigUp4() As Boolean, ByRef sigDn4() As Boolean, ByVal n As Long)
     Dim off As Long: off = NavOffset(ws)
@@ -655,20 +618,18 @@ Private Sub DrawBiasChart(ByVal ws As Worksheet, ByVal ticker As String, ByRef d
     Dim dc As Long: dc = CHART_DATA_COL + lc
 
     ws.cells(CHART_ROW + off, dc).Value = "date"
-    ws.cells(CHART_ROW + off, dc + 1).Value = "R1 old"
-    ws.cells(CHART_ROW + off, dc + 2).Value = "R4 old"
+    ws.cells(CHART_ROW + off, dc + 1).Value = "R1"
+    ws.cells(CHART_ROW + off, dc + 2).Value = "R4"
     ws.cells(CHART_ROW + off, dc + 3).Value = "TOP"
     ws.cells(CHART_ROW + off, dc + 4).Value = "UPPER"
     ws.cells(CHART_ROW + off, dc + 5).Value = "ZERO"
     ws.cells(CHART_ROW + off, dc + 6).Value = "LOWER"
     ws.cells(CHART_ROW + off, dc + 7).Value = "BOTTOM"
-    ws.cells(CHART_ROW + off, dc + 8).Value = "R1 rank"
-    ws.cells(CHART_ROW + off, dc + 9).Value = "R4 rank"
-    ws.cells(CHART_ROW + off, dc + 10).Value = "SIGUP1"
-    ws.cells(CHART_ROW + off, dc + 11).Value = "SIGDN1"
-    ws.cells(CHART_ROW + off, dc + 12).Value = "SIGUP4"
-    ws.cells(CHART_ROW + off, dc + 13).Value = "SIGDN4"
-    ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off, dc + 13)).Font.Color = RGB(90, 90, 90)
+    ws.cells(CHART_ROW + off, dc + 8).Value = "SIGUP1"
+    ws.cells(CHART_ROW + off, dc + 9).Value = "SIGDN1"
+    ws.cells(CHART_ROW + off, dc + 10).Value = "SIGUP4"
+    ws.cells(CHART_ROW + off, dc + 11).Value = "SIGDN4"
+    ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off, dc + 11)).Font.Color = RGB(90, 90, 90)
 
     Dim i As Long, r As Long
     For i = 0 To n - 1
@@ -681,23 +642,51 @@ Private Sub DrawBiasChart(ByVal ws As Worksheet, ByVal ticker As String, ByRef d
         ws.cells(r, dc + 5).Value = 0
         ws.cells(r, dc + 6).Value = -K_THRESH * 100
         ws.cells(r, dc + 7).Value = -100
-        ws.cells(r, dc + 8).Value = r1n(i)
-        If hasR4 Then ws.cells(r, dc + 9).Value = r4n(i)
-        If sigUp1(i) Then ws.cells(r, dc + 10).Value = 112
-        If sigDn1(i) Then ws.cells(r, dc + 11).Value = -112
+        If sigUp1(i) Then ws.cells(r, dc + 8).Value = 112
+        If sigDn1(i) Then ws.cells(r, dc + 9).Value = -112
         If hasR4 Then
-            If sigUp4(i) Then ws.cells(r, dc + 12).Value = 124
-            If sigDn4(i) Then ws.cells(r, dc + 13).Value = -124
+            If sigUp4(i) Then ws.cells(r, dc + 10).Value = 124
+            If sigDn4(i) Then ws.cells(r, dc + 11).Value = -124
         End If
     Next i
-    ws.Range(ws.cells(CHART_ROW + off + 1, dc), ws.cells(CHART_ROW + off + n, dc + 13)).Font.Color = RGB(60, 60, 60)
+    ws.Range(ws.cells(CHART_ROW + off + 1, dc), ws.cells(CHART_ROW + off + n, dc + 11)).Font.Color = RGB(60, 60, 60)
 
+    ' 2026-09-24: split into TWO stacked charts (user request) - R1 SHORT on
+    ' top with its own SELL/BUY short markers, R4 LONG below with its own
+    ' SELL/BUY long markers; both carry the full 5 reference lines, their own
+    ' title + legend, and their own date labels. Same hidden data block feeds
+    ' both. With no R4 (not enough history) only the R1 chart is drawn.
     On Error Resume Next
     ws.ChartObjects("BIAS_CHART").Delete
+    ws.ChartObjects("BIAS_CHART_R4").Delete
     On Error GoTo 0
+
+    Dim topY As Double: topY = ws.Rows(CHART_ROW + off).Top
+    Call DrawOneBiasChart(ws, "BIAS_CHART", topY, UCase(ticker) & "  R1 SHORT  (EMA" & N1 & ", RANK + TREND FILTER)", _
+        "R1 SHORT", dc + 1, RGB(0, 200, 255), "SELL short", dc + 8, RGB(220, 60, 60), _
+        "BUY short", dc + 9, RGB(60, 200, 90), n)
+    If hasR4 Then
+        Call DrawOneBiasChart(ws, "BIAS_CHART_R4", topY + BIAS_CHART_H + BIAS_CHART_GAP, _
+            UCase(ticker) & "  R4 LONG  (EMA" & N4 & ", RANK + TREND FILTER)", _
+            "R4 LONG", dc + 2, RR4_ACCENT, "SELL long", dc + 10, RGB(255, 120, 255), _
+            "BUY long", dc + 11, RGB(120, 160, 255), n)
+    End If
+End Sub
+
+Private Sub DrawOneBiasChart(ByVal ws As Worksheet, ByVal chartName As String, ByVal topY As Double, _
+                              ByVal titleTxt As String, ByVal lineName As String, ByVal lineCol As Long, _
+                              ByVal lineColor As Long, ByVal sellName As String, ByVal sellCol As Long, _
+                              ByVal sellColor As Long, ByVal buyName As String, ByVal buyCol As Long, _
+                              ByVal buyColor As Long, ByVal n As Long)
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim dc As Long: dc = CHART_DATA_COL + lc
+    Dim r1 As Long: r1 = CHART_ROW + off + 1
+    Dim rN As Long: rN = CHART_ROW + off + n
+
     Dim co As ChartObject
-    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL + lc).Left, ws.Rows(CHART_ROW + off).Top, 760, 460)
-    co.Name = "BIAS_CHART"
+    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL + lc).Left, topY, 760, BIAS_CHART_H)
+    co.Name = chartName
     co.Placement = xlMove
     Dim ch As Chart: Set ch = co.Chart
     ch.ChartType = xlLine
@@ -712,32 +701,20 @@ Private Sub DrawBiasChart(ByVal ws As Worksheet, ByVal ticker As String, ByRef d
     ch.PlotArea.Format.Fill.ForeColor.RGB = RGB(8, 8, 8)
     ch.PlotArea.Format.Line.Visible = msoFalse
     ch.HasTitle = True
-    ch.ChartTitle.Text = UCase(ticker) & "  BIAS - OLD HHV/LLV VS NEW RANK+TREND" & _
-        IIf(hasR4, "", "  (SHORT LINE ONLY - NOT ENOUGH HISTORY FOR EMA" & N4 & ")")
+    ch.ChartTitle.Text = titleTxt
     With ch.ChartTitle.Format.TextFrame2.TextRange.Font
         .Name = FONT_FACE: .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
     End With
 
-    Dim xr As Range: Set xr = ws.Range(ws.cells(CHART_ROW + off + 1, dc), ws.cells(CHART_ROW + off + n, dc))
-    Call AddBiasSeries(ch, "R1 old", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 1), ws.cells(CHART_ROW + off + n, dc + 1)), RGB(0, 130, 170), 1, False)
-    If hasR4 Then
-        Call AddBiasSeries(ch, "R4 old", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 2), ws.cells(CHART_ROW + off + n, dc + 2)), RGB(140, 85, 0), 1, False)
-    End If
-    Call AddBiasSeries(ch, "TOP 100", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 3), ws.cells(CHART_ROW + off + n, dc + 3)), RGB(255, 255, 255), 0.75, True)
-    Call AddBiasSeries(ch, "UPPER " & Format(K_THRESH * 100, "0"), xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 4), ws.cells(CHART_ROW + off + n, dc + 4)), RGB(220, 60, 60), 0.75, True)
-    Call AddBiasSeries(ch, "ZERO", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 5), ws.cells(CHART_ROW + off + n, dc + 5)), RGB(120, 120, 120), 0.75, True)
-    Call AddBiasSeries(ch, "LOWER -" & Format(K_THRESH * 100, "0"), xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 6), ws.cells(CHART_ROW + off + n, dc + 6)), RGB(60, 160, 90), 0.75, True)
-    Call AddBiasSeries(ch, "BOTTOM -100", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 7), ws.cells(CHART_ROW + off + n, dc + 7)), RGB(255, 255, 255), 0.75, True)
-    Call AddBiasSeries(ch, "R1 new (rank)", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 8), ws.cells(CHART_ROW + off + n, dc + 8)), RGB(0, 200, 255), 1.5, False)
-    If hasR4 Then
-        Call AddBiasSeries(ch, "R4 new (rank)", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 9), ws.cells(CHART_ROW + off + n, dc + 9)), RR4_ACCENT, 1.5, False)
-    End If
-    Call AddBiasMarkerSeries(ch, "SELL short", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 10), ws.cells(CHART_ROW + off + n, dc + 10)), RGB(220, 60, 60))
-    Call AddBiasMarkerSeries(ch, "BUY short", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 11), ws.cells(CHART_ROW + off + n, dc + 11)), RGB(60, 200, 90))
-    If hasR4 Then
-        Call AddBiasMarkerSeries(ch, "SELL long", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 12), ws.cells(CHART_ROW + off + n, dc + 12)), RGB(255, 120, 255))
-        Call AddBiasMarkerSeries(ch, "BUY long", xr, ws.Range(ws.cells(CHART_ROW + off + 1, dc + 13), ws.cells(CHART_ROW + off + n, dc + 13)), RGB(120, 160, 255))
-    End If
+    Dim xr As Range: Set xr = ws.Range(ws.cells(r1, dc), ws.cells(rN, dc))
+    Call AddBiasSeries(ch, lineName, xr, ws.Range(ws.cells(r1, lineCol), ws.cells(rN, lineCol)), lineColor, 1, False)
+    Call AddBiasSeries(ch, "TOP 100", xr, ws.Range(ws.cells(r1, dc + 3), ws.cells(rN, dc + 3)), RGB(255, 255, 255), 0.75, True)
+    Call AddBiasSeries(ch, "UPPER " & Format(K_THRESH * 100, "0"), xr, ws.Range(ws.cells(r1, dc + 4), ws.cells(rN, dc + 4)), RGB(220, 60, 60), 0.75, True)
+    Call AddBiasSeries(ch, "ZERO", xr, ws.Range(ws.cells(r1, dc + 5), ws.cells(rN, dc + 5)), RGB(120, 120, 120), 0.75, True)
+    Call AddBiasSeries(ch, "LOWER -" & Format(K_THRESH * 100, "0"), xr, ws.Range(ws.cells(r1, dc + 6), ws.cells(rN, dc + 6)), RGB(60, 160, 90), 0.75, True)
+    Call AddBiasSeries(ch, "BOTTOM -100", xr, ws.Range(ws.cells(r1, dc + 7), ws.cells(rN, dc + 7)), RGB(255, 255, 255), 0.75, True)
+    Call AddBiasMarkerSeries(ch, sellName, xr, ws.Range(ws.cells(r1, sellCol), ws.cells(rN, sellCol)), sellColor)
+    Call AddBiasMarkerSeries(ch, buyName, xr, ws.Range(ws.cells(r1, buyCol), ws.cells(rN, buyCol)), buyColor)
 
     Dim ax As Axis
     Set ax = ch.Axes(xlValue)
@@ -789,12 +766,13 @@ End Sub
 Private Sub ClearBiasChart(ByVal ws As Worksheet)
     On Error Resume Next
     ws.ChartObjects("BIAS_CHART").Delete
+    ws.ChartObjects("BIAS_CHART_R4").Delete
     On Error GoTo 0
     Dim off As Long: off = NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
     Dim dc As Long: dc = CHART_DATA_COL + lc
     Dim rng As Range
-    Set rng = ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off + NEED_BARS + 5, dc + 13))
+    Set rng = ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off + NEED_BARS + 5, dc + 11))
     rng.ClearContents
     rng.Interior.Color = RGB(0, 0, 0)
 End Sub
