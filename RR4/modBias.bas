@@ -69,6 +69,13 @@ Option Explicit
 '  R1/R4 line weight simplified to 1pt now that there is only one line per
 '  side (no longer needs to out-weigh a muted comparison line).
 '
+'  2026-09-24, K-line: each R chart now has a K-line chart + volume chart
+'  to its RIGHT over the same bars (R1 SHORT pair: candles + EMA20 + short
+'  SELL/BUY triangles; R4 LONG pair: candles + EMA200 + long triangles).
+'  OHLCV is its own Yahoo fetch (adjusted O/H/L, see FetchBiasOhlcvRaw),
+'  aligned by date to the chart bars. See the DrawBiasKlines block for why
+'  EMA/triangles sit in a secondary axis group.
+'
 '  Pure ASCII (VBE import rule).
 ' ================================================================
 
@@ -102,7 +109,18 @@ Private Const HEAT_COL_R4 As Long = 6
 Private Const CHART_COL As Long = 8          ' physical column I after the bar's +1 column shift
 Private Const CHART_DATA_COL As Long = 30    ' hidden data block the chart series point at
 Private Const BIAS_CHART_H As Double = 460      ' each of the two stacked charts
+Private Const BIAS_CHART_W As Double = 760
 Private Const BIAS_CHART_GAP As Double = 10
+
+' --- 2026-09-24: K-line + volume charts, right of each R chart ---
+Private Const KLINE_GAP As Double = 12          ' horizontal gap between an R chart and its K-line chart
+Private Const KLINE_H As Double = 335           ' K-line chart height; KLINE_H + KV_GAP + VOL_H = BIAS_CHART_H
+Private Const VOL_H As Double = 120
+Private Const KV_GAP As Double = 5
+Private Const KB_OFF As Long = 13               ' K/volume data block starts this many columns after CHART_DATA_COL
+Private Const KB_LAST As Long = 24              ' last data column offset (KB_OFF .. KB_LAST = 12 columns)
+Private Const K_PLOT_LEFT As Double = 58        ' plot-area inside left/right margins, shared so K and volume line up
+Private Const K_PLOT_RIGHT As Double = 12
 
 Private Const FONT_FACE As String = "Consolas"
 Private Const CLR_TEXT As Long = 14540253            ' RGB(221,221,221)
@@ -212,7 +230,27 @@ Public Sub RefreshBiasQuery()
     Next i
 
     Call DrawBiasChart(ws, tk, chartDates, rr1, hasR4, rr4, sigUp1, sigDn1, sigUp4, sigDn4, vc1)
-    Call NavNotify("BIAS " & tk & " done - " & vc1 & " points" & IIf(hasR4, "", " (short line only)"))
+
+    ' 2026-09-24: K-line + volume beside each R chart, same date span (the
+    ' vc1 newest bars). OHLCV is a separate Yahoo fetch aligned by date to
+    ' chartDates; EMAs are recomputed here from the same closes the R lines use.
+    Dim ko() As Double, kh() As Double, kl() As Double, kc() As Double, kv() As Double
+    Dim kOk As Boolean
+    kOk = FetchBiasOhlc(tk, chartDates, vc1, closeArr, cnt, ko, kh, kl, kc, kv)
+    If kOk Then
+        Dim bTmp() As Double, emaAllS() As Double, emaAllL() As Double
+        Call ComputeEmaDeviation(closeArr, cnt, N1, bTmp, emaAllS)
+        Call ComputeEmaDeviation(closeArr, cnt, N4, bTmp, emaAllL)
+        Dim emaS() As Double, emaL() As Double
+        ReDim emaS(0 To vc1 - 1): ReDim emaL(0 To vc1 - 1)
+        For i = 0 To vc1 - 1
+            emaS(i) = emaAllS(cnt - vc1 + i)
+            emaL(i) = emaAllL(cnt - vc1 + i)
+        Next i
+        Call DrawBiasKlines(ws, tk, vc1, ko, kh, kl, kc, kv, emaS, emaL, hasR4, sigUp1, sigDn1, sigUp4, sigDn4)
+    End If
+    Call NavNotify("BIAS " & tk & " done - " & vc1 & " points" & IIf(hasR4, "", " (short line only)") & _
+                   IIf(kOk, "", " (K-line unavailable: no OHLC)"))
 End Sub
 
 ' ----------------------------------------------------------------
@@ -685,7 +723,7 @@ Private Sub DrawOneBiasChart(ByVal ws As Worksheet, ByVal chartName As String, B
     Dim rN As Long: rN = CHART_ROW + off + n
 
     Dim co As ChartObject
-    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL + lc).Left, topY, 760, BIAS_CHART_H)
+    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL + lc).Left, topY, BIAS_CHART_W, BIAS_CHART_H)
     co.Name = chartName
     co.Placement = xlMove
     Dim ch As Chart: Set ch = co.Chart
@@ -760,6 +798,377 @@ Private Sub AddBiasMarkerSeries(ByVal ch As Chart, ByVal nm As String, ByVal xr 
     s.MarkerForegroundColor = markerColor
 End Sub
 
+' ----------------------------------------------------------------
+'  K-line + volume (2026-09-24). Two pairs, right of the R charts:
+'  R1 SHORT pair carries EMA(N1) and the short SELL/BUY triangles, R4
+'  LONG pair carries EMA(N4) and the long ones. Candles are a plain line
+'  chart group with hi-lo lines + up/down bars (exactly what Excel's
+'  native OHLC stock chart is underneath); EMA and the signal triangles
+'  live in a SECONDARY group pinned to the same fixed axis scale, because
+'  hi-lo lines span every series in their own group and up/down bars use
+'  the group's first and last series - extra series in that group would
+'  corrupt both. Red up / green down (TW convention, as on the RR4 page).
+' ----------------------------------------------------------------
+
+' JSON numeric array between "<key>":[ and the next ] (null -> "null").
+Private Function BiasJsonArr(ByRef resp As String, ByVal key As String, ByVal fromPos As Long, ByRef parts() As String) As Boolean
+    Dim p1 As Long, p2 As Long
+    p1 = InStr(fromPos, resp, """" & key & """:[")
+    If p1 = 0 Then Exit Function
+    p1 = p1 + Len(key) + 4
+    p2 = InStr(p1, resp, "]")
+    If p2 = 0 Then Exit Function
+    parts = Split(Mid(resp, p1, p2 - p1), ",")
+    BiasJsonArr = True
+End Function
+
+' One Yahoo symbol, 10y daily OHLCV. O/H/L are scaled by adjclose/close (what
+' yfinance auto_adjust does) so they sit on the same adjusted basis as the
+' closes the EMAs and R lines are computed from; C is adjclose; V is raw.
+' Rows with any null field are dropped. Returns the row count (0 = failed).
+Private Function FetchBiasOhlcvRaw(ByVal sym As String, ByRef days() As Long, ByRef o() As Double, _
+                                    ByRef h() As Double, ByRef l() As Double, ByRef c() As Double, _
+                                    ByRef v() As Double) As Long
+    Dim http As Object, resp As String, status As Long
+    On Error Resume Next
+    Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
+    If http Is Nothing Then Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://query1.finance.yahoo.com/v8/finance/chart/" & sym & "?range=10y&interval=1d", False
+    http.setRequestHeader "User-Agent", "Mozilla/5.0"
+    http.send
+    status = http.Status
+    resp = http.responseText
+    On Error GoTo 0
+    If status <> 200 Or Len(resp) = 0 Then Exit Function
+
+    Dim ts() As String, op() As String, hi() As String, lo() As String, cl() As String, vo() As String, ac() As String
+    If Not BiasJsonArr(resp, "timestamp", 1, ts) Then Exit Function
+    If Not BiasJsonArr(resp, "open", 1, op) Then Exit Function
+    If Not BiasJsonArr(resp, "high", 1, hi) Then Exit Function
+    If Not BiasJsonArr(resp, "low", 1, lo) Then Exit Function
+    If Not BiasJsonArr(resp, "close", 1, cl) Then Exit Function       ' "adjclose":[ does not match "close":[
+    If Not BiasJsonArr(resp, "volume", 1, vo) Then Exit Function
+    Dim pAdj As Long: pAdj = InStr(resp, """adjclose"":[")            ' the first one opens the object
+    If pAdj = 0 Then Exit Function
+    If Not BiasJsonArr(resp, "adjclose", pAdj + 1, ac) Then Exit Function
+
+    Dim n As Long: n = UBound(ts) + 1
+    If UBound(op) + 1 < n Then n = UBound(op) + 1
+    If UBound(hi) + 1 < n Then n = UBound(hi) + 1
+    If UBound(lo) + 1 < n Then n = UBound(lo) + 1
+    If UBound(cl) + 1 < n Then n = UBound(cl) + 1
+    If UBound(vo) + 1 < n Then n = UBound(vo) + 1
+    If UBound(ac) + 1 < n Then n = UBound(ac) + 1
+    If n <= 0 Then Exit Function
+    ReDim days(0 To n - 1): ReDim o(0 To n - 1): ReDim h(0 To n - 1)
+    ReDim l(0 To n - 1): ReDim c(0 To n - 1): ReDim v(0 To n - 1)
+
+    Dim k As Long, cnt As Long, rawC As Double, ratio As Double
+    For k = 0 To n - 1
+        If IsNumeric(Trim(ts(k))) And IsNumeric(Trim(op(k))) And IsNumeric(Trim(hi(k))) And _
+           IsNumeric(Trim(lo(k))) And IsNumeric(Trim(cl(k))) And IsNumeric(Trim(vo(k))) And _
+           IsNumeric(Trim(ac(k))) Then
+            rawC = CDbl(Val(cl(k)))
+            If rawC > 0 Then
+                ratio = CDbl(Val(ac(k))) / rawC
+                days(cnt) = CLng(Val(ts(k)) \ 86400)
+                o(cnt) = CDbl(Val(op(k))) * ratio
+                h(cnt) = CDbl(Val(hi(k))) * ratio
+                l(cnt) = CDbl(Val(lo(k))) * ratio
+                c(cnt) = CDbl(Val(ac(k)))
+                v(cnt) = CDbl(Val(vo(k)))
+                cnt = cnt + 1
+            End If
+        End If
+    Next k
+    FetchBiasOhlcvRaw = cnt
+End Function
+
+' OHLCV aligned 1:1 to the chart dates (0-based, length n, newest = last).
+' A bare TW number is tried as .TW then .TWO (same rule as
+' modvolatility.GetHistoricalData). A chart bar with no OHLC row on that date
+' falls back to a flat bar at the adjusted close with volume 0.
+Private Function FetchBiasOhlc(ByVal ticker As String, ByRef chartDates() As Date, ByVal n As Long, _
+                                ByRef closeArr() As Double, ByVal cnt As Long, _
+                                ByRef oo() As Double, ByRef hh() As Double, ByRef ll() As Double, _
+                                ByRef cc() As Double, ByRef vv() As Double) As Boolean
+    Dim t As String: t = UCase$(Trim$(ticker))
+    Dim d() As Long, ro() As Double, rh() As Double, rl() As Double, rc() As Double, rv() As Double
+    Dim m As Long
+    If InStr(t, ".") = 0 And IsNumeric(t) Then
+        m = FetchBiasOhlcvRaw(t & ".TW", d, ro, rh, rl, rc, rv)
+        If m = 0 Then m = FetchBiasOhlcvRaw(t & ".TWO", d, ro, rh, rl, rc, rv)
+    Else
+        m = FetchBiasOhlcvRaw(t, d, ro, rh, rl, rc, rv)
+    End If
+    If m = 0 Then Exit Function
+
+    Dim idx As Object: Set idx = CreateObject("Scripting.Dictionary")
+    Dim i As Long
+    For i = 0 To m - 1
+        idx(d(i)) = i
+    Next i
+
+    ReDim oo(0 To n - 1): ReDim hh(0 To n - 1): ReDim ll(0 To n - 1): ReDim cc(0 To n - 1): ReDim vv(0 To n - 1)
+    Dim dayKey As Long, j As Long, px As Double
+    For i = 0 To n - 1
+        dayKey = CLng(Int(CDbl(chartDates(i)))) - 25569
+        px = closeArr(cnt - n + i)
+        If idx.Exists(dayKey) Then
+            j = idx(dayKey)
+            oo(i) = ro(j): hh(i) = rh(j): ll(i) = rl(j): cc(i) = px: vv(i) = rv(j)
+            If hh(i) < px Then hh(i) = px
+            If ll(i) > px Then ll(i) = px
+        Else
+            oo(i) = px: hh(i) = px: ll(i) = px: cc(i) = px: vv(i) = 0
+        End If
+    Next i
+    FetchBiasOhlc = True
+End Function
+
+' 1 / 2 / 2.5 / 5 x 10^k step that gives at most 8 gridlines over span.
+Private Function NiceStep(ByVal span As Double) As Double
+    If span <= 0 Then NiceStep = 1: Exit Function
+    Dim mag As Double: mag = 10 ^ Int(Log(span / 6) / Log(10))
+    Dim mult As Variant: mult = Array(1, 2, 2.5, 5, 10)
+    Dim k As Long
+    For k = 0 To 4
+        If span / (mag * mult(k)) <= 8 Then NiceStep = mag * mult(k): Exit Function
+    Next k
+    NiceStep = mag * 10
+End Function
+
+Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal n As Long, _
+                            ByRef ko() As Double, ByRef kh() As Double, ByRef kl() As Double, _
+                            ByRef kc() As Double, ByRef kv() As Double, _
+                            ByRef emaS() As Double, ByRef emaL() As Double, ByVal hasR4 As Boolean, _
+                            ByRef sigUp1() As Boolean, ByRef sigDn1() As Boolean, _
+                            ByRef sigUp4() As Boolean, ByRef sigDn4() As Boolean)
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim dc As Long: dc = CHART_DATA_COL + lc
+    Dim kb As Long: kb = dc + KB_OFF
+    Dim r0 As Long: r0 = CHART_ROW + off + 1
+
+    Dim hdr As Variant
+    hdr = Array("O", "H", "L", "C", "EMA" & N1, "EMA" & N4, "SELLS", "BUYS", "SELLL", "BUYL", "VOLUP", "VOLDN")
+    Dim j As Long
+    For j = 0 To 11
+        ws.cells(CHART_ROW + off, kb + j).Value = hdr(j)
+    Next j
+    ws.Range(ws.cells(CHART_ROW + off, kb), ws.cells(CHART_ROW + off, kb + 11)).Font.Color = RGB(90, 90, 90)
+
+    ' one array write for the whole block; blank = not plotted (signal / off-side volume)
+    Dim blk() As Variant: ReDim blk(1 To n, 1 To 12)
+    Dim i As Long, r As Long
+    Dim lo As Double, hi As Double: lo = kl(0): hi = kh(0)
+    For i = 0 To n - 1
+        r = i + 1
+        blk(r, 1) = ko(i): blk(r, 2) = kh(i): blk(r, 3) = kl(i): blk(r, 4) = kc(i)
+        blk(r, 5) = emaS(i)
+        If hasR4 Then blk(r, 6) = emaL(i)
+        If sigUp1(i) Then blk(r, 7) = kh(i) * 1.025
+        If sigDn1(i) Then blk(r, 8) = kl(i) * 0.975
+        If hasR4 Then
+            If sigUp4(i) Then blk(r, 9) = kh(i) * 1.025
+            If sigDn4(i) Then blk(r, 10) = kl(i) * 0.975
+        End If
+        If kc(i) >= ko(i) Then blk(r, 11) = kv(i) Else blk(r, 12) = kv(i)
+
+        If kl(i) < lo Then lo = kl(i)
+        If kh(i) > hi Then hi = kh(i)
+        If emaS(i) < lo Then lo = emaS(i)
+        If emaS(i) > hi Then hi = emaS(i)
+        If hasR4 Then
+            If emaL(i) < lo Then lo = emaL(i)
+            If emaL(i) > hi Then hi = emaL(i)
+        End If
+    Next i
+    With ws.Range(ws.cells(r0, kb), ws.cells(r0 + n - 1, kb + 11))
+        .Value = blk
+        .Font.Color = RGB(60, 60, 60)
+    End With
+
+    ' shared fixed price scale (primary and the hidden secondary axis must match)
+    lo = lo * 0.96: hi = hi * 1.04            ' room for the +-2.5% signal triangles
+    Dim stp As Double: stp = NiceStep(hi - lo)
+    Dim axMin As Double, axMax As Double
+    axMin = Int(lo / stp) * stp
+    axMax = -Int(-hi / stp) * stp
+    Dim axFmt As String: axFmt = IIf(stp < 1, "#,##0.00", "#,##0")
+
+    Dim leftX As Double: leftX = ws.Columns(CHART_COL + lc).Left + BIAS_CHART_W + KLINE_GAP
+    Dim topY As Double: topY = ws.Rows(CHART_ROW + off).Top
+    Dim tk As String: tk = UCase(ticker)
+
+    Call DrawOneKline(ws, "BIAS_K_R1", leftX, topY, tk & "  K-LINE  (SHORT: EMA" & N1 & ")", dc, kb, 4, _
+        "EMA" & N1, RGB(0, 200, 255), 6, "SELL short", RGB(220, 60, 60), 7, "BUY short", RGB(60, 200, 90), _
+        n, axMin, axMax, stp, axFmt)
+    Call DrawOneVolume(ws, "BIAS_V_R1", leftX, topY + KLINE_H + KV_GAP, dc, kb, n)
+    If hasR4 Then
+        Dim topY4 As Double: topY4 = topY + BIAS_CHART_H + BIAS_CHART_GAP
+        Call DrawOneKline(ws, "BIAS_K_R4", leftX, topY4, tk & "  K-LINE  (LONG: EMA" & N4 & ")", dc, kb, 5, _
+            "EMA" & N4, RR4_ACCENT, 8, "SELL long", RGB(255, 120, 255), 9, "BUY long", RGB(120, 160, 255), _
+            n, axMin, axMax, stp, axFmt)
+        Call DrawOneVolume(ws, "BIAS_V_R4", leftX, topY4 + KLINE_H + KV_GAP, dc, kb, n)
+    End If
+End Sub
+
+' kb + emaIdx / sellIdx / buyIdx are column offsets inside the K data block.
+Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal leftX As Double, _
+                          ByVal topY As Double, ByVal titleTxt As String, ByVal dc As Long, ByVal kb As Long, _
+                          ByVal emaIdx As Long, ByVal emaName As String, ByVal emaColor As Long, _
+                          ByVal sellIdx As Long, ByVal sellName As String, ByVal sellColor As Long, _
+                          ByVal buyIdx As Long, ByVal buyName As String, ByVal buyColor As Long, _
+                          ByVal n As Long, ByVal axMin As Double, ByVal axMax As Double, _
+                          ByVal stp As Double, ByVal axFmt As String)
+    Dim off As Long: off = NavOffset(ws)
+    Dim r1 As Long: r1 = CHART_ROW + off + 1
+    Dim rN As Long: rN = CHART_ROW + off + n
+    Dim upClr As Long: upClr = RGB(220, 60, 60)
+    Dim dnClr As Long: dnClr = RGB(60, 160, 90)
+
+    Dim co As ChartObject
+    Set co = ws.ChartObjects.Add(leftX, topY, BIAS_CHART_W, KLINE_H)
+    co.Name = chartName
+    co.Placement = xlMove
+    Dim ch As Chart: Set ch = co.Chart
+    ch.ChartType = xlLine
+    Do While ch.SeriesCollection.count > 0
+        ch.SeriesCollection(1).Delete
+    Loop
+    ch.HasLegend = True
+    ch.Legend.Position = xlLegendPositionBottom
+    ch.Legend.Font.Color = CLR_MUTED: ch.Legend.Font.Size = 8
+    ch.ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+    ch.ChartArea.Format.Line.Visible = msoFalse
+    ch.PlotArea.Format.Fill.ForeColor.RGB = RGB(8, 8, 8)
+    ch.PlotArea.Format.Line.Visible = msoFalse
+    ch.HasTitle = True
+    ch.ChartTitle.Text = titleTxt
+    With ch.ChartTitle.Format.TextFrame2.TextRange.Font
+        .Name = FONT_FACE: .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    End With
+
+    Dim xr As Range: Set xr = ws.Range(ws.cells(r1, dc), ws.cells(rN, dc))
+    Dim nm As Variant, k As Long
+    nm = Array("OPEN", "HIGH", "LOW", "CLOSE")
+    For k = 0 To 3
+        Call AddBiasSeries(ch, CStr(nm(k)), xr, ws.Range(ws.cells(r1, kb + k), ws.cells(rN, kb + k)), RGB(255, 255, 255), 1, False)
+        ch.SeriesCollection(ch.SeriesCollection.count).Format.Line.Visible = msoFalse
+    Next k
+    With ch.ChartGroups(1)
+        .HasHiLoLines = True
+        .HasUpDownBars = True
+        .GapWidth = 60
+        .HiLoLines.Format.Line.ForeColor.RGB = RGB(170, 170, 170)
+        .HiLoLines.Format.Line.Weight = 0.75
+        .UpBars.Format.Fill.ForeColor.RGB = upClr
+        .UpBars.Format.Line.ForeColor.RGB = upClr
+        .DownBars.Format.Fill.ForeColor.RGB = dnClr
+        .DownBars.Format.Line.ForeColor.RGB = dnClr
+    End With
+
+    ' EMA + signal triangles: secondary group, same fixed scale as the primary axis
+    Call AddBiasSeries(ch, emaName, xr, ws.Range(ws.cells(r1, kb + emaIdx), ws.cells(rN, kb + emaIdx)), emaColor, 1.25, False)
+    ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
+    With ch.SeriesCollection(ch.SeriesCollection.count).Format.Line      ' moving groups resets the line colour to black
+        .Visible = msoTrue: .ForeColor.RGB = emaColor: .Weight = 1.25
+    End With
+    Call AddBiasMarkerSeries(ch, sellName, xr, ws.Range(ws.cells(r1, kb + sellIdx), ws.cells(rN, kb + sellIdx)), sellColor)
+    ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
+    Call AddBiasMarkerSeries(ch, buyName, xr, ws.Range(ws.cells(r1, kb + buyIdx), ws.cells(rN, kb + buyIdx)), buyColor)
+    ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
+
+    Dim ax As Axis
+    Set ax = ch.Axes(xlValue, xlPrimary)
+    ax.MinimumScale = axMin: ax.MaximumScale = axMax: ax.MajorUnit = stp
+    ax.HasMajorGridlines = True
+    ax.MajorGridlines.Format.Line.ForeColor.RGB = RGB(30, 30, 30)
+    ax.TickLabels.NumberFormat = axFmt
+    ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 8
+
+    Set ax = ch.Axes(xlValue, xlSecondary)
+    ax.MinimumScale = axMin: ax.MaximumScale = axMax: ax.MajorUnit = stp
+    ax.HasMajorGridlines = False
+    ax.TickLabelPosition = xlTickLabelPositionNone
+    ax.MajorTickMark = xlTickMarkNone
+    ax.Format.Line.Visible = msoFalse
+
+    Set ax = ch.Axes(xlCategory, xlPrimary)
+    ax.CategoryType = xlCategoryScale                    ' bar index, no weekend gaps
+    ax.TickLabelPosition = xlTickLabelPositionNone       ' dates are shown on the volume chart below
+    ax.MajorTickMark = xlTickMarkNone
+
+    ' the four candle series are structural, not something to list in the legend
+    On Error Resume Next
+    For k = 1 To 4
+        ch.Legend.LegendEntries(1).Delete
+    Next k
+    ch.PlotArea.InsideWidth = BIAS_CHART_W - K_PLOT_LEFT - K_PLOT_RIGHT
+    ch.PlotArea.InsideLeft = K_PLOT_LEFT              ' width first: setting it after can shift the left edge
+    ch.PlotArea.InsideTop = 28
+    ch.PlotArea.InsideHeight = KLINE_H - 28 - 30
+    On Error GoTo 0
+End Sub
+
+Private Sub DrawOneVolume(ByVal ws As Worksheet, ByVal chartName As String, ByVal leftX As Double, _
+                           ByVal topY As Double, ByVal dc As Long, ByVal kb As Long, ByVal n As Long)
+    Dim off As Long: off = NavOffset(ws)
+    Dim r1 As Long: r1 = CHART_ROW + off + 1
+    Dim rN As Long: rN = CHART_ROW + off + n
+
+    Dim co As ChartObject
+    Set co = ws.ChartObjects.Add(leftX, topY, BIAS_CHART_W, VOL_H)
+    co.Name = chartName
+    co.Placement = xlMove
+    Dim ch As Chart: Set ch = co.Chart
+    ch.ChartType = xlColumnClustered
+    Do While ch.SeriesCollection.count > 0
+        ch.SeriesCollection(1).Delete
+    Loop
+    ch.HasLegend = False
+    ch.HasTitle = False
+    ch.ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+    ch.ChartArea.Format.Line.Visible = msoFalse
+    ch.PlotArea.Format.Fill.ForeColor.RGB = RGB(8, 8, 8)
+    ch.PlotArea.Format.Line.Visible = msoFalse
+
+    Dim xr As Range: Set xr = ws.Range(ws.cells(r1, dc), ws.cells(rN, dc))
+    Dim s As Series
+    Set s = ch.SeriesCollection.NewSeries
+    s.Name = "VOL UP"
+    s.XValues = xr
+    s.Values = ws.Range(ws.cells(r1, kb + 10), ws.cells(rN, kb + 10))
+    s.Format.Fill.ForeColor.RGB = RGB(220, 60, 60)
+    Set s = ch.SeriesCollection.NewSeries
+    s.Name = "VOL DOWN"
+    s.XValues = xr
+    s.Values = ws.Range(ws.cells(r1, kb + 11), ws.cells(rN, kb + 11))
+    s.Format.Fill.ForeColor.RGB = RGB(60, 160, 90)
+    ch.ChartGroups(1).Overlap = 100
+    ch.ChartGroups(1).GapWidth = 40
+
+    Dim ax As Axis
+    Set ax = ch.Axes(xlValue)
+    ax.HasMajorGridlines = True
+    ax.MajorGridlines.Format.Line.ForeColor.RGB = RGB(30, 30, 30)
+    ax.TickLabels.NumberFormat = "[>=1000000]0.0,,""M"";[>=1000]0,""K"";0"
+    ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 8
+
+    Set ax = ch.Axes(xlCategory)
+    ax.CategoryType = xlCategoryScale
+    ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 7
+    ax.TickLabelSpacing = CLng(Application.WorksheetFunction.Max(1, n \ 12))
+
+    On Error Resume Next
+    ch.PlotArea.InsideWidth = BIAS_CHART_W - K_PLOT_LEFT - K_PLOT_RIGHT
+    ch.PlotArea.InsideLeft = K_PLOT_LEFT              ' width first: setting it after can shift the left edge
+    ch.PlotArea.InsideTop = 6
+    ch.PlotArea.InsideHeight = VOL_H - 6 - 24
+    On Error GoTo 0
+End Sub
+
 ' Explicitly re-blacks the hidden data block after clearing it - a bare
 ' Range.Clear resets cell formatting to Excel's default (white/no fill),
 ' which made the block flash white on every rebuild (2026-09-24 fix).
@@ -767,12 +1176,16 @@ Private Sub ClearBiasChart(ByVal ws As Worksheet)
     On Error Resume Next
     ws.ChartObjects("BIAS_CHART").Delete
     ws.ChartObjects("BIAS_CHART_R4").Delete
+    ws.ChartObjects("BIAS_K_R1").Delete
+    ws.ChartObjects("BIAS_V_R1").Delete
+    ws.ChartObjects("BIAS_K_R4").Delete
+    ws.ChartObjects("BIAS_V_R4").Delete
     On Error GoTo 0
     Dim off As Long: off = NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
     Dim dc As Long: dc = CHART_DATA_COL + lc
     Dim rng As Range
-    Set rng = ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off + NEED_BARS + 5, dc + 11))
+    Set rng = ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off + NEED_BARS + 5, dc + KB_LAST))
     rng.ClearContents
     rng.Interior.Color = RGB(0, 0, 0)
 End Sub
