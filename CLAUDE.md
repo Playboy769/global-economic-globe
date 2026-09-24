@@ -440,8 +440,20 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `WatchlistCommitEntry` 追加到清單、清空輸入列）、**rows 28–38 是已存清單**（11 筆，
   `ReadWatchlist` 清頁前讀出、`DrawWatchlist` 寫回，E 現價 `RefreshWatchlistRow` 用
   `GetStockPrice` 補，現價 ≤ 目標整列亮橘）。**雙擊已存列**（`Worksheet_BeforeDoubleClick`
-  → `WatchlistDeleteRow`）刪除並上移補位。`ReadWatchlist` 只認標題前 9 字「WATCHLIST」
-  （標題後面帶操作提示）。ARRANGE 不會動到它。
+  → `WatchlistDeleteRow`）刪除並上移補位。`ReadWatchlist` 只認標題前 9 字「WATCHLIST」。
+  ARRANGE 不會動到它。⚠️ 上面列號是 v4.12 的；v4.13 起全部 +1，且 **2026-09-21 起清單
+  縮成 7 格**——現行：標題 26、表頭 27、輸入列 28、已存清單 **29–35**（`RR4_WL_LAST = 35`），
+  第 35 列底下一條 `RR4_LINE` 分隔線；標題列的灰色操作提示字已刪（使用者要求），只剩「WATCHLIST」。
+- **TO-DO（2026-09-21）**：WATCHLIST 正下方 B36:E39，常數 `RR4_TD_TITLE/ENTRY/FIRST/LAST`
+  ＝36/37/38/39。第 36 列＝標題「TO-DO」＋欄名 TASK／DUE／DTE（**不另佔表頭列**、無灰色提示字）；
+  **第 37 列輸入列**（B 代號／C 任務／D 到期日，D 格式 `yyyy/m/d`）；**第 38–39 列已存清單（只 2 筆）**，
+  依到期日排序（沒日期排最後），E 欄 **DTE**＝到期日−今天，每次 UP 重算，**只有過期（負數）亮橘**。
+  存入時機（`TodoCommitEntry(ws, changedCol)`，由 `SheetRR4.Worksheet_Change` 帶入 `Target.Column`）：
+  C 有任務文字且在 **D 按 Enter**（D 打「-」或任何非日期＝無到期日），或在 C 按 Enter 而 D 已是日期；
+  只改 B 不存。滿 2 筆時狀態列 `TO-DO full`、輸入列保留。**雙擊已存列＝完成並刪除**
+  （`TodoDeleteRow`）。清頁前 `ReadTodo` 讀出（只認標題格＝「TO-DO」）、`DrawTodo` 寫回。
+  兩個輸入列（28、37）的灰格之間用黑色 `xlMedium` 右框線隔開（`SeparateInputCells`，使用者要求）。
+  事件碼改動在 `RR4/SheetRR4_Code.txt`。
 - **HistoryLog D 欄（Realized PnL）不是快照，是每次 UP 重算的**（v4.8）：`RebuildRealizedHistory`
   在 `LogHistory` 收尾把每一列 D 改成「Realized 表依出場日累計到該列日期」。v4.7 前是
   append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段
@@ -560,6 +572,12 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   最多 177/800 筆），不能用。代號可以是純數字或帶 `.TW/.TWO`：後綴依股數表歸屬決定，都查不到就 `.TW` 失敗
   再試 `.TWO`（`YahooSymbol` 對 `.TW/.TWO` 不做 `.`→`-` 轉換）。A 欄＝族群名（series／聚焦鍵，中文可）、
   B 欄前 4 個代號＋「+N」、C 欄 STOCKS。快取共用 `IndustryPx`（以族群名為 key）。一趟 `TG!` 約 2 分鐘。
+  **市值門檻（2026-09-22，使用者指定）**：成分股市值（股數×最新收盤，與權重同口徑、整段期間固定判斷一次）
+  **< NT$100 億**（常數 `TW_MIN_CAP`）者**不給權重、成交金額也不進 CMF/OBV**；整組都低於門檻的族群**從頁面移除**
+  （狀態列列出被移除的族群名）。C 欄 STOCKS 改為「計入/總數」、B 欄改列**計入者依市值排序的前 4 檔**，頁首註明
+  「N below NT$100e」。只套用 RGT 頁，RGI 美股產業頁不動。**快取 key 改為「族群名|cap100e」**，改門檻會自動重抓；
+  快取列另存排除數（`PX_FIRST+5*PX_MAXN+1`）與 B 欄標籤，全被排除的族群也寫一列 npts=0（`CacheRead` 回 −1）免得每次重抓。
+  實測 2026-09-22：50 組全數保留、300 檔計入、72 檔低於門檻、13 檔無資料。
   **族群名只在 TG 頁做顯示層標準化**（`NormalizeGroupName`，VBScript.RegExp；tblGroups 本身不動）：去「NN. 」
   編號、去括號、「中文大類 - 子類」只留子類、去「族群」尾綴、「中文＋英文翻譯」只留中文、「中文＋中文同義詞」
   留前者（實例：`02. 半導體 - IC設計 (IC Design)`→`IC設計`、`被動元件族群`→`被動元件`、`航空 Air transportation`
@@ -572,12 +590,6 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   只管拉丁字，中文字走 `Font.NameFarEast`**：第一版只設 `.Name`，COM 讀回來是 Noto Sans TC、畫面上中文卻還是
   舊字型；資料標籤、圖標題、軸標題三處都要 `.Name` 與 `.NameFarEast` 一起設。
 - **Thesis Library v2 — 主題筆記工作台（2026-09-13 晚，取代下面的 v1）**：`modThesis.bas` 整支重寫，照使用者給的
-  **市值門檻（2026-09-22，使用者指定）**：成分股市值（股數×最新收盤，與權重同口徑、整段期間固定判斷一次）
-  **< NT$100 億**（常數 `TW_MIN_CAP`）者**不給權重、成交金額也不進 CMF/OBV**；整組都低於門檻的族群**從頁面移除**
-  （狀態列列出被移除的族群名）。C 欄 STOCKS 改為「計入/總數」、B 欄改列**計入者依市值排序的前 4 檔**，頁首註明
-  「N below NT$100e」。只套用 RGT 頁，RGI 美股產業頁不動。**快取 key 改為「族群名|cap100e」**，改門檻會自動重抓；
-  快取列另存排除數（`PX_FIRST+5*PX_MAXN+1`）與 B 欄標籤，全被排除的族群也寫一列 npts=0（`CacheRead` 回 −1）免得每次重抓。
-  實測 2026-09-22：50 組全數保留、300 檔計入、72 檔低於門檻、13 檔無資料。
   「Earnings Workbench」截圖改版。**資料**在 `ThesisNotes` 頁 `tblNotes`，一列一個主題筆記：TARGET｜TYPE（stock/macro）｜
   CALL DATE｜STATUS｜ROLE｜THEME｜BEHAVIOR｜EVIDENCE。STATUS 八詞下拉：綠 Robust/Solid/Growing、紅 Slowing/Sluggish/
   Challenging/Contraction/Warning（**照截圖綠好紅壞，跟 RR4 其他頁紅漲綠跌相反，是使用者選的**）；ROLE＝MOAT/RISK/CATALYST/空白。
@@ -601,6 +613,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `EnsureNotesSheet` 遇到 8 欄舊表會原地升級（EVIDENCE 改名 T1L FILING、前後插入其他五欄），內容不搬；一次性回溯是照
   `RR4/evidence-tiers-2026-09-15.md` 的清單（1,721 筆：T0 88／T1 579／T1L 648／T2 178／T3 18／Δ 210，依行尾括號的來源
   字串規則判定）用 COM 搬到對應欄。KEYWORD 搜尋涵蓋六欄；`ReadNotes` 的 `ev` 改成 `ev(i, tier)` 二維陣列。
+  ⚠️ **`tblNotes` 後來又多了第 14 欄 SOURCE，細節與 repo/活頁簿同步的故事見下方「Library SOURCE 欄（2026-09-19）」**。
 - **Library 工作台三項（2026-09-16，使用者從 UI 角度挑的）**：① **列高固定三行**（`NOTE_ROW_H` 42，超出裁掉、不再 AutoFit——
   AutoFit 幾百列是重畫慢的主因）；**雙擊 note 列任一格＝右側面板顯示該筆全文**（THEME／BEHAVIOR／層級＋證據）＋該代號 archive 的
   「一句話論點」與「決策與下一個驗證點」兩段；雙擊代號仍是整篇 archive、雙擊頁標題關閉。note 的 tblNotes 列號存隱藏欄 `C_ROW`（AE）。
@@ -688,6 +701,136 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
+
+### Library SOURCE 欄（2026-09-19）
+
+**發現經過**：2026-09-19 用 COM 直接對桌面活頁簿的 `ThesisNotes!tblNotes` 加 11 筆新
+筆記前，先用 COM 讀了一次表格結構，結果 `ListColumns.Count = 14`——比 repo 當時的
+`RR4/modThesis.bas`（`NT_NCOL = 13`，`hdr` 陣列只有 13 個元素）多一欄，第 14 欄叫
+**SOURCE**。這代表活頁簿在某次先前的 session 裡被直接改過（手動或其他管道）但沒有
+回寫進 `.bas`／commit 進 repo——跟本檔開頭「Deployment topology」那幾條 repo/部署分
+歧是同一種病，只是這次分歧在「repo 的 .bas 原始碼」與「活頁簿實際內容」之間，不是
+在兩個部署之間。**改 `modThesis.bas`（尤其會動到欄數的地方：`NT_NCOL`、`hdr` 陣列、
+`EnsureNotesSheet` 的遷移分支）前，先用 COM 讀一次活頁簿目前的真實 `ListColumns.Count`
+與表頭，不要只信 repo 檔頭註解或欄位常數。**
+
+**SOURCE 欄內容慣例**：放這筆筆記的來源引用。翻查既有列，多數是**本機檔案路徑**——
+`Desktop\桌面\Bloomberg\*.pdf`（券商報告／新聞 PDF）或 repo 內研究報告路徑（如
+`research/8021-analysis-2026q2/8021_FY2026Q2_Analysis.html`）；**沒有本機存檔時**（例如
+筆記是從使用者貼上的 Substack／電子報文章整理而來），改填**純文字引用**——刊物名、
+日期、標題，例如「Moontalk財經—宏觀&美股投資日誌 2026-08-06〈標題〉(Substack, Paid)」。
+不是每筆都一定要有 SOURCE，但既然欄位存在就盡量填，方便日後回溯這筆筆記是從哪裡來的。
+
+**已修復**：2026-09-19 當天把 `modThesis.bas` 補齊到 14 欄同步狀態——加了
+`NT_SOURCE`／`NT_NCOL` 改 14、`hdr` 陣列補 `"SOURCE"`、`widths` 陣列補一個寬度、且
+`EnsureNotesSheet` 新增一段「13 欄舊表→14 欄（補 SOURCE）」的自動遷移分支，跟既有
+「8 欄舊表→13 欄（六層證據）」遷移模式一致（8 欄舊表會直接一次遷到 14 欄）。改完當場
+用 COM `VBProject.VBComponents.Remove` + `Add` + `CodeModule.AddFromString` 注入回
+桌面活頁簿（**不能用 VBE「Import File」選單**，見 [[vba-bas-ascii-only]]），再呼叫
+`Application.Run("modThesis.BuildThesisLibrary")` 當場跑一次做煙霧測試，注入前後都
+用 COM 讀 `ListColumns.Count`／`ListRows.Count` 核對過表格結構與 1,928 列資料都沒有
+被動到。現在 repo 的 `.bas` 重新是活頁簿實際狀態的真正 source of truth。
+
+**用 COM 直接對 `tblNotes` 加新筆記列的一般性做法（不改 VBA，只加資料時適用）**：
+1. 用 `[Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")` 接上
+   使用者已開啟的 Excel（活頁簿的 `FullName` 是 OneDrive 網址，不能用
+   `Marshal.BindToMoniker` 開本機路徑），從 `.Workbooks` 依名稱找到目標活頁簿。
+2. 先 `$wb.SaveCopyAs(<備份路徑>)` 做一次存檔點，再動資料。
+3. **用 `ListObject.Resize()` 展開表格**（不要用 `ListRows.Add()`——大表對這張
+   1,900+ 列的 `tblNotes` 實測會丟 COM 例外 0x800A03EC，見
+   [[rr4-excel-com-automation-gotchas]]）：算出新的最後一列位址，
+   `$lo.Resize($newRange)`，新增的列會是空白列。
+4. 逐列用 `$lo.ListRows.Item(i).Range.Cells(1, colIdx).Value2 = [string]...` 寫入，
+   **全程只寫字串**（含 CALL DATE，交給 Excel 依 `NumberFormat = "yyyy/mm/dd"` 自動轉
+   成日期序號）——同一個 PowerShell session 裡先寫 String 再寫 Double／DateTime 型別
+   會被 COM adapter 的型別快取搞到拋型別轉換錯誤，全寫字串可以完全避開。
+5. 寫完後把最後一列 TARGET 格重新賦值一次（`Value2 = [string]$c.Text`，events 要
+   開著），足以觸發 `ThesisNotesChange`（補齊預設值、重繪 Library view），最後
+   `$wb.Save()`。
+6. **中文內容一律放外部 UTF-8 JSON 檔**，用
+   `[IO.File]::ReadAllText($p, [Text.Encoding]::UTF8)` 讀入再 `ConvertFrom-Json`，
+   **不要把中文字面量直接寫在 `.ps1` 檔裡**——BOM-less 的 `.ps1` 在 Windows
+   PowerShell 5.1 會被當系統 ANSI 碼頁讀，中文字面量會整段亂碼。
+
+### Bias 頁（B / B!，2026-09-23，`RR4/modBias.bas`）
+
+使用者貼了一段自訂的標準化乖離指標公式（N1=20/N2=30/N3=55/N4=200 四條 EMA 乖離，
+M=250 滾動歸一化，K=0.8 門檻），要移進 RR4 xlsm 開新分頁。經澄清後的實作範圍
+**明顯窄於逐字翻譯原公式**，記錄在這裡避免之後誤以為漏做：
+
+- **只留 2 條線**（N1=20 短 / N4=200 長，捨棄 N2/N3），**沒有二值訊號**——原本的
+  UPCNT>=3/DNCNT>=2 四線交叉計數在只剩兩條線後沒有意義，使用者選擇「只用熱力圖顏色
+  深淺看強弱」，不是重新發明一套兩線版訊號。
+- **範圍是投組持倉＋WATCHLIST（去重），不是全市場掃描**——「查詢所有標的」原本聽起來
+  像要掃台上市/上櫃/興櫃/美股全部，但那個量級（數千檔）比照 RRG Industry 頁是
+  40-60 分鐘批次，使用者確認排除在外；改成即時查詢（跳進頁面或按 `B!` 才抓，不是常駐
+  全市場資料）。
+- **熱力圖只到投組規模**（B! 重建）：讀 `RR4` 頁持倉表（`RR4_POS_FIRST` 起、欄
+  `RR4_LEFT+1`）與 `WATCHLIST`（`RR4_WL_FIRST..RR4_WL_LAST`），依短線 R1 由強到弱排序，
+  顯示 TICKER/MKT/LAST/CHG%/R1/R4，R1、R4 兩欄套用 `PortfolioDashboard_v3.CorrHeatBg/Fg`
+  （既有 -1..1 連續熱力色階，呼叫時除以 100 對應 R 的 -100..100 值域）。
+- **單檔時序圖完全獨立、走自己的 TICKER 輸入格**（不併入熱力圖，符合使用者原話
+  「只看單檔時序圖，不併入熱力圖總覽」）：畫 R1/R4 兩條線＋原公式的完整 5 條參考線
+  （TOP 100／UPPER K·100／ZERO／LOWER -K·100／BOTTOM -100），原生 Excel `xlLine` 圖表，
+  資料寫進隱藏欄位區塊（`CHART_DATA_COL`）供 `SeriesCollection.NewSeries` 指向。
+- **價格來源直接重用既有的 `modvolatility.GetHistoricalData`**（Yahoo chart API，已處理
+  裸台股數字碼 .TW/.TWO 回退），不是另寫一支——`RRG.bas` 的 `FetchOhlcv` 是 Private
+  且回傳 OHLCV 全部欄位，用不上；`GetHistoricalData` 只要收盤價序列，介面剛好對上。
+  抓回來後裁到最新 `NEED_BARS=500`（約 2 年，使用者原話「剛好夠用」）。EMA 用同一值
+  當種子遞迴算，NEED_BARS 只比 N4+M_WIN=450 的門檻多一點緩衝，EMA200 在 M=250 視窗
+  開始的時候還沒完全收斂——這是使用者已接受的取捨，不是 bug。
+- **導覽列代碼 `B`**（分頁名 `Bias`），依 modNav 既有慣例掛 bar（第 1 列/A 欄留白，
+  bar 在 2-4 列）；`NavSheetName`／`NavPageCode`／`RunNavCommand`（跳頁 + `B!` 重算）／
+  `NavGoto` 未建置提示／`DrawNavRows` 兩顆 pages/acts 陣列都要同步加，缺一個就會出現
+  「UNKNOWN CODE」或跳頁後找不到分頁。
+- **注入時踩到一個純烏龍**：desktop 上有兩個 EXCEL.EXE 進程同時存在——一個是先前
+  session 留下的孤兒（`Visible=False`、0 個活頁簿），另一個才是這次注入用
+  `New-Object -ComObject Excel.Application` 開的、真正載入 RR4 活頁簿的實例。
+  `[Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")`
+  在有多個 Excel 進程時**不保證接到哪一個**，那次接到孤兒、對著它跑
+  `Application.Run('PortfolioDashboard_v3.RR4PositionCount')` 當然失敗（孤兒是空白
+  活頁簿，巨集根本不存在），一度誤判成專案編譯失敗、對照
+  [[rr4-excel-com-automation-gotchas]] 的「project-wide compile failure」症狀白緊張
+  了一輪。**多實例情境下要接對的那個，繞過 `GetActiveObject` 用 ROT（Running Object
+  Table）枚舉找活頁簿顯示名稱**（P/Invoke `IRunningObjectTable.EnumRunning` +
+  `GetObject`，用活頁簿檔名字串比對 moniker 的 `GetDisplayName`）——OneDrive 同步的
+  檔案在 ROT 裡的 moniker 就是它的 `https://d.docs.live.net/...` 網址，`BindToMoniker`
+  對它一樣無效（跟既有 gotcha 一致），但 ROT 枚舉找得到，且能穩定鎖定正確的
+  Excel.Application 實例，之後才順利跑通煙霧測試（13/14 檔熱力圖＋單檔 AAPL
+  251 點時序圖）並存檔。
+
+**v2（2026-09-24，使用者看過畫面截圖後的 6 項調整）**：
+- **HOLDINGS／WATCHLIST 拆成兩張獨立表格**（`GatherPositions`／`GatherWatchlist` 取代
+  原本合併去重的 `GatherUniverse`），各自獨立抓取、排序、渲染；同一檔同時在持倉與觀察
+  清單都有（實測 AMAT）就兩邊各顯示一次，不特別去重——拆表本身就是使用者要的效果。
+  `DrawOneTable` 回傳「下一張表的標題列號」讓第二張表接在第一張下面，中間空一列。
+- **長線資料不足時不再整列 n/a，只有 R4 顯示 `-`**（`FetchAndCompute` 把 R1／R4 拆成
+  兩個獨立門檻：R1 只要 `N1+M_WIN=270` 根交易日，R4 要 `N4+M_WIN=450`）——SNDK 這類
+  近期波動大或資料窗口卡在門檻邊緣的標的，實測 R1 算得出來（20.6）但 R4 算不出來，
+  現在整列照常顯示 TICKER/MKT/LAST/CHG%/R1，只有 R4 格顯示灰色 `-`。單檔時序圖同步
+  比照：`ComputeOneLine` 換成通用函式（吃 `linePeriod` 參數，R1/R4 各呼叫一次），
+  R4 不可用時圖表只畫 R1＋五條參考線，圖標題註明「ONLY - NOT ENOUGH HISTORY」。
+- **圖表左界移到 I 欄**（`CHART_COL` 9→8，經過 bar 的 +1 欄位移後落在實際 I 欄），
+  兩條主線寬度從 1.75pt 降到 1.25pt（五條參考線维持 0.75pt 不變）。
+- **隱藏資料區塊（AE 欄起）補黑底**：原本 `ClearBiasChart` 用 `Range.Clear` 清格，
+  會把儲存格格式重設回 Excel 預設（白底），使用者實測看到白色閃一下——改成
+  `ClearContents` 保留格式再手動 `Interior.Color = RGB(0,0,0)`，圖表資料區一律黑底。
+- **標題移除提示文字、全大寫**：`TICKER <GO> (chart only)` 的括號提示與旁邊那句
+  「Any ticker + Enter...」說明整句都刪掉，`DrawOneTable` 的表格標題一律 `UCase()`。
+
+**K 線＋成交量圖（2026-09-24，使用者要求「同區間段 K 線圖」）**：單檔查詢的兩張 R 圖**右側**各並排一組
+K 線圖＋量柱圖（`DrawBiasKlines`／`DrawOneKline`／`DrawOneVolume`，圖名 `BIAS_K_R1/V_R1/K_R4/V_R4`）。
+R1 SHORT 那組疊 EMA20＋short SELL/BUY 三角，R4 LONG 那組疊 EMA200＋long SELL/BUY 三角（顏色同 R 圖）；
+範圍與 R 圖完全同一批 bar。**紅漲綠跌**。資料是另一次 Yahoo 抓取（`FetchBiasOhlcvRaw`，10y，O/H/L 依
+adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺日退回平 K＋量 0），資料塊放隱藏區 `KB_OFF`=13 起 12 欄。
+- **蠟燭是「折線圖群組＋高低連線＋漲跌柱」**（原生股價圖底層就是這個），不是 `xlStockOHLC`：EMA 與訊號三角
+  **必須放次座標軸群組**——高低連線會橫跨同群組所有系列、漲跌柱用群組第一與最後一個系列，同群組多塞系列會兩者都毀。
+  次座標軸與主軸用同一組固定 min/max/MajorUnit（`NiceStep`），次軸刻度隱藏。影線顏色是單一灰（原生限制，無法依漲跌分色）。
+- ⚠️ **`AxisGroup = xlSecondary` 會把系列線色重設成黑**（黑底上看不見），要在換群組**之後**重設 `Format.Line`。
+- ⚠️ `TickLabels.NumberFormat` 條件格式**最多兩個條件**（`[>=1e6]…;[>=1e3]…;0` 可以，加第三個 `[>=1e9]` 會 1004 並卡住隱藏實例）。
+- ⚠️ 設 `PlotArea.InsideLeft` 再設 `InsideWidth` 會把左緣推走——**先 Width 再 Left**，K 圖與量圖繪圖區才對得齊。
+- 類別軸一律 `xlCategoryScale`（依 bar 序、無週末缺口）；K 圖隱藏日期軸標籤，日期只顯示在下方量圖。
+- 實測 AAPL／2330（.TW 回退）／NBIS，六張圖皆有輸出，已注入活頁簿並存檔（備份 `backup-pre-kline-*.xlsm`）。
 
 ## Deployment topology (this is the part that bites)
 
