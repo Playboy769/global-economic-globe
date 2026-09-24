@@ -5,6 +5,10 @@
 '  page Company research has no bar, so that cell of its is ignored by the
 '  NavPageCode / NavHasRows checks; Realized / Transactions / HistoryLog
 '  carry one since 2026-09-13.
+'  Workbook_BeforeClose (2026-09-23): cancels any pending
+'  modLiveRefresh Application.OnTime call, so closing the workbook never
+'  leaves a scheduled callback that would try to fire against a closed
+'  file and throw an error.
 ' ================================================================
 Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
@@ -20,4 +24,8 @@ Fail:
     Application.EnableEvents = True
     Application.ScreenUpdating = True
     MsgBox "Nav command error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    Call modLiveRefresh.StopAutoRefresh
 End Sub

@@ -18,6 +18,9 @@
 '  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
 '  The CmdBtn0-7 click handlers were removed with the ActiveX buttons
 '  (2026-09-12) - their jobs are nav commands now (see modNav).
+'  Worksheet_Activate/Deactivate (2026-09-23): staying on this sheet for
+'  60s starts a 15s live-price auto-refresh loop (modLiveRefresh); leaving
+'  cancels it. See modLiveRefresh.bas / PortfolioDashboard_v3.RefreshLivePricesLite.
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
@@ -72,4 +75,12 @@ Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean
 Fin:
     Application.EnableEvents = True
     If Err.Number <> 0 Then MsgBox "Watchlist / to-do delete error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+
+Private Sub Worksheet_Activate()
+    Call modLiveRefresh.StartDwellTimer
+End Sub
+
+Private Sub Worksheet_Deactivate()
+    Call modLiveRefresh.StopAutoRefresh
 End Sub

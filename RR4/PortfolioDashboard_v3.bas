@@ -76,6 +76,17 @@ Public Const RR4_CFG_CAP   As String = "T3"
 '  the summary is the same number; page row 1 is blank at normal height)
 Public Const RR4_FX_CELL   As String = "C6"
 Public Const RR4_ARR_CELL  As String = "E6"
+' 2026-09-23: live-refresh heartbeat cell (see ShowLiveRefreshStatus).
+' NOT in the nav bar (rows 1-4) - the sheet has no freeze panes
+' (COM-checked FreezePanes=False) and the user's normal scroll position
+' sits around row 25+ to see the position table, so anything in rows 1-4
+' is scrolled off-screen during actual use; that's why the first two
+' placements (P2, then N2) never appeared for them even though the
+' mechanism itself worked (screenshot-verified both times). L42 sits on
+' the "POSITION LOG - RR4" title row, right above the table the user is
+' already looking at - user-specified location, confirmed empty via COM.
+Private Const LIVE_STATUS_ROW As Long = 42
+Private Const LIVE_STATUS_COL As Long = 12   ' column L
 ' v4.7 (2026-09-12): a 14-row chart band (RR4_CHART_TOP..) sits between the
 ' upper blocks and the position log, which moved down from 27/28/29.
 ' v4.7.1: one blank row above (25) and below (40) the band; the ticker
@@ -2589,6 +2600,317 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     ws.cells(r, RR4_LEFT + 1).Font.Italic = True
     ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 End Sub
+
+' ================================================================
+'  LIVE AUTO-REFRESH (cell-only, 2026-09-23) - called every TICK_SEC by
+'  modLiveRefresh.Tick once the user has sat on this sheet for a minute.
+'  Deliberately does NOT call BuildPositions/CalcPositions or redraw
+'  totals/donut/weight-bars/TOP EXPOSURE - RebuildPortfolioDashboard
+'  measured ~22s per run, far too slow to fire every 15s. Only the LAST
+'  column (position table) and the price column (watchlist) get new
+'  numbers, only for tickers whose market is open right now; % CHG /
+'  UNRL PNL / totals are left exactly as the last UP computed them.
+' ================================================================
+Public Sub RefreshLivePricesLite()
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets(SH_PORT)
+
+    Dim twOpen As Boolean: twOpen = modMarketHours.IsTWMarketOpen()
+    Dim usOpen As Boolean: usOpen = modMarketHours.IsUSMarketOpen()
+    If Not twOpen And Not usOpen Then
+        Call ShowLiveRefreshStatus(ws, queried:=False, gotPrice:=False)
+        Exit Sub
+    End If
+
+    Dim queriedCount As Long: queriedCount = 0
+
+    ' one batched MIS request covers every TW ticker on screen, same
+    ' pattern as RebuildPortfolioDashboard's own prefetch
+    If twOpen Then
+        Dim twTickers() As String: twTickers = CollectOpenMarketTWTickers(ws)
+        modMISPrice.PrefetchMISPrices twTickers
+    End If
+
+    Dim prevEvents As Boolean: prevEvents = Application.EnableEvents
+    Dim prevScr    As Boolean: prevScr = Application.ScreenUpdating
+    Application.EnableEvents = False
+    Application.ScreenUpdating = False
+    On Error GoTo Fin
+
+    ' Ticker-board flash (2026-09-23; switched from a border outline, then
+    ' briefly to a full-cell background flash, then - per explicit user
+    ' feedback ("底色不用改變都是黑色，字變動就好") - to a FONT-colour-only
+    ' flash. Background/Interior.Color is never touched by the tick-flash
+    ' at all (it stays exactly as already painted - black row stripes for
+    ' the position table, the P.TARGET hit/no-hit fill for the watchlist,
+    ' set unconditionally below regardless of whether this tick flashes).
+    ' Every cell whose price actually changed this tick gets its Font.Color
+    ' set to the up/down colour INSTANTLY (no tween animation - user wants
+    ' "瞬間跳變、乾脆俐落"), all of them together; once every changed cell
+    ' is written ScreenUpdating flips back on and the flash holds briefly,
+    ' then every cell's Font.Color is restored in one more pass - to its
+    ' own normal resting colour (LAST: light grey; %CHG/UNRL PNL: the
+    ' muted PnL colour; watchlist LAST: accent-orange-bold if P.TARGET hit,
+    ' else light grey - captured/computed per cell, never assumed uniform,
+    ' since LAST/%CHG/UNRL PNL each rest at a different colour). Cells with
+    ' no prior price (first-ever populate) or an unchanged price are left
+    ' alone - flashing only marks a real tick, like the board this is
+    ' modelled on.
+    Dim flashCell() As Range, flashRestoreColor() As Long, flashCount As Long
+    ' each changed position row can now flash up to 3 cells (LAST/%CHG/UNRL
+    ' PNL, 2026-09-23), each changed watchlist row up to 1 - size generously
+    Dim maxFlash As Long: maxFlash = (RR4_WL_LAST - RR4_WL_FIRST + 1) + 1500
+    ReDim flashCell(1 To maxFlash)
+    ReDim flashRestoreColor(1 To maxFlash)
+    flashCount = 0
+
+    ' 2026-09-23: sum of every position's UNRL PNL change this tick (TWD
+    ' terms, same conversion already applied to each row's own cell below)
+    ' - lets the SUMMARY block's UNREALISED PNL / NET EXPOSURE / UNREALISED
+    ' PNL % move on every 15s tick too, without needing a full UP (which
+    ' this "lite" refresh deliberately skips - see module header). Cost
+    ' basis does not change on a price tick, so market value and
+    ' unrealised PnL move by exactly the same delta.
+    Dim totalUnrlDeltaTWD As Double: totalUnrlDeltaTWD = 0
+
+    ' ---- position table: RR4_POS_HDR+1 downward while TICKER is non-blank ----
+    Dim r As Long: r = RR4_POS_HDR + 1
+    Do While Len(Trim(CStr(ws.cells(r, RR4_LEFT + 1).Value))) > 0
+        Dim rawTk As String: rawTk = CStr(ws.cells(r, RR4_LEFT + 1).Value)
+        Dim normTw As String: normTw = NormalizeTWTicker(rawTk)
+        Dim isTw As Boolean: isTw = (normTw <> "")
+        If (isTw And twOpen) Or (Not isTw And usOpen) Then
+            Dim queryTk As String: queryTk = IIf(isTw, normTw, UCase(Trim(rawTk)))
+            Dim px As Double: px = modLivePrice.GetLivePrice(queryTk)
+            If px > 0 Then
+                queriedCount = queriedCount + 1
+                Dim lastCell As Range: Set lastCell = ws.cells(r, RR4_LEFT + 9)
+                Dim oldPx As Double: oldPx = NumOr0(lastCell.Value)
+                lastCell.Value = px
+                If oldPx > 0 And px <> oldPx Then
+                    Dim tickFlashColor As Long: tickFlashColor = PnLColor(px - oldPx)
+
+                    ' LAST always rests at the same light grey regardless of
+                    ' direction (set once, here, by WriteOnePositionRow) -
+                    ' flash it, then restore to that.
+                    flashCount = flashCount + 1
+                    Set flashCell(flashCount) = lastCell
+                    flashRestoreColor(flashCount) = RGB(221, 221, 221)
+                    lastCell.Font.Color = tickFlashColor
+
+                    ' 2026-09-23: % CHG / UNRL PNL recomputed from the ENTRY
+                    ' PX / SHARES / C6 already sitting on the sheet (no
+                    ' BuildPositions/CalcPositions re-run - that's the whole
+                    ' point of "lite") and flashed in the same beat as LAST.
+                    ' Each of the 3 cells is flashed/restored individually
+                    ' (not as one merged range) because they rest at
+                    ' different colours - LAST is always grey, %CHG/UNRL
+                    ' PNL rest at the muted PnL colour.
+                    Dim entryPx2 As Double: entryPx2 = NumOr0(ws.cells(r, RR4_LEFT + 8).Value)
+                    If entryPx2 > 0 Then
+                        Dim shares2 As Double: shares2 = NumOr0(ws.cells(r, RR4_LEFT + 7).Value)
+                        Dim newChgPct As Double: newChgPct = (px - entryPx2) / entryPx2
+                        Dim newUnrl As Double: newUnrl = (px - entryPx2) * shares2
+                        If GetCurrencyType(queryTk) = "USD" Then
+                            Dim exRateNow As Double: exRateNow = NumOr0(ws.Range(RR4_FX_CELL).Value)
+                            If exRateNow > 0 Then newUnrl = newUnrl * exRateNow
+                        End If
+                        Dim pnlFontColor As Long: pnlFontColor = PnLColorMuted(newUnrl)
+
+                        Dim chgPctCell As Range: Set chgPctCell = ws.cells(r, RR4_LEFT + 10)
+                        chgPctCell.Value = newChgPct
+                        flashCount = flashCount + 1
+                        Set flashCell(flashCount) = chgPctCell
+                        flashRestoreColor(flashCount) = pnlFontColor
+                        chgPctCell.Font.Color = tickFlashColor
+
+                        Dim unrlCell As Range: Set unrlCell = ws.cells(r, RR4_LEFT + 11)
+                        Dim oldUnrlCellVal As Double: oldUnrlCellVal = NumOr0(unrlCell.Value)
+                        unrlCell.Value = newUnrl
+                        totalUnrlDeltaTWD = totalUnrlDeltaTWD + (newUnrl - oldUnrlCellVal)
+                        flashCount = flashCount + 1
+                        Set flashCell(flashCount) = unrlCell
+                        flashRestoreColor(flashCount) = pnlFontColor
+                        unrlCell.Font.Color = tickFlashColor
+                    End If
+                End If
+            End If
+        End If
+        r = r + 1
+    Loop
+
+    ' ---- watchlist: RR4_WL_FIRST..RR4_WL_LAST, price column RR4_LEFT+4 ----
+    ' the P.TARGET-hit highlight (RefreshWatchlistRow's own orange/black
+    ' rule) can flip with the new price, so the resting colour here is
+    ' RECOMPUTED from the new price, never just "whatever was there before".
+    Dim wr As Long
+    For wr = RR4_WL_FIRST To RR4_WL_LAST
+        Dim wRaw As String: wRaw = CStr(ws.cells(wr, RR4_LEFT + 1).Value)
+        If Len(Trim(wRaw)) > 0 Then
+            Dim wNormTw As String: wNormTw = NormalizeTWTicker(wRaw)
+            Dim wIsTw As Boolean: wIsTw = (wNormTw <> "")
+            If (wIsTw And twOpen) Or (Not wIsTw And usOpen) Then
+                Dim wQueryTk As String: wQueryTk = IIf(wIsTw, wNormTw, UCase(Trim(wRaw)))
+                Dim wpx As Double: wpx = modLivePrice.GetLivePrice(wQueryTk)
+                If wpx > 0 Then
+                    queriedCount = queriedCount + 1
+                    Dim priceCell As Range: Set priceCell = ws.cells(wr, RR4_LEFT + 4)
+                    Dim oldWpx As Double: oldWpx = NumOr0(priceCell.Value)
+                    priceCell.Value = wpx
+                    Dim tgt As Double: tgt = NumOr0(ws.cells(wr, RR4_LEFT + 3).Value)
+                    Dim hit As Boolean: hit = (wpx > 0 And tgt > 0 And wpx <= tgt)
+                    ' the P.TARGET-hit fill (orange/black background, and its
+                    ' matching resting font colour) is independent of the
+                    ' tick-flash - always set to what the new price says it
+                    ' should be, whether or not this tick also flashes.
+                    ' Interior.Color is NEVER touched by the flash itself.
+                    priceCell.Interior.Color = IIf(hit, RGB(60, 30, 0), RGB(0, 0, 0))
+                    Dim restFontColor As Long: restFontColor = IIf(hit, RR4_ACCENT, RGB(221, 221, 221))
+                    If oldWpx > 0 And wpx <> oldWpx Then
+                        flashCount = flashCount + 1
+                        Set flashCell(flashCount) = priceCell
+                        flashRestoreColor(flashCount) = restFontColor
+                        priceCell.Font.Color = PnLColor(wpx - oldWpx)
+                    Else
+                        priceCell.Font.Color = restFontColor
+                    End If
+                End If
+            End If
+        End If
+    Next wr
+
+    ' 2026-09-23: push the accumulated UNRL PNL delta into the SUMMARY
+    ' block (UNREALISED PNL, NET EXPOSURE, UNREALISED PNL %) - see the
+    ' totalUnrlDeltaTWD comment above. Cost basis (TWD) is derived from
+    ' the summary's own pre-tick UNREALISED PNL / NET EXPOSURE cells
+    ' (cost = market value - unrealised PnL) rather than recomputed from
+    ' the position table, since CalcPositions is exactly the expensive
+    ' full-rebuild path this "lite" refresh exists to avoid.
+    If totalUnrlDeltaTWD <> 0 Then
+        Dim unrlPnlCell As Range: Set unrlPnlCell = ws.cells(RR4_TOP + 19, RR4_LEFT + 2)
+        Dim netExpCell As Range: Set netExpCell = ws.cells(RR4_TOP + 16, RR4_LEFT + 6)
+        Dim unrlPctCell As Range: Set unrlPctCell = ws.cells(RR4_TOP + 19, RR4_LEFT + 6)
+
+        Dim oldTotalUnrlS As Double: oldTotalUnrlS = NumOr0(unrlPnlCell.Value)
+        Dim oldTotalMktS As Double: oldTotalMktS = NumOr0(netExpCell.Value)
+        Dim totalCostS As Double: totalCostS = oldTotalMktS - oldTotalUnrlS
+
+        Dim newTotalUnrlS As Double: newTotalUnrlS = oldTotalUnrlS + totalUnrlDeltaTWD
+        unrlPnlCell.Value = newTotalUnrlS
+        unrlPnlCell.Font.Color = GainLossColor(newTotalUnrlS)
+
+        netExpCell.Value = oldTotalMktS + totalUnrlDeltaTWD
+
+        If totalCostS > 0 Then
+            Dim newUnrlPctS As Double: newUnrlPctS = newTotalUnrlS / totalCostS
+            unrlPctCell.Value = newUnrlPctS
+            unrlPctCell.Font.Color = GainLossColor(newUnrlPctS)
+        End If
+    End If
+
+    If flashCount > 0 Then
+        Application.ScreenUpdating = True
+        ' 2026-09-23: every changed cell's TEXT already switched to its
+        ' flash colour above, all in the same pass - so the "whole board"
+        ' pops together the instant ScreenUpdating flips back on. 300ms
+        ' hold is deliberately short ("瞬間跳變、乾脆俐落" - user explicitly
+        ' did not want a lingering effect). Background is never touched.
+        Call PauseFlashMS(300)
+        Dim k As Long
+        For k = 1 To flashCount
+            flashCell(k).Font.Color = flashRestoreColor(k)
+        Next k
+    End If
+
+    Call ShowLiveRefreshStatus(ws, queried:=True, gotPrice:=(queriedCount > 0))
+
+Fin:
+    Application.EnableEvents = prevEvents
+    Application.ScreenUpdating = prevScr
+End Sub
+
+Private Sub PauseFlashMS(ByVal ms As Long)
+    Dim t As Single: t = Timer + ms / 1000
+    Do While Timer < t: DoEvents: Loop
+End Sub
+
+' ================================================================
+'  NAV-BAR HEARTBEAT (2026-09-23) - the 15s auto-refresh was otherwise
+'  completely silent, so this writes a small status word into the RR4
+'  nav bar itself (row 2, column P - clear of the C2 command cell, the
+'  code-line overflow in rows 3/4, and the T2/T3 config cells at column
+'  20), then clears it after a couple of seconds. Deliberately separate
+'  from modNav.NavNotify (the Excel status-bar line UP/V!/etc. already
+'  use) - this is a cell people can actually see without looking at the
+'  bottom of the window, and it only ever reflects the auto-refresh tick.
+' ================================================================
+' 2026-09-23: this used to write a status word then blank itself back to ""
+' after ~1.5s. Per user feedback ("update 的標示都存在") it now stays on
+' screen permanently - the last status is always visible, never cleared -
+' and rests at a pale red rather than the old green/grey. Only on an
+' actual successful update does it briefly brighten to a fuller red, then
+' settle back to the pale resting shade; MARKET CLOSED / FETCH FAILED just
+' sit at the pale colour with no flash (nothing genuinely updated).
+Private Sub ShowLiveRefreshStatus(ws As Worksheet, ByVal queried As Boolean, ByVal gotPrice As Boolean)
+    Dim cell As Range: Set cell = ws.cells(LIVE_STATUS_ROW, LIVE_STATUS_COL)
+    Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
+    Dim restColor As Long: restColor = RGB(204, 102, 102)   ' pale red, always-on resting colour
+    Dim flashColor As Long: flashColor = RGB(255, 40, 40)   ' brighter red, brief pop on a real update
+
+    cell.NumberFormat = "@"
+    cell.Font.Name = "Consolas"
+    cell.Font.Size = 9
+    cell.Font.Bold = True
+    cell.HorizontalAlignment = xlLeft
+    cell.Interior.Color = RGB(0, 0, 0)
+
+    If Not queried Then
+        cell.Value = "MARKET CLOSED"
+        cell.Font.Color = restColor
+    ElseIf gotPrice Then
+        cell.Value = ChrW(&H2713) & " UPDATED " & Format(Now, "hh:mm:ss")
+        cell.Font.Color = flashColor
+        Application.ScreenUpdating = True
+        Call PauseFlashMS(300)
+        cell.Font.Color = restColor
+    Else
+        cell.Value = "PRICE FETCH FAILED " & Format(Now, "hh:mm:ss")
+        cell.Font.Color = restColor
+    End If
+
+    Application.ScreenUpdating = prevScr
+End Sub
+
+' Every TW ticker currently on screen (position table + watchlist),
+' normalized to include .TW/.TWO - for a single batched MIS prefetch.
+Private Function CollectOpenMarketTWTickers(ws As Worksheet) As String()
+    Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary")
+
+    Dim r As Long: r = RR4_POS_HDR + 1
+    Do While Len(Trim(CStr(ws.cells(r, RR4_LEFT + 1).Value))) > 0
+        Dim tk As String: tk = NormalizeTWTicker(CStr(ws.cells(r, RR4_LEFT + 1).Value))
+        If tk <> "" And Not seen.Exists(tk) Then seen(tk) = 1
+        r = r + 1
+    Loop
+
+    Dim wr As Long
+    For wr = RR4_WL_FIRST To RR4_WL_LAST
+        Dim wtk As String: wtk = NormalizeTWTicker(CStr(ws.cells(wr, RR4_LEFT + 1).Value))
+        If wtk <> "" And Not seen.Exists(wtk) Then seen(wtk) = 1
+    Next wr
+
+    Dim out() As String
+    If seen.Count = 0 Then
+        ReDim out(0 To -1)
+    Else
+        ReDim out(0 To seen.Count - 1)
+        Dim i As Long: i = 0
+        Dim k As Variant
+        For Each k In seen.keys
+            out(i) = CStr(k): i = i + 1
+        Next k
+    End If
+    CollectOpenMarketTWTickers = out
+End Function
 
 ' 2026-09-23: 收集這一輪 UP 需要報價的全部台股代號（持倉 + watchlist +
 ' ticker panel），交給 modMISPrice.PrefetchMISPrices 一次批次查詢。正規化
