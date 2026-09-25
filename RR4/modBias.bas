@@ -119,7 +119,7 @@ Private Const KLINE_H As Double = 335           ' K-line chart height; KLINE_H +
 Private Const VOL_H As Double = 120
 Private Const KV_GAP As Double = 5
 Private Const KB_OFF As Long = 13               ' K/volume data block starts this many columns after CHART_DATA_COL
-Private Const KB_LAST As Long = 24              ' last data column offset (KB_OFF .. KB_LAST = 12 columns)
+Private Const KB_LAST As Long = 25              ' last data column offset (KB_OFF .. KB_LAST = 13 columns)
 Private Const K_PLOT_LEFT As Double = 58        ' plot-area inside left/right margins, shared so K and volume line up
 Private Const K_PLOT_RIGHT As Double = 12
 
@@ -988,18 +988,6 @@ Private Function FetchBiasOhlc(ByVal ticker As String, ByRef chartDates() As Dat
     FetchBiasOhlc = True
 End Function
 
-' 1 / 2 / 2.5 / 5 x 10^k step that gives at most 8 gridlines over span.
-Private Function NiceStep(ByVal span As Double) As Double
-    If span <= 0 Then NiceStep = 1: Exit Function
-    Dim mag As Double: mag = 10 ^ Int(Log(span / 6) / Log(10))
-    Dim mult As Variant: mult = Array(1, 2, 2.5, 5, 10)
-    Dim k As Long
-    For k = 0 To 4
-        If span / (mag * mult(k)) <= 8 Then NiceStep = mag * mult(k): Exit Function
-    Next k
-    NiceStep = mag * 10
-End Function
-
 Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal n As Long, _
                             ByRef ko() As Double, ByRef kh() As Double, ByRef kl() As Double, _
                             ByRef kc() As Double, ByRef kv() As Double, _
@@ -1013,15 +1001,15 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
     Dim r0 As Long: r0 = CHART_ROW + off + 1
 
     Dim hdr As Variant
-    hdr = Array("O", "H", "L", "C", "EMA" & N1, "EMA" & N4, "SELLS", "BUYS", "SELLL", "BUYL", "VOLUP", "VOLDN")
+    hdr = Array("O", "H", "L", "C", "EMA" & N1, "EMA" & N4, "SELLS", "BUYS", "SELLL", "BUYL", "VOLUP", "VOLDN", "LOCK")
     Dim j As Long
-    For j = 0 To 11
+    For j = 0 To 12
         ws.cells(CHART_ROW + off, kb + j).Value = hdr(j)
     Next j
-    ws.Range(ws.cells(CHART_ROW + off, kb), ws.cells(CHART_ROW + off, kb + 11)).Font.Color = RGB(90, 90, 90)
+    ws.Range(ws.cells(CHART_ROW + off, kb), ws.cells(CHART_ROW + off, kb + 12)).Font.Color = RGB(90, 90, 90)
 
     ' one array write for the whole block; blank = not plotted (signal / off-side volume)
-    Dim blk() As Variant: ReDim blk(1 To n, 1 To 12)
+    Dim blk() As Variant: ReDim blk(1 To n, 1 To 13)
     Dim i As Long, r As Long
     Dim lo As Double, hi As Double: lo = kl(0): hi = kh(0)
     For i = 0 To n - 1
@@ -1036,6 +1024,7 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
             If sigDn4(i) Then blk(r, 10) = kl(i) * 0.975
         End If
         If kc(i) >= ko(i) Then blk(r, 11) = kv(i) Else blk(r, 12) = kv(i)
+        If kh(i) - kl(i) <= kh(i) * 0.000000001 Then blk(r, 13) = kc(i)   ' one-price lock: no body, no wick -> needs its own mark
 
         If kl(i) < lo Then lo = kl(i)
         If kh(i) > hi Then hi = kh(i)
@@ -1046,18 +1035,20 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
             If emaL(i) > hi Then hi = emaL(i)
         End If
     Next i
-    With ws.Range(ws.cells(r0, kb), ws.cells(r0 + n - 1, kb + 11))
+    With ws.Range(ws.cells(r0, kb), ws.cells(r0 + n - 1, kb + 12))
         .Value = blk
         .Font.Color = RGB(60, 60, 60)
     End With
 
-    ' shared fixed price scale (primary and the hidden secondary axis must match)
-    lo = lo * 0.96: hi = hi * 1.04            ' room for the +-2.5% signal triangles
-    Dim stp As Double: stp = NiceStep(hi - lo)
+    ' shared logarithmic price scale (2026-09-25, base 10): bounds are whole powers of ten around the
+    ' data (+-4% room for the signal triangles); primary and hidden secondary axis must match
+    lo = lo * 0.96: hi = hi * 1.04
+    If lo <= 0 Then lo = 0.01
     Dim axMin As Double, axMax As Double
-    axMin = Int(lo / stp) * stp
-    axMax = -Int(-hi / stp) * stp
-    Dim axFmt As String: axFmt = IIf(stp < 1, "#,##0.00", "#,##0")
+    axMin = 10 ^ Int(Log(lo) / Log(10))
+    axMax = 10 ^ (-Int(-Log(hi) / Log(10)))
+    If axMax <= axMin Then axMax = axMin * 10
+    Dim axFmt As String: axFmt = IIf(axMin < 1, "#,##0.00", "#,##0")
 
     Dim leftX As Double: leftX = ws.Columns(CHART_COL + lc).Left + BIAS_CHART_W + KLINE_GAP
     Dim topY As Double: topY = ws.Rows(CHART_ROW + off).Top
@@ -1065,13 +1056,13 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
 
     Call DrawOneKline(ws, "BIAS_K_R1", leftX, topY, tk & "  K-LINE  (SHORT: EMA" & N1 & ")", dc, kb, 4, _
         "EMA" & N1, RGB(0, 200, 255), 6, "SELL short", RGB(220, 60, 60), 7, "BUY short", RGB(60, 200, 90), _
-        n, axMin, axMax, stp, axFmt)
+        n, axMin, axMax, axFmt)
     Call DrawOneVolume(ws, "BIAS_V_R1", leftX, topY + KLINE_H + KV_GAP, dc, kb, n)
     If hasR4 Then
         Dim topY4 As Double: topY4 = topY + BIAS_CHART_H + BIAS_CHART_GAP
         Call DrawOneKline(ws, "BIAS_K_R4", leftX, topY4, tk & "  K-LINE  (LONG: EMA" & N4 & ")", dc, kb, 5, _
             "EMA" & N4, RR4_ACCENT, 8, "SELL long", RGB(255, 120, 255), 9, "BUY long", RGB(120, 160, 255), _
-            n, axMin, axMax, stp, axFmt)
+            n, axMin, axMax, axFmt)
         Call DrawOneVolume(ws, "BIAS_V_R4", leftX, topY4 + KLINE_H + KV_GAP, dc, kb, n)
     End If
 End Sub
@@ -1083,7 +1074,7 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
                           ByVal sellIdx As Long, ByVal sellName As String, ByVal sellColor As Long, _
                           ByVal buyIdx As Long, ByVal buyName As String, ByVal buyColor As Long, _
                           ByVal n As Long, ByVal axMin As Double, ByVal axMax As Double, _
-                          ByVal stp As Double, ByVal axFmt As String)
+                          ByVal axFmt As String)
     Dim off As Long: off = NavOffset(ws)
     Dim r1 As Long: r1 = CHART_ROW + off + 1
     Dim rN As Long: rN = CHART_ROW + off + n
@@ -1143,17 +1134,32 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
     Call AddBiasMarkerSeries(ch, buyName, xr, ws.Range(ws.cells(r1, kb + buyIdx), ws.cells(rN, kb + buyIdx)), buyColor)
     ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
+    ' one-price locks (open=high=low=close): a zero-height bar draws nothing, so mark them with a white dash
+    Dim lk As Series: Set lk = ch.SeriesCollection.NewSeries
+    lk.Name = "LOCK": lk.XValues = xr
+    lk.Values = ws.Range(ws.cells(r1, kb + 12), ws.cells(rN, kb + 12))
+    lk.ChartType = xlLine
+    lk.AxisGroup = xlSecondary
+    lk.Format.Line.Visible = msoFalse
+    lk.MarkerStyle = xlMarkerStyleDash
+    lk.MarkerSize = 7
+    lk.MarkerBackgroundColor = RGB(255, 255, 255)
+    lk.MarkerForegroundColor = RGB(255, 255, 255)
 
     Dim ax As Axis
     Set ax = ch.Axes(xlValue, xlPrimary)
-    ax.MinimumScale = axMin: ax.MaximumScale = axMax: ax.MajorUnit = stp
+    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 10
+    ax.MinimumScale = axMin: ax.MaximumScale = axMax
     ax.HasMajorGridlines = True
-    ax.MajorGridlines.Format.Line.ForeColor.RGB = RGB(30, 30, 30)
+    ax.MajorGridlines.Format.Line.ForeColor.RGB = RGB(60, 60, 60)
+    ax.HasMinorGridlines = True
+    ax.MinorGridlines.Format.Line.ForeColor.RGB = RGB(24, 24, 24)
     ax.TickLabels.NumberFormat = axFmt
     ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 8
 
     Set ax = ch.Axes(xlValue, xlSecondary)
-    ax.MinimumScale = axMin: ax.MaximumScale = axMax: ax.MajorUnit = stp
+    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 10
+    ax.MinimumScale = axMin: ax.MaximumScale = axMax
     ax.HasMajorGridlines = False
     ax.TickLabelPosition = xlTickLabelPositionNone
     ax.MajorTickMark = xlTickMarkNone
@@ -1169,6 +1175,7 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     For k = 1 To 4
         ch.Legend.LegendEntries(1).Delete
     Next k
+    ch.Legend.LegendEntries(ch.Legend.LegendEntries.count).Delete      ' LOCK
     ch.PlotArea.InsideWidth = BIAS_CHART_W - K_PLOT_LEFT - K_PLOT_RIGHT
     ch.PlotArea.InsideLeft = K_PLOT_LEFT              ' width first: setting it after can shift the left edge
     ch.PlotArea.InsideTop = 28

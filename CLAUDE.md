@@ -842,6 +842,8 @@ adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺
   R 圖、K 線、量圖的資料一起搬。舊位置（實體 AE 起）由 `LEGACY_DATA_COL` 在每次 `ClearBiasChart` 時清空並恢復黑底。
   ZA 是第 677 欄，不是 702（702 是 ZZ）。
 
+- **2026-09-25 K 線圖：對數價格軸＋一字鎖標記（使用者）**：兩張 K 線圖（R1／R4）的價格軸（主軸與隱藏次軸）改 `xlScaleLogarithmic`、底數 10，上下界＝資料 lo/hi 各留 4% 後取 10 的整數次方（`NiceStep`／`MajorUnit` 已刪）；量圖不動。代價：資料只跨不到一個數量級時 K 棒只佔軸的一部分（2330 落在 100–10000 的上段），要更貼合可改底數 2 或不取整。**一字鎖（high=low）的 K 棒零實體零影線、原本完全看不見**，資料塊多第 13 欄 `LOCK`（`KB_LAST` 24→25），次座標軸上一條只有白色短橫線標記（`xlMarkerStyleDash`）的系列，顏色不分漲跌停（使用者指定白線）；圖例最後一項 LOCK 刪掉。注入時 `AddFromString` 前要先剝掉 `.bas` 第一行 `Attribute VB_Name`，否則整個專案編譯失敗、所有 `Application.Run` 報「無法執行巨集」。
+
 ### Watch 頁（W / W!，2026-09-25，`RR4/modWatch.bas`）
 
 WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，連結 Library 與 Bias）。**資料在 `WatchData` 頁的 `tblWatch`**
