@@ -822,7 +822,7 @@ M=250 滾動歸一化，K=0.8 門檻），要移進 RR4 xlsm 開新分頁。經�
 K 線圖＋量柱圖（`DrawBiasKlines`／`DrawOneKline`／`DrawOneVolume`，圖名 `BIAS_K_R1/V_R1/K_R4/V_R4`）。
 R1 SHORT 那組疊 EMA20＋short SELL/BUY 三角，R4 LONG 那組疊 EMA200＋long SELL/BUY 三角（顏色同 R 圖）；
 範圍與 R 圖完全同一批 bar。**紅漲綠跌**。資料是另一次 Yahoo 抓取（`FetchBiasOhlcvRaw`，10y，O/H/L 依
-adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺日退回平 K＋量 0），資料塊放隱藏區 `KB_OFF`=13 起 12 欄。
+adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺日退回平 K＋量 0），資料塊放隱藏區（`KB_OFF`=13 起 12 欄；2026-09-25 起整塊在 ZA）。
 - **蠟燭是「折線圖群組＋高低連線＋漲跌柱」**（原生股價圖底層就是這個），不是 `xlStockOHLC`：EMA 與訊號三角
   **必須放次座標軸群組**——高低連線會橫跨同群組所有系列、漲跌柱用群組第一與最後一個系列，同群組多塞系列會兩者都毀。
   次座標軸與主軸用同一組固定 min/max/MajorUnit（`NiceStep`），次軸刻度隱藏。影線顏色是單一灰（原生限制，無法依漲跌分色）。
@@ -831,6 +831,12 @@ adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺
 - ⚠️ 設 `PlotArea.InsideLeft` 再設 `InsideWidth` 會把左緣推走——**先 Width 再 Left**，K 圖與量圖繪圖區才對得齊。
 - 類別軸一律 `xlCategoryScale`（依 bar 序、無週末缺口）；K 圖隱藏日期軸標籤，日期只顯示在下方量圖。
 - 實測 AAPL／2330（.TW 回退）／NBIS，六張圖皆有輸出，已注入活頁簿並存檔（備份 `backup-pre-kline-*.xlsm`）。
+- **2026-09-25 兩項調整（使用者）**：① **K 棒改「紅漲白跌」、黑色 0.75pt 邊框**（漲＝RGB(220,60,60) 實心、跌＝純白實心，
+  影線白色，量柱同紅／白＋黑框；圖表背景維持黑底所以黑框在黑底上幾乎看不見，靠填色區分）。邊框會吃掉細棒，所以漲跌柱
+  `GapWidth` 由 60 降到 10。上一段寫的「紅漲綠跌／影線灰色」以本條為準（R 圖、RR4 頁其他地方仍是紅漲綠跌，只有 K 線圖與量圖改白跌）。
+  ② **隱藏資料塊整塊搬到實體 ZA 欄起**（`CHART_DATA_COL` 30→676，加上導覽列 +1 欄位移＝第 677 欄 ZA，一路到 ZY 共 25 欄）；
+  R 圖、K 線、量圖的資料一起搬。舊位置（實體 AE 起）由 `LEGACY_DATA_COL` 在每次 `ClearBiasChart` 時清空並恢復黑底。
+  ZA 是第 677 欄，不是 702（702 是 ZZ）。
 
 ## Deployment topology (this is the part that bites)
 
