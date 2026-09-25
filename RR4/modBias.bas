@@ -1124,7 +1124,7 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
         .HasUpDownBars = True
         .GapWidth = 10                      ' wide bodies: the 0.75pt black borders eat thin ones
         .HiLoLines.Format.Line.ForeColor.RGB = RGB(255, 255, 255)
-        .HiLoLines.Format.Line.Weight = 0.75
+        .HiLoLines.Format.Line.Weight = 0.25            ' 2026-09-25: wicks thinned from 0.75pt (user request)
         .UpBars.Format.Fill.ForeColor.RGB = upClr
         .UpBars.Format.Line.ForeColor.RGB = RGB(0, 0, 0)
         .UpBars.Format.Line.Weight = 0.75
