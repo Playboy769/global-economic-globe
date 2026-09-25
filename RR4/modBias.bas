@@ -1151,7 +1151,7 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     lk.AxisGroup = xlSecondary
     lk.Format.Line.Visible = msoFalse
     lk.MarkerStyle = xlMarkerStyleDash
-    lk.MarkerSize = 3             ' 2026-09-25: ~1px hairline
+    lk.MarkerSize = 2             ' 2026-09-25: smallest Excel allows (min 2)
     lk.MarkerBackgroundColor = RGB(255, 255, 255)
     lk.MarkerForegroundColor = RGB(255, 255, 255)
 
