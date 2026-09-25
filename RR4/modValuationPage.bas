@@ -387,8 +387,9 @@ Private Sub DrawShell(ws As Worksheet, ByVal tk As String, ByVal mkt As String, 
     Call InputCell(ws.cells(PG_IN, COL_TK), tk)
     Call InputCell(ws.cells(PG_IN, COL_MKT), mkt)
     Call InputCell(ws.cells(PG_IN, COL_GRP), grp)
+    Call AddInputDropdowns(ws)
     With ws.cells(PG_IN, COL_GRP + 2)
-        .Value = "US ticker or TW code + Enter.  MKT blank = auto.  GROUP blank = the tblGroups group holding the ticker.  ROIC only, no WACC."
+        .Value = "US ticker or TW code + Enter.  MKT blank = auto.  GROUP: click the cell's arrow for every tblGroups name (blank = the group holding the ticker).  ROIC only, no WACC."
         .Font.Color = CLR_MUTED
     End With
     ws.Columns(1).ColumnWidth = 24
@@ -396,6 +397,29 @@ Private Sub DrawShell(ws As Worksheet, ByVal tk As String, ByVal mkt As String, 
     ws.Columns(3).ColumnWidth = 14
     For i = 4 To LAST_CLEAR_COL: ws.Columns(i).ColumnWidth = 12: Next i
     ws.Columns(RIGHT_COL).ColumnWidth = 24
+End Sub
+
+' 2026-09-25: dropdowns on MKT (US / TW) and GROUP (every name in tblGroups,
+' via the same GroupList name the Company research page uses). Typing a
+' value that is not in the list still works - information alert only, no
+' error - so a group alias typed by hand is never blocked. GroupList is
+' rebuilt here so the list always matches tblGroups as it is right now.
+Private Sub AddInputDropdowns(ws As Worksheet)
+    On Error Resume Next
+    Call RebuildGroupList
+    With ws.cells(PG_IN, COL_MKT).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="US,TW"
+        .IgnoreBlank = True
+        .ShowError = False
+    End With
+    With ws.cells(PG_IN, COL_GRP).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="=" & GROUP_LIST_NAME
+        .IgnoreBlank = True
+        .ShowError = False
+    End With
+    On Error GoTo 0
 End Sub
 
 Private Sub StackLabel(c As Range, ByVal txt As String)
