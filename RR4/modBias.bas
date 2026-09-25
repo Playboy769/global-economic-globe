@@ -847,7 +847,7 @@ End Sub
 ' never sits exactly on top of a reference line. Blank cells (every bar
 ' that is not itself a signal) simply plot nothing, which is what makes
 ' this a sparse marker series instead of a second line.
-Private Sub AddBiasMarkerSeries(ByVal ch As Chart, ByVal nm As String, ByVal xr As Range, ByVal yr As Range, ByVal markerColor As Long)
+Private Sub AddBiasMarkerSeries(ByVal ch As Chart, ByVal nm As String, ByVal xr As Range, ByVal yr As Range, ByVal markerColor As Long, Optional ByVal markerSize As Long = 7)
     Dim s As Series: Set s = ch.SeriesCollection.NewSeries
     s.Name = nm
     s.XValues = xr
@@ -855,7 +855,7 @@ Private Sub AddBiasMarkerSeries(ByVal ch As Chart, ByVal nm As String, ByVal xr 
     s.ChartType = xlLine
     s.Format.Line.Visible = msoFalse
     s.MarkerStyle = xlMarkerStyleTriangle
-    s.MarkerSize = 7
+    s.MarkerSize = markerSize
     s.MarkerBackgroundColor = markerColor
     s.MarkerForegroundColor = markerColor
 End Sub
@@ -1040,15 +1040,24 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
         .Font.Color = RGB(60, 60, 60)
     End With
 
-    ' shared logarithmic price scale (2026-09-25, base 10): bounds are whole powers of ten around the
-    ' data (+-4% room for the signal triangles); primary and hidden secondary axis must match
-    lo = lo * 0.96: hi = hi * 1.04
+    ' shared logarithmic price scale (base 2, 2026-09-25): lower bound = the largest "nice" start value at or
+    ' below the data, upper bound = start * 2^k just covering it, so ticks read start, 2*start, 4*start...
+    ' primary and hidden secondary axis must match
+    lo = lo * 0.96: hi = hi * 1.04            ' room for the +-2.5% signal triangles
     If lo <= 0 Then lo = 0.01
-    Dim axMin As Double, axMax As Double
-    axMin = 10 ^ Int(Log(lo) / Log(10))
-    axMax = 10 ^ (-Int(-Log(hi) / Log(10)))
-    If axMax <= axMin Then axMax = axMin * 10
-    Dim axFmt As String: axFmt = IIf(axMin < 1, "#,##0.00", "#,##0")
+    Dim mant As Variant: mant = Array(1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10)
+    Dim e10 As Double: e10 = 10 ^ Int(Log(lo) / Log(10))
+    Dim axMin As Double, axMax As Double, mi As Long
+    axMin = e10
+    For mi = 0 To 11
+        If mant(mi) * e10 <= lo * 1.0000001 Then axMin = mant(mi) * e10
+    Next mi
+    axMax = axMin
+    Do While axMax < hi
+        axMax = axMax * 2
+    Loop
+    If axMax <= axMin Then axMax = axMin * 2
+    Dim axFmt As String: axFmt = IIf(axMin < 10, "#,##0.00", "#,##0")
 
     Dim leftX As Double: leftX = ws.Columns(CHART_COL + lc).Left + BIAS_CHART_W + KLINE_GAP
     Dim topY As Double: topY = ws.Rows(CHART_ROW + off).Top
@@ -1125,14 +1134,14 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     End With
 
     ' EMA + signal triangles: secondary group, same fixed scale as the primary axis
-    Call AddBiasSeries(ch, emaName, xr, ws.Range(ws.cells(r1, kb + emaIdx), ws.cells(rN, kb + emaIdx)), emaColor, 1.25, False)
+    Call AddBiasSeries(ch, emaName, xr, ws.Range(ws.cells(r1, kb + emaIdx), ws.cells(rN, kb + emaIdx)), emaColor, 0.5, False)
     ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
     With ch.SeriesCollection(ch.SeriesCollection.count).Format.Line      ' moving groups resets the line colour to black
-        .Visible = msoTrue: .ForeColor.RGB = emaColor: .Weight = 1.25
+        .Visible = msoTrue: .ForeColor.RGB = emaColor: .Weight = 0.5
     End With
-    Call AddBiasMarkerSeries(ch, sellName, xr, ws.Range(ws.cells(r1, kb + sellIdx), ws.cells(rN, kb + sellIdx)), sellColor)
+    Call AddBiasMarkerSeries(ch, sellName, xr, ws.Range(ws.cells(r1, kb + sellIdx), ws.cells(rN, kb + sellIdx)), sellColor, 4)
     ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
-    Call AddBiasMarkerSeries(ch, buyName, xr, ws.Range(ws.cells(r1, kb + buyIdx), ws.cells(rN, kb + buyIdx)), buyColor)
+    Call AddBiasMarkerSeries(ch, buyName, xr, ws.Range(ws.cells(r1, kb + buyIdx), ws.cells(rN, kb + buyIdx)), buyColor, 4)
     ch.SeriesCollection(ch.SeriesCollection.count).AxisGroup = xlSecondary
     ' one-price locks (open=high=low=close): a zero-height bar draws nothing, so mark them with a white dash
     Dim lk As Series: Set lk = ch.SeriesCollection.NewSeries
@@ -1142,23 +1151,22 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     lk.AxisGroup = xlSecondary
     lk.Format.Line.Visible = msoFalse
     lk.MarkerStyle = xlMarkerStyleDash
-    lk.MarkerSize = 7
+    lk.MarkerSize = 3             ' 2026-09-25: ~1px hairline
     lk.MarkerBackgroundColor = RGB(255, 255, 255)
     lk.MarkerForegroundColor = RGB(255, 255, 255)
 
     Dim ax As Axis
     Set ax = ch.Axes(xlValue, xlPrimary)
-    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 10
+    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 2
     ax.MinimumScale = axMin: ax.MaximumScale = axMax
     ax.HasMajorGridlines = True
     ax.MajorGridlines.Format.Line.ForeColor.RGB = RGB(60, 60, 60)
-    ax.HasMinorGridlines = True
-    ax.MinorGridlines.Format.Line.ForeColor.RGB = RGB(24, 24, 24)
+    ax.HasMinorGridlines = False
     ax.TickLabels.NumberFormat = axFmt
     ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 8
 
     Set ax = ch.Axes(xlValue, xlSecondary)
-    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 10
+    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 2
     ax.MinimumScale = axMin: ax.MaximumScale = axMax
     ax.HasMajorGridlines = False
     ax.TickLabelPosition = xlTickLabelPositionNone
