@@ -107,7 +107,8 @@ Private Const HEAT_COL_R1 As Long = 5
 Private Const HEAT_COL_R4 As Long = 6
 
 Private Const CHART_COL As Long = 8          ' physical column I after the bar's +1 column shift
-Private Const CHART_DATA_COL As Long = 30    ' hidden data block the chart series point at
+Private Const CHART_DATA_COL As Long = 676   ' hidden data block the chart series point at: physical column ZA (676 + the bar's +1 column shift = 677)
+Private Const LEGACY_DATA_COL As Long = 30   ' where the block lived before 2026-09-25 (physical AE); cleared on every rebuild
 Private Const BIAS_CHART_H As Double = 460      ' each of the two stacked charts
 Private Const BIAS_CHART_W As Double = 760
 Private Const BIAS_CHART_GAP As Double = 10
@@ -1026,7 +1027,7 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     Dim r1 As Long: r1 = CHART_ROW + off + 1
     Dim rN As Long: rN = CHART_ROW + off + n
     Dim upClr As Long: upClr = RGB(220, 60, 60)
-    Dim dnClr As Long: dnClr = RGB(60, 160, 90)
+    Dim dnClr As Long: dnClr = RGB(255, 255, 255)   ' 2026-09-25: red up / white down, black borders
 
     Dim co As ChartObject
     Set co = ws.ChartObjects.Add(leftX, topY, BIAS_CHART_W, KLINE_H)
@@ -1060,13 +1061,15 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     With ch.ChartGroups(1)
         .HasHiLoLines = True
         .HasUpDownBars = True
-        .GapWidth = 60
-        .HiLoLines.Format.Line.ForeColor.RGB = RGB(170, 170, 170)
+        .GapWidth = 10                      ' wide bodies: the 0.75pt black borders eat thin ones
+        .HiLoLines.Format.Line.ForeColor.RGB = RGB(255, 255, 255)
         .HiLoLines.Format.Line.Weight = 0.75
         .UpBars.Format.Fill.ForeColor.RGB = upClr
-        .UpBars.Format.Line.ForeColor.RGB = upClr
+        .UpBars.Format.Line.ForeColor.RGB = RGB(0, 0, 0)
+        .UpBars.Format.Line.Weight = 0.75
         .DownBars.Format.Fill.ForeColor.RGB = dnClr
-        .DownBars.Format.Line.ForeColor.RGB = dnClr
+        .DownBars.Format.Line.ForeColor.RGB = RGB(0, 0, 0)
+        .DownBars.Format.Line.Weight = 0.75
     End With
 
     ' EMA + signal triangles: secondary group, same fixed scale as the primary axis
@@ -1141,11 +1144,13 @@ Private Sub DrawOneVolume(ByVal ws As Worksheet, ByVal chartName As String, ByVa
     s.XValues = xr
     s.Values = ws.Range(ws.cells(r1, kb + 10), ws.cells(rN, kb + 10))
     s.Format.Fill.ForeColor.RGB = RGB(220, 60, 60)
+    s.Format.Line.Visible = msoTrue: s.Format.Line.ForeColor.RGB = RGB(0, 0, 0): s.Format.Line.Weight = 0.75
     Set s = ch.SeriesCollection.NewSeries
     s.Name = "VOL DOWN"
     s.XValues = xr
     s.Values = ws.Range(ws.cells(r1, kb + 11), ws.cells(rN, kb + 11))
-    s.Format.Fill.ForeColor.RGB = RGB(60, 160, 90)
+    s.Format.Fill.ForeColor.RGB = RGB(255, 255, 255)
+    s.Format.Line.Visible = msoTrue: s.Format.Line.ForeColor.RGB = RGB(0, 0, 0): s.Format.Line.Weight = 0.75
     ch.ChartGroups(1).Overlap = 100
     ch.ChartGroups(1).GapWidth = 40
 
@@ -1186,6 +1191,11 @@ Private Sub ClearBiasChart(ByVal ws As Worksheet)
     Dim dc As Long: dc = CHART_DATA_COL + lc
     Dim rng As Range
     Set rng = ws.Range(ws.cells(CHART_ROW + off, dc), ws.cells(CHART_ROW + off + NEED_BARS + 5, dc + KB_LAST))
+    rng.ClearContents
+    rng.Interior.Color = RGB(0, 0, 0)
+    ' the block moved to ZA on 2026-09-25: wipe the old AE-based copy (same shape, same rows)
+    Dim ldc As Long: ldc = LEGACY_DATA_COL + lc
+    Set rng = ws.Range(ws.cells(CHART_ROW + off, ldc), ws.cells(CHART_ROW + off + NEED_BARS + 5, ldc + KB_LAST))
     rng.ClearContents
     rng.Interior.Color = RGB(0, 0, 0)
 End Sub
