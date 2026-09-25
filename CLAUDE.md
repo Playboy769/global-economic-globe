@@ -435,7 +435,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   12 色調色盤＋「代號 %」標籤放在環**外**（v4.10 起圖型其實是 xlPie＋畫在中央的黑色圓形
   `RR4_DONUT_HOLE` 假裝成洞——真 doughnut 的標籤只能貼在環上，Excel 沒有 outside 位置）；
   導覽列未選取的代碼／標籤調暗、只有目前頁亮起，不用底線。
-- **WATCHLIST（v4.9.1）**：圖表帶左側 B25:E38——標題 25、表頭 26、**row 27 是輸入列**
+- **WATCHLIST（v4.9.1；⚠️ 2026-09-25 起 RR4 頁這塊只是 Watch 頁的唯讀摘要，資料在 tblWatch，見下方「Watch 頁」；以下是舊 entry-row 時代的描述）**：圖表帶左側 B25:E38——標題 25、表頭 26、**row 27 是輸入列**
   （B 代號／C 策略／D 目標價，代號＋目標價都填了就由 `SheetRR4.Worksheet_Change` →
   `WatchlistCommitEntry` 追加到清單、清空輸入列）、**rows 28–38 是已存清單**（11 筆，
   `ReadWatchlist` 清頁前讀出、`DrawWatchlist` 寫回，E 現價 `RefreshWatchlistRow` 用
@@ -837,6 +837,27 @@ adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺
   ② **隱藏資料塊整塊搬到實體 ZA 欄起**（`CHART_DATA_COL` 30→676，加上導覽列 +1 欄位移＝第 677 欄 ZA，一路到 ZY 共 25 欄）；
   R 圖、K 線、量圖的資料一起搬。舊位置（實體 AE 起）由 `LEGACY_DATA_COL` 在每次 `ClearBiasChart` 時清空並恢復黑底。
   ZA 是第 677 欄，不是 702（702 是 ZZ）。
+
+### Watch 頁（W / W!，2026-09-25，`RR4/modWatch.bas`）
+
+WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，連結 Library 與 Bias）。**資料在 `WatchData` 頁的 `tblWatch`**
+（同 ThesisNotes 模式），**畫面 `Watch` 頁純粹是這張表的 render**，換排序／加名單不重抓，只有 `W!` 才抓價／Library／Bias。
+- **欄位**：手打 TICKER｜STRATEGY｜ENTRY TGT｜ADDED（預設今天）；灰色快取欄由程式寫（LAST／NOTES／CALL／STATUS／MOAT／RISK／CAT／R1／R4／SIG／SIGDT）。
+  新增：頁面上方 entry row（TICKER + ENTRY TGT 都填就送出，同代號＝更新）或在 WatchData 表下方直接打；刪除＝刪表格列。不限筆數。
+- **Library 欄**：`modThesis.LibrarySummaryMap`（一次掃 tblNotes，以去 .TW/.TWO 的代號為鍵，只算 TYPE=stock）→ 筆記數、最新 CALL DATE
+  （>60 天灰、>120 天橘）、該日 STATUS、該日 MOAT/RISK/CATALYST 數。**Bias 欄**：`modBias.BiasSnapshot`（一次 Yahoo 抓取）→ R1／R4 與 Bias 表格同
+  （HHV/LLV 線），訊號則是圖上三角形用的 rank+trend 線的最近一次 SELL/BUY（short／long）與日期、距今天數。兩者口徑不同是刻意的，各自對得上要連過去的那一頁。
+- **雙擊**：表頭 TICKER／ADDED／DIST% ＝循環排序（升→降→關，`WATCHSORT`）；預設排序＝已到／低於目標價者優先，再依離目標近的排；
+  TICKER 格 → Library（`LibraryOpenTicker` 填 QUERY 並重畫）；R1 以後的 Bias 格 → Bias 頁畫該檔（`BiasOpenTicker`）。
+- **RR4 頁 B26:E35 改成唯讀摘要**：`ReadWatchlist` 呼叫 `WatchEnsure`＋`WatchTop(7)`（同 W 頁排序），`RefreshWatchlistRow` 順手把現價寫回 tblWatch 的 LAST；
+  **雙擊摘要列 → `WatchGoto` 跳 W 頁並選到該檔**（不再是刪除）；原 entry row（第 28 列）留空。`WatchlistCommitEntry`／`WatchlistDeleteRow` 已刪。
+  Bias 的 `GatherWatchlist`、Library 的 `@WATCH` 都改讀 `modWatch.WatchTickers()`，**不要再直接讀 B29:B35**。
+- **首次遷移**：`WatchEnsure`（在 UP 的 read-before-clear 位置或第一次 `W!`）建表並把 RR4 舊區塊 B29:D35 抄進去（ADDED＝當天）；實測 5 筆全數保留。
+- 導覽列代碼 **W**（頁 `Watch`）、動作碼 **W!**，modNav 六處都已登記；分頁名刻意避開 `Sanner.ExportTopToWatchlist` 建的 `Watchlist` 頁。
+  事件碼由 `EnsureSheetCode`／`WriteSheetCode` 寫入，紀錄在 `RR4/SheetWatch_Code.txt`、`SheetWatchData_Code.txt`。
+- ⚠️ **`IsNumeric(Date)` 是 False**：從 `Range.Value` 讀回的日期欄（ADDED/CALL/SIGDT）用一般 `IsNumeric` 判斷會全被當成空值；`modWatch.NumOr0` 先判 `VarType = vbDate`。
+- ⚠️ 用 COM 注入使用者已開的活頁簿時，若使用者目前前景視窗是別的活頁簿（例如「活頁簿1」），`Application.Run` 找不到巨集、看起來像整個專案編譯失敗——先 `$wb.Activate()`。
+- 實測（測試複本＋活頁簿）：`W!`、加入 TSLA（entry row）、排序三段循環、雙擊 TICKER→Library、雙擊 R1→Bias、`WatchGoto`、在 WatchData 打小寫 nvda 自動轉大寫並補 ADDED、Library `@WATCH`（8 calls／109 notes）、完整 `UP` 後 RR4 摘要 5 筆正確。
 
 ## Deployment topology (this is the part that bites)
 
