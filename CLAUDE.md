@@ -698,6 +698,20 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     `.TWO`）。回應快取在 `RR4/.valuation-cache/`（MOPS 30 天、SEC 1 天、Yahoo 半天，已進 .gitignore），3017＋14 家同業首跑
     134 秒、快取後 7 秒。
   - 可離開 Excel 單獨測：`python RR4/valuation.py --ticker 3017 --market TW --peers 2421,6230 --out out.txt`。
+  - **陸股同業（2026-09-25，使用者：7610 的鎢在台灣沒有直接同業，沿用報告做法用 600549／000657 量級對照）**：
+    ① **tblGroups 可有 `Market = CN` 的族群**，代號用 Yahoo 格式（`600549.SS`、`000657.SZ`）；已建好「鎢（陸股參照）」兩檔。
+    ② **GROUP 格支援逗號（全形／頓號也收）分隔多個族群，成員合併**（`PeerSpecs`：每個族群取「目標市場＋CN」的成員，其他市場的列不混入）；
+    `MKT` 空白時取第一個非 CN 族群的市場。CN 代號**只能當同業、不能當目標**（`ShowValuation` 會擋）。
+    ③ `valuation.py` 的請求 `peers` 改成 `"TICKER|MKT"` 字串（`parse_peer`；無後綴＝沿用目標市場，`.SS/.SZ/.SH` 一律 CN），`build()` 依各同業市場選 loader（TW／US／`load_cn`）。
+    ④ **`load_cn` 走 Yahoo `fundamentals-timeseries`（要 cookie＋crumb）**：資產負債表取最新一季 `quarterly*`，**流量一律取 `trailing*`（TTM）**——
+    實測 `quarterlyOperatingIncome` 等單季流量序列會缺季（例：缺 2025-09-30），四季加不起來，`trailing*` 沒這問題且含折舊攤提；`quarterlyEBIT` 反而完整但口徑是稅前＋利息。
+    ⚠️ Yahoo 的 OperatingIncome 對陸企可高於稅前利益（廈門鎢業 TTM 營業利益 83.6 億 vs 稅前 63.7 億），所以 ROIC 只是粗略讀數；金額維持人民幣不換算，只有比率進倍數帶。
+    債務用 `CurrentDebtAndCapitalLeaseObligation`／`LongTermDebtAndCapitalLeaseObligation`（已含租賃，`lease_total` 留空避免重複計）。
+    ⑤ 頁面：同業表多 `CCY` 欄、CN 列註明「CN reference - rough comparison only」、區塊標題與合理價區塊下各一行提醒；**散布圖 CN 點用琥珀色菱形＋標籤 `(CN)`**。
+    CN 同業**照樣進候選倍數帶／回歸／合理價**（使用者決定）——7610 實測：600549 EV/EBIT 11.4x、000657 29.9x、7610 42.0x，只有兩家樣本所以帶很窄，僅供量級參考。
+    ⑥ `Sanner.RunGroupKeyword` 遇到 CN 族群會提示不支援、不掃描；RRG TW 頁本來只吃 Market=TW 不受影響；Company research 的 GROUP 下拉會列出 CN 族群。
+    ⚠️ 實測時另一個 session 同時在改 `modBias.bas`（對數軸、一字鎖死標記）並注入同一本活頁簿，注入時把 `Attribute VB_Name` 行留在程式碼裡，讓整個專案編譯失敗（`Application.Run` 全部報「巨集可能無法使用」）——
+    遇到時用 COM 刪掉該模組第一行的 Attribute 行即可；本次沒有動、也沒有 commit `modBias.bas`。
   - **MKT／GROUP 輸入格下拉（2026-09-25，使用者「我都會忘記有哪些族群」）**：`AddInputDropdowns`（`DrawShell` 內、`NavAdd` 之前）——MKT＝`US,TW`，
     GROUP＝`=GroupList`（`Sanner.RebuildGroupList` 每次重建頁面時先重寫，清單永遠等於 tblGroups 目前的全部族群名、原名原順序、不附成分股數）。
     `AlertStyle = xlValidAlertInformation`＋`ShowError = False`：清單外的手打值不擋。**Company research 的 GROUP 格本來就有同一個下拉**（`DrawCrHeader`），沒動。
