@@ -459,7 +459,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   `P.TARGET = ENTRY PX × (1 + UPSIDE%)`、`SWING RISK = ENTRY PX × (1 − |DOWNSIDE|%)`（都是每股價位，UPSIDE／DOWNSIDE 空白就留空）。
   **Transactions 頁的 P_Target 欄不再被讀取**（`BuildPositions` 已移除；該欄仍在頁面上，只是沒人用）。
   R／S 是手打的**純數字、格式顯示成 `n%`**（打 25＝+25.0%，**不是 0.25**；DOWNSIDE 格式的負數區段不帶自動負號，
-  所以打 12 或 −12 都顯示 −12.0%），UPSIDE 紅字、DOWNSIDE 綠字、置中粗體，樣式同原 SWING RISK。手打值以代號為鍵、UP 前讀出後寫回
+  所以打 12 或 −12 都顯示 −12.0%），UPSIDE 紅字、DOWNSIDE 綠字、置中不粗體（SWING RISK 一併取消粗體）。手打值以代號為鍵、UP 前讀出後寫回
   （`ReadHandColumn(ws, "UPSIDE"/"DOWNSIDE")` 依表頭文字定位，`HandNumber` 轉回數字）。⚠️ 打「25%」會被 Excel 當 0.25，畫面顯示 +0.3%，照打 25 即可。
   ⚠️ **使用者這本活頁簿是手動計算模式**（`Application.Calculation = xlCalculationManual`），公式不會自己重算：
   `WritePositionRows` 寫完呼叫 `Range.Calculate`、工作表 `Worksheet_Change`（R／S 欄、持倉列）呼叫 `RecalcTargetRow` 只刷新該列的 P／Q。

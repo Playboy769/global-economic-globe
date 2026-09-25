@@ -1404,7 +1404,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
         .NumberFormat = "#,##0.00"
         .FormulaR1C1 = "=IF(AND(ISNUMBER(RC[2]),RC[-8]>0),RC[-8]*(1-ABS(RC[2])/100),"""")"
         .Font.Color = RR4_INPUT_FG
-        .Font.Bold = True
+        .Font.Bold = False
         .HorizontalAlignment = xlCenter
     End With
     ' UPSIDE / DOWNSIDE: plain numbers shown as "n%" by the format (no /100), so
@@ -1413,13 +1413,13 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     With ws.cells(r, RR4_UP_COL)
         .NumberFormat = "+0.0""%"";-0.0""%"";0.0""%"""
         If upMap.Exists(tickerCode) Then .Value = HandNumber(upMap(tickerCode))
-        .Font.Bold = True
+        .Font.Bold = False
         .HorizontalAlignment = xlCenter
     End With
     With ws.cells(r, RR4_DN_COL)
         .NumberFormat = """-""0.0""%"";""-""0.0""%"";0.0""%"""
         If dnMap.Exists(tickerCode) Then .Value = HandNumber(dnMap(tickerCode))
-        .Font.Bold = True
+        .Font.Bold = False
         .HorizontalAlignment = xlCenter
     End With
 
