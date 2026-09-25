@@ -9,6 +9,7 @@ Private Sub UserForm_Initialize()
     With Me.cmbAction
         .AddItem "Buy"
         .AddItem "Sell"
+        .AddItem "Dividend"
         .AddItem "UpdateInfo"
         .ListIndex = 0
     End With
@@ -126,6 +127,37 @@ Private Sub btnSave_Click()
     tFee = val(Me.txtFee.Value)
     tTax = val(Me.txtTax.Value)
     
+    ' 2026-09-26: cash dividend. Type the cash actually received (in the stock's own
+    ' currency) into the Price box; shares / fees stay 0, Net_Amount carries the amount.
+    ' A bare code (2330) is completed from the tickers already in the log.
+    If Me.cmbAction.Value = "Dividend" Then
+        If tPrice <= 0 Then
+            MsgBox "股利：請在「Dividend cash」欄填入實際入帳的股利金額（原幣）", vbExclamation
+            Exit Sub
+        End If
+        With wsLog
+            .cells(NextRow, tc + 1).Value = "T-" & Format(Now, "yyyymmdd-HHmmss")
+            .cells(NextRow, tc + 2).Value = tDate
+            .cells(NextRow, tc + 3).Value = ResolveDividendTicker(UCase(Trim(Me.txtTicker.Value)), wsLog)
+            .cells(NextRow, tc + 4).Value = "Dividend"
+            .cells(NextRow, tc + 5).Value = 0
+            .cells(NextRow, tc + 6).Value = 0
+            .cells(NextRow, tc + 7).Value = 0
+            .cells(NextRow, tc + 8).Value = 0
+            .cells(NextRow, tc + 9).Value = tPrice
+            .cells(NextRow, tc + 10).Value = ""
+            .cells(NextRow, tc + 11).Value = 0
+            .cells(NextRow, tc + 12).Value = ""
+            .cells(NextRow, tc + 13).Value = 0
+            .cells(NextRow, tc + 14).Value = Me.cmbBroker.Value
+        End With
+        MsgBox "股利已記錄：" & wsLog.cells(NextRow, tc + 3).Value & "  " & Format(tPrice, "#,##0.##"), vbInformation
+        Me.txtTicker.Value = ""
+        Me.txtPrice.Value = "0"
+        Me.txtTicker.SetFocus
+        Exit Sub
+    End If
+
     If Me.cmbAction.Value = "Buy" Then
         estSellAmount = tShares * tPrice
         
@@ -205,6 +237,20 @@ Private Sub btnSave_Click()
 End Sub
 
 ' ==========================================
+'  股利代號補全：只打數字（2330）時，沿用交易紀錄裡已有的 .TW / .TWO 寫法
+' ==========================================
+Private Function ResolveDividendTicker(ByVal tk As String, ByVal wsLog As Worksheet) As String
+    ResolveDividendTicker = tk
+    If InStr(tk, ".") > 0 Or Not IsNumeric(tk) Then Exit Function
+    Dim r As Long, t As String, tc As Long: tc = NavLeft(wsLog)
+    For r = TrHdrRow(wsLog) + 1 To TrLastRow(wsLog)
+        t = UCase(Trim(CStr(wsLog.cells(r, tc + 3).Value)))
+        If Left$(t, Len(tk) + 1) = tk & "." Then ResolveDividendTicker = t: Exit Function
+    Next r
+    ResolveDividendTicker = tk & ".TW"
+End Function
+
+' ==========================================
 '  [按鈕] 關閉視窗
 ' ==========================================
 Private Sub btnClose_Click()
@@ -231,6 +277,12 @@ Private Sub AutoCalculateCosts()
     sCurrency = Me.cmbCurrency.Value
     sAction = Me.cmbAction.Value
     sSector = Me.cmbSector.Value
+    
+    If sAction = "Dividend" Then
+        Me.txtFee.Value = "0"
+        Me.txtTax.Value = "0"
+        Exit Sub
+    End If
     
     dAmount = dShares * dPrice
     
@@ -290,6 +342,11 @@ Private Sub txtPrice_Change()
 End Sub
 
 Private Sub cmbAction_Change()
+    If Me.cmbAction.Value = "Dividend" Then
+        Me.Label7.Caption = "Dividend cash"
+    Else
+        Me.Label7.Caption = "Action Price"
+    End If
     Call AutoCalculateCosts
 End Sub
 

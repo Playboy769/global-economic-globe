@@ -757,6 +757,16 @@ Sub CalculateRealizedPnL()
     Dim lastRow As Long: lastRow = TrLastRow(wsTrans)
     Dim writeRow As Long: writeRow = r0 + 1
     Dim c0 As Long: c0 = NavLeft(wsReal)          ' page column n -> sheet column c0 + n
+
+    ' 2026-09-26: cash dividends. A Transactions row with Action = Dividend
+    ' (Shares/Price/fees 0, Net_Amount = cash received in the ticker's own
+    ' currency) is not part of the FIFO walk; it is collected here and written
+    ' as extra Realized rows BELOW the trades (STRATEGY = DIVIDEND), so it
+    ' flows into every number that sums this page - RR4 SUMMARY realized PnL,
+    ' HistoryLog D (cumulative by date), RealizedBefore, the RLPNL chart.
+    Dim dvN As Long
+    Dim dvDate() As Date, dvTk() As String, dvAmt() As Double, dvBk() As String
+    ReDim dvDate(1 To 64): ReDim dvTk(1 To 64): ReDim dvAmt(1 To 64): ReDim dvBk(1 To 64)
     Dim t0 As Long: t0 = NavLeft(wsTrans)         ' same for the Transactions page
     Dim rr As Long
 
@@ -778,6 +788,16 @@ Sub CalculateRealizedPnL()
             currType = "TWD"
         Else
             currType = "USD"
+        End If
+
+        If Action = "DIVIDEND" And Ticker <> "" And NetAmount <> 0 Then
+            dvN = dvN + 1
+            If dvN > UBound(dvTk) Then
+                ReDim Preserve dvDate(1 To dvN * 2): ReDim Preserve dvTk(1 To dvN * 2)
+                ReDim Preserve dvAmt(1 To dvN * 2): ReDim Preserve dvBk(1 To dvN * 2)
+            End If
+            If IsDate(tDate) Then dvDate(dvN) = CDate(tDate) Else dvDate(dvN) = Date
+            dvTk(dvN) = Ticker: dvAmt(dvN) = NetAmount: dvBk(dvN) = broker
         End If
 
         If Ticker <> "" And shares > 0 Then
@@ -901,12 +921,46 @@ Sub CalculateRealizedPnL()
                     .Cells(writeRow, c0 + 2).Font.Color = pnlClr
                     .Cells(writeRow, c0 + 3).Font.Color = pnlClr
                     .Cells(writeRow, c0 + 8).Font.Color = pnlClr
+                    .Cells(writeRow, c0 + 7).Font.Color = .Cells(writeRow, c0 + 1).Font.Color
                 End With
                 writeRow = writeRow + 1
 
             End Select
         End If
     Next rr
+
+    ' dividends, oldest first, after the trades (same contiguous table)
+    Dim di As Long, dj As Long
+    For di = 1 To dvN - 1
+        For dj = di + 1 To dvN
+            If dvDate(dj) < dvDate(di) Then
+                Dim tmpD As Date, tmpT As String, tmpA As Double, tmpB As String
+                tmpD = dvDate(di): tmpT = dvTk(di): tmpA = dvAmt(di): tmpB = dvBk(di)
+                dvDate(di) = dvDate(dj): dvTk(di) = dvTk(dj): dvAmt(di) = dvAmt(dj): dvBk(di) = dvBk(dj)
+                dvDate(dj) = tmpD: dvTk(dj) = tmpT: dvAmt(dj) = tmpA: dvBk(dj) = tmpB
+            End If
+        Next dj
+    Next di
+    For di = 1 To dvN
+        Dim dvTWD As Double
+        If InStr(dvTk(di), ".TW") > 0 Then dvTWD = dvAmt(di) Else dvTWD = dvAmt(di) * exRate
+        With wsReal
+            .Cells(writeRow, c0 + 1) = dvTk(di)
+            .Cells(writeRow, c0 + 2) = "-": .Cells(writeRow, c0 + 2).NumberFormat = "General"
+            .Cells(writeRow, c0 + 2).HorizontalAlignment = xlRight
+            .Cells(writeRow, c0 + 3) = dvAmt(di): .Cells(writeRow, c0 + 3).NumberFormat = "#,##0.00"
+            .Cells(writeRow, c0 + 6) = dvAmt(di)
+            .Cells(writeRow, c0 + 7) = "DIVIDEND"
+            .Cells(writeRow, c0 + 8) = dvTWD: .Cells(writeRow, c0 + 8).NumberFormat = "#,##0"
+            .Cells(writeRow, c0 + 9) = dvDate(di): .Cells(writeRow, c0 + 9).NumberFormat = "yyyy/m/d"
+            .Cells(writeRow, c0 + 10) = dvBk(di)
+            .Cells(writeRow, c0 + 2).Font.Color = RGB(200, 200, 200)
+            .Cells(writeRow, c0 + 3).Font.Color = RGB(200, 200, 200)
+            .Cells(writeRow, c0 + 7).Font.Color = RGB(0, 200, 255)
+            .Cells(writeRow, c0 + 8).Font.Color = RGB(200, 200, 200)
+        End With
+        writeRow = writeRow + 1
+    Next di
 
     ' (2026-09-12) The "Update RR4 Entry PX" pass that used to follow is gone:
     ' it matched RR4 rows by ticker + column 13 as the broker, which stopped
@@ -1190,12 +1244,12 @@ Sub RunSystemDebug()
         Dim invalidAction As Long
         For tr = trH + 1 To trLR
             Dim act As String: act = UCase(Trim(CStr(wsTr.Cells(tr, trC + 4).Value)))
-            If act <> "BUY" And act <> "SELL" And act <> "ADJUSTCOST" And act <> "" Then
+            If act <> "BUY" And act <> "SELL" And act <> "ADJUSTCOST" And act <> "DIVIDEND" And act <> "" Then
                 invalidAction = invalidAction + 1
             End If
         Next tr
         Call DB_Row(wsDB, wr, "Transactions", "Invalid Action", _
-            IIf(invalidAction = 0, "OK", "ERROR"), invalidAction & " rows (must be BUY/SELL/ADJUSTCOST)", _
+            IIf(invalidAction = 0, "OK", "ERROR"), invalidAction & " rows (must be BUY/SELL/ADJUSTCOST/DIVIDEND)", _
             IIf(invalidAction = 0, RGB(0, 210, 100), RGB(255, 80, 80)))
         wr = wr + 1
     End If

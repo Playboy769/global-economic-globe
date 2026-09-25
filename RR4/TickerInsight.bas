@@ -453,6 +453,7 @@ Private Sub DrawShellHeaders(ws As Worksheet, ticker As String)
     Call WriteLabel(ws, RR4_TOP + TI_BODY + 11, TI_LBL, "REALIZED PNL")
     Call WriteLabel(ws, RR4_TOP + TI_BODY + 12, TI_LBL, "LIFETIME EFF")
     Call WriteLabel(ws, RR4_TOP + TI_BODY + 13, TI_LBL, "VELOCITY/DAY")
+    Call WriteLabel(ws, RR4_TOP + TI_BODY + 14, TI_LBL, "DIVIDENDS")
 
     Call WriteLabel(ws, RR4_TOP + TI_BODY + 16, TI_LBL, "LAST PRICE")
     Call WriteLabel(ws, RR4_TOP + TI_BODY + 17, TI_LBL, "PRICE TARGET")
@@ -721,12 +722,14 @@ Private Sub DrawActivePosition(ws As Worksheet, ticker As String, _
     Dim fx As Double: fx = GetFXToTWD(ticker)                   ' RR4!B2 for US, 1 for TW
     Dim lastPx As Double: lastPx = GetStockPriceSafe(ticker)
     Dim wap As Double, unrl As Double, retPct As Double, netExp As Double
+    Dim divNat As Double: divNat = TickerDividendNative(ticker)      ' cash dividends, native currency
 
     If totalShares > 0 Then
         wap = totalCost / totalShares
         netExp = lastPx * totalShares * fx              ' aggregate -> TWD
         unrl = (lastPx - wap) * totalShares * fx        ' aggregate -> TWD
-        If totalCost > 0 Then retPct = (lastPx - wap) * totalShares / totalCost
+        ' RETURN % counts the dividends logged for this ticker (2026-09-26)
+        If totalCost > 0 Then retPct = ((lastPx - wap) * totalShares + divNat) / totalCost
     End If
 
     ' NOTE: labels are drawn by DrawShellHeaders. We only fill values here.
@@ -777,8 +780,15 @@ Private Sub DrawLifetimeMetrics(ws As Worksheet, ticker As String, _
 
     Dim fx As Double: fx = GetFXToTWD(ticker)
 
-    ' --- REALIZED PNL (TWD-converted) ---
-    Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 11, TI_VAL, totalPnL * fx, "NT$")
+    ' --- REALIZED PNL (TWD-converted): closed trades + cash dividends, the same
+    ' number the Realized page adds up (dividends are Realized rows there) ---
+    Dim divNat As Double: divNat = TickerDividendNative(ticker)
+    Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 11, TI_VAL, (totalPnL + divNat) * fx, "NT$")
+    If divNat <> 0 Then
+        Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 14, TI_VAL, divNat * fx, "NT$")
+    Else
+        Call WriteDash(ws, RR4_TOP + TI_BODY + 14, TI_VAL)
+    End If
 
     ' --- LIFETIME EFF (Profit Factor) ---
     ' Defensive: clear borders/background, set NumberFormat BEFORE Value,
@@ -815,6 +825,23 @@ Private Sub DrawLifetimeMetrics(ws As Worksheet, ticker As String, _
     If totalDays > 0 Then velocity = totalPnL / totalDays
     Call WriteValuePnL(ws, RR4_TOP + TI_BODY + 13, TI_VAL, velocity * fx, "NT$")
 End Sub
+
+' Cash dividends logged for this ticker (Action = Dividend, Net_Amount in the
+' ticker's own currency), all brokers. 0 when none.
+Private Function TickerDividendNative(ticker As String) As Double
+    Dim wsTr As Worksheet
+    On Error Resume Next: Set wsTr = ThisWorkbook.Sheets("Transactions"): On Error GoTo 0
+    If wsTr Is Nothing Then Exit Function
+    Dim tickerNorm As String: tickerNorm = NormalizeTicker(ticker)
+    Dim r As Long, lastRow As Long: lastRow = TrLastRow(wsTr)
+    For r = TrHdrRow(wsTr) + 1 To lastRow
+        If UCase(Trim(CStr(wsTr.cells(r, TrCol(wsTr, COL_ACTION)).Value))) = "DIVIDEND" Then
+            If NormalizeTicker(CStr(wsTr.cells(r, TrCol(wsTr, COL_TICKER)).Value)) = tickerNorm Then
+                TickerDividendNative = TickerDividendNative + SafeNum(wsTr.cells(r, TrCol(wsTr, COL_NETAMT)).Value)
+            End If
+        End If
+    Next r
+End Function
 
 ' ================================================================
 ' SECTION 3: PROJECTION (rows 16-19)

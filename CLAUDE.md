@@ -873,6 +873,31 @@ adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺
 
 - **GROUP <GO>（2026-09-25，使用者「加上觀看群組乖離功能」）**：Bias 頁 TICKER 格右邊多一個 **GROUP <GO>** 輸入格（合併 3 欄、下拉＝`GroupList`，即 tblGroups 全部 96 個族群含 CN；打字可部分比對，唯一符合才採用、多個符合會在狀態列列出候選）。選定後 `RunGroupQuery` 逐檔抓 Yahoo（同 `FetchAndCompute`，每檔約 1–2 秒）、畫成第三張表 **GROUP: 族群名**，接在 WATCHLIST 下方（起始列＝TICKER 欄最後有內容的列＋2，列號與筆數存在工作表層級隱藏名稱 `BIASGRPROW`／`BIASGRPN`），欄位同其他兩表（TICKER/MKT/LAST/CHG%/R1/R4，同一組熱力色階）外加 **NAME**（第 7 欄，寬 22，`Attach.GetCompanyName`；tblGroups 本身沒有公司名欄）。MKT 判斷：`.SS/.SZ`＝CN、`.TW` 或純數字＝TW、其餘 US；R4 資料不足照舊顯示 `-`。預設依 R1 由強到弱；**雙擊 CHG%／R1／R4 表頭＝排序**（同欄再雙擊反向，表頭尾巴 ▼／▲），**雙擊某檔代號＝把它填進 TICKER 並畫 K 線／乖離圖**（`BiasDoubleClick`）。排序是讀回工作表數值、不重抓。`B!` 重建會清掉群組表，但若 GROUP 格還有值會在最後自動重跑一次。Bias 工作表事件碼因此多了 `Worksheet_BeforeDoubleClick`（`EnsureSheetCode` 以字串 `BiasDoubleClick` 判斷是否已是新版，舊版會自動覆寫；紀錄在 `RR4/SheetBias_Code.txt`）。實測：測試設備（3 檔 TW）、鎢（陸股參照，2 檔 CN）正常出表，排序與雙擊代號→K 線圖皆通過。
 
+### 現金股利收入（2026-09-26，使用者「股利收入無法被計算到」）
+
+之前完全沒有股利的記錄管道，所以任何頁面都算不到。現在的做法（使用者逐題決定）：
+
+- **記錄**：Transactions 頁一列一筆，**Action = `Dividend`**（`frmTransaction` 的 Action 下拉多了 Dividend）。Date＝入帳日、Ticker、
+  **`Net_Amount`＝實收現金（該股原幣）**，Shares／Price／手續費／稅全 0，Sector／Strategy／Target／Beta 留空（避免覆蓋持倉的策略與 Beta）。
+  表單選 Dividend 時 `Label7` 改成「Dividend cash」，**金額打在 Price 那格**、Shares 不用填、手續費稅自動清 0；只打數字代號（2330）會依
+  Transactions 已有的寫法補成 `2330.TW`／`3374.TWO`（`ResolveDividendTicker`），從沒交易過的補 `.TW`。
+  ⚠️ **表單存檔路徑我沒辦法在自動化下實測**（`Show` 是強制對話框、`btnSave_Click` 是 Private）——只驗證了編譯與資料列格式；
+  第一次用請自己存一筆看看。
+- **併入已實現損益（同一個數字）**：`Attach.CalculateRealizedPnL` 在 FIFO 迴圈裡把 Dividend 列另收成陣列（它們不進 FIFO，因為 `Shares > 0` 的門檻與
+  `Select Case` 都不會處理它），迴圈後**依日期由舊到新寫在 Realized 表的交易列下面**（同一張連續的表）：TICKER／RET% `-`／PNL＝原幣金額／NET AMT／
+  STRATEGY＝`DIVIDEND`（青色）／PNL(TWD)／DATE／BROKER。因為只是 Realized 表的多幾列，所以**所有加總 Realized PNL(TWD) 欄的地方自動含股利**：
+  RR4 SUMMARY 已實現／總損益、HistoryLog D 欄（`RebuildRealizedHistory` 依日期累計）、`RealizedBefore`、RLPNL 折線圖、DAILY LOG 的 R.PNL。
+  **美股股利依「當前 USD/TWD（RR4 頁 C6）」換算**，與美股交易的已實現損益同一套，所以匯率變動時股利的 TWD 數字也會跟著微動。
+  DAILY LOG 的逐筆列表只列 BUY/SELL，**股利不會出現在今日交易清單**（但當天入帳的股利會算進 R.PNL）。
+- **代號面板（Ticker panel）**：`TickerDividendNative(ticker)` 掃 Transactions 的 Dividend 列（依 `NormalizeTicker`，不分 broker）。**REALIZED PNL（row 16）＝交易已實現＋股利**
+  （與 Realized 頁同口徑）、新增 **DIVIDENDS（row 19，`TI_BODY + 14`）**單獨顯示累計股利（無股利顯示 `—`）、**RETURN % 改成含股利**：
+  `((現價−均價)×股數 + 股利) ÷ 成本`。LIFETIME EFF／VELOCITY 仍只算交易，不含股利。
+- **配股（股票股利）刻意不處理**（會改股數與成本、牽涉三份 FIFO），只處理現金股利。
+- **歷史漏記的股利**：由使用者提供清單（日期／代號／實收），再用 COM 一次寫進 Transactions 表尾——**FIFO 照列序、不照日期**，但股利不進 FIFO，所以位置不影響結果。
+- 實測（2026-09-26，測試列已刪）：加 2330.TW 8,500 與 AMAT 12.34 USD → Realized 表 `DIVIDEND` 兩列、PNL(TWD) 合計 +8,891.87（＝8,500＋12.34×31.756）、
+  刪掉後回到原值 82,949.46；代號面板兩檔的 REALIZED／DIVIDENDS／RETURN % 皆正確。`RunSystemDebug` 的「Invalid Action」現在也認 DIVIDEND。
+  副作用：測試時 `RefreshTickerInsight` 把面板的 TICKER 格改成了 AMAT。
+
 ### Watch 頁（W / W!，2026-09-25，`RR4/modWatch.bas`）
 
 WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，連結 Library 與 Bias）。**資料在 `WatchData` 頁的 `tblWatch`**
