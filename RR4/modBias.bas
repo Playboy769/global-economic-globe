@@ -123,6 +123,15 @@ Private Const KB_LAST As Long = 25              ' last data column offset (KB_OF
 Private Const K_PLOT_LEFT As Double = 58        ' plot-area inside left/right margins, shared so K and volume line up
 Private Const K_PLOT_RIGHT As Double = 12
 
+' --- 2026-09-25: GROUP <GO> box (whole tblGroups group -> its own table under WATCHLIST) ---
+Private Const COL_GRP As Long = 3               ' GROUP input, merged across GRP_SPAN columns (C:E)
+Private Const GRP_SPAN As Long = 3
+Private Const HEAT_COL_NAME As Long = 7         ' company name column of the group table
+Private Const GRP_ROW_NAME As String = "BIASGRPROW"   ' sheet-level names: logical title row / row count of the group table
+Private Const GRP_N_NAME As String = "BIASGRPN"
+Private grpSortKey As Long                      ' 1 = CHG%, 2 = R1, 3 = R4
+Private grpSortDesc As Boolean
+
 Private Const FONT_FACE As String = "Consolas"
 Private Const CLR_TEXT As Long = 14540253            ' RGB(221,221,221)
 Private Const CLR_MUTED As Long = 8553090            ' RGB(130,130,130)
@@ -143,9 +152,11 @@ Public Sub BuildBiasPage()
 
     Dim keepTk As String
     keepTk = UCase(Trim(CellStr(ws.cells(PG_IN + NavOffset(ws), COL_TK + NavLeft(ws)).Value)))
+    Dim keepGrp As String
+    keepGrp = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_GRP + NavLeft(ws)).Value)
 
     Call NavStrip(ws)
-    Call DrawShell(ws, keepTk)
+    Call DrawShell(ws, keepTk, keepGrp)
     Call ClearBiasChart(ws)             ' drop any stale chart from a previous build up front
     Call NavNotify("BIAS building tables (holdings + watchlist) ...")
 
@@ -172,6 +183,7 @@ Public Sub BuildBiasPage()
     If Len(keepTk) > 0 Then Call RefreshBiasQuery
 
     Call FinishPage(ws)
+    If Len(keepGrp) > 0 Then Call RunGroupQuery
     Application.ScreenUpdating = prevScr
     Application.EnableEvents = prevEv
     Call NavGoto("B", ws)
@@ -191,6 +203,10 @@ Public Sub BiasChange(ByVal ws As Worksheet, ByVal Target As Range)
     If Target.CountLarge > 4 Then Exit Sub
     Dim r As Long: r = PG_IN + NavOffset(ws)
     Dim c As Long: c = COL_TK + NavLeft(ws)
+    If Not Intersect(Target, ws.cells(r, COL_GRP + NavLeft(ws))) Is Nothing Then
+        Call RunGroupQuery
+        Exit Sub
+    End If
     If Intersect(Target, ws.cells(r, c)) Is Nothing Then Exit Sub
     Call RefreshBiasQuery
 End Sub
@@ -313,6 +329,296 @@ Public Sub RefreshBiasQuery()
     End If
     Call NavNotify("BIAS " & tk & " done - " & vc1 & " points" & IIf(hasR4, "", " (short line only)") & _
                    IIf(kOk, "", " (K-line unavailable: no OHLC)"))
+End Sub
+
+' ----------------------------------------------------------------
+'  GROUP <GO> (2026-09-25): every ticker of one tblGroups group, same
+'  columns/colour scale as HOLDINGS / WATCHLIST plus the company name,
+'  drawn as its own table under WATCHLIST. Double-click R1 / R4 / CHG%
+'  header = sort (again = reverse), double-click a ticker = its K-line and
+'  bias charts. Fetches one Yahoo history per ticker (about 2 s each).
+' ----------------------------------------------------------------
+Private Function GroupKey(ByVal s As String) As String
+    s = Replace(Replace(s, ChrW(&H3000), ""), " ", "")
+    GroupKey = LCase$(s)
+End Function
+
+' Exact match (spaces/case ignored) else the single group whose name contains the text.
+Private Function ResolveGroupName(ByVal raw As String, ByRef msg As String) As String
+    Dim names As Variant: names = Sanner.GetGroupNames("")
+    If IsEmpty(names) Then msg = "GROUP: Groups table missing or empty": Exit Function
+    Dim k As String: k = GroupKey(raw)
+    Dim i As Long, hit As String, nHit As Long, cand As String
+    For i = 0 To UBound(names)
+        If GroupKey(CStr(names(i))) = k Then ResolveGroupName = CStr(names(i)): Exit Function
+    Next i
+    For i = 0 To UBound(names)
+        If InStr(GroupKey(CStr(names(i))), k) > 0 Then
+            nHit = nHit + 1
+            If nHit = 1 Then hit = CStr(names(i))
+            If nHit <= 5 Then cand = cand & IIf(cand = "", "", " | ") & CStr(names(i))
+        End If
+    Next i
+    If nHit = 1 Then ResolveGroupName = hit: Exit Function
+    If nHit > 1 Then
+        msg = "GROUP '" & raw & "' is ambiguous: " & cand
+    Else
+        msg = "GROUP '" & raw & "' not found (pick one from the dropdown)"
+    End If
+End Function
+
+Private Function GrpNameVal(ByVal ws As Worksheet, ByVal nm As String) As Long
+    Dim s As String
+    On Error Resume Next
+    s = ws.Names(nm).RefersTo
+    On Error GoTo 0
+    If Left$(s, 1) = "=" Then GrpNameVal = CLng(Mid$(s, 2))
+End Function
+
+Private Sub ClearGroupTable(ByVal ws As Worksheet)
+    Dim tr As Long: tr = GrpNameVal(ws, GRP_ROW_NAME)
+    If tr > 0 Then
+        Dim n As Long: n = GrpNameVal(ws, GRP_N_NAME)
+        Dim off As Long: off = NavOffset(ws)
+        Dim lc As Long: lc = NavLeft(ws)
+        With ws.Range(ws.cells(tr + off, 1 + lc), ws.cells(tr + off + n + 4, HEAT_COL_NAME + lc))
+            .Clear
+            .Interior.Color = RGB(0, 0, 0)
+            .Font.Name = FONT_FACE
+            .Font.Size = 9
+            .Font.Color = CLR_TEXT
+            .VerticalAlignment = xlCenter
+        End With
+    End If
+    On Error Resume Next
+    ws.Names(GRP_ROW_NAME).Delete
+    ws.Names(GRP_N_NAME).Delete
+    On Error GoTo 0
+End Sub
+
+Private Sub SortGroupRows(ByRef tk() As String, ByRef mkt() As String, ByRef lastPx() As Double, _
+                           ByRef chg() As Double, ByRef r1() As Double, ByRef r4() As Double, _
+                           ByRef hasR4() As Boolean, ByRef okF() As Boolean, ByRef nm() As String, _
+                           ByVal n As Long, ByVal key As Long, ByVal desc As Boolean)
+    Dim i As Long, j As Long, best As Long, better As Boolean
+    Dim vj As Double, vb As Double, mj As Boolean, mb As Boolean
+    For i = 0 To n - 2
+        best = i
+        For j = i + 1 To n - 1
+            better = False
+            If okF(j) <> okF(best) Then
+                better = okF(j)
+            ElseIf okF(j) Then
+                Select Case key
+                    Case 1: vj = chg(j): vb = chg(best): mj = False: mb = False
+                    Case 3: vj = r4(j): vb = r4(best): mj = Not hasR4(j): mb = Not hasR4(best)
+                    Case Else: vj = r1(j): vb = r1(best): mj = False: mb = False
+                End Select
+                If mj <> mb Then
+                    better = mb
+                ElseIf Not mj Then
+                    If desc Then better = (vj > vb) Else better = (vj < vb)
+                End If
+            End If
+            If better Then best = j
+        Next j
+        If best <> i Then
+            Call SwapStr(tk, i, best): Call SwapStr(mkt, i, best): Call SwapStr(nm, i, best)
+            Call SwapDbl(lastPx, i, best): Call SwapDbl(chg, i, best)
+            Call SwapDbl(r1, i, best): Call SwapDbl(r4, i, best)
+            Call SwapBool(hasR4, i, best): Call SwapBool(okF, i, best)
+        End If
+    Next i
+End Sub
+
+Private Sub DrawGroupTable(ByVal ws As Worksheet, ByVal gname As String, ByRef tk() As String, ByRef mkt() As String, _
+                            ByRef lastPx() As Double, ByRef chg() As Double, ByRef r1() As Double, _
+                            ByRef hasR4() As Boolean, ByRef r4() As Double, ByRef okF() As Boolean, _
+                            ByRef nm() As String, ByVal n As Long)
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim lastPhys As Long
+    lastPhys = ws.cells(ws.Rows.count, 1 + lc).End(xlUp).Row
+    Dim titleRow As Long: titleRow = lastPhys - off + 2
+
+    Call DrawOneTable(ws, "GROUP: " & gname, tk, mkt, lastPx, chg, r1, hasR4, r4, okF, n, titleRow)
+
+    Dim hdrPhys As Long: hdrPhys = titleRow + 1 + off
+    With ws.cells(hdrPhys, HEAT_COL_NAME + lc)
+        .Value = "NAME"
+        .Font.Color = RGB(0, 200, 255): .Font.Size = 9: .HorizontalAlignment = xlLeft
+    End With
+    With ws.Range(ws.cells(hdrPhys, 1 + lc), ws.cells(hdrPhys, HEAT_COL_NAME + lc)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
+    End With
+    Dim mk As Long: mk = HEAT_COL_R1
+    If grpSortKey = 1 Then mk = HEAT_COL_CHG
+    If grpSortKey = 3 Then mk = HEAT_COL_R4
+    With ws.cells(hdrPhys, mk + lc)
+        .Value = .Value & " " & IIf(grpSortDesc, ChrW(&H25BC), ChrW(&H25B2))
+    End With
+
+    Dim i As Long, r As Long
+    For i = 0 To n - 1
+        r = hdrPhys + 1 + i
+        With ws.cells(r, HEAT_COL_NAME + lc)
+            .Value = nm(i)
+            .Font.Color = CLR_MUTED
+            .HorizontalAlignment = xlLeft
+        End With
+    Next i
+    With ws.Range(ws.cells(hdrPhys + n, 1 + lc), ws.cells(hdrPhys + n, HEAT_COL_NAME + lc)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
+    End With
+
+    ws.Names.Add Name:=GRP_ROW_NAME, RefersTo:="=" & CStr(titleRow), Visible:=False
+    ws.Names.Add Name:=GRP_N_NAME, RefersTo:="=" & CStr(n), Visible:=False
+End Sub
+
+Public Sub RunGroupQuery()
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Worksheets(BIAS_SHEET): On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
+    Application.EnableEvents = False
+    Application.ScreenUpdating = False
+    On Error GoTo Fail
+
+    Dim raw As String: raw = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_GRP + NavLeft(ws)).Value)
+    Call ClearGroupTable(ws)
+    If raw = "" Then GoTo Done
+
+    Dim msg As String, gname As String
+    gname = ResolveGroupName(raw, msg)
+    If gname = "" Then Call NavNotify(msg, True): GoTo Done
+    Dim tv As Variant: tv = Sanner.GetSectorTickers("", gname)
+    If IsEmpty(tv) Then Call NavNotify("GROUP " & gname & ": no tickers", True): GoTo Done
+
+    Dim n As Long: n = UBound(tv) - LBound(tv) + 1
+    Dim tk() As String, mkt() As String, lastPx() As Double, chg() As Double, r1() As Double, r4() As Double
+    Dim hasR4() As Boolean, okF() As Boolean, nm() As String
+    ReDim tk(0 To n - 1): ReDim mkt(0 To n - 1): ReDim lastPx(0 To n - 1): ReDim chg(0 To n - 1)
+    ReDim r1(0 To n - 1): ReDim r4(0 To n - 1): ReDim hasR4(0 To n - 1): ReDim okF(0 To n - 1): ReDim nm(0 To n - 1)
+
+    Dim i As Long, done As Long, tmp As String
+    Dim lastV As Double, chgV As Double, r1V As Double, r4V As Double, hasR4V As Boolean
+    For i = 0 To n - 1
+        tk(i) = UCase(Trim(CStr(tv(LBound(tv) + i))))
+        If InStr(tk(i), ".SS") > 0 Or InStr(tk(i), ".SZ") > 0 Then
+            mkt(i) = "CN"
+        ElseIf InStr(tk(i), ".TW") > 0 Or IsNumeric(tk(i)) Then
+            mkt(i) = "TW"
+        Else
+            mkt(i) = "US"
+        End If
+        Call NavNotify("BIAS GROUP " & gname & " " & (i + 1) & "/" & n & " " & tk(i) & " ...")
+        If FetchAndCompute(tk(i), lastV, chgV, r1V, hasR4V, r4V) Then
+            lastPx(i) = lastV: chg(i) = chgV: r1(i) = r1V: hasR4(i) = hasR4V: r4(i) = r4V
+            okF(i) = True
+            done = done + 1
+            tmp = tk(i)
+            On Error Resume Next
+            nm(i) = Attach.GetCompanyName(tmp)
+            On Error GoTo Fail
+            If nm(i) = tk(i) Or nm(i) = tmp Then nm(i) = ""
+        End If
+    Next i
+
+    grpSortKey = 2: grpSortDesc = True
+    Call SortGroupRows(tk, mkt, lastPx, chg, r1, r4, hasR4, okF, nm, n, grpSortKey, grpSortDesc)
+    Call DrawGroupTable(ws, gname, tk, mkt, lastPx, chg, r1, hasR4, r4, okF, nm, n)
+    Call EnsureSheetCode(ws)
+    Call NavNotify("BIAS GROUP " & gname & " done - " & done & "/" & n & " tickers")
+Done:
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+    Exit Sub
+Fail:
+    Dim em As String: em = Err.Description
+    On Error Resume Next
+    Call NavNotify("BIAS GROUP error: " & em, True)
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+End Sub
+
+' Re-sort the drawn group table from what is on the sheet (no refetch).
+Private Sub ResortGroup(ByVal ws As Worksheet)
+    Dim n As Long: n = GrpNameVal(ws, GRP_N_NAME)
+    Dim tr As Long: tr = GrpNameVal(ws, GRP_ROW_NAME)
+    If n = 0 Or tr = 0 Then Exit Sub
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim msg As String
+    Dim gname As String: gname = ResolveGroupName(CellStr(ws.cells(PG_IN + off, COL_GRP + lc).Value), msg)
+    If gname = "" Then Exit Sub
+
+    Dim tk() As String, mkt() As String, lastPx() As Double, chg() As Double, r1() As Double, r4() As Double
+    Dim hasR4() As Boolean, okF() As Boolean, nm() As String
+    ReDim tk(0 To n - 1): ReDim mkt(0 To n - 1): ReDim lastPx(0 To n - 1): ReDim chg(0 To n - 1)
+    ReDim r1(0 To n - 1): ReDim r4(0 To n - 1): ReDim hasR4(0 To n - 1): ReDim okF(0 To n - 1): ReDim nm(0 To n - 1)
+    Dim i As Long, r As Long
+    For i = 0 To n - 1
+        r = tr + 2 + off + i
+        tk(i) = CellStr(ws.cells(r, HEAT_COL_TICKER + lc).Value)
+        mkt(i) = CellStr(ws.cells(r, HEAT_COL_MKT + lc).Value)
+        nm(i) = CellStr(ws.cells(r, HEAT_COL_NAME + lc).Value)
+        If VarType(ws.cells(r, HEAT_COL_LAST + lc).Value) = vbDouble Then
+            okF(i) = True
+            lastPx(i) = ws.cells(r, HEAT_COL_LAST + lc).Value
+            chg(i) = ws.cells(r, HEAT_COL_CHG + lc).Value
+            r1(i) = ws.cells(r, HEAT_COL_R1 + lc).Value
+            If VarType(ws.cells(r, HEAT_COL_R4 + lc).Value) = vbDouble Then
+                hasR4(i) = True
+                r4(i) = ws.cells(r, HEAT_COL_R4 + lc).Value
+            End If
+        End If
+    Next i
+    Call SortGroupRows(tk, mkt, lastPx, chg, r1, r4, hasR4, okF, nm, n, grpSortKey, grpSortDesc)
+    Call ClearGroupTable(ws)
+    Call DrawGroupTable(ws, gname, tk, mkt, lastPx, chg, r1, hasR4, r4, okF, nm, n)
+End Sub
+
+' Worksheet_BeforeDoubleClick: group table header = sort, ticker = open its charts.
+Public Sub BiasDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
+    If Target.CountLarge > 1 Then Exit Sub
+    Dim tr As Long: tr = GrpNameVal(ws, GRP_ROW_NAME)
+    If tr = 0 Then Exit Sub
+    Dim n As Long: n = GrpNameVal(ws, GRP_N_NAME)
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim hdrPhys As Long: hdrPhys = tr + 1 + off
+    Dim c As Long: c = Target.Column - lc
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    If Target.Row = hdrPhys Then
+        Dim k As Long
+        Select Case c
+            Case HEAT_COL_CHG: k = 1
+            Case HEAT_COL_R1: k = 2
+            Case HEAT_COL_R4: k = 3
+        End Select
+        If k > 0 Then
+            Cancel = True
+            If k = grpSortKey Then
+                grpSortDesc = Not grpSortDesc
+            Else
+                grpSortKey = k: grpSortDesc = True
+            End If
+            Application.ScreenUpdating = False
+            Call ResortGroup(ws)
+            Application.ScreenUpdating = True
+        End If
+    ElseIf Target.Row > hdrPhys And Target.Row <= hdrPhys + n And c = HEAT_COL_TICKER Then
+        Dim tk As String: tk = CellStr(Target.Value)
+        If tk <> "" Then
+            Cancel = True
+            Application.EnableEvents = prevEv
+            Call BiasOpenTicker(tk)
+            Exit Sub
+        End If
+    End If
+    Application.EnableEvents = prevEv
 End Sub
 
 ' ----------------------------------------------------------------
@@ -1296,7 +1602,12 @@ Private Function EnsureBiasSheet() As Worksheet
     Set EnsureBiasSheet = ws
 End Function
 
-Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String)
+Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepGrp As String)
+    On Error Resume Next
+    ws.Names(GRP_ROW_NAME).Delete
+    ws.Names(GRP_N_NAME).Delete
+    ws.cells.UnMerge
+    On Error GoTo 0
     ws.cells.Clear
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
@@ -1317,9 +1628,23 @@ Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String)
     ws.Rows(PG_IN).RowHeight = 20
     Call InputCell(ws.cells(PG_IN, COL_TK), keepTk)
 
+    Call StackLabel(ws.cells(PG_LBL, COL_GRP), "GROUP <GO>")
+    ws.Range(ws.cells(PG_IN, COL_GRP), ws.cells(PG_IN, COL_GRP + GRP_SPAN - 1)).Merge
+    Call InputCell(ws.cells(PG_IN, COL_GRP), keepGrp)
+    On Error Resume Next
+    Call Sanner.RebuildGroupList
+    With ws.cells(PG_IN, COL_GRP).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="=" & Sanner.GROUP_LIST_NAME
+        .IgnoreBlank = True
+        .ShowError = False
+    End With
+    On Error GoTo 0
+
     ws.Columns(1).ColumnWidth = 14
     Dim c As Long
     For c = 2 To 8: ws.Columns(c).ColumnWidth = 12: Next c
+    ws.Columns(HEAT_COL_NAME).ColumnWidth = 22
 End Sub
 
 Private Sub StackLabel(ByVal cell As Range, ByVal txt As String)
@@ -1363,13 +1688,16 @@ Private Sub EnsureSheetCode(ByVal ws As Worksheet)
             If comp.Properties("Name").Value = ws.Name Then
                 Dim cm As Object: Set cm = comp.CodeModule
                 If cm.CountOfLines > 0 Then
-                    If InStr(cm.Lines(1, cm.CountOfLines), "BiasChange") > 0 Then Exit Sub
+                    If InStr(cm.Lines(1, cm.CountOfLines), "BiasDoubleClick") > 0 Then Exit Sub
                     cm.DeleteLines 1, cm.CountOfLines
                 End If
                 cm.AddFromString "Option Explicit" & vbCrLf & vbCrLf & _
-                    "' Bias page: TICKER input -> modBias.BiasChange (see modBias.bas)" & vbCrLf & _
+                    "' Bias page: TICKER / GROUP inputs -> modBias.BiasChange, group table double-click -> BiasDoubleClick (see modBias.bas)" & vbCrLf & _
                     "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
                     "    Call BiasChange(Me, Target)" & vbCrLf & _
+                    "End Sub" & vbCrLf & vbCrLf & _
+                    "Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)" & vbCrLf & _
+                    "    Call BiasDoubleClick(Me, Target, Cancel)" & vbCrLf & _
                     "End Sub" & vbCrLf
                 Exit Sub
             End If

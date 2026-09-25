@@ -1,0 +1,16 @@
+' ================================================================
+'  Code-behind of the "Bias" worksheet (modBias, nav code B). Written
+'  automatically by modBias.EnsureSheetCode (B! / GROUP query) - kept here as
+'  plain text because document modules are not exported as .bas.
+'    TICKER / GROUP input -> BiasChange
+'    double-click group-table header = sort, ticker = its charts -> BiasDoubleClick
+' ================================================================
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call BiasChange(Me, Target)
+End Sub
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call BiasDoubleClick(Me, Target, Cancel)
+End Sub

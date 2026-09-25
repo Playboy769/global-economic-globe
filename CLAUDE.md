@@ -871,6 +871,8 @@ adjclose/close 還原、成交量原始值，依日期對齊到 chart bars，缺
 
 - **同日改版（使用者看截圖後）**：對數軸底數 10→**2**，下界＝不高於資料 lo 的「漂亮起始值」（1/1.25/1.5/2/2.5/3/4/5/6/7.5/8×10^k），上界＝起始值×2^k 剛好蓋住資料（實測 AAPL 150–600、2330 800–3200），刻度即 起始值×2^n；不再取 10 的整數次方（K 棒不再被壓扁）。K 線圖的 EMA 線寬 1.25→0.5pt、買賣三角形 7→4（`AddBiasMarkerSeries` 加了 `markerSize` 選填參數，乖離折線圖仍傳預設 7）、一字鎖白線 marker 7→3（約 1 像素）。**後續：marker 再縮到 2（Excel 允許的最小值，`MarkerSize` 下限 2）。** 原生方案（零高度漲柱靠邊框畫線）行不通：邊框被設成黑色所以看不見，而漲跌柱邊框屬整個群組、改成可見色會讓所有 K 棒多一圈邊——使用者不接受改邊框，所以保留 LOCK dash 系列。
 
+- **GROUP <GO>（2026-09-25，使用者「加上觀看群組乖離功能」）**：Bias 頁 TICKER 格右邊多一個 **GROUP <GO>** 輸入格（合併 3 欄、下拉＝`GroupList`，即 tblGroups 全部 96 個族群含 CN；打字可部分比對，唯一符合才採用、多個符合會在狀態列列出候選）。選定後 `RunGroupQuery` 逐檔抓 Yahoo（同 `FetchAndCompute`，每檔約 1–2 秒）、畫成第三張表 **GROUP: 族群名**，接在 WATCHLIST 下方（起始列＝TICKER 欄最後有內容的列＋2，列號與筆數存在工作表層級隱藏名稱 `BIASGRPROW`／`BIASGRPN`），欄位同其他兩表（TICKER/MKT/LAST/CHG%/R1/R4，同一組熱力色階）外加 **NAME**（第 7 欄，寬 22，`Attach.GetCompanyName`；tblGroups 本身沒有公司名欄）。MKT 判斷：`.SS/.SZ`＝CN、`.TW` 或純數字＝TW、其餘 US；R4 資料不足照舊顯示 `-`。預設依 R1 由強到弱；**雙擊 CHG%／R1／R4 表頭＝排序**（同欄再雙擊反向，表頭尾巴 ▼／▲），**雙擊某檔代號＝把它填進 TICKER 並畫 K 線／乖離圖**（`BiasDoubleClick`）。排序是讀回工作表數值、不重抓。`B!` 重建會清掉群組表，但若 GROUP 格還有值會在最後自動重跑一次。Bias 工作表事件碼因此多了 `Worksheet_BeforeDoubleClick`（`EnsureSheetCode` 以字串 `BiasDoubleClick` 判斷是否已是新版，舊版會自動覆寫；紀錄在 `RR4/SheetBias_Code.txt`）。實測：測試設備（3 檔 TW）、鎢（陸股參照，2 檔 CN）正常出表，排序與雙擊代號→K 線圖皆通過。
+
 ### Watch 頁（W / W!，2026-09-25，`RR4/modWatch.bas`）
 
 WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，連結 Library 與 Bias）。**資料在 `WatchData` 頁的 `tblWatch`**
