@@ -1219,33 +1219,105 @@ Private Function BareTicker(ByVal s As String) As String
     If Right$(BareTicker, 3) = ".TW" Then BareTicker = Left$(BareTicker, Len(BareTicker) - 3)
 End Function
 
-' Tickers typed on the RR4 page: the position log (B44 down, until blank) or
-' the WATCHLIST saved rows (B29:B39).  Read straight off the sheet so this
-' module does not depend on PortfolioDashboard's private readers.
+' Tickers for @PORT / @WATCH: the RR4 page's position log (B44 down, until
+' blank), or the WATCHLIST worksheet (tblWatch, modWatch.WatchTickers) - since
+' 2026-09-25 the RR4 page block is only a summary of that table.  Positions are
+' read straight off the sheet so this module does not depend on
+' PortfolioDashboard's private readers.
 Private Function RR4Tickers(ByVal positions As Boolean) As Variant
     Dim out As Object: Set out = CreateObject("Scripting.Dictionary")
+    If Not positions Then
+        Dim wv As Variant, k As Long
+        wv = WatchTickers()
+        If Not IsEmpty(wv) Then
+            For k = LBound(wv) To UBound(wv)
+                If Trim$(CStr(wv(k))) <> "" Then out(UCase$(Trim$(CStr(wv(k))))) = True
+            Next k
+        End If
+        RR4Tickers = out.keys
+        Exit Function
+    End If
     Dim ws As Worksheet
     On Error Resume Next
     Set ws = ThisWorkbook.Worksheets("RR4")
     On Error GoTo 0
     If Not ws Is Nothing Then
         Dim r As Long, tk As String
-        If positions Then
-            r = RR4_POS_FIRST
-            Do While r < RR4_POS_FIRST + 200
-                tk = Trim$(CStr(ws.cells(r, RR4_LEFT + 1).Value))
-                If tk = "" Then Exit Do
-                out(UCase$(tk)) = True
-                r = r + 1
-            Loop
-        Else
-            For r = RR4_WL_FIRST To RR4_WL_LAST
-                tk = Trim$(CStr(ws.cells(r, RR4_LEFT + 1).Value))
-                If tk <> "" Then out(UCase$(tk)) = True
-            Next r
-        End If
+        r = RR4_POS_FIRST
+        Do While r < RR4_POS_FIRST + 200
+            tk = Trim$(CStr(ws.cells(r, RR4_LEFT + 1).Value))
+            If tk = "" Then Exit Do
+            out(UCase$(tk)) = True
+            r = r + 1
+        Loop
     End If
     RR4Tickers = out.keys
+End Function
+
+' ----------------------------------------------------------------
+'  Public hooks for the Watch page (modWatch, 2026-09-25)
+' ----------------------------------------------------------------
+
+' One pass over tblNotes -> Dictionary keyed by BARE ticker (".TW"/".TWO"
+' stripped, same rule as MatchesQuery) of Variant arrays:
+'   (0) note count  (1) latest CALL DATE  (2) STATUS of a note on that date
+'   (3) MOAT / (4) RISK / (5) CATALYST counts among the notes on that date.
+' Only TYPE = stock notes count (a watch ticker is a stock).
+Public Function LibrarySummaryMap() As Object
+    Dim out As Object: Set out = CreateObject("Scripting.Dictionary")
+    Set LibrarySummaryMap = out
+    Dim lo As ListObject: Set lo = NotesTable()
+    Dim tg() As String, ty() As String, dt() As Date, st() As String
+    Dim ro() As String, th() As String, be() As String, ev() As String, rw() As Long
+    Dim n As Long: n = ReadNotes(lo, tg, ty, dt, st, ro, th, be, ev, rw)
+    If n = 0 Then Exit Function
+    Dim i As Long, key As String, a As Variant
+    For i = 1 To n                                   ' pass 1: count + latest date
+        If ty(i) = "stock" Then
+            key = BareTicker(tg(i))
+            If Not out.Exists(key) Then
+                out(key) = Array(0, CDate(0), "", 0, 0, 0)
+            End If
+            a = out(key)
+            a(0) = a(0) + 1
+            If dt(i) > a(1) Then a(1) = dt(i)
+            out(key) = a
+        End If
+    Next i
+    For i = 1 To n                                   ' pass 2: status / roles on the latest date
+        If ty(i) = "stock" Then
+            key = BareTicker(tg(i))
+            a = out(key)
+            If dt(i) = a(1) Then
+                If a(2) = "" And st(i) <> "" Then a(2) = st(i)
+                If ro(i) = "MOAT" Then a(3) = a(3) + 1
+                If ro(i) = "RISK" Then a(4) = a(4) + 1
+                If ro(i) = "CATALYST" Then a(5) = a(5) + 1
+                out(key) = a
+            End If
+        End If
+    Next i
+End Function
+
+' Put a ticker in the Library QUERY box (filter/keyword cleared) and redraw.
+' The caller jumps with NavGoto "L". False if the Library page is not built.
+Public Function LibraryOpenTicker(ByVal tk As String) As Boolean
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(THESIS_SHEET)
+    On Error GoTo 0
+    If ws Is Nothing Then Exit Function
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    ws.cells(PG_IN + off, C_TGT + lc).NumberFormat = "@"
+    ws.cells(PG_IN + off, C_TGT + lc).Value = BareTicker(tk)
+    ws.cells(PG_IN + off, C_KEYWORD + lc).Value = ""
+    ws.cells(PG_IN + off, C_FILTER + lc).Value = ""
+    Application.EnableEvents = prevEv
+    Call DrawThesisView(ws)
+    LibraryOpenTicker = True
 End Function
 
 ' "Nothing matches" helper: targets starting with any typed QUERY token.

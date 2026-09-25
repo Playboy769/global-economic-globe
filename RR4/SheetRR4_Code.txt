@@ -7,12 +7,13 @@
 '    D5  ARRANGE <GO>   -> PortfolioDashboard_v3.ApplyArrange
 '    J4  TICKER <GO>    -> TickerInsight.RefreshTickerInsight
 '    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
-'    B27:D27 WATCHLIST entry row -> PortfolioDashboard_v3.WatchlistCommitEntry
-'                        (appends to rows 28-38 once ticker + target are in)
+'    (WATCHLIST entry row retired 2026-09-25 - names are typed on the Watch
+'     page, modWatch; the RR4 block is a read-only summary)
 '    B37:D37 TO-DO entry row -> PortfolioDashboard_v3.TodoCommitEntry
 '                        (2026-09-21; commits on Enter in D, or in C when
 '                        D already holds a date)
-'  Worksheet_BeforeDoubleClick: B29:E35 -> WatchlistDeleteRow (v4.9.1),
+'  Worksheet_BeforeDoubleClick: B29:E35 -> modWatch.WatchGoto (2026-09-25;
+'                               was WatchlistDeleteRow),
 '                               B38:E39 -> TodoDeleteRow (done)
 '  (addresses come from the RR4_* / TI_* constants). The nav command
 '  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
@@ -24,15 +25,13 @@
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
-    Dim hitArr As Boolean, hitTicker As Boolean, hitTarget As Boolean, hitWL As Boolean, hitTD As Boolean
+    Dim hitArr As Boolean, hitTicker As Boolean, hitTarget As Boolean, hitTD As Boolean
     hitArr = Not Intersect(Target, Me.Range(RR4_ARR_CELL)) Is Nothing
     hitTicker = Not Intersect(Target, Me.Range(TI_TICKER_CELL)) Is Nothing
     hitTarget = Not Intersect(Target, Me.Range(TI_TARGET_CELL)) Is Nothing
-    hitWL = Not Intersect(Target, Me.Range(Me.Cells(RR4_WL_ENTRY, RR4_LEFT + 1), _
-                                            Me.Cells(RR4_WL_ENTRY, RR4_LEFT + 3))) Is Nothing
     hitTD = Not Intersect(Target, Me.Range(Me.Cells(RR4_TD_ENTRY, RR4_LEFT + 1), _
                                             Me.Cells(RR4_TD_ENTRY, RR4_LEFT + 3))) Is Nothing
-    If Not (hitArr Or hitTicker Or hitTarget Or hitWL Or hitTD) Then Exit Sub
+    If Not (hitArr Or hitTicker Or hitTarget Or hitTD) Then Exit Sub
 
     Application.EnableEvents = False
     On Error GoTo Fin
@@ -42,8 +41,6 @@ Private Sub Worksheet_Change(ByVal Target As Range)
         Call RefreshTickerInsight(CStr(Target.Value))
     ElseIf hitTarget Then
         Call RefreshTickerProjection
-    ElseIf hitWL Then
-        Call WatchlistCommitEntry(Me)
     Else
         Call TodoCommitEntry(Me, Target.Column)
     End If
@@ -68,13 +65,13 @@ Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean
     Application.EnableEvents = False
     On Error GoTo Fin
     If hitWL Then
-        Call WatchlistDeleteRow(Me, Target.Row)
+        Call WatchGoto(Me, CStr(Me.Cells(Target.Row, RR4_LEFT + 1).Value))
     Else
         Call TodoDeleteRow(Me, Target.Row)
     End If
 Fin:
     Application.EnableEvents = True
-    If Err.Number <> 0 Then MsgBox "Watchlist / to-do delete error " & Err.Number & ": " & Err.Description, vbCritical
+    If Err.Number <> 0 Then MsgBox "Watchlist jump / to-do delete error " & Err.Number & ": " & Err.Description, vbCritical
 End Sub
 
 Private Sub Worksheet_Activate()

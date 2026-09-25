@@ -195,6 +195,67 @@ Public Sub BiasChange(ByVal ws As Worksheet, ByVal Target As Range)
     Call RefreshBiasQuery
 End Sub
 
+' ----------------------------------------------------------------
+'  Public hooks for the Watch page (modWatch, 2026-09-25)
+' ----------------------------------------------------------------
+
+' Today's R1 (EMA20) / R4 (EMA200) exactly as the Bias tables show them
+' (HHV/LLV lines, ComputeOneLine), plus the most recent SELL/BUY signal from
+' the rank+trend line the chart triangles use, with its bar date. ONE Yahoo
+' history fetch. sigText is "" when no signal exists in the window or the
+' history is too short for the rank window (needs N4+MR_RANK bars). False =
+' no price history at all.
+Public Function BiasSnapshot(ByVal tk As String, ByRef r1 As Double, ByRef hasR4 As Boolean, _
+                              ByRef r4 As Double, ByRef sigText As String, ByRef sigDate As Date) As Boolean
+    r1 = 0: r4 = 0: hasR4 = False: sigText = "": sigDate = 0
+    Dim closeArr() As Double, dateArr() As Date, cnt As Long
+    If Not FetchBiasHistory(UCase(Trim(tk)), closeArr, dateArr, cnt) Then Exit Function
+
+    Dim rrA() As Double, vcA As Long
+    If Not ComputeOneLine(closeArr, cnt, N1, rrA, vcA) Or vcA = 0 Then Exit Function
+    r1 = rrA(vcA - 1)
+    Dim rrB() As Double, vcB As Long
+    If ComputeOneLine(closeArr, cnt, N4, rrB, vcB) And vcB > 0 Then
+        hasR4 = True: r4 = rrB(vcB - 1)
+    End If
+    BiasSnapshot = True
+
+    Dim sr1() As Double, su1() As Boolean, sd1() As Boolean, vs1 As Long
+    If Not ComputeOneLineRankSignal(closeArr, cnt, N1, sr1, su1, sd1, vs1) Or vs1 = 0 Then Exit Function
+    Dim sr4() As Double, su4() As Boolean, sd4() As Boolean, vs4 As Long, has4 As Boolean
+    has4 = ComputeOneLineRankSignal(closeArr, cnt, N4, sr4, su4, sd4, vs4) And vs4 > 0
+    Dim i As Long, txt As String
+    For i = vs1 - 1 To 0 Step -1
+        txt = ""
+        If su1(i) Then txt = txt & IIf(txt = "", "", " + ") & "SELL short"
+        If sd1(i) Then txt = txt & IIf(txt = "", "", " + ") & "BUY short"
+        If has4 Then
+            If su4(i) Then txt = txt & IIf(txt = "", "", " + ") & "SELL long"
+            If sd4(i) Then txt = txt & IIf(txt = "", "", " + ") & "BUY long"
+        End If
+        If txt <> "" Then
+            sigText = txt
+            sigDate = dateArr(cnt - vs1 + i)
+            Exit For
+        End If
+    Next i
+End Function
+
+' Put a ticker in the Bias TICKER box and redraw its charts (the caller jumps
+' with NavGoto "B"). False if the Bias page has not been built.
+Public Function BiasOpenTicker(ByVal tk As String) As Boolean
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Worksheets(BIAS_SHEET): On Error GoTo 0
+    If ws Is Nothing Then Exit Function
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    ws.cells(PG_IN + NavOffset(ws), COL_TK + NavLeft(ws)).NumberFormat = "@"
+    ws.cells(PG_IN + NavOffset(ws), COL_TK + NavLeft(ws)).Value = UCase(Trim(tk))
+    Application.EnableEvents = prevEv
+    Call RefreshBiasQuery
+    BiasOpenTicker = True
+End Function
+
 Public Sub RefreshBiasQuery()
     Dim ws As Worksheet
     On Error Resume Next: Set ws = ThisWorkbook.Worksheets(BIAS_SHEET): On Error GoTo 0
@@ -286,24 +347,24 @@ Private Function GatherPositions(ByRef outTickers() As String) As Long
     GatherPositions = n
 End Function
 
+' 2026-09-25: the WATCHLIST is the Watch worksheet's table (tblWatch, via
+' modWatch.WatchTickers); the RR4 page block is only a 7-row summary of it.
 Private Function GatherWatchlist(ByRef outTickers() As String) As Long
-    Dim wsP As Worksheet
-    On Error Resume Next: Set wsP = ThisWorkbook.Worksheets(NavSheetName("P")): On Error GoTo 0
-    If wsP Is Nothing Then Exit Function
-    If Left(UCase(CellStr(wsP.cells(RR4_WL_TITLE, RR4_LEFT + 1).Value)), 9) <> "WATCHLIST" Then Exit Function
+    Dim wv As Variant: wv = WatchTickers()
+    If IsEmpty(wv) Then Exit Function
 
     Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary")
     Dim list As New Collection
-    Dim wr As Long
-    For wr = RR4_WL_FIRST To RR4_WL_LAST
-        Dim wtk As String: wtk = UCase(Trim(CellStr(wsP.cells(wr, RR4_LEFT + 1).Value)))
+    Dim wk As Long
+    For wk = LBound(wv) To UBound(wv)
+        Dim wtk As String: wtk = UCase(Trim(CellStr(wv(wk))))
         If wtk <> "" Then
             If Not seen.Exists(wtk) Then
                 seen(wtk) = True
                 list.Add wtk
             End If
         End If
-    Next wr
+    Next wk
 
     Dim n As Long: n = list.count
     If n = 0 Then Exit Function

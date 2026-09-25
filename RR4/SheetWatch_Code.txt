@@ -1,0 +1,16 @@
+' ================================================================
+'  Code-behind of the "Watch" worksheet (modWatch, nav code W). Written
+'  automatically by modWatch.EnsureSheetCode (W!) - kept here as plain text
+'  because document modules are not exported as .bas.
+'    entry row (TICKER / STRATEGY / ENTRY TGT) -> WatchPageChange
+'    double-click header = sort, TICKER = Library, Bias cells = Bias
+' ================================================================
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call WatchPageChange(Me, Target)
+End Sub
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call WatchPageDoubleClick(Me, Target, Cancel)
+End Sub

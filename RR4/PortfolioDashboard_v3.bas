@@ -93,16 +93,14 @@ Private Const LIVE_STATUS_COL As Long = 12   ' column L
 ' panel was shortened to row 24 to make room (TickerInsight TI_BOTTOM).
 Public Const RR4_CHART_TOP As Long = 27
 Public Const RR4_CHART_ROWS As Long = 14
-' WATCHLIST (v4.9, 2026-09-12; v4.9.1 entry-row flow): B:E of the chart
-' band, left of the donut. Title row 25, header 26.
-'   Row 27 = ENTRY ROW (input cells): type B ticker / C strategy / D entry
-'            target; as soon as ticker AND target are both in, the sheet
-'            code hands the row to WatchlistCommitEntry, which appends it
-'            to the list and clears row 27 for the next one.
-'   Rows 28-38 = the saved list (11 entries), E = live last price, a row
-'            whose last <= target is lit. Double-click a saved row to
-'            delete it (WatchlistDeleteRow, from Worksheet_BeforeDoubleClick).
-' Saved rows survive the clear (ReadWatchlist / DrawWatchlist).
+' WATCHLIST (v4.9, 2026-09-12): B:E of the chart band, left of the donut.
+' 2026-09-25: now a READ-ONLY SUMMARY of the Watch worksheet (modWatch,
+' table tblWatch on WatchData): title row 26, header 27, row 28 unused
+' (the old entry row), rows 29-35 = the first 7 names in Watch-page order,
+' E = live last price (also written back to tblWatch's LAST cache), a row
+' whose last <= target is lit. Double-click a row = open the Watch page on
+' that name (SheetRR4_Code.txt -> modWatch.WatchGoto). ReadWatchlist /
+' DrawWatchlist keep the block alive across the page clear.
 Public Const RR4_WL_TITLE  As Long = 26
 Public Const RR4_WL_HDR    As Long = 27
 Public Const RR4_WL_ENTRY  As Long = 28
@@ -2006,30 +2004,15 @@ End Sub
 ' ================================================================
 '  WATCHLIST (B25:E38) - see the RR4_WL_* constants
 ' ================================================================
-' Saved rows, read BEFORE the sheet is cleared. Only trusted when the
-' title is in place (an older layout has other things in those cells).
-' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target, blanks
-' compacted out; Empty when there is nothing.
+' 2026-09-25: the WATCHLIST lives in the Watch worksheet (modWatch, table
+' tblWatch); this block is a read-only summary of its first 7 names.
+' Read BEFORE the sheet is cleared: WatchEnsure creates tblWatch on the first
+' run and seeds it from the old block, which is still intact at this point.
+' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target in Watch-page
+' order; Empty when there is nothing.
 Private Function ReadWatchlist(ws As Worksheet) As Variant
-    If Left(UCase(CellStr(ws.cells(RR4_WL_TITLE, RR4_LEFT + 1).Value)), 9) <> "WATCHLIST" Then Exit Function
-    Dim tmp(1 To 12, 1 To 3) As Variant, n As Long, r As Long
-    For r = RR4_WL_FIRST To RR4_WL_LAST
-        Dim tk As String: tk = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
-        Dim st As String: st = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
-        Dim tg As Variant: tg = ws.cells(r, RR4_LEFT + 3).Value
-        If tk <> "" Then
-            n = n + 1
-            tmp(n, 1) = tk
-            tmp(n, 2) = st
-            tmp(n, 3) = IIf(IsNumeric(tg) And Not IsEmpty(tg), CDbl(tg), Empty)
-        End If
-    Next r
-    If n = 0 Then Exit Function
-    Dim out() As Variant: ReDim out(1 To n, 1 To 3)
-    For r = 1 To n
-        out(r, 1) = tmp(r, 1): out(r, 2) = tmp(r, 2): out(r, 3) = tmp(r, 3)
-    Next r
-    ReadWatchlist = out
+    Call modWatch.WatchEnsure
+    ReadWatchlist = modWatch.WatchTop(RR4_WL_LAST - RR4_WL_FIRST + 1)
 End Function
 
 ' Title, header, the entry row, then the saved rows with live price.
@@ -2078,24 +2061,18 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
     End With
 End Sub
 
-' The entry row: three dark input cells, always empty after a commit.
+' 2026-09-25: the old entry row (RR4_WL_ENTRY) is retired - names are typed
+' on the Watch page. Keep the row blank and black so no input styling is left.
 Private Sub WatchlistPaintEntryRow(ws As Worksheet)
+    With ws.Range(ws.cells(RR4_WL_ENTRY, RR4_LEFT + 1), ws.cells(RR4_WL_ENTRY, RR4_LEFT + 4))
+        .ClearContents
+        .Interior.Color = RGB(0, 0, 0)
+        .Borders(xlEdgeRight).LineStyle = xlNone
+    End With
     Dim c As Long
     For c = 1 To 3
-        With ws.cells(RR4_WL_ENTRY, RR4_LEFT + c)
-            .Value = ""
-            .Interior.Color = RR4_INPUT_BG
-            .Font.Color = RR4_INPUT_FG
-            .Font.Bold = (c = 1)
-            .HorizontalAlignment = IIf(c = 2, xlLeft, xlCenter)
-            .NumberFormat = IIf(c = 3, "#,##0.00", "@")
-        End With
+        ws.cells(RR4_WL_ENTRY, RR4_LEFT + c).Borders(xlEdgeRight).LineStyle = xlNone
     Next c
-    With ws.cells(RR4_WL_ENTRY, RR4_LEFT + 4)
-        .Value = ""
-        .Interior.Color = RGB(0, 0, 0)
-    End With
-    Call SeparateInputCells(ws, RR4_WL_ENTRY, 3)
 End Sub
 
 ' Black vertical rules between adjacent grey input cells of an entry row
@@ -2111,57 +2088,6 @@ Private Sub SeparateInputCells(ws As Worksheet, ByVal r As Long, ByVal n As Long
     Next c
 End Sub
 
-' Called by the sheet code when B/C/D of the entry row changes. Commits
-' once ticker AND target are both in; otherwise leaves the row alone so
-' the other cells can still be typed.
-Public Sub WatchlistCommitEntry(ws As Worksheet)
-    Dim tk As String: tk = UCase(Trim(CellStr(ws.cells(RR4_WL_ENTRY, RR4_LEFT + 1).Value)))
-    Dim st As String: st = CellStr(ws.cells(RR4_WL_ENTRY, RR4_LEFT + 2).Value)
-    Dim tg As Variant: tg = ws.cells(RR4_WL_ENTRY, RR4_LEFT + 3).Value
-    If tk = "" Then Exit Sub
-    If Not IsNumeric(tg) Or IsEmpty(tg) Then Exit Sub
-    If CDbl(tg) <= 0 Then Exit Sub
-
-    ' first free saved row
-    Dim r As Long, dest As Long
-    For r = RR4_WL_FIRST To RR4_WL_LAST
-        If CellStr(ws.cells(r, RR4_LEFT + 1).Value) = "" Then dest = r: Exit For
-    Next r
-    If dest = 0 Then
-        Call NavNotify("WATCHLIST full (" & (RR4_WL_LAST - RR4_WL_FIRST + 1) & " rows) - double-click a row to delete one", True)
-        Exit Sub
-    End If
-    ws.cells(dest, RR4_LEFT + 1).NumberFormat = "@"
-    ws.cells(dest, RR4_LEFT + 1).Value = tk
-    ws.cells(dest, RR4_LEFT + 2).NumberFormat = "@"
-    ws.cells(dest, RR4_LEFT + 2).Value = st
-    ws.cells(dest, RR4_LEFT + 3).NumberFormat = "#,##0.00"
-    ws.cells(dest, RR4_LEFT + 3).Value = CDbl(tg)
-    Call RefreshWatchlistRow(ws, dest)
-    Call WatchlistPaintEntryRow(ws)
-    ws.cells(RR4_WL_ENTRY, RR4_LEFT + 1).Select
-    Call NavNotify("WATCHLIST + " & tk & " @ " & Format(CDbl(tg), "#,##0.00"))
-End Sub
-
-' Called by the sheet code on a double-click inside the saved rows: drop
-' that entry and close the gap.
-Public Sub WatchlistDeleteRow(ws As Worksheet, ByVal r As Long)
-    If r < RR4_WL_FIRST Or r > RR4_WL_LAST Then Exit Sub
-    Dim tk As String: tk = CellStr(ws.cells(r, RR4_LEFT + 1).Value)
-    If tk = "" Then Exit Sub
-    Dim k As Long
-    For k = r To RR4_WL_LAST - 1
-        ws.cells(k, RR4_LEFT + 1).Value = ws.cells(k + 1, RR4_LEFT + 1).Value
-        ws.cells(k, RR4_LEFT + 2).Value = ws.cells(k + 1, RR4_LEFT + 2).Value
-        ws.cells(k, RR4_LEFT + 3).Value = ws.cells(k + 1, RR4_LEFT + 3).Value
-    Next k
-    ws.Range(ws.cells(RR4_WL_LAST, RR4_LEFT + 1), ws.cells(RR4_WL_LAST, RR4_LEFT + 3)).ClearContents
-    For k = r To RR4_WL_LAST
-        Call RefreshWatchlistRow(ws, k)
-    Next k
-    Call NavNotify("WATCHLIST - " & tk & " removed")
-End Sub
-
 ' Live price into E and the lit / unlit state of one saved row.
 Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
     If r < RR4_WL_FIRST Or r > RR4_WL_LAST Then Exit Sub
@@ -2173,6 +2099,7 @@ Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
         px = GetStockPrice(tk)
         On Error GoTo 0
     End If
+    If px > 0 Then Call modWatch.WatchCacheLast(tk, px)     ' keep tblWatch's LAST cache current
     Dim cells4 As Range
     Set cells4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
     cells4.NumberFormat = "General"

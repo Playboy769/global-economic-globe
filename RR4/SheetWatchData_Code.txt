@@ -1,0 +1,11 @@
+' ================================================================
+'  Code-behind of the "WatchData" worksheet (tblWatch). Written by
+'  modWatch.EnsureWatchData - kept here as plain text.
+'    editing the table -> WatchDataChange (upper-case TICKER, default
+'    ADDED, redraw the Watch page)
+' ================================================================
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call WatchDataChange(Me, Target)
+End Sub
