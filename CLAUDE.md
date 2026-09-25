@@ -463,7 +463,11 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   （`ReadHandColumn(ws, "UPSIDE"/"DOWNSIDE")` 依表頭文字定位，`HandNumber` 轉回數字）。⚠️ 打「25%」會被 Excel 當 0.25，畫面顯示 +0.3%，照打 25 即可。
   ⚠️ **使用者這本活頁簿是手動計算模式**（`Application.Calculation = xlCalculationManual`），公式不會自己重算：
   `WritePositionRows` 寫完呼叫 `Range.Calculate`、工作表 `Worksheet_Change`（R／S 欄、持倉列）呼叫 `RecalcTargetRow` 只刷新該列的 P／Q。
-  P.TARGET 高亮（LAST > P.TARGET 整列亮橘底）沿用，改讀公式結果。實測 7610 ENTRY PX 1,904.99、UPSIDE 25／DOWNSIDE 12 →
+  P.TARGET 高亮（LAST > P.TARGET 整列亮橘底）沿用，改讀公式結果。**ARRANGE 新增 UPU/UPD（UPSIDE 低→高／高→低）與 DNU/DND（DOWNSIDE）**，且 **ARRANGE 輸入格 E6 改成下拉清單**
+  （項目形如 `WTD  WT hi>lo`，驗證的 Formula1 是逗號串、上限 255 字元；`ApplyArrange` 取第一個字當代碼、並把格子改回只剩代碼；手打代碼仍可、不擋）。
+  DOWNSIDE 為了能排序，**手打的正數會被改存成負數**（12→−12，`RecalcTargetRow`／UP 都會做），所以 DNU＝最深下檔在前；空白列一律排最後。
+  ⚠️ **DV 清單來源不能是「命名的陣列常數」**（`=ArrangeList` 會丟 1004，整個 UP 中途掛掉、畫面被清空——2026-09-26 踩過，
+  當時 R／S 手打值是從 `backup-pre-arrange-*.xlsm` 讀回來的）；用字面逗號串。實測 7610 ENTRY PX 1,904.99、UPSIDE 25／DOWNSIDE 12 →
   P.TARGET 2,381.24、SWING RISK 1,676.39；UP、ARRANGE(WTD) 後公式跟著列走。
 - **HistoryLog D 欄（Realized PnL）不是快照，是每次 UP 重算的**（v4.8）：`RebuildRealizedHistory`
   在 `LogHistory` 收尾把每一列 D 改成「Realized 表依出場日累計到該列日期」。v4.7 前是

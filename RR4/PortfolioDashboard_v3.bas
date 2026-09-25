@@ -194,7 +194,7 @@ Sub RebuildPortfolioDashboard()
     Dim liveFx As Double: liveFx = FetchLiveFx()
     m_fxLive = (liveFx > 20 And liveFx < 50)
     If m_fxLive Then exRate = liveFx
-    Dim arrCode As String: arrCode = UCase(CellStr(wsP.Range(RR4_ARR_CELL).Value))
+    Dim arrCode As String: arrCode = ArrangeCodeOf(CellStr(wsP.Range(RR4_ARR_CELL).Value))
     Dim tiTicker As String: tiTicker = UCase(CellStr(wsP.Range(TI_TICKER_CELL).Value))
     If tiTicker = "" Then tiTicker = UCase(CellStr(wsP.Range("K5").Value))   ' one-time: pre-v2.5 panel kept it in K5
     Dim tiTarget As Variant: tiTarget = wsP.Range(TI_TARGET_CELL).Value
@@ -923,6 +923,7 @@ Private Sub DrawHeader(ws As Worksheet, exRate As Double, arrCode As String)
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
+    Call AddArrangeDropdown(ws)
     ' E2 (code list + current order) is written by ApplyArrange
 
     With ws.Range(ws.cells(RR4_TOP + 2, RR4_LEFT + 1), ws.cells(RR4_TOP + 2, RR4_LEFT + 7)).Borders(xlEdgeBottom)
@@ -1310,6 +1311,16 @@ End Function
 ' Typing UPSIDE / DOWNSIDE: refresh that row's P.TARGET / SWING RISK formulas
 ' (called from the RR4 sheet's Worksheet_Change; manual-calculation safe).
 Public Sub RecalcTargetRow(ByVal ws As Worksheet, ByVal r As Long)
+    ' a typed DOWNSIDE is stored negative (12 -> -12) so ARRANGE can sort it
+    Dim dn As Variant: dn = ws.cells(r, RR4_DN_COL).Value
+    If VarType(dn) = vbDouble Then
+        If dn > 0 Then
+            Dim prevEv As Boolean: prevEv = Application.EnableEvents
+            Application.EnableEvents = False
+            ws.cells(r, RR4_DN_COL).Value = -dn
+            Application.EnableEvents = prevEv
+        End If
+    End If
     ws.Range(ws.cells(r, RR4_LEFT + 15), ws.cells(r, RR4_SWING_COL)).Calculate
 End Sub
 
@@ -1418,7 +1429,7 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     End With
     With ws.cells(r, RR4_DN_COL)
         .NumberFormat = """-""0.0""%"";""-""0.0""%"";0.0""%"""
-        If dnMap.Exists(tickerCode) Then .Value = HandNumber(dnMap(tickerCode))
+        If dnMap.Exists(tickerCode) Then .Value = NegateIfPositive(HandNumber(dnMap(tickerCode)))
         .Font.Bold = False
         .HorizontalAlignment = xlCenter
     End With
@@ -1479,7 +1490,7 @@ End Sub
 ' ================================================================
 Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
     Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets(SH_PORT)
-    code = UCase(Trim(code))
+    code = ArrangeCodeOf(code)
 
     Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
     Application.ScreenUpdating = False
@@ -1503,6 +1514,12 @@ Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
         Case "DAD": keyCol = RR4_LEFT + 4: ord = xlDescending: desc = "DAYS  long > short"
         Case "WTU": keyCol = RR4_LEFT + 12: ord = xlAscending: desc = "WT%  light > heavy"
         Case "WTD": keyCol = RR4_LEFT + 12: ord = xlDescending: desc = "WT%  heavy > light"
+        ' UPSIDE (R) / DOWNSIDE (S) are numbers; DOWNSIDE is stored negative, so DNU puts
+        ' the deepest downside first. Blank cells always sort last.
+        Case "UPU": keyCol = RR4_UP_COL: ord = xlAscending: desc = "UPSIDE  low > high"
+        Case "UPD": keyCol = RR4_UP_COL: ord = xlDescending: desc = "UPSIDE  high > low"
+        Case "DNU": keyCol = RR4_DN_COL: ord = xlAscending: desc = "DOWNSIDE  deepest > shallowest"
+        Case "DND": keyCol = RR4_DN_COL: ord = xlDescending: desc = "DOWNSIDE  shallowest > deepest"
         Case Else
             known = False
             keyCol = RR4_ORD_COL: ord = xlAscending
@@ -1533,13 +1550,22 @@ Public Sub ApplyArrange(Optional ByVal code As String = vbNullString)
     Call DrawDonut(ws, lastR)
     Call DrawFunnel(ws, lastR)
 
-    Dim codeList As String: codeList = "UNU/UND PCU/PCD DAU/DAD WTU/WTD DEF  >>  "
+    Dim codeList As String: codeList = "UNU/UND PCU/PCD DAU/DAD WTU/WTD UPU/UPD DNU/DND DEF  >>  "
     With ws.cells(RR4_TOP + 2, RR4_LEFT + 5)
         .Value = codeList & desc
         .Font.Size = 9
         .Font.Color = RGB(0, 200, 255)
         .Characters(Len(codeList) + 1, Len(desc)).Font.Color = IIf(known, RR4_ACCENT, RGB(255, 80, 80))
     End With
+
+    ' the dropdown items are "CODE  hint" - keep only the code in the input cell
+    If known And code <> "" Then
+        Dim prevEv As Boolean: prevEv = Application.EnableEvents
+        Application.EnableEvents = False
+        ws.Range(RR4_ARR_CELL).NumberFormat = "@"
+        ws.Range(RR4_ARR_CELL).Value = code
+        Application.EnableEvents = prevEv
+    End If
 
 Fin:
     ' never leave the screen frozen behind an error - the sheet's own handler
@@ -1551,10 +1577,37 @@ End Sub
 
 Private Function IsArrangeCode(ByVal code As String) As Boolean
     Select Case UCase(Trim(code))
-        Case "", "DEF", "UNU", "UND", "PCU", "PCD", "DAU", "DAD", "WTU", "WTD"
+        Case "", "DEF", "UNU", "UND", "PCU", "PCD", "DAU", "DAD", "WTU", "WTD", "UPU", "UPD", "DNU", "DND"
             IsArrangeCode = True
     End Select
 End Function
+
+' The ARRANGE cell holds either a bare code or a dropdown item ("WTD  WT high"):
+' the code is the first word.
+Private Function ArrangeCodeOf(ByVal txt As String) As String
+    txt = UCase(Trim(txt))
+    Dim p As Long: p = InStr(txt, " ")
+    If p > 0 Then txt = Left$(txt, p - 1)
+    ArrangeCodeOf = txt
+End Function
+
+' Dropdown for the ARRANGE input cell (items kept short: the list is only as
+' wide as the cell). Typing a code by hand still works.
+Private Sub AddArrangeDropdown(ws As Worksheet)
+    Dim items As Variant
+    items = Array("DEF  default", "UNU  PNL lo>hi", "UND  PNL hi>lo", "PCU  CHG lo>hi", "PCD  CHG hi>lo", _
+                  "DAU  DAYS lo>hi", "DAD  DAYS hi>lo", "WTU  WT lo>hi", "WTD  WT hi>lo", _
+                  "UPU  UP lo>hi", "UPD  UP hi>lo", "DNU  DN lo>hi", "DND  DN hi>lo")
+    ' (a named array constant is rejected as a list source, so it is the literal
+    ' comma-separated string; the limit is 255 characters)
+    With ws.Range(RR4_ARR_CELL).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:=Join(items, ",")
+        .InCellDropdown = True
+        .IgnoreBlank = True
+        .ShowError = False
+    End With
+End Sub
 
 ' Last position row = last consecutive row carrying a default-order key.
 ' Bounded by the last used cell of column T: an unbounded walk would run off
@@ -2495,6 +2548,14 @@ End Function
 ' otherwise the text as typed.
 Private Function HandNumber(ByVal s As String) As Variant
     If IsNumeric(s) Then HandNumber = CDbl(s) Else HandNumber = s
+End Function
+
+' DOWNSIDE is kept negative whatever sign was typed (so ARRANGE can sort it)
+Private Function NegateIfPositive(ByVal v As Variant) As Variant
+    If VarType(v) = vbDouble Then
+        If v > 0 Then v = -v
+    End If
+    NegateIfPositive = v
 End Function
 
 Private Function NumOr0(ByVal v As Variant) As Double
