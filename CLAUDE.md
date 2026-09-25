@@ -385,7 +385,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   / L20（目標價）、追蹤格 X1——獨立的「Ticker Insight」工作表已不存在。
   **其他模組讀 RR4 頁一律透過 `RR4_*` 常數／`RR4FxRate()`／`RR4PositionCount()`，禁止
   寫死位址**（Attach.bas 舊的 `C22`/`A1`/`B2` 全在搬版後讀錯格）。`ResetSheetStyle`
-  會清整張表，所有手打值（FX、ARRANGE 碼、SWING RISK Q 欄與 NOTE R 欄［v4.11，依表頭文字定位、以代號為鍵］、panel 的代號/目標價、T1/T2、WATCHLIST）
+  會清整張表，所有手打值（FX、ARRANGE 碼、UPSIDE R 欄與 DOWNSIDE S 欄［2026-09-25 取代 SWING RISK／NOTE 手打；依表頭文字定位、以代號為鍵］、panel 的代號/目標價、T1/T2、WATCHLIST）
   要在清除**前**讀出、之後寫回。
 - **Ticker panel 的市場判斷以 Transactions 為準（TickerInsight v2.4，2026-09-13）**：`IsTWTicker` 只看代號字串有沒有
   `.TW`，而 FIFO 配對走 `NormalizeTicker`（去後綴），所以在 K5 打裸碼 `3374` 會配到 `3374.TWO` 的交易、卻被當成美股，
@@ -454,6 +454,17 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   （`TodoDeleteRow`）。清頁前 `ReadTodo` 讀出（只認標題格＝「TO-DO」）、`DrawTodo` 寫回。
   兩個輸入列（28、37）的灰格之間用黑色 `xlMedium` 右框線隔開（`SeparateInputCells`，使用者要求）。
   事件碼改動在 `RR4/SheetRR4_Code.txt`。
+- **持倉表 UPSIDE / DOWNSIDE（2026-09-25，使用者）**：表頭列 43 的 **R＝UPSIDE、S＝DOWNSIDE**（取代原 NOTE，舊備註內容
+  使用者決定不備份、直接丟棄）；`P.TARGET`（P）與 `SWING RISK`（Q）**改成公式、不再手打**：
+  `P.TARGET = ENTRY PX × (1 + UPSIDE%)`、`SWING RISK = ENTRY PX × (1 − |DOWNSIDE|%)`（都是每股價位，UPSIDE／DOWNSIDE 空白就留空）。
+  **Transactions 頁的 P_Target 欄不再被讀取**（`BuildPositions` 已移除；該欄仍在頁面上，只是沒人用）。
+  R／S 是手打的**純數字、格式顯示成 `n%`**（打 25＝+25.0%，**不是 0.25**；DOWNSIDE 格式的負數區段不帶自動負號，
+  所以打 12 或 −12 都顯示 −12.0%），UPSIDE 紅字、DOWNSIDE 綠字、置中粗體，樣式同原 SWING RISK。手打值以代號為鍵、UP 前讀出後寫回
+  （`ReadHandColumn(ws, "UPSIDE"/"DOWNSIDE")` 依表頭文字定位，`HandNumber` 轉回數字）。⚠️ 打「25%」會被 Excel 當 0.25，畫面顯示 +0.3%，照打 25 即可。
+  ⚠️ **使用者這本活頁簿是手動計算模式**（`Application.Calculation = xlCalculationManual`），公式不會自己重算：
+  `WritePositionRows` 寫完呼叫 `Range.Calculate`、工作表 `Worksheet_Change`（R／S 欄、持倉列）呼叫 `RecalcTargetRow` 只刷新該列的 P／Q。
+  P.TARGET 高亮（LAST > P.TARGET 整列亮橘底）沿用，改讀公式結果。實測 7610 ENTRY PX 1,904.99、UPSIDE 25／DOWNSIDE 12 →
+  P.TARGET 2,381.24、SWING RISK 1,676.39；UP、ARRANGE(WTD) 後公式跟著列走。
 - **HistoryLog D 欄（Realized PnL）不是快照，是每次 UP 重算的**（v4.8）：`RebuildRealizedHistory`
   在 `LogHistory` 收尾把每一列 D 改成「Realized 表依出場日累計到該列日期」。v4.7 前是
   append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段

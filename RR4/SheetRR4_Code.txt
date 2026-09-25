@@ -9,6 +9,9 @@
 '    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
 '    (WATCHLIST entry row retired 2026-09-25 - names are typed on the Watch
 '     page, modWatch; the RR4 block is a read-only summary)
+'    R/S UPSIDE / DOWNSIDE of a position row -> RecalcTargetRow (2026-09-25;
+'                        the workbook is in manual calculation, so the P.TARGET /
+'                        SWING RISK formulas are refreshed by hand here)
 '    B37:D37 TO-DO entry row -> PortfolioDashboard_v3.TodoCommitEntry
 '                        (2026-09-21; commits on Enter in D, or in C when
 '                        D already holds a date)
@@ -25,6 +28,12 @@
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
+    ' UPSIDE / DOWNSIDE typed in the position log -> refresh that row's P.TARGET / SWING RISK
+    If Target.Row >= RR4_POS_FIRST And Target.Row < RR4_POS_FIRST + 100 And _
+       (Target.Column = RR4_UP_COL Or Target.Column = RR4_DN_COL) Then
+        Call RecalcTargetRow(Me, Target.Row)
+        Exit Sub
+    End If
     Dim hitArr As Boolean, hitTicker As Boolean, hitTarget As Boolean, hitTD As Boolean
     hitArr = Not Intersect(Target, Me.Range(RR4_ARR_CELL)) Is Nothing
     hitTicker = Not Intersect(Target, Me.Range(TI_TICKER_CELL)) Is Nothing

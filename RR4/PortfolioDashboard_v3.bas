@@ -37,7 +37,11 @@ Private Const HL_BASE_ROW As Long = 3   ' first baseline row on HistoryRaw
 '  Position log columns (BROKER column and broker group rows removed):
 '    A TICKER   B NAME      C ENTRY DT  D DAYS      E SECTOR   F NET EXPOS
 '    G SHARES   H ENTRY PX  I LAST      J % CHG     K UNRL PNL L WT%
-'    M W.BETA   N BETA 30D  O P.TARGET  P SWING RISK (typed by hand)
+'    M W.BETA   N BETA 30D  O P.TARGET  P SWING RISK  Q UPSIDE  R DOWNSIDE
+'    (2026-09-25: UPSIDE / DOWNSIDE are hand-typed %, 25 = 25%; P.TARGET =
+'    ENTRY PX x (1+UPSIDE%), SWING RISK = ENTRY PX x (1-DOWNSIDE%), formulas;
+'    the Transactions P_Target column is no longer read.  Letters above are
+'    the historical page-relative ones - real columns are P/Q/R/S.)
 '    T (hidden) default-order key, used by ARRANGE "DEF"
 '
 '  ARRANGE <GO> (D2): UNU/UND = UNRL PNL, PCU/PCD = % CHG, DAU/DAD = DAYS,
@@ -122,10 +126,13 @@ Private Const RR4_DONUT_NAME As String = "RR4_DONUT"
 Private Const RR4_RLPNL_NAME As String = "RR4_RLPNL"   ' realized-PnL line chart (v4.6)
 Private Const RR4_FUNNEL_NAME As String = "RR4_FUNNEL" ' beta-exposure funnel chart (v4.18)
 Private Const RR4_FUN_PREFIX  As String = "RR4_FUN_"    ' shape-based funnel bars (see DrawFunnel)
-Private Const RR4_NCOL      As Long = 19    ' last body column, B:S (R:S = NOTE, v4.11)
+Private Const RR4_NCOL      As Long = 19    ' last body column, B:S (R = UPSIDE, S = DOWNSIDE)
 Private Const RR4_ORD_COL   As Long = 22    ' V (hidden)
 Private Const RR4_SWING_COL As Long = 17    ' Q
-Private Const RR4_NOTE_COL  As Long = 18    ' R (text overflows into S, which stays empty)
+Public Const RR4_UP_COL    As Long = 18    ' R  UPSIDE, hand-typed % (25 = 25%)
+Public Const RR4_DN_COL    As Long = 19    ' S  DOWNSIDE, hand-typed % (12 or -12 = -12%)
+Private Const RR4_UP_FG     As Long = 7237375   ' RGB(255,110,110)
+Private Const RR4_DN_FG     As Long = 8570990   ' RGB(110,200,130)
 Private Const RR4_LOG_ROWS  As Long = 5     ' daily-log trade lines, rows 10-14
 Private Const RR4_POS_ROW_H As Double = 24  ' position-log data rows (v4.5, was 18)
 Private Const RR4_WBAR_PREFIX As String = "RR4W_"
@@ -198,8 +205,8 @@ Sub RebuildPortfolioDashboard()
     Dim cfgCap As Variant: cfgCap = wsP.Range(RR4_CFG_CAP).Value
     If Not IsDate(cfgInc) Then cfgInc = wsP.Range("S1").Value
     If NumOr0(cfgCap) <= 0 Then cfgCap = wsP.Range("S2").Value
-    Dim swingRiskMap As Object: Set swingRiskMap = ReadHandColumn(wsP, "SWING RISK")
-    Dim noteMap As Object: Set noteMap = ReadHandColumn(wsP, "NOTE")
+    Dim upMap As Object: Set upMap = ReadHandColumn(wsP, "UPSIDE")
+    Dim dnMap As Object: Set dnMap = ReadHandColumn(wsP, "DOWNSIDE")
     Dim wl As Variant: wl = ReadWatchlist(wsP)
     Dim td As Variant: td = ReadTodo(wsP)
     ' A sheet still on an older layout has other data sitting in these cells:
@@ -256,7 +263,7 @@ Sub RebuildPortfolioDashboard()
     Call DrawSummary(wsP, posData, totalMktTWD, totalCostTWD, totalUnrlTWD, realPnL, portBeta, posCount)
     Call DrawColumnHeaders(wsP)
     Dim lastDataRow As Long
-    lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, swingRiskMap, noteMap)
+    lastDataRow = WritePositionRows(wsP, posData, totalMktTWD, upMap, dnMap)
     Call ApplyArrange(arrCode)
     Call DrawWatchlist(wsP, wl)
     Call DrawTodo(wsP, td)
@@ -862,7 +869,7 @@ Private Sub ResetSheetStyle(ws As Worksheet)
     ActiveWindow.DisplayGridlines = False
 
     ' A is a blank spacer (as wide as E). B ticker, C name, F sector are the wide text
-    ' columns; Q SWING RISK is free text; R/S hold the panel's PnL / return.
+    ' columns; P.TARGET / SWING RISK are formulas; R/S are hand-typed UPSIDE / DOWNSIDE %.
     ws.Columns(1).ColumnWidth = 11      ' v4.3: same as E (was 2)
     Dim i As Integer
     For i = 2 To 19
@@ -1254,7 +1261,9 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
     Dim headers As Variant
     headers = Array("TICKER", "NAME", "ENTRY DT", "DAYS", "SECTOR", _
                     "NET EXPOS", "SHARES", "ENTRY PX", "LAST", "% CHG", _
-                    "UNRL PNL", "WT%", "W.BETA", "BETA 30D", "P.TARGET", "SWING RISK", "NOTE")
+                    "UNRL PNL", "WT%", "W.BETA", "BETA 30D", "P.TARGET", "SWING RISK", "UPSIDE", "DOWNSIDE")
+    ' the old NOTE header was merged over R:S; clear that before writing S
+    ws.Range(ws.cells(RR4_POS_HDR, RR4_UP_COL), ws.cells(RR4_POS_HDR, RR4_DN_COL)).UnMerge
     Dim i As Integer
     For i = 0 To UBound(headers)
         With ws.cells(RR4_POS_HDR, RR4_LEFT + i + 1)
@@ -1267,13 +1276,6 @@ Private Sub DrawColumnHeaders(ws As Worksheet)
             .HorizontalAlignment = xlCenter
         End With
     Next i
-    ' NOTE header spans R:S (the data rows stay unmerged - text overflows)
-    With ws.Range(ws.cells(RR4_POS_HDR, RR4_NOTE_COL), ws.cells(RR4_POS_HDR, RR4_NOTE_COL + 1))
-        .UnMerge
-        .Interior.Color = RGB(10, 10, 10)
-        .Merge
-        .HorizontalAlignment = xlCenter
-    End With
     ws.Rows(RR4_POS_HDR).RowHeight = 20
     With ws.Range(ws.cells(RR4_POS_HDR, RR4_LEFT + 1), ws.cells(RR4_POS_HDR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
@@ -1287,26 +1289,34 @@ End Sub
 ' CalcPositions order; ApplyArrange then sorts them and paints the
 ' stripes, the P.TARGET highlight and the closing gold rule.
 Private Function WritePositionRows(ws As Worksheet, posData() As Variant, _
-                                    totalMkt As Double, ByVal swingRiskMap As Object, _
-                                    ByVal noteMap As Object) As Long
+                                    totalMkt As Double, ByVal upMap As Object, _
+                                    ByVal dnMap As Object) As Long
     WritePositionRows = RR4_POS_FIRST - 1
     Dim n As Long: n = PosCountOf(posData)
     If n < 1 Then Exit Function
 
     Dim i As Long, r As Long: r = RR4_POS_FIRST
     For i = 1 To n
-        Call WriteOnePositionRow(ws, r, i, posData, totalMkt, swingRiskMap, noteMap)
+        Call WriteOnePositionRow(ws, r, i, posData, totalMkt, upMap, dnMap)
         r = r + 1
     Next i
     WritePositionRows = r - 1
+    ' the workbook may sit in manual calculation - Range.Calculate works either way
+    ws.Range(ws.cells(RR4_POS_FIRST, RR4_LEFT + 15), ws.cells(r - 1, RR4_SWING_COL)).Calculate
 
     Call DrawTopExposure(ws, posData, totalMkt)
 End Function
 
+' Typing UPSIDE / DOWNSIDE: refresh that row's P.TARGET / SWING RISK formulas
+' (called from the RR4 sheet's Worksheet_Change; manual-calculation safe).
+Public Sub RecalcTargetRow(ByVal ws As Worksheet, ByVal r As Long)
+    ws.Range(ws.cells(r, RR4_LEFT + 15), ws.cells(r, RR4_SWING_COL)).Calculate
+End Sub
+
 ' ------------------------------------------------------------
 Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
                                  posData() As Variant, totalMkt As Double, _
-                                 swingRiskMap As Object, noteMap As Object)
+                                 upMap As Object, dnMap As Object)
     With ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_NCOL))
         .Font.Name = "Consolas"
         .Font.Size = 10
@@ -1328,7 +1338,6 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     Dim unrlPnl    As Double: unrlPnl = posData(i, 13)
     Dim Beta       As Double: Beta = posData(i, 14)
     Dim beta30d    As Double: beta30d = posData(i, 15)
-    Dim pTgt       As Double: pTgt = posData(i, 16)
 
     Dim wtPct As Double: If totalMkt > 0 Then wtPct = netExpos / totalMkt
     Dim wBeta As Double: wBeta = wtPct * Beta
@@ -1382,24 +1391,36 @@ Private Sub WriteOnePositionRow(ws As Worksheet, r As Long, i As Long, _
     ws.cells(r, RR4_LEFT + 14).NumberFormat = "0.000"
     ws.cells(r, RR4_LEFT + 14).Font.Color = RGB(180, 180, 255)
 
-    ws.cells(r, RR4_LEFT + 15).Value = pTgt
-    ws.cells(r, RR4_LEFT + 15).NumberFormat = "#,##0"
-    ws.cells(r, RR4_LEFT + 15).Font.Color = RR4_ACCENT
-
-    ' hand-typed columns (SWING RISK, NOTE): white text on the row stripe
+    ' P.TARGET = ENTRY PX x (1 + UPSIDE%), SWING RISK = ENTRY PX x (1 - |DOWNSIDE|%):
+    ' live formulas on the row's own R / S / I cells (so they follow a hand edit
+    ' and survive ARRANGE sorts); blank until UPSIDE / DOWNSIDE is typed. The old
+    ' Transactions P_Target column is no longer read.
+    With ws.cells(r, RR4_LEFT + 15)
+        .NumberFormat = "#,##0.00"
+        .FormulaR1C1 = "=IF(AND(ISNUMBER(RC[2]),RC[-7]>0),RC[-7]*(1+RC[2]/100),"""")"
+        .Font.Color = RR4_ACCENT
+    End With
     With ws.cells(r, RR4_SWING_COL)
-        .NumberFormat = "@"
-        If swingRiskMap.Exists(tickerCode) Then .Value = swingRiskMap(tickerCode)
+        .NumberFormat = "#,##0.00"
+        .FormulaR1C1 = "=IF(AND(ISNUMBER(RC[2]),RC[-8]>0),RC[-8]*(1-ABS(RC[2])/100),"""")"
         .Font.Color = RR4_INPUT_FG
         .Font.Bold = True
         .HorizontalAlignment = xlCenter
     End With
-    With ws.cells(r, RR4_NOTE_COL)
-        .NumberFormat = "@"
-        If noteMap.Exists(tickerCode) Then .Value = noteMap(tickerCode)
-        .Font.Color = RR4_INPUT_FG
-        .Font.Bold = False
-        .HorizontalAlignment = xlLeft
+    ' UPSIDE / DOWNSIDE: plain numbers shown as "n%" by the format (no /100), so
+    ' typing 25 reads +25.0%; the DOWNSIDE format drops the sign of the value and
+    ' prints "-", so 12 and -12 both read -12.0%.
+    With ws.cells(r, RR4_UP_COL)
+        .NumberFormat = "+0.0""%"";-0.0""%"";0.0""%"""
+        If upMap.Exists(tickerCode) Then .Value = HandNumber(upMap(tickerCode))
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
+    End With
+    With ws.cells(r, RR4_DN_COL)
+        .NumberFormat = """-""0.0""%"";""-""0.0""%"";0.0""%"""
+        If dnMap.Exists(tickerCode) Then .Value = HandNumber(dnMap(tickerCode))
+        .Font.Bold = True
+        .HorizontalAlignment = xlCenter
     End With
 
     ' hidden default-order key (ARRANGE "DEF")
@@ -1563,9 +1584,11 @@ Private Sub RestripeRows(ws As Worksheet, lastR As Long)
             .Interior.Color = bg
             .Borders(xlEdgeBottom).LineStyle = xlNone
         End With
-        ' v4.11: SWING RISK / NOTE ride the stripe like every other cell
+        ' v4.11: SWING RISK rides the stripe like every other cell; UPSIDE red,
+        ' DOWNSIDE green (TW convention)
         ws.cells(r, RR4_SWING_COL).Font.Color = RR4_INPUT_FG
-        ws.cells(r, RR4_NOTE_COL).Font.Color = RR4_INPUT_FG
+        ws.cells(r, RR4_UP_COL).Font.Color = RR4_UP_FG
+        ws.cells(r, RR4_DN_COL).Font.Color = RR4_DN_FG
     Next r
     With ws.Range(ws.cells(lastR, RR4_LEFT + 1), ws.cells(lastR, RR4_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
@@ -2393,7 +2416,7 @@ End Function
 ' ================================================================
 '  Small helpers (v4)
 ' ================================================================
-' SWING RISK and NOTE are typed by hand, so they have to survive the
+' UPSIDE and DOWNSIDE are typed by hand, so they have to survive the
 ' sheet clear. Found by header text (whatever row the log is on), keyed
 ' by ticker so an ARRANGE between two UPs does not mis-assign them.
 Private Function ReadHandColumn(ws As Worksheet, ByVal headerText As String) As Object
@@ -2465,6 +2488,13 @@ Private Function CellStr(ByVal v As Variant) As String
     If IsError(v) Then Exit Function
     If IsEmpty(v) Or IsNull(v) Then Exit Function
     CellStr = Trim(CStr(v))
+End Function
+
+' A hand-typed cell read back as text: a number when it parses (so the
+' UPSIDE / DOWNSIDE formats and the P.TARGET / SWING RISK formulas see it),
+' otherwise the text as typed.
+Private Function HandNumber(ByVal s As String) As Variant
+    If IsNumeric(s) Then HandNumber = CDbl(s) Else HandNumber = s
 End Function
 
 Private Function NumOr0(ByVal v As Variant) As Double
@@ -3128,7 +3158,6 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
         Dim tax    As Double: tax = val(data(i, 7))
         Dim netAmt As Double: netAmt = val(data(i, 8))
         Dim Sector As String: Sector = CStr(data(i, 9))
-        Dim pTgt   As Double: pTgt = val(data(i, 10))
         Dim strat  As String: strat = CStr(data(i, 11))
         Dim Beta   As Double: Beta = val(data(i, 12))
         Dim broker As String
@@ -3150,7 +3179,6 @@ Private Function BuildPositions(wsTr As Worksheet) As Object
                 dict.Add posKey, Array(0#, 0#, 0#, 0#, 0#, 0#, "", 0#, "", 0#, broker, New Collection)
             End If
             Dim d As Variant: d = dict(posKey)
-            If pTgt > 0 Then d(7) = pTgt
             If strat <> "" Then d(8) = strat
             If Beta <> 0 Then d(9) = Beta
             If Sector <> "" Then d(6) = Sector
