@@ -698,6 +698,10 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     `.TWO`）。回應快取在 `RR4/.valuation-cache/`（MOPS 30 天、SEC 1 天、Yahoo 半天，已進 .gitignore），3017＋14 家同業首跑
     134 秒、快取後 7 秒。
   - 可離開 Excel 單獨測：`python RR4/valuation.py --ticker 3017 --market TW --peers 2421,6230 --out out.txt`。
+  - **MKT／GROUP 輸入格下拉（2026-09-25，使用者「我都會忘記有哪些族群」）**：`AddInputDropdowns`（`DrawShell` 內、`NavAdd` 之前）——MKT＝`US,TW`，
+    GROUP＝`=GroupList`（`Sanner.RebuildGroupList` 每次重建頁面時先重寫，清單永遠等於 tblGroups 目前的全部族群名、原名原順序、不附成分股數）。
+    `AlertStyle = xlValidAlertInformation`＋`ShowError = False`：清單外的手打值不擋。**Company research 的 GROUP 格本來就有同一個下拉**（`DrawCrHeader`），沒動。
+    ⚠️ `DrawShell` 的 `ws.cells.Clear` 會把驗證一起清掉，所以下拉要在每次 DrawShell 內重加。實測：GroupList 96 筆、兩格驗證讀回正確。
 - **`RR4/Sheet*_Code.txt`、`ThisWorkbook_Code.txt` 是工作表／活頁簿事件碼的唯一紀錄**
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
