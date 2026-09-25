@@ -14,7 +14,10 @@ Option Explicit
 '  Peer group = the tblGroups group that contains the ticker (Sanner.
 '  GetGroupNames / GetSectorTickers): theme groups first (>= 4 members),
 '  then the numbered sector groups, TW before US; the GROUP input can
-'  override it, and with no group at all only the ROIC side is filled.  Page layout (page rows; the bar adds a blank row, 3 bar
+'  override it (several names, comma-separated: members merge; 2026-09-25) and
+'  a Market = CN group (tblGroups, Yahoo tickers like 600549.SS) contributes
+'  CN reference peers, order-of-magnitude only; with no group at all only the
+'  ROIC side is filled.  Page layout (page rows; the bar adds a blank row, 3 bar
 '  rows and a blank column A - read inputs through NavOffset / NavLeft):
 '    row 1     VALUATION title | context
 '    row 2-3   TICKER <GO> (A) . MKT (C) . GROUP (E)   label above input
@@ -75,17 +78,23 @@ Public Sub ShowValuation(ByVal rawTicker As String, Optional ByVal marketOverrid
     If Right$(bare, 4) = ".TWO" Then bare = Left$(bare, Len(bare) - 4): mkt = "TW"
     If Right$(bare, 3) = ".TW" Then bare = Left$(bare, Len(bare) - 3): mkt = "TW"
 
-    ' peer group from tblGroups
+    If Right$(bare, 3) = ".SS" Or Right$(bare, 3) = ".SZ" Or Right$(bare, 3) = ".SH" Then
+        Call WriteFlag(ws, PG_BODY, "CN tickers can only be peers (put them in a Market = CN group), not the target.")
+        Call NavNotify("VALUATION: CN tickers are peer-only", True)
+        GoTo Done
+    End If
+
+    ' peer group(s) from tblGroups: GROUP may hold several names, comma-separated
     Dim gMkt As String, peers As Variant
     If grp = "" Then
         grp = FindGroupOf(bare, mkt, gMkt)
     Else
-        gMkt = GroupMarketOf(grp)
+        gMkt = FirstNonCnMarket(grp)
     End If
     ' an all-digit code is a TW stock whatever the group table says
     If IsNumeric(bare) Then mkt = "TW"
     If mkt = "" Then mkt = IIf(gMkt <> "", gMkt, "US")
-    If grp <> "" Then peers = GetSectorTickers(mkt, grp)
+    If grp <> "" Then peers = PeerSpecs(grp, mkt)
     ' no group = ROIC side only; the relative / fair-value blocks read n/a
     Dim nPeers As Long
     If IsEmpty(peers) Then
@@ -202,9 +211,54 @@ Private Function IsNumberedGroup(ByVal g As String) As Boolean
     IsNumberedGroup = (Mid$(g, 1, 1) Like "#" And Mid$(g, 2, 1) Like "#" And Mid$(g, 3, 2) = ". ")
 End Function
 
+' GROUP text -> group names (full-width / ideographic commas accepted).
+Private Function SplitGroups(ByVal grp As String) As Variant
+    grp = Replace(Replace(grp, ChrW(&HFF0C), ","), ChrW(&H3001), ",")
+    SplitGroups = Split(grp, ",")
+End Function
+
+' Market of the first non-CN group in the GROUP text ("" if none): the
+' target's market when MKT is blank. CN groups only ever supply peers.
+Private Function FirstNonCnMarket(ByVal grp As String) As String
+    Dim parts As Variant: parts = SplitGroups(grp)
+    Dim i As Long, m As String
+    For i = 0 To UBound(parts)
+        If Len(Trim$(CStr(parts(i)))) > 0 Then
+            m = GroupMarketOf(Trim$(CStr(parts(i))))
+            If m <> "" And m <> "CN" Then FirstNonCnMarket = m: Exit Function
+        End If
+    Next i
+End Function
+
+' "TICKER|MKT" specs of every named group's members: the target's own market
+' plus any Market = CN rows (CN reference peers ride along with every group
+' they are named in). Deduplicated; Empty when nothing matched.
+Private Function PeerSpecs(ByVal grp As String, ByVal mkt As String) As Variant
+    Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary")
+    seen.CompareMode = vbTextCompare
+    Dim parts As Variant: parts = SplitGroups(grp)
+    Dim i As Long, k As Long, m As Variant, tks As Variant, nm As String
+    For i = 0 To UBound(parts)
+        nm = Trim$(CStr(parts(i)))
+        If Len(nm) > 0 Then
+            For Each m In Array(mkt, "CN")
+                If CStr(m) <> "" Then
+                    tks = GetSectorTickers(CStr(m), nm)
+                    If Not IsEmpty(tks) Then
+                        For k = LBound(tks) To UBound(tks)
+                            If Not seen.Exists(CStr(tks(k))) Then seen.Add CStr(tks(k)), CStr(tks(k)) & "|" & CStr(m)
+                        Next k
+                    End If
+                End If
+            Next m
+        End If
+    Next i
+    If seen.count > 0 Then PeerSpecs = seen.items
+End Function
+
 Private Function GroupMarketOf(ByVal grp As String) As String
     Dim m As Variant, names As Variant, g As Variant
-    For Each m In Array("TW", "US")
+    For Each m In Array("TW", "US", "CN")
         Dim mm As String: mm = CStr(m)
         names = GetGroupNames(mm)
         If Not IsEmpty(names) Then
@@ -389,7 +443,7 @@ Private Sub DrawShell(ws As Worksheet, ByVal tk As String, ByVal mkt As String, 
     Call InputCell(ws.cells(PG_IN, COL_GRP), grp)
     Call AddInputDropdowns(ws)
     With ws.cells(PG_IN, COL_GRP + 2)
-        .Value = "US ticker or TW code + Enter.  MKT blank = auto.  GROUP: click the cell's arrow for every tblGroups name (blank = the group holding the ticker).  ROIC only, no WACC."
+        .Value = "US ticker or TW code + Enter.  MKT blank = auto.  GROUP: click the arrow for every tblGroups name, several names comma-separated (a Market = CN group adds CN reference peers); blank = the group holding the ticker.  ROIC only, no WACC."
         .Font.Color = CLR_MUTED
     End With
     ws.Columns(1).ColumnWidth = 24
@@ -571,6 +625,14 @@ Private Sub RenderPage(ws As Worksheet)
         If Cell(row, 0) = "Fair price (chosen)" Then ws.cells(r, RIGHT_COL + 1).Font.Color = RR4_ACCENT
         r = r + 1
     Next row
+    If Val(Meta("cn_peers")) > 0 Then
+        With ws.cells(r, RIGHT_COL)
+            .Value = "band includes CN reference peers - order of magnitude only, not strictly comparable"
+            .Font.Color = CLR_FLAG
+            .Font.Italic = True
+        End With
+        r = r + 1
+    End If
     If r > leftEnd Then leftEnd = r
 
     ' ---- quarterly history
@@ -593,9 +655,10 @@ Private Sub RenderPage(ws As Worksheet)
     r = r + 2
 
     ' ---- peers
-    Call Section(ws, r, 1, "PEER GROUP  " & IIf(Meta("group") = "", "(none - type a GROUP name to compare)", Meta("group")) & "  (tblGroups, " & Meta("peers_used") & " usable for the multiple band)", 13)
+    Dim nCn As Long: nCn = CLng(Val(Meta("cn_peers")))
+    Call Section(ws, r, 1, "PEER GROUP  " & IIf(Meta("group") = "", "(none - type a GROUP name to compare)", Meta("group")) & "  (tblGroups, " & Meta("peers_used") & " usable for the multiple band" & IIf(nCn > 0, ", " & nCn & " CN reference", "") & ")", 14)
     r = r + 1
-    Call HeaderRow(ws, r, 1, Array("TICKER", "NAME", "PERIOD", "ROIC", "EV/EBIT", "P/B", "NOPAT MGN", "IC TURN", "MCAP", "EV", "EBIT TTM", "IC", "NOTE"))
+    Call HeaderRow(ws, r, 1, Array("TICKER", "NAME", "PERIOD", "ROIC", "EV/EBIT", "P/B", "NOPAT MGN", "IC TURN", "MCAP", "EV", "EBIT TTM", "IC", "NOTE", "CCY"))
     r = r + 1
     Dim peerFirst As Long: peerFirst = r
     first = True
@@ -603,9 +666,10 @@ Private Sub RenderPage(ws As Worksheet)
         If first Then
             first = False
         Else
-            Call WriteVals(ws, r, 1, row, Array("@", "@", "@", "pct", "x", "x", "pct", "x", "M", "M", "M", "M", "@"))
+            Call WriteVals(ws, r, 1, row, Array("@", "@", "@", "pct", "x", "x", "pct", "x", "M", "M", "M", "M", "@", "@"))
             ws.cells(r, 13).Font.Color = CLR_MUTED
             ws.cells(r, 13).HorizontalAlignment = xlLeft
+            ws.cells(r, 14).Font.Color = IIf(Cell(row, 13) = "CNY", CLR_FLAG, CLR_MUTED)
             If r = peerFirst Then ws.Range(ws.cells(r, 1), ws.cells(r, 12)).Font.Color = RR4_ACCENT   ' the target row
             If IsNumeric(Cell(row, 3)) Then ws.cells(r, 4).Font.Color = IIf(CDbl(Cell(row, 3)) >= floorV, CLR_GOOD, CLR_BAD)
             r = r + 1
@@ -613,6 +677,10 @@ Private Sub RenderPage(ws As Worksheet)
     Next row
     Dim peerLast As Long: peerLast = r - 1
     Call WriteNote(ws, r, "EV = market cap + debt + leases + minority - cash & short-term investments.  Peers with negative EBIT or EV/EBIT >= 100 are listed but left out of the band and regression.")
+    If nCn > 0 Then
+        r = r + 1
+        Call WriteNote(ws, r, "CN reference peers (CCY = CNY, Yahoo data): included in the band and regression as an order-of-magnitude comparison only - different regulator and pricing system, amounts not FX-converted (only ratios enter), Yahoo operating income can exceed pre-tax profit.")
+    End If
     r = r + 2
 
     ' ---- thesis + log
@@ -690,14 +758,17 @@ Private Sub DrawScatter(ws As Worksheet, ByVal r1 As Long, ByVal r2 As Long, ByV
         If IsNumeric(ws.cells(r, 4).Value) And IsNumeric(ws.cells(r, 5).Value) Then
             If ws.cells(r, 4).Value <> "" And ws.cells(r, 5).Value <> "" Then
                 Dim s As Series: Set s = ch.SeriesCollection.NewSeries
-                s.Name = CStr(ws.cells(r, 1).Value)
+                Dim isCn As Boolean: isCn = (CStr(ws.cells(r, 14).Value) = "CNY")
+                s.Name = CStr(ws.cells(r, 1).Value) & IIf(isCn, " (CN)", "")
                 s.XValues = ws.cells(r, 4)
                 s.Values = ws.cells(r, 5)
-                s.MarkerStyle = xlMarkerStyleCircle
-                s.MarkerSize = IIf(r = r1, 10, 7)
+                s.MarkerStyle = IIf(isCn, xlMarkerStyleDiamond, xlMarkerStyleCircle)
+                s.MarkerSize = IIf(r = r1, 10, IIf(isCn, 8, 7))
                 Dim excluded As Boolean: excluded = (CDbl(ws.cells(r, 5).Value) >= 100)
                 If r = r1 Then
                     s.MarkerBackgroundColor = RR4_ACCENT: s.MarkerForegroundColor = RR4_ACCENT
+                ElseIf isCn Then
+                    s.MarkerBackgroundColor = IIf(excluded, RGB(0, 0, 0), CLR_FLAG): s.MarkerForegroundColor = CLR_FLAG
                 ElseIf excluded Then
                     s.MarkerBackgroundColor = RGB(0, 0, 0): s.MarkerForegroundColor = RGB(120, 120, 120)
                 Else
@@ -708,7 +779,7 @@ Private Sub DrawScatter(ws As Worksheet, ByVal r1 As Long, ByVal r2 As Long, ByV
                     .ShowSeriesName = True: .ShowValue = False: .ShowCategoryName = False
                     .Position = xlLabelPositionRight
                     .Font.Name = FONT_FACE: .Font.Size = 8
-                    .Font.Color = IIf(r = r1, RR4_ACCENT, RGB(200, 200, 200))
+                    .Font.Color = IIf(r = r1, RR4_ACCENT, IIf(isCn, CLR_FLAG, RGB(200, 200, 200)))
                 End With
                 n = n + 1
             End If

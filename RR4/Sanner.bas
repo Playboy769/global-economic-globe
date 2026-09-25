@@ -553,6 +553,10 @@ Sub RunGroupKeyword(ByVal raw As String)
     Dim mkt As String, gm As String, g As Variant, tks As Variant, k As Long
     For Each g In picked.keys
         gm = GetGroupMarket(CStr(g))
+        If StrComp(gm, "CN", vbTextCompare) = 0 Then
+            Call NavNotify("Group [" & CStr(g) & "] is Market = CN (Valuation-page peers only) - the scanner does not support it, nothing scanned", True)
+            Exit Sub
+        End If
         If Len(mkt) = 0 Then
             mkt = gm
         ElseIf StrComp(mkt, gm, vbTextCompare) <> 0 Then

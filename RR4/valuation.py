@@ -31,8 +31,16 @@ Data:
         TTM = current YTD + prior FY - prior-year YTD of the same quarter,
         and quarters use the 3-month contexts (Q4 = FY - Q3 YTD).  Shares
         = ordinary share capital / NT$10 par.
+    CN  (peers only, 2026-09-25)  Yahoo fundamentals-timeseries (cookie +
+        crumb): latest quarterly balance sheet + trailing-twelve-month flows
+        (the quarterly flow series have gaps, the trailing ones do not).
+        Amounts stay in CNY - only ratios (ROIC, EV/EBIT) enter the maths.
+        Yahoo's OperatingIncome for CN filers can sit above pre-tax profit
+        (items below the operating line), so the ROIC is a rough reading.
     Prices  Yahoo chart API (last close).  TW tries .TW then .TWO.
-Peer group comes from the workbook (tblGroups), passed in the request.
+Peer group comes from the workbook (tblGroups), passed in the request as
+"TICKER|MKT" strings (MKT = TW / US / CN; a bare ticker inherits the target's
+market).
 
 Output is a plain text file of tab-separated blocks (VBA has no JSON
 parser): "#NAME" starts a block, following lines are rows.
@@ -57,8 +65,8 @@ UA = "Ryan Personal Research Tool ryan929929@gmail.com"   # same as shared-vba/m
 YAHOO_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/124 Safari/537.36")
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".valuation-cache")
-TAX_FALLBACK = {"US": 0.21, "TW": 0.20}
-ROIC_FLOOR = {"US": 0.10, "TW": 0.08}      # absolute hurdle replacing WACC
+TAX_FALLBACK = {"US": 0.21, "TW": 0.20, "CN": 0.25}
+ROIC_FLOOR = {"US": 0.10, "TW": 0.08, "CN": 0.08}      # absolute hurdle replacing WACC (CN is only ever a peer)
 HIST_QUARTERS = 8
 LOG = []
 
@@ -154,6 +162,9 @@ def price_for(ticker, market):
             if num(px):
                 return px, ticker + suf
         return None, ""
+    if market == "CN":
+        px, cur = yahoo_last_close(ticker)          # 600549.SS / 000657.SZ - suffix kept
+        return px, ticker
     px, cur = yahoo_last_close(ticker.replace(".", "-"))
     return px, ticker
 
@@ -551,6 +562,114 @@ def load_tw(co_id, history=True):
 
 
 # ----------------------------------------------------------------------------
+# CN (peers only): Yahoo fundamentals-timeseries
+# ----------------------------------------------------------------------------
+_YSESS = None
+CN_Q = {   # latest quarterly balance-sheet items
+    "assets": "TotalAssets", "cur_liab": "CurrentLiabilities", "cash": "CashAndCashEquivalents",
+    "st_inv": "OtherShortTermInvestments", "equity": "StockholdersEquity",
+    "st_debt": "CurrentDebtAndCapitalLeaseObligation", "lt_debt": "LongTermDebtAndCapitalLeaseObligation",
+    "minority": "MinorityInterest", "shares": "OrdinarySharesNumber", "shares2": "ShareIssued",
+}
+CN_T = {   # trailing-twelve-month flows (the quarterly ones have gaps)
+    "ebit": "OperatingIncome", "revenue": "TotalRevenue", "pretax": "PretaxIncome",
+    "tax": "TaxProvision", "da": "DepreciationAndAmortization", "capex": "CapitalExpenditure",
+}
+
+
+def yahoo_session():
+    """Cookie + crumb, needed by the fundamentals-timeseries endpoint."""
+    global _YSESS
+    if _YSESS is None:
+        s = requests.Session()
+        s.headers.update({"User-Agent": YAHOO_UA})
+        s.get("https://fc.yahoo.com", timeout=20, allow_redirects=False)
+        crumb = s.get("https://query2.finance.yahoo.com/v1/test/getcrumb", timeout=20).text.strip()
+        if not crumb or "<" in crumb or len(crumb) > 40:
+            raise RuntimeError("yahoo crumb failed")
+        _YSESS = (s, crumb)
+    return _YSESS
+
+
+def yahoo_timeseries(sym, types, ttl_days=0.5):
+    import hashlib
+    key = "yts_%s_%s.json" % (sym, hashlib.md5(types.encode()).hexdigest()[:10])
+    p = cache_path(key)
+    if os.path.exists(p) and (time.time() - os.path.getmtime(p)) < ttl_days * 86400:
+        with open(p, "rb") as f:
+            return json.loads(f.read().decode("utf-8", "replace"))
+    s, crumb = yahoo_session()
+    url = "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/" + sym
+    r = s.get(url, params={"type": types, "period1": 1500000000, "period2": int(time.time()), "crumb": crumb}, timeout=40)
+    if r.status_code >= 400:
+        raise RuntimeError("HTTP %d %s" % (r.status_code, sym))
+    with open(p, "wb") as f:
+        f.write(r.content)
+    return json.loads(r.text)
+
+
+def ts_series(payload):
+    """{'quarterlyTotalAssets': {'2026-06-30': 7.1e10, ...}, ...}"""
+    out = {}
+    for x in (payload.get("timeseries", {}).get("result") or []):
+        for k, v in x.items():
+            if k in ("meta", "timestamp") or not isinstance(v, list):
+                continue
+            d = {}
+            for e in v:
+                try:
+                    d[e["asOfDate"]] = float(e["reportedValue"]["raw"])
+                except (KeyError, TypeError, ValueError):
+                    pass
+            out[k] = d
+    return out
+
+
+def yahoo_name(sym):
+    try:
+        txt = fetch("https://query1.finance.yahoo.com/v8/finance/chart/%s" % sym, "yahoo_%s.json" % sym,
+                    {"User-Agent": YAHOO_UA}, ttl_days=0.5, params={"range": "5d", "interval": "1d"})
+        return json.loads(txt)["chart"]["result"][0]["meta"].get("longName") or sym
+    except Exception:  # noqa
+        return sym
+
+
+def latest_val(series, name):
+    d = series.get(name) or {}
+    if not d:
+        return None, None
+    k = max(d)
+    return d[k], k
+
+
+def load_cn(ticker, history=True):
+    if history:
+        raise RuntimeError("CN tickers are supported as peers only (Yahoo keeps 5 quarters, no history block)")
+    types = ",".join(["quarterly" + v for v in CN_Q.values()] + ["trailing" + v for v in CN_T.values()])
+    ser = ts_series(yahoo_timeseries(ticker, types))
+    ta, bs_date = latest_val(ser, "quarterlyTotalAssets")
+    if not num(ta):
+        raise RuntimeError("Yahoo has no balance sheet for " + ticker)
+    row = {"end": parse_date(bs_date)}
+    for k, nm in CN_Q.items():
+        row[k] = (ser.get("quarterly" + nm) or {}).get(bs_date)
+    row["st_borrow_for_ic"] = row.get("st_debt")
+    ttm = {}
+    for k, nm in CN_T.items():
+        v, d = latest_val(ser, "trailing" + nm)
+        ttm[k] = v
+        if num(v) and d != bs_date:
+            log("%s: trailing%s is as of %s, balance sheet %s" % (ticker, nm, d, bs_date))
+    sh = row.get("shares")
+    if not num(sh):
+        sh = row.get("shares2")
+    return {"ticker": ticker, "market": "CN", "name": yahoo_name(ticker), "unit": "CNY",
+            "periods": [row], "ttm_override": ttm, "shares": sh,
+            "shares_note": "Yahoo OrdinarySharesNumber (CNY, no FX conversion)",
+            "src": "Yahoo fundamentals-timeseries %s" % bs_date}
+
+
+# ----------------------------------------------------------------------------
 # metrics
 # ----------------------------------------------------------------------------
 def ic_readings(row):
@@ -697,14 +816,17 @@ def ols(xs, ys):
 
 
 def build(target, market, peers, group):
+    """peers = [(ticker, market)] - a peer may be TW / US / CN whatever the target is."""
     market = market.upper()
-    loader = load_tw if market == "TW" else load_us
-    tickers = [target] + [p for p in peers if p.upper() != target.upper()]
+    if market == "CN":
+        raise RuntimeError("CN tickers are supported as peers only")
+    specs = [(target, market)] + [(t, m) for (t, m) in peers if t.upper() != target.upper()]
     companies = []
-    for i, tk in enumerate(tickers):
+    for i, (tk, pm) in enumerate(specs):
         try:
+            loader = {"TW": load_tw, "US": load_us, "CN": load_cn}[pm]
             co = loader(tk, history=(i == 0))
-            px, sym = price_for(tk, market)
+            px, sym = price_for(tk, pm)
             if not num(px):
                 log("%s: no price" % tk)
             row = compute_company(co, px)
@@ -755,6 +877,7 @@ def build(target, market, peers, group):
         trend = "IMPROVING" if d > 0.02 else ("DETERIORATING" if d < -0.02 else "FLAT")
     return {
         "target": tgt, "peers": companies[1:], "peers_used": len(peers_ok), "group": group,
+        "cn_peers": sum(1 for c in companies[1:] if c["market"] == "CN"),
         "p25": p25, "p50": p50, "p75": p75, "reg": reg, "pred_mult": pred, "premium": premium,
         "chosen": chosen, "chosen_lbl": chosen_lbl,
         "fair_lo": fair_lo, "fair_mid": fair_mid, "fair_hi": fair_hi, "fair": fair, "margin": margin,
@@ -807,6 +930,7 @@ def write_out(res, path, elapsed):
     row("built", datetime.now().strftime("%Y-%m-%d %H:%M"))
     row("elapsed_s", "%.0f" % elapsed)
     row("peers_used", res["peers_used"])
+    row("cn_peers", res["cn_peers"])
     row("floor", fmt(res["floor"], "pct"))
 
     block("SUMMARY")     # label, value, fmt, note
@@ -860,7 +984,7 @@ def write_out(res, path, elapsed):
             fmt(h["margin_ttm"], "pct"), fmt(h["turnover_ttm"]))
 
     block("PEERS")
-    row("ticker", "name", "period_end", "roic", "ev_ebit", "pb", "margin", "turnover", "mcap", "ev", "ebit_ttm", "ic", "note")
+    row("ticker", "name", "period_end", "roic", "ev_ebit", "pb", "margin", "turnover", "mcap", "ev", "ebit_ttm", "ic", "note", "ccy")
     for c in [t] + res["peers"]:
         note = ""
         if not num(c["ev_ebit"]):
@@ -869,8 +993,11 @@ def write_out(res, path, elapsed):
             note = "excluded: EV/EBIT >= 100"
         if c["tax_src"] == "fallback":
             note = (note + "; " if note else "") + "tax fallback"
+        if c["market"] == "CN":
+            note = (note + "; " if note else "") + "CN reference - rough comparison only"
         row(c["ticker"], c["name"], c["period_end"], fmt(c["roic"], "pct"), fmt(c["ev_ebit"]), fmt(c["pb"]),
-            fmt(c["margin"], "pct"), fmt(c["turnover"]), fmt(c["mcap"]), fmt(c["ev"]), fmt(c["ebit_ttm"]), fmt(c["ic"]), note)
+            fmt(c["margin"], "pct"), fmt(c["turnover"]), fmt(c["mcap"]), fmt(c["ev"]), fmt(c["ebit_ttm"]), fmt(c["ic"]),
+            note, c["unit"])
 
     block("THESIS")
     rk = t["roic_pct_rank"]
@@ -913,6 +1040,20 @@ def pxv(v):
     return ("%.2f" % v) if num(v) else "n/a"
 
 
+def parse_peer(spec, default_market):
+    """'TICKER|MKT' (MKT = TW / US / CN) or a bare ticker that inherits the
+    target's market.  A .SS / .SZ / .SH suffix always means CN."""
+    tk, _, pm = spec.strip().partition("|")
+    tk, pm = tk.strip().upper(), pm.strip().upper()
+    if tk.endswith((".SS", ".SZ", ".SH")):
+        pm = "CN"
+    if not pm:
+        pm = default_market.upper()
+    if pm == "TW":
+        tk = tk.replace(".TWO", "").replace(".TW", "")
+    return tk, pm
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--req", help="request json written by VBA: {ticker, market, peers[], group}")
@@ -934,11 +1075,11 @@ def main():
     for suf in (".TWO", ".TW"):
         if ticker.endswith(suf):
             ticker, market = ticker[: -len(suf)], "TW"
-    peers = [p.upper().replace(".TWO", "").replace(".TW", "") if market.upper() == "TW" else p.upper() for p in peers]
     if ticker.isdigit():
         market = "TW"              # an all-digit code is a TW stock whatever was passed
     if not market:
         market = "US"
+    peers = [parse_peer(p, market) for p in peers]
     t0 = time.time()
     try:
         res = build(ticker, market, peers, group)
