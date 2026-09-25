@@ -107,9 +107,8 @@ Public Const RR4_CHART_ROWS As Long = 14
 ' DrawWatchlist keep the block alive across the page clear.
 Public Const RR4_WL_TITLE  As Long = 26
 Public Const RR4_WL_HDR    As Long = 27
-Public Const RR4_WL_ENTRY  As Long = 28
-Public Const RR4_WL_FIRST  As Long = 29
-Public Const RR4_WL_LAST   As Long = 35    ' 2026-09-21: 11 -> 7 rows to make room for TO-DO
+Public Const RR4_WL_FIRST  As Long = 28    ' 2026-09-26: the retired entry row (28) now holds a name too
+Public Const RR4_WL_LAST   As Long = 35    ' 2026-09-21: 11 -> 7 rows to make room for TO-DO; 8 rows since 2026-09-26
 ' TO-DO (2026-09-21): B:E under the WATCHLIST. Row 36 = title + column
 ' names (TASK / DUE / DTE), row 37 = entry row (B ticker, C task, D due),
 ' rows 38-39 = the saved list, sorted by due date (undated last), DTE =
@@ -2081,7 +2080,7 @@ End Sub
 '  WATCHLIST (B25:E38) - see the RR4_WL_* constants
 ' ================================================================
 ' 2026-09-25: the WATCHLIST lives in the Watch worksheet (modWatch, table
-' tblWatch); this block is a read-only summary of its first 7 names.
+' tblWatch); this block is a read-only summary of its first 8 names (rows 28-35 since 2026-09-26).
 ' Read BEFORE the sheet is cleared: WatchEnsure creates tblWatch on the first
 ' run and seeds it from the old block, which is still intact at this point.
 ' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target in Watch-page
@@ -2091,7 +2090,7 @@ Private Function ReadWatchlist(ws As Worksheet) As Variant
     ReadWatchlist = modWatch.WatchTop(RR4_WL_LAST - RR4_WL_FIRST + 1)
 End Function
 
-' Title, header, the entry row, then the saved rows with live price.
+' Title, header, then the saved rows with live price.
 Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
     ' 2026-09-21: grey how-to hint dropped (user request) - title only
     With ws.cells(RR4_WL_TITLE, RR4_LEFT + 1)
@@ -2116,8 +2115,6 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
         .Weight = xlThin
     End With
 
-    Call WatchlistPaintEntryRow(ws)
-
     Dim n As Long: If IsArray(wl) Then n = UBound(wl, 1)
     Dim r As Long, i As Long
     For r = RR4_WL_FIRST To RR4_WL_LAST
@@ -2135,20 +2132,6 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
         .Color = RR4_LINE
         .Weight = xlThin
     End With
-End Sub
-
-' 2026-09-25: the old entry row (RR4_WL_ENTRY) is retired - names are typed
-' on the Watch page. Keep the row blank and black so no input styling is left.
-Private Sub WatchlistPaintEntryRow(ws As Worksheet)
-    With ws.Range(ws.cells(RR4_WL_ENTRY, RR4_LEFT + 1), ws.cells(RR4_WL_ENTRY, RR4_LEFT + 4))
-        .ClearContents
-        .Interior.Color = RGB(0, 0, 0)
-        .Borders(xlEdgeRight).LineStyle = xlNone
-    End With
-    Dim c As Long
-    For c = 1 To 3
-        ws.cells(RR4_WL_ENTRY, RR4_LEFT + c).Borders(xlEdgeRight).LineStyle = xlNone
-    Next c
 End Sub
 
 ' Black vertical rules between adjacent grey input cells of an entry row
