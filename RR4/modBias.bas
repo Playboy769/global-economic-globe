@@ -129,6 +129,15 @@ Private Const COL_MODE As Long = 6              ' 2026-09-26: MODE input (CLOSE 
 Private Const STREAK_MIN As Long = 3            ' K-line charts label a bar only when its run is at least this long (Watch column shows any length)
 Private Const GRP_SPAN As Long = 3
 Private Const HEAT_COL_NAME As Long = 7         ' company name column of the group table
+' --- 2026-09-26: COMPARE <GO> / RANGE <GO> boxes (performance compare chart, log2 axis) ---
+Private Const COL_CMP As Long = 8                ' COMPARE input, merged across CMP_SPAN columns (H:N)
+Private Const CMP_SPAN As Long = 7
+Private Const COL_RANGE As Long = 16             ' RANGE input (3M / 6M / 1Y / 2Y / 3Y / YTD)
+Private Const CMP_MAX As Long = 12
+Private Const CMP_H As Double = 520
+Private Const CMP_ROWS As Long = 1000            ' rows of the hidden data block that get cleared
+Private Const CMP_DATA_OFF As Long = 31          ' data block starts this many columns after CHART_DATA_COL (past the K-line block)
+Private Const CMP_CHART_NAME As String = "BIAS_CMP"
 Private Const GRP_ROW_NAME As String = "BIASGRPROW"   ' sheet-level names: logical title row / row count of the group table
 Private Const GRP_N_NAME As String = "BIASGRPN"
 Private grpSortKey As Long                      ' 1 = CHG%, 2 = R1, 3 = R4
@@ -159,8 +168,12 @@ Public Sub BuildBiasPage()
 
     Dim keepMode As String
     keepMode = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_MODE + NavLeft(ws)).Value)
+    Dim keepCmp As String, keepRng As String
+    keepCmp = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_CMP + NavLeft(ws)).Value)
+    keepRng = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_RANGE + NavLeft(ws)).Value)
     Call NavStrip(ws)
-    Call DrawShell(ws, keepTk, keepGrp, keepMode)
+    Call DrawShell(ws, keepTk, keepGrp, keepMode, keepCmp, keepRng)
+    Call ClearCompare(ws)
     Call ClearBiasChart(ws)             ' drop any stale chart from a previous build up front
     Call NavNotify("BIAS building tables (holdings + watchlist) ...")
 
@@ -188,6 +201,7 @@ Public Sub BuildBiasPage()
 
     Call FinishPage(ws)
     If Len(keepGrp) > 0 Then Call RunGroupQuery
+    If Len(keepCmp) > 0 Then Call RunCompare
     Application.ScreenUpdating = prevScr
     Application.EnableEvents = prevEv
     Call NavGoto("B", ws)
@@ -204,11 +218,16 @@ End Sub
 ' Sheet event (Worksheet_Change, written by EnsureSheetCode): typing a
 ' ticker in the query box redraws only its chart, never the tables.
 Public Sub BiasChange(ByVal ws As Worksheet, ByVal Target As Range)
-    If Target.CountLarge > 4 Then Exit Sub
+    If Target.CountLarge > CMP_SPAN Then Exit Sub   ' a merged COMPARE cell reports its whole area
     Dim r As Long: r = PG_IN + NavOffset(ws)
     Dim c As Long: c = COL_TK + NavLeft(ws)
     If Not Intersect(Target, ws.cells(r, COL_GRP + NavLeft(ws))) Is Nothing Then
         Call RunGroupQuery
+        Exit Sub
+    End If
+    If Not Intersect(Target, ws.cells(r, COL_CMP + NavLeft(ws))) Is Nothing Or _
+       Not Intersect(Target, ws.cells(r, COL_RANGE + NavLeft(ws))) Is Nothing Then
+        Call RunCompare
         Exit Sub
     End If
     If Not Intersect(Target, ws.cells(r, COL_MODE + NavLeft(ws))) Is Nothing Then
@@ -706,6 +725,349 @@ Public Sub BiasDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, ByRef C
         End If
     End If
     Application.EnableEvents = prevEv
+End Sub
+
+' ----------------------------------------------------------------
+'  COMPARE <GO> (2026-09-26): one chart, many tickers, performance rebased
+'  to 100 at the range start, price axis logarithmic base 2 (a 2x move is
+'  the same height everywhere; slope = growth rate). Tickers come from the
+'  COMPARE box (comma separated, @PORT = RR4 positions, @WATCH = Watch
+'  list; max CMP_MAX). RANGE box: 3M / 6M / 1Y / 2Y / 3Y / YTD. Own-currency
+'  adjusted-close returns aligned on the union of trading days (a market
+'  that is closed keeps its last close); a ticker listed inside the range
+'  starts at its first bar with 100. The legend is ranked by final return.
+'  Chart sits under the two R / K-line chart pairs; its data block is the
+'  hidden ZA-side block, CMP_DATA_OFF columns after the single-ticker one.
+' ----------------------------------------------------------------
+Private Function CmpTokens(ByVal raw As String, ByRef outTk() As String) As Long
+    Dim s As String: s = raw
+    s = Replace(s, ChrW(&HFF0C), ",")
+    s = Replace(s, ChrW(&H3001), ",")
+    s = Replace(s, ";", ",")
+    s = Replace(s, " ", ",")
+    Dim parts() As String: parts = Split(s, ",")
+    Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary")
+    Dim list As New Collection
+    Dim pv() As String, pn As Long
+    Dim i As Long, k As Long, t As String
+    For i = LBound(parts) To UBound(parts)
+        t = UCase(Trim(parts(i)))
+        If t = "@PORT" Or t = "@WATCH" Then
+            Erase pv
+            pn = 0
+            If t = "@PORT" Then pn = GatherPositions(pv) Else pn = GatherWatchlist(pv)
+            For k = 0 To pn - 1
+                If Not seen.Exists(pv(k)) Then
+                    seen(pv(k)) = True
+                    list.Add pv(k)
+                End If
+            Next k
+        ElseIf t <> "" Then
+            If Not seen.Exists(t) Then
+                seen(t) = True
+                list.Add t
+            End If
+        End If
+    Next i
+    Dim n As Long: n = list.count
+    If n = 0 Then Exit Function
+    ReDim outTk(0 To n - 1)
+    For i = 1 To n
+        outTk(i - 1) = list(i)
+    Next i
+    CmpTokens = n
+End Function
+
+Private Sub ClearCompare(ByVal ws As Worksheet)
+    On Error Resume Next
+    ws.ChartObjects(CMP_CHART_NAME).Delete
+    On Error GoTo 0
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim dcm As Long: dcm = CHART_DATA_COL + lc + CMP_DATA_OFF
+    Dim rng As Range
+    Set rng = ws.Range(ws.cells(CHART_ROW + off, dcm), ws.cells(CHART_ROW + off + CMP_ROWS, dcm + CMP_MAX + 1))
+    rng.ClearContents
+    rng.Interior.Color = RGB(0, 0, 0)
+End Sub
+
+Public Sub RunCompare()
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Worksheets(BIAS_SHEET): On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
+    Application.EnableEvents = False
+    Application.ScreenUpdating = False
+    On Error GoTo Fail
+
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim raw As String: raw = CellStr(ws.cells(PG_IN + off, COL_CMP + lc).Value)
+    Dim rngTxt As String: rngTxt = UCase(CellStr(ws.cells(PG_IN + off, COL_RANGE + lc).Value))
+    Call ClearCompare(ws)
+    If raw = "" Then GoTo Done
+    If InStr(",3M,6M,1Y,2Y,3Y,YTD,", "," & rngTxt & ",") = 0 Then rngTxt = "1Y"
+
+    Dim tk() As String, n As Long, capped As Boolean
+    n = CmpTokens(raw, tk)
+    If n = 0 Then
+        Call NavNotify("COMPARE: no tickers", True)
+        GoTo Done
+    End If
+    If n > CMP_MAX Then
+        n = CMP_MAX
+        capped = True
+    End If
+
+    ' --- fetch ---
+    Dim allD() As Variant, allP() As Variant, okF() As Boolean
+    ReDim allD(0 To n - 1): ReDim allP(0 To n - 1): ReDim okF(0 To n - 1)
+    Dim i As Long, j As Long, k As Long
+    Dim dd() As Date, pp() As Double, nOk As Long, endD As Double, failList As String
+    For i = 0 To n - 1
+        Call NavNotify("BIAS COMPARE " & (i + 1) & "/" & n & " " & tk(i) & " ...")
+        Erase dd: Erase pp
+        If modvolatility.GetHistoricalData(tk(i), dd, pp) Then
+            allD(i) = dd
+            allP(i) = pp
+            okF(i) = True
+            nOk = nOk + 1
+            If CDbl(Int(CDbl(dd(UBound(dd))))) > endD Then endD = CDbl(Int(CDbl(dd(UBound(dd)))))
+        Else
+            failList = failList & " " & tk(i)
+        End If
+    Next i
+    If nOk = 0 Then
+        Call NavNotify("COMPARE: no price history for" & failList, True)
+        GoTo Done
+    End If
+
+    ' --- range start and the common anchor (last bar on or before the start) ---
+    Dim startD As Double
+    Select Case rngTxt
+        Case "3M": startD = CDbl(DateAdd("m", -3, CDate(endD)))
+        Case "6M": startD = CDbl(DateAdd("m", -6, CDate(endD)))
+        Case "2Y": startD = CDbl(DateAdd("yyyy", -2, CDate(endD)))
+        Case "3Y": startD = CDbl(DateAdd("yyyy", -3, CDate(endD)))
+        Case "YTD": startD = CDbl(DateSerial(Year(CDate(endD)) - 1, 12, 31))
+        Case Else: startD = CDbl(DateAdd("yyyy", -1, CDate(endD)))
+    End Select
+    Dim anchorD As Double, lb As Long, ub As Long, a As Double
+    For i = 0 To n - 1
+        If okF(i) Then
+            dd = allD(i)
+            lb = LBound(dd): ub = UBound(dd)
+            For j = lb To ub
+                a = CDbl(Int(CDbl(dd(j))))
+                If a <= startD Then
+                    If a > anchorD Then anchorD = a
+                Else
+                    Exit For
+                End If
+            Next j
+        End If
+    Next i
+    If anchorD = 0 Then anchorD = startD
+
+    ' --- union of trading days from the anchor on, ascending ---
+    Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
+    For i = 0 To n - 1
+        If okF(i) Then
+            dd = allD(i)
+            For j = LBound(dd) To UBound(dd)
+                a = CDbl(Int(CDbl(dd(j))))
+                If a >= anchorD Then dict(CLng(a)) = True
+            Next j
+        End If
+    Next i
+    Dim m As Long: m = dict.count
+    If m < 2 Then
+        Call NavNotify("COMPARE: fewer than 2 bars in the range", True)
+        GoTo Done
+    End If
+    Dim axD() As Long: ReDim axD(0 To m - 1)
+    Dim kv As Variant, idx As Long, tmpL As Long
+    idx = 0
+    For Each kv In dict.Keys
+        axD(idx) = CLng(kv): idx = idx + 1
+    Next kv
+    For i = 1 To m - 1
+        tmpL = axD(i): j = i - 1
+        Do While j >= 0
+            If axD(j) > tmpL Then axD(j + 1) = axD(j): j = j - 1 Else Exit Do
+        Loop
+        axD(j + 1) = tmpL
+    Next i
+
+    ' --- rebased values (0 = not plotted yet) ---
+    Dim v2() As Double: ReDim v2(0 To nOk - 1, 0 To m - 1)
+    Dim nm() As String, ret() As Double, colIdx() As Long
+    ReDim nm(0 To nOk - 1): ReDim ret(0 To nOk - 1): ReDim colIdx(0 To nOk - 1)
+    Dim t As Long, bs As Double
+    Dim lo As Double, hi As Double: lo = 0: hi = 0
+    t = 0
+    For i = 0 To n - 1
+        If okF(i) Then
+            dd = allD(i): pp = allP(i)
+            lb = LBound(dd): ub = UBound(dd)
+            j = lb - 1: bs = 0
+            For k = 0 To m - 1
+                Do While j + 1 <= ub
+                    If CLng(Int(CDbl(dd(j + 1)))) <= axD(k) Then j = j + 1 Else Exit Do
+                Loop
+                If j >= lb Then
+                    If pp(j) > 0 Then
+                        If bs = 0 Then bs = pp(j)
+                        v2(t, k) = pp(j) / bs * 100
+                        If lo = 0 Or v2(t, k) < lo Then lo = v2(t, k)
+                        If v2(t, k) > hi Then hi = v2(t, k)
+                    End If
+                End If
+            Next k
+            nm(t) = tk(i)
+            ret(t) = v2(t, m - 1) - 100
+            colIdx(t) = i
+            t = t + 1
+        End If
+    Next i
+    If lo <= 0 Then
+        Call NavNotify("COMPARE: no usable prices", True)
+        GoTo Done
+    End If
+
+    ' rank by final return, best first (the legend reads as a ranking)
+    Dim rk() As Long: ReDim rk(0 To nOk - 1)
+    For i = 0 To nOk - 1: rk(i) = i: Next i
+    For i = 1 To nOk - 1
+        tmpL = rk(i): j = i - 1
+        Do While j >= 0
+            If ret(rk(j)) < ret(tmpL) Then rk(j + 1) = rk(j): j = j - 1 Else Exit Do
+        Loop
+        rk(j + 1) = tmpL
+    Next i
+
+    ' --- hidden data block: date | series in rank order | (blank) | BASE 100 ---
+    Dim dcm As Long: dcm = CHART_DATA_COL + lc + CMP_DATA_OFF
+    Dim r0 As Long: r0 = CHART_ROW + off + 1
+    ws.cells(CHART_ROW + off, dcm).Value = "date"
+    For i = 0 To nOk - 1
+        ws.cells(CHART_ROW + off, dcm + 1 + i).Value = nm(rk(i))
+    Next i
+    ws.cells(CHART_ROW + off, dcm + CMP_MAX + 1).Value = "BASE100"
+    ws.Range(ws.cells(CHART_ROW + off, dcm), ws.cells(CHART_ROW + off, dcm + CMP_MAX + 1)).Font.Color = RGB(90, 90, 90)
+    Dim blk() As Variant: ReDim blk(1 To m, 1 To CMP_MAX + 2)
+    For k = 0 To m - 1
+        blk(k + 1, 1) = CDbl(axD(k))
+        For i = 0 To nOk - 1
+            If v2(rk(i), k) > 0 Then blk(k + 1, 2 + i) = v2(rk(i), k)
+        Next i
+        blk(k + 1, CMP_MAX + 2) = 100
+    Next k
+    With ws.Range(ws.cells(r0, dcm), ws.cells(r0 + m - 1, dcm + CMP_MAX + 1))
+        .Value = blk
+        .Font.Color = RGB(60, 60, 60)
+    End With
+    ws.Range(ws.cells(r0, dcm), ws.cells(r0 + m - 1, dcm)).NumberFormat = "yyyy-mm-dd"
+
+    Call DrawCompareChart(ws, dcm, m, nOk, nm, ret, rk, colIdx, lo, hi, axD(0), rngTxt)
+
+    Dim msg As String
+    msg = "BIAS COMPARE done - " & nOk & "/" & n & " tickers, " & rngTxt & ", base " & Format(CDate(axD(0)), "yyyy-mm-dd")
+    If capped Then msg = msg & " (first " & CMP_MAX & " only)"
+    If failList <> "" Then msg = msg & " | no data:" & failList
+    Call NavNotify(msg)
+Done:
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+    Exit Sub
+Fail:
+    Dim em As String: em = Err.Description
+    On Error Resume Next
+    Call NavNotify("BIAS COMPARE error: " & em, True)
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+End Sub
+
+Private Sub DrawCompareChart(ByVal ws As Worksheet, ByVal dcm As Long, ByVal m As Long, ByVal nOk As Long, _
+                              ByRef nm() As String, ByRef ret() As Double, ByRef rk() As Long, ByRef colIdx() As Long, _
+                              ByVal lo As Double, ByVal hi As Double, ByVal baseDay As Long, ByVal rngTxt As String)
+    Dim off As Long: off = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim r1 As Long: r1 = CHART_ROW + off + 1
+    Dim rN As Long: rN = CHART_ROW + off + m
+
+    Dim topY As Double
+    topY = ws.Rows(CHART_ROW + off).Top + 2 * BIAS_CHART_H + BIAS_CHART_GAP + 20
+    Dim co As ChartObject
+    Set co = ws.ChartObjects.Add(ws.Columns(CHART_COL + lc).Left, topY, 2 * BIAS_CHART_W + KLINE_GAP, CMP_H)
+    co.Name = CMP_CHART_NAME
+    co.Placement = xlMove
+    Dim ch As Chart: Set ch = co.Chart
+    ch.ChartType = xlLine
+    Do While ch.SeriesCollection.count > 0
+        ch.SeriesCollection(1).Delete
+    Loop
+    ch.DisplayBlanksAs = xlNotPlotted
+    ch.HasLegend = True
+    ch.Legend.Position = xlLegendPositionRight
+    ch.Legend.Font.Color = CLR_TEXT: ch.Legend.Font.Size = 9
+    ch.ChartArea.Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+    ch.ChartArea.Format.Line.Visible = msoFalse
+    ch.PlotArea.Format.Fill.ForeColor.RGB = RGB(8, 8, 8)
+    ch.PlotArea.Format.Line.Visible = msoFalse
+    ch.HasTitle = True
+    ch.ChartTitle.Text = "PERFORMANCE COMPARE  " & rngTxt & "  (BASE 100 = " & Format(CDate(baseDay), "yyyy-mm-dd") & ", LOG2 AXIS)"
+    With ch.ChartTitle.Format.TextFrame2.TextRange.Font
+        .Name = FONT_FACE: .Size = 10: .Bold = msoTrue: .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    End With
+
+    Dim pal As Variant
+    pal = Array(RGB(0, 200, 255), RGB(255, 160, 0), RGB(120, 220, 90), RGB(255, 90, 200), RGB(180, 140, 255), RGB(255, 235, 80), _
+                RGB(255, 110, 110), RGB(80, 230, 200), RGB(160, 200, 255), RGB(230, 150, 90), RGB(200, 255, 140), RGB(255, 190, 220))
+
+    Dim xr As Range: Set xr = ws.Range(ws.cells(r1, dcm), ws.cells(rN, dcm))
+    Dim i As Long, nameTxt As String
+    For i = 0 To nOk - 1
+        nameTxt = nm(rk(i)) & "  " & Format(ret(rk(i)), "+0.0;-0.0;0.0") & "%"
+        Call AddBiasSeries(ch, nameTxt, xr, ws.Range(ws.cells(r1, dcm + 1 + i), ws.cells(rN, dcm + 1 + i)), _
+                           CLng(pal(colIdx(rk(i)) Mod 12)), 1.25, False)
+    Next i
+    Call AddBiasSeries(ch, "BASE 100", xr, ws.Range(ws.cells(r1, dcm + CMP_MAX + 1), ws.cells(rN, dcm + CMP_MAX + 1)), RGB(255, 255, 255), 0.75, True)
+
+    ' base-2 axis anchored at 100: bounds are 100 / 2^a and 100 * 2^b, so ticks read ...50, 100, 200, 400...
+    ' (one gridline step = the price doubling / halving vs the base day)
+    lo = lo * 0.95: hi = hi * 1.05
+    Dim axMin As Double, axMax As Double
+    axMin = 100: axMax = 100
+    Do While axMin > lo
+        axMin = axMin / 2
+    Loop
+    Do While axMax < hi
+        axMax = axMax * 2
+    Loop
+    If axMax <= 100 Then axMax = 200
+    If axMin >= 100 Then axMin = 50
+
+    Dim ax As Axis
+    Set ax = ch.Axes(xlValue, xlPrimary)
+    ax.ScaleType = xlScaleLogarithmic: ax.LogBase = 2
+    ax.MinimumScale = axMin: ax.MaximumScale = axMax
+    ax.HasMajorGridlines = True
+    ax.MajorGridlines.Format.Line.ForeColor.RGB = RGB(60, 60, 60)
+    ax.HasMinorGridlines = False
+    ax.TickLabels.NumberFormat = "General"
+    ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 8
+
+    Set ax = ch.Axes(xlCategory, xlPrimary)
+    ax.CategoryType = xlCategoryScale
+    ax.TickLabels.NumberFormat = "yyyy-mm-dd"
+    ax.TickLabels.Font.Color = RGB(150, 150, 150): ax.TickLabels.Font.Size = 7
+    ax.TickLabelSpacing = CLng(Application.WorksheetFunction.Max(1, m \ 14))
+
+    On Error Resume Next
+    ch.Legend.LegendEntries(ch.Legend.LegendEntries.count).Delete      ' BASE 100 is a guide, not a ticker
+    On Error GoTo 0
 End Sub
 
 ' ----------------------------------------------------------------
@@ -1724,7 +2086,8 @@ Private Function EnsureBiasSheet() As Worksheet
     Set EnsureBiasSheet = ws
 End Function
 
-Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepGrp As String, ByVal keepMode As String)
+Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepGrp As String, ByVal keepMode As String, _
+                       ByVal keepCmp As String, ByVal keepRng As String)
     On Error Resume Next
     ws.Names(GRP_ROW_NAME).Delete
     ws.Names(GRP_N_NAME).Delete
@@ -1771,6 +2134,22 @@ Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepG
     With ws.cells(PG_IN, COL_MODE).Validation
         .Delete
         .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="CLOSE,RED"
+        .IgnoreBlank = True
+        .ShowError = False
+    End With
+    On Error GoTo 0
+
+    ' 2026-09-26: COMPARE box (tickers, comma separated) + RANGE box
+    Call StackLabel(ws.cells(PG_LBL, COL_CMP), "COMPARE <GO>  (tickers, comma separated; @PORT / @WATCH)")
+    ws.Range(ws.cells(PG_IN, COL_CMP), ws.cells(PG_IN, COL_CMP + CMP_SPAN - 1)).Merge
+    Call InputCell(ws.cells(PG_IN, COL_CMP), keepCmp)
+    Call StackLabel(ws.cells(PG_LBL, COL_RANGE), "RANGE <GO>")
+    If InStr(",3M,6M,1Y,2Y,3Y,YTD,", "," & UCase(keepRng) & ",") = 0 Then keepRng = "1Y"
+    Call InputCell(ws.cells(PG_IN, COL_RANGE), UCase(keepRng))
+    On Error Resume Next
+    With ws.cells(PG_IN, COL_RANGE).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="3M,6M,1Y,2Y,3Y,YTD"
         .IgnoreBlank = True
         .ShowError = False
     End With
