@@ -893,8 +893,10 @@ Private Sub DrawShell(ByVal ws As Worksheet)
     ws.Rows(R_TILE + m_off).RowHeight = 32
     ws.Rows(R_THGAP + m_off).RowHeight = SEP_PT
     ws.Rows(R_GAP2 + m_off).RowHeight = 10
-    ws.Rows(R_READ + m_off).RowHeight = 34
-    ws.Rows(R_QUOTE + m_off).RowHeight = 34
+    ws.Rows(R_PRINT + m_off).RowHeight = 34
+    ws.Rows(R_READ + m_off).RowHeight = 85
+    ws.Rows(R_QUOTE + m_off).RowHeight = 85
+    ws.Rows(R_SRC + m_off).RowHeight = 34
     ws.Rows(R_GAP3 + m_off).RowHeight = 12
 
     ' --- title + ticker row ---
@@ -1013,11 +1015,11 @@ Private Sub DrawShell(ByVal ws As Worksheet)
             .NumberFormat = "@"
             .WrapText = True
             .HorizontalAlignment = xlLeft
-            .VerticalAlignment = xlTop
+            .VerticalAlignment = xlCenter
             .Font.Color = RGB(214, 214, 214)
             .Font.Size = 9
         End With
-        Cl(CLng(rr), 0).VerticalAlignment = xlTop
+        Cl(CLng(rr), 0).VerticalAlignment = xlCenter
     Next rr
 
     ' --- peer map + table static parts ---
