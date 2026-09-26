@@ -119,12 +119,14 @@ Private Const KLINE_H As Double = 335           ' K-line chart height; KLINE_H +
 Private Const VOL_H As Double = 120
 Private Const KV_GAP As Double = 5
 Private Const KB_OFF As Long = 13               ' K/volume data block starts this many columns after CHART_DATA_COL
-Private Const KB_LAST As Long = 25              ' last data column offset (KB_OFF .. KB_LAST = 13 columns)
+Private Const KB_LAST As Long = 29              ' last data column offset (KB_OFF .. KB_LAST = 17 columns; 2026-09-26: +4 streak columns)
 Private Const K_PLOT_LEFT As Double = 58        ' plot-area inside left/right margins, shared so K and volume line up
 Private Const K_PLOT_RIGHT As Double = 12
 
 ' --- 2026-09-25: GROUP <GO> box (whole tblGroups group -> its own table under WATCHLIST) ---
 Private Const COL_GRP As Long = 3               ' GROUP input, merged across GRP_SPAN columns (C:E)
+Private Const COL_MODE As Long = 6              ' 2026-09-26: MODE input (CLOSE / RED) right of the GROUP box - what counts as an up bar for the streak numbers
+Private Const STREAK_MIN As Long = 3            ' K-line charts label a bar only when its run is at least this long (Watch column shows any length)
 Private Const GRP_SPAN As Long = 3
 Private Const HEAT_COL_NAME As Long = 7         ' company name column of the group table
 Private Const GRP_ROW_NAME As String = "BIASGRPROW"   ' sheet-level names: logical title row / row count of the group table
@@ -155,8 +157,10 @@ Public Sub BuildBiasPage()
     Dim keepGrp As String
     keepGrp = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_GRP + NavLeft(ws)).Value)
 
+    Dim keepMode As String
+    keepMode = CellStr(ws.cells(PG_IN + NavOffset(ws), COL_MODE + NavLeft(ws)).Value)
     Call NavStrip(ws)
-    Call DrawShell(ws, keepTk, keepGrp)
+    Call DrawShell(ws, keepTk, keepGrp, keepMode)
     Call ClearBiasChart(ws)             ' drop any stale chart from a previous build up front
     Call NavNotify("BIAS building tables (holdings + watchlist) ...")
 
@@ -207,9 +211,72 @@ Public Sub BiasChange(ByVal ws As Worksheet, ByVal Target As Range)
         Call RunGroupQuery
         Exit Sub
     End If
+    If Not Intersect(Target, ws.cells(r, COL_MODE + NavLeft(ws))) Is Nothing Then
+        Call RefreshBiasQuery          ' MODE change: redraw the single-ticker charts only (no group / heat tables)
+        Exit Sub
+    End If
     If Intersect(Target, ws.cells(r, c)) Is Nothing Then Exit Sub
     Call RefreshBiasQuery
 End Sub
+
+' 2026-09-26: what an "up bar" means for the streak numbers. CLOSE = close above
+' the previous close, RED = close above the open (red candle). Anything else in
+' the MODE box (or no Bias page yet) reads as CLOSE.
+Public Function BiasStreakMode() As String
+    BiasStreakMode = "CLOSE"
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(BIAS_SHEET)
+    If ws Is Nothing Then Exit Function
+    Dim t As String
+    t = UCase(CellStr(ws.cells(PG_IN + NavOffset(ws), COL_MODE + NavLeft(ws)).Value))
+    On Error GoTo 0
+    If t = "RED" Then BiasStreakMode = "RED"
+End Function
+
+' Signed consecutive-bar count per bar (0-based, oldest first): +k = k-th up bar
+' of the current run, -k = k-th down bar, 0 = flat / no reference. A flat bar
+' breaks both directions. CLOSE compares c(i) with c(i-1); RED compares c(i)
+' with o(i) (o is ignored in CLOSE mode).
+Private Sub ComputeStreaks(ByRef o() As Double, ByRef c() As Double, ByVal n As Long, _
+                            ByVal mode As String, ByRef st() As Long)
+    ReDim st(0 To n - 1)
+    Dim i As Long, d As Double, tol As Double, prev As Long
+    For i = 0 To n - 1
+        prev = 0
+        If i > 0 Then prev = st(i - 1)
+        If mode = "RED" Then
+            d = c(i) - o(i)
+        ElseIf i = 0 Then
+            d = 0
+        Else
+            d = c(i) - c(i - 1)
+        End If
+        tol = c(i) * 0.000000001
+        If d > tol Then
+            If prev > 0 Then st(i) = prev + 1 Else st(i) = 1
+        ElseIf d < -tol Then
+            If prev < 0 Then st(i) = prev - 1 Else st(i) = -1
+        End If
+    Next i
+End Sub
+
+' Current streak (last bar) for the Watch page; one extra Yahoo OHLC fetch only
+' in RED mode (CLOSE mode reuses the closes already in hand).
+Private Function CurrentStreak(ByVal tk As String, ByRef closeArr() As Double, ByRef dateArr() As Date, _
+                                ByVal cnt As Long) As Long
+    Dim mode As String: mode = BiasStreakMode()
+    Dim o() As Double, st() As Long
+    If mode = "RED" Then
+        Dim fo() As Double, fh() As Double, fl() As Double, fc() As Double, fv() As Double
+        If Not FetchBiasOhlc(tk, dateArr, cnt, closeArr, cnt, fo, fh, fl, fc, fv) Then Exit Function
+        Call ComputeStreaks(fo, fc, cnt, mode, st)
+    Else
+        ReDim o(0 To cnt - 1)
+        Call ComputeStreaks(o, closeArr, cnt, mode, st)
+    End If
+    CurrentStreak = st(cnt - 1)
+End Function
 
 ' ----------------------------------------------------------------
 '  Public hooks for the Watch page (modWatch, 2026-09-25)
@@ -220,12 +287,17 @@ End Sub
 ' the rank+trend line the chart triangles use, with its bar date. ONE Yahoo
 ' history fetch. sigText is "" when no signal exists in the window or the
 ' history is too short for the rank window (needs N4+MR_RANK bars). False =
-' no price history at all.
+' no price history at all. streak (optional) = signed consecutive up(+)/down(-)
+' bar count ending at the last bar, MODE per BiasStreakMode (0 = flat / n/a).
 Public Function BiasSnapshot(ByVal tk As String, ByRef r1 As Double, ByRef hasR4 As Boolean, _
-                              ByRef r4 As Double, ByRef sigText As String, ByRef sigDate As Date) As Boolean
-    r1 = 0: r4 = 0: hasR4 = False: sigText = "": sigDate = 0
+                              ByRef r4 As Double, ByRef sigText As String, ByRef sigDate As Date, _
+                              Optional ByRef streak As Long) As Boolean
+    r1 = 0: r4 = 0: hasR4 = False: sigText = "": sigDate = 0: streak = 0
     Dim closeArr() As Double, dateArr() As Date, cnt As Long
     If Not FetchBiasHistory(UCase(Trim(tk)), closeArr, dateArr, cnt) Then Exit Function
+    On Error Resume Next
+    streak = CurrentStreak(UCase(Trim(tk)), closeArr, dateArr, cnt)      ' 2026-09-26: signed run length, MODE from the Bias page
+    On Error GoTo 0
 
     Dim rrA() As Double, vcA As Long
     If Not ComputeOneLine(closeArr, cnt, N1, rrA, vcA) Or vcA = 0 Then Exit Function
@@ -314,8 +386,23 @@ Public Sub RefreshBiasQuery()
     ' chartDates; EMAs are recomputed here from the same closes the R lines use.
     Dim ko() As Double, kh() As Double, kl() As Double, kc() As Double, kv() As Double
     Dim kOk As Boolean
-    kOk = FetchBiasOhlc(tk, chartDates, vc1, closeArr, cnt, ko, kh, kl, kc, kv)
+    ' fetched over the FULL history, then sliced to the chart bars, so the streak
+    ' count at the chart's left edge is right (2026-09-26)
+    Dim fo() As Double, fh() As Double, fl() As Double, fc() As Double, fv() As Double
+    kOk = FetchBiasOhlc(tk, dateArr, cnt, closeArr, cnt, fo, fh, fl, fc, fv)
     If kOk Then
+        ReDim ko(0 To vc1 - 1): ReDim kh(0 To vc1 - 1): ReDim kl(0 To vc1 - 1)
+        ReDim kc(0 To vc1 - 1): ReDim kv(0 To vc1 - 1)
+        For i = 0 To vc1 - 1
+            ko(i) = fo(cnt - vc1 + i): kh(i) = fh(cnt - vc1 + i): kl(i) = fl(cnt - vc1 + i)
+            kc(i) = fc(cnt - vc1 + i): kv(i) = fv(cnt - vc1 + i)
+        Next i
+        Dim stAll() As Long, stc() As Long
+        Call ComputeStreaks(fo, fc, cnt, BiasStreakMode(), stAll)
+        ReDim stc(0 To vc1 - 1)
+        For i = 0 To vc1 - 1
+            stc(i) = stAll(cnt - vc1 + i)
+        Next i
         Dim bTmp() As Double, emaAllS() As Double, emaAllL() As Double
         Call ComputeEmaDeviation(closeArr, cnt, N1, bTmp, emaAllS)
         Call ComputeEmaDeviation(closeArr, cnt, N4, bTmp, emaAllL)
@@ -325,7 +412,7 @@ Public Sub RefreshBiasQuery()
             emaS(i) = emaAllS(cnt - vc1 + i)
             emaL(i) = emaAllL(cnt - vc1 + i)
         Next i
-        Call DrawBiasKlines(ws, tk, vc1, ko, kh, kl, kc, kv, emaS, emaL, hasR4, sigUp1, sigDn1, sigUp4, sigDn4)
+        Call DrawBiasKlines(ws, tk, vc1, ko, kh, kl, kc, kv, emaS, emaL, hasR4, sigUp1, sigDn1, sigUp4, sigDn4, stc)
     End If
     Call NavNotify("BIAS " & tk & " done - " & vc1 & " points" & IIf(hasR4, "", " (short line only)") & _
                    IIf(kOk, "", " (K-line unavailable: no OHLC)"))
@@ -1299,7 +1386,7 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
                             ByRef kc() As Double, ByRef kv() As Double, _
                             ByRef emaS() As Double, ByRef emaL() As Double, ByVal hasR4 As Boolean, _
                             ByRef sigUp1() As Boolean, ByRef sigDn1() As Boolean, _
-                            ByRef sigUp4() As Boolean, ByRef sigDn4() As Boolean)
+                            ByRef sigUp4() As Boolean, ByRef sigDn4() As Boolean, ByRef st() As Long)
     Dim off As Long: off = NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
     Dim dc As Long: dc = CHART_DATA_COL + lc
@@ -1307,15 +1394,15 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
     Dim r0 As Long: r0 = CHART_ROW + off + 1
 
     Dim hdr As Variant
-    hdr = Array("O", "H", "L", "C", "EMA" & N1, "EMA" & N4, "SELLS", "BUYS", "SELLL", "BUYL", "VOLUP", "VOLDN", "LOCK")
+    hdr = Array("O", "H", "L", "C", "EMA" & N1, "EMA" & N4, "SELLS", "BUYS", "SELLL", "BUYL", "VOLUP", "VOLDN", "LOCK", "STRUPPX", "STRDNPX", "STRUPN", "STRDNN")
     Dim j As Long
-    For j = 0 To 12
+    For j = 0 To 16
         ws.cells(CHART_ROW + off, kb + j).Value = hdr(j)
     Next j
-    ws.Range(ws.cells(CHART_ROW + off, kb), ws.cells(CHART_ROW + off, kb + 12)).Font.Color = RGB(90, 90, 90)
+    ws.Range(ws.cells(CHART_ROW + off, kb), ws.cells(CHART_ROW + off, kb + 16)).Font.Color = RGB(90, 90, 90)
 
     ' one array write for the whole block; blank = not plotted (signal / off-side volume)
-    Dim blk() As Variant: ReDim blk(1 To n, 1 To 13)
+    Dim blk() As Variant: ReDim blk(1 To n, 1 To 17)
     Dim i As Long, r As Long
     Dim lo As Double, hi As Double: lo = kl(0): hi = kh(0)
     For i = 0 To n - 1
@@ -1331,6 +1418,8 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
         End If
         If kc(i) >= ko(i) Then blk(r, 11) = kv(i) Else blk(r, 12) = kv(i)
         If kh(i) - kl(i) <= kh(i) * 0.000000001 Then blk(r, 13) = kc(i)   ' one-price lock: no body, no wick -> needs its own mark
+        If st(i) >= STREAK_MIN Then blk(r, 14) = kh(i): blk(r, 16) = st(i)      ' streak label anchors: up-run above the high, down-run below the low
+        If st(i) <= -STREAK_MIN Then blk(r, 15) = kl(i): blk(r, 17) = -st(i)
 
         If kl(i) < lo Then lo = kl(i)
         If kh(i) > hi Then hi = kh(i)
@@ -1341,7 +1430,7 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
             If emaL(i) > hi Then hi = emaL(i)
         End If
     Next i
-    With ws.Range(ws.cells(r0, kb), ws.cells(r0 + n - 1, kb + 12))
+    With ws.Range(ws.cells(r0, kb), ws.cells(r0 + n - 1, kb + 16))
         .Value = blk
         .Font.Color = RGB(60, 60, 60)
     End With
@@ -1371,13 +1460,13 @@ Private Sub DrawBiasKlines(ByVal ws As Worksheet, ByVal ticker As String, ByVal 
 
     Call DrawOneKline(ws, "BIAS_K_R1", leftX, topY, tk & "  K-LINE  (SHORT: EMA" & N1 & ")", dc, kb, 4, _
         "EMA" & N1, RGB(0, 200, 255), 6, "SELL short", RGB(220, 60, 60), 7, "BUY short", RGB(60, 200, 90), _
-        n, axMin, axMax, axFmt)
+        n, axMin, axMax, axFmt, st)
     Call DrawOneVolume(ws, "BIAS_V_R1", leftX, topY + KLINE_H + KV_GAP, dc, kb, n)
     If hasR4 Then
         Dim topY4 As Double: topY4 = topY + BIAS_CHART_H + BIAS_CHART_GAP
         Call DrawOneKline(ws, "BIAS_K_R4", leftX, topY4, tk & "  K-LINE  (LONG: EMA" & N4 & ")", dc, kb, 5, _
             "EMA" & N4, RR4_ACCENT, 8, "SELL long", RGB(255, 120, 255), 9, "BUY long", RGB(120, 160, 255), _
-            n, axMin, axMax, axFmt)
+            n, axMin, axMax, axFmt, st)
         Call DrawOneVolume(ws, "BIAS_V_R4", leftX, topY4 + KLINE_H + KV_GAP, dc, kb, n)
     End If
 End Sub
@@ -1389,7 +1478,7 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
                           ByVal sellIdx As Long, ByVal sellName As String, ByVal sellColor As Long, _
                           ByVal buyIdx As Long, ByVal buyName As String, ByVal buyColor As Long, _
                           ByVal n As Long, ByVal axMin As Double, ByVal axMax As Double, _
-                          ByVal axFmt As String)
+                          ByVal axFmt As String, ByRef st() As Long)
     Dim off As Long: off = NavOffset(ws)
     Dim r1 As Long: r1 = CHART_ROW + off + 1
     Dim rN As Long: rN = CHART_ROW + off + n
@@ -1460,6 +1549,8 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     lk.MarkerSize = 2             ' 2026-09-25: smallest Excel allows (min 2)
     lk.MarkerBackgroundColor = RGB(255, 255, 255)
     lk.MarkerForegroundColor = RGB(255, 255, 255)
+    Call AddStreakLabels(ws, ch, "STREAK UP", xr, r1, kb + 13, n, st, True)
+    Call AddStreakLabels(ws, ch, "STREAK DN", xr, r1, kb + 14, n, st, False)
 
     Dim ax As Axis
     Set ax = ch.Axes(xlValue, xlPrimary)
@@ -1489,12 +1580,43 @@ Private Sub DrawOneKline(ByVal ws As Worksheet, ByVal chartName As String, ByVal
     For k = 1 To 4
         ch.Legend.LegendEntries(1).Delete
     Next k
-    ch.Legend.LegendEntries(ch.Legend.LegendEntries.count).Delete      ' LOCK
+    For k = 1 To 3
+        ch.Legend.LegendEntries(ch.Legend.LegendEntries.count).Delete      ' STREAK DN, STREAK UP, LOCK
+    Next k
     ch.PlotArea.InsideWidth = BIAS_CHART_W - K_PLOT_LEFT - K_PLOT_RIGHT
     ch.PlotArea.InsideLeft = K_PLOT_LEFT              ' width first: setting it after can shift the left edge
     ch.PlotArea.InsideTop = 28
     ch.PlotArea.InsideHeight = KLINE_H - 28 - 30
     On Error GoTo 0
+End Sub
+
+' 2026-09-26: consecutive-bar counts as text only. One secondary-axis line series
+' (no line, no marker) whose points sit on the bar's high (up runs) / low (down
+' runs) and carry the run length as a data label; bars outside a qualifying run
+' are blank cells, so they get no label. pxCol = anchor prices column.
+Private Sub AddStreakLabels(ByVal ws As Worksheet, ByVal ch As Chart, ByVal nm As String, ByVal xr As Range, _
+                             ByVal r1 As Long, ByVal pxCol As Long, ByVal n As Long, _
+                             ByRef st() As Long, ByVal isUp As Boolean)
+    Dim s As Series: Set s = ch.SeriesCollection.NewSeries
+    s.Name = nm: s.XValues = xr
+    s.Values = ws.Range(ws.cells(r1, pxCol), ws.cells(r1 + n - 1, pxCol))
+    s.ChartType = xlLine
+    s.AxisGroup = xlSecondary
+    s.Format.Line.Visible = msoFalse              ' moving groups resets the line colour, so format after the switch
+    s.MarkerStyle = xlMarkerStyleNone
+    Dim i As Long, v As Long
+    For i = 0 To n - 1
+        v = st(i)
+        If (isUp And v >= STREAK_MIN) Or (Not isUp And v <= -STREAK_MIN) Then
+            s.Points(i + 1).HasDataLabel = True
+            With s.Points(i + 1).DataLabel
+                .ShowValue = True                 ' keep one Show* on, or the label is dropped when .Text is set
+                .Text = CStr(Abs(v))
+                .Position = IIf(isUp, xlLabelPositionAbove, xlLabelPositionBelow)
+                .Font.Size = 7: .Font.Bold = True: .Font.Color = RGB(255, 255, 255)
+            End With
+        End If
+    Next i
 End Sub
 
 Private Sub DrawOneVolume(ByVal ws As Worksheet, ByVal chartName As String, ByVal leftX As Double, _
@@ -1602,7 +1724,7 @@ Private Function EnsureBiasSheet() As Worksheet
     Set EnsureBiasSheet = ws
 End Function
 
-Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepGrp As String)
+Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepGrp As String, ByVal keepMode As String)
     On Error Resume Next
     ws.Names(GRP_ROW_NAME).Delete
     ws.Names(GRP_N_NAME).Delete
@@ -1636,6 +1758,19 @@ Private Sub DrawShell(ByVal ws As Worksheet, ByVal keepTk As String, ByVal keepG
     With ws.cells(PG_IN, COL_GRP).Validation
         .Delete
         .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="=" & Sanner.GROUP_LIST_NAME
+        .IgnoreBlank = True
+        .ShowError = False
+    End With
+    On Error GoTo 0
+
+    ' 2026-09-26: MODE box (streak numbers on the K-line charts / Watch STREAK column)
+    Call StackLabel(ws.cells(PG_LBL, COL_MODE), "MODE <GO>")
+    If UCase(keepMode) <> "RED" Then keepMode = "CLOSE" Else keepMode = "RED"
+    Call InputCell(ws.cells(PG_IN, COL_MODE), keepMode)
+    On Error Resume Next
+    With ws.cells(PG_IN, COL_MODE).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="CLOSE,RED"
         .IgnoreBlank = True
         .ShowError = False
     End With

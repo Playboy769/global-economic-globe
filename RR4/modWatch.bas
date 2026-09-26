@@ -12,7 +12,7 @@ Option Explicit
 '  Data: sheet "WatchData", ListObject tblWatch, one row per name.
 '    typed   TICKER | STRATEGY | ENTRY TGT | ADDED (default today)
 '    cache   LAST | NOTES | CALL | STATUS | MOAT | RISK | CAT | R1 | R4 |
-'            SIG | SIGDT     (program-written by W!, grey; the page is a
+'            SIG | SIGDT | STREAK     (program-written by W!, grey; the page is a
 '            pure render of this table, so sorting / adding a name never
 '            refetches anything - only W! does, like B! / V! / HC!)
 '  Add by typing into the entry row on the page (TICKER + ENTRY TGT) or
@@ -54,7 +54,8 @@ Private Const WT_R1 As Long = 12
 Private Const WT_R4 As Long = 13
 Private Const WT_SIG As Long = 14
 Private Const WT_SIGDT As Long = 15
-Private Const WT_NCOL As Long = 15
+Private Const WT_STREAK As Long = 16       ' 2026-09-26: signed consecutive up(+)/down(-) bar count (MODE on the Bias page)
+Private Const WT_NCOL As Long = 16
 
 ' --- page rows (page coordinates; + NavOffset / NavLeft once the bar is on) ---
 Private Const PG_TITLE As Long = 1
@@ -82,7 +83,8 @@ Private Const C_R4 As Long = 14
 Private Const C_SIG As Long = 15
 Private Const C_SIGDT As Long = 16
 Private Const C_AGO As Long = 17
-Private Const C_LASTCOL As Long = 17
+Private Const C_STREAK As Long = 18
+Private Const C_LASTCOL As Long = 18
 
 Private Const FRESH_GREY As Long = 60
 Private Const FRESH_ORANGE As Long = 120
@@ -216,7 +218,7 @@ Private Function EnsureWatchData() As ListObject
     Dim lo As ListObject: Set lo = WatchTable()
     Dim created As Boolean
     Dim hdr As Variant
-    hdr = Array("TICKER", "STRATEGY", "ENTRY TGT", "ADDED", "LAST", "NOTES", "CALL", "STATUS", "MOAT", "RISK", "CAT", "R1", "R4", "SIG", "SIGDT")
+    hdr = Array("TICKER", "STRATEGY", "ENTRY TGT", "ADDED", "LAST", "NOTES", "CALL", "STATUS", "MOAT", "RISK", "CAT", "R1", "R4", "SIG", "SIGDT", "STREAK")
     Dim j As Long
     If lo Is Nothing Then
         For j = 0 To WT_NCOL - 1: ws.Cells(3, j + 1).Value = hdr(j): Next j
@@ -224,6 +226,10 @@ Private Function EnsureWatchData() As ListObject
         lo.Name = WATCH_TABLE
         created = True
     End If
+    ' 2026-09-26: an existing 15-column table gets the STREAK column appended in place (data untouched)
+    Do While lo.ListColumns.Count < WT_NCOL
+        lo.ListColumns.Add.Name = hdr(lo.ListColumns.Count)
+    Loop
     lo.TableStyle = ""
     With lo.HeaderRowRange
         .Font.Color = RR4_ACCENT: .Font.Bold = True
@@ -231,7 +237,7 @@ Private Function EnsureWatchData() As ListObject
         .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Color = RR4_LINE
     End With
     lo.ListColumns(WT_LAST).Range.Resize(1, WT_NCOL - WT_LAST + 1).Font.Color = CLR_MUTED
-    Dim widths As Variant: widths = Array(12, 36, 12, 12, 11, 7, 12, 12, 6, 6, 6, 8, 8, 20, 12)
+    Dim widths As Variant: widths = Array(12, 36, 12, 12, 11, 7, 12, 12, 6, 6, 6, 8, 8, 20, 12, 8)
     For j = 0 To WT_NCOL - 1: ws.Columns(j + 1).ColumnWidth = widths(j): Next j
     If Not lo.DataBodyRange Is Nothing Then
         With lo.DataBodyRange
@@ -246,6 +252,7 @@ Private Function EnsureWatchData() As ListObject
         lo.ListColumns(WT_R1).DataBodyRange.NumberFormat = "0.0"
         lo.ListColumns(WT_R4).DataBodyRange.NumberFormat = "0.0"
         lo.ListColumns(WT_SIGDT).DataBodyRange.NumberFormat = "yyyy/mm/dd"
+        lo.ListColumns(WT_STREAK).DataBodyRange.NumberFormat = "General"
         lo.ListColumns(WT_LAST).DataBodyRange.Resize(, WT_NCOL - WT_LAST + 1).Font.Color = CLR_MUTED
     End If
     Call WriteSheetCode(ws, "Option Explicit" & vbCrLf & vbCrLf & _
@@ -503,7 +510,7 @@ Private Function RefreshCache(ByVal lo As ListObject) As Long
 
     Dim libMap As Object: Set libMap = LibrarySummaryMap()
     Dim px As Double, a As Variant, key As String
-    Dim r1 As Double, r4 As Double, hasR4 As Boolean, sigTxt As String, sigDt As Date, ok As Boolean
+    Dim r1 As Double, r4 As Double, hasR4 As Boolean, sigTxt As String, sigDt As Date, ok As Boolean, stk As Long
     Dim done As Long
     For i = 1 To n
         tk = UCase(CellStr(v(i, WT_TICKER)))
@@ -533,7 +540,8 @@ Private Function RefreshCache(ByVal lo As ListObject) As Long
 
             ok = False
             On Error Resume Next
-            ok = BiasSnapshot(tk, r1, hasR4, r4, sigTxt, sigDt)
+            stk = 0
+            ok = BiasSnapshot(tk, r1, hasR4, r4, sigTxt, sigDt, stk)
             Err.Clear
             On Error GoTo 0
             If ok Then
@@ -541,8 +549,9 @@ Private Function RefreshCache(ByVal lo As ListObject) As Long
                 If hasR4 Then v(i, WT_R4) = r4 Else v(i, WT_R4) = "-"
                 v(i, WT_SIG) = sigTxt
                 If sigTxt <> "" Then v(i, WT_SIGDT) = sigDt Else v(i, WT_SIGDT) = Empty
+                v(i, WT_STREAK) = stk
             Else
-                v(i, WT_R1) = "n/a": v(i, WT_R4) = Empty: v(i, WT_SIG) = Empty: v(i, WT_SIGDT) = Empty
+                v(i, WT_R1) = "n/a": v(i, WT_R4) = Empty: v(i, WT_SIG) = Empty: v(i, WT_SIGDT) = Empty: v(i, WT_STREAK) = Empty
             End If
         End If
     Next i
@@ -623,7 +632,7 @@ Private Sub DrawShell(ByVal ws As Worksheet)
         End With
     Next k
     Dim widths As Variant
-    widths = Array(12, 6, 34, 11, 6, 11, 11, 9, 7, 12, 12, 8, 8, 8, 26, 11, 6)
+    widths = Array(12, 6, 34, 11, 6, 11, 11, 9, 7, 12, 12, 8, 8, 8, 26, 11, 6, 8)
     For c = 0 To C_LASTCOL - 1: ws.Columns(c + 1).ColumnWidth = widths(c): Next c
     Call DrawHeader(ws, 0, 0)
 End Sub
@@ -631,7 +640,7 @@ End Sub
 Private Sub DrawHeader(ByVal ws As Worksheet, ByVal off As Long, ByVal lc As Long)
     Dim hdr As Variant
     hdr = Array("TICKER", "MKT", "STRATEGY", "ADDED", "DAYS", "ENTRY TGT", "LAST", "DIST%", _
-                "NOTES", "LAST CALL", "STATUS", "M/R/C", "R1", "R4", "SIGNAL", "SIG DATE", "AGO")
+                "NOTES", "LAST CALL", "STATUS", "M/R/C", "R1", "R4", "SIGNAL", "SIG DATE", "AGO", "STREAK")
     Dim mode As String: mode = SortMode()
     Dim c As Long, txt As String, arrow As String
     For c = 1 To C_LASTCOL
@@ -895,6 +904,18 @@ Private Sub DrawOneRow(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long,
     With ws.Cells(r, C_AGO + lc)
         .HorizontalAlignment = xlCenter
         If sd > 0 Then .Value = CLng(Date - CDate(sd)) Else .Value = "-": .Font.Color = CLR_MUTED
+    End With
+    ' STREAK: signed run of consecutive up(+, red) / down(-, green) bars, any length
+    Dim stk As Long: stk = CLng(NumOr0(v(i, WT_STREAK)))
+    With ws.Cells(r, C_STREAK + lc)
+        .HorizontalAlignment = xlCenter
+        If stk > 0 Then
+            .NumberFormat = "+0": .Value = stk: .Font.Color = RGB(220, 60, 60): .Font.Bold = True
+        ElseIf stk < 0 Then
+            .NumberFormat = "0": .Value = stk: .Font.Color = RGB(60, 200, 90): .Font.Bold = True
+        Else
+            .Value = ChrW(&H2014): .Font.Color = CLR_MUTED
+        End If
     End With
 End Sub
 
