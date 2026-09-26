@@ -13,8 +13,10 @@ Option Explicit
 '   3 SOX                Yahoo ^SOX (index level)
 '   4 SOX VOL 20D        20-day realized vol of SOX, annualised, in %
 '   5 SOX VOL 20D AVG    mean of the last 20 daily values of row 4, in %
-'   6 BRENT SPOT         EIA spot via FRED DCOILBRENTEU (USD/bbl)
-'   7 WTI SPOT           EIA spot via FRED DCOILWTICO   (USD/bbl)
+'   6 BRENT FUT          Yahoo BZ=F, continuous front-month Brent futures (USD/bbl)
+'   7 WTI FUT            Yahoo CL=F, continuous front-month WTI futures   (USD/bbl)
+'                        (futures, NOT spot; the price jumps on contract roll days,
+'                        so 1W / 1M / percentile can be distorted around a roll)
 '
 ' Columns (per row):
 '   1 last        latest value
@@ -25,15 +27,20 @@ Option Explicit
 '   5 chg1M       vs 21 observations back (same unit rule)
 '   6 pctile      percent of the last 252 observations (incl. today; fewer if
 '                 the history is shorter) that are <= the latest value, 0-100
-'   7 asOf        date of the last observation, "yyyy-mm-dd" (oil lags 1-2 days)
+'   7 asOf        date of the last observation, "yyyy-mm-dd" (exchange-local date of
+'                 the last Yahoo bar; on a weekend = the last trading day)
 '   8 note        F&G: CNN rating text (Fear / Extreme Greed ...); others ""
 '   9 unit        unit of columns 4 and 5:  "pt" = point difference
 '                 (F&G, SOX VOL 20D, SOX VOL 20D AVG), "%" = percent change
-'                 (VIX, SOX, BRENT, WTI)
+'                 (VIX, SOX, BRENT FUT, WTI FUT)
 '
 ' Definitions:
-'   * "observation" = a valid data point (FRED holidays "." are skipped, Yahoo
-'     null closes are skipped). 1W = 5 observations back, 1M = 21 back.
+'   * "observation" = a valid data point (Yahoo null closes are skipped).
+'     1W = 5 observations back, 1M = 21 back.
+'   * Oil rows: history = Yahoo range=1y daily closes; the last point is replaced
+'     by meta.regularMarketPrice (live price) when its exchange-local date equals
+'     the last bar's date, so day change = live price vs previous close. On a
+'     weekend / holiday the live price equals the last trading day's close.
 '   * Realized vol: sample stdev (n-1) of the last 20 daily LOG returns of the
 '     SOX adjusted close * sqrt(252) * 100. The series of daily vols is built
 '     over the whole 2y history; row 5 is the plain mean of its last 20 values
@@ -50,9 +57,9 @@ Option Explicit
 ' Source quirks (measured 2026-09-27):
 '   * CNN answers 418 unless User-Agent is a full browser string AND a
 '     Referer of edition.cnn.com is sent.
-'   * FRED stalls (no answer) when the User-Agent looks like a browser, so
-'     FRED gets a plain non-browser UA; cosd= limits the CSV to ~500 days.
-'   * Yahoo chart accepts any UA; '^' must be encoded as %5E.
+'   * Yahoo chart accepts any UA; '^' must be encoded as %5E, '=' as %3D.
+'   * Oil used to come from EIA spot via FRED; that was dropped because FRED
+'     lags 3 trading days (and spot differs from futures), see CLAUDE.md.
 ' Self-contained: depends on no other RR4 module. Keep this file pure ASCII.
 ' ============================================================================
 
@@ -60,7 +67,6 @@ Private Const MK_ROWS As Long = 7
 Private Const MK_COLS As Long = 9
 
 Private Const UA_BROWSER As String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-Private Const UA_PLAIN As String = "curl/8.4.0"
 
 Private Const T_RESOLVE_MS As Long = 5000
 Private Const T_CONNECT_MS As Long = 5000
@@ -78,8 +84,8 @@ Public Function MarketLabel(ByVal i As Long) As String
         Case 3: MarketLabel = "SOX"
         Case 4: MarketLabel = "SOX VOL 20D"
         Case 5: MarketLabel = "SOX VOL 20D AVG"
-        Case 6: MarketLabel = "BRENT SPOT"
-        Case 7: MarketLabel = "WTI SPOT"
+        Case 6: MarketLabel = "BRENT FUT"
+        Case 7: MarketLabel = "WTI FUT"
         Case Else: MarketLabel = ""
     End Select
 End Function
@@ -95,9 +101,9 @@ Public Function MarketSnapshot() As Variant
     Err.Clear
     LoadSoxFamily m
     Err.Clear
-    LoadOil m, 6, "DCOILBRENTEU"
+    LoadOil m, 6, "BZ%3DF"
     Err.Clear
-    LoadOil m, 7, "DCOILWTICO"
+    LoadOil m, 7, "CL%3DF"
     Err.Clear
     On Error GoTo 0
 
@@ -265,37 +271,11 @@ Fail:
     ClearRow m, 5
 End Sub
 
-Private Sub LoadOil(ByRef m() As Variant, ByVal r As Long, ByVal seriesId As String)
+Private Sub LoadOil(ByRef m() As Variant, ByVal r As Long, ByVal symEnc As String)
+    ' Yahoo front-month future, 1y daily closes, last point = live price.
     On Error GoTo Fail
-    Dim s As String
-    s = HttpGetText("https://fred.stlouisfed.org/graph/fredgraph.csv?id=" & seriesId & "&cosd=" & DateStr(Date - 500), UA_PLAIN, "", "")
-    If Len(s) = 0 Then Exit Sub
-
-    Dim lines() As String
-    s = Replace(s, vbCr, "")
-    lines = Split(s, vbLf)
-
-    Dim v() As Double, d() As Double, n As Long, i As Long
-    ReDim v(1 To UBound(lines) + 1)
-    ReDim d(1 To UBound(lines) + 1)
-    Dim parts() As String, dt As Double
-    For i = 1 To UBound(lines)                  ' line 0 is the header
-        If Len(lines(i)) > 8 Then
-            parts = Split(lines(i), ",")
-            If UBound(parts) >= 1 Then
-                If Len(parts(1)) > 0 And parts(1) <> "." Then
-                    dt = DateValueIso(Left$(parts(0), 10))
-                    If dt > 0 Then
-                        n = n + 1
-                        d(n) = dt - EpochDay()
-                        v(n) = Val(parts(1))
-                    End If
-                End If
-            End If
-        End If
-    Next i
-    If n < 2 Then Exit Sub
-
+    Dim d() As Double, v() As Double, n As Long
+    If Not FetchYahoo(symEnc, d, v, n, "1y", True) Then Exit Sub
     FillStats m, r, v, n, "%", DayToStr(d(n)), ""
     Exit Sub
 Fail:
@@ -351,10 +331,12 @@ End Sub
 ' ---------------------------------------------------------------- Yahoo
 
 Private Function FetchYahoo(ByVal symEnc As String, ByRef d() As Double, _
-                            ByRef v() As Double, ByRef n As Long) As Boolean
+                            ByRef v() As Double, ByRef n As Long, _
+                            Optional ByVal rng As String = "2y", _
+                            Optional ByVal useLive As Boolean = False) As Boolean
     On Error GoTo Fail
     Dim s As String
-    s = HttpGetText("https://query1.finance.yahoo.com/v8/finance/chart/" & symEnc & "?range=2y&interval=1d", UA_BROWSER, "", "")
+    s = HttpGetText("https://query1.finance.yahoo.com/v8/finance/chart/" & symEnc & "?range=" & rng & "&interval=1d", UA_BROWSER, "", "")
     If Len(s) = 0 Then Exit Function
 
     Dim pInd As Long
@@ -389,6 +371,18 @@ Private Function FetchYahoo(ByVal symEnc As String, ByRef d() As Double, _
             v(n) = Val(c)
         End If
     Next i
+    ' optional: replace the last point by the live price when it is the same
+    ' exchange-local day as the last bar (weekend: live price = last close)
+    If useLive And n >= 1 Then
+        Dim pP As Long, pT As Long, lp As Double, lt As Double
+        pP = InStr(1, s, """regularMarketPrice"":", vbBinaryCompare)
+        pT = InStr(1, s, """regularMarketTime"":", vbBinaryCompare)
+        If pP > 0 And pT > 0 Then
+            lp = NumAfterKey(s, pP + 20)
+            lt = Fix((NumAfterKey(s, pT + 20) + gmt) / 86400#)
+            If lp > 0 And lt = d(n) Then v(n) = lp
+        End If
+    End If
     FetchYahoo = (n >= 2)
     Exit Function
 Fail:

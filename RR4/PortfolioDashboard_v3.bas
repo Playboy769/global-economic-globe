@@ -2232,7 +2232,7 @@ End Function
 
 Private Function MarketLabelOf(ByVal i As Long) As String
     Dim d As Variant
-    d = Array("FEAR & GREED", "VIX", "SOX", "SOX VOL 20D", "SOX VOL 20D AVG", "BRENT SPOT", "WTI SPOT")
+    d = Array("FEAR & GREED", "VIX", "SOX", "SOX VOL 20D", "SOX VOL 20D AVG", "BRENT FUT", "WTI FUT")
     MarketLabelOf = CStr(d(i - 1))
     Dim v As Variant
     On Error Resume Next
