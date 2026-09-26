@@ -77,25 +77,33 @@ Private Const R_SEG As Long = 5
 Private Const R_GAP1 As Long = 6
 Private Const R_SC As Long = 7
 Private Const R_TLBL As Long = 8
-Private Const R_TILE As Long = 9
-Private Const R_GAP2 As Long = 10
-Private Const R_DHEAD As Long = 11
-Private Const R_PRINT As Long = 12
-Private Const R_READ As Long = 13
-Private Const R_QUOTE As Long = 14
-Private Const R_SRC As Long = 15
-Private Const R_GAP3 As Long = 16
-Private Const R_MAP As Long = 17
-Private Const R_MLBL As Long = 18
-Private Const R_RING1 As Long = 19              ' rings sit on rows 19-20
-Private Const R_AXIS As Long = 21
-Private Const R_TICK As Long = 22
-Private Const R_LEG As Long = 23
-Private Const R_THDR As Long = 24
-Private Const R_TFIRST As Long = 25
+Private Const R_TLGAP As Long = 9               ' spacer between the tile labels and the tiles
+Private Const R_TILE As Long = 10
+Private Const R_GAP2 As Long = 11
+Private Const R_DHEAD As Long = 12
+Private Const R_PRINT As Long = 13
+Private Const R_READ As Long = 14
+Private Const R_QUOTE As Long = 15
+Private Const R_SRC As Long = 16
+Private Const R_GAP3 As Long = 17
+Private Const R_MAP As Long = 18
+Private Const R_MLBL As Long = 19               ' the key ring block lives on rows 19-24 (left of the axis)
+Private Const R_RING1 As Long = 20              ' peer rings sit on rows 20-21
+Private Const R_AXIS As Long = 22
+Private Const R_TICK As Long = 23
+Private Const R_LEG As Long = 24
+Private Const R_THDR As Long = 25
+Private Const R_THGAP As Long = 26              ' spacer between the table header and the first row
+Private Const R_TFIRST As Long = 27
 
-Private Const NUNIT As Long = 14                ' units 0..13
-Private Const UNIT_PTS As Double = 72
+' Logical units: 0 = label column (tickers / block labels), 1..7 = the seven item
+' columns (tiles, detail tabs, peer-table verdicts share them), 8 INDEX, 9 BUCKET,
+' 10 REPORTED.  Physical columns interleave a narrow black spacer after every
+' item column (ColOf), which is what makes the gaps between tiles / tabs / cells.
+Private Const NUNIT As Long = 11                ' units 0..10
+Private Const NPHYS As Long = 18                ' physical columns behind them
+Private Const SP_PTS As Double = 6              ' spacer column width
+Private Const SEP_PT As Double = 7.5            ' label -> tile / header -> first row gap (~10 px)
 Private Const FONT_FACE As String = "Consolas"
 Private Const ITEM_NAME As String = "E2ITEM"    ' hidden workbook name: the item shown in the detail strip
 
@@ -289,8 +297,30 @@ Private Sub Sync(ByVal ws As Worksheet)
 End Sub
 
 ' cell at (page row, unit); unit 0 = the first content column
+Private Function ColOf(ByVal u As Long) As Long
+    If u <= 0 Then
+        ColOf = 0
+    ElseIf u <= 7 Then
+        ColOf = 2 * u - 1
+    Else
+        ColOf = u + 7
+    End If
+End Function
+
+' physical column offset (0-based from the first content column) -> unit; -1 = spacer / outside
+Private Function UnitOfCol(ByVal k As Long) As Long
+    UnitOfCol = -1
+    If k = 0 Then
+        UnitOfCol = 0
+    ElseIf k >= 1 And k <= 13 Then
+        If k Mod 2 = 1 Then UnitOfCol = (k + 1) \ 2
+    ElseIf k >= 15 And k <= 17 Then
+        UnitOfCol = k - 7
+    End If
+End Function
+
 Private Function Cl(ByVal pr As Long, ByVal u As Long) As Range
-    Set Cl = m_ws.Cells(pr + m_off, m_lc + 1 + u)
+    Set Cl = m_ws.Cells(pr + m_off, m_lc + 1 + ColOf(u))
 End Function
 
 Private Function Rg(ByVal pr As Long, ByVal u1 As Long, ByVal u2 As Long) As Range
@@ -848,13 +878,17 @@ End Sub
 
 Private Sub DrawShell(ByVal ws As Worksheet)
     Dim u As Long, i As Long
-    For u = 0 To NUNIT - 1
-        Call SetColPts(ws.Columns(m_lc + 1 + u), UNIT_PTS)
+    Dim wpts As Variant
+    wpts = Array(72, 100, SP_PTS, 100, SP_PTS, 100, SP_PTS, 100, SP_PTS, 100, SP_PTS, 100, SP_PTS, 100, SP_PTS, 60, 70, 84)
+    For u = 0 To NPHYS - 1
+        Call SetColPts(ws.Columns(m_lc + 1 + u), CDbl(wpts(u)))
     Next u
     ws.Rows(R_GAP1 + m_off).RowHeight = 8
     ws.Rows(R_TITLE + m_off).RowHeight = 22
     ws.Rows(R_TICKER + m_off).RowHeight = 22
+    ws.Rows(R_TLGAP + m_off).RowHeight = SEP_PT
     ws.Rows(R_TILE + m_off).RowHeight = 32
+    ws.Rows(R_THGAP + m_off).RowHeight = SEP_PT
     ws.Rows(R_GAP2 + m_off).RowHeight = 10
     ws.Rows(R_READ + m_off).RowHeight = 34
     ws.Rows(R_QUOTE + m_off).RowHeight = 34
@@ -925,13 +959,14 @@ Private Sub DrawShell(ByVal ws As Worksheet)
 
     ' --- summary block labels (values are dynamic) ---
     Dim bl As Variant: bl = Array("MARGINS", "GUIDES", "BUCKETS", "AVG INDEX", "REPORTED")
+    Dim bu As Variant: bu = Array(3, 5, 7, 9, 10)                ' first unit of each block
     For i = 0 To 4
-        Call StackLabel(Cl(R_LAYER, 4 + 2 * i), CStr(bl(i)))
-        Cl(R_LAYER, 4 + 2 * i).Font.Size = 7
-        Call Edge(Rg(R_LAYER, 4 + 2 * i, 4 + 2 * i), xlEdgeLeft, RR4_LINE, xlThin)
-        Call Edge(Rg(R_PASTE, 4 + 2 * i, 4 + 2 * i), xlEdgeLeft, RR4_LINE, xlThin)
-        Cl(R_LAYER, 4 + 2 * i).IndentLevel = 1
-        Cl(R_PASTE, 4 + 2 * i).IndentLevel = 1
+        Call StackLabel(Cl(R_LAYER, CLng(bu(i))), CStr(bl(i)))
+        Cl(R_LAYER, CLng(bu(i))).Font.Size = 7
+        Call Edge(Cl(R_LAYER, CLng(bu(i))), xlEdgeLeft, RR4_LINE, xlThin)
+        Call Edge(Cl(R_PASTE, CLng(bu(i))), xlEdgeLeft, RR4_LINE, xlThin)
+        Cl(R_LAYER, CLng(bu(i))).IndentLevel = 1
+        Cl(R_PASTE, CLng(bu(i))).IndentLevel = 1
     Next i
 
     ' --- SCORECARD ---
@@ -945,14 +980,13 @@ Private Sub DrawShell(ByVal ws As Worksheet)
         .IndentLevel = 1
     End With
     For i = 1 To 7
-        With Cl(R_TLBL, 2 * (i - 1))
+        With Cl(R_TLBL, i)
             .Value = i & " " & ItemName(i)
             .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 7
             .HorizontalAlignment = xlLeft
             .VerticalAlignment = xlBottom
         End With
-        With Rg(R_TILE, 2 * (i - 1), 2 * (i - 1) + 1)
-            .Merge
+        With Cl(R_TILE, i)
             .NumberFormat = "@"
             .HorizontalAlignment = xlLeft
             .IndentLevel = 1
@@ -1025,7 +1059,7 @@ Private Sub AddValidations()
         .ShowError = False
     End With
     For i = 1 To 7
-        With Cl(R_TILE, 2 * (i - 1)).Validation
+        With Cl(R_TILE, i).Validation
             .Delete
             .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:=ItemVocab(i)
             .IgnoreBlank = True
@@ -1167,11 +1201,11 @@ Private Sub DrawSummary()
     green = RGB(86, 200, 124): red = RGB(224, 92, 92): orange = RGB(235, 150, 40): dimc = RGB(120, 120, 120)
 
     ' MARGINS
-    Call TwoPart(Cl(R_PASTE, 4), up & " up", green, dn & " down", red, sepTxt, dimc)
+    Call TwoPart(Cl(R_PASTE, 3), up & " up", green, dn & " down", red, sepTxt, dimc)
     ' GUIDES
-    Call TwoPart(Cl(R_PASTE, 6), rs & " raised", green, cut & " cut", red, sepTxt, dimc)
+    Call TwoPart(Cl(R_PASTE, 5), rs & " raised", green, cut & " cut", red, sepTxt, dimc)
     ' BUCKETS: long first, then monitor, then avoid - non-zero parts only
-    With Cl(R_PASTE, 8)
+    With Cl(R_PASTE, 7)
         .Font.Size = 10: .Font.Bold = False: .HorizontalAlignment = xlLeft
         Dim txt As String, parts(1 To 3) As String, cols(1 To 3) As Long, np As Long
         If nL > 0 Then np = np + 1: parts(np) = nL & " long": cols(np) = green
@@ -1191,7 +1225,7 @@ Private Sub DrawSummary()
         End If
     End With
     ' AVG INDEX
-    With Cl(R_PASTE, 10)
+    With Cl(R_PASTE, 9)
         .Font.Size = 10: .Font.Bold = False: .HorizontalAlignment = xlLeft
         If nData = 0 Then
             .Value = "-": .Font.Color = dimc
@@ -1199,10 +1233,13 @@ Private Sub DrawSummary()
             .NumberFormat = "@"
             .Value = Format$(sumIdx / nData, "+0.00;-0.00;0.00")
             .Font.Color = RGB(245, 245, 245)
+            On Error Resume Next
+            .Errors(xlNumberAsText).Ignore = True          ' no green "number stored as text" flag
+            On Error GoTo 0
         End If
     End With
     ' REPORTED range
-    With Cl(R_PASTE, 12)
+    With Cl(R_PASTE, 10)
         .Font.Size = 10: .Font.Bold = False: .HorizontalAlignment = xlLeft
         If dMax = 0 Then
             .Value = "-": .Font.Color = dimc
@@ -1242,7 +1279,7 @@ Private Sub DrawTiles()
         If c_selRow > 0 Then v = CellStr(c_v(c_selRow, ET_V1 + i - 1))
         If v = "-" Then v = ""
         cls = VClass(v)
-        Set rng = Rg(R_TILE, 2 * (i - 1), 2 * (i - 1) + 1)
+        Set rng = Cl(R_TILE, i)
         With rng
             .Borders.LineStyle = xlNone
             .Interior.Color = ClsBg(cls, True)
@@ -1327,7 +1364,7 @@ Private Sub DrawTable()
     Dim lastR As Long: lastR = m_ws.Cells(m_ws.Rows.Count, m_lc + 1).End(xlUp).Row
     If lastR < firstR + 60 Then lastR = firstR + 60
     Dim area As Range
-    Set area = m_ws.Range(m_ws.Cells(firstR, 1), m_ws.Cells(lastR + 2, m_lc + NUNIT + 1))
+    Set area = m_ws.Range(m_ws.Cells(firstR, 1), m_ws.Cells(lastR + 2, m_lc + NPHYS + 1))
     area.ClearContents
     area.Borders.LineStyle = xlNone
     area.Interior.Color = RGB(0, 0, 0)
@@ -1344,6 +1381,7 @@ Private Sub DrawTable()
         i = p_ord(k)
         pr = R_TFIRST + k - 1
         Dim selRow As Boolean: selRow = p_sel(i)
+        Call Edge(Rg(pr, 0, NUNIT - 1), xlEdgeBottom, RGB(0, 0, 0), xlMedium)      ' ~2 px seam between rows
         With Cl(pr, 0)
             .NumberFormat = "@"
             .Value = p_tk(i)
@@ -1491,8 +1529,8 @@ End Function
 
 Private Sub DrawMap()
     Dim axL As Double, axR As Double, axY As Double
-    axL = Cl(R_AXIS, 0).Left + 54
-    axR = Cl(R_AXIS, NUNIT - 1).Left + Cl(R_AXIS, NUNIT - 1).Width - 50
+    axL = Cl(R_AXIS, 0).Left + 62
+    axR = Cl(R_AXIS, NUNIT - 1).Left + Cl(R_AXIS, NUNIT - 1).Width - 30
     axY = Cl(R_AXIS, 0).Top + Cl(R_AXIS, 0).Height / 2
 
     ' axis + ticks + tick labels
@@ -1521,20 +1559,22 @@ Private Sub DrawMap()
         Call AddText("E2_LEGT" & bi, CStr(bn(bi)), x + 7, legY, 50, 7.5, RGB(150, 150, 150), False, 1)
     Next bi
 
-    ' key ring (which segment is which item)
+    ' key ring (which segment is which item). Its own block: centre 32 pt below the top of
+    ' the MLBL row, ring 22 pt, numbers 11.5 pt outside the ring edge (clear of it and of the
+    ' row above), the "key" caption a clear 6 pt under the lowest number.
     Dim kcx As Double, kcy As Double
-    kcx = Cl(R_RING1, 0).Left + 22
-    kcy = Cl(R_RING1, 0).Top + Cl(R_RING1, 0).Height
+    kcx = Cl(R_MLBL, 0).Left + 30
+    kcy = Cl(R_MLBL, 0).Top + 32
     Dim kc(1 To 7) As Long, q As Long
     For q = 1 To 7: kc(q) = RGB(110, 110, 110): Next q
-    Call AddRing("E2_KEY", kcx, kcy, 26, kc)
+    Call AddRing("E2_KEY", kcx, kcy, 22, kc)
     Dim pi As Double: pi = 3.14159265358979
     Dim ang As Double
     For q = 1 To 7
         ang = (-90 + (q - 0.5) * 360 / 7) * pi / 180
-        Call AddText("E2_KEYN" & q, CStr(q), kcx + 19 * Cos(ang), kcy + 19 * Sin(ang), 8, 6.5, RGB(150, 150, 150), False, 2)
+        Call AddText("E2_KEYN" & q, CStr(q), kcx + 22.5 * Cos(ang), kcy + 22.5 * Sin(ang), 8, 6.5, RGB(150, 150, 150), False, 2)
     Next q
-    Call AddText("E2_KEYT", "key", kcx, axY, 24, 7.5, RGB(130, 130, 130), False, 2)
+    Call AddText("E2_KEYT", "key", kcx, kcy + 22.5 + 6.25 + 6 + 6.5, 24, 7.5, RGB(130, 130, 130), False, 2)
 
     ' peers with data, ascending by INDEX so overlapping rings can be spread left to right
     Dim n As Long, i As Long, j As Long, tmp As Long
@@ -1661,8 +1701,8 @@ Public Sub Earn2Change(ByVal ws As Worksheet, ByVal Target As Range)
     Call Sync(ws)
     Dim t As Range: Set t = Target.Cells(1, 1)
     Dim pr As Long: pr = t.Row - m_off
-    Dim u As Long: u = t.Column - m_lc - 1
-    If pr < 1 Or u < 0 Or u >= NUNIT Then Exit Sub          ' the nav bar rows / blank column A
+    Dim u As Long: u = UnitOfCol(t.Column - m_lc - 1)
+    If pr < 1 Or u < 0 Then Exit Sub                        ' nav bar rows / blank column A / spacer columns
     Dim prevEv As Boolean: prevEv = Application.EnableEvents
     Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
     Application.EnableEvents = False
@@ -1677,8 +1717,8 @@ Public Sub Earn2Change(ByVal ws As Worksheet, ByVal Target As Range)
     ElseIf pr = R_SEG And u = 5 Then
         Call LoadCtx(ws)
         Call DrawContent(False)
-    ElseIf pr = R_TILE Then
-        Call TileChanged(ws, u \ 2 + 1, t)
+    ElseIf pr = R_TILE And u >= 1 And u <= 7 Then
+        Call TileChanged(ws, u, t)
     ElseIf pr = R_SC And u >= 1 Then
         Call WriteField(ws, ET_HEAD, CellStr(Rg(R_SC, 1, NUNIT - 1).Cells(1, 1).Value))
     ElseIf (pr = R_PRINT Or pr = R_READ Or pr = R_QUOTE Or pr = R_SRC) And u >= 1 Then
@@ -1796,10 +1836,10 @@ Public Sub Earn2Select(ByVal ws As Worksheet, ByVal Target As Range)
     Call Sync(ws)
     Dim t As Range: Set t = Target.Cells(1, 1)
     Dim pr As Long: pr = t.Row - m_off
-    Dim u As Long: u = t.Column - m_lc - 1
-    If pr < 1 Or u < 0 Or u >= NUNIT Then Exit Sub
+    Dim u As Long: u = UnitOfCol(t.Column - m_lc - 1)
+    If pr < 1 Or u < 0 Then Exit Sub
     Dim item As Long, doIt As Boolean
-    If pr = R_TILE Then item = u \ 2 + 1: doIt = True
+    If pr = R_TILE And u >= 1 And u <= 7 Then item = u: doIt = True
     If pr = R_DHEAD And u >= 1 And u <= 7 Then item = u: doIt = True
     Dim prevEv As Boolean: prevEv = Application.EnableEvents
     Dim prevScr As Boolean: prevScr = Application.ScreenUpdating

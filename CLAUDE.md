@@ -972,24 +972,40 @@ SEGMENT 已含該代號就保留（覆寫不會被洗掉），否則重新自動
 選定代號在表格／地圖用**它選的那一季**（REPORTED 下拉，寫在 SEGMENT 列右邊、名稱
 `E2DateList`），其他成員一律用各自最新一季。
 
-**版面**：14 個等寬「unit」（每個 72pt，B 欄起），所有程式用 `Cl(頁面列, unit)`／`Rg` 定址
-（內部加 `NavOffset`/`NavLeft`），所以建置中與建好後是同一套程式。標頭摘要區塊 MARGINS／
+**版面（2026-09-26 間距改版）**：程式用**邏輯 unit** 定址——unit 0＝左側標籤欄（代號、區塊標籤，72pt）、
+unit 1..7＝**七個項目欄**（100pt）、unit 8/9/10＝INDEX（60）／BUCKET（70）／REPORTED（84）；
+`ColOf(u)` 把 unit 對到**實體欄**，在每個項目欄後插一條 **6pt 純黑 spacer 欄**（實體 18 欄：
+0 標籤、1/3/5/…/13 項目欄、2/4/…/14 spacer、15–17 三個尾欄），`UnitOfCol` 反查（點到 spacer 欄
+＝忽略）。`Cl(頁面列, unit)`／`Rg` 加上 `NavOffset`/`NavLeft`，**跨 unit 的合併（SEGMENT、
+PASTE、SCORECARD 標題、detail 文字）自然包含 spacer**。**tile、detail tab、peer 表格 verdict
+欄共用同一組七個項目欄＋spacer，垂直對齊**（使用者選「align」）——取捨：範本 tile 週期
+226px、表格週期 125px 是不對齊的，這版三者都收斂成 tile＝100pt 一格；左側標籤欄放代號（表格）
+／代號標籤（detail）／區塊標籤，INDEX／BUCKET／REPORTED 在七欄之後。標頭摘要區塊改從
+unit 3、5、7、9、10 起（MARGINS／GUIDES／BUCKETS／AVG INDEX／REPORTED），公司名在 unit 3。
+**間距**：tile 標籤列與 tile 之間多一列 `R_TLGAP`（7.5pt≈10px）、表格標題列與第一列之間多一列
+`R_THGAP`（同 7.5pt）；tile／tab／verdict 儲存格彼此之間就是 6pt spacer 欄（保留各自的彩色
+左邊條與選定 tile 的外框）；表格每列下緣一條黑色 `xlMedium` 邊框＝約 2px 列縫。頁面列號因此
+比舊版多兩列（R_TLGAP=9、R_TILE=10、…、R_TFIRST=27）。tile 已改成**單一儲存格**（不再兩欄
+合併），下拉驗證掛在該格。標頭摘要區塊 MARGINS／
 GUIDES／BUCKETS／AVG INDEX／REPORTED 只算有資料的成員（BUCKETS 只列非零、順序 long·
-monitor·avoid；REPORTED 用 `→`）。七張 tile ＝ 兩個 unit 合併、tile 本身就是下拉格；點 tile 或
+monitor·avoid；REPORTED 用 `→`；AVG INDEX 的「數字存成文字」綠三角已用 `Errors.Ignore` 關掉）。點 tile 或
 detail 分頁列的 tab（`Worksheet_SelectionChange`）＝切換 detail 項目（隱藏名稱 `E2ITEM`），
-Print vs bar／Read／Quote／Source 四格（合併 13 個 unit、自動換行）直接打字、當場寫回該
+Print vs bar／Read／Quote／Source 四格（合併 unit 1..10、自動換行）直接打字、當場寫回該
 項目的 PRINT_n/READ_n/QUOTE_n/SOURCE_n。點表格裡的代號＝那檔變成 TICKER（同一個
 SEGMENT）——⚠️ 用 SelectionChange 實作，所以**鍵盤方向鍵掃過代號欄也會切換**。
 **PEER MAP** 全部是 `E2_*` 圖形（`xlMove`，由儲存格 `Left/Top` 算位置，每次重畫先全刪）：
-軸 −0.50..+0.50（超出 ±0.5 夾在端點）、每檔一個 bucket 色圓點在真實 INDEX 上、上方一個
+軸 −0.50..+0.50（左端＝標籤欄左緣＋62pt、右端＝REPORTED 欄右緣−30pt；超出 ±0.5 夾在端點）、
+每檔一個 bucket 色圓點在真實 INDEX 上、上方一個
 **7 段環**（每段一個 freeform 多邊形，從 12 點鐘順時針，1 號在正上右側；顏色＝該項好綠壞紅
 中性灰）、再上方 ticker 標籤（選定代號＝橘底黑字＋橘色外圈）；INDEX 相近的環用一維叢集
 （`SpreadX`，間距 38pt、以叢集真實位置平均為中心）左右錯開，圓點不動。選定列在 A 欄
-（導覽列留的空白欄）畫一條橘色標記。
+（導覽列留的空白欄）畫一條橘色標記。**key 小環自成一塊**（`R_MLBL` 列頂端下 32pt 為圓心、直徑
+22pt；數字 1–7 放在距圓心 22.5pt＝環外緣外 11.5pt 處，最上面的 7 和 1 距 MLBL 列頂還有約 6pt、
+不會蓋到上一列；「key」說明字在最下面的數字下方再留約 7pt），左緣在標籤欄內、不擠到軸的 −0.50。
 
 **驗證**（隱藏複本＋實機）：用截圖的 DAL＋5 檔（JBLU/UAL/LUV/AAL/ALK）＋DAL 上一季、TW（2330
 晶圓代工 3 檔、覆寫到 IC設計）實跑：標頭數字（MARGINS 2 up·4 down、GUIDES 1 raised·3 cut、
-BUCKETS 3 monitor·3 avoid）、tile 顏色、表格排序與 bucket、環 7 段×6 環、同分環錯開、
+BUCKETS 3 monitor·3 avoid）、tile 顏色、表格排序與 bucket、環 7 段×6 環、同分環錯開、（間距改版後）label→tile 間距／tile 間 spacer／三塊欄位對齊／2px 列縫／key 環間距用 CopyPicture 逐張看過、
 選定列標記、tile 改值→表與摘要更新、點 tile 切項目、detail 寫回 tblEarn、REPORTED 下拉
 切季、點同業換代號、`E2!` 重建不疊圖形／導覽列、LAYER 1→E 頁再 `E2` 回來、EarnData 手改
 → 頁面重畫且代號自動大寫，都通過；測試列已全部刪除，`tblEarn` 留空。以 `Range.CopyPicture`
