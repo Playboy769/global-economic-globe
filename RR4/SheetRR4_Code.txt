@@ -13,10 +13,13 @@
 '    R/S UPSIDE / DOWNSIDE of a position row -> RecalcTargetRow (2026-09-25;
 '                        the workbook is in manual calculation, so the P.TARGET /
 '                        SWING RISK formulas are refreshed by hand here)
-'    B37:D37 TO-DO entry row -> PortfolioDashboard_v3.TodoCommitEntry
-'                        (2026-09-21; commits on Enter in D, or in C when
-'                        D already holds a date)
-'  Worksheet_BeforeDoubleClick: B38:E39 -> TodoDeleteRow (done)
+'    TO-DO entry row (G59, H59:K59 merged, L59) -> PortfolioDashboard_v3.TodoCommitEntry
+'                        (2026-09-21, moved 2026-09-27 from B37:D37; commits on
+'                        Enter in the due cell, or in the task cell when the due
+'                        cell already holds a date. The task cell is MERGED, so
+'                        Target is the whole H:K area - CountLarge > 1 is only
+'                        tolerated for a merged Target)
+'  Worksheet_BeforeDoubleClick: G60:M61 saved TO-DO rows -> TodoDeleteRow (done)
 '                               (the WATCHLIST jump to the Watch page was
 '                               removed 2026-09-27)
 '  (addresses come from the RR4_* / TI_* constants). The nav command
@@ -28,7 +31,11 @@
 '  cancels it. See modLiveRefresh.bas / PortfolioDashboard_v3.RefreshLivePricesLite.
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
-    If Target.CountLarge > 1 Then Exit Sub
+    If Target.CountLarge > 1 Then
+        If Not Target.MergeCells Then Exit Sub
+        If Intersect(Target, Me.Range(Me.Cells(RR4_TD_ENTRY, RR4_TD_C_TASK), _
+                                      Me.Cells(RR4_TD_ENTRY, RR4_TD_C_TASK2))) Is Nothing Then Exit Sub
+    End If
     ' UPSIDE / DOWNSIDE typed in the position log -> refresh that row's P.TARGET / SWING RISK
     If Target.Row >= RR4_POS_FIRST And Target.Row < RR4_POS_FIRST + 100 And _
        (Target.Column = RR4_UP_COL Or Target.Column = RR4_DN_COL) Then
@@ -39,8 +46,8 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     hitArr = Not Intersect(Target, Me.Range(RR4_ARR_CELL)) Is Nothing
     hitTicker = Not Intersect(Target, Me.Range(TI_TICKER_CELL)) Is Nothing
     hitTarget = Not Intersect(Target, Me.Range(TI_TARGET_CELL)) Is Nothing
-    hitTD = Not Intersect(Target, Me.Range(Me.Cells(RR4_TD_ENTRY, RR4_LEFT + 1), _
-                                            Me.Cells(RR4_TD_ENTRY, RR4_LEFT + 3))) Is Nothing
+    hitTD = Not Intersect(Target, Me.Range(Me.Cells(RR4_TD_ENTRY, RR4_TD_C_TICK), _
+                                            Me.Cells(RR4_TD_ENTRY, RR4_TD_C_DUE))) Is Nothing
     If Not (hitArr Or hitTicker Or hitTarget Or hitTD) Then Exit Sub
 
     Application.EnableEvents = False
@@ -64,9 +71,11 @@ Fin:
 End Sub
 
 Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
-    If Target.CountLarge > 1 Then Exit Sub
-    If Intersect(Target, Me.Range(Me.Cells(RR4_TD_FIRST, RR4_LEFT + 1), _
-                                  Me.Cells(RR4_TD_LAST, RR4_LEFT + 4))) Is Nothing Then Exit Sub
+    If Target.CountLarge > 1 Then
+        If Not Target.MergeCells Then Exit Sub          ' merged task cell H:K reports its whole area
+    End If
+    If Intersect(Target, Me.Range(Me.Cells(RR4_TD_FIRST, RR4_TD_C_TICK), _
+                                  Me.Cells(RR4_TD_LAST, RR4_TD_C_DTE))) Is Nothing Then Exit Sub
     Cancel = True
     Application.EnableEvents = False
     On Error GoTo Fin

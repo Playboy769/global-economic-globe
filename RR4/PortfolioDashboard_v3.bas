@@ -105,24 +105,46 @@ Public Const RR4_CHART_ROWS As Long = 14
 ' cache; "-" when no price could be fetched. No events hang on it (no
 ' double-click, no hit highlight). ReadWatchlist / DrawWatchlist keep the
 ' block alive across the page clear; WatchlistLastRow finds its end.
-' B26:E35 (its old home, 2026-09-12..09-26) is blank on purpose - reserved
-' for a market dashboard. The RR4_WLOLD_* constants only serve
-' modWatch.SeedFromRR4 (one-off migration of an older layout).
+' B26:E35 (its old home, 2026-09-12..09-26) now belongs to the MARKET block
+' (see below). The RR4_WLOLD_* constants only serve modWatch.SeedFromRR4
+' (one-off migration of an older layout; it only fires when B26 still says
+' WATCHLIST, which the MARKET title has replaced).
 Public Const RR4_WL_TITLE  As Long = 58
 Public Const RR4_WL_HDR    As Long = 59
 Public Const RR4_WL_FIRST  As Long = 60
 Public Const RR4_WLOLD_TITLE As Long = 26
 Public Const RR4_WLOLD_FIRST As Long = 28
 Public Const RR4_WLOLD_LAST  As Long = 35
-' TO-DO (2026-09-21): B:E (formerly under the old WATCHLIST spot). Row 36 = title + column
-' names (TASK / DUE / DTE), row 37 = entry row (B ticker, C task, D due),
-' rows 38-39 = the saved list, sorted by due date (undated last), DTE =
-' due - today recomputed on every UP, lit orange once overdue.
-' Double-click a saved row = done (TodoDeleteRow).
-Public Const RR4_TD_TITLE  As Long = 36
-Public Const RR4_TD_ENTRY  As Long = 37
-Public Const RR4_TD_FIRST  As Long = 38
-Public Const RR4_TD_LAST   As Long = 39
+' MARKET dashboard (2026-09-27): B26:E40. Title row 26, then 7 indicators x 2
+' rows (27..40). Data from modMarket.MarketSnapshot (called through
+' Application.Run, so this module compiles without modMarket present).
+' Upper row  B name / C last / D chg / E chg%  ; lower row (small grey) B note
+' or "as of" / C 1W / D 1M / E P<percentile>.  Red up / green down, direction only.
+Public Const RR4_MK_TITLE  As Long = 26
+Public Const RR4_MK_FIRST  As Long = 27
+Public Const RR4_MK_LAST   As Long = 40
+Private Const RR4_MK_N     As Long = 7
+' TO-DO (2026-09-21; moved 2026-09-27 from B36:E39 to G58, level with the
+' WATCHLIST title). Row 58 = title G + column names (TASK / DUE / DTE), row 59 =
+' entry row, rows 60-61 = the saved list (2 rows), sorted by due date (undated
+' last), DTE = due - today recomputed on every UP, lit orange once overdue.
+' Columns: G ticker (7) | H:K task, MERGED per row (8..11) | L due (12) | M DTE (13).
+' Double-click a saved row = done (TodoDeleteRow). Merged cells: the sheet events
+' see the whole H:K area as Target, TodoCommitEntry gets its first column.
+Public Const RR4_TD_TITLE  As Long = 58
+Public Const RR4_TD_ENTRY  As Long = 59
+Public Const RR4_TD_FIRST  As Long = 60
+Public Const RR4_TD_LAST   As Long = 61
+Public Const RR4_TD_C_TICK As Long = 7
+Public Const RR4_TD_C_TASK As Long = 8
+Public Const RR4_TD_C_TASK2 As Long = 11
+Public Const RR4_TD_C_DUE  As Long = 12
+Public Const RR4_TD_C_DTE  As Long = 13
+' Old home B36:E39 (title B36, entry 37, saved 38-39; B ticker / C task / D due):
+' read once by ReadTodo when the new spot has no TO-DO yet, then overwritten by MARKET.
+Private Const RR4_TDOLD_TITLE As Long = 36
+Private Const RR4_TDOLD_FIRST As Long = 38
+Private Const RR4_TDOLD_LAST  As Long = 39
 Public Const RR4_POS_TITLE As Long = 42
 Public Const RR4_POS_HDR   As Long = 43
 Public Const RR4_POS_FIRST As Long = 44
@@ -271,6 +293,7 @@ Sub RebuildPortfolioDashboard()
     Call ApplyArrange(arrCode)
     Call DrawWatchlist(wsP, wl)
     Call DrawTodo(wsP, td)
+    Call DrawMarket(wsP)
     Call DrawDisclaimer(wsP, lastDataRow)
     Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
@@ -2146,19 +2169,6 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
     Next i
 End Sub
 
-' Black vertical rules between adjacent grey input cells of an entry row
-' (B..B+n-1), so each field reads as its own box (2026-09-21).
-Private Sub SeparateInputCells(ws As Worksheet, ByVal r As Long, ByVal n As Long)
-    Dim c As Long
-    For c = 1 To n - 1
-        With ws.cells(r, RR4_LEFT + c).Borders(xlEdgeRight)
-            .LineStyle = xlContinuous
-            .Color = RGB(0, 0, 0)
-            .Weight = xlMedium
-        End With
-    Next c
-End Sub
-
 ' Live price into E of one watchlist row and its (plain) styling. No highlight
 ' rule any more: the list is display-only (2026-09-27).
 Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
@@ -2195,21 +2205,218 @@ Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
 End Sub
 
 ' ================================================================
-'  TO-DO (B36:E39, 2026-09-21) - see the RR4_TD_* constants
+'  MARKET (B26:E40, 2026-09-27) - see the RR4_MK_* constants
+' ================================================================
+' The data layer is modMarket (MarketSnapshot / MarketLabel). It is reached
+' through Application.Run with a text name, so this module COMPILES whether or
+' not modMarket exists; a missing module / a raised error only makes Run fail at
+' runtime, which is trapped here - the block then shows "-" everywhere and UP
+' carries on. Contract: MarketSnapshot() = Variant(1..7, 1..9), Empty = no data:
+'   1 last  2 chgDay  3 chgDayPct  4 chg1W  5 chg1M  6 pctile(0-100)
+'   7 asOf "yyyy-mm-dd"  8 note (F&G rating text)  9 unit ("pt" / "%")
+' chgDayPct / chg1W / chg1M-with-unit-"%" are PERCENT numbers (1.23 = 1.23%).
+Private Function MarketFetch() As Variant
+    Dim v As Variant, ok As Boolean
+    On Error Resume Next
+    v = Application.Run("'" & ThisWorkbook.Name & "'!modMarket.MarketSnapshot")
+    If Err.Number = 0 Then
+        If IsArray(v) Then
+            ok = (LBound(v, 1) = 1 And UBound(v, 1) >= RR4_MK_N And LBound(v, 2) = 1 And UBound(v, 2) >= 9)
+            If Err.Number <> 0 Then ok = False
+        End If
+    End If
+    Err.Clear
+    On Error GoTo 0
+    If ok Then MarketFetch = v
+End Function
+
+Private Function MarketLabelOf(ByVal i As Long) As String
+    Dim d As Variant
+    d = Array("FEAR & GREED", "VIX", "SOX", "SOX VOL 20D", "SOX VOL 20D AVG", "BRENT SPOT", "WTI SPOT")
+    MarketLabelOf = CStr(d(i - 1))
+    Dim v As Variant
+    On Error Resume Next
+    v = Application.Run("'" & ThisWorkbook.Name & "'!modMarket.MarketLabel", i)
+    If Err.Number = 0 Then
+        If VarType(v) = vbString Then
+            If Len(v) > 0 Then MarketLabelOf = CStr(v)
+        End If
+    End If
+    Err.Clear
+End Function
+
+Private Function MkIsNum(ByVal v As Variant) As Boolean
+    If IsError(v) Or IsEmpty(v) Or IsNull(v) Then Exit Function
+    If VarType(v) = vbString Then Exit Function
+    MkIsNum = IsNumeric(v)
+End Function
+
+' Signed text such as "+1.2%" / "-0.8 pt" for the lower (small grey) row.
+Private Function MkSigned(ByVal v As Double, ByVal unit As String) As String
+    Dim s As String: s = Format(v, "+0.0;-0.0;0.0")
+    If LCase(unit) = "pt" Then MkSigned = s & " pt" Else MkSigned = s & "%"
+End Function
+
+Private Sub MkGrey(rg As Range, ByVal txt As String)
+    rg.NumberFormat = "General"
+    rg.Value = txt
+    rg.Font.Color = RGB(140, 140, 140)
+End Sub
+
+Private Sub DrawMarket(ws As Worksheet)
+    Dim m As Variant: m = MarketFetch()
+    Dim ok As Boolean: ok = IsArray(m)
+
+    With ws.cells(RR4_MK_TITLE, RR4_LEFT + 1)
+        .Value = "MARKET"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 10
+        .HorizontalAlignment = xlLeft
+    End With
+
+    Dim i As Long, rt As Long, rb As Long, c As Long
+    Dim v As Variant, unit As String, decs As Long, fmt As String, fmtChg As String
+    For i = 1 To RR4_MK_N
+        rt = RR4_MK_FIRST + (i - 1) * 2
+        rb = rt + 1
+        Select Case i
+            Case 2, 6, 7: decs = 2          ' VIX, oils
+            Case 3: decs = 2                ' SOX (thousands separator below)
+            Case Else: decs = 1             ' F&G, SOX volatility
+        End Select
+        fmt = IIf(i = 3, "#,##0.", "0.") & String(decs, "0")
+        fmtChg = "+" & fmt & ";-" & fmt & ";" & fmt
+
+        ' ---- upper row: name / last / chg / chg% ----
+        With ws.cells(rt, RR4_LEFT + 1)
+            .Value = MarketLabelOf(i)
+            .Font.Color = RGB(221, 221, 221)
+            .Font.Bold = False
+            .HorizontalAlignment = xlLeft
+        End With
+        For c = 2 To 4
+            ws.cells(rt, RR4_LEFT + c).HorizontalAlignment = xlRight
+            ws.cells(rb, RR4_LEFT + c).HorizontalAlignment = xlRight
+        Next c
+        ws.cells(rb, RR4_LEFT + 1).HorizontalAlignment = xlLeft
+
+        ' last
+        If ok Then v = m(i, 1) Else v = Empty
+        If MkIsNum(v) Then
+            With ws.cells(rt, RR4_LEFT + 2)
+                .NumberFormat = fmt
+                .Value = CDbl(v)
+                .Font.Color = RGB(255, 255, 255)
+                .Font.Bold = True
+            End With
+        Else
+            Call MkGrey(ws.cells(rt, RR4_LEFT + 2), "-")
+        End If
+        ' chg (col 2) and chg% (col 3): coloured by direction, red up / green down
+        For c = 2 To 3
+            If ok Then v = m(i, c) Else v = Empty
+            If MkIsNum(v) Then
+                With ws.cells(rt, RR4_LEFT + 1 + c)
+                    .NumberFormat = IIf(c = 2, fmtChg, "+0.00""%"";-0.00""%"";0.00""%""")
+                    .Value = CDbl(v)
+                    If CDbl(v) > 0 Then
+                        .Font.Color = RR4_UP_FG
+                    ElseIf CDbl(v) < 0 Then
+                        .Font.Color = RR4_DN_FG
+                    Else
+                        .Font.Color = RGB(221, 221, 221)
+                    End If
+                End With
+            Else
+                Call MkGrey(ws.cells(rt, RR4_LEFT + 1 + c), "-")
+            End If
+        Next c
+
+        ' ---- lower row (small grey): note / as-of, 1W, 1M, percentile ----
+        With ws.Range(ws.cells(rb, RR4_LEFT + 1), ws.cells(rb, RR4_LEFT + 4))
+            .Font.Size = 8
+            .Font.Bold = False
+            .Font.Color = RGB(140, 140, 140)
+        End With
+        unit = "%"
+        If ok Then If Not IsEmpty(m(i, 9)) Then unit = CStr(m(i, 9))
+        Dim txt As String
+        ' B: F&G note (rating) / oil "as of <date>"
+        txt = ""
+        If ok Then
+            If i = 1 Then
+                If Not IsEmpty(m(i, 8)) Then txt = CStr(m(i, 8))
+                If txt = "" Then txt = "-"
+            ElseIf i >= 6 Then
+                If Not IsEmpty(m(i, 7)) Then txt = "as of " & CStr(m(i, 7))
+                If txt = "" Then txt = "-"
+            End If
+        ElseIf i = 1 Or i >= 6 Then
+            txt = "-"
+        End If
+        ws.cells(rb, RR4_LEFT + 1).NumberFormat = "@"
+        ws.cells(rb, RR4_LEFT + 1).Value = txt
+        ' C: 1W, D: 1M
+        For c = 4 To 5
+            If ok Then v = m(i, c) Else v = Empty
+            If MkIsNum(v) Then
+                ws.cells(rb, RR4_LEFT + c - 2).NumberFormat = "@"
+                ws.cells(rb, RR4_LEFT + c - 2).Value = IIf(c = 4, "1W ", "1M ") & MkSigned(CDbl(v), unit)
+            Else
+                Call MkGrey(ws.cells(rb, RR4_LEFT + c - 2), "-")
+            End If
+        Next c
+        ' E: percentile
+        If ok Then v = m(i, 6) Else v = Empty
+        If MkIsNum(v) Then
+            ws.cells(rb, RR4_LEFT + 4).NumberFormat = "@"
+            ws.cells(rb, RR4_LEFT + 4).Value = "P" & CStr(CLng(Round(CDbl(v), 0)))
+        Else
+            Call MkGrey(ws.cells(rb, RR4_LEFT + 4), "-")
+        End If
+
+        ' hairline between indicators (not after the last one)
+        If i < RR4_MK_N Then
+            With ws.Range(ws.cells(rb, RR4_LEFT + 1), ws.cells(rb, RR4_LEFT + 4)).Borders(xlEdgeBottom)
+                .LineStyle = xlContinuous
+                .Color = RR4_LINE
+                .Weight = xlThin
+            End With
+        End If
+    Next i
+End Sub
+
+' ================================================================
+'  TO-DO (G58, moved 2026-09-27; was B36:E39) - see the RR4_TD_* constants
 ' ================================================================
 ' Saved rows, read BEFORE the sheet is cleared; only trusted when the
 ' title is in place. Returns Variant(1..n, 1..3) = ticker / task / due
 ' (due = Date or Empty), or Empty when there is nothing.
+' Reads the new spot (G58...) first; when it holds no TO-DO title, or no rows,
+' falls back once to the old spot B36:E39 (one-off migration).
 Private Function ReadTodo(ws As Worksheet) As Variant
-    If UCase(CellStr(ws.cells(RR4_TD_TITLE, RR4_LEFT + 1).Value)) <> "TO-DO" Then Exit Function
-    Dim tmp(1 To 4, 1 To 3) As Variant, n As Long, r As Long
-    For r = RR4_TD_FIRST To RR4_TD_LAST
-        Dim tsk As String: tsk = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
-        If tsk <> "" Then
+    Dim v As Variant
+    If UCase(CellStr(ws.cells(RR4_TD_TITLE, RR4_TD_C_TICK).Value)) = "TO-DO" Then
+        v = ReadTodoAt(ws, RR4_TD_FIRST, RR4_TD_LAST, RR4_TD_C_TICK, RR4_TD_C_TASK, RR4_TD_C_DUE)
+        If IsArray(v) Then ReadTodo = v: Exit Function
+    End If
+    If UCase(CellStr(ws.cells(RR4_TDOLD_TITLE, RR4_LEFT + 1).Value)) = "TO-DO" Then
+        ReadTodo = ReadTodoAt(ws, RR4_TDOLD_FIRST, RR4_TDOLD_LAST, RR4_LEFT + 1, RR4_LEFT + 2, RR4_LEFT + 3)
+    End If
+End Function
+
+Private Function ReadTodoAt(ws As Worksheet, ByVal r1 As Long, ByVal r2 As Long, _
+                            ByVal cTick As Long, ByVal cTask As Long, ByVal cDue As Long) As Variant
+    Dim tmp(1 To 8, 1 To 3) As Variant, n As Long, r As Long
+    Dim tsk As String
+    For r = r1 To r2
+        tsk = CellStr(ws.cells(r, cTask).Value)
+        If tsk <> "" And n < 8 Then
             n = n + 1
-            tmp(n, 1) = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
+            tmp(n, 1) = UCase(CellStr(ws.cells(r, cTick).Value))
             tmp(n, 2) = tsk
-            tmp(n, 3) = TodoDue(ws.cells(r, RR4_LEFT + 3).Value)
+            tmp(n, 3) = TodoDue(ws.cells(r, cDue).Value)
         End If
     Next r
     If n = 0 Then Exit Function
@@ -2217,7 +2424,7 @@ Private Function ReadTodo(ws As Worksheet) As Variant
     For r = 1 To n
         out(r, 1) = tmp(r, 1): out(r, 2) = tmp(r, 2): out(r, 3) = tmp(r, 3)
     Next r
-    ReadTodo = out
+    ReadTodoAt = out
 End Function
 
 ' A due-date cell value as a Date, or Empty when it is not a date.
@@ -2232,7 +2439,7 @@ End Function
 
 ' Title + column names, the entry row, then the saved rows (sorted).
 Private Sub DrawTodo(ws As Worksheet, td As Variant)
-    With ws.cells(RR4_TD_TITLE, RR4_LEFT + 1)
+    With ws.cells(RR4_TD_TITLE, RR4_TD_C_TICK)
         .Value = "TO-DO"
         .Font.Color = RR4_ACCENT
         .Font.Bold = True
@@ -2240,9 +2447,10 @@ Private Sub DrawTodo(ws As Worksheet, td As Variant)
         .HorizontalAlignment = xlLeft
     End With
     Dim hdr As Variant: hdr = Array("TASK", "DUE", "DTE")
+    Dim hc As Variant: hc = Array(RR4_TD_C_TASK, RR4_TD_C_DUE, RR4_TD_C_DTE)
     Dim c As Long
     For c = 0 To 2
-        With ws.cells(RR4_TD_TITLE, RR4_LEFT + 2 + c)
+        With ws.cells(RR4_TD_TITLE, CLng(hc(c)))
             .Value = hdr(c)
             .Font.Color = RGB(0, 200, 255)
             .Font.Size = 9
@@ -2254,27 +2462,49 @@ Private Sub DrawTodo(ws As Worksheet, td As Variant)
     Call TodoWriteList(ws, td)
 End Sub
 
-' The entry row: B ticker / C task / D due, three dark input cells.
+' The task cell of a TO-DO row: H:K merged (idempotent). A merged area's
+' events report the whole H:K range as Target; its .Column is H.
+Private Function TodoTaskRange(ws As Worksheet, ByVal r As Long) As Range
+    Dim rg As Range
+    Set rg = ws.Range(ws.cells(r, RR4_TD_C_TASK), ws.cells(r, RR4_TD_C_TASK2))
+    If Not rg.MergeCells Then
+        On Error Resume Next
+        rg.Merge
+        On Error GoTo 0
+    End If
+    Set TodoTaskRange = rg
+End Function
+
+' The entry row: G ticker / H:K task (merged) / L due, dark input cells.
 Private Sub TodoPaintEntryRow(ws As Worksheet)
-    Dim c As Long
-    For c = 1 To 3
-        With ws.cells(RR4_TD_ENTRY, RR4_LEFT + c)
-            .Value = ""
-            .Interior.Color = RR4_INPUT_BG
-            .Font.Color = RR4_INPUT_FG
-            .Font.Bold = (c = 1)
-            .HorizontalAlignment = IIf(c = 2, xlLeft, xlCenter)
-            .NumberFormat = IIf(c = 3, "yyyy/m/d", "@")
-        End With
-    Next c
-    With ws.cells(RR4_TD_ENTRY, RR4_LEFT + 4)
+    Dim r As Long: r = RR4_TD_ENTRY
+    Dim tsk As Range: Set tsk = TodoTaskRange(ws, r)
+    Dim rg As Variant
+    For Each rg In Array(ws.cells(r, RR4_TD_C_TICK), tsk, ws.cells(r, RR4_TD_C_DUE))
+        rg.Value = ""
+        rg.Interior.Color = RR4_INPUT_BG
+        rg.Font.Color = RR4_INPUT_FG
+        rg.Font.Bold = False
+        rg.NumberFormat = "@"
+        rg.HorizontalAlignment = xlCenter
+    Next rg
+    ws.cells(r, RR4_TD_C_TICK).Font.Bold = True
+    tsk.HorizontalAlignment = xlLeft
+    ws.cells(r, RR4_TD_C_DUE).NumberFormat = "yyyy/m/d"
+    With ws.cells(r, RR4_TD_C_DTE)
         .Value = ""
         .Interior.Color = RGB(0, 0, 0)
     End With
-    Call SeparateInputCells(ws, RR4_TD_ENTRY, 3)
+    For Each rg In Array(ws.cells(r, RR4_TD_C_TICK), tsk)     ' black rules between the three boxes
+        With rg.Borders(xlEdgeRight)
+            .LineStyle = xlContinuous
+            .Color = RGB(0, 0, 0)
+            .Weight = xlMedium
+        End With
+    Next rg
 End Sub
 
-' Sort by due date (undated last, ties keep order) and write rows 38-39;
+' Sort by due date (undated last, ties keep order) and write rows 60-61;
 ' DTE = due - today, orange once negative.
 Private Sub TodoWriteList(ws As Worksheet, td As Variant)
     Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
@@ -2296,32 +2526,33 @@ Private Sub TodoWriteList(ws As Worksheet, td As Variant)
     For r = RR4_TD_FIRST To RR4_TD_LAST
         k = r - RR4_TD_FIRST + 1
         Dim row4 As Range
-        Set row4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
+        Call TodoTaskRange(ws, r)                     ' H:K merged
+        Set row4 = ws.Range(ws.cells(r, RR4_TD_C_TICK), ws.cells(r, RR4_TD_C_DTE))
         row4.ClearContents
         row4.Interior.Color = RGB(0, 0, 0)
         row4.Font.Color = RGB(221, 221, 221)
         row4.Font.Bold = False
-        ws.cells(r, RR4_LEFT + 1).NumberFormat = "@"
-        ws.cells(r, RR4_LEFT + 2).NumberFormat = "@"
-        ws.cells(r, RR4_LEFT + 3).NumberFormat = "yyyy/m/d"
-        ws.cells(r, RR4_LEFT + 4).NumberFormat = "0"
-        ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlCenter
-        ws.cells(r, RR4_LEFT + 2).HorizontalAlignment = xlLeft
-        ws.cells(r, RR4_LEFT + 3).HorizontalAlignment = xlCenter
-        ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlCenter
+        ws.cells(r, RR4_TD_C_TICK).NumberFormat = "@"
+        ws.cells(r, RR4_TD_C_TASK).NumberFormat = "@"
+        ws.cells(r, RR4_TD_C_DUE).NumberFormat = "yyyy/m/d"
+        ws.cells(r, RR4_TD_C_DTE).NumberFormat = "0"
+        ws.cells(r, RR4_TD_C_TICK).HorizontalAlignment = xlCenter
+        ws.cells(r, RR4_TD_C_TASK).HorizontalAlignment = xlLeft
+        ws.cells(r, RR4_TD_C_DUE).HorizontalAlignment = xlCenter
+        ws.cells(r, RR4_TD_C_DTE).HorizontalAlignment = xlCenter
         If k <= n Then
             i = ord(k)
-            ws.cells(r, RR4_LEFT + 1).Value = td(i, 1)
-            ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
-            ws.cells(r, RR4_LEFT + 1).Font.Bold = True
-            ws.cells(r, RR4_LEFT + 2).Value = td(i, 2)
+            ws.cells(r, RR4_TD_C_TICK).Value = td(i, 1)
+            ws.cells(r, RR4_TD_C_TICK).Font.Color = RR4_ACCENT
+            ws.cells(r, RR4_TD_C_TICK).Font.Bold = True
+            ws.cells(r, RR4_TD_C_TASK).Value = td(i, 2)
             If Not IsEmpty(td(i, 3)) Then
-                ws.cells(r, RR4_LEFT + 3).Value = td(i, 3)
+                ws.cells(r, RR4_TD_C_DUE).Value = td(i, 3)
                 Dim dte As Long: dte = CLng(CDbl(td(i, 3)) - CDbl(Date))
-                ws.cells(r, RR4_LEFT + 4).Value = dte
+                ws.cells(r, RR4_TD_C_DTE).Value = dte
                 If dte < 0 Then
-                    ws.cells(r, RR4_LEFT + 4).Font.Color = RR4_ACCENT
-                    ws.cells(r, RR4_LEFT + 4).Font.Bold = True
+                    ws.cells(r, RR4_TD_C_DTE).Font.Color = RR4_ACCENT
+                    ws.cells(r, RR4_TD_C_DTE).Font.Bold = True
                 End If
             End If
         End If
@@ -2335,17 +2566,18 @@ Private Function TodoBefore(td As Variant, ByVal a As Long, ByVal b As Long) As 
     TodoBefore = (CDbl(td(a, 3)) < CDbl(td(b, 3)))
 End Function
 
-' Called by the sheet code when B/C/D of the TO-DO entry row changes.
-' Commits once the task (C) is in and the row is finished: Enter in the
-' due cell D (a date, or anything non-date such as "-" for no date), or
-' Enter in C when D already holds a date.
+' Called by the sheet code when G/H:K/L of the TO-DO entry row changes
+' (changedCol = Target.Column, so the merged task area reports H).
+' Commits once the task is in and the row is finished: Enter in the
+' due cell L (a date, or anything non-date such as "-" for no date), or
+' Enter in the task cell when L already holds a date.
 Public Sub TodoCommitEntry(ws As Worksheet, ByVal changedCol As Long)
-    Dim tk As String: tk = UCase(Trim(CellStr(ws.cells(RR4_TD_ENTRY, RR4_LEFT + 1).Value)))
-    Dim tsk As String: tsk = Trim(CellStr(ws.cells(RR4_TD_ENTRY, RR4_LEFT + 2).Value))
-    Dim due As Variant: due = TodoDue(ws.cells(RR4_TD_ENTRY, RR4_LEFT + 3).Value)
+    Dim tk As String: tk = UCase(Trim(CellStr(ws.cells(RR4_TD_ENTRY, RR4_TD_C_TICK).Value)))
+    Dim tsk As String: tsk = Trim(CellStr(ws.cells(RR4_TD_ENTRY, RR4_TD_C_TASK).Value))
+    Dim due As Variant: due = TodoDue(ws.cells(RR4_TD_ENTRY, RR4_TD_C_DUE).Value)
     If tsk = "" Then Exit Sub
-    If changedCol = RR4_LEFT + 1 Then Exit Sub
-    If changedCol = RR4_LEFT + 2 And IsEmpty(due) Then Exit Sub
+    If changedCol = RR4_TD_C_TICK Then Exit Sub
+    If changedCol = RR4_TD_C_TASK And IsEmpty(due) Then Exit Sub
 
     Dim td As Variant: td = ReadTodo(ws)
     Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
@@ -2361,7 +2593,7 @@ Public Sub TodoCommitEntry(ws As Worksheet, ByVal changedCol As Long)
     nw(n + 1, 1) = tk: nw(n + 1, 2) = tsk: nw(n + 1, 3) = due
     Call TodoWriteList(ws, nw)
     Call TodoPaintEntryRow(ws)
-    ws.cells(RR4_TD_ENTRY, RR4_LEFT + 1).Select
+    ws.cells(RR4_TD_ENTRY, RR4_TD_C_TICK).Select
     Call NavNotify("TO-DO + " & tsk)
 End Sub
 
@@ -2369,7 +2601,7 @@ End Sub
 ' task is done - drop it and close the gap.
 Public Sub TodoDeleteRow(ws As Worksheet, ByVal r As Long)
     If r < RR4_TD_FIRST Or r > RR4_TD_LAST Then Exit Sub
-    Dim tsk As String: tsk = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
+    Dim tsk As String: tsk = CellStr(ws.cells(r, RR4_TD_C_TASK).Value)
     If tsk = "" Then Exit Sub
     Dim td As Variant: td = ReadTodo(ws)
     Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
