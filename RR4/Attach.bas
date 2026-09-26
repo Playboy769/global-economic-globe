@@ -702,6 +702,31 @@ Public Sub MigrateRealizedNav()
     Call NavAdd(ws, "RL")
 End Sub
 
+' 2026-09-26 (owner's request): an ID column - 1, 2, 3 ... down the trade rows -
+' sits left of TICKER on the Realized page. It is one more blank column left of
+' the page content, so the nav geometry becomes "1|2" (NavLeft = 2) and every
+' reader that already goes through RealCol / NavLeft follows on its own; the ID
+' cells are page column 0 (RealCol(ws, 0) = column B). One-off: a whole-column
+' insert at B (formats copied from TICKER), the bar mark bumped from 1|1 to 1|2,
+' and the bar repainted. Safe to call again - a page already at NavLeft 2 is left alone.
+Public Sub MigrateRealizedId()
+    Dim ws As Worksheet
+    On Error Resume Next: Set ws = ThisWorkbook.Sheets("Realized"): On Error GoTo 0
+    If ws Is Nothing Then Exit Sub
+    If Not NavHasRows(ws) Then Exit Sub
+    If NavLeft(ws) >= 2 Then Exit Sub
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    ws.Columns(2).Insert Shift:=xlToRight
+    ws.Columns(3).Copy
+    ws.Columns(2).PasteSpecial xlPasteFormats
+    Application.CutCopyMode = False
+    ws.Columns(2).ColumnWidth = 5
+    ws.Names.Add Name:="RR4NAV", RefersTo:="=" & Chr$(34) & "1|2" & Chr$(34), Visible:=False
+    Call NavAdd(ws, "RL")
+    Application.EnableEvents = prevEv
+End Sub
+
 Sub CalculateRealizedPnL()
     Dim wsTrans As Worksheet, wsReal As Worksheet, wsPort As Worksheet
     Set wsTrans = ThisWorkbook.Sheets("Transactions")
@@ -709,10 +734,11 @@ Sub CalculateRealizedPnL()
     Set wsPort = ThisWorkbook.Sheets("RR4")
     Application.ScreenUpdating = False
     Call MigrateRealizedNav                       ' first UP on the old layout: insert the bar
+    Call MigrateRealizedId                        ' 2026-09-26: ID column left of TICKER
     Call NavAdd(wsReal, "RL")                      ' afterwards: just repaint the bar
     Dim r0 As Long: r0 = RealHdrRow(wsReal)
     Dim caps As Object: Set caps = ReadRealizedCaptions(wsReal)
-    wsReal.Range(wsReal.Cells(r0 + 1, RealCol(wsReal, 1)), _
+    wsReal.Range(wsReal.Cells(r0 + 1, RealCol(wsReal, 0)), _
                  wsReal.Cells(r0 + 10000, RealCol(wsReal, REAL_CAP_COL))).ClearContents
 
     ' 2026-08-14: RET% inserted as column B (realized return on the FIFO cost
@@ -728,11 +754,11 @@ Sub CalculateRealizedPnL()
     ' Header (RR4 palette since 2026-09-13): the 10 generated columns plus
     ' the two hand-kept ones, so they read as one table.
     Dim hdrs As Variant
-    hdrs = Array("TICKER", "RET%", "PNL", "SHARES", "AVG COST", "NET AMT", _
+    hdrs = Array("ID", "TICKER", "RET%", "PNL", "SHARES", "AVG COST", "NET AMT", _
                  "STRATEGY", "PNL(TWD)", "DATE", "BROKER", "CAPTION", "LOAN DISTRIBUTION")
     Dim hc As Integer
-    For hc = 0 To REAL_LOAN_COL - 1
-        With wsReal.Cells(r0, RealCol(wsReal, hc + 1))
+    For hc = 0 To REAL_LOAN_COL                   ' page column 0 = ID
+        With wsReal.Cells(r0, RealCol(wsReal, hc))
             .Value = hdrs(hc)
             .Font.Color = RR4_ACCENT
             .Font.Bold = True
@@ -742,7 +768,7 @@ Sub CalculateRealizedPnL()
             .HorizontalAlignment = xlCenter
         End With
     Next hc
-    With wsReal.Range(wsReal.Cells(r0, RealCol(wsReal, 1)), wsReal.Cells(r0, RealCol(wsReal, REAL_LOAN_COL))).Borders(xlEdgeBottom)
+    With wsReal.Range(wsReal.Cells(r0, RealCol(wsReal, 0)), wsReal.Cells(r0, RealCol(wsReal, REAL_LOAN_COL))).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
         .Color = RR4_LINE
         .Weight = xlThin
@@ -929,6 +955,19 @@ Sub CalculateRealizedPnL()
         End If
     Next rr
 
+    ' ID = position in the table, trade rows only (dividend rows stay unnumbered).
+    ' A live formula, refreshed with Range.Calculate because the workbook may be
+    ' in manual calculation.
+    If writeRow - 1 > r0 Then
+        With wsReal.Range(wsReal.Cells(r0 + 1, c0), wsReal.Cells(writeRow - 1, c0))
+            .NumberFormat = "0"
+            .Formula = "=ROW()-" & r0
+            .HorizontalAlignment = xlCenter
+            .Font.Color = RGB(120, 120, 120)
+            .Calculate
+        End With
+    End If
+
     ' dividends, oldest first, after the trades (same contiguous table)
     Dim di As Long, dj As Long
     For di = 1 To dvN - 1
@@ -986,6 +1025,7 @@ Sub CalculateRealizedPnL()
     ' and blew column B up to the full bar width (2026-09-15).
     wsReal.Range(wsReal.Cells(r0, c0 + 1), wsReal.Cells(IIf(orphanRow > r0 + 1, orphanRow - 1, r0 + 1), c0 + REAL_NCOL)).Columns.AutoFit
     Call SetColumnPixels(wsReal, c0 + 1, 150)  ' TICKER column: fixed 150 px (user spec)
+    wsReal.Columns(c0).ColumnWidth = 5          ' ID column
     Application.ScreenUpdating = True
 End Sub
 
@@ -1022,7 +1062,7 @@ Sub ClearAllData()
     If Not wsReal Is Nothing Then
         ' page A:K (the captions go with their trades); header row and bar stay
         LR = RealLastRow(wsReal)
-        If LR > RealHdrRow(wsReal) Then wsReal.Range(wsReal.Cells(RealHdrRow(wsReal) + 1, RealCol(wsReal, 1)), _
+        If LR > RealHdrRow(wsReal) Then wsReal.Range(wsReal.Cells(RealHdrRow(wsReal) + 1, RealCol(wsReal, 0)), _
                                                      wsReal.Cells(LR, RealCol(wsReal, REAL_CAP_COL))).ClearContents
     End If
     If Not wsHist Is Nothing Then

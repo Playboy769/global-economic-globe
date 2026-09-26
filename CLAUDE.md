@@ -367,6 +367,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     `=IF(G>0,…)` 死公式、M211:M213 三條孤兒備註、`_FilterDatabase` 舊名稱，再 `NavAdd`——整列／整欄插入會把手打格
     連同資料一起位移，這就是為什麼不用搬格子。實測遷移＋UP 後 15 條 Caption 全部回到原交易列、HistoryLog D 欄
     66,612 不變。
+  - **Realized 頁 ID 欄（2026-09-26，使用者「ticker 之前加一個 id 標示 123456789…」）**：TICKER 左邊多一欄 **ID**（頁面欄 0，實際 B 欄；公式 `=ROW()-表頭列`，只編號交易列、**DIVIDEND 列不編號**，淡灰字置中、寬 5），純粹是目前表上的序號、重排會變。做法是讓這頁的導覽幾何從 `1|1` 變 **`1|2`（`NavLeft = 2`）**——`modNav.NavWantLeft` 對 `RL` 回 2、`Attach.MigrateRealizedId` 一次性整欄插入 B（格式抄自 TICKER）、把 `RR4NAV` 標記改成 `1|2` 並重畫 bar（bar 現在從 C 起、指令格 **D2**），所以**所有走 `RealCol`／`NavLeft` 的讀寫（Caption、儀表板加總、`RealizedBefore`…）自動跟著右移一欄、沒有逐一改**；`CalculateRealizedPnL` 的表頭陣列多了 "ID"、清除範圍與 `ClearAllData` 改從 `RealCol(ws,0)` 起。頁面欄號因此是 **ID=0、TICKER=1…**（不變，舊文件的 A=1 說法指的是 TICKER）。⚠️ 工作簿是手動計算模式，ID 公式寫完用 `Range.Calculate` 刷新；你手動排序或刪列後要按 F9 才會重編。實測 UP 前後：31 列、PNL(TWD) 合計 82,720.79、Caption 25 條都不變。
   - V/VT/C/CC 各自的繪製程序從第 1 列開始畫，所以進場先 `NavStrip(ws)`、收尾
     （含提早 exit 的路徑）`NavAdd(ws, code)`；隱藏的工作表層級名稱 `RR4NAV` 標記
     「目前有那 3 列」，靠它避免重畫時疊出第二條 bar。VT/CC 的打字輸入格用

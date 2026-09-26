@@ -92,7 +92,13 @@ Private Function NavWantTop(ByVal ws As Worksheet) As Long
 End Function
 
 Private Function NavWantLeft(ByVal ws As Worksheet) As Long
-    If NavPageCode(ws) = "P" Then NavWantLeft = RR4_LEFT Else NavWantLeft = 1
+    If NavPageCode(ws) = "P" Then
+        NavWantLeft = RR4_LEFT
+    ElseIf NavPageCode(ws) = "RL" Then
+        NavWantLeft = 2             ' Realized: blank A + the ID column (2026-09-26)
+    Else
+        NavWantLeft = 1
+    End If
 End Function
 
 ' Geometry currently ON the sheet, from the mark (0/0 when no bar rows).
