@@ -8,16 +8,17 @@
 '    J4  TICKER <GO>    -> TickerInsight.RefreshTickerInsight
 '    K20 PRICE TARGET   -> TickerInsight.RefreshTickerProjection
 '    (WATCHLIST entry row retired 2026-09-25 - names are typed on the Watch
-'     page, modWatch; the RR4 block is a read-only summary)
+'     page, modWatch; since 2026-09-27 the RR4 WATCHLIST is a display-only
+'     list from row 58 with NO events at all)
 '    R/S UPSIDE / DOWNSIDE of a position row -> RecalcTargetRow (2026-09-25;
 '                        the workbook is in manual calculation, so the P.TARGET /
 '                        SWING RISK formulas are refreshed by hand here)
 '    B37:D37 TO-DO entry row -> PortfolioDashboard_v3.TodoCommitEntry
 '                        (2026-09-21; commits on Enter in D, or in C when
 '                        D already holds a date)
-'  Worksheet_BeforeDoubleClick: B29:E35 -> modWatch.WatchGoto (2026-09-25;
-'                               was WatchlistDeleteRow),
-'                               B38:E39 -> TodoDeleteRow (done)
+'  Worksheet_BeforeDoubleClick: B38:E39 -> TodoDeleteRow (done)
+'                               (the WATCHLIST jump to the Watch page was
+'                               removed 2026-09-27)
 '  (addresses come from the RR4_* / TI_* constants). The nav command
 '  cell B1 is handled workbook-wide in ThisWorkbook.Workbook_SheetChange.
 '  The CmdBtn0-7 click handlers were removed with the ActiveX buttons
@@ -64,23 +65,15 @@ End Sub
 
 Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
     If Target.CountLarge > 1 Then Exit Sub
-    Dim hitWL As Boolean, hitTD As Boolean
-    hitWL = Not Intersect(Target, Me.Range(Me.Cells(RR4_WL_FIRST, RR4_LEFT + 1), _
-                                           Me.Cells(RR4_WL_LAST, RR4_LEFT + 4))) Is Nothing
-    hitTD = Not Intersect(Target, Me.Range(Me.Cells(RR4_TD_FIRST, RR4_LEFT + 1), _
-                                           Me.Cells(RR4_TD_LAST, RR4_LEFT + 4))) Is Nothing
-    If Not (hitWL Or hitTD) Then Exit Sub
+    If Intersect(Target, Me.Range(Me.Cells(RR4_TD_FIRST, RR4_LEFT + 1), _
+                                  Me.Cells(RR4_TD_LAST, RR4_LEFT + 4))) Is Nothing Then Exit Sub
     Cancel = True
     Application.EnableEvents = False
     On Error GoTo Fin
-    If hitWL Then
-        Call WatchGoto(Me, CStr(Me.Cells(Target.Row, RR4_LEFT + 1).Value))
-    Else
-        Call TodoDeleteRow(Me, Target.Row)
-    End If
+    Call TodoDeleteRow(Me, Target.Row)
 Fin:
     Application.EnableEvents = True
-    If Err.Number <> 0 Then MsgBox "Watchlist jump / to-do delete error " & Err.Number & ": " & Err.Description, vbCritical
+    If Err.Number <> 0 Then MsgBox "To-do delete error " & Err.Number & ": " & Err.Description, vbCritical
 End Sub
 
 Private Sub Worksheet_Activate()

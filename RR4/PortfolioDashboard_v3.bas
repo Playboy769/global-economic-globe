@@ -97,19 +97,24 @@ Private Const LIVE_STATUS_COL As Long = 12   ' column L
 ' panel was shortened to row 24 to make room (TickerInsight TI_BOTTOM).
 Public Const RR4_CHART_TOP As Long = 27
 Public Const RR4_CHART_ROWS As Long = 14
-' WATCHLIST (v4.9, 2026-09-12): B:E of the chart band, left of the donut.
-' 2026-09-25: now a READ-ONLY SUMMARY of the Watch worksheet (modWatch,
-' table tblWatch on WatchData): title row 26, header 27, row 28 unused
-' (the old entry row), rows 29-35 = the first 7 names in Watch-page order,
-' E = live last price (also written back to tblWatch's LAST cache), a row
-' whose last <= target is lit. Double-click a row = open the Watch page on
-' that name (SheetRR4_Code.txt -> modWatch.WatchGoto). ReadWatchlist /
-' DrawWatchlist keep the block alive across the page clear.
-Public Const RR4_WL_TITLE  As Long = 26
-Public Const RR4_WL_HDR    As Long = 27
-Public Const RR4_WL_FIRST  As Long = 28    ' 2026-09-26: the retired entry row (28) now holds a name too
-Public Const RR4_WL_LAST   As Long = 35    ' 2026-09-21: 11 -> 7 rows to make room for TO-DO; 8 rows since 2026-09-26
-' TO-DO (2026-09-21): B:E under the WATCHLIST. Row 36 = title + column
+' WATCHLIST (2026-09-27): a READ-ONLY, display-only render of the Watch
+' worksheet (modWatch, table tblWatch on WatchData), drawn BELOW the position
+' log: title row 58, header row 59 (TICKER / STRATEGY / ENTRY TGT / LAST in
+' B:E), then EVERY name in Watch-page order from row 60 (no row limit, no
+' STRATEGY filter). LAST = live price, also written back to tblWatch's LAST
+' cache; "-" when no price could be fetched. No events hang on it (no
+' double-click, no hit highlight). ReadWatchlist / DrawWatchlist keep the
+' block alive across the page clear; WatchlistLastRow finds its end.
+' B26:E35 (its old home, 2026-09-12..09-26) is blank on purpose - reserved
+' for a market dashboard. The RR4_WLOLD_* constants only serve
+' modWatch.SeedFromRR4 (one-off migration of an older layout).
+Public Const RR4_WL_TITLE  As Long = 58
+Public Const RR4_WL_HDR    As Long = 59
+Public Const RR4_WL_FIRST  As Long = 60
+Public Const RR4_WLOLD_TITLE As Long = 26
+Public Const RR4_WLOLD_FIRST As Long = 28
+Public Const RR4_WLOLD_LAST  As Long = 35
+' TO-DO (2026-09-21): B:E (formerly under the old WATCHLIST spot). Row 36 = title + column
 ' names (TASK / DUE / DTE), row 37 = entry row (B ticker, C task, D due),
 ' rows 38-39 = the saved list, sorted by due date (undated last), DTE =
 ' due - today recomputed on every UP, lit orange once overdue.
@@ -2077,38 +2082,50 @@ Private Sub DrawRealizedChart(ws As Worksheet)
 End Sub
 
 ' ================================================================
-'  WATCHLIST (B25:E38) - see the RR4_WL_* constants
+'  WATCHLIST (row 58 down) - see the RR4_WL_* constants
 ' ================================================================
-' 2026-09-25: the WATCHLIST lives in the Watch worksheet (modWatch, table
-' tblWatch); this block is a read-only summary of its first 8 names (rows 28-35 since 2026-09-26).
+' 2026-09-27: display-only render of the Watch worksheet (modWatch, table
+' tblWatch): ALL names in Watch-page order (STRATEGY filter not applied).
 ' Read BEFORE the sheet is cleared: WatchEnsure creates tblWatch on the first
-' run and seeds it from the old block, which is still intact at this point.
-' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target in Watch-page
-' order; Empty when there is nothing.
+' run and seeds it from an older RR4 block, which is still intact at this point.
+' Returns a 2-D Variant(1..n, 1..3) = ticker / strategy / target; Empty when
+' there is nothing.
 Private Function ReadWatchlist(ws As Worksheet) As Variant
     Call modWatch.WatchEnsure
-    ReadWatchlist = modWatch.WatchTop(RR4_WL_LAST - RR4_WL_FIRST + 1)
+    ReadWatchlist = modWatch.WatchTop(100000)
 End Function
 
-' Title, header, then the saved rows with live price.
+' Last row of the drawn watchlist (RR4_WL_FIRST - 1 when it is empty).
+Private Function WatchlistLastRow(ws As Worksheet) As Long
+    Dim r As Long: r = RR4_WL_FIRST
+    Do While Len(Trim(CStr(ws.cells(r, RR4_LEFT + 1).Value))) > 0
+        r = r + 1
+    Loop
+    WatchlistLastRow = r - 1
+End Function
+
+' Title, header (RR4 orange), one RR4_LINE rule, then one row per name.
 Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
-    ' 2026-09-21: grey how-to hint dropped (user request) - title only
     With ws.cells(RR4_WL_TITLE, RR4_LEFT + 1)
         .Value = "WATCHLIST"
         .Font.Color = RR4_ACCENT
         .Font.Bold = True
         .Font.Size = 10
+        .HorizontalAlignment = xlLeft
     End With
+    ws.Rows(RR4_WL_TITLE).RowHeight = 22
     Dim hdr As Variant: hdr = Array("TICKER", "STRATEGY", "ENTRY TGT", "LAST")
     Dim c As Long
     For c = 0 To 3
         With ws.cells(RR4_WL_HDR, RR4_LEFT + 1 + c)
             .Value = hdr(c)
-            .Font.Color = RGB(0, 200, 255)
+            .Font.Color = RR4_ACCENT
             .Font.Size = 9
-            .HorizontalAlignment = IIf(c = 1, xlLeft, xlCenter)
+            .Font.Bold = False
+            .HorizontalAlignment = IIf(c >= 2, xlRight, xlLeft)
         End With
     Next c
+    ws.Rows(RR4_WL_HDR).RowHeight = 20
     With ws.Range(ws.cells(RR4_WL_HDR, RR4_LEFT + 1), ws.cells(RR4_WL_HDR, RR4_LEFT + 4)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
         .Color = RR4_LINE
@@ -2117,21 +2134,16 @@ Private Sub DrawWatchlist(ws As Worksheet, wl As Variant)
 
     Dim n As Long: If IsArray(wl) Then n = UBound(wl, 1)
     Dim r As Long, i As Long
-    For r = RR4_WL_FIRST To RR4_WL_LAST
-        i = r - RR4_WL_FIRST + 1
-        If i <= n Then
-            ws.cells(r, RR4_LEFT + 1).Value = wl(i, 1)
-            ws.cells(r, RR4_LEFT + 2).Value = wl(i, 2)
-            If Not IsEmpty(wl(i, 3)) Then ws.cells(r, RR4_LEFT + 3).Value = wl(i, 3)
-        End If
+    For i = 1 To n
+        r = RR4_WL_FIRST + i - 1
+        ws.Rows(r).RowHeight = 22
+        ws.cells(r, RR4_LEFT + 1).NumberFormat = "@"
+        ws.cells(r, RR4_LEFT + 2).NumberFormat = "@"
+        ws.cells(r, RR4_LEFT + 1).Value = wl(i, 1)
+        ws.cells(r, RR4_LEFT + 2).Value = wl(i, 2)
+        If Not IsEmpty(wl(i, 3)) Then ws.cells(r, RR4_LEFT + 3).Value = wl(i, 3)
         Call RefreshWatchlistRow(ws, r)
-    Next r
-    ' closing rule under the last saved row, separating it from TO-DO
-    With ws.Range(ws.cells(RR4_WL_LAST, RR4_LEFT + 1), ws.cells(RR4_WL_LAST, RR4_LEFT + 4)).Borders(xlEdgeBottom)
-        .LineStyle = xlContinuous
-        .Color = RR4_LINE
-        .Weight = xlThin
-    End With
+    Next i
 End Sub
 
 ' Black vertical rules between adjacent grey input cells of an entry row
@@ -2147,11 +2159,11 @@ Private Sub SeparateInputCells(ws As Worksheet, ByVal r As Long, ByVal n As Long
     Next c
 End Sub
 
-' Live price into E and the lit / unlit state of one saved row.
+' Live price into E of one watchlist row and its (plain) styling. No highlight
+' rule any more: the list is display-only (2026-09-27).
 Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
-    If r < RR4_WL_FIRST Or r > RR4_WL_LAST Then Exit Sub
+    If r < RR4_WL_FIRST Then Exit Sub
     Dim tk As String: tk = UCase(CellStr(ws.cells(r, RR4_LEFT + 1).Value))
-    Dim tgt As Double: tgt = NumOr0(ws.cells(r, RR4_LEFT + 3).Value)
     Dim px As Double
     If tk <> "" Then
         On Error Resume Next
@@ -2161,31 +2173,25 @@ Public Sub RefreshWatchlistRow(ws As Worksheet, ByVal r As Long)
     If px > 0 Then Call modWatch.WatchCacheLast(tk, px)     ' keep tblWatch's LAST cache current
     Dim cells4 As Range
     Set cells4 = ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 4))
-    cells4.NumberFormat = "General"
+    cells4.Interior.Color = RGB(0, 0, 0)
+    cells4.Font.Color = RGB(221, 221, 221)
+    cells4.Font.Bold = False
     ws.cells(r, RR4_LEFT + 1).NumberFormat = "@"
     ws.cells(r, RR4_LEFT + 2).NumberFormat = "@"
     ws.cells(r, RR4_LEFT + 3).NumberFormat = "#,##0.00"
     ws.cells(r, RR4_LEFT + 4).NumberFormat = "#,##0.00"
-    ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlCenter
+    ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
     ws.cells(r, RR4_LEFT + 2).HorizontalAlignment = xlLeft
-    ws.cells(r, RR4_LEFT + 3).HorizontalAlignment = xlCenter
-    ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlCenter
+    ws.cells(r, RR4_LEFT + 3).HorizontalAlignment = xlRight
+    ws.cells(r, RR4_LEFT + 4).HorizontalAlignment = xlRight
     With ws.cells(r, RR4_LEFT + 4)
         If px > 0 Then .Value = px Else .Value = IIf(tk = "", "", "-")
     End With
-    ' lit when the price has come down to the entry target
-    Dim hit As Boolean: hit = (px > 0 And tgt > 0 And px <= tgt)
-    If hit Then
-        cells4.Interior.Color = RGB(60, 30, 0)
-        cells4.Font.Color = RR4_ACCENT
-        cells4.Font.Bold = True
-    Else
-        cells4.Interior.Color = RGB(0, 0, 0)
-        cells4.Font.Color = RGB(221, 221, 221)
-        cells4.Font.Bold = False
-        ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
-        ws.cells(r, RR4_LEFT + 1).Font.Bold = True
-    End If
+    ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
+    ws.cells(r, RR4_LEFT + 1).Font.Bold = True
+    On Error Resume Next
+    ws.cells(r, RR4_LEFT + 1).Errors(xlNumberAsText).Ignore = True   ' 1303 as text: no green triangle
+    On Error GoTo 0
 End Sub
 
 ' ================================================================
@@ -2642,16 +2648,15 @@ Public Sub RefreshLivePricesLite()
     ' feedback ("底色不用改變都是黑色，字變動就好") - to a FONT-colour-only
     ' flash. Background/Interior.Color is never touched by the tick-flash
     ' at all (it stays exactly as already painted - black row stripes for
-    ' the position table, the P.TARGET hit/no-hit fill for the watchlist,
-    ' set unconditionally below regardless of whether this tick flashes).
+    ' the position table, plain black for the watchlist).
     ' Every cell whose price actually changed this tick gets its Font.Color
     ' set to the up/down colour INSTANTLY (no tween animation - user wants
     ' "瞬間跳變、乾脆俐落"), all of them together; once every changed cell
     ' is written ScreenUpdating flips back on and the flash holds briefly,
     ' then every cell's Font.Color is restored in one more pass - to its
     ' own normal resting colour (LAST: light grey; %CHG/UNRL PNL: the
-    ' muted PnL colour; watchlist LAST: accent-orange-bold if P.TARGET hit,
-    ' else light grey - captured/computed per cell, never assumed uniform,
+    ' muted PnL colour; watchlist LAST: light grey - captured/computed per
+    ' cell, never assumed uniform,
     ' since LAST/%CHG/UNRL PNL each rest at a different colour). Cells with
     ' no prior price (first-ever populate) or an unchanged price are left
     ' alone - flashing only marks a real tick, like the board this is
@@ -2659,7 +2664,7 @@ Public Sub RefreshLivePricesLite()
     Dim flashCell() As Range, flashRestoreColor() As Long, flashCount As Long
     ' each changed position row can now flash up to 3 cells (LAST/%CHG/UNRL
     ' PNL, 2026-09-23), each changed watchlist row up to 1 - size generously
-    Dim maxFlash As Long: maxFlash = (RR4_WL_LAST - RR4_WL_FIRST + 1) + 1500
+    Dim maxFlash As Long: maxFlash = (WatchlistLastRow(ws) - RR4_WL_FIRST + 1) + 1500
     ReDim flashCell(1 To maxFlash)
     ReDim flashRestoreColor(1 To maxFlash)
     flashCount = 0
@@ -2739,45 +2744,33 @@ Public Sub RefreshLivePricesLite()
         r = r + 1
     Loop
 
-    ' ---- watchlist: RR4_WL_FIRST..RR4_WL_LAST, price column RR4_LEFT+4 ----
-    ' the P.TARGET-hit highlight (RefreshWatchlistRow's own orange/black
-    ' rule) can flip with the new price, so the resting colour here is
-    ' RECOMPUTED from the new price, never just "whatever was there before".
-    Dim wr As Long
-    For wr = RR4_WL_FIRST To RR4_WL_LAST
+    ' ---- watchlist: RR4_WL_FIRST downward while TICKER is non-blank, price column RR4_LEFT+4 ----
+    ' display-only since 2026-09-27: no target-hit fill, LAST just rests light grey.
+    Dim wr As Long: wr = RR4_WL_FIRST
+    Do While Len(Trim(CStr(ws.cells(wr, RR4_LEFT + 1).Value))) > 0
         Dim wRaw As String: wRaw = CStr(ws.cells(wr, RR4_LEFT + 1).Value)
-        If Len(Trim(wRaw)) > 0 Then
-            Dim wNormTw As String: wNormTw = NormalizeTWTicker(wRaw)
-            Dim wIsTw As Boolean: wIsTw = (wNormTw <> "")
-            If (wIsTw And twOpen) Or (Not wIsTw And usOpen) Then
-                Dim wQueryTk As String: wQueryTk = IIf(wIsTw, wNormTw, UCase(Trim(wRaw)))
-                Dim wpx As Double: wpx = modLivePrice.GetLivePrice(wQueryTk)
-                If wpx > 0 Then
-                    queriedCount = queriedCount + 1
-                    Dim priceCell As Range: Set priceCell = ws.cells(wr, RR4_LEFT + 4)
-                    Dim oldWpx As Double: oldWpx = NumOr0(priceCell.Value)
-                    priceCell.Value = wpx
-                    Dim tgt As Double: tgt = NumOr0(ws.cells(wr, RR4_LEFT + 3).Value)
-                    Dim hit As Boolean: hit = (wpx > 0 And tgt > 0 And wpx <= tgt)
-                    ' the P.TARGET-hit fill (orange/black background, and its
-                    ' matching resting font colour) is independent of the
-                    ' tick-flash - always set to what the new price says it
-                    ' should be, whether or not this tick also flashes.
-                    ' Interior.Color is NEVER touched by the flash itself.
-                    priceCell.Interior.Color = IIf(hit, RGB(60, 30, 0), RGB(0, 0, 0))
-                    Dim restFontColor As Long: restFontColor = IIf(hit, RR4_ACCENT, RGB(221, 221, 221))
-                    If oldWpx > 0 And wpx <> oldWpx Then
-                        flashCount = flashCount + 1
-                        Set flashCell(flashCount) = priceCell
-                        flashRestoreColor(flashCount) = restFontColor
-                        priceCell.Font.Color = PnLColor(wpx - oldWpx)
-                    Else
-                        priceCell.Font.Color = restFontColor
-                    End If
+        Dim wNormTw As String: wNormTw = NormalizeTWTicker(wRaw)
+        Dim wIsTw As Boolean: wIsTw = (wNormTw <> "")
+        If (wIsTw And twOpen) Or (Not wIsTw And usOpen) Then
+            Dim wQueryTk As String: wQueryTk = IIf(wIsTw, wNormTw, UCase(Trim(wRaw)))
+            Dim wpx As Double: wpx = modLivePrice.GetLivePrice(wQueryTk)
+            If wpx > 0 Then
+                queriedCount = queriedCount + 1
+                Dim priceCell As Range: Set priceCell = ws.cells(wr, RR4_LEFT + 4)
+                Dim oldWpx As Double: oldWpx = NumOr0(priceCell.Value)
+                priceCell.Value = wpx
+                If oldWpx > 0 And wpx <> oldWpx Then
+                    flashCount = flashCount + 1
+                    Set flashCell(flashCount) = priceCell
+                    flashRestoreColor(flashCount) = RGB(221, 221, 221)
+                    priceCell.Font.Color = PnLColor(wpx - oldWpx)
+                Else
+                    priceCell.Font.Color = RGB(221, 221, 221)
                 End If
             End If
         End If
-    Next wr
+        wr = wr + 1
+    Loop
 
     ' 2026-09-23: push the accumulated UNRL PNL delta into the SUMMARY
     ' block (UNREALISED PNL, NET EXPOSURE, UNREALISED PNL %) - see the
@@ -2893,11 +2886,12 @@ Private Function CollectOpenMarketTWTickers(ws As Worksheet) As String()
         r = r + 1
     Loop
 
-    Dim wr As Long
-    For wr = RR4_WL_FIRST To RR4_WL_LAST
+    Dim wr As Long: wr = RR4_WL_FIRST
+    Do While Len(Trim(CStr(ws.cells(wr, RR4_LEFT + 1).Value))) > 0
         Dim wtk As String: wtk = NormalizeTWTicker(CStr(ws.cells(wr, RR4_LEFT + 1).Value))
         If wtk <> "" And Not seen.Exists(wtk) Then seen(wtk) = 1
-    Next wr
+        wr = wr + 1
+    Loop
 
     Dim out() As String
     If seen.Count = 0 Then

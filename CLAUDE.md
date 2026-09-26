@@ -436,7 +436,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   12 色調色盤＋「代號 %」標籤放在環**外**（v4.10 起圖型其實是 xlPie＋畫在中央的黑色圓形
   `RR4_DONUT_HOLE` 假裝成洞——真 doughnut 的標籤只能貼在環上，Excel 沒有 outside 位置）；
   導覽列未選取的代碼／標籤調暗、只有目前頁亮起，不用底線。
-- **WATCHLIST（v4.9.1；⚠️ 2026-09-25 起 RR4 頁這塊只是 Watch 頁的唯讀摘要，資料在 tblWatch，見下方「Watch 頁」；以下是舊 entry-row 時代的描述）**：圖表帶左側 B25:E38——標題 25、表頭 26、**row 27 是輸入列**
+- **WATCHLIST 新版（2026-09-27，使用者決定）**：RR4 頁 **第 58 列起**（持倉表與兩行 disclaimer 之下）——標題 `RR4_WL_TITLE`＝58、表頭 `RR4_WL_HDR`＝59（TICKER／STRATEGY／ENTRY TGT／LAST，RR4 深橘）、資料 `RR4_WL_FIRST`＝60 起，**tblWatch 全部名稱、不限筆數、不套 STRATEGY 篩選**（`WatchTop(100000)`，順序同 Watch 頁）；表頭下一條 `RR4_LINE` 分隔線、列高 22、代號橘粗體、ENTRY TGT／LAST 靠右兩位小數，LAST 抓不到顯示 `-`。版面**不動欄寬、沒有合併儲存格**：TICKER＝B、STRATEGY＝C（本來就寬 40，容得下 `WAIT BIAS and VOLITILITY`）、ENTRY TGT＝D、LAST＝E。**純顯示、無任何事件**：`SheetRR4_Code.txt` 的 `Worksheet_BeforeDoubleClick` 只剩 TO-DO 完成刪除，`modWatch.WatchGoto` 不再被 RR4 頁呼叫；也沒有到價亮橘、沒有 DIST%。列數是動態的——結尾由 `WatchlistLastRow`（掃 B 欄到空白）決定，`RR4_WL_LAST` 常數已刪；`RefreshLivePricesLite`（15 秒即時價）與 `CollectOpenMarketTWTickers` 也改成從第 60 列往下掃到空白。UP 時 `RefreshWatchlistRow` 仍把現價寫回 tblWatch 的 LAST 快取。**B26:E35 現在是空的、刻意留給之後的市場儀表板**；舊位置常數保留為 `RR4_WLOLD_TITLE/FIRST/LAST`（26／28／35），只給 `modWatch.SeedFromRR4` 的一次性遷移用。TO-DO（B36:E39）、圖表帶（甜甜圈 F、RLPNL J:S、rows 27–40）、ticker panel、持倉表 R/S 事件都沒動。⚠️ 持倉表加到 11 檔以上時 disclaimer（`lastDataRow+3/+4`）會撞上第 58 列，屆時得挪版面。
+  ⚠️ 順帶發現的既有 bug（未改）：`RebuildPortfolioDashboard` 讀 ticker panel 目標價時，L22 為空會退回讀 `L21`（「pre-v2.6 一次性過渡」），但 v2.6 之後 L21 是 **LAST PRICE**，所以目標價為空的 UP 會被填成現價（PROJECTED PNL 變 NT$0）。2026-09-27 那次 UP 踩到，已手動清回空白。
+- **WATCHLIST（v4.9.1；⚠️ 已過時：2026-09-27 起 RR4 頁的 WATCHLIST 搬到第 58 列起的純顯示新版，B26:E35 清空留作市場儀表板，見下一條「WATCHLIST 新版」；資料在 tblWatch，見「Watch 頁」；以下是舊 entry-row 時代的描述，列號僅供考古）**：圖表帶左側 B25:E38——標題 25、表頭 26、**row 27 是輸入列**
   （B 代號／C 策略／D 目標價，代號＋目標價都填了就由 `SheetRR4.Worksheet_Change` →
   `WatchlistCommitEntry` 追加到清單、清空輸入列）、**rows 28–38 是已存清單**（11 筆，
   `ReadWatchlist` 清頁前讀出、`DrawWatchlist` 寫回，E 現價 `RefreshWatchlistRow` 用
@@ -914,7 +916,7 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 （同 ThesisNotes 模式），**畫面 `Watch` 頁純粹是這張表的 render**，換排序／加名單不重抓，只有 `W!` 才抓價／Library／Bias。
 - **欄位**：手打 TICKER｜STRATEGY｜ENTRY TGT｜ADDED（預設今天）；灰色快取欄由程式寫（LAST／NOTES／CALL／STATUS／MOAT／RISK／CAT／R1／R4／SIG／SIGDT）。
   新增：頁面上方 entry row（TICKER + ENTRY TGT 都填就送出，同代號＝更新）或在 WatchData 表下方直接打；刪除＝刪表格列。不限筆數。
-  **刪除（2026-09-26，使用者「Watch 現在無法刪除」）**：每個資料列的**空白 A 欄有一個 ×**（`PaintDeleteHandles`，淡灰），**雙擊它 → Yes/No 確認（顯示代號與策略）→ 刪 `tblWatch` 該列 → 只重畫 Watch 頁**（`DeleteWatchRow`，不重抓價格與 Bias，其他名單的快取保留）；不留備份、不能復原（等同手動刪 WatchData 那一列，那個做法仍可用）。RR4 頁 WATCHLIST 摘要要等下一次 UP 才會更新，摘要上雙擊仍是跳 Watch 頁、不能刪。⚠️ `BuildWatchPage` 是在**拆掉導覽列的狀態**（NavLeft＝0）畫列、`NavAdd` 才插入空白 A 欄，所以 × 由 `FinishPage` 在 NavAdd 之後補畫，排序／新增／刪除這些「已有導覽列」的重畫則在 `DrawWatchRows` 結尾補畫。實測：加 ZZTEST → 雙擊 × → 確認 → 表格回到 7 筆、頁面上的 ZZTEST 消失。
+  **刪除（2026-09-26，使用者「Watch 現在無法刪除」）**：每個資料列的**空白 A 欄有一個 ×**（`PaintDeleteHandles`，淡灰），**雙擊它 → Yes/No 確認（顯示代號與策略）→ 刪 `tblWatch` 該列 → 只重畫 Watch 頁**（`DeleteWatchRow`，不重抓價格與 Bias，其他名單的快取保留）；不留備份、不能復原（等同手動刪 WatchData 那一列，那個做法仍可用）。RR4 頁的 WATCHLIST 列表要等下一次 UP 才會更新（2026-09-27 起在第 58 列，純顯示，見 RR4 慣例「WATCHLIST 新版」，雙擊不再跳 Watch 頁）。⚠️ `BuildWatchPage` 是在**拆掉導覽列的狀態**（NavLeft＝0）畫列、`NavAdd` 才插入空白 A 欄，所以 × 由 `FinishPage` 在 NavAdd 之後補畫，排序／新增／刪除這些「已有導覽列」的重畫則在 `DrawWatchRows` 結尾補畫。實測：加 ZZTEST → 雙擊 × → 確認 → 表格回到 7 筆、頁面上的 ZZTEST 消失。
 - **STRATEGY 篩選（2026-09-26，使用者「W - strategy 要可以篩選相同的策略」）**：**雙擊某列的 STRATEGY 格**＝只留策略**文字包含**該格內容的列（不分大小寫；點 `WAIT BIAS` 會連 `WAIT BIAS and VOLITILITY` 一起留、點後者只留它自己）。**不符合的列不隱藏，留在頁面上但整列變暗**（`DimRow`：黑底＋深灰字，熱力色與到價高亮一併去掉），符合的排前面、暗的排後面，兩組內各自維持目前排序；**× 刪除、TICKER→Library、Bias 格→Bias 對暗列照常可用**。表頭 STRATEGY 後面會加 `[篩選文字]`（橘字），**取消＝雙擊表頭 STRATEGY 或雙擊頁標題**；篩選文字存隱藏名稱 `WATCHFILTER`，**`W!` 會重設它**（`WATCHSORT` 排序不會）。篩選只影響 Watch 頁——`WatchTop`（RR4 摘要）呼叫 `OrderIdx` 不帶 `applyFilter`。實測（ETN／SNPS／CRWD 等 7 檔）：Grid 篩選、表頭取消、`WAIT BIAS` 包含比對、與 TICKER 排序併用、頁標題取消、`W!` 重設都通過。
 - **STREAK 欄（2026-09-26）**：Bias 區塊最右（AGO 之後）多一欄 **STREAK**＝目前連漲(+n，紅)／連跌(−n，綠)根數，**任何長度都顯示**（沒有 ≥3 門檻，那是圖上的規則），無則灰色 `—`；定義跟 Bias 頁 **MODE 格**（`modBias.BiasStreakMode()`，讀不到就 CLOSE）。資料只在 `W!` 時算，跟 R1／R4／SIG 同一次抓取（`BiasSnapshot` 多一個選填 `ByRef streak`；CLOSE 模式直接用手上的收盤價，**RED 模式才多一次 Yahoo OHLC 抓取**），快取在 `tblWatch` 第 16 欄 `STREAK`——**舊的 15 欄表在 `EnsureWatchData` 裡原地補欄**（`ListColumns.Add`，資料不動）。所以**改 MODE 後 Watch 頁的數字要等下一次 `W!` 才會更新**（頁面只是快取的 render）。雙擊 STREAK 格＝跟其他 Bias 格一樣開 Bias 頁畫該檔。實測 7 檔：CLOSE 模式 SNPS +8／CRWD −2、RED 模式 AMAT +6／SNPS −1，切換前後 tblWatch 其他資料不變。
 - **Library 欄**：`modThesis.LibrarySummaryMap`（一次掃 tblNotes，以去 .TW/.TWO 的代號為鍵，只算 TYPE=stock）→ 筆記數、最新 CALL DATE
@@ -922,9 +924,9 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
   （HHV/LLV 線），訊號則是圖上三角形用的 rank+trend 線的最近一次 SELL/BUY（short／long）與日期、距今天數。兩者口徑不同是刻意的，各自對得上要連過去的那一頁。
 - **雙擊**：表頭 TICKER／ADDED／DIST% ＝循環排序（升→降→關，`WATCHSORT`）；預設排序＝已到／低於目標價者優先，再依離目標近的排；
   TICKER 格 → Library（`LibraryOpenTicker` 填 QUERY 並重畫）；R1 以後的 Bias 格 → Bias 頁畫該檔（`BiasOpenTicker`）。
-- **RR4 頁 B26:E35 改成唯讀摘要**：`ReadWatchlist` 呼叫 `WatchEnsure`＋`WatchTop(7)`（同 W 頁排序），`RefreshWatchlistRow` 順手把現價寫回 tblWatch 的 LAST；
-  **雙擊摘要列 → `WatchGoto` 跳 W 頁並選到該檔**（不再是刪除）；原 entry row（第 28 列）留空。`WatchlistCommitEntry`／`WatchlistDeleteRow` 已刪。
-  Bias 的 `GatherWatchlist`、Library 的 `@WATCH` 都改讀 `modWatch.WatchTickers()`，**不要再直接讀 B29:B35**。
+- **RR4 頁 WATCHLIST（⚠️ 2026-09-25 的 B26:E35 摘要版已過時；2026-09-27 起改為第 58 列起的全名單純顯示新版，B26:E35 清空，見 RR4 慣例「WATCHLIST 新版」）**：`ReadWatchlist` 呼叫 `WatchEnsure`＋`WatchTop`（同 W 頁排序），`RefreshWatchlistRow` 順手把現價寫回 tblWatch 的 LAST；
+  （已過時）舊摘要列的雙擊跳 W 頁行為已於 2026-09-27 移除；原 entry row 留空。`WatchlistCommitEntry`／`WatchlistDeleteRow` 已刪。
+  Bias 的 `GatherWatchlist`、Library 的 `@WATCH` 都改讀 `modWatch.WatchTickers()`，**不要再直接讀 RR4 頁的 WATCHLIST 儲存格**。
 - **首次遷移**：`WatchEnsure`（在 UP 的 read-before-clear 位置或第一次 `W!`）建表並把 RR4 舊區塊 B29:D35 抄進去（ADDED＝當天）；實測 5 筆全數保留。
 - 導覽列代碼 **W**（頁 `Watch`）、動作碼 **W!**，modNav 六處都已登記；分頁名刻意避開 `Sanner.ExportTopToWatchlist` 建的 `Watchlist` 頁。
   事件碼由 `EnsureSheetCode`／`WriteSheetCode` 寫入，紀錄在 `RR4/SheetWatch_Code.txt`、`SheetWatchData_Code.txt`。

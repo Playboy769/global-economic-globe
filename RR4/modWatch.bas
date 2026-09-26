@@ -5,9 +5,10 @@ Option Explicit
 '  WATCH (nav code W, W! = rebuild) - sheet "Watch"        2026-09-25
 ' ----------------------------------------------------------------
 '  The WATCHLIST as a full worksheet. Until 2026-09-25 it was a 7-row
-'  block on the RR4 page (B26:E35); that block is now a read-only
-'  summary of this page's first 7 rows (PortfolioDashboard_v3.
-'  ReadWatchlist -> WatchTop) and double-clicking it jumps here.
+'  block on the RR4 page (B26:E35). Since 2026-09-27 the RR4 page shows
+'  every name of this table as a display-only list from row 58
+'  (PortfolioDashboard_v3.ReadWatchlist -> WatchTop, same order as this
+'  page); it has no events - WatchGoto is no longer called from RR4.
 '
 '  Data: sheet "WatchData", ListObject tblWatch, one row per name.
 '    typed   TICKER | STRATEGY | ENTRY TGT | ADDED (default today)
@@ -28,7 +29,7 @@ Option Explicit
 '
 '  Sort (double-click a header): TICKER, ADDED/DAYS, DIST% - asc, desc,
 '  off. Default = names at/below their ENTRY TGT first, then nearest to
-'  target. The same order feeds the RR4 summary (WatchTop).
+'  target. The same order feeds the RR4 page list (WatchTop).
 '
 '  First run migrates the old RR4 block into tblWatch (SeedFromRR4).
 '  Pure ASCII (VBE import rule).
@@ -278,9 +279,9 @@ Private Sub SeedFromRR4(ByVal lo As ListObject)
     Set wsP = ThisWorkbook.Worksheets(NavSheetName("P"))
     On Error GoTo 0
     If wsP Is Nothing Then Exit Sub
-    If Left(UCase(CellStr(wsP.Cells(RR4_WL_TITLE, RR4_LEFT + 1).Value)), 9) <> "WATCHLIST" Then Exit Sub
+    If Left(UCase(CellStr(wsP.Cells(RR4_WLOLD_TITLE, RR4_LEFT + 1).Value)), 9) <> "WATCHLIST" Then Exit Sub
     Dim r As Long, tk As String
-    For r = RR4_WL_FIRST To RR4_WL_LAST
+    For r = RR4_WLOLD_FIRST To RR4_WLOLD_LAST
         tk = UCase(CellStr(wsP.Cells(r, RR4_LEFT + 1).Value))
         If tk <> "" Then
             Call TableAppend(lo, tk, CellStr(wsP.Cells(r, RR4_LEFT + 2).Value), wsP.Cells(r, RR4_LEFT + 3).Value, Date)
