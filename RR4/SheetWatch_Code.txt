@@ -4,7 +4,8 @@
 '  because document modules are not exported as .bas.
 '    entry row (TICKER / STRATEGY / ENTRY TGT) -> WatchPageChange
 '    double-click header = sort, TICKER = Library, Bias cells = Bias,
-'    the x in column A of a row = remove that name (2026-09-26)
+'    the x in column A of a row = remove that name (2026-09-26),
+'    STRATEGY cell = filter to that strategy, STRATEGY header / title = clear it
 ' ================================================================
 Option Explicit
 

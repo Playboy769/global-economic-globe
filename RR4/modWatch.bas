@@ -87,6 +87,7 @@ Private Const C_LASTCOL As Long = 17
 Private Const FRESH_GREY As Long = 60
 Private Const FRESH_ORANGE As Long = 120
 Private Const SORT_NAME As String = "WATCHSORT"
+Private Const FILTER_NAME As String = "WATCHFILTER"   ' 2026-09-26: STRATEGY contains-filter (W! resets it)
 Private Const FONT_FACE As String = "Consolas"
 Private Const CLR_TEXT As Long = 14540253            ' RGB(221,221,221)
 Private Const CLR_MUTED As Long = 8553090            ' RGB(130,130,130)
@@ -159,6 +160,30 @@ Private Sub SetSortMode(ByVal m As String)
     On Error GoTo 0
     If m <> "" Then ThisWorkbook.Names.Add Name:=SORT_NAME, RefersTo:="=""" & m & """", Visible:=False
 End Sub
+
+' STRATEGY filter (hidden name): rows whose strategy CONTAINS this text (any
+' case) stay lit and sort first; the others stay on the page, dimmed.
+Private Function FilterText() As String
+    Dim s As String
+    On Error Resume Next
+    s = ThisWorkbook.Names(FILTER_NAME).RefersTo
+    On Error GoTo 0
+    If Left$(s, 2) = "=" & Chr$(34) Then s = Mid$(s, 3, Len(s) - 3)
+    FilterText = s
+End Function
+
+Private Sub SetFilterText(ByVal txt As String)
+    On Error Resume Next
+    ThisWorkbook.Names(FILTER_NAME).Delete
+    On Error GoTo 0
+    txt = Trim$(Replace(txt, Chr$(34), "'"))
+    If txt <> "" Then ThisWorkbook.Names.Add Name:=FILTER_NAME, RefersTo:="=" & Chr$(34) & txt & Chr$(34), Visible:=False
+End Sub
+
+Private Function MatchesFilter(ByVal strat As String, ByVal flt As String) As Boolean
+    If flt = "" Then MatchesFilter = True: Exit Function
+    MatchesFilter = (InStr(1, strat, flt, vbTextCompare) > 0)
+End Function
 
 ' ================================================================
 '  Data sheet + table
@@ -384,7 +409,7 @@ Private Function RowBefore(ByRef v As Variant, ByVal a As Long, ByVal b As Long,
 End Function
 
 ' Row indexes (1-based into the table body) of the named rows, sorted.
-Private Function OrderIdx(ByRef v As Variant, ByRef idx() As Long) As Long
+Private Function OrderIdx(ByRef v As Variant, ByRef idx() As Long, Optional ByVal applyFilter As Boolean = False) As Long
     Dim n As Long: n = UBound(v, 1)
     ReDim idx(1 To n)
     Dim i As Long, m As Long
@@ -402,6 +427,21 @@ Private Function OrderIdx(ByRef v As Variant, ByRef idx() As Long) As Long
         Next j
         If best <> i Then t = idx(i): idx(i) = idx(best): idx(best) = t
     Next i
+    ' STRATEGY filter (page only - the RR4 summary asks without it): matching
+    ' rows first, the dimmed rest after, each group keeping the sorted order
+    Dim flt As String
+    If applyFilter Then flt = FilterText()
+    If flt <> "" Then
+        Dim tmp() As Long: ReDim tmp(1 To m)
+        Dim k As Long: k = 0
+        For i = 1 To m
+            If MatchesFilter(CellStr(v(idx(i), WT_STRAT)), flt) Then k = k + 1: tmp(k) = idx(i)
+        Next i
+        For i = 1 To m
+            If Not MatchesFilter(CellStr(v(idx(i), WT_STRAT)), flt) Then k = k + 1: tmp(k) = idx(i)
+        Next i
+        For i = 1 To m: idx(i) = tmp(i): Next i
+    End If
     OrderIdx = m
 End Function
 
@@ -418,6 +458,7 @@ Public Sub BuildWatchPage()
     On Error GoTo Fail
 
     Dim n As Long
+    Call SetFilterText("")                       ' W! resets the STRATEGY filter (sort mode stays)
     If TableRows(lo) > 0 Then n = RefreshCache(lo)
     Call NavStrip(ws)
     Call DrawShell(ws)
@@ -603,9 +644,14 @@ Private Sub DrawHeader(ByVal ws As Worksheet, ByVal off As Long, ByVal lc As Lon
                 arrow = IIf(sd = "asc", " " & ChrW(&H25B2), " " & ChrW(&H25BC))
             End If
         End If
+        Dim fltMark As String: fltMark = ""
+        If c = C_STRAT Then
+            Dim fl As String: fl = FilterText()
+            If fl <> "" Then fltMark = "  [" & fl & "]"
+        End If
         With ws.Cells(PG_HDR + off, c + lc)
-            .Value = txt & arrow
-            .Font.Color = RGB(0, 200, 255)
+            .Value = txt & arrow & fltMark
+            .Font.Color = IIf(fltMark <> "", RR4_ACCENT, RGB(0, 200, 255))
             .Font.Size = 9
             .HorizontalAlignment = IIf(c = C_STRAT Or c = C_SIG, xlLeft, xlCenter)
         End With
@@ -668,7 +714,7 @@ Private Sub DrawWatchRows(ByVal ws As Worksheet)
     Dim cnt As Long, k As Long, v As Variant, idx() As Long
     If TableRows(lo) > 0 Then
         v = lo.DataBodyRange.Value
-        cnt = OrderIdx(v, idx)
+        cnt = OrderIdx(v, idx, True)
     End If
     If cnt = 0 Then
         With ws.Cells(r0, 1 + lc)
@@ -677,13 +723,27 @@ Private Sub DrawWatchRows(ByVal ws As Worksheet)
         End With
         Exit Sub
     End If
+    Dim flt As String: flt = FilterText()
     For k = 1 To cnt
         Call DrawOneRow(ws, r0 + k - 1, lc, v, idx(k))
+        If flt <> "" Then
+            If Not MatchesFilter(CellStr(v(idx(k), WT_STRAT)), flt) Then Call DimRow(ws, r0 + k - 1, lc)
+        End If
     Next k
     With ws.Range(ws.Cells(r0 + cnt - 1, 1 + lc), ws.Cells(r0 + cnt - 1, C_LASTCOL + lc)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
     End With
     Call PaintDeleteHandles(ws)
+End Sub
+
+' A row outside the STRATEGY filter: same cells, but flat black with dark grey
+' text (heat colours and the target-hit highlight are dropped too).
+Private Sub DimRow(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long)
+    With ws.Range(ws.Cells(r, 1 + lc), ws.Cells(r, C_LASTCOL + lc))
+        .Interior.Color = RGB(0, 0, 0)
+        .Font.Color = RGB(75, 75, 75)
+        .Font.Bold = False
+    End With
 End Sub
 
 ' 2026-09-26: an x in the blank column A of every data row - double-click it to
@@ -978,6 +1038,13 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
             Case C_TK: key = "ticker": first = "asc"
             Case C_ADDED, C_DAYS: key = "added": first = "desc"
             Case C_DIST: key = "dist": first = "desc"
+            Case C_STRAT
+                ' double-click the STRATEGY header = clear the strategy filter
+                If FilterText() = "" Then Exit Sub
+                Cancel = True
+                Call SetFilterText("")
+                Call RedrawWatchRows(ws)
+                Exit Sub
         End Select
         If key = "" Then Exit Sub
         Cancel = True
@@ -990,17 +1057,32 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
         Else
             Call SetSortMode(key & "|" & first)
         End If
-        Dim prevEv As Boolean: prevEv = Application.EnableEvents
-        Application.EnableEvents = False
-        Call DrawWatchRows(ws)
-        Application.EnableEvents = prevEv
+        Call RedrawWatchRows(ws)
+        Exit Sub
+    End If
+
+    ' double-click the page title = clear the strategy filter too
+    If t.Row = PG_TITLE + off And c = 1 Then
+        If FilterText() <> "" Then
+            Cancel = True
+            Call SetFilterText("")
+            Call RedrawWatchRows(ws)
+        End If
         Exit Sub
     End If
 
     If t.Row < PG_FIRST + off Then Exit Sub
     Dim tk As String: tk = UCase(CellStr(ws.Cells(t.Row, C_TK + lc).Value))
     If tk = "" Then Exit Sub
-    If c = C_TK Then
+    If c = C_STRAT Then
+        ' double-click a STRATEGY cell = keep only strategies containing that text
+        Dim stx As String: stx = CellStr(t.Value)
+        If stx <> "" Then
+            Cancel = True
+            Call SetFilterText(stx)
+            Call RedrawWatchRows(ws)
+        End If
+    ElseIf c = C_TK Then
         Cancel = True
         If LibraryOpenTicker(tk) Then
             Call NavGoto("L", ws)
@@ -1015,6 +1097,14 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
             Call NavNotify("Bias is not built yet - run B!", True)
         End If
     End If
+End Sub
+
+' Redraw the rows from tblWatch (sort / filter changes: no refetch).
+Private Sub RedrawWatchRows(ByVal ws As Worksheet)
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    Call DrawWatchRows(ws)
+    Application.EnableEvents = prevEv
 End Sub
 
 ' Double-click on the x in column A: confirm, delete that name's row from
