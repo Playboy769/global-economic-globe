@@ -910,6 +910,7 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 （同 ThesisNotes 模式），**畫面 `Watch` 頁純粹是這張表的 render**，換排序／加名單不重抓，只有 `W!` 才抓價／Library／Bias。
 - **欄位**：手打 TICKER｜STRATEGY｜ENTRY TGT｜ADDED（預設今天）；灰色快取欄由程式寫（LAST／NOTES／CALL／STATUS／MOAT／RISK／CAT／R1／R4／SIG／SIGDT）。
   新增：頁面上方 entry row（TICKER + ENTRY TGT 都填就送出，同代號＝更新）或在 WatchData 表下方直接打；刪除＝刪表格列。不限筆數。
+  **刪除（2026-09-26，使用者「Watch 現在無法刪除」）**：每個資料列的**空白 A 欄有一個 ×**（`PaintDeleteHandles`，淡灰），**雙擊它 → Yes/No 確認（顯示代號與策略）→ 刪 `tblWatch` 該列 → 只重畫 Watch 頁**（`DeleteWatchRow`，不重抓價格與 Bias，其他名單的快取保留）；不留備份、不能復原（等同手動刪 WatchData 那一列，那個做法仍可用）。RR4 頁 WATCHLIST 摘要要等下一次 UP 才會更新，摘要上雙擊仍是跳 Watch 頁、不能刪。⚠️ `BuildWatchPage` 是在**拆掉導覽列的狀態**（NavLeft＝0）畫列、`NavAdd` 才插入空白 A 欄，所以 × 由 `FinishPage` 在 NavAdd 之後補畫，排序／新增／刪除這些「已有導覽列」的重畫則在 `DrawWatchRows` 結尾補畫。實測：加 ZZTEST → 雙擊 × → 確認 → 表格回到 7 筆、頁面上的 ZZTEST 消失。
 - **Library 欄**：`modThesis.LibrarySummaryMap`（一次掃 tblNotes，以去 .TW/.TWO 的代號為鍵，只算 TYPE=stock）→ 筆記數、最新 CALL DATE
   （>60 天灰、>120 天橘）、該日 STATUS、該日 MOAT/RISK/CATALYST 數。**Bias 欄**：`modBias.BiasSnapshot`（一次 Yahoo 抓取）→ R1／R4 與 Bias 表格同
   （HHV/LLV 線），訊號則是圖上三角形用的 rank+trend 線的最近一次 SELL/BUY（short／long）與日期、距今天數。兩者口徑不同是刻意的，各自對得上要連過去的那一頁。

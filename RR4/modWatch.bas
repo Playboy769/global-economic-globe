@@ -683,6 +683,26 @@ Private Sub DrawWatchRows(ByVal ws As Worksheet)
     With ws.Range(ws.Cells(r0 + cnt - 1, 1 + lc), ws.Cells(r0 + cnt - 1, C_LASTCOL + lc)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
     End With
+    Call PaintDeleteHandles(ws)
+End Sub
+
+' 2026-09-26: an x in the blank column A of every data row - double-click it to
+' remove that name (WatchPageDoubleClick -> DeleteWatchRow). Only meaningful
+' once the bar's blank column exists (NavLeft >= 1): during BuildWatchPage the
+' rows are drawn on the stripped page, so FinishPage calls this again after NavAdd.
+Private Sub PaintDeleteHandles(ByVal ws As Worksheet)
+    Dim lc As Long: lc = NavLeft(ws)
+    If lc < 1 Then Exit Sub
+    Dim r As Long, t As String
+    For r = PG_FIRST + NavOffset(ws) To PG_FIRST + NavOffset(ws) + 1000
+        t = CellStr(ws.Cells(r, C_TK + lc).Value)
+        If t = "" Or Left$(t, 1) = "(" Then Exit For
+        With ws.Cells(r, 1)
+            .Value = ChrW(&HD7)
+            .HorizontalAlignment = xlCenter
+            .Font.Color = CLR_MUTED
+        End With
+    Next r
 End Sub
 
 Private Sub DrawOneRow(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long, ByRef v As Variant, ByVal i As Long)
@@ -838,6 +858,7 @@ End Sub
 Private Sub FinishPage(ByVal ws As Worksheet)
     On Error Resume Next
     Call NavAdd(ws, "W")
+    Call PaintDeleteHandles(ws)
     Call EnsureSheetCode(ws)
     On Error GoTo 0
 End Sub
@@ -940,6 +961,14 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
     Dim t As Range: Set t = Target.Cells(1, 1)
     Dim off As Long: off = NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
+    ' 2026-09-26: the x in the blank column A of a data row removes that name
+    If lc >= 1 And t.Column = 1 And t.Row >= PG_FIRST + off Then
+        If CellStr(t.Value) = ChrW(&HD7) Then
+            Cancel = True
+            Call DeleteWatchRow(ws, t.Row, lc)
+        End If
+        Exit Sub
+    End If
     Dim c As Long: c = t.Column - lc
     If c < 1 Or c > C_LASTCOL Then Exit Sub
 
@@ -985,6 +1014,44 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
         Else
             Call NavNotify("Bias is not built yet - run B!", True)
         End If
+    End If
+End Sub
+
+' Double-click on the x in column A: confirm, delete that name's row from
+' tblWatch, redraw the Watch page only (no price / Bias refetch - the other
+' names keep their cached values). The RR4 WATCHLIST summary catches up on the
+' next UP. Nothing is kept: same as deleting the row on WatchData by hand.
+Private Sub DeleteWatchRow(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long)
+    Dim tk As String: tk = UCase(CellStr(ws.Cells(r, C_TK + lc).Value))
+    If tk = "" Then Exit Sub
+    Dim st As String: st = CellStr(ws.Cells(r, C_STRAT + lc).Value)
+    If MsgBox("Remove " & tk & IIf(st <> "", "  (" & st & ")", "") & " from the watchlist?", _
+              vbYesNo + vbQuestion + vbDefaultButton2, "WATCHLIST") <> vbYes Then Exit Sub
+    Dim lo As ListObject: Set lo = WatchTable()
+    If lo Is Nothing Then Exit Sub
+    If TableRows(lo) = 0 Then Exit Sub
+    Dim v As Variant: v = lo.DataBodyRange.Value
+    Dim i As Long, hit As Long
+    For i = 1 To UBound(v, 1)
+        If UCase(CellStr(v(i, WT_TICKER))) = tk Then hit = i: Exit For
+    Next i
+    If hit = 0 Then
+        Call NavNotify("WATCHLIST: " & tk & " is not in tblWatch - run W!", True)
+        Exit Sub
+    End If
+    Dim prevEv As Boolean: prevEv = Application.EnableEvents
+    Application.EnableEvents = False
+    On Error Resume Next
+    lo.ListRows(hit).Delete
+    Dim errN As Long: errN = Err.Number
+    Dim errD As String: errD = Err.Description
+    On Error GoTo 0
+    If errN = 0 Then Call DrawWatchRows(ws)
+    Application.EnableEvents = prevEv
+    If errN = 0 Then
+        Call NavNotify("WATCHLIST: removed " & tk)
+    Else
+        Call NavNotify("WATCHLIST: delete failed - " & errD, True)
     End If
 End Sub
 
