@@ -1,0 +1,20 @@
+' ================================================================
+'  Code-behind of the "Peer Earnings" worksheet (modEarn2, nav code E2).
+'  Written automatically by modEarn2.FinishSheetCode (E2!) - kept here as
+'  plain text because document modules are not exported as .bas.
+'    Worksheet_Change          -> Earn2Change (TICKER / SEGMENT / REPORTED /
+'                                 verdict tiles / HEADLINE / detail cells; every
+'                                 typed value is written back to tblEarn)
+'    Worksheet_SelectionChange -> Earn2Select (click = tile or tab picks the
+'                                 item, a peer's ticker becomes the TICKER,
+'                                 the 1 of LAYER jumps to the Earnings page)
+' ================================================================
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call Earn2Change(Me, Target)
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    Call Earn2Select(Me, Target)
+End Sub

@@ -19,6 +19,8 @@ Option Explicit
 '          HC HoldingsCorr . SC Correlation . R Company research
 '          RGE / RGI / RGT the three RRG pages . L Library (thesis notes)
 '          E Earnings (2026-09-13, modEarnings; E! refetches its ticker)
+'          E2 Peer Earnings (2026-09-26, modEarn2; E2! rebuilds) - layer 2 of Earnings:
+'             7-item earnings scorecard + segment peer map / table, tblEarn on EarnData
 '          VA Valuation (2026-09-15, modValuationPage; VA! refetches - ROIC
 '             relative valuation via RR4/valuation.py, no WACC)
 '          B Bias (2026-09-23, modBias; B! rebuilds the heatmap) - EMA20/
@@ -27,7 +29,7 @@ Option Explicit
 '          W Watch (2026-09-25, modWatch; W! rebuilds) - the WATCHLIST worksheet,
 '             tblWatch on WatchData, linked to Library (notes) and Bias (R1/R4, signals)
 '  Actions UP update dashboard . ADD / DEL trade forms . V! HC! RGE! RGI!
-'          RGT! L! E! B! W! recalc and show that page . IMAP industry map
+'          RGT! L! E! E2! B! W! recalc and show that page . IMAP industry map
 '          DBG system debug . CLEARALL wipe all data
 '          (ClearAllData keeps its own Yes/No confirmation)
 '  Jumping to a page never recalculates it - the "!" codes do that.
@@ -160,6 +162,7 @@ Public Function NavSheetName(ByVal code As String) As String
         Case "RGT": NavSheetName = "RRG TW Groups"
         Case "L":  NavSheetName = "Library"
         Case "E":  NavSheetName = "Earnings"
+        Case "E2": NavSheetName = "Peer Earnings"
         Case "VA": NavSheetName = "Valuation"
         Case "W":  NavSheetName = "Watch"
         Case "R":  NavSheetName = "Company research"
@@ -170,7 +173,7 @@ End Function
 Public Function NavPageCode(ByVal ws As Object) As String
     If Not TypeOf ws Is Worksheet Then Exit Function
     Dim c As Variant
-    For Each c In Array("B", "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "VA", "W")
+    For Each c In Array("B", "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "E2", "VA", "W")
         If StrComp(ws.Name, NavSheetName(CStr(c)), vbTextCompare) = 0 Then
             NavPageCode = CStr(c)
             Exit Function
@@ -319,7 +322,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
 
     ' row 2: pages
     Dim pages As Variant
-    pages = Array("B", "BIAS", "E", "EARNINGS", "H", "HISTORY", "HC", "HOLDCORR", "L", "LIBRARY", _
+    pages = Array("B", "BIAS", "E", "EARNINGS", "E2", "PEER EARN", "H", "HISTORY", "HC", "HOLDCORR", "L", "LIBRARY", _
                   "P", "PORTFOLIO", "R", "RESEARCH", "RGE", "RRG ETF", "RGI", "RRG IND", "RGT", "RRG TW", _
                   "RL", "REALIZED", "SC", "SECTORCORR", "T", "TRANSACTION", "V", "VOLITILITY", "VA", "VALUATION", "VT", "TKRVOL", "W", "WATCH")
     Call WriteCodeLine(ws.cells(2 + top, 1 + off), pages, code, RR4_ACCENT)
@@ -327,7 +330,7 @@ Public Sub DrawNavRows(ByVal ws As Worksheet, ByVal code As String)
     ' row 3: actions
     Dim acts As Variant
     acts = Array("ADD", "TRADE", "B!", "BIAS", "CLEARALL", "WIPE ALL DATA", "DBG", "DEBUG", "DEL", "DELETE", _
-                 "E!", "EARNINGS", "HC!", "HOLDCORR", "IMAP", "IND MAP", "L!", "LIBRARY", _
+                 "E!", "EARNINGS", "E2!", "PEER EARN", "HC!", "HOLDCORR", "IMAP", "IND MAP", "L!", "LIBRARY", _
                  "RGE!", "RRG ETF", "RGI!", "RRG IND", "RGT!", "RRG TW", "UP", "UPDATE", "V!", "RECALC VOL", "VA!", "VALUATION", "W!", "WATCH")
     Call WriteCodeLine(ws.cells(3 + top, 1 + off), acts, "", RGB(0, 200, 255))
 
@@ -427,7 +430,7 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
     If cmd = "" Then Exit Sub
 
     Select Case cmd
-        Case "B", "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "R", "VA", "W"
+        Case "B", "P", "RL", "T", "H", "V", "VT", "HC", "SC", "RGE", "RGI", "RGT", "L", "E", "E2", "R", "VA", "W"
             Call NavGoto(cmd, src)
             Exit Sub                ' a jump has no result to echo
         Case "UP"
@@ -453,6 +456,8 @@ Public Sub RunNavCommand(ByVal raw As String, ByVal src As Worksheet)
             Call BuildThesisLibrary
         Case "E!"
             Call RefreshEarnings
+        Case "E2!"
+            Call BuildEarn2
         Case "VA!"
             Call RefreshValuation
         Case "W!"
@@ -479,7 +484,7 @@ Public Sub NavGoto(ByVal code As String, ByVal src As Worksheet)
     On Error GoTo 0
     If ws Is Nothing Then
         Call NavStatus(src, "[" & code & "] " & NavSheetName(code) & " is not built yet" & _
-                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E" Or code = "VA" Or code = "B" Or code = "W", " - run " & code & "!", ""), True)
+                       IIf(code = "V" Or code = "HC" Or code = "RGE" Or code = "RGI" Or code = "RGT" Or code = "L" Or code = "E" Or code = "E2" Or code = "VA" Or code = "B" Or code = "W", " - run " & code & "!", ""), True)
         Exit Sub
     End If
     If ws.Visible <> xlSheetVisible Then ws.Visible = xlSheetVisible

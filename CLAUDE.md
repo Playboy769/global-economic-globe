@@ -932,6 +932,76 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 - ⚠️ 用 COM 注入使用者已開的活頁簿時，若使用者目前前景視窗是別的活頁簿（例如「活頁簿1」），`Application.Run` 找不到巨集、看起來像整個專案編譯失敗——先 `$wb.Activate()`。
 - 實測（測試複本＋活頁簿）：`W!`、加入 TSLA（entry row）、排序三段循環、雙擊 TICKER→Library、雙擊 R1→Bias、`WatchGoto`、在 WatchData 打小寫 nvda 自動轉大寫並補 ADDED、Library `@WATCH`（8 calls／109 notes）、完整 `UP` 後 RR4 摘要 5 筆正確。
 
+### Peer Earnings（E2 / E2!，2026-09-26，`RR4/modEarn2.bas`）
+
+Earnings 的**第二層「Industry Read」**：把一次財報 print 打成 7 項分數，再和同一個 SEGMENT
+的所有成員排在一起看。**第一層 Earnings（E）頁一個字都沒動**；本頁 LAYER 列的 `1` 點下去
+＝帶著代號跳到 E 頁（`modEarnings.ShowEarnings`），回來打 `E2`。分頁名 `Peer Earnings`，
+導覽列代碼 `E2`（標籤 PEER EARN）、動作碼 `E2!`（modNav 六處都登記：NavSheetName、
+NavPageCode、RunNavCommand 跳頁＋`E2!`、NavGoto 未建置提示、DrawNavRows 兩行、檔頭註解）。
+
+**資料**：隱藏分頁 `EarnData`（要批次貼上先 Unhide）的 `tblEarn`，**一個代號一個季度一列**：
+`TICKER｜REPORTED｜V1..V7｜HEADLINE｜PRINT_n READ_n QUOTE_n SOURCE_n（n=1..7，共 38 欄）`。
+歷史永遠不覆寫（換季＝換 REPORTED 日期＝新的一列）。頁面是這張表的 render，頁面上打的字
+一律當場寫回表（第一次寫入才建列；REPORTED 空白時用今天）。**目前刻意是空的**——等使用者
+週二給 Bloomberg 共識／guidance 資料；程式沒有存任何範例資料。
+
+**七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
+Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
+Strong/Neutral/Weak；7 Industry＝Cyclical/Secular/Defensive。符號 ▲ 好（Beat/Raised/Expansion/
+Strong）、▼ 壞（Miss/Lowered/Contraction/Weak）、• 中性、○ Not guided；**綠好紅壞**（照使用者的
+範本截圖，刻意和 RR4 其他頁的紅漲綠跌相反，同 Library STATUS）。格內存的是純文字（`Beat`），
+符號是**儲存格數字格式** `"▲ "@` 加上去的，所以複製出去、下拉清單比對都還是原字。
+
+**INDEX / BUCKET 定義集中在 `modEarn2` 檔頭一處**（`VerdictScore`／`BucketOf`＋
+`IDX_DIV=7`、`BK_LONG=+0.50`、`BK_MONITOR=+0.15`）：分數＝好 +1、壞 −1、其他（含空白、
+Not guided）0，INDEX＝七項總和 ÷ 7；≥+0.50 Long、+0.15..+0.49 Monitor、<+0.15 Avoid。
+使用者可能週二給不同公式，只改這一處。⚠️ **與範本截圖對不上**：截圖 JBLU +0.43、DAL +0.29
+用 sum/7 重現，但 UAL（圖 +0.33，算得 +0.29）、LUV（圖 0.00，算得 +0.14）、AAL／ALK
+（圖 −0.14，算得 0.00）不符，AVG INDEX 圖 +0.13、算得 +0.19。反推：若 **Lowered = −2**，
+LUV／AAL／ALK／JBLU／DAL 五檔全部對上，只有 UAL 差 1/21——公式待使用者確認。
+
+**SEGMENT（同業）**：TW 代號＝`tblGroups`（Market=TW）第一個含該代號的族群，顯示名走
+`RRG.NormalizeGroupName`（**該函式為此改成 Public**）；US 代號＝`IndustryMap`（IMAP）第一個含
+它的 plate。⚠️ moomoo CSV 只有 plate 名稱、沒有上層 sector，所以顯示 `Airlines`，不是範本的
+`C. Discretionary - Travel_Airlines`。SEGMENT 格是下拉（清單＝該代號市場的全部族群，寫在
+EarnData 的 AP:AQ 欄、名稱 `E2SegList`），手打可部分比對、唯一符合才採用；打新代號時若目前
+SEGMENT 已含該代號就保留（覆寫不會被洗掉），否則重新自動挑。成員與 tblEarn 比對時**去掉
+`.TW/.TWO`**，但存的是使用者打的形式（大寫）；裸數字（4–6 位、可帶一個字母）視為 TW。
+沒資料的成員顯示灰字 `not yet run`，不進地圖與平均；表格依 INDEX 由高到低（同分維持成員順序）。
+選定代號在表格／地圖用**它選的那一季**（REPORTED 下拉，寫在 SEGMENT 列右邊、名稱
+`E2DateList`），其他成員一律用各自最新一季。
+
+**版面**：14 個等寬「unit」（每個 72pt，B 欄起），所有程式用 `Cl(頁面列, unit)`／`Rg` 定址
+（內部加 `NavOffset`/`NavLeft`），所以建置中與建好後是同一套程式。標頭摘要區塊 MARGINS／
+GUIDES／BUCKETS／AVG INDEX／REPORTED 只算有資料的成員（BUCKETS 只列非零、順序 long·
+monitor·avoid；REPORTED 用 `→`）。七張 tile ＝ 兩個 unit 合併、tile 本身就是下拉格；點 tile 或
+detail 分頁列的 tab（`Worksheet_SelectionChange`）＝切換 detail 項目（隱藏名稱 `E2ITEM`），
+Print vs bar／Read／Quote／Source 四格（合併 13 個 unit、自動換行）直接打字、當場寫回該
+項目的 PRINT_n/READ_n/QUOTE_n/SOURCE_n。點表格裡的代號＝那檔變成 TICKER（同一個
+SEGMENT）——⚠️ 用 SelectionChange 實作，所以**鍵盤方向鍵掃過代號欄也會切換**。
+**PEER MAP** 全部是 `E2_*` 圖形（`xlMove`，由儲存格 `Left/Top` 算位置，每次重畫先全刪）：
+軸 −0.50..+0.50（超出 ±0.5 夾在端點）、每檔一個 bucket 色圓點在真實 INDEX 上、上方一個
+**7 段環**（每段一個 freeform 多邊形，從 12 點鐘順時針，1 號在正上右側；顏色＝該項好綠壞紅
+中性灰）、再上方 ticker 標籤（選定代號＝橘底黑字＋橘色外圈）；INDEX 相近的環用一維叢集
+（`SpreadX`，間距 38pt、以叢集真實位置平均為中心）左右錯開，圓點不動。選定列在 A 欄
+（導覽列留的空白欄）畫一條橘色標記。
+
+**驗證**（隱藏複本＋實機）：用截圖的 DAL＋5 檔（JBLU/UAL/LUV/AAL/ALK）＋DAL 上一季、TW（2330
+晶圓代工 3 檔、覆寫到 IC設計）實跑：標頭數字（MARGINS 2 up·4 down、GUIDES 1 raised·3 cut、
+BUCKETS 3 monitor·3 avoid）、tile 顏色、表格排序與 bucket、環 7 段×6 環、同分環錯開、
+選定列標記、tile 改值→表與摘要更新、點 tile 切項目、detail 寫回 tblEarn、REPORTED 下拉
+切季、點同業換代號、`E2!` 重建不疊圖形／導覽列、LAYER 1→E 頁再 `E2` 回來、EarnData 手改
+→ 頁面重畫且代號自動大寫，都通過；測試列已全部刪除，`tblEarn` 留空。以 `Range.CopyPicture`
+（存成 PNG）對照範本截圖看過，版面結構一致。
+
+**踩到的坑**：① 合併儲存格的 `Worksheet_Change` 的 `Target` 是整個合併區
+（`CountLarge>1`），要靠 `Target.MergeCells` 判斷是單一輸入格；② 數字格式 `@` 要在寫值
+**之前**設（`+0.13`、`07-10` 會被 Excel 轉成數字／日期）；③ 選擇排序法不穩定，同分成員
+會亂序——改插入排序；④ 螢幕鎖定時 `CopyFromScreen` 只截到鎖屏，改用 `Range.CopyPicture`
+＋STA PowerShell 存剪貼簿圖（會覆蓋使用者剪貼簿）。⚠️ PASTE 輸入格只畫了格子、**尚未接線**
+（使用者之後再說怎麼用）。
+
 ## Deployment topology (this is the part that bites)
 
 There are **eight separate Railway deployments** sourced from **five separate git repos**, plus

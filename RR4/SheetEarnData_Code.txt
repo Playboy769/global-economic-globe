@@ -1,0 +1,11 @@
+' ================================================================
+'  Code-behind of the "EarnData" worksheet (tblEarn, hidden). Written by
+'  modEarn2.EnsureData - kept here as plain text.
+'    editing / pasting into the table -> Earn2DataChange (upper-case TICKER,
+'    redraw the dynamic parts of the Peer Earnings page)
+' ================================================================
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call Earn2DataChange(Me, Target)
+End Sub

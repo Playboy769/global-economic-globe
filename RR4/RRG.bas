@@ -2007,7 +2007,7 @@ End Function
 '   1. drop a leading "NN. " number          2. drop any (parenthetical)
 '   3. "CJK category - sub" -> sub            4. drop a trailing U+65CF U+7FA4 ("group")
 '   5. "CJK + English translation" -> CJK     6. "CJK + CJK synonym" -> first
-Private Function NormalizeGroupName(ByVal nm As String) As String
+Public Function NormalizeGroupName(ByVal nm As String) As String
     Dim re As Object: Set re = CreateObject("VBScript.RegExp")
     re.Global = True
     nm = Replace(nm, ChrW(&H3000), " ")
