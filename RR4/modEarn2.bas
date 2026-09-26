@@ -5,8 +5,7 @@ Option Explicit
 '  PEER EARNINGS (nav code E2, E2! = rebuild) - sheet "Peer Earnings"   2026-09-26
 ' ----------------------------------------------------------------
 '  Layer 2 of the Earnings pages ("Industry Read"). Layer 1 is the
-'  Earnings (E) page, untouched: the LAYER row here jumps to it with the
-'  ticker (click the 1).  This page scores one earnings print on seven
+'  Earnings (E) page, untouched: double-click the 1 of the LAYER row to switch to it.  This page scores one earnings print on seven
 '  items, then lines the ticker up against every member of its segment.
 '
 '  Data: sheet "EarnData" (hidden - Unhide to bulk-paste), ListObject
@@ -36,9 +35,10 @@ Option Explicit
 '  tblEarn with the .TW/.TWO suffix stripped; each member's LATEST row is
 '  shown (the selected ticker uses the quarter picked in REPORTED).
 '
-'  Clicks (Worksheet_SelectionChange): a tile or tab = that item goes into
-'  the detail strip; a peer's ticker in the table = that ticker becomes the
-'  TICKER (same segment); the 1 of LAYER = jump to the E page.
+'  Clicks: a tile or tab (single click, SelectionChange) = that item goes into
+'  the detail strip.  DOUBLE-click (BeforeDoubleClick): a peer's ticker in the table =
+'  that ticker becomes the TICKER (same segment); the 1 of LAYER = just switch to the
+'  Earnings sheet - nothing is rebuilt and no ticker is carried (E2 never calls modEarnings).
 '
 '  Geometry: a grid of 14 equal "units" (column B onwards once the nav
 '  bar's blank column A is in). Every draw routine addresses cells by
@@ -797,7 +797,7 @@ Public Sub BuildEarn2()
         Call Sync(ws)
         tk = UCase$(CellStr(Cl(R_TICKER, 1).Value))
         segTxt = CellStr(Cl(R_SEG, 1).Value)
-        repV = Cl(R_SEG, 5).Value
+        repV = Cl(R_SEG, 4).Value
         pasteTxt = CellStr(Cl(R_PASTE, 1).Value)
         nm = CellStr(Cl(R_TICKER, 3).Value)
     End If
@@ -822,7 +822,7 @@ Public Sub BuildEarn2()
     Cl(R_TICKER, 1).Value = tk
     Cl(R_TICKER, 3).Value = nm
     Cl(R_SEG, 1).Value = segTxt
-    If ParseRep(repV) > 0 Then Cl(R_SEG, 5).Value2 = ParseRep(repV)
+    If ParseRep(repV) > 0 Then Cl(R_SEG, 4).Value2 = ParseRep(repV)
     Cl(R_PASTE, 1).Value = pasteTxt
     m_imLoaded = False
     Call WriteSegList(MktOf(tk))
@@ -848,13 +848,16 @@ End Sub
 
 Private Sub FinishSheetCode(ByVal ws As Worksheet)
     Call WriteSheetCode(ws, "Option Explicit" & vbCrLf & vbCrLf & _
-        "' Peer Earnings page (modEarn2): typed inputs + tile / tab / peer clicks" & vbCrLf & _
+        "' Peer Earnings page (modEarn2): typed inputs, tile / tab clicks, LAYER 1 / peer-ticker double-clicks" & vbCrLf & _
         "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
         "    Call Earn2Change(Me, Target)" & vbCrLf & _
         "End Sub" & vbCrLf & vbCrLf & _
         "Private Sub Worksheet_SelectionChange(ByVal Target As Range)" & vbCrLf & _
         "    Call Earn2Select(Me, Target)" & vbCrLf & _
-        "End Sub" & vbCrLf, "Earn2Select")
+        "End Sub" & vbCrLf & vbCrLf & _
+        "Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)" & vbCrLf & _
+        "    Call Earn2DoubleClick(Me, Target, Cancel)" & vbCrLf & _
+        "End Sub" & vbCrLf, "Earn2DoubleClick")
 End Sub
 
 Private Sub StackLabel(ByVal c As Range, ByVal txt As String)
@@ -941,15 +944,16 @@ Private Sub DrawShell(ByVal ws As Worksheet)
         .HorizontalAlignment = xlLeft
     End With
     Call StackLabel(Cl(R_SEG, 0), "SEGMENT")
-    With Rg(R_SEG, 1, 3)
+    With Rg(R_SEG, 1, 2)
         .Merge
         .NumberFormat = "@"
         .HorizontalAlignment = xlLeft
         .Font.Name = "Noto Sans TC"
         .Font.Color = RGB(235, 235, 235)
+        .ShrinkToFit = True                       ' long US plate names still fit the two-column cell
     End With
-    Call StackLabel(Cl(R_SEG, 4), "REPORTED")
-    With Cl(R_SEG, 5)
+    Call StackLabel(Cl(R_SEG, 3), "REPORTED")
+    With Cl(R_SEG, 4)
         .NumberFormat = "yyyy-mm-dd"
         .Interior.Color = RR4_INPUT_BG
         .Font.Color = RR4_INPUT_FG
@@ -1052,7 +1056,7 @@ Private Sub AddValidations()
         .IgnoreBlank = True
         .ShowError = False
     End With
-    With Cl(R_SEG, 5).Validation
+    With Cl(R_SEG, 4).Validation
         .Delete
         .Add Type:=xlValidateList, AlertStyle:=xlValidAlertInformation, Formula1:="=E2DateList"
         .IgnoreBlank = True
@@ -1077,7 +1081,7 @@ Private Sub LoadCtx(ByVal ws As Worksheet)
     Call LoadTable
     c_tk = UCase$(CellStr(Cl(R_TICKER, 1).Value))
     c_mkt = MktOf(c_tk)
-    c_rep = ParseRep(Cl(R_SEG, 5).Value)
+    c_rep = ParseRep(Cl(R_SEG, 4).Value)
     c_selRow = 0
     c_segKey = ""
     c_nm = 0
@@ -1711,10 +1715,10 @@ Public Sub Earn2Change(ByVal ws As Worksheet, ByVal Target As Range)
 
     If pr = R_TICKER And u = 1 Then
         Call TickerChanged(ws, False)
-    ElseIf pr = R_SEG And (u >= 1 And u <= 3) Then
+    ElseIf pr = R_SEG And (u >= 1 And u <= 2) Then
         Call LoadCtx(ws)
         Call DrawContent(False)
-    ElseIf pr = R_SEG And u = 5 Then
+    ElseIf pr = R_SEG And u = 4 Then
         Call LoadCtx(ws)
         Call DrawContent(False)
     ElseIf pr = R_TILE And u >= 1 And u <= 7 Then
@@ -1750,8 +1754,8 @@ Private Sub WriteField(ByVal ws As Worksheet, ByVal col As Long, ByVal txt As St
     Dim rep As Double: rep = c_rep
     If rep = 0 Then
         rep = Int(CDbl(Date))
-        Cl(R_SEG, 5).NumberFormat = "yyyy-mm-dd"
-        Cl(R_SEG, 5).Value2 = rep
+        Cl(R_SEG, 4).NumberFormat = "yyyy-mm-dd"
+        Cl(R_SEG, 4).Value2 = rep
     End If
     Dim r As Long: r = EnsureRowFor(c_tk, rep)
     If r = 0 Then Exit Sub
@@ -1791,7 +1795,7 @@ Private Sub TickerChanged(ByVal ws As Worksheet, ByVal keepSeg As Boolean)
     Call WriteSegList(mkt)
     If tk = "" Then
         Cl(R_SEG, 1).Value = ""
-        Cl(R_SEG, 5).Value = ""
+        Cl(R_SEG, 4).Value = ""
         Cl(R_TICKER, 3).Value = ""
         Call WriteDateList("")
     Else
@@ -1807,10 +1811,10 @@ Private Sub TickerChanged(ByVal ws As Worksheet, ByVal keepSeg As Boolean)
         Call LoadTable
         Dim lr As Long: lr = LatestRow(BareKey(tk))
         If lr > 0 Then
-            Cl(R_SEG, 5).NumberFormat = "yyyy-mm-dd"
-            Cl(R_SEG, 5).Value2 = Int(NumOr0(c_v(lr, ET_REP)))
+            Cl(R_SEG, 4).NumberFormat = "yyyy-mm-dd"
+            Cl(R_SEG, 4).Value2 = Int(NumOr0(c_v(lr, ET_REP)))
         Else
-            Cl(R_SEG, 5).Value = ""
+            Cl(R_SEG, 4).Value = ""
         End If
         Call WriteDateList(tk)
         Dim nm As String
@@ -1825,7 +1829,9 @@ Private Sub TickerChanged(ByVal ws As Worksheet, ByVal keepSeg As Boolean)
     Call DrawContent(False)
 End Sub
 
-' Selection = click: tiles / tabs pick the item, a peer's ticker becomes the TICKER, the 1 jumps to E.
+' Selection = single click: tiles / tabs pick the item. (LAYER 1 and the peer tickers are double-click only -
+' see Earn2DoubleClick: Enter after typing a TICKER lands on the LAYER 1 cell, and a single-click
+' handler there rebuilt the E page on every ticker.)
 Public Sub Earn2Select(ByVal ws As Worksheet, ByVal Target As Range)
     If Not NavHasRows(ws) Then Exit Sub
     If Target.CountLarge > 1 Then
@@ -1854,36 +1860,46 @@ Public Sub Earn2Select(ByVal ws As Worksheet, ByVal Target As Range)
         Call DrawDetail
         GoTo Fin
     End If
+    Exit Sub
+Fin:
+    If Err.Number <> 0 Then Call NavNotify("PEER EARNINGS error: " & Err.Description, True)
+    Application.ScreenUpdating = prevScr
+    Application.EnableEvents = prevEv
+End Sub
+
+' Double-click: LAYER "1" = just switch to the Earnings sheet (nothing is rebuilt, no ticker is carried);
+' a peer's ticker in the table = that ticker becomes the TICKER (same segment, redraw from tblEarn only).
+Public Sub Earn2DoubleClick(ByVal ws As Worksheet, ByVal Target As Range, ByRef Cancel As Boolean)
+    If Not NavHasRows(ws) Then Exit Sub
+    Call Sync(ws)
+    Dim t As Range: Set t = Target.Cells(1, 1)
+    Dim pr As Long: pr = t.Row - m_off
+    Dim u As Long: u = UnitOfCol(t.Column - m_lc - 1)
+    If pr < 1 Or u < 0 Then Exit Sub
     If pr = R_LAYER And u = 1 Then
-        Call LoadCtx(ws)
-        Application.EnableEvents = False
-        On Error GoTo Fin
-        Dim mk As String: mk = IIf(c_mkt = "TW", "TW", IIf(c_mkt = "US", "US", ""))
-        If c_tk = "" Then
-            Call NavGoto("E", ws)
-        Else
-            Call modEarnings.ShowEarnings(c_tk, mk, True)
-        End If
-        GoTo Fin
+        Cancel = True
+        Call NavGoto("E", ws)
+        Exit Sub
     End If
     If pr >= R_TFIRST And u = 0 Then
         Dim pk As String: pk = UCase$(CellStr(t.Value))
         If pk = "" Then Exit Sub
+        Cancel = True
         Call LoadCtx(ws)
         If BareKey(pk) = BareKey(c_tk) Then Exit Sub
+        Dim prevEv As Boolean: prevEv = Application.EnableEvents
+        Dim prevScr As Boolean: prevScr = Application.ScreenUpdating
         Application.EnableEvents = False
         Application.ScreenUpdating = False
         On Error GoTo Fin
         Cl(R_TICKER, 1).NumberFormat = "@"
         Cl(R_TICKER, 1).Value = pk
         Call TickerChanged(ws, True)
-        GoTo Fin
-    End If
-    Exit Sub
 Fin:
-    If Err.Number <> 0 Then Call NavNotify("PEER EARNINGS error: " & Err.Description, True)
-    Application.ScreenUpdating = prevScr
-    Application.EnableEvents = prevEv
+        If Err.Number <> 0 Then Call NavNotify("PEER EARNINGS error: " & Err.Description, True)
+        Application.ScreenUpdating = prevScr
+        Application.EnableEvents = prevEv
+    End If
 End Sub
 
 ' EarnData edits (manual entry / paste): tidy the row, redraw the page's dynamic parts.

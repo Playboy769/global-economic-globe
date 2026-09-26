@@ -2,12 +2,18 @@
 '  Code-behind of the "Peer Earnings" worksheet (modEarn2, nav code E2).
 '  Written automatically by modEarn2.FinishSheetCode (E2!) - kept here as
 '  plain text because document modules are not exported as .bas.
-'    Worksheet_Change          -> Earn2Change (TICKER / SEGMENT / REPORTED /
-'                                 verdict tiles / HEADLINE / detail cells; every
-'                                 typed value is written back to tblEarn)
-'    Worksheet_SelectionChange -> Earn2Select (click = tile or tab picks the
-'                                 item, a peer's ticker becomes the TICKER,
-'                                 the 1 of LAYER jumps to the Earnings page)
+'  (the marker string Earn2DoubleClick tells WriteSheetCode this is the
+'  current version; an older sheet code without it is overwritten)
+'    Worksheet_Change            -> Earn2Change (TICKER / SEGMENT / REPORTED /
+'                                   verdict tiles / HEADLINE / detail cells; every
+'                                   typed value is written back to tblEarn)
+'    Worksheet_SelectionChange   -> Earn2Select (single click on a tile or a tab
+'                                   picks the item; nothing else reacts to a
+'                                   plain selection - Enter after a ticker lands
+'                                   on the LAYER 1 cell and must do nothing)
+'    Worksheet_BeforeDoubleClick -> Earn2DoubleClick (LAYER 1 = switch to the
+'                                   Earnings sheet, no rebuild / no ticker carried;
+'                                   a peer ticker in the table = becomes the TICKER)
 ' ================================================================
 Option Explicit
 
@@ -17,4 +23,8 @@ End Sub
 
 Private Sub Worksheet_SelectionChange(ByVal Target As Range)
     Call Earn2Select(Me, Target)
+End Sub
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Call Earn2DoubleClick(Me, Target, Cancel)
 End Sub

@@ -935,8 +935,9 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 ### Peer Earnings（E2 / E2!，2026-09-26，`RR4/modEarn2.bas`）
 
 Earnings 的**第二層「Industry Read」**：把一次財報 print 打成 7 項分數，再和同一個 SEGMENT
-的所有成員排在一起看。**第一層 Earnings（E）頁一個字都沒動**；本頁 LAYER 列的 `1` 點下去
-＝帶著代號跳到 E 頁（`modEarnings.ShowEarnings`），回來打 `E2`。分頁名 `Peer Earnings`，
+的所有成員排在一起看。**第一層 Earnings（E）頁一個字都沒動**；本頁 LAYER 列的 `1` **雙擊**
+＝只切到 E 工作表（`NavGoto("E")`）：**不重算、不帶代號**（E 保留自己原本的代號，E→E2 也不帶），
+回來打 `E2`；**E2 完全不呼叫 `modEarnings.*`**。分頁名 `Peer Earnings`，
 導覽列代碼 `E2`（標籤 PEER EARN）、動作碼 `E2!`（modNav 六處都登記：NavSheetName、
 NavPageCode、RunNavCommand 跳頁＋`E2!`、NavGoto 未建置提示、DrawNavRows 兩行、檔頭註解）。
 
@@ -969,7 +970,8 @@ EarnData 的 AP:AQ 欄、名稱 `E2SegList`），手打可部分比對、唯一�
 SEGMENT 已含該代號就保留（覆寫不會被洗掉），否則重新自動挑。成員與 tblEarn 比對時**去掉
 `.TW/.TWO`**，但存的是使用者打的形式（大寫）；裸數字（4–6 位、可帶一個字母）視為 TW。
 沒資料的成員顯示灰字 `not yet run`，不進地圖與平均；表格依 INDEX 由高到低（同分維持成員順序）。
-選定代號在表格／地圖用**它選的那一季**（REPORTED 下拉，寫在 SEGMENT 列右邊、名稱
+選定代號在表格／地圖用**它選的那一季**（REPORTED 下拉，2026-09-26 起在 SEGMENT 同一列：標籤在 unit 3、
+輸入格在 unit 4，對齊 MARGINS 區塊左緣，SEGMENT 合併格縮成 unit 1–2 並開 ShrinkToFit；名稱
 `E2DateList`），其他成員一律用各自最新一季。
 
 **版面（2026-09-26 間距改版）**：程式用**邏輯 unit** 定址——unit 0＝左側標籤欄（代號、區塊標籤，72pt）、
@@ -988,11 +990,12 @@ unit 3、5、7、9、10 起（MARGINS／GUIDES／BUCKETS／AVG INDEX／REPORTED�
 比舊版多兩列（R_TLGAP=9、R_TILE=10、…、R_TFIRST=27）。tile 已改成**單一儲存格**（不再兩欄
 合併），下拉驗證掛在該格。標頭摘要區塊 MARGINS／
 GUIDES／BUCKETS／AVG INDEX／REPORTED 只算有資料的成員（BUCKETS 只列非零、順序 long·
-monitor·avoid；REPORTED 用 `→`；AVG INDEX 的「數字存成文字」綠三角已用 `Errors.Ignore` 關掉）。點 tile 或
+monitor·avoid；REPORTED 用 `→`；AVG INDEX 的「數字存成文字」綠三角已用 `Errors.Ignore` 關掉）。**單擊** tile 或
 detail 分頁列的 tab（`Worksheet_SelectionChange`）＝切換 detail 項目（隱藏名稱 `E2ITEM`），
 Print vs bar／Read／Quote／Source 四格（合併 unit 1..10、自動換行）直接打字、當場寫回該
-項目的 PRINT_n/READ_n/QUOTE_n/SOURCE_n。點表格裡的代號＝那檔變成 TICKER（同一個
-SEGMENT）——⚠️ 用 SelectionChange 實作，所以**鍵盤方向鍵掃過代號欄也會切換**。
+項目的 PRINT_n/READ_n/QUOTE_n/SOURCE_n。**雙擊**表格裡的代號（`Worksheet_BeforeDoubleClick` → `Earn2DoubleClick`，
+`Cancel=True`）＝那檔變成 TICKER（同一個 SEGMENT，只從 tblEarn 重畫）；單擊代號什麼都不做。
+LAYER `1` 與同業代號都**只有雙擊**才動作（見下方踩到的坑）。
 **PEER MAP** 全部是 `E2_*` 圖形（`xlMove`，由儲存格 `Left/Top` 算位置，每次重畫先全刪）：
 軸 −0.50..+0.50（左端＝標籤欄左緣＋62pt、右端＝REPORTED 欄右緣−30pt；超出 ±0.5 夾在端點）、
 每檔一個 bucket 色圓點在真實 INDEX 上、上方一個
@@ -1007,7 +1010,7 @@ SEGMENT）——⚠️ 用 SelectionChange 實作，所以**鍵盤方向鍵掃�
 晶圓代工 3 檔、覆寫到 IC設計）實跑：標頭數字（MARGINS 2 up·4 down、GUIDES 1 raised·3 cut、
 BUCKETS 3 monitor·3 avoid）、tile 顏色、表格排序與 bucket、環 7 段×6 環、同分環錯開、（間距改版後）label→tile 間距／tile 間 spacer／三塊欄位對齊／2px 列縫／key 環間距用 CopyPicture 逐張看過、
 選定列標記、tile 改值→表與摘要更新、點 tile 切項目、detail 寫回 tblEarn、REPORTED 下拉
-切季、點同業換代號、`E2!` 重建不疊圖形／導覽列、LAYER 1→E 頁再 `E2` 回來、EarnData 手改
+切季、雙擊同業換代號（單擊無動作）、`E2!` 重建不疊圖形／導覽列、雙擊 LAYER 1 切到 E 頁（E 頁內容雜湊前後相同）再 `E2` 回來、EarnData 手改
 → 頁面重畫且代號自動大寫，都通過；測試列已全部刪除，`tblEarn` 留空。以 `Range.CopyPicture`
 （存成 PNG）對照範本截圖看過，版面結構一致。
 
@@ -1017,6 +1020,16 @@ BUCKETS 3 monitor·3 avoid）、tile 顏色、表格排序與 bucket、環 7 段
 會亂序——改插入排序；④ 螢幕鎖定時 `CopyFromScreen` 只截到鎖屏，改用 `Range.CopyPicture`
 ＋STA PowerShell 存剪貼簿圖（會覆蓋使用者剪貼簿）。⚠️ PASTE 輸入格只畫了格子、**尚未接線**
 （使用者之後再說怎麼用）。
+**⑤ Enter 落到 LAYER 的 `1`（2026-09-26 修）**：在 TICKER 格打完代號按 Enter，游標會掉到下一列的 LAYER `1` 格；
+舊版把「點 LAYER 1」寫在 `Worksheet_SelectionChange`，所以每輸入一檔代號都會順手呼叫
+`modEarnings.ShowEarnings`、重跑 E 頁（SEC／MOPS 抓取很慢）。現在 LAYER 1 與同業代號都改
+`BeforeDoubleClick`，SelectionChange 只處理 tile／tab。`WriteSheetCode` 用標記字串
+`Earn2DoubleClick` 判斷事件碼是否為新版，舊版會被 E2! 覆寫。
+**⑥ SEGMENT 看起來是空的（GS）**：實查 GS 在 IndustryMap 的 BK2260 `Capital Markets`（活頁簿
+5,812 筆已載入），自動挑選、隱藏複本與實機重跑都正確顯示 `Capital Markets`（同業 MS/GS/SCHW/IBKR…）。
+使用者截圖的空白是**畫面凍結的假象**——Enter 落到 LAYER 1 觸發 ShowEarnings 時螢幕更新被關著，
+畫面停在重畫前的舊狀態；與資料無關，⑤ 修掉後不再發生。DAL→Airlines、2330→晶圓代工也驗過。
+代號真的不在任何 plate／群組時：SEGMENT 留空、表格只列它自己，下拉仍可手選。
 
 ## Deployment topology (this is the part that bites)
 
