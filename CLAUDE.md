@@ -953,8 +953,24 @@ NavPageCode、RunNavCommand 跳頁＋`E2!`、NavGoto 未建置提示、DrawNavRo
 **資料**：隱藏分頁 `EarnData`（要批次貼上先 Unhide）的 `tblEarn`，**一個代號一個季度一列**：
 `TICKER｜REPORTED｜V1..V7｜HEADLINE｜PRINT_n READ_n QUOTE_n SOURCE_n（n=1..7，共 38 欄）`。
 歷史永遠不覆寫（換季＝換 REPORTED 日期＝新的一列）。頁面是這張表的 render，頁面上打的字
-一律當場寫回表（第一次寫入才建列；REPORTED 空白時用今天）。**目前刻意是空的**——等使用者
-週二給 Bloomberg 共識／guidance 資料；程式沒有存任何範例資料。
+一律當場寫回表（第一次寫入才建列；REPORTED 空白時用今天）。~~目前刻意是空的~~（已過時，見下方
+2026-09-27 條目）——原設計是等使用者週二給 Bloomberg 共識／guidance 資料，程式本身不存任何範例資料。
+
+**2026-09-27：已開始真的填資料**。寫入前用 COM 讀了一次活頁簿現況，發現 `tblEarn` 其實**已有 3 筆**
+（GS／AXTI／7610）——不是空的，跟上一段「目前刻意是空的」的敘述已經分歧，推測是後續某次 modEarn2
+版面調整（detail row 高度等）的實測資料忘了清（同一種「文件跟活頁簿分家」的病，見「Library SOURCE 欄」
+一節）。這 3 筆先原封不動保留、沒有動。接著依「蒐集所有可以填入的公司」盤點結果（見同名 Artifact
+清單），把**清單裡 7/7（可直接完整填）的 8 家——AAOI／AMAT／AMZN／BE／GLW／GOOGL／LITE／MATX**
+逐一寫入，每家 38 欄全填（V1-V7＋HEADLINE＋7 項各自的 PRINT/READ/QUOTE/SOURCE），QUOTE 一律是從
+Bloomberg 券商報告或 `research/` 報告原文逐字擷取（抓不到乾淨引句的寧可留空，不杜撰）；AMAT／GLW
+兩家同時引用 Bloomberg＋research 兩個來源湊到 7/7，SOURCE 欄寫明 `combined: ...`。寫入方式沿用
+「Library SOURCE 欄」那節的 COM 慣例：`ListObject.Resize()` 展開表格、逐格 `Value2` 寫字串
+（含 REPORTED，交給 `NumberFormat="yyyy/mm/dd"` 自動轉日期）。寫完用 COM 把 TICKER 格依序打成
+AMAT／GOOGL 觸發真正的 `Earn2DataChange`／`TickerChanged` 事件、`Range.CopyPicture` 截圖核對——
+SEGMENT 自動配對（AMAT→Semiconductor Equipment & Materials、GOOGL→Internet Content & Information）、
+tile 顏色、PEER MAP 圓環、GOOGL 的 Rev-guide/EPS-guide＝`Not guided`（灰色○、QUOTE 留空不報錯）都正確，
+之後把 TICKER 格還原成原本的 GS。現在 `tblEarn` 共 **11 列**（3 舊＋8 新）。清單裡其餘公司（5-6/7 缺
+共識、3-4/7 缺財測那些）**刻意還沒寫**，使用者要自己逐一審核再決定，不要看到這節就順手填滿。
 
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
