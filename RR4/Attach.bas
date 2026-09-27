@@ -1026,20 +1026,70 @@ Sub CalculateRealizedPnL()
     wsReal.Range(wsReal.Cells(r0, c0 + 1), wsReal.Cells(IIf(orphanRow > r0 + 1, orphanRow - 1, r0 + 1), c0 + REAL_NCOL)).Columns.AutoFit
     Call SetColumnPixels(wsReal, c0 + 1, 150)  ' TICKER column: fixed 150 px (user spec)
     wsReal.Columns(c0).ColumnWidth = 5          ' ID column
+    Call PaintRealizedFrame(wsReal)
     Application.ScreenUpdating = True
 End Sub
 
-' Column width in pixels (Excel's ColumnWidth is in default-font characters;
-' .Width reads back in points, 4/3 px per point at 96 dpi). Two passes get
-' within a pixel.
-Public Sub SetColumnPixels(ByVal ws As Worksheet, ByVal col As Long, ByVal px As Long)
-    Dim k As Long, target As Double: target = px * 0.75
-    ws.Columns(col).ColumnWidth = px / 7
-    For k = 1 To 3
-        Dim w As Double: w = ws.Columns(col).Width
-        If Abs(w - target) < 0.75 Then Exit For
-        ws.Columns(col).ColumnWidth = ws.Columns(col).ColumnWidth * target / w
-    Next k
+' 2026-09-27 (owner's request): the Realized page's frame lines are repainted on
+' every redraw (CalculateRealizedPnL calls this last).
+'   - Column A, the blank spacer the nav bar inserts, carries no border of its own
+'     (left / top / bottom / inside-horizontal cleared, whole column). Its right
+'     edge is the SAME line as column B's left edge in Excel's border model
+'     (clearing one clears the other), and the owner wants B's left edge kept -
+'     so that one shared line is re-asserted below, in the sheet's grid colour.
+'   - The table block B:O, header row .. RealLastRow (DIVIDEND rows included),
+'     is a full grid: all four edges of every cell plus the inside lines, in the
+'     style the CAPTION column (M) already had, read off the live sheet:
+'     xlContinuous / xlThin / RGB(22,22,22) - the same on every data cell of B:M.
+'     The header row keeps its RR4_LINE underline and the bar divider above it
+'     (the header cells' fill and font are not touched here).
+'   - N:O rows below the table lose any stale bottom line.
+' Why it went wrong: the spacer column is inserted carrying the neighbouring
+' cells' legacy grid borders (Insert copies formats) and nothing ever cleared
+' them; MigrateRealizedNav's one-off Range.Clear on the old LOAN columns wiped
+' their grid borders for good and nothing ever drew them back.
+Public Sub PaintRealizedFrame(ByVal ws As Worksheet)
+    Dim r0 As Long: r0 = RealHdrRow(ws)
+    Dim lastR As Long: lastR = RealLastRow(ws)
+    Dim gridClr As Long: gridClr = RGB(22, 22, 22)
+    Dim b As Variant
+    On Error Resume Next
+    ' column A: nothing of its own
+    For Each b In Array(xlEdgeLeft, xlEdgeTop, xlEdgeBottom, xlInsideHorizontal)
+        ws.Columns(1).Borders(b).LineStyle = xlNone
+    Next b
+    ' the shared A|B line = column B's left edge stays (not in the bar rows)
+    With ws.Columns(2).Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .Color = gridClr
+        .Weight = xlThin
+    End With
+    If r0 > 2 Then ws.Range(ws.Cells(2, 2), ws.Cells(r0 - 1, 2)).Borders(xlEdgeLeft).LineStyle = xlNone
+    Dim cFirst As Long: cFirst = RealCol(ws, 0)                 ' ID column (B)
+    Dim cLoan As Long: cLoan = RealCol(ws, REAL_LOAN_COL)       ' LOAN DISTRIBUTION (N)
+    Dim usedLast As Long: usedLast = ws.UsedRange.Row + ws.UsedRange.Rows.Count - 1
+    If usedLast > lastR Then
+        For Each b In Array(xlInsideHorizontal, xlEdgeBottom)
+            ws.Range(ws.Cells(lastR + 1, cLoan), ws.Cells(usedLast, cLoan + 1)).Borders(b).LineStyle = xlNone
+        Next b
+    End If
+    ' full grid over B:O, header row .. last row
+    For Each b In Array(xlEdgeLeft, xlEdgeTop, xlEdgeBottom, xlEdgeRight, xlInsideHorizontal, xlInsideVertical)
+        With ws.Range(ws.Cells(r0, cFirst), ws.Cells(lastR, cLoan + 1)).Borders(b)
+            .LineStyle = xlContinuous
+            .Color = gridClr
+            .Weight = xlThin
+        End With
+    Next b
+    ' header underline (and the bar divider above the header) stay in RR4_LINE
+    For Each b In Array(xlEdgeBottom, xlEdgeTop)
+        With ws.Range(ws.Cells(r0, cFirst), ws.Cells(r0, cLoan + 1)).Borders(b)
+            .LineStyle = xlContinuous
+            .Color = RR4_LINE
+            .Weight = xlThin
+        End With
+    Next b
+    On Error GoTo 0
 End Sub
 
 Sub ClearAllData()
