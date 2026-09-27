@@ -755,7 +755,7 @@ Sub CalculateRealizedPnL()
     ' the two hand-kept ones, so they read as one table.
     Dim hdrs As Variant
     hdrs = Array("ID", "TICKER", "RET%", "PNL", "SHARES", "AVG COST", "NET AMT", _
-                 "STRATEGY", "PNL(TWD)", "DATE", "BROKER", "CAPTION", "LOAN DISTRIBUTION")
+                 "STRATEGY", "PNL(TWD)", "DATE", "BROKER", "CAPTION", "NOTES")
     Dim hc As Integer
     For hc = 0 To REAL_LOAN_COL                   ' page column 0 = ID
         With wsReal.Cells(r0, RealCol(wsReal, hc))
@@ -1066,7 +1066,7 @@ Public Sub PaintRealizedFrame(ByVal ws As Worksheet)
     End With
     If r0 > 2 Then ws.Range(ws.Cells(2, 2), ws.Cells(r0 - 1, 2)).Borders(xlEdgeLeft).LineStyle = xlNone
     Dim cFirst As Long: cFirst = RealCol(ws, 0)                 ' ID column (B)
-    Dim cLoan As Long: cLoan = RealCol(ws, REAL_LOAN_COL)       ' LOAN DISTRIBUTION (N)
+    Dim cLoan As Long: cLoan = RealCol(ws, REAL_LOAN_COL)       ' NOTES (N)
     Dim usedLast As Long: usedLast = ws.UsedRange.Row + ws.UsedRange.Rows.Count - 1
     If usedLast > lastR Then
         For Each b In Array(xlInsideHorizontal, xlEdgeBottom)
