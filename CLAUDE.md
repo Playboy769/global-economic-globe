@@ -969,8 +969,22 @@ Bloomberg 券商報告或 `research/` 報告原文逐字擷取（抓不到乾淨
 AMAT／GOOGL 觸發真正的 `Earn2DataChange`／`TickerChanged` 事件、`Range.CopyPicture` 截圖核對——
 SEGMENT 自動配對（AMAT→Semiconductor Equipment & Materials、GOOGL→Internet Content & Information）、
 tile 顏色、PEER MAP 圓環、GOOGL 的 Rev-guide/EPS-guide＝`Not guided`（灰色○、QUOTE 留空不報錯）都正確，
-之後把 TICKER 格還原成原本的 GS。現在 `tblEarn` 共 **11 列**（3 舊＋8 新）。清單裡其餘公司（5-6/7 缺
-共識、3-4/7 缺財測那些）**刻意還沒寫**，使用者要自己逐一審核再決定，不要看到這節就順手填滿。
+之後把 TICKER 格還原成原本的 GS。
+
+**同日稍後：使用者授權把清單裡「6/7（僅缺 1 項）」與「5/7（僅缺共識，結構性缺口）」兩個分層
+全部寫完**（3189／3711／DDOG 三家＋57 家 5/7 分層，共 60 家），採「多個背景代理平行擷取
+＋我自己序列化寫入＋每寫完一家就存檔」的做法防止 session 額度中斷時遺失進度（小波次跑，
+每波 3-4 個代理各扛 3-4 家）。缺項一律 V 值與該項 4 個細節欄位（PRINT/READ/QUOTE/SOURCE）
+一起留白給使用者自己補，不猜測。**寫入前務必先比對 3 家舊列（GS／AXTI／7610）的代號，
+避免重複——這次就真的漏掉了**：GS 同時在「5/7 分層」名單裡，寫入時沒排除，造成同代號
+同季度（2026-07-14）出現兩列；發現後比對兩列內容，保留舊列（使用者原本填的版本其實比
+這次代理查到的更完整——V1/V2 已有 Beat/Beat 與精確共識數字 $16.49B／$14.47，這次代理
+反而因為找不到共識而留空），刪除新寫的那列（`ListRows.Delete`，刪除前用 COM 讀兩列全部
+38 欄比對確認哪列該留）。AXTI／7610 因為分別屬於「已完成」與「3-4/7，本輪不在範圍」，
+沒有重複問題。最終 `tblEarn` 共 **70 列**（3 舊，其中 1 列因重複被刪＋替換＝仍算原 3 家
+＋67 新，8 家 7/7＋3 家原 6/7 補完＋56 家 5/7；GS 那列沿用舊資料未變動）。清單裡剩下的
+「3-4/7 缺財測」「0-2/7 需重新找素材」兩個分層**刻意還沒寫**，使用者要自己逐一審核再決定，
+不要看到這節就順手填滿。
 
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
