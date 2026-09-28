@@ -755,7 +755,10 @@ VBE 編譯／中斷模式卡住，**Excel 卻把清空狀態存了檔**（12:21�
 不受影響）。**UP 是 read-before-clear，所以清空狀態下再跑 UP 只會重建預設、不會更糟。**
 遺失的只有手打值：持倉表 **UPSIDE／DOWNSIDE**、TO-DO 清單、**T2／T3（InceptionDate／StartingCapital）**、
 ticker panel 的代號／目標價、ARRANGE 碼；WATCHLIST 在 `tblWatch`、Library 在 `tblNotes`，不受影響。
-要救回請到 OneDrive 版本記錄下載事故前的版本（另存成別的檔案），讀出上述格子再寫回。
+**已救回**：用 `Portfolio\backup-pre-7610-earn-20260927.xlsm`（09-27 00:04）讀出 9 檔 UPSIDE／DOWNSIDE、ticker panel 代號（BE）、
+TO-DO（BE Book Profit 9/28；CASH ReAllocate 10/9 是依本檔 09-27 遷移紀錄補的，備份裡沒有）寫回，P.TARGET／SWING RISK 與備份逐檔一致。
+T2／T3 兩份都是空的（SUMMARY 的 INCEPTION／STARTING 由程式預設值 2026-08-01／600,000 產生），無需還原。若備份之後你又改過 UPSIDE／DOWNSIDE，需自行更新。
+（若日後有更早或更晚的完整版本，可到 OneDrive 版本記錄下載，另存成別的檔案再讀。）
 
 **教訓**：① 對活頁簿跑 `UP` 之前一律先 `SaveCopyAs` 備份（別只在改資料時才備份）；② 用 COM 跑完 UP 要用
 `StatusBar` 與持倉列數把關再 `Save()`（見 [[rr4-excel-com-automation-gotchas]]）；③ **COM 對剛啟動的
