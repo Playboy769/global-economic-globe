@@ -1030,6 +1030,19 @@ Sub CalculateRealizedPnL()
     Application.ScreenUpdating = True
 End Sub
 
+' Column width in pixels (Excel's ColumnWidth is in default-font characters;
+' .Width reads back in points, 4/3 px per point at 96 dpi). Two passes get
+' within a pixel.
+Public Sub SetColumnPixels(ByVal ws As Worksheet, ByVal col As Long, ByVal px As Long)
+    Dim k As Long, target As Double: target = px * 0.75
+    ws.Columns(col).ColumnWidth = px / 7
+    For k = 1 To 3
+        Dim w As Double: w = ws.Columns(col).Width
+        If Abs(w - target) < 0.75 Then Exit For
+        ws.Columns(col).ColumnWidth = ws.Columns(col).ColumnWidth * target / w
+    Next k
+End Sub
+
 ' 2026-09-27 (owner's request): the Realized page's frame lines are repainted on
 ' every redraw (CalculateRealizedPnL calls this last).
 '   - Column A, the blank spacer the nav bar inserts, carries no border of its own
