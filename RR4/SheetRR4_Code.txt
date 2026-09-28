@@ -19,7 +19,7 @@
 '                        cell already holds a date. The task cell is MERGED, so
 '                        Target is the whole H:K area - CountLarge > 1 is only
 '                        tolerated for a merged Target)
-'  Worksheet_BeforeDoubleClick: G60:M61 saved TO-DO rows -> TodoDeleteRow (done)
+'  Worksheet_BeforeDoubleClick: G60:M69 saved TO-DO rows (10, since 2026-09-28) -> TodoDeleteRow (done)
 '                               (the WATCHLIST jump to the Watch page was
 '                               removed 2026-09-27)
 '  (addresses come from the RR4_* / TI_* constants). The nav command

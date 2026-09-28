@@ -126,15 +126,20 @@ Public Const RR4_MK_LAST   As Long = 40
 Private Const RR4_MK_N     As Long = 7
 ' TO-DO (2026-09-21; moved 2026-09-27 from B36:E39 to G58, level with the
 ' WATCHLIST title). Row 58 = title G + column names (TASK / DUE / DTE), row 59 =
-' entry row, rows 60-61 = the saved list (2 rows), sorted by due date (undated
-' last), DTE = due - today recomputed on every UP, lit orange once overdue.
+' entry row, rows 60-69 = the saved list (10 rows, widened 2026-09-28 from the
+' original 2 - the cap lives only in RR4_TD_LAST, everything else in this file
+' loops RR4_TD_FIRST..RR4_TD_LAST so no other line needed to change), sorted by
+' due date (undated last), DTE = due - today recomputed on every UP, lit orange
+' once overdue. This column band (G:M) doesn't overlap the WATCHLIST/MARKET
+' block, which lives in B:E at the same rows, so the extra rows don't collide
+' with anything below G58.
 ' Columns: G ticker (7) | H:K task, MERGED per row (8..11) | L due (12) | M DTE (13).
 ' Double-click a saved row = done (TodoDeleteRow). Merged cells: the sheet events
 ' see the whole H:K area as Target, TodoCommitEntry gets its first column.
 Public Const RR4_TD_TITLE  As Long = 58
 Public Const RR4_TD_ENTRY  As Long = 59
 Public Const RR4_TD_FIRST  As Long = 60
-Public Const RR4_TD_LAST   As Long = 61
+Public Const RR4_TD_LAST   As Long = 69
 Public Const RR4_TD_C_TICK As Long = 7
 Public Const RR4_TD_C_TASK As Long = 8
 Public Const RR4_TD_C_TASK2 As Long = 11
@@ -2408,11 +2413,14 @@ End Function
 
 Private Function ReadTodoAt(ws As Worksheet, ByVal r1 As Long, ByVal r2 As Long, _
                             ByVal cTick As Long, ByVal cTask As Long, ByVal cDue As Long) As Variant
-    Dim tmp(1 To 8, 1 To 3) As Variant, n As Long, r As Long
+    ' capacity = the saved-row count (was a hard-coded 8, which silently dropped
+    ' rows 9-10 once the list was widened to 10)
+    Const TD_CAP As Long = RR4_TD_LAST - RR4_TD_FIRST + 1
+    Dim tmp(1 To TD_CAP, 1 To 3) As Variant, n As Long, r As Long
     Dim tsk As String
     For r = r1 To r2
         tsk = CellStr(ws.cells(r, cTask).Value)
-        If tsk <> "" And n < 8 Then
+        If tsk <> "" And n < TD_CAP Then
             n = n + 1
             tmp(n, 1) = UCase(CellStr(ws.cells(r, cTick).Value))
             tmp(n, 2) = tsk
@@ -2504,8 +2512,8 @@ Private Sub TodoPaintEntryRow(ws As Worksheet)
     Next rg
 End Sub
 
-' Sort by due date (undated last, ties keep order) and write rows 60-61;
-' DTE = due - today, orange once negative.
+' Sort by due date (undated last, ties keep order) and write rows
+' RR4_TD_FIRST..RR4_TD_LAST; DTE = due - today, orange once negative.
 Private Sub TodoWriteList(ws As Worksheet, td As Variant)
     Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
     Dim ord() As Long, i As Long, j As Long, t As Long
@@ -2581,20 +2589,37 @@ Public Sub TodoCommitEntry(ws As Worksheet, ByVal changedCol As Long)
 
     Dim td As Variant: td = ReadTodo(ws)
     Dim n As Long: If IsArray(td) Then n = UBound(td, 1)
-    If n >= RR4_TD_LAST - RR4_TD_FIRST + 1 Then
-        Call NavNotify("TO-DO full (" & (RR4_TD_LAST - RR4_TD_FIRST + 1) & " rows) - double-click a row to mark it done", True)
-        Exit Sub
+    ' Full list: push out the existing item with the earliest due date (undated
+    ' items sort last so they are pushed out last; all undated -> the first one).
+    ' The new item is always kept.
+    Dim cap As Long: cap = RR4_TD_LAST - RR4_TD_FIRST + 1
+    Dim skip As Long, evicted As String, i As Long
+    If n >= cap Then
+        skip = 1
+        For i = 2 To n
+            If TodoBefore(td, i, skip) Then skip = i
+        Next i
+        evicted = CellStr(td(skip, 2))
     End If
-    Dim nw() As Variant: ReDim nw(1 To n + 1, 1 To 3)
-    Dim i As Long
+    Dim nw() As Variant
+    If n >= cap Then ReDim nw(1 To n, 1 To 3) Else ReDim nw(1 To n + 1, 1 To 3)
+    Dim m As Long
     For i = 1 To n
-        nw(i, 1) = td(i, 1): nw(i, 2) = td(i, 2): nw(i, 3) = td(i, 3)
+        If i <> skip Then
+            m = m + 1
+            nw(m, 1) = td(i, 1): nw(m, 2) = td(i, 2): nw(m, 3) = td(i, 3)
+        End If
     Next i
-    nw(n + 1, 1) = tk: nw(n + 1, 2) = tsk: nw(n + 1, 3) = due
+    m = m + 1
+    nw(m, 1) = tk: nw(m, 2) = tsk: nw(m, 3) = due
     Call TodoWriteList(ws, nw)
     Call TodoPaintEntryRow(ws)
     ws.cells(RR4_TD_ENTRY, RR4_TD_C_TICK).Select
-    Call NavNotify("TO-DO + " & tsk)
+    If evicted <> "" Then
+        Call NavNotify("TO-DO + " & tsk & "  (list full - pushed out: " & evicted & ")")
+    Else
+        Call NavNotify("TO-DO + " & tsk)
+    End If
 End Sub
 
 ' Called by the sheet code on a double-click inside the saved rows: the
