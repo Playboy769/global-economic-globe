@@ -63,7 +63,6 @@ Private Const PG_TITLE As Long = 1
 Private Const PG_LBL As Long = 2
 Private Const PG_IN As Long = 3
 Private Const PG_GRP As Long = 4
-Private Const PG_HDR As Long = 5
 Private Const PG_FIRST As Long = 6
 
 ' --- page columns ---
@@ -622,23 +621,49 @@ Private Sub DrawShell(ByVal ws As Worksheet)
         End With
     Next c
 
-    ' group bands
-    Dim g As Variant, gc As Variant, k As Long
-    g = Array("WATCH", "LIBRARY", "BIAS  (R1 = EMA20 short, R4 = EMA200 long)")
-    gc = Array(C_TK, C_NOTES, C_R1)
-    For k = 0 To 2
-        With ws.Cells(PG_GRP, gc(k))
-            .Value = g(k)
-            .Font.Color = RR4_ACCENT: .Font.Bold = True
-        End With
-    Next k
+    ' the market sections (title band + header + rows) are drawn by DrawWatchRows
     Dim widths As Variant
     widths = Array(12, 6, 34, 11, 6, 11, 11, 9, 7, 12, 12, 8, 8, 8, 26, 11, 6, 8)
     For c = 0 To C_LASTCOL - 1: ws.Columns(c + 1).ColumnWidth = widths(c): Next c
-    Call DrawHeader(ws, 0, 0)
 End Sub
 
-Private Sub DrawHeader(ByVal ws As Worksheet, ByVal off As Long, ByVal lc As Long)
+' 2026-09-28: one section per market. Title row = market name (US / TW) with the
+' LIBRARY / BIAS group labels on the same row; the column header sits under it.
+Private Sub DrawSectionTitle(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long, ByVal mkt As String)
+    ws.Rows(r).RowHeight = 20
+    With ws.Cells(r, C_TK + lc)
+        .NumberFormat = "@"
+        .Value = mkt
+        .Font.Color = RR4_ACCENT: .Font.Bold = True: .Font.Size = 11
+        .HorizontalAlignment = xlCenter
+    End With
+    With ws.Cells(r, C_NOTES + lc)
+        .Value = "LIBRARY"
+        .Font.Color = RR4_ACCENT: .Font.Bold = True: .HorizontalAlignment = xlLeft
+    End With
+    With ws.Cells(r, C_R1 + lc)
+        .Value = "BIAS  (R1 = EMA20 short, R4 = EMA200 long)"
+        .Font.Color = RR4_ACCENT: .Font.Bold = True: .HorizontalAlignment = xlLeft
+    End With
+End Sub
+
+' What a Watch page row is: "title" (US / TW band), "hdr" (column header),
+' "data" (a name) or "blank".
+Private Function RowKind(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long) As String
+    Dim t As String: t = CellStr(ws.Cells(r, C_TK + lc).Value)
+    Dim m As String: m = CellStr(ws.Cells(r, C_MKT + lc).Value)
+    If t = "" Then
+        RowKind = "blank"
+    ElseIf Left$(t, 6) = "TICKER" And m = "MKT" Then
+        RowKind = "hdr"
+    ElseIf (t = "US" Or t = "TW") And m = "" Then
+        RowKind = "title"
+    Else
+        RowKind = "data"
+    End If
+End Function
+
+Private Sub DrawHeader(ByVal ws As Worksheet, ByVal hr As Long, ByVal lc As Long)
     Dim hdr As Variant
     hdr = Array("TICKER", "MKT", "STRATEGY", "ADDED", "DAYS", "ENTRY TGT", "LAST", "DIST%", _
                 "NOTES", "LAST CALL", "STATUS", "M/R/C", "R1", "R4", "SIGNAL", "SIG DATE", "AGO", "STREAK")
@@ -659,14 +684,14 @@ Private Sub DrawHeader(ByVal ws As Worksheet, ByVal off As Long, ByVal lc As Lon
             Dim fl As String: fl = FilterText()
             If fl <> "" Then fltMark = "  [" & fl & "]"
         End If
-        With ws.Cells(PG_HDR + off, c + lc)
+        With ws.Cells(hr, c + lc)
             .Value = txt & arrow & fltMark
             .Font.Color = IIf(fltMark <> "", RR4_ACCENT, RGB(0, 200, 255))
             .Font.Size = 9
             .HorizontalAlignment = IIf(c = C_STRAT Or c = C_SIG, xlLeft, xlCenter)
         End With
     Next c
-    With ws.Range(ws.Cells(PG_HDR + off, 1 + lc), ws.Cells(PG_HDR + off, C_LASTCOL + lc)).Borders(xlEdgeBottom)
+    With ws.Range(ws.Cells(hr, 1 + lc), ws.Cells(hr, C_LASTCOL + lc)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
     End With
 End Sub
@@ -696,10 +721,11 @@ End Sub
 ' Clears the data rows (below the header) and re-blacks them.
 Private Sub ClearRows(ByVal ws As Worksheet, ByVal r0 As Long, ByVal lc As Long)
     Dim lastRow As Long: lastRow = ws.Cells(ws.Rows.Count, C_TK + lc).End(xlUp).Row + 5
-    If lastRow < r0 + 60 Then lastRow = r0 + 60
+    If lastRow < r0 + 120 Then lastRow = r0 + 120
     Dim rng As Range
     Set rng = ws.Range(ws.Cells(r0, 1), ws.Cells(lastRow, C_LASTCOL + lc + 2))
     rng.ClearContents
+    rng.EntireRow.RowHeight = 16
     rng.Interior.Color = RGB(0, 0, 0)
     rng.Font.Bold = False
     rng.Font.Color = CLR_TEXT
@@ -716,9 +742,8 @@ End Function
 Private Sub DrawWatchRows(ByVal ws As Worksheet)
     Dim off As Long: off = NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
-    Dim r0 As Long: r0 = PG_FIRST + off
+    Dim r0 As Long: r0 = PG_GRP + off
     Call ClearRows(ws, r0, lc)
-    Call DrawHeader(ws, off, lc)
 
     Dim lo As ListObject: Set lo = WatchTable()
     Dim cnt As Long, k As Long, v As Variant, idx() As Long
@@ -726,25 +751,48 @@ Private Sub DrawWatchRows(ByVal ws As Worksheet)
         v = lo.DataBodyRange.Value
         cnt = OrderIdx(v, idx, True)
     End If
-    If cnt = 0 Then
-        With ws.Cells(r0, 1 + lc)
-            .Value = "(empty - type TICKER + ENTRY TGT in the boxes above, then press Enter)"
-            .Font.Color = CLR_MUTED
-        End With
-        Exit Sub
+
+    ' split the sorted / filtered order by market, each keeping its order
+    Dim us() As Long, tw() As Long, nUS As Long, nTW As Long
+    If cnt > 0 Then
+        ReDim us(1 To cnt): ReDim tw(1 To cnt)
+        For k = 1 To cnt
+            If IsTWName(CellStr(v(idx(k), WT_TICKER))) Then
+                nTW = nTW + 1: tw(nTW) = idx(k)
+            Else
+                nUS = nUS + 1: us(nUS) = idx(k)
+            End If
+        Next k
     End If
+
     Dim flt As String: flt = FilterText()
-    For k = 1 To cnt
-        Call DrawOneRow(ws, r0 + k - 1, lc, v, idx(k))
-        If flt <> "" Then
-            If Not MatchesFilter(CellStr(v(idx(k), WT_STRAT)), flt) Then Call DimRow(ws, r0 + k - 1, lc)
-        End If
-    Next k
-    With ws.Range(ws.Cells(r0 + cnt - 1, 1 + lc), ws.Cells(r0 + cnt - 1, C_LASTCOL + lc)).Borders(xlEdgeBottom)
-        .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
-    End With
+    Dim r As Long: r = r0
+    r = DrawMarketSection(ws, r, lc, "US", v, us, nUS, flt)
+    r = DrawMarketSection(ws, r + 2, lc, "TW", v, tw, nTW, flt)
     Call PaintDeleteHandles(ws)
 End Sub
+
+' Title row, header row, then the names; returns the last row used.
+Private Function DrawMarketSection(ByVal ws As Worksheet, ByVal r As Long, ByVal lc As Long, _
+        ByVal mkt As String, ByRef v As Variant, ByRef ix() As Long, ByVal n As Long, _
+        ByVal flt As String) As Long
+    Call DrawSectionTitle(ws, r, lc, mkt)
+    Call DrawHeader(ws, r + 1, lc)
+    Dim k As Long, rr As Long
+    For k = 1 To n
+        rr = r + 1 + k
+        Call DrawOneRow(ws, rr, lc, v, ix(k))
+        If flt <> "" Then
+            If Not MatchesFilter(CellStr(v(ix(k), WT_STRAT)), flt) Then Call DimRow(ws, rr, lc)
+        End If
+    Next k
+    If n > 0 Then
+        With ws.Range(ws.Cells(r + 1 + n, 1 + lc), ws.Cells(r + 1 + n, C_LASTCOL + lc)).Borders(xlEdgeBottom)
+            .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
+        End With
+    End If
+    DrawMarketSection = r + 1 + n
+End Function
 
 ' A row outside the STRATEGY filter: same cells, but flat black with dark grey
 ' text (heat colours and the target-hit highlight are dropped too).
@@ -763,15 +811,17 @@ End Sub
 Private Sub PaintDeleteHandles(ByVal ws As Worksheet)
     Dim lc As Long: lc = NavLeft(ws)
     If lc < 1 Then Exit Sub
-    Dim r As Long, t As String
-    For r = PG_FIRST + NavOffset(ws) To PG_FIRST + NavOffset(ws) + 1000
-        t = CellStr(ws.Cells(r, C_TK + lc).Value)
-        If t = "" Or Left$(t, 1) = "(" Then Exit For
-        With ws.Cells(r, 1)
-            .Value = ChrW(&HD7)
-            .HorizontalAlignment = xlCenter
-            .Font.Color = CLR_MUTED
-        End With
+    Dim r As Long, r0 As Long, rEnd As Long
+    r0 = PG_GRP + NavOffset(ws)
+    rEnd = ws.Cells(ws.Rows.Count, C_TK + lc).End(xlUp).Row
+    For r = r0 To rEnd
+        If RowKind(ws, r, lc) = "data" Then
+            With ws.Cells(r, 1)
+                .Value = ChrW(&HD7)
+                .HorizontalAlignment = xlCenter
+                .Font.Color = CLR_MUTED
+            End With
+        End If
     Next r
 End Sub
 
@@ -1054,7 +1104,9 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
     Dim c As Long: c = t.Column - lc
     If c < 1 Or c > C_LASTCOL Then Exit Sub
 
-    If t.Row = PG_HDR + off Then
+    Dim kind As String
+    If t.Row >= PG_GRP + off Then kind = RowKind(ws, t.Row, lc)
+    If kind = "hdr" Then
         Dim key As String, first As String
         Select Case c
             Case C_TK: key = "ticker": first = "asc"
@@ -1093,7 +1145,7 @@ Public Sub WatchPageDoubleClick(ByVal ws As Worksheet, ByVal Target As Range, By
         Exit Sub
     End If
 
-    If t.Row < PG_FIRST + off Then Exit Sub
+    If kind <> "data" Then Exit Sub
     Dim tk As String: tk = UCase(CellStr(ws.Cells(t.Row, C_TK + lc).Value))
     If tk = "" Then Exit Sub
     If c = C_STRAT Then
@@ -1180,12 +1232,13 @@ Public Sub WatchGoto(ByVal src As Worksheet, ByVal tk As String)
     Dim off As Long: off = NavOffset(ws)
     Dim lc As Long: lc = NavLeft(ws)
     Dim r As Long
-    For r = PG_FIRST + off To PG_FIRST + off + 500
-        If UCase(CellStr(ws.Cells(r, C_TK + lc).Value)) = tk Then
-            ws.Cells(r, C_TK + lc).Select
-            Exit For
+    For r = PG_GRP + off To PG_GRP + off + 500
+        If RowKind(ws, r, lc) = "data" Then
+            If UCase(CellStr(ws.Cells(r, C_TK + lc).Value)) = tk Then
+                ws.Cells(r, C_TK + lc).Select
+                Exit For
+            End If
         End If
-        If CellStr(ws.Cells(r, C_TK + lc).Value) = "" Then Exit For
     Next r
 End Sub
 
