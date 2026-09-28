@@ -839,6 +839,18 @@
         "research/fnv-analysis-2026q2/FNV_2026Q2_Analysis"
       ],
       "port": 8193
+    },
+    {
+      "name": "xom-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8194",
+        "--directory",
+        "research/xom-analysis-2026q2/XOM_FY2026Q2_Analysis"
+      ],
+      "port": 8194
     }
   ]
 }
