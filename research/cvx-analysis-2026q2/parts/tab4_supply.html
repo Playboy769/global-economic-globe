@@ -1,0 +1,220 @@
+  <div id="panel-supply" class="panel">
+    <div class="note grey">Chevron 是整合型油氣公司，「供應鏈」在此指實體價值鏈（上游生產、中下游輸儲、煉化行銷）加採購投入。<b>10-K 未具名任何關鍵供應商，也未揭露任何占營收 10% 以上的客戶</b>；信用風險描述為「分散於全球廣大客戶」（10-K Note 26；Q2'26 10-Q Note 16）。這件事本身就是訊號：集中度風險不在供應商或客戶名單，而在<b>實體通道</b>（CPC 管線、荷姆茲海峽、少數權益法合資）。下方兩張圖使用同一組 8 個節點，金額僅採已揭露或可由揭露值直接推算者，不補猜數字。</div>
+
+    <div class="card">
+      <div class="card-title">價值流向圖（Sankey・Q2 FY26 已揭露金額，單位 $M）</div>
+      <div id="sankeyEmbed_a1b4j7r" style="width:100%;height:520px;background:#fff;border:1px solid #eee;border-radius:6px;position:relative;"></div>
+<script>
+(function(){
+  var DATA = {"nodes":[{"id":"sup_goods","label":"外購原油與成品來源（未具名）","color":"#64748b"},{"id":"sup_equip","label":"設備與工程服務商（未具名）","color":"#64748b"},{"id":"tco","label":"TCO（哈薩克・50%）","color":"#8a6d3d"},{"id":"cpchem","label":"CPChem（50%）","color":"#8a6d3d"},{"id":"gsc","label":"GS Caltex等下游聯屬","color":"#8a6d3d"},{"id":"upstream","label":"上游（US＋Intl）","color":"#15803d"},{"id":"downstream","label":"下游（煉油・行銷）","color":"#c2600a"},{"id":"cust","label":"終端客戶（分散・無10%客戶）","color":"#334155"}],"links":[{"source":"sup_goods","target":"downstream","value":36607},{"source":"sup_equip","target":"upstream","value":4226},{"source":"tco","target":"upstream","value":3000},{"source":"cpchem","target":"downstream","value":456},{"source":"gsc","target":"downstream","value":399},{"source":"upstream","target":"downstream","value":21419},{"source":"upstream","target":"cust","value":13073},{"source":"downstream","target":"cust","value":54126}]};
+  function render(){
+    var container = document.getElementById("sankeyEmbed_a1b4j7r");
+    if (!container) return;
+    var svg = d3.select(container).append("svg").attr("width","100%").attr("height","100%").style("display","block");
+    var gMain = svg.append("g");
+    var tooltip = document.createElement("div");
+    tooltip.style.cssText = "position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:4px;padding:6px 10px;font:12px 'Noto Serif TC',serif;color:#0a0a0a;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:10;white-space:pre-line;";
+    container.appendChild(tooltip);
+    function showTooltip(event, text){
+      var rect = container.getBoundingClientRect();
+      tooltip.textContent = text;
+      tooltip.style.display = "block";
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top + 12) + 'px';
+    }
+    function hideTooltip(){ tooltip.style.display = "none"; }
+    function draw(){
+      var rect = container.getBoundingClientRect();
+      var w = rect.width, h = rect.height;
+      if (w < 50 || h < 50) return;
+      svg.attr("viewBox", [0,0,w,h]).attr("preserveAspectRatio","xMidYMid meet");
+      gMain.selectAll("*").remove();
+      if (!DATA.nodes.length) return;
+      try {
+        var nodePadding = 16;
+        function makeGen(extentH){
+          return d3.sankey().nodeId(function(d){return d.id;}).nodeWidth(14).nodePadding(nodePadding).iterations(64).nodeAlign(d3.sankeyJustify).extent([[10,10],[w-10,extentH-10]]);
+        }
+        var nodesCopy1 = DATA.nodes.map(function(n){ return {id:n.id,label:n.label,color:n.color}; });
+        var linksCopy1 = DATA.links.map(function(l){ return {source:l.source,target:l.target,value:l.value}; });
+        var graph1 = makeGen(h)({nodes:nodesCopy1, links:linksCopy1});
+        var colCounts = {};
+        graph1.nodes.forEach(function(n){ var cx = Math.round(n.x0); colCounts[cx] = (colCounts[cx]||0)+1; });
+        var maxPerColumn = 0;
+        for (var ck in colCounts) { if (colCounts[ck] > maxPerColumn) maxPerColumn = colCounts[ck]; }
+        var virtualH = Math.max(h, maxPerColumn*26);
+        var graph;
+        if (virtualH > h) {
+          var nodesCopy2 = DATA.nodes.map(function(n){ return {id:n.id,label:n.label,color:n.color}; });
+          var linksCopy2 = DATA.links.map(function(l){ return {source:l.source,target:l.target,value:l.value}; });
+          graph = makeGen(virtualH)({nodes:nodesCopy2, links:linksCopy2});
+        } else {
+          graph = graph1;
+          virtualH = h;
+        }
+        svg.attr("viewBox", [0,0,w,virtualH]).attr("preserveAspectRatio","xMidYMid meet");
+        var k = Math.min(1, h / virtualH);
+        var fontSize = Math.min(10.5/k, 10.5/0.45);
+        var minSep = fontSize + 3;
+        var dodgeGroups = {};
+        graph.nodes.forEach(function(d){
+          var anchorLeft = d.x0 < w/2;
+          var gx = Math.round(anchorLeft ? d.x1 : d.x0);
+          var gkey = (anchorLeft ? "L" : "R") + "_" + gx;
+          (dodgeGroups[gkey] = dodgeGroups[gkey] || []).push(d);
+        });
+        Object.keys(dodgeGroups).forEach(function(gkey){
+          var arr = dodgeGroups[gkey];
+          arr.sort(function(a,b){ return (a.y0+a.y1)/2 - (b.y0+b.y1)/2; });
+          var prevY = null;
+          arr.forEach(function(d){
+            var y = (d.y0+d.y1)/2;
+            if (prevY !== null && y - prevY < minSep) y = prevY + minSep;
+            d._labelY = y;
+            prevY = y;
+          });
+        });
+        var linkSel = gMain.append("g").attr("fill","none").selectAll("path").data(graph.links).enter().append("path")
+          .attr("d", d3.sankeyLinkHorizontal())
+          .attr("stroke", function(d){ return d.source.color; })
+          .attr("stroke-width", function(d){ return Math.max(1, d.width); })
+          .attr("stroke-opacity", 0.38);
+        var nodeSel = gMain.append("g").selectAll("g").data(graph.nodes).enter().append("g");
+        nodeSel.append("rect")
+          .attr("x", function(d){ return d.x0; })
+          .attr("y", function(d){ return d.y0; })
+          .attr("width", function(d){ return d.x1-d.x0; })
+          .attr("height", function(d){ return Math.max(1, d.y1-d.y0); })
+          .attr("fill", function(d){ return d.color; })
+          .attr("rx", 1);
+        nodeSel.append("text")
+          .attr("x", function(d){ return d.x0 < w/2 ? d.x1+6 : d.x0-6; })
+          .attr("y", function(d){ return d._labelY; })
+          .attr("text-anchor", function(d){ return d.x0 < w/2 ? "start" : "end"; })
+          .attr("dominant-baseline", "middle")
+          .style("font", "500 " + fontSize + "px 'Noto Serif TC', serif")
+          .style("paint-order", "stroke")
+          .style("stroke", "#fff")
+          .style("stroke-width", "3px")
+          .style("stroke-linejoin", "round")
+          .attr("fill", "#333")
+          .text(function(d){ return d.label; });
+        var connectedMap = {};
+        graph.links.forEach(function(l){
+          (connectedMap[l.source.id] = connectedMap[l.source.id] || {})[l.target.id] = true;
+          (connectedMap[l.target.id] = connectedMap[l.target.id] || {})[l.source.id] = true;
+        });
+        nodeSel.on("mousemove", function(event, d){
+          showTooltip(event, d.label + "\n流量 " + d.value.toLocaleString());
+          var connected = connectedMap[d.id] || {};
+          linkSel.attr("stroke-opacity", function(l){ return (l.source.id===d.id || l.target.id===d.id) ? 0.65 : 0.08; });
+          nodeSel.select("rect").attr("opacity", function(n){ return (n.id===d.id || connected[n.id]) ? 1 : 0.35; });
+          nodeSel.select("text").attr("opacity", function(n){ return (n.id===d.id || connected[n.id]) ? 1 : 0.25; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+          nodeSel.select("rect").attr("opacity", 1);
+          nodeSel.select("text").attr("opacity", 1);
+        });
+        linkSel.on("mousemove", function(event, d){
+          showTooltip(event, d.source.label + " → " + d.target.label + "\n" + d.value.toLocaleString());
+          linkSel.attr("stroke-opacity", function(l){ return l===d ? 0.7 : 0.08; });
+        }).on("mouseleave", function(){
+          hideTooltip();
+          linkSel.attr("stroke-opacity", 0.38);
+        });
+      } catch (err) { /* layout error: leave blank rather than crash the host page */ }
+    }
+    draw();
+    if (window.ResizeObserver) {
+      var t;
+      new ResizeObserver(function(){ clearTimeout(t); t = setTimeout(draw, 150); }).observe(container);
+    }
+    // ResizeObserver (and IntersectionObserver) do not reliably fire when a display:none
+    // ancestor (e.g. a hidden tab panel) becomes visible again, since the element had no
+    // box to begin with. Cover that case with a poll that keeps checking UNTIL the container
+    // actually has a size and gets drawn -- not bounded by a fixed try count, since a real
+    // reader may not click into a hidden tab until well after page load. It stops for good
+    // the moment a draw succeeds (or a lightweight cap if the element never appears at all).
+    if (window.IntersectionObserver) {
+      new IntersectionObserver(function(entries){
+        if (entries[0].isIntersecting) draw();
+      }).observe(container);
+    }
+    var pollTries = 0;
+    var pollId = setInterval(function(){
+      pollTries++;
+      if (container.querySelector('rect') || pollTries > 1800) { clearInterval(pollId); return; }
+      var pr = container.getBoundingClientRect();
+      if (pr.width >= 50 && pr.height >= 50) draw();
+    }, 400);
+    // Zero-latency real-world backstop: the instant a reader's cursor enters the now-visible
+    // container (e.g. right after clicking into its tab), draw immediately if not done yet.
+    // This is a plain hit-tested DOM event, unaffected by observer/timer edge cases above.
+    container.addEventListener('mouseenter', function(){ if (!container.querySelector('rect')) draw(); });
+  }
+  if (window.d3 && d3.sankey) { render(); return; }
+  if (!window.__sankeyD3Load) {
+    window.__sankeyD3Load = new Promise(function(resolve){
+      var s1 = document.createElement("script");
+      s1.src = "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js";
+      s1.onload = function(){
+        var s2 = document.createElement("script");
+        s2.src = "https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js";
+        s2.onload = resolve;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
+    });
+  }
+  window.__sankeyD3Load.then(render);
+})();
+</script>
+      <div style="font-size:12px;color:#666;text-align:center;margin-top:6px;">線寬＝Q2'26 各科目金額。<b>注意單位性質不同</b>：外購原油與成品（合併損益表科目，含非下游用途）、資本支出、聯屬分配款／權益收益、收入並列，只表達揭露量級，不構成會計恆等式。「分部間抵銷 21,419」與「對外銷售 13,073」為推算值（分部收入合計 88,618 − 合併銷售 67,199；上游分部收入 34,492 − 21,419），並假設抵銷以上游售予下游為主，10-Q 未拆分方向。</div>
+    </div>
+    <div class="note grey">⚑ 人工解讀：（1）外購原油與成品 $36.6B 是圖中最粗的輸入，而該科目對應的供應商<b>全數未具名</b>；下游進料約 60% 為進口原油（10-K Item 1），意味著煉油端的供給韌性取決於第三方與航運通道，而非 Chevron 自有權益油。（2）TCO 單一節點 Q2 分配款約 $3B（逐字稿稱聯屬分配款約 $3B、大部分來自 TCO），占管理層全年指引 $6B（Brent $70）的一半，是圖中唯一以單一合資撐起的大額輸入，見風險矩陣 R1。（3）CPChem $456M、GS Caltex 等 $399M 的權益收益金額小，但屬高波動項（CPChem 去年同期僅 $55M）。來源：Q2'26 10-Q Item 1 合併損益表、Note 7（分部收入／權益收益）、Item 2（資本支出）；Q2 法說會逐字稿（分配款與 $6B 指引）。</div>
+
+    <div class="card">
+      <div class="card-title">上下游結構圖（chart-tools · chain-diagram，節點與上方 Sankey 一致）</div>
+      <div style="max-width:900px;margin:0 auto;">
+  <svg viewBox="0 0 1398.8500000000001 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;"><rect x="0" y="0" width="1398.85" height="500" fill="#ffffff"/><text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,50) rotate(-90)">外部供應與聯屬公司</text><text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,226) rotate(-90)">事業分部</text><text x="16" y="0" text-anchor="middle" font-size="10.5" fill="#9a9fa2" letter-spacing=".04em" font-family="ui-monospace,Consolas,Menlo,monospace" transform="translate(16,402) rotate(-90)">終端客戶</text><defs><marker id="arr-9c4a35" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#9c4a35"/></marker><marker id="arr-0d6e73" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#0d6e73"/></marker><marker id="arr-8a6d3d" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#8a6d3d"/></marker></defs><polyline points="170.5,80 170.5,98 738.4250000000001,98 738.4250000000001,196" fill="none" stroke="#0d6e73" stroke-width="1.6" marker-end="url(#arr-0d6e73)"/><rect x="388.79" y="89" width="131.35" height="18" rx="3" fill="#ffffff"/><text x="454.46" y="102" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">外購原油與成品 $36.6B</text><polyline points="433,80 433,120 468.42500000000007,120 468.42500000000007,196" fill="none" stroke="#0d6e73" stroke-width="1.6" marker-end="url(#arr-0d6e73)"/><rect x="393.56" y="111" width="114.3" height="18" rx="3" fill="#ffffff"/><text x="450.71" y="124" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">上游資本支出 $4.2B</text><polyline points="701.9250000000001,80 701.9250000000001,142 680.4250000000001,142 680.4250000000001,196" fill="none" stroke="#8a6d3d" stroke-width="1.6" marker-end="url(#arr-8a6d3d)"/><rect x="616.98" y="133" width="148.4" height="18" rx="3" fill="#ffffff"/><text x="691.18" y="146" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">聯屬分配款≈$3B・CPC 出口</text><polyline points="970.8500000000001,80 970.8500000000001,164 844.4250000000001,164 844.4250000000001,196" fill="none" stroke="#8a6d3d" stroke-width="1.6" marker-end="url(#arr-8a6d3d)"/><rect x="861.49" y="155" width="92.3" height="18" rx="3" fill="#ffffff"/><text x="907.64" y="168" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">權益收益 $456M</text><polyline points="1240.8500000000001,80 1240.8500000000001,182 950.4250000000001,182 950.4250000000001,196" fill="none" stroke="#8a6d3d" stroke-width="1.6" marker-end="url(#arr-8a6d3d)"/><rect x="1049.49" y="173" width="92.3" height="18" rx="3" fill="#ffffff"/><text x="1095.64" y="186" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">權益收益 $399M</text><polyline points="574.4250000000001,256 574.4250000000001,274 72,274 72,372" fill="none" stroke="#0d6e73" stroke-width="1.6" marker-end="url(#arr-0d6e73)"/><rect x="252.04" y="265" width="142.35" height="18" rx="3" fill="#ffffff"/><text x="323.21" y="278" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">對外銷售 $13.1B（推算）</text><polyline points="844.4250000000001,256 844.4250000000001,296 1346.8500000000001,296 1346.8500000000001,372" fill="none" stroke="#0d6e73" stroke-width="1.6" marker-end="url(#arr-0d6e73)"/><rect x="1046.46" y="287" width="98.35" height="18" rx="3" fill="#ffffff"/><text x="1095.64" y="300" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">下游收入 $54.1B</text><polyline points="692.4250000000001,226 726.4250000000001,226" fill="none" stroke="#9c4a35" stroke-width="1.6" marker-end="url(#arr-9c4a35)" stroke-dasharray="6 5"/><rect x="632.75" y="175" width="153.35" height="18" rx="3" fill="#ffffff"/><text x="709.43" y="188" text-anchor="middle" font-size="11" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace">分部間抵銷 $21.4B（推算）</text><g><rect x="60" y="20" width="221" height="60" rx="9" fill="rgb(221,235,235)" stroke="#0d6e73" stroke-width="1.4"/><text x="170.5" y="46.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15181a" font-family="sans-serif" opacity="1">外購原油與成品來源（未具名）</text><text x="170.5" y="61.68" text-anchor="middle" font-size="11" font-weight="400" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">10-K 未揭露供應商名稱與集中度</text></g><g><rect x="315" y="20" width="236" height="60" rx="9" fill="rgb(221,235,235)" stroke="#0d6e73" stroke-width="1.4"/><text x="433" y="46.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15181a" font-family="sans-serif" opacity="1">設備與工程服務商（未具名）</text><text x="433" y="61.68" text-anchor="middle" font-size="11" font-weight="400" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">鑽機・海事設備・EPC；交期長、價格具…</text></g><g><rect x="585" y="20" width="233.85" height="60" rx="9" fill="rgb(239,235,228)" stroke="#8a6d3d" stroke-width="1.4"/><text x="701.93" y="46.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15181a" font-family="sans-serif" opacity="1">TCO（哈薩克・50%）</text><text x="701.93" y="61.68" text-anchor="middle" font-size="11" font-weight="400" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">出口主走 CPC 管線（Chevron 持 15%）</text></g><g><rect x="852.85" y="20" width="236" height="60" rx="9" fill="rgb(239,235,228)" stroke="#8a6d3d" stroke-width="1.4"/><text x="970.85" y="46.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15181a" font-family="sans-serif" opacity="1">CPChem（50%）</text><text x="970.85" y="61.68" text-anchor="middle" font-size="11" font-weight="400" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">北美乙烷裂解為主；沙烏地・卡達據點…</text></g><g><rect x="1122.85" y="20" width="236" height="60" rx="9" fill="rgb(239,235,228)" stroke="#8a6d3d" stroke-width="1.4"/><text x="1240.85" y="46.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15181a" font-family="sans-serif" opacity="1">GS Caltex等下游聯屬</text><text x="1240.85" y="61.68" text-anchor="middle" font-size="11" font-weight="400" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">南韓 Yeosu 800 kb/d 等（含其他下游…</text></g><g><rect x="456.43" y="196" width="236" height="60" rx="12" fill="#15181a" stroke="#15181a" stroke-width="1.4"/><text x="574.43" y="222.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#f5f6f5" font-family="sans-serif" opacity="1">上游（US＋Intl）</text><text x="574.43" y="237.68" text-anchor="middle" font-size="11" font-weight="400" fill="#c9cdce" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">Q2 產量 4,070 MBOED；Permian・Bak…</text></g><g><rect x="726.43" y="196" width="236" height="60" rx="12" fill="#15181a" stroke="#15181a" stroke-width="1.4"/><text x="844.43" y="222.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#f5f6f5" font-family="sans-serif" opacity="1">下游（煉油・行銷）</text><text x="844.43" y="237.68" text-anchor="middle" font-size="11" font-weight="400" fill="#c9cdce" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">美國進料 1,070 kb/d；進口原油約占…</text></g><g><rect x="60" y="372" width="1298.85" height="60" rx="12" fill="rgb(221,235,235)" stroke="#0d6e73" stroke-width="1.4"/><text x="709.43" y="398.68" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15181a" font-family="sans-serif" opacity="1">終端客戶（分散・無10%客戶）</text><text x="709.43" y="413.68" text-anchor="middle" font-size="11" font-weight="400" fill="#5a6167" font-family="ui-monospace,Consolas,Menlo,monospace" opacity="1">10-K/10-Q 稱信用集中度有限</text></g><rect x="464.35" y="461" width="22" height="2.4" fill="#0d6e73"/><text x="494.35" y="466" font-size="11" fill="#5a6167" font-family="sans-serif">實線＝Q2 有揭露金額的流向</text><rect x="651.5" y="461" width="22" height="2.4" fill="#8a6d3d"/><text x="681.5" y="466" font-size="11" fill="#5a6167" font-family="sans-serif">聯屬公司（權益法）</text><line x1="798.5" y1="462" x2="820.5" y2="462" stroke="#9c4a35" stroke-width="2" stroke-dasharray="5 4"/><text x="828.5" y="466" font-size="11" fill="#5a6167" font-family="sans-serif">內部移轉（推算）</text></svg>
+</div>
+      <div style="font-size:12px;color:#666;text-align:center;margin-top:6px;">結構圖交代「誰供給誰、分幾層」；邊上金額與 Sankey 同源。CPC 管線（Chevron 15%）無獨立金額可畫，故以 TCO 邊標註而不另立節點；虛線＝推算的內部移轉。來源：10-K Item 1、Item 7、Note 7、Note 14；Q2'26 10-Q Item 1／Item 2。</div>
+    </div>
+    <div class="note grey">⚑ 人工解讀：結構上 Chevron 的外部依賴集中在圖左欄五個節點，但其中<b>只有 TCO 與 CPC 的組合有可觀察的單點風險</b>（TCO 的出口主要走 CPC）。此圖刻意不畫「Guyana Stabroek（30%，非作業）」與澳洲 LNG 節點，因為 Q2 10-Q 沒有可與上圖並列的金額，畫進去只會讓線寬失真；兩者在下表以文字列示。</div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">實體通道與單點暴露（filings 未標為「單一來源」，係依揭露整理）</div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th style="text-align:left">通道／節點</th><th style="text-align:left">揭露內容</th><th style="text-align:left">出處</th><th>信心度</th></tr></thead>
+          <tbody>
+            <tr><td style="text-align:left">CPC 管線（Chevron 15%）</td><td style="text-align:left">2025 年平均輸送 1.5 Mb/d（哈薩克 1.4、俄羅斯 0.1）；為 TCO 與 Karachaganak 的主要出口，並列為無人機攻擊／制裁風險</td><td style="text-align:left">10-K Item 1、Item 7</td><td>高</td></tr>
+            <tr><td style="text-align:left">TCO（50%）</td><td style="text-align:left">帳面價值 $23,830M，占權益法投資合計 $43,037M 約 55%；特許權至 2033；Q2 分配款約 $3B</td><td style="text-align:left">10-K Note 7；逐字稿</td><td>高</td></tr>
+            <tr><td style="text-align:left">中東供給中斷</td><td style="text-align:left">Partitioned Zone 與 CPChem 沙烏地／卡達減產；國際煉油進料 598 kb/d（去年同期 661，約 −9.5%）、國際成品銷量 1,287 kb/d（1,473，約 −12.6%）</td><td style="text-align:left">Q2'26 10-Q Item 2</td><td>高</td></tr>
+            <tr><td style="text-align:left">Guyana Stabroek（30%，非作業）</td><td style="text-align:left">4 座 FPSO 運轉，Uaru 預計 2026、Whiptail 2027、Hammerhead 2029；作業者於審閱段落未具名</td><td style="text-align:left">10-K Item 1</td><td>中</td></tr>
+            <tr><td style="text-align:left">Hess Midstream LP（持股約 38%，併表）</td><td style="text-align:left">Bakken 集氣與外運；Chevron 唯一重大 VIE，費用型服務</td><td style="text-align:left">10-K Item 1、Note 1</td><td>高</td></tr>
+            <tr><td style="text-align:left">Venezuela</td><td style="text-align:left">僅在美國授權下營運，收入於收到現金時才認列；逐字稿稱三個 JV 產量達 28 萬桶／日</td><td style="text-align:left">Q2'26 10-Q Item 2；逐字稿</td><td>中</td></tr>
+            <tr><td style="text-align:left">客戶集中度</td><td style="text-align:left"><b>未揭露</b>任何 10% 客戶；貿易應收 $22.0B（分散），非貿易應收 $3.9B 含合資夥伴政府</td><td style="text-align:left">Q2'26 10-Q Note 15／16</td><td>高（揭露事實）</td></tr>
+            <tr><td style="text-align:left">供應商集中度</td><td style="text-align:left"><b>未揭露</b>供應商名稱與占比；僅稱關鍵資本設備交期長、美國服務與設備成本壓力「仍偏高」</td><td style="text-align:left">10-K Item 7；Q2'26 10-Q Item 2</td><td>高（揭露事實）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="note grey">⚑ 人工解讀：留白反推——公司不披露供應商與客戶名單，最合理的解釋是採購與銷售確實分散（原油與成品市場有公開價格，客戶可替代），而非刻意隱瞞。但「分散」不等於「無風險」：真正的集中在 TCO／CPC 這一條與地緣政治綁在一起的通道，公司自己也承認替代路線（裏海運輸、鐵路、儲存緩衝）<b>未量化</b>。另 Guyana 作業者未在審閱段落具名，屬信心度較低項目。約 17% 的 H1'26 產量位於 OPEC+ 國家（Q2'26 10-Q Item 2），是另一層政策暴露。</div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-title">採購與租賃義務（10-K FY2025，Q2'26 10-Q 未更新；單位 $M）</div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th style="text-align:left">項目</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2030 後</th></tr></thead>
+          <tbody>
+            <tr><td style="text-align:left">Throughput／take-or-pay</td><td>1,330</td><td>1,554</td><td>1,807</td><td>1,806</td><td>1,700</td><td>11,080</td></tr>
+            <tr><td style="text-align:left">其他無條件採購義務</td><td>204</td><td>215</td><td>155</td><td>16</td><td>16</td><td>31</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="note grey">⚑ 人工解讀：throughput／take-or-pay 合計約 $19.3B，其中約 57%（$11.1B）落在 2030 年以後，涵蓋管線與儲存容量、公用事業與石油產品，<b>對手方未具名</b>，且部分與專案夥伴分攤（10-K Note 24）。另有尚未起算的營業租賃 $1,316M（鑽機、期租船、E&amp;P 設備、儲槽；10-K Leases 附註）。Q2'26 10-Q 未提供更新排程，也<b>未見 Kilby 相關採購承諾、融資或 VIE</b>（Note 12、Note 1）——FID 之後這張表預期會出現台階式增加，是下一季 10-Q 的觀察點（與資產負債表 tab 的採購承諾項目互為交叉連結）。</div>
+    <div class="note grey">交叉來源：CVX 10-K FY2025 Supply Chain Notes（accession 0000093410-26-000078）；CVX Q2 10-Q Key Data（accession 0000093410-26-000167）；Q2 法說會逐字稿。推算欄位均已於圖說註明。</div>
+  </div>

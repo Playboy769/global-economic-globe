@@ -1,0 +1,56 @@
+# CVX 10-K FY2025 Supply Chain / Structure Notes
+
+**Source**: Chevron Corporation Form 10-K for FY ended 2025-12-31, filed 2026-02-24, accession 0000093410-26-000078 (cvx-20251231.htm). Updates from 10-Q Q2 2026 (0000093410-26-000167) flagged "Q2'26 10-Q". Item references are to the 10-K unless stated. Chevron is an integrated oil company, so "supply chain" here = the physical value chain (upstream production -> midstream/export -> refining -> marketing/chemicals) plus procurement inputs. The 10-K does **not** name individual key suppliers or major customers (no 10%-customer disclosure) - see section 6.
+
+## 1. Structure (Item 1 Business; Note 14 Operating Segments)
+- **Upstream** (US, International) and **Downstream** (US, International: refining, marketing, lubricants/additives, chemicals via affiliates, shipping, pipelines); **All Other** (treasury, corporate, insurance, technology, new energies).
+- 2025 net earnings: US Upstream $5,815M; Intl Upstream $7,007M; US Downstream $1,375M; Intl Downstream $1,647M; All Other $(3,545)M; total $12,299M (Note 14 / Item 8).
+- Proved reserves at YE2025 ~**10.6 billion BOE**, +8% YoY, largest additions from the Hess acquisition and Permian extensions (Item 2 Properties/Item 1). 2025 production 3.7 MMBOED (+12%); 10-K 2026 guidance +7-10% vs 2025 at Brent $60 (Item 1 Production Outlook, Item 7).
+
+## 2. Upstream key assets (Item 1, "Review of ongoing E&P activities")
+- **Permian (Texas/New Mexico)**: >1.75 million net acres in Delaware and Midland basins; 2025 production reached **1 MMBOED** net (grew >10% with lower capex); "factory" multi-well pad development. The 10-K states the Pasadena refinery expansion lets Chevron process more Permian equity crude (Item 1 Downstream) and that the data-center power project will be supplied with Permian gas (Item 1).
+- **Bakken (North Dakota, ex-Hess)**: ~469,000 net acres; 2H25 net production 99 kb/d crude, 62 kb/d NGLs, 260 MMcf/d gas. **Hess Midstream LP (HESM)**: Chevron ~38% consolidated (its only significant VIE): gathering/compression, Tioga Gas Plant, Little Missouri 4 (50%), Mentor propane terminal, Ramberg crude terminal, Tioga Rail Terminal, 550 rail cars; connects to Dakota Access Pipeline. Fee-based services for Chevron and third parties.
+- **Gulf of America**: largest acreage holder post-Hess; 2025 net 235 kb/d crude, 19 kb/d NGLs, 150 MMcf/d gas. Assets include Anchor (62.9%, op.), Ballymore (60%, first oil April 2025), Big Foot (60%), Jack/St. Malo, Stampede (50%, now operator), Tahiti (58%), Mad Dog (15.6% non-op), Perdido (37.5%), Whale (41.5%, first production Jan 2025), plus ex-Hess Pickerel, Baldpate, Penn State, Conger, Tubular Bells (100%), Llano.
+- **California**: six fields (Kern River, Midway Sunset, etc.); 2025 net 63 MBOED; limited drilling planned 2026 after Kern County permit reinstatement.
+- **Guyana (ex-Hess) - Stabroek Block, Chevron 30% non-operated (non-operated; operator not named in the 10-K passages reviewed)**: 4 producing FPSOs (One Guyana first production Aug 2025, ~250 kb/d gross); Uaru (Errea Wittu FPSO) first production expected 2026; Whiptail (Jaguar FPSO) 2027; Hammerhead (~150 kb/d) sanctioned Sept 2025, 2029; expected 8 FPSOs, ~1.7 MMb/d gross capacity by 2030; 30% of 130-mile Liza-to-shore gas pipeline feeding a 300 MW Government of Guyana power plant. (Item 1 Other Americas)
+- **Kazakhstan**: **TCO (50%)** operates Tengiz and Korolev under a concession expiring **2033**; Future Growth Project (FGP) completed 2025, +260 kb/d, gross ~1 MMBOED. **Karachaganak** 18% non-operated (PSA to 2038). **CPC pipeline 15%**: carried avg 1.5 Mb/d in 2025 (1.4 Kazakhstan, 0.1 Russia); "primary export route for Tengiz" and majority of TCO and Karachaganak exports (Item 1; Item 7 Business Environment flags CPC drone-attack/sanctions risk).
+- **Australia** (largest LNG producer there): Gorgon (47.3%, op., 15.6 mtpa, Jansz-Io compression first gas 2028, Stage 3 FID 2025, first gas 2029), Wheatstone (64.1% LNG / 80.2% licences, 8.9 mtpa), NWS Venture 16.7% (asset swap with Woodside expected to close 2026).
+- **Other**: Nigeria (Agbami 67.3% op.; Escravos Gas Plant 680 MMcf/d; EGTL 33 kb/d; 36.9% West African Gas Pipeline), Angola (Block 0 39.2%, Block 14, Angola LNG 36.4%, NGC 31% first production 2026), Equatorial Guinea (Aseng 38%, Alba), **Partitioned Zone** (Saudi/Kuwait concession to 2046), Thailand (Pattani Basin), Bangladesh, Israel (Tamar/Leviathan; expansion completed per Q1'26 10-Q; Nitzana pipeline to Egypt 2028), Argentina (Vaca Muerta; 14% Oldelval; Vaca Muerta Sur pipeline shareholder, operational 2027), Venezuela (limited, US-licensed; no proved reserves recognized; Q2'26 10-Q: income recognized only on cash receipt).
+- **New businesses**: first **power project for data centers** in West Texas supplied by Permian gas (10-K Item 1; Q2'26 10-Q: 2.67 GW behind-the-meter, 20-year PPA with Microsoft); lithium (135,000 net acres Smackover); hydrogen (ACES Delta, Utah, commissioning); Bayou Bend CCS 50%.
+
+## 3. Downstream (Item 1 Downstream)
+- Refining network capacity **1.8 MMb/d** at YE2025; 2025 average capacity utilization 92.9% (87.9% in 2024); US 94.5% (86.6%). **US refineries (1,099 kb/d operable)**: Pascagoula MS 369, El Segundo CA 290, Richmond CA 257, Pasadena TX 125 (expansion fully operational 2025, processes more Permian equity crude), Salt Lake City UT 58. **Imported crude ~60% of US refinery inputs** in 2025 and 2024 - i.e., crude supply for US refining is materially third-party/imported.
+- International refining: **Singapore Refining Co. (50%, 290 kb/d)**, **GS Caltex Yeosu (50%, 800 kb/d, South Korea)**, **Star Petroleum (SPRC) Thailand 60.6%** (Map Ta Phut 175 kb/d listed operable). Q2'26 10-Q: agreement to sell 50% of SRC and other downstream assets in Singapore, Australia, Indonesia, Malaysia, Philippines, Vietnam, close expected 2027; Hong Kong downstream sold Q2'26 (~$290M).
+- Marketing: ~8,600 Chevron/Texaco-branded US stations (~380 company-owned/leased); ~5,200 international branded stations incl. affiliates (Caltex in Asia-Pacific); aviation fuel to 58 airports; total worldwide refined product sales 2,801 kb/d in 2025 (incl. affiliates' share 384 kb/d).
+- **Chemicals**: Chevron Oronite (lubricant/fuel additives; 11 locations); **CPChem 50%** (29 manufacturing facilities; Golden Triangle Polymers, Orange TX, 51% owned/operated; Ras Laffan Petrochemical, Qatar, 30%; both start-up expected 1H 2027); **GS Caltex** aromatics/olefins.
+- **Transportation**: US crude/gas/products pipelines (plus Hess assets); operated fleet of crude tankers, product carriers and LNG vessels.
+
+## 4. Equity affiliates and JV concentration (Note 7 Investments and Advances)
+| Affiliate | Carrying value 12/31/25 | 2025 equity earnings | 2024 |
+|---|---|---|---|
+| Tengizchevroil | $23,830M | $1,556M | $3,033M |
+| Caspian Pipeline Consortium | $645M | $143M | $180M |
+| Angola LNG | $1,588M | $473M | $405M |
+| CPChem | $8,985M | $352M | $903M |
+| GS Caltex | $4,403M | $278M | $58M |
+| Total equity method | $43,037M | $3,000M | $4,596M |
+- TCO loan to fund WPMP/FGP: principal **$3,500M** at YE25 (repayment drove $979M inflow H1'26, Q2'26 10-Q Note 3). CPChem loan $969M for Golden Triangle.
+- Related-party flows: sales to affiliates $12,563M (2025); purchases from affiliates $7,322M (Note 7 Other Information).
+
+## 5. Procurement / supplier-side disclosures (Item 7 "Supply Chain and Inflation Impacts", Item 1A, Note 24)
+- Chevron "actively manages contracting, procurement and supply chain activities"; third-party costs exposed to weather, construction delays, distribution issues, inflation, tariffs, and supplier market pricing; contracts use "various pricing mechanisms, which may result in a lag" (Item 7; repeated in Q2'26 10-Q).
+- **Lead times for key capital equipment remain long due to strong demand**; offshore market competitive for vessels and subsea equipment; US onshore drilling and completion cost pressure "continue to ease" (10-K Item 7). Q2'26 10-Q updates: US cost pressures for services and select equipment "remain elevated", reflecting cross-industry demand and supplier capital discipline; mitigated via demand planning, volume commitments, standardization, scope optimization, fixed/indexed/performance-based contracts.
+- **Tariffs**: 2025 impact <1% of third-party spend, not material; US Supreme Court struck down some global tariffs Feb 2026, uncertainty remains (Item 7).
+- **Long-term unconditional purchase obligations (Note 24)**: throughput/take-or-pay 2026 $1,330M, 2027 $1,554M, 2028 $1,807M, 2029 $1,806M, 2030 $1,700M, after 2030 $11,080M; other unconditional 2026 $204M ... after 2030 $31M. These cover "pipeline and storage capacity, utilities, and petroleum products", some relating to suppliers' financing arrangements. Counterparty names: not disclosed.
+- Operating leases not yet commenced $1,316M (drilling rigs, time-chartered vessels, E&P equipment, storage tanks); counterparties not disclosed.
+- **Delivery commitments (Item 2)**: US ~110M bbl NGLs and 830 Bcf gas 2026-2028; outside US 3.2 Tcf gas (Australia, Israel); Australia contracts priced on variable formulas referencing crude/gas/products; Israel contracts base price plus indexation. Most Australian LNG offtake under binding long-term contracts, LNG contract prices "typically linked to crude oil prices" (Q2'26 10-Q Item 2).
+- Cyber (Item 1C): risk management covers third-party suppliers; four Cyber Intelligence Centers.
+
+## 6. Customer concentration and single-source risk
+- **Customer concentration: not disclosed.** No customer is named or quantified at 10% of revenue in the 10-K; Note 26 and Q2'26 10-Q Note 16 describe trade receivables as "dispersed across the company's broad worldwide customer base", with limited credit concentration. Trade receivables $22.0B at 6/30/26; $15,986M at 12/31/25. Non-trade receivables include governments in their capacity as JV partners ($3.9B at 6/30/26).
+- **Single-source / chokepoint exposures visible in the filings** (not labelled "single-source" by the company): (1) **CPC pipeline** is the primary export route for TCO and Karachaganak liquids (15% Chevron interest); disruptions (drone attacks, sanctions on Russia-transit) affect Kazakhstan volumes; (2) **Middle East conflict** - Partitioned Zone curtailments and CPChem Saudi/Qatar curtailments (Q2'26 10-Q Item 2); (3) Venezuela operates only under US licences; (4) imported crude ~60% of US refinery inputs; (5) HESM fee-based midstream is the gathering system for Bakken volumes; (6) Guyana Stabroek volumes depend on FPSOs run by the (unnamed in the reviewed passages) operator - Chevron holds a 30% non-operated interest.
+- **Downstream to petrochemicals**: CPChem and GS Caltex are affiliate customers/suppliers of Chevron (affiliate revenue $12.6B, purchases $7.3B).
+
+## 7. Items requested but not disclosed
+- Names/shares of key equipment or service suppliers, single-source vendors, or top customers: **not disclosed**.
+- Kilby data-center project counterparties, capex, financing structure: not named in the 10-K; only "first power project for data centers ... West Texas" (Item 1). Q2'26 10-Q names Microsoft as offtaker (20-year PPA, 2.67 GW). Engine No. 1 named only in Q1'26 10-Q exclusivity agreement.

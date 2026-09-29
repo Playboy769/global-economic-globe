@@ -851,6 +851,29 @@
         "research/xom-analysis-2026q2/XOM_FY2026Q2_Analysis"
       ],
       "port": 8194
+    },
+    {
+      "name": "cvx-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8195",
+        "--directory",
+        "research/cvx-analysis-2026q2/CVX_FY2026Q2_Analysis"
+      ],
+      "port": 8195
+    },
+    {
+      "name": "my-slide",
+      "runtimeExecutable": "npm.cmd",
+      "runtimeArgs": [
+        "--prefix",
+        "my-slide",
+        "run",
+        "dev"
+      ],
+      "port": 5173
     }
   ]
 }
