@@ -1573,7 +1573,7 @@ Private Function IndustryComposite(ByVal code As String, ByRef nm As String, ByV
     Dim ckey As String: ckey = code
     If capIsShares Then ckey = code & "|cap" & Format(TW_MIN_CAP / 100000000#, "0") & "e"
     Dim cLbl As String
-    npts = CacheRead(ckey, asOf, days, c, h, l, v, nOk, nFail, nExcl, cLbl)
+    npts = CacheRead(ckey, asOf, days, c, h, l, v, nOk, nFail, nExcl, cLbl, capIsShares)
     If npts <> 0 Then                                   ' -1 = cached, but nothing counted
         okC = okC + nOk: failC = failC + nFail: okThis = nOk
         gExclC = gExclC + nExcl
@@ -1717,12 +1717,20 @@ End Function
 
 Private Function CacheRead(ByVal code As String, ByVal asOf As Long, ByRef days() As Long, ByRef c() As Double, _
                            ByRef h() As Double, ByRef l() As Double, ByRef v() As Double, ByRef nOk As Long, ByRef nFail As Long, _
-                           ByRef nExcl As Long, ByRef lbl As String) As Long
+                           ByRef nExcl As Long, ByRef lbl As String, Optional ByVal twIntraday As Boolean = False) As Long
     Dim wc As Worksheet: Set wc = CacheSheet(False)
     If wc Is Nothing Then Exit Function
     Dim r As Long: r = CacheRow(wc, code)
     If r = 0 Then Exit Function
     If CLng(Val(wc.cells(r, 2).Value)) <> asOf Then Exit Function
+    ' TW: a row built while the market was still open holds a partial last bar - never serve it
+    ' once the session is over (the as-of day alone cannot tell it from the final close)
+    If twIntraday Then
+        Dim built As Double: built = Val(wc.cells(r, PX_FIRST + 5 * PX_MAXN + 2).Value)
+        If built < CDbl(DateSerial(1970, 1, 1)) + asOf + TimeSerial(14, 0, 0) Then
+            If Now >= CDbl(DateSerial(1970, 1, 1)) + asOf + TimeSerial(9, 0, 0) Then Exit Function
+        End If
+    End If
     Dim npts As Long: npts = CLng(Val(wc.cells(r, 5).Value))
     If npts < 0 Or npts > PX_MAXN Then Exit Function
     nOk = CLng(Val(wc.cells(r, 3).Value)): nFail = CLng(Val(wc.cells(r, 4).Value))
@@ -1763,6 +1771,7 @@ Private Sub CacheWrite(ByVal code As String, ByVal nm As String, ByVal asOf As L
     wc.Range(wc.cells(r, PX_FIRST), wc.cells(r, PX_FIRST + 5 * PX_MAXN - 1)).Value = blk
     wc.cells(r, PX_FIRST + 5 * PX_MAXN).Value = nm
     wc.cells(r, PX_FIRST + 5 * PX_MAXN + 1).Value = nExcl
+    wc.cells(r, PX_FIRST + 5 * PX_MAXN + 2).Value = CDbl(Now)     ' when built, see CacheRead
 End Sub
 
 ' ---- IMAP: import projects/moomoo-plate-list/moomoo_us_plate_stocks.csv ----
