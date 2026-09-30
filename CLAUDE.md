@@ -616,6 +616,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   只管拉丁字，中文字走 `Font.NameFarEast`**：第一版只設 `.Name`，COM 讀回來是 Noto Sans TC、畫面上中文卻還是
   舊字型；資料標籤、圖標題、軸標題三處都要 `.Name` 與 `.NameFarEast` 一起設。
 - **RGT 快取盤中失效（2026-09-30）**：`IndustryPx` 快取原本只比對「最後一根 K 棒日期」，盤中建的半根 K 棒會被當天之後的每次 `RGT!` 沿用，圖看起來「怎麼更新都不動」。現在快取列多存建立時間（`PX_FIRST + 5*PX_MAXN + 2`），**只對 TW 族群**：建立時間早於該 as-of 日 14:00 的列一律視為過期重抓（盤中每次 `RGT!` 都會重抓、收盤後第一次重抓一次就定型）；舊列沒有時間戳＝過期。RGI 美股產業頁不動。實跑重建 50 組約 5 分鐘。
+- **RGT 快速版指標（2026-09-30，使用者要求更即時）**：**只有 RGT 頁**（`gFast`＝`kind=TWG`）RS-RATIO／RS-MOM 的基準線由 SMA 改成 **EMA**、視窗縮短——`100·rs/EMA(rs,30)`、`100·ratio/EMA(ratio,10)`，之後照舊 EWM span 3，尾巴取樣（13 週、每 5 日）與自動軸不變（`TWG_RS_WINDOW`/`TWG_MOM_WINDOW`，EMA 用 `EwmAdjust`、min_periods＝視窗）。RGE／RGI 仍是 SMA65／SMA20，與 Python `rrg_dynamic.py` 一致；**RGT 刻意與 Python 版不同**（使用者：Excel 版自成一套）。改後點位變動大（例：矽智財 RS-RATIO 71→118），表頭註明 `(EMA base)`。順手修：`BuildRRGCore` 的 `ws.Activate: ActiveWindow.FreezePanes = False` 在視窗不是該頁時會丟 1004（『無法設定 FreezePanes』），讓從 RGT 頁打 `RGT!` 偶爾失敗並留下清空的頁面——已包 `On Error Resume Next`；失敗訊息現在附 `@S<n>` 步驟標記。
 - **Thesis Library v2 — 主題筆記工作台（2026-09-13 晚，取代下面的 v1）**：`modThesis.bas` 整支重寫，照使用者給的
   「Earnings Workbench」截圖改版。**資料**在 `ThesisNotes` 頁 `tblNotes`，一列一個主題筆記：TARGET｜TYPE（stock/macro）｜
   CALL DATE｜STATUS｜ROLE｜THEME｜BEHAVIOR｜EVIDENCE。STATUS 八詞下拉：綠 Robust/Solid/Growing、紅 Slowing/Sluggish/

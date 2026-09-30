@@ -96,6 +96,10 @@ Option Explicit
 
 Private Const RS_WINDOW As Long = 65
 Private Const MOM_WINDOW As Long = 20
+' TW groups run a faster variant: EMA (not SMA) baselines over shorter windows
+Private Const TWG_RS_WINDOW As Long = 30
+Private Const TWG_MOM_WINDOW As Long = 10
+Private gRsW As Long, gMomW As Long, gFast As Boolean
 Private Const EWM_SPAN As Long = 3
 Private Const TAIL_WEEKS As Long = 13
 Private Const TAIL_SPACING As Long = 5
@@ -304,6 +308,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         Case "TWG": sheetNm = TWG_SHEET: navCode = "RGT": gChartW = TWG_CHART_W: gChartH = TWG_CHART_H: gBench = TW_BENCH
         Case Else:  sheetNm = ETF_SHEET: navCode = "RGE": gChartW = ETF_CHART_W: gChartH = ETF_CHART_H: gBench = BENCH
     End Select
+    gFast = isTwg
+    gRsW = IIf(isTwg, TWG_RS_WINDOW, RS_WINDOW): gMomW = IIf(isTwg, TWG_MOM_WINDOW, MOM_WINDOW)
     Dim ws As Worksheet
     On Error Resume Next
     Set ws = ThisWorkbook.Sheets(sheetNm)
@@ -353,7 +359,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     Dim bH() As Double, bL() As Double, bV() As Double
     Application.StatusBar = "RRG: fetching " & gBench
     nb = FetchOhlcv(gBench, bDays, bPx, bH, bL, bV)
-    If nb < RS_WINDOW + MOM_WINDOW + 5 Then Err.Raise vbObjectError + 1, , "not enough " & gBench & " data (" & nb & " days)"
+    If nb < gRsW + gMomW + 5 Then Err.Raise vbObjectError + 1, , "not enough " & gBench & " data (" & nb & " days)"
     Dim bIdx As Object: Set bIdx = CreateObject("Scripting.Dictionary")
     For i = 0 To nb - 1: bIdx(bDays(i)) = i: Next i
 
@@ -394,8 +400,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         For k = 0 To nt - 1
             If bIdx.Exists(tDays(k)) Then rs(bIdx(tDays(k))) = tPx(k) / bPx(bIdx(tDays(k)))
         Next k
-        Call RollingRatio(rs, ratio, RS_WINDOW)
-        Call RollingRatio(ratio, mom, MOM_WINDOW)
+        Call RollingRatio(rs, ratio, gRsW)
+        Call RollingRatio(ratio, mom, gMomW)
         Call EwmAdjust(ratio, sr, EWM_SPAN)
         Call EwmAdjust(mom, sm, EWM_SPAN)
         ' rows where both are valid (pandas dropna), keep the last 66
@@ -455,7 +461,9 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         .VerticalAlignment = xlCenter
     End With
     ws.Activate
+    On Error Resume Next                                ' no window / not in normal view -> nothing to unfreeze
     ActiveWindow.FreezePanes = False
+    On Error GoTo Fail
     ActiveWindow.DisplayGridlines = False
     Dim rr As Long
     For rr = 1 To TBL_FIRST + n + 40: ws.Rows(rr).RowHeight = 18: Next rr
@@ -477,8 +485,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
                  IIf(isTwg, ", " & gExclC & " below NT$" & Format(TW_MIN_CAP / 100000000#, "0") & "e" & _
                      IIf(nDropped > 0, ", " & nDropped & " groups dropped", ""), "") & _
                  IIf(failC > 0, ", " & failC & " no data", "") & ")", "") & _
-                 " vs " & gBench & "  .  daily adjclose  .  RS " & RS_WINDOW & "d / MOM " & MOM_WINDOW & _
-                 "d / EWM " & EWM_SPAN & "  .  " & TAIL_WEEKS & "-week tail  .  as of " & Format(asOf, "yyyy/mm/dd") & _
+                 " vs " & gBench & "  .  daily adjclose  .  RS " & gRsW & "d / MOM " & gMomW & _
+                 "d / EWM " & EWM_SPAN & IIf(gFast, " (EMA base)", "") & "  .  " & TAIL_WEEKS & "-week tail  .  as of " & Format(asOf, "yyyy/mm/dd") & _
                  "  .  built " & Format(Now, "yyyy/mm/dd hh:mm")
         .Font.Color = RGB(120, 120, 120): .Font.Size = 9
     End With
@@ -602,8 +610,8 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     End With
     Dim notes As Variant
     notes = Array( _
-        "RS-RATIO  = 100 x (px / " & gBench & ") / SMA65(px / " & gBench & "), then EWM span 3  -  relative strength vs its own quarter trend", _
-        "RS-MOM    = 100 x RS-RATIO / SMA20(RS-RATIO), then EWM span 3  -  is that strength accelerating (>100) or fading", _
+        "RS-RATIO  = 100 x (px / " & gBench & ") / " & IIf(gFast, "EMA", "SMA") & gRsW & "(px / " & gBench & "), then EWM span 3  -  relative strength vs its own " & IIf(gFast, "6-week", "quarter") & " trend", _
+        "RS-MOM    = 100 x RS-RATIO / " & IIf(gFast, "EMA", "SMA") & gMomW & "(RS-RATIO), then EWM span 3  -  is that strength accelerating (>100) or fading", _
         "TAIL      = the last 13 weeks, one dot per 5 trading days; the big dot is today, older dots fade", _
         "QUADRANT  = LEADING (both >= 100) / WEAKENING (ratio >= 100, mom < 100) / LAGGING (both < 100) / IMPROVING (ratio < 100, mom >= 100)", _
         "1W dRAT / dMOM = change since the previous tail dot (5 trading days), the direction the tail is heading", _
@@ -759,8 +767,22 @@ Fail:
 End Sub
 
 ' 100 * x / SMA(x, w); NaN unless the whole window is valid (pandas min_periods = window)
+' gFast (TW groups): the baseline is an EMA of span w instead, same min_periods.
 Private Sub RollingRatio(ByRef src() As Double, ByRef dst() As Double, ByVal w As Long)
     Dim i As Long, k As Long, s As Double, ok As Boolean
+    If gFast Then
+        Dim e() As Double: ReDim e(LBound(src) To UBound(src))
+        Call EwmAdjust(src, e, w)
+        Dim nv As Long
+        For i = LBound(src) To UBound(src)
+            dst(i) = NAN
+            If src(i) <> NAN Then nv = nv + 1
+            If nv >= w And src(i) <> NAN And e(i) <> NAN Then
+                If e(i) <> 0 Then dst(i) = 100 * src(i) / e(i)
+            End If
+        Next i
+        Exit Sub
+    End If
     For i = LBound(src) To UBound(src)
         dst(i) = NAN
         If i - LBound(src) + 1 >= w Then
