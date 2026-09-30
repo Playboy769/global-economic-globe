@@ -538,7 +538,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 - **RRG（RG）頁（2026-09-12）**：`RRG.bas`，`sector-rotation-system/rrg_dynamic.py` 的 Excel 版，
   **只有當天快照、沒有時間滑桿**。算法逐條照抄 Python（RS-Ratio = 100·rs/SMA65、RS-Mom = 100·ratio/SMA20、
   兩者再 EWM span 3 `adjust=True`、尾巴取最後 66 列從最新往回每 5 個取 1 → 14 點），實測 26 檔與
-  `compute_daily_rrg` 差 <1e-12。宇宙直接共用 `CorelationMatrix.SectorList()`（已改 Public）扣掉 SPY。
+  `compute_daily_rrg` 差 <1e-12。宇宙直接共用 `CorelationMatrix.SectorList()`（已改 Public）扣掉 SPY。**2026-09-30 依使用者的 Moomoo `Sectors ETF.csv` 補了 NCLD／LYTE／CCML（三檔 Roundhill 新 ETF，歸 AI/TECH，簡稱 Neocld／Photon／MLCC）；YBTC 依使用者決定不加；XLRE 不在 CSV 但保留。SC 頁共用同一份，下次重建才會多 3 檔。三檔上市不久、歷史不足時 RGE 表上顯示 `NO DATA` 且不畫點，資料夠了自動出現。`sector-rotation-system/config.py`（universe／TICKER_CATEGORY／TICKER_NAMES）已同步改好但那個 repo 未 commit／push。**
   **價格自己抓 Yahoo chart API 的 `adjclose`＋`timestamp` 依日期對齊 SPY**（`FetchAdjSeries`）——CC 頁的
   `FetchPriceArray` 只抓 `close` 且只切前 5000 字元，250 天會截尾，不能拿來算 RRG。版面：A:I 表格
   （TICKER/LABEL/GROUP/RS-RATIO/RS-MOM/QUADRANT/1W dRAT/1W dMOM/PTS）、K 欄起 `RRG_MAIN` 散布圖（一檔一個
@@ -962,6 +962,25 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 - ⚠️ **`IsNumeric(Date)` 是 False**：從 `Range.Value` 讀回的日期欄（ADDED/CALL/SIGDT）用一般 `IsNumeric` 判斷會全被當成空值；`modWatch.NumOr0` 先判 `VarType = vbDate`。
 - ⚠️ 用 COM 注入使用者已開的活頁簿時，若使用者目前前景視窗是別的活頁簿（例如「活頁簿1」），`Application.Run` 找不到巨集、看起來像整個專案編譯失敗——先 `$wb.Activate()`。
 - 實測（測試複本＋活頁簿）：`W!`、加入 TSLA（entry row）、排序三段循環、雙擊 TICKER→Library、雙擊 R1→Bias、`WatchGoto`、在 WatchData 打小寫 nvda 自動轉大寫並補 ADDED、Library `@WATCH`（8 calls／109 notes）、完整 `UP` 後 RR4 摘要 5 筆正確。
+
+### Yield 頁（Y / Y!，2026-09-30，`RR4/modYield.bas`）
+
+美債殖利率、曲線利差、實質殖利率＋損益兩平通膨、信用利差 OAS、拍賣結果，一頁兩欄（左：殖利率／
+利差／實質／曲線比較；右：OAS／拍賣）。導覽列代碼 **Y**（分頁 `Yield`）、動作碼 **Y!**（跳頁不重抓，
+`modNav` 六處都已登記）。獨立、不連動 RR4 頁與其他模組；**不畫圖**（使用者決定）；字型 Consolas＋RR4 配色。
+- **資料全由 VBA 抓**：FRED `fredgraph.csv`（DGS3MO/2/5/10/30、DFII5/10、BAMLC0A1CAAA/2CAA/3CA/0CM、BAMLH0A0HYM2）＋
+  財政部 FiscalData `auctions_query`，3 年，存進隱藏分頁 `YieldData`（日期＋12 條原始序列＋5 欄衍生），頁面只放值
+  （活頁簿是手動計算模式）。日期取 10Y 有資料的交易日，其餘序列缺值以前值補齊，所以 FRED 晚一天發布的序列
+  變動可能顯示 0。整個 Y! 約 30–60 秒。
+- ⚠️ **不要帶瀏覽器 User-Agent 打 FRED**：實測 WinHTTP 帶 Chrome UA 會卡到逾時（19 秒），不設 UA（預設）不到 1 秒就回。
+  `HttpGetText` 因此刻意不設 User-Agent。
+- ⚠️ **拍賣的再發行天期標籤是「剩餘年限」**（`9-Year 11-Month`、`29-Year 11-Month`、`19-Year 10-Month`），
+  必須四捨五入回名義天期（`NormTerm`）才對得到 10Y/20Y/30Y 與 TIPS，否則每月最新一場都會被漏掉、
+  「最新」停在上個月（桌面 xlsx 版第一版就是這樣，10 年期停在 8/12）。浮動利率債與 CMB 排除。
+- **M7 公司債利差只是代理**：AAA/AA OAS（ICE BofA 指數），免費源沒有個別公司債每日報價。**尾差（tail）沒做**
+  （需要 when-issued 殖利率，免費資料沒有），改看「較前次同券 bp」與 BTC 對 3 年平均的差值。
+- 同一份資料的桌面版 `treasury-yield-dashboard.xlsx`（`projects/treasury-yield-dashboard/build.py`，Python 版、
+  黑底 Calibri、含圖表）與這頁實測數字逐格一致。注入前備份 `Portfolio\backup-pre-yield-20260930.xlsm`。
 
 ### Peer Earnings（E2 / E2!，2026-09-26，`RR4/modEarn2.bas`）
 
