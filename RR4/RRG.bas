@@ -127,6 +127,7 @@ Private gBench As String                     ' benchmark of the current build (S
 Private Const IND_MAP As String = "IndustryMap"      ' plateCode / plateName / symbol / rank / marketCap / plateType
 Private Const IND_PX As String = "IndustryPx"        ' hidden cache: one composite series per industry row
 Private Const PX_MAXN As Long = 270                  ' points per array in the cache (1y ~ 252 days)
+Private gStep As String
 Private Const PX_FIRST As Long = 6                   ' cache row: A code, B asof, C ok, D fail, E npts, F.. arrays
 
 Private Const CMF_WINDOW As Long = 20
@@ -438,6 +439,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     n = o
     If n = 0 Then Err.Raise vbObjectError + 4, , "no group has a member above the size floor"
 
+    gStep = "S0"
     ' ---- page ----
     Application.ScreenUpdating = False
     Call ShapesMoveOnly(ws)
@@ -489,6 +491,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
     End With
 
+    gStep = "S1"
     ' ---- table ----
     Dim hdr As Variant
     hdr = Array(IIf(isInd, "CODE", IIf(isTwg, "GROUP", "TICKER")), IIf(isInd, "INDUSTRY", IIf(isTwg, "MEMBERS", "LABEL")), IIf(isComp, "STOCKS", "GROUP"), _
@@ -564,8 +567,10 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     With ws.Range(ws.cells(lastRow, 1), ws.cells(lastRow, TBL_NCOL)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous: .Color = RR4_LINE: .Weight = xlThin
     End With
+    gStep = "S2"
     Call PaintTableRows(ws, "")
 
+    gStep = "S3"
     ' ---- quadrant membership ----
     Dim qr As Long: qr = lastRow + 2
     With ws.cells(qr, 1)
@@ -589,6 +594,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         ws.cells(fr + 1 + j, 3).Value = IIf(sigMembers(j) = "", "-", sigMembers(j))
     Next j
 
+    gStep = "S4"
     ' ---- notes ----
     Dim nr As Long: nr = fr + 7
     With ws.cells(nr, 1)
@@ -653,6 +659,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         ws.cells(nr + 1 + j, 1).Font.Size = 8
     Next j
 
+    gStep = "S5"
     ' ---- tail data block (chart source): starts past the charts' right edge ----
     Dim dcol As Long: dcol = DATA_COL_MIN
     Do While ws.Columns(dcol - 2).Left < ws.Columns(CHART_COL).Left + gChartW + 12
@@ -691,6 +698,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
         ws.Columns(cx).ColumnWidth = 7: ws.Columns(cx + 1).ColumnWidth = 7
     Next i
 
+    gStep = "S6"
     ' ---- TRAIL: weekly RS-RATIO changes, one row per ETF, column sparkline in I ----
     Dim trCol As Long: trCol = DataCol(ws) + 2 * n + 1
     With ws.cells(TBL_HDR - 1, trCol)
@@ -716,10 +724,13 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
     sg.Axes.Horizontal.Axis.Visible = False
     sg.DisplayBlanksAs = xlNotPlotted
 
+    gStep = "S7"
     ' ---- chart ----
     Call DrawRrgChart(ws, tickers, tailX, tailY, tailN, n, xMin - 1.5, xMax + 1.5, yMin - 1.5, yMax + 1.5, asOf)
+    gStep = "S8"
     Call DrawFlowChart(ws, tickers, fPchg, fCmf, fObv, fSig, fOk, n, asOf)
 
+    gStep = "S9"
     Call NavAdd(ws, navCode)
     Call SetFocusMark(ws, "")
     Call SetMark(ws, SORT_MARK, "")
@@ -732,7 +743,7 @@ Private Sub BuildRRGCore(ByVal kind As String, Optional ByVal limitN As Long = 0
                    IIf(nDropped > 0, "  .  dropped (no member >= NT$" & Format(TW_MIN_CAP / 100000000#, "0") & "e): " & dropped, ""))
     Exit Sub
 Fail:
-    Dim failMsg As String: failMsg = Err.Description
+    Dim failMsg As String: failMsg = Err.Description & " @" & gStep
     Dim wasCancel As Boolean: wasCancel = (Err.Number = 18)
     Application.StatusBar = False
     Application.ScreenUpdating = True
