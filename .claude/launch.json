@@ -865,6 +865,18 @@
       "port": 8195
     },
     {
+      "name": "umac-analysis",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8196",
+        "--directory",
+        "research/umac-analysis-2026q2/UMAC_FY2026Q2_Analysis"
+      ],
+      "port": 8196
+    },
+    {
       "name": "my-slide",
       "runtimeExecutable": "npm.cmd",
       "runtimeArgs": [
