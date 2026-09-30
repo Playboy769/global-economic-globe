@@ -29,6 +29,7 @@ Public Function SectorList() As Variant
         Array("SMH", "SMH", "SEMI"), Array("SOXX", "SOXX", "SEMI"), _
         Array("CHAT", "GenAI", "AI/TECH"), Array("MAGS", "Mag7", "AI/TECH"), Array("SKYY", "Cloud", "AI/TECH"), _
         Array("IGV", "Softwr", "AI/TECH"), Array("CIBR", "Cyber", "AI/TECH"), Array("DRAM", "DRAM", "AI/TECH"), _
+        Array("NCLD", "Neocld", "AI/TECH"), Array("LYTE", "Photon", "AI/TECH"), Array("CCML", "MLCC", "AI/TECH"), _
         Array("QQQ", "QQQ", "INDEX/FACTOR"), Array("VTV", "Value", "INDEX/FACTOR"), Array("SPMO", "Momntm", "INDEX/FACTOR"), _
         Array("XLK", "Tech", "SECTOR SPDR"), Array("XLF", "Finance", "SECTOR SPDR"), Array("XLE", "Energy", "SECTOR SPDR"), _
         Array("XLV", "Health", "SECTOR SPDR"), Array("XLI", "Indust", "SECTOR SPDR"), Array("XLY", "ConDisc", "SECTOR SPDR"), _
