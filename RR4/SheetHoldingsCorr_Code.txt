@@ -1,0 +1,6 @@
+Option Explicit
+
+' HoldingsCorr page: ticker A/B pair lookup (PortfolioDashboard_v3.HcPairChange)
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Call HcPairChange(Me, Target)
+End Sub

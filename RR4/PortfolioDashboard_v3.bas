@@ -115,15 +115,21 @@ Public Const RR4_WL_FIRST  As Long = 60
 Public Const RR4_WLOLD_TITLE As Long = 26
 Public Const RR4_WLOLD_FIRST As Long = 28
 Public Const RR4_WLOLD_LAST  As Long = 35
-' MARKET dashboard (2026-09-27): B26:E40. Title row 26, then 7 indicators x 2
-' rows (27..40). Data from modMarket.MarketSnapshot (called through
-' Application.Run, so this module compiles without modMarket present).
-' Upper row  B name / C last / D chg / E chg%  ; lower row (small grey) B note
-' or "as of" / C 1W / D 1M / E P<percentile>.  Red up / green down, direction only.
+' MARKET dashboard (2026-09-27; compacted 2026-10-01): B26:E37. Title row 26,
+' then 7 indicators, ONE row each (27..33), then 4 hand-typed category rows
+' (34..37, no blank rows anywhere). Data from modMarket.MarketSnapshot (called
+' through Application.Run, so this module compiles without modMarket present).
+' Indicator row  B name / C last / D chg / E chg%  (no grey sub-row any more: the
+' 1W / 1M / percentile / rating / "as of" text was dropped). Red up / green down,
+' direction only. Category rows: B = STOCK MARKET / BONDS / LABOR MARKET /
+' INFLATION CONDITION (orange bold), C:E merged = free text typed by hand,
+' read before the page clear and written back by title (ReadMarketNotes).
 Public Const RR4_MK_TITLE  As Long = 26
 Public Const RR4_MK_FIRST  As Long = 27
-Public Const RR4_MK_LAST   As Long = 40
+Public Const RR4_MK_CAT_FIRST As Long = 34
+Public Const RR4_MK_LAST   As Long = 37
 Private Const RR4_MK_N     As Long = 7
+Private Const RR4_MK_NCAT  As Long = 4
 ' TO-DO (2026-09-21; moved 2026-09-27 from B36:E39 to G58, level with the
 ' WATCHLIST title). Row 58 = title G + column names (TASK / DUE / DTE), row 59 =
 ' entry row, rows 60-69 = the saved list (10 rows, widened 2026-09-28 from the
@@ -240,6 +246,7 @@ Sub RebuildPortfolioDashboard()
     Dim dnMap As Object: Set dnMap = ReadHandColumn(wsP, "DOWNSIDE")
     Dim wl As Variant: wl = ReadWatchlist(wsP)
     Dim td As Variant: td = ReadTodo(wsP)
+    Dim mkNotes As Variant: mkNotes = ReadMarketNotes(wsP)
     ' A sheet still on an older layout has other data sitting in these cells:
     ' keep only a real ARRANGE code and a numeric target for a real ticker.
     If Not IsArrangeCode(arrCode) Then arrCode = ""
@@ -298,7 +305,7 @@ Sub RebuildPortfolioDashboard()
     Call ApplyArrange(arrCode)
     Call DrawWatchlist(wsP, wl)
     Call DrawTodo(wsP, td)
-    Call DrawMarket(wsP)
+    Call DrawMarket(wsP, mkNotes)
     Call DrawDisclaimer(wsP, lastDataRow)
     Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
@@ -2256,19 +2263,37 @@ Private Function MkIsNum(ByVal v As Variant) As Boolean
     MkIsNum = IsNumeric(v)
 End Function
 
-' Signed text such as "+1.2%" / "-0.8 pt" for the lower (small grey) row.
-Private Function MkSigned(ByVal v As Double, ByVal unit As String) As String
-    Dim s As String: s = Format(v, "+0.0;-0.0;0.0")
-    If LCase(unit) = "pt" Then MkSigned = s & " pt" Else MkSigned = s & "%"
-End Function
-
-Private Sub MkGrey(rg As Range, ByVal txt As String)
+' Placeholder for an indicator that could not be fetched (light, not grey).
+Private Sub MkDash(rg As Range)
     rg.NumberFormat = "General"
-    rg.Value = txt
-    rg.Font.Color = RGB(140, 140, 140)
+    rg.Value = "-"
+    rg.Font.Color = RGB(221, 221, 221)
 End Sub
 
-Private Sub DrawMarket(ws As Worksheet)
+Private Function MarketCatTitle(ByVal k As Long) As String
+    Dim d As Variant
+    d = Array("STOCK MARKET", "BONDS", "LABOR MARKET", "INFLATION CONDITION")
+    MarketCatTitle = CStr(d(k - 1))
+End Function
+
+' Hand-typed category notes (C:E merged next to each category title), read
+' BEFORE the page clear. A note is only trusted when that row's B cell holds the
+' expected title - on the previous layout rows 34..37 held the grey sub-rows of
+' the indicators, whose C cells ("1W +0.8%" ...) must not be carried over.
+' Returns Variant(1..4) of String ("" = nothing typed).
+Private Function ReadMarketNotes(ws As Worksheet) As Variant
+    Dim out(1 To RR4_MK_NCAT) As Variant, k As Long, r As Long
+    For k = 1 To RR4_MK_NCAT
+        r = RR4_MK_CAT_FIRST + k - 1
+        out(k) = ""
+        If UCase(Trim$(CellStr(ws.cells(r, RR4_LEFT + 1).Value))) = MarketCatTitle(k) Then
+            out(k) = CellStr(ws.cells(r, RR4_LEFT + 2).Value)
+        End If
+    Next k
+    ReadMarketNotes = out
+End Function
+
+Private Sub DrawMarket(ws As Worksheet, notes As Variant)
     Dim m As Variant: m = MarketFetch()
     Dim ok As Boolean: ok = IsArray(m)
 
@@ -2280,11 +2305,10 @@ Private Sub DrawMarket(ws As Worksheet)
         .HorizontalAlignment = xlLeft
     End With
 
-    Dim i As Long, rt As Long, rb As Long, c As Long
-    Dim v As Variant, unit As String, decs As Long, fmt As String, fmtChg As String
+    Dim i As Long, rt As Long, c As Long
+    Dim v As Variant, decs As Long, fmt As String, fmtChg As String
     For i = 1 To RR4_MK_N
-        rt = RR4_MK_FIRST + (i - 1) * 2
-        rb = rt + 1
+        rt = RR4_MK_FIRST + i - 1
         Select Case i
             Case 2, 6, 7: decs = 2          ' VIX, oils
             Case 3: decs = 2                ' SOX (thousands separator below)
@@ -2302,9 +2326,7 @@ Private Sub DrawMarket(ws As Worksheet)
         End With
         For c = 2 To 4
             ws.cells(rt, RR4_LEFT + c).HorizontalAlignment = xlRight
-            ws.cells(rb, RR4_LEFT + c).HorizontalAlignment = xlRight
         Next c
-        ws.cells(rb, RR4_LEFT + 1).HorizontalAlignment = xlLeft
 
         ' last
         If ok Then v = m(i, 1) Else v = Empty
@@ -2316,7 +2338,7 @@ Private Sub DrawMarket(ws As Worksheet)
                 .Font.Bold = True
             End With
         Else
-            Call MkGrey(ws.cells(rt, RR4_LEFT + 2), "-")
+            Call MkDash(ws.cells(rt, RR4_LEFT + 2))
         End If
         ' chg (col 2) and chg% (col 3): coloured by direction, red up / green down
         For c = 2 To 3
@@ -2334,62 +2356,45 @@ Private Sub DrawMarket(ws As Worksheet)
                     End If
                 End With
             Else
-                Call MkGrey(ws.cells(rt, RR4_LEFT + 1 + c), "-")
+                Call MkDash(ws.cells(rt, RR4_LEFT + 1 + c))
             End If
         Next c
 
-        ' ---- lower row (small grey): note / as-of, 1W, 1M, percentile ----
-        With ws.Range(ws.cells(rb, RR4_LEFT + 1), ws.cells(rb, RR4_LEFT + 4))
-            .Font.Size = 8
-            .Font.Bold = False
-            .Font.Color = RGB(140, 140, 140)
+        ' hairline under every indicator row (the last one separates the
+        ' indicators from the category rows below)
+        With ws.Range(ws.cells(rt, RR4_LEFT + 1), ws.cells(rt, RR4_LEFT + 4)).Borders(xlEdgeBottom)
+            .LineStyle = xlContinuous
+            .Color = RR4_LINE
+            .Weight = xlThin
         End With
-        unit = "%"
-        If ok Then If Not IsEmpty(m(i, 9)) Then unit = CStr(m(i, 9))
-        Dim txt As String
-        ' B: F&G note (rating) / oil "as of <date>"
-        txt = ""
-        If ok Then
-            If i = 1 Then
-                If Not IsEmpty(m(i, 8)) Then txt = CStr(m(i, 8))
-                If txt = "" Then txt = "-"
-            ElseIf i >= 6 Then
-                If Not IsEmpty(m(i, 7)) Then txt = "as of " & CStr(m(i, 7))
-                If txt = "" Then txt = "-"
-            End If
-        ElseIf i = 1 Or i >= 6 Then
-            txt = "-"
-        End If
-        ws.cells(rb, RR4_LEFT + 1).NumberFormat = "@"
-        ws.cells(rb, RR4_LEFT + 1).Value = txt
-        ' C: 1W, D: 1M
-        For c = 4 To 5
-            If ok Then v = m(i, c) Else v = Empty
-            If MkIsNum(v) Then
-                ws.cells(rb, RR4_LEFT + c - 2).NumberFormat = "@"
-                ws.cells(rb, RR4_LEFT + c - 2).Value = IIf(c = 4, "1W ", "1M ") & MkSigned(CDbl(v), unit)
-            Else
-                Call MkGrey(ws.cells(rb, RR4_LEFT + c - 2), "-")
-            End If
-        Next c
-        ' E: percentile
-        If ok Then v = m(i, 6) Else v = Empty
-        If MkIsNum(v) Then
-            ws.cells(rb, RR4_LEFT + 4).NumberFormat = "@"
-            ws.cells(rb, RR4_LEFT + 4).Value = "P" & CStr(CLng(Round(CDbl(v), 0)))
-        Else
-            Call MkGrey(ws.cells(rb, RR4_LEFT + 4), "-")
-        End If
-
-        ' hairline between indicators (not after the last one)
-        If i < RR4_MK_N Then
-            With ws.Range(ws.cells(rb, RR4_LEFT + 1), ws.cells(rb, RR4_LEFT + 4)).Borders(xlEdgeBottom)
-                .LineStyle = xlContinuous
-                .Color = RR4_LINE
-                .Weight = xlThin
-            End With
-        End If
     Next i
+
+    ' ---- category rows: orange title in B, C:E merged = hand-typed note ----
+    Dim k As Long, rc As Long, hasNotes As Boolean
+    hasNotes = IsArray(notes)
+    For k = 1 To RR4_MK_NCAT
+        rc = RR4_MK_CAT_FIRST + k - 1
+        With ws.cells(rc, RR4_LEFT + 1)
+            .Value = MarketCatTitle(k)
+            .Font.Color = RR4_ACCENT
+            .Font.Bold = True
+            .Font.Size = 10
+            .HorizontalAlignment = xlLeft
+        End With
+        With ws.Range(ws.cells(rc, RR4_LEFT + 2), ws.cells(rc, RR4_LEFT + 4))
+            .NumberFormat = "@"
+            .Font.Color = RGB(255, 255, 255)
+            .Font.Bold = False
+            .Interior.Color = RGB(0, 0, 0)
+            .HorizontalAlignment = xlLeft
+            .VerticalAlignment = xlCenter
+            .WrapText = False
+            .Merge
+        End With
+        If hasNotes Then
+            If Len(CStr(notes(k))) > 0 Then ws.cells(rc, RR4_LEFT + 2).Value = CStr(notes(k))
+        End If
+    Next k
 End Sub
 
 ' ================================================================
@@ -3837,14 +3842,70 @@ Sub BuildHoldingsCorrelation()
     Next i
 
     ' ------------------------------------------------------------
-    Dim commonDates() As Date
-    Dim usedCount As Long
-    Call CorrGetCommonDates(priceData, tickerCount, commonDates, usedCount)
+    ' 30 / 90 / 180 trading-day windows, all cut from the one price
+    ' history fetched above. A window only uses the tickers that have
+    ' enough history for it; the others show n/a in that block.
+    Dim winN As Variant: winN = Array(30, 90, 180)
+    Dim wCorr(0 To 2) As Variant, wValid(0 To 2) As Variant
+    Dim wUsed(0 To 2) As Long, wFirst(0 To 2) As Date, wLast(0 To 2) As Date
+    Dim wi As Long, j As Long, r As Long, c As Long
+    Dim needPx As Long, eligN As Long, usedW As Long, retN As Long
+    Dim px1 As Double, px2 As Double
+    Dim elig() As Boolean, cm() As Double, rets() As Double, cd() As Date
+    Dim anyOk As Boolean: anyOk = False
 
-    If usedCount < 4 Then
+    For wi = 0 To 2
+        needPx = CLng(winN(wi)) + 1
+        ReDim elig(0 To tickerCount - 1)
+        eligN = 0
+        For i = 0 To tickerCount - 1
+            If Not priceData(i) Is Nothing Then
+                If priceData(i).count >= needPx Then
+                    elig(i) = True
+                    eligN = eligN + 1
+                End If
+            End If
+        Next i
+
+        ReDim cm(0 To tickerCount - 1, 0 To tickerCount - 1)
+        usedW = 0
+        If eligN >= 2 Then
+            Call CorrWindowDates(priceData, tickerCount, elig, needPx, cd, usedW)
+        End If
+
+        If usedW >= 4 Then
+            retN = usedW - 1
+            ReDim rets(0 To tickerCount - 1, 0 To retN - 1)
+            For i = 0 To tickerCount - 1
+                If elig(i) Then
+                    For j = 0 To retN - 1
+                        px1 = 0: px2 = 0
+                        On Error Resume Next
+                        px1 = priceData(i)(cd(j))
+                        px2 = priceData(i)(cd(j + 1))
+                        On Error GoTo 0
+                        If px1 > 0 And px2 > 0 Then rets(i, j) = Log(px2 / px1)
+                    Next j
+                End If
+            Next i
+            For r = 0 To tickerCount - 1
+                For c = 0 To tickerCount - 1
+                    If elig(r) And elig(c) Then cm(r, c) = CorrPearson(rets, r, c, retN)
+                Next c
+            Next r
+            wFirst(wi) = cd(0)
+            wLast(wi) = cd(usedW - 1)
+            anyOk = True
+        End If
+
+        wUsed(wi) = usedW
+        wCorr(wi) = cm
+        wValid(wi) = elig
+    Next wi
+
+    If Not anyOk Then
         Dim diagMsg As String
-        diagMsg = "Insufficient common trading days (" & usedCount & " day(s))." & vbCr & vbCr & _
-                 "History row count per ticker:" & vbCr
+        diagMsg = "Insufficient common trading days in every window." & vbCr & "History row count per ticker:" & vbCr
         Dim dIdx As Long
         For dIdx = 0 To tickerCount - 1
             Dim dcnt As Long: dcnt = 0
@@ -3853,43 +3914,13 @@ Sub BuildHoldingsCorrelation()
             If dcnt = 0 Then diagMsg = diagMsg & "  <-- API returned nothing"
             diagMsg = diagMsg & vbCr
         Next dIdx
-        diagMsg = diagMsg & vbCr & "Tip: re-import Attach module, save / close / reopen workbook, retry."
         Debug.Print diagMsg
-        Call NavNotify("HC!: only " & usedCount & " common trading days - per-ticker counts in the Immediate window", True)
+        Call NavNotify("HC!: not enough common trading days - per-ticker counts in the Immediate window", True)
         Application.ScreenUpdating = True: Exit Sub
     End If
 
     ' ------------------------------------------------------------
-        ' ------------------------------------------------------------
-    Dim retCount As Long: retCount = usedCount - 1
-    Dim returns() As Double
-    ReDim returns(0 To tickerCount - 1, 0 To retCount - 1)
-
-    Dim j As Long
-    For i = 0 To tickerCount - 1
-        For j = 0 To retCount - 1
-            Dim px1 As Double: px1 = 0
-            Dim px2 As Double: px2 = 0
-            On Error Resume Next
-            px1 = priceData(i)(commonDates(j))
-            px2 = priceData(i)(commonDates(j + 1))
-            On Error GoTo 0
-            If px1 > 0 And px2 > 0 Then returns(i, j) = Log(px2 / px1)
-        Next j
-    Next i
-
-    ' ------------------------------------------------------------
-    Dim corrMatrix() As Double
-    ReDim corrMatrix(0 To tickerCount - 1, 0 To tickerCount - 1)
-    Dim r As Long, c As Long
-    For r = 0 To tickerCount - 1
-        For c = 0 To tickerCount - 1
-            corrMatrix(r, c) = CorrPearson(returns, r, c, retCount)
-        Next c
-    Next r
-
-    ' ------------------------------------------------------------
-    Call HoldingsCorrRenderSheet(tickers, tickerCount, corrMatrix, usedCount, commonDates)
+    Call HoldingsCorrRenderSheet(tickers, tickerCount, winN, wCorr, wValid, wUsed, wFirst, wLast)
 
     Application.ScreenUpdating = True
     Application.StatusBar = "HoldingsCorr updated: " & Format(Now, "hh:mm:ss")
@@ -3898,12 +3929,15 @@ End Sub
 
 ' ------------------------------------------------------------
 Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
-                                     corrMatrix() As Double, usedCount As Long, _
-                                     commonDates() As Date)
+                                     winN As Variant, wCorr() As Variant, wValid() As Variant, _
+                                     wUsed() As Long, wFirst() As Date, wLast() As Date)
+    ' v3 (2026-10-04): three blocks side by side on this one sheet - 30D, 90D
+    ' and 180D trading-day windows (left to right), same ticker order in each
+    ' so one holding's correlations can be compared across windows. Each block
+    ' keeps the v2 content: matrix + AVG CORR, weight-averaged portfolio
+    ' figure, most / least correlated pairs. One shared SCALE ramp.
     ' v2 (2026-09-12): RR4 page look - orange accent, grey dividers, a
-    ' continuous red/green heat map instead of 7 bins, a colour ramp legend,
-    ' AVG CORR per holding, the most / least correlated pairs, and a
-    ' portfolio-wide average pairwise correlation.
+    ' continuous red/green heat map instead of 7 bins, AVG CORR per holding.
     Dim wsC As Worksheet
     On Error Resume Next: Set wsC = ThisWorkbook.Sheets("HoldingsCorr"): On Error GoTo 0
     If wsC Is Nothing Then
@@ -3925,8 +3959,11 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
     Dim rr As Long
     For rr = 1 To 60: wsC.Rows(rr).RowHeight = 18: Next rr
 
-    Dim retCount As Long: retCount = usedCount - 1
-    Dim i As Long, j As Long
+    Dim i As Long, j As Long, k As Long
+    Dim HDR As Long: HDR = 7
+    Dim blockW As Long: blockW = tickerCount + 3
+    If blockW < 10 Then blockW = 10
+    Dim totalCols As Long: totalCols = 3 * blockW + 2
 
     ' ---- header --------------------------------------------------
     With wsC.cells(1, 1)
@@ -3937,38 +3974,47 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
     End With
     wsC.Rows(1).RowHeight = 24
     With wsC.cells(1, 4)
-        .Value = retCount & "-day log returns  .  " & Format(commonDates(0), "yyyy/m/d") & " ~ " & _
-                 Format(commonDates(usedCount - 1), "yyyy/m/d") & "  .  updated " & Format(Now, "yyyy/mm/dd hh:mm")
+        .Value = "30 / 90 / 180 trading-day log returns  .  updated " & Format(Now, "yyyy/mm/dd hh:mm")
         .Font.Color = RGB(120, 120, 120)
         .Font.Size = 9
     End With
-    Dim lastCol As Long: lastCol = tickerCount + 3       ' matrix cols 2..n+1, gap, AVG at n+3
-    With wsC.Range(wsC.cells(1, 1), wsC.cells(1, lastCol + 6)).Borders(xlEdgeBottom)
+    With wsC.Range(wsC.cells(1, 1), wsC.cells(1, totalCols)).Borders(xlEdgeBottom)
         .LineStyle = xlContinuous
         .Color = RR4_LINE
         .Weight = xlThin
     End With
 
-    ' ---- per-holding average correlation + portfolio average ----------
-    Dim avgCorr() As Double: ReDim avgCorr(0 To tickerCount - 1)
+    wsC.Rows(HDR).RowHeight = 20
     For i = 0 To tickerCount - 1
-        Dim sRow As Double: sRow = 0
-        For j = 0 To tickerCount - 1
-            If i <> j Then sRow = sRow + corrMatrix(i, j)
-        Next j
-        If tickerCount > 1 Then avgCorr(i) = sRow / (tickerCount - 1)
+        wsC.Rows(HDR + 1 + i).RowHeight = 22
     Next i
 
+    ' ---- pair lookup: two tickers in, 30/90/180D correlation out --------
+    ' (page row 3 labels, row 4 inputs, result text at E4; cleared by HC!)
+    wsC.cells(3, 1).Value = "TICKER A <GO>"
+    wsC.cells(3, 3).Value = "TICKER B <GO>"
+    wsC.Range(wsC.cells(3, 1), wsC.cells(3, 3)).Font.Color = RR4_ACCENT
+    wsC.Range(wsC.cells(3, 1), wsC.cells(3, 3)).Font.Bold = True
+    wsC.Range(wsC.cells(3, 1), wsC.cells(3, 3)).Font.Size = 8
+    Dim pc As Variant
+    For Each pc In Array(1, 3)
+        With wsC.cells(4, CLng(pc))
+            .NumberFormat = "@"
+            .Interior.Color = RR4_INPUT_BG
+            .Font.Color = RR4_INPUT_FG
+            .Font.Bold = True
+            .HorizontalAlignment = xlCenter
+        End With
+    Next pc
+    Call HcWriteSheetCode(wsC)
+
+    ' ---- weights (RR4 page WT%, summed over brokers) --------------
     ' 2026-09-18: the portfolio figure is WEIGHT-averaged, not a plain mean.
     ' A plain mean lets a 0.2%-of-book holding move the headline number as
-    ' much as a 20% one, so it read "well spread" while the weight actually
-    ' sat in a few correlated names. Each pair is weighted by w_i*w_j, the
-    ' same product that drives portfolio variance:
-    '     sum(w_i*w_j*corr_ij) / sum(w_i*w_j)   over i<j
-    ' Weights come from the RR4 page's WT% column (summed across brokers),
-    ' so the number matches the weights on screen. With no usable weights
-    ' (RR4 page not built yet) it falls back to equal weights, which makes
-    ' this identical to the old plain mean.
+    ' much as a 20% one. Each pair is weighted by w_i*w_j, the same product
+    ' that drives portfolio variance:  sum(w_i*w_j*corr_ij) / sum(w_i*w_j).
+    ' With no usable weights (RR4 page not built yet) it falls back to equal
+    ' weights, which makes it identical to a plain mean.
     Dim wmap As Object: Set wmap = RR4WeightMap()
     Dim wArr() As Double: ReDim wArr(0 To tickerCount - 1)
     Dim wSum As Double: wSum = 0
@@ -3982,129 +4028,26 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
         For i = 0 To tickerCount - 1: wArr(i) = 1: Next i
     End If
 
-    Dim wNum As Double, wDen As Double
-    For i = 0 To tickerCount - 1
-        For j = i + 1 To tickerCount - 1
-            Dim pw As Double: pw = wArr(i) * wArr(j)
-            wNum = wNum + pw * corrMatrix(i, j)
-            wDen = wDen + pw
-        Next j
-    Next i
-    Dim portAvg As Double: If wDen > 0 Then portAvg = wNum / wDen
+    ' ---- the three blocks ----------------------------------------
+    Dim cm() As Double, vd() As Boolean
+    For k = 0 To 2
+        Dim c0 As Long: c0 = 1 + k * (blockW + 1)
+        cm = wCorr(k)
+        vd = wValid(k)
+        Call DrawCorrBlock(wsC, c0, blockW, tickers, tickerCount, cm, vd, _
+                           CLng(winN(k)), wUsed(k), wFirst(k), wLast(k), wArr)
+        If k < 2 Then wsC.Columns(c0 + blockW).ColumnWidth = 3
+    Next k
 
-    ' ---- matrix --------------------------------------------------
-    Dim HDR As Long: HDR = 3
-    wsC.Columns(1).ColumnWidth = 12
-    For i = 0 To tickerCount - 1
-        wsC.Columns(i + 2).ColumnWidth = 8
-    Next i
-    wsC.Columns(tickerCount + 2).ColumnWidth = 2
-    wsC.Columns(lastCol).ColumnWidth = 10
-
-    With wsC.cells(HDR, 1)
-        .Value = "TICKER"
-        .Font.Color = RR4_ACCENT
-        .Font.Bold = True
-        .Interior.Color = RGB(10, 10, 10)
-        .HorizontalAlignment = xlCenter
-    End With
-    For i = 0 To tickerCount - 1
-        With wsC.cells(HDR, i + 2)
-            .Value = ShortTicker(tickers(i))
-            .Font.Color = RR4_ACCENT
-            .Font.Bold = True
-            .Font.Size = 8
-            .Interior.Color = RGB(10, 10, 10)
-            .HorizontalAlignment = xlCenter
-        End With
-    Next i
-    With wsC.cells(HDR, lastCol)
-        .Value = "AVG CORR"
-        .Font.Color = RR4_ACCENT
-        .Font.Bold = True
-        .Font.Size = 8
-        .Interior.Color = RGB(10, 10, 10)
-        .HorizontalAlignment = xlCenter
-    End With
-    wsC.Rows(HDR).RowHeight = 20
-    With wsC.Range(wsC.cells(HDR, 1), wsC.cells(HDR, lastCol)).Borders(xlEdgeBottom)
-        .LineStyle = xlContinuous
-        .Color = RR4_LINE
-        .Weight = xlThin
-    End With
-
-    Dim minAvg As Double: minAvg = 2
-    Dim maxAvg As Double: maxAvg = -2
-    For i = 0 To tickerCount - 1
-        If avgCorr(i) < minAvg Then minAvg = avgCorr(i)
-        If avgCorr(i) > maxAvg Then maxAvg = avgCorr(i)
-    Next i
-
-    For i = 0 To tickerCount - 1
-        Dim rn As Long: rn = HDR + 1 + i
-        wsC.Rows(rn).RowHeight = 22
-        With wsC.cells(rn, 1)
-            .Value = ShortTicker(tickers(i))
-            .Font.Color = RR4_ACCENT
-            .Font.Bold = True
-            .HorizontalAlignment = xlCenter
-            .Interior.Color = RGB(10, 10, 10)
-        End With
-        For j = 0 To tickerCount - 1
-            With wsC.cells(rn, j + 2)
-                .HorizontalAlignment = xlCenter
-                .Font.Size = 8
-                If i = j Then
-                    .Value = ChrW(&H2014)
-                    .Interior.Color = RGB(20, 20, 20)
-                    .Font.Color = RGB(70, 70, 70)
-                Else
-                    .Value = corrMatrix(i, j)
-                    .NumberFormat = "0.00"
-                    .Font.Bold = (Abs(corrMatrix(i, j)) >= 0.5)
-                    .Interior.Color = CorrHeatBg(corrMatrix(i, j))
-                    .Font.Color = CorrHeatFg(corrMatrix(i, j))
-                End If
-                With .Borders
-                    .LineStyle = xlContinuous
-                    .Color = RGB(0, 0, 0)
-                    .Weight = xlThin
-                End With
-            End With
-        Next j
-        ' AVG CORR column: the most diversifying holding (lowest) in green,
-        ' the most crowded (highest) in red
-        With wsC.cells(rn, lastCol)
-            .Value = avgCorr(i)
-            .NumberFormat = "0.00"
-            .HorizontalAlignment = xlCenter
-            .Font.Bold = True
-            .Interior.Color = RGB(12, 12, 12)
-            If tickerCount > 2 And avgCorr(i) = minAvg Then
-                .Font.Color = RGB(0, 200, 90)
-            ElseIf tickerCount > 2 And avgCorr(i) = maxAvg Then
-                .Font.Color = RGB(235, 70, 70)
-            Else
-                .Font.Color = RGB(200, 200, 200)
-            End If
-        End With
-    Next i
+    ' ---- shared legend: colour ramp ------------------------------
     Dim lastMatrixRow As Long: lastMatrixRow = HDR + tickerCount
-    With wsC.Range(wsC.cells(lastMatrixRow, 1), wsC.cells(lastMatrixRow, lastCol)).Borders(xlEdgeBottom)
-        .LineStyle = xlContinuous
-        .Color = RR4_LINE
-        .Weight = xlThin
-    End With
-
-    ' ---- legend: colour ramp + portfolio average ----------------------
     Dim r As Long: r = lastMatrixRow + 2
     wsC.cells(r, 1).Value = "SCALE"
     wsC.cells(r, 1).Font.Color = RR4_ACCENT
     wsC.cells(r, 1).Font.Bold = True
     Dim ramp As Variant: ramp = Array(-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1)
-    Dim k As Long
     For k = 0 To UBound(ramp)
-        ' the ramp may run into the narrow gap column - widen it enough to show
+        ' the ramp may run into a narrow gap column - widen it enough to show
         If wsC.Columns(k + 2).ColumnWidth < 7 Then wsC.Columns(k + 2).ColumnWidth = 7
         With wsC.cells(r, k + 2)
             .Value = ramp(k)
@@ -4120,63 +4063,15 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
         .Font.Color = RGB(120, 120, 120)
         .Font.Size = 9
     End With
-    r = r + 1
-    wsC.cells(r, 1).Value = "PORTFOLIO WEIGHT-AVG PAIRWISE CORR"
-    wsC.cells(r, 1).Font.Color = RGB(0, 200, 255)
-    With wsC.cells(r, 4)
-        .Value = portAvg
-        .NumberFormat = "0.00"
-        .Font.Bold = True
-        .Font.Color = IIf(portAvg >= 0.5, RGB(235, 70, 70), IIf(portAvg <= 0.2, RGB(0, 200, 90), RGB(221, 221, 221)))
-    End With
-    wsC.cells(r, 5).Value = IIf(portAvg >= 0.5, "crowded - holdings largely share one bet", _
-                            IIf(portAvg <= 0.2, "well spread", "moderate"))
-    wsC.cells(r, 5).Font.Color = RGB(120, 120, 120)
-    wsC.cells(r, 5).Font.Size = 9
-
-    ' ---- top / bottom pairs -------------------------------------
-    r = r + 2
-    Dim nP As Long: nP = tickerCount * (tickerCount - 1) \ 2
-    Dim pA() As Long, pB() As Long, pV() As Double
-    ReDim pA(1 To nP): ReDim pB(1 To nP): ReDim pV(1 To nP)
-    k = 0
-    For i = 0 To tickerCount - 1
-        For j = i + 1 To tickerCount - 1
-            k = k + 1: pA(k) = i: pB(k) = j: pV(k) = corrMatrix(i, j)
-        Next j
-    Next i
-    ' simple selection sort, descending
-    Dim a As Long, b As Long, tmpL As Long, tmpD As Double
-    For a = 1 To nP - 1
-        For b = a + 1 To nP
-            If pV(b) > pV(a) Then
-                tmpD = pV(a): pV(a) = pV(b): pV(b) = tmpD
-                tmpL = pA(a): pA(a) = pA(b): pA(b) = tmpL
-                tmpL = pB(a): pB(a) = pB(b): pB(b) = tmpL
-            End If
-        Next b
-    Next a
-    Dim show As Long: show = IIf(nP < 5, nP, 5)
-
-    wsC.cells(r, 1).Value = "MOST CORRELATED PAIRS"
-    wsC.cells(r, 1).Font.Color = RR4_ACCENT
-    wsC.cells(r, 1).Font.Bold = True
-    wsC.cells(r, 6).Value = "LEAST CORRELATED / HEDGING PAIRS"
-    wsC.cells(r, 6).Font.Color = RR4_ACCENT
-    wsC.cells(r, 6).Font.Bold = True
-    r = r + 1
-    For k = 1 To show
-        Call CorrPairLine(wsC, r + k - 1, 1, ShortTicker(tickers(pA(k))), ShortTicker(tickers(pB(k))), pV(k))
-        Dim kk As Long: kk = nP - k + 1
-        Call CorrPairLine(wsC, r + k - 1, 6, ShortTicker(tickers(pA(kk))), ShortTicker(tickers(pB(kk))), pV(kk))
-    Next k
-    r = r + show + 1
 
     ' ---- footnote -----------------------------------------------
+    r = lastMatrixRow + 11
     Dim notes As Variant
     notes = Array( _
         "HOW THESE ARE COMPUTED", _
-        "CORRELATION   = Pearson correlation of daily LOG returns over the dates every holding has in common (" & retCount & " returns)", _
+        "WINDOWS       = the latest 30 / 90 / 180 trading days every included holding has in common (N shown on each block); same ticker order in all three", _
+        "CORRELATION   = Pearson correlation of daily LOG returns over that window", _
+        "n/a           = the holding has fewer price points than the window needs (e.g. recent listing); the rest are computed without it", _
         "AVG CORR      = mean of a holding's correlations with the other holdings   - lowest (green) diversifies most, highest (red) is the most crowded", _
         "PORTFOLIO WEIGHT-AVG = sum(w_i*w_j*corr_ij) / sum(w_i*w_j) over each pair once, w = WT% on the RR4 page   - >= 0.5 crowded, <= 0.2 well spread", _
         "PAIRS         = the same matrix ranked: top 5 pairs that move together, bottom 5 that move against each other")
@@ -4194,6 +4089,391 @@ Private Sub HoldingsCorrRenderSheet(tickers() As String, tickerCount As Long, _
 
     Call NavAdd(wsC, "HC")
     wsC.Activate
+End Sub
+
+' ---- pair lookup (HC page inputs A / B) -----------------------------
+' Sheet event code (RR4/SheetHoldingsCorr_Code.txt) calls this on any change.
+Public Sub HcPairChange(ByVal ws As Worksheet, ByVal Target As Range)
+    If Target.CountLarge > 1 Then Exit Sub
+    Dim ro As Long: ro = 4 + NavOffset(ws)
+    Dim ca As Long: ca = 1 + NavLeft(ws)
+    Dim cb As Long: cb = 3 + NavLeft(ws)
+    If Target.Row <> ro Then Exit Sub
+    If Target.Column <> ca And Target.Column <> cb Then Exit Sub
+
+    Dim resCell As Range: Set resCell = ws.cells(ro, 5 + NavLeft(ws))
+    Dim ta As String: ta = UCase(Trim(CellStr(ws.cells(ro, ca).Value)))
+    Dim tb As String: tb = UCase(Trim(CellStr(ws.cells(ro, cb).Value)))
+    Application.EnableEvents = False
+    On Error GoTo Done
+    resCell.Font.Color = RGB(221, 221, 221)
+    resCell.Font.Size = 9
+    resCell.HorizontalAlignment = xlLeft
+    If ta = "" Or tb = "" Then
+        resCell.Value = ""
+        GoTo Done
+    End If
+    Application.StatusBar = "Fetching " & ta & " / " & tb & "..."
+
+    Dim da() As Date, pa() As Double, db() As Date, pb() As Double
+    If Not GetHistoricalData(ta, da, pa) Then resCell.Value = "no price data for " & ta: GoTo Done
+    If Not GetHistoricalData(tb, db, pb) Then resCell.Value = "no price data for " & tb: GoTo Done
+
+    Dim dictB As Object: Set dictB = CreateObject("Scripting.Dictionary")
+    Dim i As Long
+    For i = LBound(db) To UBound(db)
+        If pb(i) > 0 Then dictB(CLng(db(i))) = pb(i)
+    Next i
+    ' dates both have, oldest first
+    Dim cdt() As Long, ca2() As Double, cb2() As Double, nC As Long
+    ReDim cdt(0 To UBound(da) - LBound(da)): ReDim ca2(0 To UBound(da) - LBound(da)): ReDim cb2(0 To UBound(da) - LBound(da))
+    For i = LBound(da) To UBound(da)
+        If pa(i) > 0 Then
+            If dictB.Exists(CLng(da(i))) Then
+                cdt(nC) = CLng(da(i)): ca2(nC) = pa(i): cb2(nC) = dictB(CLng(da(i))): nC = nC + 1
+            End If
+        End If
+    Next i
+
+    Dim wins As Variant: wins = Array(30, 90, 180)
+    Dim txt As String, ns As String, w As Long, k As Long, n As Long
+    Dim rets() As Double
+    For k = 0 To 2
+        n = CLng(wins(k))
+        If k > 0 Then txt = txt & " | ": ns = ns & "/"
+        If nC < n + 1 Then
+            txt = txt & n & "D n/a": ns = ns & "n/a"
+        Else
+            ReDim rets(0 To 1, 0 To n - 1)
+            For w = 0 To n - 1
+                rets(0, w) = Log(ca2(nC - n + w) / ca2(nC - n + w - 1))
+                rets(1, w) = Log(cb2(nC - n + w) / cb2(nC - n + w - 1))
+            Next w
+            txt = txt & n & "D " & Format(CorrPearson(rets, 0, 1, n), "0.00")
+            ns = ns & n
+        End If
+    Next k
+    resCell.Value = ta & " x " & tb & "  " & txt & "  (N=" & ns & ")"
+Done:
+    Application.StatusBar = False
+    Application.EnableEvents = True
+End Sub
+
+Private Sub HcWriteSheetCode(ByVal ws As Worksheet)
+    On Error GoTo Skip
+    Dim comp As Object, cm As Object
+    For Each comp In ThisWorkbook.VBProject.VBComponents
+        If comp.Type = 100 Then
+            If comp.Properties("Name").Value = ws.Name Then
+                Set cm = comp.CodeModule
+                If cm.CountOfLines > 0 Then
+                    If InStr(cm.Lines(1, cm.CountOfLines), "HcPairChange") > 0 Then Exit Sub
+                    cm.DeleteLines 1, cm.CountOfLines
+                End If
+                cm.AddFromString "Option Explicit" & vbCrLf & vbCrLf & _
+                    "' HoldingsCorr page: ticker A/B pair lookup (PortfolioDashboard_v3.HcPairChange)" & vbCrLf & _
+                    "Private Sub Worksheet_Change(ByVal Target As Range)" & vbCrLf & _
+                    "    Call HcPairChange(Me, Target)" & vbCrLf & _
+                    "End Sub" & vbCrLf
+                Exit Sub
+            End If
+        End If
+    Next comp
+    Exit Sub
+Skip:
+    Call NavNotify("HC built, but its sheet event code could not be written (paste RR4/SheetHoldingsCorr_Code.txt by hand)", True)
+End Sub
+
+' One window's block at column c0: title row 3, matrix from row 4, then the
+' weight-averaged portfolio figure and the most / least correlated pairs.
+Private Sub DrawCorrBlock(wsC As Worksheet, ByVal c0 As Long, ByVal blockW As Long, _
+                          tickers() As String, ByVal n As Long, corrM() As Double, vd() As Boolean, _
+                          ByVal winDays As Long, ByVal used As Long, ByVal d1 As Date, ByVal d2 As Date, _
+                          wArr() As Double)
+    Dim HDR As Long: HDR = 7
+    Dim i As Long, j As Long, k As Long
+    Dim avgCol As Long: avgCol = c0 + n + 2
+    Dim ok As Boolean: ok = (used >= 4)
+
+    ' column widths for this block
+    wsC.Columns(c0).ColumnWidth = 12
+    For i = 1 To blockW - 1
+        wsC.Columns(c0 + i).ColumnWidth = 8
+    Next i
+    wsC.Columns(c0 + n + 1).ColumnWidth = 2
+    wsC.Columns(avgCol).ColumnWidth = 10
+
+    ' ---- block title ---------------------------------------------
+    With wsC.cells(HDR - 1, c0)
+        .Value = winDays & "D"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 11
+    End With
+    With wsC.cells(HDR - 1, c0 + 1)
+        If ok Then
+            .Value = "N=" & (used - 1) & " returns" & IIf(used - 1 < winDays, " (shortened)", "") & _
+                     "  .  " & Format(d1, "yyyy/m/d") & " ~ " & Format(d2, "yyyy/m/d")
+            .Font.Color = RGB(120, 120, 120)
+        Else
+            .Value = "NOT ENOUGH COMMON HISTORY FOR THIS WINDOW"
+            .Font.Color = RGB(235, 70, 70)
+        End If
+        .Font.Size = 9
+    End With
+    If Not ok Then Exit Sub
+
+    ' ---- header row ----------------------------------------------
+    With wsC.cells(HDR, c0)
+        .Value = "TICKER"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Interior.Color = RGB(10, 10, 10)
+        .HorizontalAlignment = xlCenter
+    End With
+    For i = 0 To n - 1
+        With wsC.cells(HDR, c0 + 1 + i)
+            .Value = ShortTicker(tickers(i))
+            .Font.Color = RR4_ACCENT
+            .Font.Bold = True
+            .Font.Size = 8
+            .Interior.Color = RGB(10, 10, 10)
+            .HorizontalAlignment = xlCenter
+        End With
+    Next i
+    With wsC.cells(HDR, avgCol)
+        .Value = "AVG CORR"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 8
+        .Interior.Color = RGB(10, 10, 10)
+        .HorizontalAlignment = xlCenter
+    End With
+    With wsC.Range(wsC.cells(HDR, c0), wsC.cells(HDR, avgCol)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+
+    ' ---- per-holding average correlation (valid holdings only) ----
+    Dim avgCorr() As Double: ReDim avgCorr(0 To n - 1)
+    Dim hasAvg() As Boolean: ReDim hasAvg(0 To n - 1)
+    Dim vdN As Long: vdN = 0
+    Dim minAvg As Double: minAvg = 2
+    Dim maxAvg As Double: maxAvg = -2
+    Dim sRow As Double, cnt As Long
+    For i = 0 To n - 1
+        If vd(i) Then vdN = vdN + 1
+        sRow = 0: cnt = 0
+        If vd(i) Then
+            For j = 0 To n - 1
+                If j <> i And vd(j) Then sRow = sRow + corrM(i, j): cnt = cnt + 1
+            Next j
+        End If
+        If cnt > 0 Then
+            avgCorr(i) = sRow / cnt
+            hasAvg(i) = True
+            If avgCorr(i) < minAvg Then minAvg = avgCorr(i)
+            If avgCorr(i) > maxAvg Then maxAvg = avgCorr(i)
+        End If
+    Next i
+
+    ' ---- matrix --------------------------------------------------
+    Dim rn As Long
+    For i = 0 To n - 1
+        rn = HDR + 1 + i
+        With wsC.cells(rn, c0)
+            .Value = ShortTicker(tickers(i))
+            .Font.Color = RR4_ACCENT
+            .Font.Bold = True
+            .HorizontalAlignment = xlCenter
+            .Interior.Color = RGB(10, 10, 10)
+        End With
+        For j = 0 To n - 1
+            With wsC.cells(rn, c0 + 1 + j)
+                .HorizontalAlignment = xlCenter
+                .Font.Size = 8
+                If i = j Then
+                    .Value = ChrW(&H2014)
+                    .Interior.Color = RGB(20, 20, 20)
+                    .Font.Color = RGB(70, 70, 70)
+                ElseIf vd(i) And vd(j) Then
+                    .Value = corrM(i, j)
+                    .NumberFormat = "0.00"
+                    .Font.Bold = (Abs(corrM(i, j)) >= 0.5)
+                    .Interior.Color = CorrHeatBg(corrM(i, j))
+                    .Font.Color = CorrHeatFg(corrM(i, j))
+                Else
+                    .Value = "n/a"
+                    .Interior.Color = RGB(20, 20, 20)
+                    .Font.Color = RGB(90, 90, 90)
+                End If
+                With .Borders
+                    .LineStyle = xlContinuous
+                    .Color = RGB(0, 0, 0)
+                    .Weight = xlThin
+                End With
+            End With
+        Next j
+        ' AVG CORR: the most diversifying holding (lowest) in green,
+        ' the most crowded (highest) in red
+        With wsC.cells(rn, avgCol)
+            .HorizontalAlignment = xlCenter
+            .Font.Bold = True
+            .Interior.Color = RGB(12, 12, 12)
+            If hasAvg(i) Then
+                .Value = avgCorr(i)
+                .NumberFormat = "0.00"
+                If vdN > 2 And avgCorr(i) = minAvg Then
+                    .Font.Color = RGB(0, 200, 90)
+                ElseIf vdN > 2 And avgCorr(i) = maxAvg Then
+                    .Font.Color = RGB(235, 70, 70)
+                Else
+                    .Font.Color = RGB(200, 200, 200)
+                End If
+            Else
+                .Value = "n/a"
+                .Font.Color = RGB(90, 90, 90)
+            End If
+        End With
+    Next i
+    Dim lastMatrixRow As Long: lastMatrixRow = HDR + n
+    With wsC.Range(wsC.cells(lastMatrixRow, c0), wsC.cells(lastMatrixRow, avgCol)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+
+    ' ---- portfolio weight-average pairwise correlation -----------
+    Dim wNum As Double, wDen As Double, pw As Double, pass As Long
+    For pass = 1 To 2
+        wNum = 0: wDen = 0
+        For i = 0 To n - 1
+            For j = i + 1 To n - 1
+                If vd(i) And vd(j) Then
+                    If pass = 1 Then pw = wArr(i) * wArr(j) Else pw = 1
+                    wNum = wNum + pw * corrM(i, j)
+                    wDen = wDen + pw
+                End If
+            Next j
+        Next i
+        If wDen > 0 Then Exit For
+    Next pass
+    Dim r As Long: r = lastMatrixRow + 3
+    wsC.cells(r, c0).Value = "PORTFOLIO WEIGHT-AVG PAIRWISE CORR"
+    wsC.cells(r, c0).Font.Color = RGB(0, 200, 255)
+    If wDen > 0 Then
+        Dim portAvg As Double: portAvg = wNum / wDen
+        With wsC.cells(r, c0 + 3)
+            .Value = portAvg
+            .NumberFormat = "0.00"
+            .Font.Bold = True
+            .Font.Color = IIf(portAvg >= 0.5, RGB(235, 70, 70), IIf(portAvg <= 0.2, RGB(0, 200, 90), RGB(221, 221, 221)))
+        End With
+        wsC.cells(r, c0 + 4).Value = IIf(portAvg >= 0.5, "crowded - holdings largely share one bet", _
+                                IIf(portAvg <= 0.2, "well spread", "moderate"))
+        wsC.cells(r, c0 + 4).Font.Color = RGB(120, 120, 120)
+        wsC.cells(r, c0 + 4).Font.Size = 9
+    Else
+        wsC.cells(r, c0 + 3).Value = "n/a"
+        wsC.cells(r, c0 + 3).Font.Color = RGB(90, 90, 90)
+    End If
+
+    ' ---- top / bottom pairs (valid holdings only) ----------------
+    r = r + 2
+    Dim nP As Long: nP = 0
+    Dim pA() As Long, pB() As Long, pV() As Double
+    ReDim pA(1 To n * n): ReDim pB(1 To n * n): ReDim pV(1 To n * n)
+    For i = 0 To n - 1
+        For j = i + 1 To n - 1
+            If vd(i) And vd(j) Then
+                nP = nP + 1: pA(nP) = i: pB(nP) = j: pV(nP) = corrM(i, j)
+            End If
+        Next j
+    Next i
+    Dim a As Long, b As Long, tmpL As Long, tmpD As Double
+    For a = 1 To nP - 1
+        For b = a + 1 To nP
+            If pV(b) > pV(a) Then
+                tmpD = pV(a): pV(a) = pV(b): pV(b) = tmpD
+                tmpL = pA(a): pA(a) = pA(b): pA(b) = tmpL
+                tmpL = pB(a): pB(a) = pB(b): pB(b) = tmpL
+            End If
+        Next b
+    Next a
+    Dim show As Long: show = IIf(nP < 5, nP, 5)
+
+    wsC.cells(r, c0).Value = "MOST CORRELATED PAIRS"
+    wsC.cells(r, c0).Font.Color = RR4_ACCENT
+    wsC.cells(r, c0).Font.Bold = True
+    wsC.cells(r, c0 + 5).Value = "LEAST CORRELATED / HEDGING PAIRS"
+    wsC.cells(r, c0 + 5).Font.Color = RR4_ACCENT
+    wsC.cells(r, c0 + 5).Font.Bold = True
+    r = r + 1
+    Dim kk As Long
+    For k = 1 To show
+        Call CorrPairLine(wsC, r + k - 1, c0, ShortTicker(tickers(pA(k))), ShortTicker(tickers(pB(k))), pV(k))
+        kk = nP - k + 1
+        Call CorrPairLine(wsC, r + k - 1, c0 + 5, ShortTicker(tickers(pA(kk))), ShortTicker(tickers(pB(kk))), pV(kk))
+    Next k
+End Sub
+
+' Latest wantPx dates that every ELIGIBLE ticker has a price on (the same
+' idea as CorrGetCommonDates, but ineligible tickers are skipped so a short
+' history only blanks its own row/column). wantPx price points -> wantPx-1
+' log returns.
+Private Sub CorrWindowDates(priceData() As Object, tickerCount As Long, elig() As Boolean, _
+                            ByVal wantPx As Long, ByRef commonDates() As Date, ByRef usedCount As Long)
+    Dim allDates As Object: Set allDates = CreateObject("Scripting.Dictionary")
+    Dim dkey As Variant, rv As Variant, rm As Collection
+    Dim i As Long, firstDone As Boolean: firstDone = False
+    For i = 0 To tickerCount - 1
+        If elig(i) Then
+            If Not firstDone Then
+                For Each dkey In priceData(i).keys
+                    allDates(dkey) = 1
+                Next dkey
+                firstDone = True
+            Else
+                Set rm = New Collection
+                For Each dkey In allDates.keys
+                    If Not priceData(i).Exists(dkey) Then rm.Add dkey
+                Next dkey
+                For Each rv In rm
+                    allDates.Remove rv
+                Next rv
+            End If
+        End If
+    Next i
+
+    Dim dateCount As Long: dateCount = allDates.count
+    If dateCount = 0 Then usedCount = 0: Exit Sub
+
+    Dim sortedDates() As Date
+    ReDim sortedDates(0 To dateCount - 1)
+    Dim di As Long: di = 0
+    For Each dkey In allDates.keys
+        sortedDates(di) = CDate(dkey): di = di + 1
+    Next dkey
+
+    Dim a As Long, b As Long, tmpD As Date
+    For a = 1 To dateCount - 1
+        tmpD = sortedDates(a)
+        b = a - 1
+        Do While b >= 0
+            If sortedDates(b) <= tmpD Then Exit Do
+            sortedDates(b + 1) = sortedDates(b)
+            b = b - 1
+        Loop
+        sortedDates(b + 1) = tmpD
+    Next a
+
+    Dim startIdx As Long: startIdx = IIf(dateCount > wantPx, dateCount - wantPx, 0)
+    usedCount = dateCount - startIdx
+    ReDim commonDates(0 To usedCount - 1)
+    For i = 0 To usedCount - 1
+        commonDates(i) = sortedDates(startIdx + i)
+    Next i
 End Sub
 
 ' Ticker (as logged, upper-cased) -> its WT% on the RR4 page's position log,
