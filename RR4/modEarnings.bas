@@ -58,6 +58,9 @@ Private Const PG_TBL_HDR As Long = 10
 Private Const N_QTR As Long = 12
 Private Const TW_MONTHS As Long = 24
 Private Const LAST_CLEAR_COL As Long = 40
+Private Const RIVER_NAME As String = "EARN_RIVER"
+Private Const RIVER_DATA_COL As Long = 60        ' chart data block, far right of the table (BH at draw time)
+Private Const RIVER_H As Double = 300#           ' chart height, points
 
 Private Const UA As String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
 Private Const FONT_FACE As String = "Consolas"
@@ -73,8 +76,16 @@ Private m_end() As String                        ' yyyy-mm-dd
 Private m_filed() As String                      ' yyyy-mm-dd
 Private m_form() As String
 Private m_q4() As Boolean                        ' derived Q4 column
+Private m_cq() As String                         ' calendar quarter of the period end (CY26Q2)
+Private m_pend() As Boolean                      ' placeholder column: not reported yet
+Private m_real As Long                           ' how many of the m_n columns hold reported data (they come first)
 Private m_v As Object                            ' metric key -> Variant(1..m_n), "" = missing
 Private m_splits As Collection                   ' Array(split date, ratio) from Yahoo
+Private m_pe As Variant, m_ps As Variant         ' the four valuation multiples, kept for the river chart
+Private m_evEb As Variant, m_evS As Variant
+Private m_rvOn As Boolean                        ' river data block written, chart still to build (after the nav bar)
+Private m_rvAt As Long, m_rvDr As Long, m_rvDc As Long, m_rvKq As Long, m_rvTmax As Double
+Private m_rvLast(1 To 4) As Double               ' newest-quarter percentile per multiple (P/E, P/S, EV/EBITDA, EV/Sales)
 
 ' ----------------------------------------------------------------
 '  Entry points
@@ -115,6 +126,9 @@ Public Sub ShowEarnings(ByVal rawTicker As String, Optional ByVal marketOverride
         GoTo Done
     End If
 
+    Call PadCalendarYear
+    srcNote = srcNote & LagNote(mkt)
+
     Dim sym As String
     Dim prices As Object: Set prices = LoadPrices(tk, mkt, sym)
     With ws.cells(PG_TITLE, 3)
@@ -125,6 +139,7 @@ Public Sub ShowEarnings(ByVal rawTicker As String, Optional ByVal marketOverride
     Dim lastRow As Long
     lastRow = RenderTable(ws, mkt, prices, srcNote)
     If mkt = "TW" Then lastRow = RenderMonthly(ws, lastRow + 2, tk)
+    Call DrawMultipleRiver(ws, lastRow + 2)
     Call NavNotify("EARNINGS " & tk & " done - " & m_n & " quarters")
 
 Done:
@@ -185,6 +200,10 @@ Private Function EnsureEarningsSheet() As Worksheet
 End Function
 
 Private Sub DrawShell(ws As Worksheet, ByVal tk As String, ByVal mkt As String)
+    m_rvOn = False
+    Do While ws.ChartObjects.count > 0              ' Clear leaves floating charts behind
+        ws.ChartObjects(1).Delete
+    Loop
     ws.cells.Clear
     With ws.cells
         .Interior.Color = RGB(0, 0, 0)
@@ -241,6 +260,7 @@ End Sub
 Private Sub FinishPage(ws As Worksheet)
     On Error Resume Next
     Call NavAdd(ws, "E")
+    Call BuildRiverChart(ws)                         ' after the bar: it inserts rows/columns, chart refs do not follow
     Call EnsureSheetCode(ws)
     On Error GoTo 0
 End Sub
@@ -564,12 +584,128 @@ Private Function TwDeadline(ByVal qEnd As Date) As Date
 End Function
 
 ' ----------------------------------------------------------------
+'  Calendar-year window (2026-10-04): the table always ends at Q4 of the
+'  current calendar year.  A quarter is placed by the calendar quarter its
+'  period end falls in (MU: 5/28 -> CY Q2, ~9/3 -> CY Q3).  Quarters that
+'  are not reported yet get a "pending" placeholder column (estimated period
+'  end, next fiscal label) and the oldest columns fall off so the window
+'  stays N_QTR wide.  Real columns always come first (m_real of them).
+' ----------------------------------------------------------------
+Private Function CqIdx(ByVal d As Date) As Long
+    CqIdx = Year(d) * 4 + (Month(d) - 1) \ 3
+End Function
+
+Private Function CqName(ByVal idx As Long) As String
+    CqName = "CY" & Right$(CStr(idx \ 4), 2) & "Q" & CStr((idx Mod 4) + 1)
+End Function
+
+' FY2026Q3 -> FY2026Q4 -> FY2027Q1 (same for a plain 2026Q3 style label)
+Private Function NextLbl(ByVal lbl As String) As String
+    Dim p As Long: p = InStrRev(lbl, "Q")
+    If p < 2 Then Exit Function
+    Dim qn As Long: qn = CLng(Val(Mid$(lbl, p + 1)))
+    Dim pre As String: pre = Left$(lbl, p - 1)
+    If qn < 1 Or qn > 4 Then Exit Function
+    If qn < 4 Then
+        NextLbl = pre & "Q" & (qn + 1)
+    Else
+        If Len(pre) >= 4 Then
+            If IsNumeric(Right$(pre, 4)) Then
+                NextLbl = Left$(pre, Len(pre) - 4) & CStr(CLng(Right$(pre, 4)) + 1) & "Q1"
+            End If
+        End If
+    End If
+End Function
+
+Private Sub PadCalendarYear()
+    Dim i As Long, j As Long
+    m_real = m_n
+    For i = 1 To m_n
+        m_cq(i) = CqName(CqIdx(CDate(m_end(i))))
+        m_pend(i) = False
+    Next i
+    Dim lastQ As Long: lastQ = CqIdx(CDate(m_end(m_n)))
+    Dim tq As Long: tq = Year(Date) * 4 + 3
+    If lastQ >= tq Then Exit Sub
+
+    Dim n0 As Long: n0 = m_n
+    Dim n2 As Long: n2 = n0 + (tq - lastQ)
+    ReDim Preserve m_lbl(1 To n2): ReDim Preserve m_end(1 To n2): ReDim Preserve m_filed(1 To n2)
+    ReDim Preserve m_form(1 To n2): ReDim Preserve m_q4(1 To n2)
+    ReDim Preserve m_cq(1 To n2): ReDim Preserve m_pend(1 To n2)
+    Dim k As Variant, a As Variant, b() As Variant
+    For Each k In m_v.keys
+        a = m_v(k)
+        ReDim b(1 To n2)
+        For i = 1 To n2
+            If i <= n0 Then b(i) = a(i) Else b(i) = ""
+        Next i
+        m_v(k) = b
+    Next k
+
+    Dim lbl As String: lbl = m_lbl(n0)
+    Dim prevEnd As Date: prevEnd = CDate(m_end(n0))
+    Dim e As Date, qi As Long, nl As String
+    For j = n0 + 1 To n2
+        qi = lastQ + (j - n0)
+        e = DateAdd("m", 3, prevEnd)
+        If CqIdx(e) <> qi Then e = DateSerial(qi \ 4, (qi Mod 4) * 3 + 4, 0)
+        nl = NextLbl(lbl)
+        If nl = "" Then nl = CqName(qi)
+        lbl = nl
+        m_lbl(j) = lbl: m_end(j) = Format$(e, "yyyy-mm-dd"): m_filed(j) = "-": m_form(j) = "pending"
+        m_q4(j) = False: m_cq(j) = CqName(qi): m_pend(j) = True
+        prevEnd = e
+    Next j
+
+    ' keep the window N_QTR wide: drop the oldest columns
+    Dim shift As Long: shift = n2 - N_QTR
+    If shift > 0 Then
+        For i = 1 To N_QTR
+            m_lbl(i) = m_lbl(i + shift): m_end(i) = m_end(i + shift): m_filed(i) = m_filed(i + shift)
+            m_form(i) = m_form(i + shift): m_q4(i) = m_q4(i + shift)
+            m_cq(i) = m_cq(i + shift): m_pend(i) = m_pend(i + shift)
+        Next i
+        ReDim Preserve m_lbl(1 To N_QTR): ReDim Preserve m_end(1 To N_QTR): ReDim Preserve m_filed(1 To N_QTR)
+        ReDim Preserve m_form(1 To N_QTR): ReDim Preserve m_q4(1 To N_QTR)
+        ReDim Preserve m_cq(1 To N_QTR): ReDim Preserve m_pend(1 To N_QTR)
+        For Each k In m_v.keys
+            a = m_v(k)
+            ReDim b(1 To N_QTR)
+            For i = 1 To N_QTR: b(i) = a(i + shift): Next i
+            m_v(k) = b
+        Next k
+        m_n = N_QTR
+        m_real = n0 - shift
+    Else
+        m_n = n2
+        m_real = n0
+    End If
+    If m_real < 1 Then m_real = 1
+End Sub
+
+' US only: the newest filing is on the SEC list but companyfacts has no figures
+' for it yet (the API trails the filing) - say so instead of showing a silent
+' column of dashes.
+Private Function LagNote(ByVal mkt As String) As String
+    If mkt = "TW" Or m_real < 1 Then Exit Function
+    Dim r As Variant, a As Variant, s As Variant
+    r = m_v("Revenue"): a = m_v("Assets"): s = m_v("NetIncome")
+    If Not HasVal(r(m_real)) And Not HasVal(a(m_real)) And Not HasVal(s(m_real)) Then
+        LagNote = " WARNING: the newest filing (" & m_form(m_real) & ", filed " & m_filed(m_real) & ") has no figures in companyfacts yet - " & _
+                  "SEC's API trails the filing; press E! again later."
+    End If
+End Function
+
+' ----------------------------------------------------------------
 '  Shared data helpers
 ' ----------------------------------------------------------------
 Private Sub AllocCols(ByVal n As Long)
     m_n = n
     ReDim m_lbl(1 To n): ReDim m_end(1 To n): ReDim m_filed(1 To n)
     ReDim m_form(1 To n): ReDim m_q4(1 To n)
+    ReDim m_cq(1 To n): ReDim m_pend(1 To n)
+    m_real = n
     Set m_v = CreateObject("Scripting.Dictionary")
 End Sub
 
@@ -690,6 +826,27 @@ Private Sub RenderDates(ws As Worksheet, ByVal mkt As String, ByVal ySym As Stri
         End If
     End If
 
+    ' A date that has already passed is the print that just happened (MU 2026-09-30
+    ' read "DAYS -1 CONFIRMED"): move it to LAST CALL and project the next one.
+    If CDate(nd) < Date Then
+        If lastCall = "" Then
+            lastCall = nd
+        ElseIf CDate(lastCall) < CDate(nd) Then
+            lastCall = nd
+        End If
+        Dim rptd As Date: rptd = CDate(nd)
+        Dim nx As Date
+        If mkt = "TW" Then
+            nx = ProjectNext(mkt)
+        Else
+            nx = rptd + 91
+            Do While nx < Date: nx = nx + 91: Loop
+        End If
+        nd = Format$(nx, "yyyy-mm-dd")
+        status = "PROJECTED"
+        src = "reported " & Format$(rptd, "yyyy/mm/dd") & " - next date projected"
+        If mkt <> "TW" Then src = src & " (+91d)"
+    End If
     Dim dNext As Date: dNext = CDate(nd)
     With ws.cells(PG_DT_VAL, 1)
         .Value = dNext: .NumberFormat = "yyyy/mm/dd ddd"
@@ -712,7 +869,7 @@ Private Sub RenderDates(ws As Worksheet, ByVal mkt As String, ByVal ySym As Stri
     Else
         ws.cells(PG_DT_VAL, 4).Value = "-"
     End If
-    ws.cells(PG_DT_VAL, 5).Value = m_filed(m_n) & "  " & m_form(m_n)
+    ws.cells(PG_DT_VAL, 5).Value = m_filed(m_real) & "  " & m_form(m_real)
     With ws.cells(PG_DT_VAL, 7)
         .Value = src: .Font.Color = CLR_MUTED
     End With
@@ -722,16 +879,16 @@ End Sub
 Private Function ProjectNext(ByVal mkt As String) As Date
     Dim d As Date
     If mkt = "TW" Then
-        Dim qe As Date: qe = CDate(m_end(m_n))
+        Dim qe As Date: qe = CDate(m_end(m_real))
         Do
             qe = DateSerial(Year(qe), Month(qe) + 4, 0)          ' last day of the quarter after
             d = TwDeadline(qe)
         Loop While d < Date
     Else
-        If m_n >= 4 Then
-            d = CDate(m_filed(m_n - 3)) + 364
+        If m_real >= 4 Then
+            d = CDate(m_filed(m_real - 3)) + 364
         Else
-            d = CDate(m_filed(m_n)) + 91
+            d = CDate(m_filed(m_real)) + 91
         End If
         Do While d < Date: d = d + 91: Loop
     End If
@@ -847,7 +1004,7 @@ Private Function RenderTable(ws As Worksheet, ByVal mkt As String, prices As Obj
     ReDim dy(1 To n): ReDim payout(1 To n)
 
     For i = 1 To n
-        px(i) = Num(NearestPriceOnOrBefore(prices, m_end(i)))
+        If m_pend(i) Then px(i) = "" Else px(i) = Num(NearestPriceOnOrBefore(prices, m_end(i)))
         mcap(i) = Mu(px(i), shares(i))
         sps(i) = Dv(rev(i), shares(i))
         pe(i) = Dv(px(i), eps(i))
@@ -911,8 +1068,21 @@ Private Function RenderTable(ws As Worksheet, ByVal mkt As String, prices As Obj
         .Font.Color = RR4_ACCENT: .Font.Bold = True
         .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Color = RR4_LINE
     End With
+    For i = 1 To n
+        If m_pend(i) Then
+            With ws.cells(r, i + 1)
+                .Font.Color = CLR_MUTED
+                .AddComment "Not reported yet - placeholder for calendar " & m_cq(i) & " (period end is an estimate). Fills in once the filing is out."
+            End With
+        End If
+    Next i
     r = r + 1
-    Call TextRow(ws, r, "Period end", m_end)
+    Dim endTxt() As String: ReDim endTxt(1 To n)
+    For i = 1 To n
+        endTxt(i) = IIf(m_pend(i), "~", "") & m_end(i)
+    Next i
+    Call TextRow(ws, r, "Period end", endTxt)
+    Call TextRow(ws, r, "Calendar qtr", m_cq)
     Call TextRow(ws, r, "Filed" & IIf(mkt = "TW", " (deadline)", ""), m_filed)
     Call TextRow(ws, r, "Form", m_form)
 
@@ -1016,6 +1186,8 @@ Private Function RenderTable(ws As Worksheet, ByVal mkt As String, prices As Obj
     Call BandRow(ws, PG_TBL_HDR + 1, bc, "P/E", pe)
     Call BandRow(ws, PG_TBL_HDR + 2, bc, "P/S", ps)
 
+    m_pe = pe: m_ps = ps: m_evEb = evEb: m_evS = evS
+
     Call WriteFlag(ws, lastRow + 1, srcNote)
     RenderTable = lastRow + 1
 End Function
@@ -1092,6 +1264,213 @@ Private Sub WriteFlag(ws As Worksheet, ByVal r As Long, ByVal txt As String)
         .Font.Italic = True
         .HorizontalAlignment = xlLeft
     End With
+End Sub
+
+' ----------------------------------------------------------------
+'  Valuation river (streamgraph)   2026-09-30
+'  P/E, P/S, EV/EBITDA and EV/Sales from the table, each turned into its
+'  percentile inside its own history (share of the shown quarters whose
+'  multiple is <= that quarter's), so the four layers are comparable and can
+'  be stacked - raw multiples cannot be added.  Layer thickness = how rich
+'  that multiple is versus its own history, NOT its size.  A quarter where
+'  any of the four is missing or <= 0 is dropped from the chart (percentiles
+'  use only the quarters shown).  Excel has no streamgraph: a stacked area
+'  whose first series is an invisible spacer, (Tmax - T) / 2, centres the
+'  river.  Stack order is EV/Sales first, so top -> bottom reads like the table.
+'  The numbers behind it sit in a block far right of the table (RIVER_DATA_COL).
+' ----------------------------------------------------------------
+Private Sub DrawMultipleRiver(ws As Worksheet, ByVal atRow As Long)
+    On Error GoTo Fail
+    If Not IsArray(m_pe) Then Exit Sub
+    Dim src(1 To 4) As Variant
+    src(1) = m_pe: src(2) = m_ps: src(3) = m_evEb: src(4) = m_evS
+    Dim mname As Variant, mclr As Variant
+    mname = Array("P/E", "P/S", "EV/EBITDA", "EV/Sales")
+    mclr = Array(RR4_ACCENT, RGB(0, 140, 140), RGB(130, 90, 190), RGB(50, 110, 190))
+
+    ' quarters where all four multiples exist and are positive
+    Dim n As Long: n = m_n
+    Dim keep() As Long, kq As Long, i As Long, k As Long, okQ As Boolean
+    ReDim keep(1 To n)
+    For i = 1 To n
+        okQ = True
+        For k = 1 To 4
+            If Not HasVal(src(k)(i)) Then
+                okQ = False
+            ElseIf CDbl(src(k)(i)) <= 0 Then
+                okQ = False
+            End If
+        Next k
+        If okQ Then kq = kq + 1: keep(kq) = i
+    Next i
+    If kq < 3 Then
+        Call WriteFlag(ws, atRow, "Valuation river needs 3+ quarters where P/E, P/S, EV/EBITDA and EV/Sales are all positive (found " & kq & ").")
+        Exit Sub
+    End If
+
+    ' percentile of each multiple inside the shown quarters
+    Dim pv() As Double, tot() As Double, tmax As Double
+    ReDim pv(1 To 4, 1 To kq): ReDim tot(1 To kq)
+    Dim j As Long, j2 As Long, cnt As Long, v As Double
+    For k = 1 To 4
+        For j = 1 To kq
+            v = CDbl(src(k)(keep(j)))
+            cnt = 0
+            For j2 = 1 To kq
+                If CDbl(src(k)(keep(j2))) <= v Then cnt = cnt + 1
+            Next j2
+            pv(k, j) = 100# * cnt / kq
+            tot(j) = tot(j) + pv(k, j)
+        Next j
+    Next k
+    For j = 1 To kq
+        If tot(j) > tmax Then tmax = tot(j)
+    Next j
+
+    Dim ttl As String
+    ttl = "VALUATION RIVER  .  P/E, P/S, EV/EBITDA, EV/Sales as percentile of own history  .  " & kq & "Q"
+    If kq < n Then ttl = ttl & " (" & (n - kq) & " with a negative/missing multiple dropped)"
+    Call Section(ws, atRow, ttl)
+
+    ' data block: label | BASE | 4 layers bottom -> top | raw multiples in the same order
+    Dim dc As Long: dc = RIVER_DATA_COL
+    Dim dr As Long: dr = atRow + 1
+    Dim s As Long
+    With ws.cells(atRow, dc)
+        .Value = "RIVER DATA - layers are percentiles (0-100), raw multiples to the right"
+        .Font.Color = CLR_MUTED
+    End With
+    ws.cells(dr, dc).Value = "QTR"
+    ws.cells(dr, dc + 1).Value = "BASE"
+    For s = 1 To 4
+        ws.cells(dr, dc + 1 + s).Value = CStr(mname(4 - s))
+        ws.cells(dr, dc + 5 + s).Value = CStr(mname(4 - s)) & " x"
+    Next s
+    For j = 1 To kq
+        ws.cells(dr + j, dc).NumberFormat = "@"
+        ws.cells(dr + j, dc).Value = m_lbl(keep(j))
+        ws.cells(dr + j, dc + 1).Value = (tmax - tot(j)) / 2#
+        For s = 1 To 4
+            ws.cells(dr + j, dc + 1 + s).Value = pv(5 - s, j)
+            ws.cells(dr + j, dc + 5 + s).Value = CDbl(src(5 - s)(keep(j)))
+        Next s
+    Next j
+    With ws.Range(ws.cells(dr, dc), ws.cells(dr + kq, dc + 9))
+        .Font.Color = CLR_MUTED
+        .HorizontalAlignment = xlRight
+    End With
+    ws.Range(ws.cells(dr + 1, dc + 1), ws.cells(dr + kq, dc + 5)).NumberFormat = "0.0"
+    ws.Range(ws.cells(dr + 1, dc + 6), ws.cells(dr + kq, dc + 9)).NumberFormat = "0.00"
+
+    m_rvAt = atRow: m_rvDr = dr: m_rvDc = dc: m_rvKq = kq: m_rvTmax = tmax
+    For k = 1 To 4: m_rvLast(k) = pv(k, kq): Next k
+    m_rvOn = True                                    ' the chart itself is built by BuildRiverChart
+    Exit Sub
+Fail:
+    Dim msg As String: msg = Err.Description
+    On Error Resume Next
+    Call WriteFlag(ws, atRow, "Valuation river failed: " & msg)
+End Sub
+
+' Second half of the river: runs after NavAdd (the bar inserts 4 rows + 1 column,
+' and a chart series made before that keeps pointing at the old cells).
+Private Sub BuildRiverChart(ws As Worksheet)
+    If Not m_rvOn Then Exit Sub
+    m_rvOn = False
+    On Error GoTo Fail
+    Dim mname As Variant, mclr As Variant
+    mname = Array("P/E", "P/S", "EV/EBITDA", "EV/Sales")
+    mclr = Array(RR4_ACCENT, RGB(0, 140, 140), RGB(130, 90, 190), RGB(50, 110, 190))
+    Dim lr As Long: lr = NavOffset(ws)
+    Dim lc As Long: lc = NavLeft(ws)
+    Dim dr As Long: dr = m_rvDr + lr
+    Dim dc As Long: dc = m_rvDc + lc
+    Dim kq As Long: kq = m_rvKq
+    Dim tmax As Double: tmax = m_rvTmax
+    Dim s As Long
+
+    ' chart
+    Dim wdt As Double
+    wdt = ws.Range(ws.cells(dr, 1 + lc), ws.cells(dr, m_n + 1 + lc)).Width
+    Dim co As ChartObject
+    Set co = ws.ChartObjects.Add(ws.cells(dr, 1 + lc).Left, ws.cells(dr, 1 + lc).Top + 4, wdt, RIVER_H)
+    co.Name = RIVER_NAME
+    co.Placement = xlMove
+    Dim ch As Chart: Set ch = co.Chart
+    ch.ChartType = xlAreaStacked
+    Do While ch.SeriesCollection.count > 0
+        ch.SeriesCollection(1).Delete
+    Loop
+    Dim xr As Range: Set xr = ws.Range(ws.cells(dr + 1, dc), ws.cells(dr + kq, dc))
+    Dim sname As String
+    For s = 0 To 4
+        If s = 0 Then sname = "BASE" Else sname = CStr(mname(4 - s))
+        With ch.SeriesCollection.NewSeries
+            .Name = sname
+            .Values = ws.Range(ws.cells(dr + 1, dc + 1 + s), ws.cells(dr + kq, dc + 1 + s))
+            .XValues = xr
+        End With
+    Next s
+
+    ch.HasTitle = False
+    With ch.ChartArea
+        .Format.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        .Format.Line.Visible = msoFalse
+    End With
+    ch.PlotArea.Format.Fill.Visible = msoFalse
+    On Error Resume Next
+    ch.ChartArea.Font.Name = FONT_FACE
+    On Error GoTo Fail
+
+    With ch.SeriesCollection(1)                      ' invisible spacer
+        .Format.Fill.Visible = msoFalse
+        .Format.Line.Visible = msoFalse
+    End With
+    Dim lbl As String
+    For s = 1 To 4
+        With ch.SeriesCollection(s + 1)
+            .Format.Fill.Visible = msoTrue
+            .Format.Fill.Solid
+            .Format.Fill.ForeColor.RGB = CLng(mclr(4 - s))
+            .Format.Line.Visible = msoTrue
+            .Format.Line.ForeColor.RGB = RGB(0, 0, 0)
+            .Format.Line.Weight = 1
+            lbl = CStr(mname(4 - s)) & " P" & Format(m_rvLast(5 - s), "0")
+            .Points(kq).HasDataLabel = True
+            .Points(kq).DataLabel.Text = lbl
+            .Points(kq).DataLabel.Font.Color = RGB(255, 255, 255)
+            .Points(kq).DataLabel.Font.Bold = True
+            .Points(kq).DataLabel.Font.Size = 8
+        End With
+    Next s
+
+    With ch.Axes(xlValue)
+        .MinimumScale = -tmax * 0.03
+        .MaximumScale = tmax * 1.03
+        .Crosses = xlMinimum
+        .TickLabelPosition = xlNone
+        .HasMajorGridlines = False
+        .Format.Line.Visible = msoFalse
+    End With
+    With ch.Axes(xlCategory)
+        .AxisBetweenCategories = False
+        .TickLabelPosition = xlTickLabelPositionLow
+        .TickLabels.Font.Color = CLR_TEXT
+        .TickLabels.Font.Size = 8
+        .HasMajorGridlines = False
+        .Format.Line.ForeColor.RGB = RR4_LINE
+    End With
+    ch.HasLegend = True
+    ch.Legend.Position = xlLegendPositionBottom
+    ch.Legend.Font.Color = CLR_TEXT
+    ch.Legend.Font.Size = 9
+    ch.Legend.LegendEntries(1).Delete                ' the spacer
+    Exit Sub
+Fail:
+    Dim msg As String: msg = Err.Description
+    On Error Resume Next
+    ws.cells(m_rvAt + lr, 1 + lc).Value = "Valuation river chart failed: " & msg
+    ws.cells(m_rvAt + lr, 1 + lc).Font.Color = CLR_FLAG
 End Sub
 
 ' ----------------------------------------------------------------
