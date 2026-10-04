@@ -1720,7 +1720,9 @@ expense。來源：損益表營業利益與利息費用（10-Q/10-K 損益表或
    仿照鄰近卡片格式新增一張 `.wk-card`，連結指向
    `https://globe-invest.up.railway.app/research/<TICKER>_..._Analysis.html`；同時把該公司的
    下次財報日期加進 `EARN_DATES` 陣列（依日期遞增排序插入正確位置），並在新卡片的 `.wk-info`
-   內加對應的 `.wk-next-earn` 行（見該區塊上方的 Maintenance 註解）。**新卡片務必帶
+   內加對應的 `.wk-next-earn` 行（見該區塊上方的 Maintenance 註解）。
+   **改完 `EARN_DATES` 一定要對 `index.html` 內嵌腳本跑 `node --check`**（每個物件之間要有逗號，
+   漏一個整頁腳本都不會執行，見檔尾「事故紀錄」2026-10-04）。**新卡片務必帶
    `data-published="YYYY-MM-DD"` 屬性**——Timeline 頁面（`#page-timeline`）沒有獨立資料來源，
    完全是 `buildTimelineRows()` 在讀取 `#page-works` 下所有帶 `data-published` 的 `.wk-card`
    自動產生排序清單，漏了這個屬性等於這篇報告不會出現在 Timeline。上架後應打開 Timeline
@@ -1778,3 +1780,34 @@ expense。來源：損益表營業利益與利息費用（10-Q/10-K 損益表或
 **輸出**：直接在對話框給出 500 字版本，六段依序標註對應第幾點（比照模板檔裡精材 3374
 的演練格式），不需要另存新檔、不需要鏡像上架。若字數明顯超支（如超過 550 字），依模板
 「填寫規則」自我檢查是哪一段邏輯還沒收斂，而不是逐字砍到剛好 500。
+
+## 事故紀錄
+
+> 之後遇到的線上事故、踩坑依時間倒序累積在這一節；一則一個 `###`，寫症狀、根因、診斷步驟、預防。
+
+### 首頁整段腳本壞掉：`EARN_DATES` 少一個逗號（2026-10-04）
+
+- **症狀**：`ofw.up.railway.app` 首頁輪播只剩空白長方形框、導覽列（Home→Works 等）點不動，
+  訪客與已登入都中，桌機重現，**重新整理常常無法恢復**。
+- **根因**：`app/OutsideFramework/index.html` 的 `EARN_DATES` 陣列裡，某一行（NVIDIA）結尾少了
+  逗號。`index.html` 只有**一個**大型內嵌 `<script>`，語法錯誤會讓整段都不執行：輪播圖是靠腳本把
+  `data-src` 填進 `src`（沒執行→空框）、導覽切換函式根本沒定義（→點不動）。
+  引入：`3763183`（上架 4573／4979／3711 時插入新日期）；修復：`bac3cf1`。
+- **為什麼看起來是隨機的**：不是隨機，壞版本上線後就一直壞。時好時壞是因為部分瀏覽器還拿著
+  更早的舊頁面快取（舊版語法正確、可正常運作）。**遇到「有時好有時壞」先查語法錯誤，不要先猜網路或圖片。**
+- **診斷步驟**（照這個順序，約 1 分鐘）：
+  1. 瀏覽器 Console 看到 `Uncaught SyntaxError: Unexpected token '{'` 就是這類問題。
+  2. 抓**線上實際回傳的 HTML**，把內嵌腳本抽出來讓 node 檢查，錯誤會直接指到行號：
+     ```
+     curl -s https://ofw.up.railway.app/ -o live.html
+     node -e "const h=require('fs').readFileSync('live.html','utf8');[...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach((m,i)=>require('fs').writeFileSync('s'+i+'.js',m[1]))"
+     node --check s0.js
+     ```
+  3. 檢查本地原始檔時，要先移除 `<!--AUTH_TOKENS_SCRIPT-->`（伺服器才會替換它），再抽出腳本檢查。
+- **預防**：**任何動到 `app/OutsideFramework/index.html` 內嵌 JS 的改動（尤其是 `EARN_DATES`、
+  Works 卡片相關陣列）提交前，一律照上面第 2、3 點對本地檔跑一次 `node --check`**，通過再 commit／push。
+  `EARN_DATES` 每個物件之間都要有逗號（插入新日期時最容易漏掉相鄰那一行的結尾逗號）。
+  repo 目前沒有 CI 做這個檢查，所以只能靠這條人工規則。
+- **驗證陷阱**：Claude 內建瀏覽器面板隱藏時 `innerWidth` 為 0，`matchMedia('(max-width:640px)')`
+  會判成手機，首頁輪播的 JS 會**直接跳過**（圖片 `src` 不會填、不會複製成兩份），看起來像沒載入，
+  其實是正常的手機分支。驗證輪播要先確認視窗寬度，或改用桌機寬度的瀏覽器。
