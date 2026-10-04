@@ -789,6 +789,9 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
 
 ### RR4 頁被 UP 清空、存檔後才發現（2026-09-28 事故紀錄）
 
+- **HARD RULES 區塊（2026-10-05，`DrawRulesBlock`）**：RR4 頁持倉表下方兩行 disclaimer（`lastDataRow+3/+4`）之後、WATCHLIST 標題（`RR4_WL_TITLE`＝58）之前，佔 `lastDataRow+5`／`+6` 兩列（目前 8 檔＝56／57，57 緊貼 WATCHLIST 標題、中間沒有空列）。B 欄標題 `HARD RULES`（`RR4_ACCENT`），C 欄起每列一個字串（Consolas 9、不合併、靠文字溢出）：第 1 列＝規則 1 單檔上限 ≤20% 權益｜2 主題上限（同供應鏈）≤40%｜5 贏後降級（累計損益創新高後 5 個交易日內新倉位上限減半）；第 2 列＝6 停損冷卻（單筆虧損 >1% 權益後 3 個交易日內不得買回同商品／類別）｜7 延伸限制（買進價高於 EMA13 達 8% 以上不買）。編號沿用使用者習慣（3、4 未列）。
+  **純靜態文字、無事件、無資料來源**，由 `RebuildPortfolioDashboard` 在 `DrawDisclaimer` 後呼叫重畫（UP 會清整頁，所以不需 read-before-clear）。唯一動態處：持倉表 WT% 最大值 >20% 時，規則 1 那段文字變紅（UP 時判斷，非即時）。第 2 列若超過 `RR4_WL_TITLE-1`（持倉多到 ≥9 檔以上）區塊會**自動略過**並在狀態列提示，不會蓋到 WATCHLIST／TO-DO；屆時得挪版面。中文以 `ChrW` 組字，.bas 維持 ASCII。備份 `Portfolio\backup-pre-rules-20261005-0022.xlsm`。
+
 擴充 TO-DO 的 session 在活頁簿上跑 `UP`，`RebuildPortfolioDashboard` 先清空整張 RR4 頁、之後在
 VBE 編譯／中斷模式卡住，**Excel 卻把清空狀態存了檔**（12:21），連 AutoRecover（`%APPDATA%\Microsoft\Excel\*.xlsb`，
 12:22）也是空的，桌面 `Portfolio\` 底下沒有更早的備份。這就是「卡住」的真面目——症狀是 VBE 中斷，

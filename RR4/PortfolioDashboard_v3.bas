@@ -309,6 +309,7 @@ Sub RebuildPortfolioDashboard()
     Call DrawDisclaimer(wsP, lastDataRow)
     Call RenderTickerPanel(tiTicker, tiTarget)
     Call LogHistory(totalMktTWD, totalUnrlTWD + realPnL, realPnL)
+    Call DrawRulesBlock(wsP, lastDataRow)
     Call DrawRealizedChart(wsP)     ' after LogHistory, so today's row is on the line
 
     Application.ScreenUpdating = True
@@ -2855,6 +2856,61 @@ Private Sub DrawDisclaimer(ws As Worksheet, startRow As Long)
     ws.Range(ws.cells(r, RR4_LEFT + 1), ws.cells(r, RR4_LEFT + 16)).Merge
     On Error GoTo 0
     ws.cells(r, RR4_LEFT + 1).Value = "On the way in Medium-High  Beta Between 2-2.5 , Remember alwaus do the Eliminate underperformers"
+' HARD RULES (2026-10-05): static 2-row reminder between the disclaimer lines
+' (lastDataRow+3/+4) and the WATCHLIST title (RR4_WL_TITLE). Rows lastDataRow+5
+' and +6, B = title, C = text (plain overflow, no merges). Nothing is moved: if
+' the second row would pass RR4_WL_TITLE-1 (too many positions) the block is
+' skipped and the status bar says so. Rule 1 turns red while the largest WT%
+' exceeds 20%. Rules are numbered as the user knows them (1,2,5 / 6,7).
+Private Sub DrawRulesBlock(ws As Worksheet, lastDataRow As Long)
+    Dim r1 As Long: r1 = lastDataRow + 5
+    Dim r2 As Long: r2 = r1 + 1
+    If r2 > RR4_WL_TITLE - 1 Then
+        Application.StatusBar = "HARD RULES block skipped - no free rows above WATCHLIST"
+        Exit Sub
+    End If
+    Dim s1 As String, s2 As String
+    s1 = "1 " & ChrW(&H55AE) & ChrW(&H6A94) & ChrW(&H4E0A) & ChrW(&H9650) & ": " & ChrW(&H55AE) & ChrW(&H4E00) & ChrW(&H6301) & ChrW(&H80A1) & " " & ChrW(&H2264) & " 20% " & ChrW(&H6B0A) & ChrW(&H76CA)
+    s1 = s1 & "   |   2 " & ChrW(&H4E3B) & ChrW(&H984C) & ChrW(&H4E0A) & ChrW(&H9650) & ": " & ChrW(&H540C) & ChrW(&H4E00) & ChrW(&H4F9B) & ChrW(&H61C9) & ChrW(&H93C8) & ChrW(&H5408) & ChrW(&H8A08) & " " & ChrW(&H2264) & " 40%"
+    s1 = s1 & "   |   5 " & ChrW(&H8D0F) & ChrW(&H5F8C) & ChrW(&H964D) & ChrW(&H7D1A) & ": " & ChrW(&H7D2F) & ChrW(&H8A08) & ChrW(&H640D) & ChrW(&H76CA) & ChrW(&H5275) & ChrW(&H65B0) & ChrW(&H9AD8) & ChrW(&H5F8C) & " 5 " & ChrW(&H500B) & ChrW(&H4EA4) & ChrW(&H6613) & ChrW(&H65E5) & ChrW(&H5167) & ChrW(&HFF0C) & ChrW(&H65B0) & ChrW(&H5009) & ChrW(&H4F4D) & ChrW(&H4E0A) & ChrW(&H9650) & ChrW(&H6E1B) & ChrW(&H534A)
+    s2 = "6 " & ChrW(&H505C) & ChrW(&H640D) & ChrW(&H51B7) & ChrW(&H537B) & ": " & ChrW(&H55AE) & ChrW(&H7B46) & ChrW(&H8667) & ChrW(&H640D) & " >1% " & ChrW(&H6B0A) & ChrW(&H76CA) & ChrW(&H5F8C) & ChrW(&HFF0C) & " 3 " & ChrW(&H500B) & ChrW(&H4EA4) & ChrW(&H6613) & ChrW(&H65E5) & ChrW(&H5167) & ChrW(&H4E0D) & ChrW(&H5F97) & ChrW(&H8CB7) & ChrW(&H56DE) & ChrW(&H540C) & ChrW(&H5546) & ChrW(&H54C1) & ChrW(&HFF0F) & ChrW(&H540C) & ChrW(&H985E) & ChrW(&H5225)
+    s2 = s2 & "   |   7 " & ChrW(&H5EF6) & ChrW(&H4F38) & ChrW(&H9650) & ChrW(&H5236) & ": " & ChrW(&H8CB7) & ChrW(&H9032) & ChrW(&H50F9) & ChrW(&H9AD8) & ChrW(&H65BC) & " EMA13 " & ChrW(&H9054) & " 8% " & ChrW(&H4EE5) & ChrW(&H4E0A) & ChrW(&H4E0D) & ChrW(&H8CB7)
+
+    Dim c0 As Long: c0 = RR4_LEFT + 1
+    With ws.cells(r1, c0)
+        .Value = "HARD RULES"
+        .Font.Color = RR4_ACCENT
+        .Font.Bold = True
+        .Font.Size = 10
+        .HorizontalAlignment = xlLeft
+    End With
+    Dim r As Long
+    For r = r1 To r2
+        ws.Rows(r).RowHeight = 18
+        With ws.cells(r, c0 + 1)
+            .Value = IIf(r = r1, s1, s2)
+            .Font.Name = "Consolas"
+            .Font.Size = 9
+            .Font.Bold = False
+            .Font.Color = RGB(230, 230, 230)
+            .HorizontalAlignment = xlLeft
+            .WrapText = False
+        End With
+    Next r
+    ' rule 1 text red while the largest single-name weight breaks the cap
+    Dim lastR As Long: lastR = LastPositionRow(ws)
+    Dim mx As Double, wr As Long
+    For wr = RR4_POS_FIRST To lastR
+        If NumOr0(ws.cells(wr, RR4_LEFT + 12).Value) > mx Then mx = NumOr0(ws.cells(wr, RR4_LEFT + 12).Value)
+    Next wr
+    If mx > 0.2 Then ws.cells(r1, c0 + 1).Characters(1, InStr(s1, "|") - 2).Font.Color = RGB(255, 80, 80)
+    With ws.Range(ws.cells(r2, c0), ws.cells(r2, c0 + 16)).Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .Color = RR4_LINE
+        .Weight = xlThin
+    End With
+End Sub
+
     ws.cells(r, RR4_LEFT + 1).Font.Color = RR4_ACCENT
     ws.cells(r, RR4_LEFT + 1).Font.Italic = True
     ws.cells(r, RR4_LEFT + 1).HorizontalAlignment = xlLeft
