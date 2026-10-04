@@ -124,9 +124,14 @@ Public Sub FetchSECFilings()
     ' observed in CRWV's data (its short-term debt tags are equally absent for
     ' the same quarter this fallback fires for), but worth re-checking if EV
     ' ever looks inflated for a filer using this fallback.
+    ' 2026-10-04: MU stopped tagging LongTermDebt after FY2026Q1 and reports only
+    ' LongTermDebtAndCapitalLeaseObligations (debt + finance leases, wider basis),
+    ' so it is a last-resort gap-fill after the two above.
     Set mapLongTermDebt = MergeConceptMapsFallback( _
-        BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD"), _
-        BuildConceptMap(usgaapRaw, Array("DebtInstrumentCarryingAmount"), "USD"))
+        MergeConceptMapsFallback( _
+            BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD"), _
+            BuildConceptMap(usgaapRaw, Array("DebtInstrumentCarryingAmount"), "USD")), _
+        BuildConceptMap(usgaapRaw, Array("LongTermDebtAndCapitalLeaseObligations"), "USD"))
     Set mapStockholdersEquity = BuildConceptMap(usgaapRaw, Array("StockholdersEquity"), "USD")
     Set mapEffectiveTaxRate = BuildConceptMap(usgaapRaw, Array("EffectiveIncomeTaxRateContinuingOperations"), "pure")
     Set mapCapEx = BuildConceptMap(usgaapRaw, Array("PaymentsToAcquirePropertyPlantAndEquipment"), "USD")
@@ -1213,9 +1218,14 @@ Public Sub RefreshWatchlistRow(ByVal ws As Worksheet, ByVal r As Long, ByVal tic
     ' comment there for why (a filer can drop the current/noncurrent split
     ' entirely in favor of one DebtInstrumentCarryingAmount total, as CRWV did
     ' starting its FY2026Q2 10-Q).
+    ' 2026-10-04: MU stopped tagging LongTermDebt after FY2026Q1 and reports only
+    ' LongTermDebtAndCapitalLeaseObligations (debt + finance leases, wider basis),
+    ' so it is a last-resort gap-fill after the two above.
     Set mapLongTermDebt = MergeConceptMapsFallback( _
-        BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD"), _
-        BuildConceptMap(usgaapRaw, Array("DebtInstrumentCarryingAmount"), "USD"))
+        MergeConceptMapsFallback( _
+            BuildConceptMap(usgaapRaw, Array("LongTermDebtNoncurrent", "LongTermDebt"), "USD"), _
+            BuildConceptMap(usgaapRaw, Array("DebtInstrumentCarryingAmount"), "USD")), _
+        BuildConceptMap(usgaapRaw, Array("LongTermDebtAndCapitalLeaseObligations"), "USD"))
     Set mapShortTermDebt = BuildConceptMap(usgaapRaw, Array("ShortTermBorrowings", "DebtCurrent", "LongTermDebtCurrent"), "USD")
     Set mapCash = BuildConceptMap(usgaapRaw, Array("CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"), "USD")
     Set mapOperatingIncome = BuildConceptMap(usgaapRaw, Array("OperatingIncomeLoss"), "USD")
