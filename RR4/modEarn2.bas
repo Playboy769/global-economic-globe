@@ -92,6 +92,7 @@ Private Const R_RING1 As Long = 20              ' peer rings sit on rows 20-21
 Private Const R_AXIS As Long = 22
 Private Const R_TICK As Long = 23
 Private Const R_LEG As Long = 24
+Private Const RING_STEP As Double = 50          ' vertical distance between stacked ring levels (pt)
 Private Const R_THDR As Long = 25
 Private Const R_THGAP As Long = 26              ' spacer between the table header and the first row
 Private Const R_TFIRST As Long = 27
@@ -231,6 +232,18 @@ Private Function RingColor(ByVal cls As Long) As Long
         Case 3: RingColor = RGB(128, 128, 128)
         Case 4: RingColor = RGB(84, 84, 84)
         Case Else: RingColor = RGB(58, 58, 58)
+    End Select
+End Function
+
+' Dim grey-scale version of RingColor for peers that are not the selected ticker: same class
+' ordering (good lighter, bad darker) so direction is still readable, none of the hue.
+Private Function GreyRingColor(ByVal cls As Long) As Long
+    Select Case cls
+        Case 1: GreyRingColor = RGB(120, 120, 120)
+        Case 2: GreyRingColor = RGB(54, 54, 54)
+        Case 3: GreyRingColor = RGB(82, 82, 82)
+        Case 4: GreyRingColor = RGB(66, 66, 66)
+        Case Else: GreyRingColor = RGB(44, 44, 44)
     End Select
 End Function
 
@@ -1537,6 +1550,54 @@ Private Sub DrawMap()
     Dim axL As Double, axR As Double, axY As Double
     axL = Cl(R_AXIS, 0).Left + 62
     axR = Cl(R_AXIS, NUNIT - 1).Left + Cl(R_AXIS, NUNIT - 1).Width - 30
+
+    ' peers with data, ascending by INDEX. Overlapping rings are spread left to right and,
+    ' where that still leaves them closer than one ring (38 pt) on the same row, stacked on up
+    ' to 5 levels (RING_STEP pt apart). Levels need height, so the MLBL row grows to fit
+    ' BEFORE any y position is read from cell geometry.
+    Dim n As Long, i As Long, j As Long, tmp As Long
+    Dim ord() As Long: ReDim ord(1 To IIf(p_n > 0, p_n, 1))
+    For i = 1 To p_n
+        If p_has(i) Then n = n + 1: ord(n) = i
+    Next i
+    For i = 2 To n                                       ' insertion sort: stable, INDEX ascending
+        tmp = ord(i): j = i - 1
+        Do While j >= 1
+            If p_idx(ord(j)) > p_idx(tmp) + 0.0000000001 Then
+                ord(j + 1) = ord(j): j = j - 1
+            Else
+                Exit Do
+            End If
+        Loop
+        ord(j + 1) = tmp
+    Next i
+    Dim xt() As Double, xr() As Double, lv() As Long, ix As Double
+    ReDim xt(1 To IIf(n > 0, n, 1)): ReDim xr(1 To IIf(n > 0, n, 1)): ReDim lv(1 To IIf(n > 0, n, 1))
+    Dim lastX(0 To 4) As Double, lvl As Long, best As Long, maxLev As Long
+    For i = 1 To n
+        ix = p_idx(ord(i))
+        If ix > 0.5 Then ix = 0.5
+        If ix < -0.5 Then ix = -0.5
+        xt(i) = axL + (ix + 0.5) * (axR - axL)
+    Next i
+    If n > 0 Then Call SpreadX(xt, xr, n, 20, axL - 6, axR + 6)
+    For lvl = 0 To 4: lastX(lvl) = -1E+30: Next lvl
+    For i = 1 To n
+        best = -1
+        For lvl = 0 To 4
+            If xr(i) - lastX(lvl) >= 37.99 Then best = lvl: Exit For
+        Next lvl
+        If best < 0 Then                                  ' all 5 levels busy: take the freest one
+            best = 0
+            For lvl = 1 To 4
+                If lastX(lvl) < lastX(best) Then best = lvl
+            Next lvl
+        End If
+        lv(i) = best: lastX(best) = xr(i)
+        If best > maxLev Then maxLev = best
+    Next i
+    m_ws.Rows(R_MLBL + m_off).RowHeight = 17 + RING_STEP * maxLev
+
     axY = Cl(R_AXIS, 0).Top + Cl(R_AXIS, 0).Height / 2
 
     ' axis + ticks + tick labels
@@ -1582,71 +1643,63 @@ Private Sub DrawMap()
     Next q
     Call AddText("E2_KEYT", "key", kcx, kcy + 22.5 + 6.25 + 6 + 6.5, 24, 7.5, RGB(130, 130, 130), False, 2)
 
-    ' peers with data, ascending by INDEX so overlapping rings can be spread left to right
-    Dim n As Long, i As Long, j As Long, tmp As Long
-    Dim ord() As Long: ReDim ord(1 To IIf(p_n > 0, p_n, 1))
-    For i = 1 To p_n
-        If p_has(i) Then n = n + 1: ord(n) = i
-    Next i
     If n = 0 Then Exit Sub
-    For i = 2 To n                                       ' insertion sort: stable, INDEX ascending
-        tmp = ord(i): j = i - 1
-        Do While j >= 1
-            If p_idx(ord(j)) > p_idx(tmp) + 0.0000000001 Then
-                ord(j + 1) = ord(j): j = j - 1
-            Else
-                Exit Do
-            End If
-        Loop
-        ord(j + 1) = tmp
-    Next i
-    Dim xt() As Double, xr() As Double, ix As Double
-    ReDim xt(1 To n): ReDim xr(1 To n)
+
+    Dim anySel As Boolean
     For i = 1 To n
-        ix = p_idx(ord(i))
-        If ix > 0.5 Then ix = 0.5
-        If ix < -0.5 Then ix = -0.5
-        xt(i) = axL + (ix + 0.5) * (axR - axL)
+        If p_sel(ord(i)) Then anySel = True
     Next i
-    Call SpreadX(xt, xr, n, 38, axL - 6, axR + 6)
 
     Dim ringY As Double: ringY = Cl(R_RING1, 0).Top + Cl(R_RING1, 0).Height
-    Dim lblY As Double: lblY = Cl(R_MLBL, 0).Top + Cl(R_MLBL, 0).Height / 2 - 1
+    Dim ringCy As Double, lblY As Double
     Dim it As Long, cols(1 To 7) As Long, bkt As String, key As String, lw As Double
-    For i = 1 To n
-        j = ord(i)
-        key = ShapeKey(p_tk(j))
-        For it = 1 To 7: cols(it) = RingColor(VClass(p_v(j, it))): Next it
-        bkt = BucketOf(p_idx(j))
-        Call AddDot("E2_DOT_" & key, xt(i), axY, 6, BucketColor(bkt))
-        Call AddRing("E2_ARC_" & key, xr(i), ringY, 30, cols)
-        lw = Len(p_tk(j)) * 5.6 + 9
-        If p_sel(j) Then
-            Dim so As Object: Set so = m_ws.Shapes.AddShape(9, xr(i) - 17.5, ringY - 17.5, 35, 35)
-            so.Name = "E2_SEL_" & key
-            so.Fill.Visible = msoFalse
-            so.Line.ForeColor.RGB = RR4_ACCENT
-            so.Line.Weight = 1.75
-            so.Placement = xlMove
-            Dim bx As Object: Set bx = m_ws.Shapes.AddShape(5, xr(i) - lw / 2, lblY - 7.5, lw, 15)
-            bx.Name = "E2_LBL_" & key
-            bx.Fill.ForeColor.RGB = RR4_ACCENT
-            bx.Line.Visible = msoFalse
-            bx.Placement = xlMove
-            With bx.TextFrame2
-                .MarginLeft = 0: .MarginRight = 0: .MarginTop = 0: .MarginBottom = 0
-                .WordWrap = msoFalse: .VerticalAnchor = 3
-                .TextRange.Text = p_tk(j)
-                .TextRange.Font.Name = FONT_FACE
-                .TextRange.Font.Size = 7.5
-                .TextRange.Font.Bold = msoTrue
-                .TextRange.Font.Fill.ForeColor.RGB = RGB(0, 0, 0)
-                .TextRange.ParagraphFormat.Alignment = 2
-            End With
-        Else
-            Call AddText("E2_LBL_" & key, p_tk(j), xr(i), lblY, lw, 7.5, RR4_ACCENT, True, 2)
-        End If
-    Next i
+    Dim pass As Long
+    For pass = 0 To 1                                     ' pass 0 = everyone else, pass 1 = selected (drawn last = on top)
+        For i = 1 To n
+            j = ord(i)
+            If (pass = 1) = CBool(p_sel(j)) Then
+                key = ShapeKey(p_tk(j))
+                For it = 1 To 7
+                    If anySel And Not p_sel(j) Then
+                        cols(it) = GreyRingColor(VClass(p_v(j, it)))
+                    Else
+                        cols(it) = RingColor(VClass(p_v(j, it)))
+                    End If
+                Next it
+                bkt = BucketOf(p_idx(j))
+                ringCy = ringY - lv(i) * RING_STEP
+                lblY = ringCy - 26.5
+                Call AddDot("E2_DOT_" & key, xt(i), axY, 6, BucketColor(bkt))
+                Call AddRing("E2_ARC_" & key, xr(i), ringCy, 30, cols)
+                lw = Len(p_tk(j)) * 5.6 + 9
+                If p_sel(j) Then
+                    Dim so As Object: Set so = m_ws.Shapes.AddShape(9, xr(i) - 17.5, ringCy - 17.5, 35, 35)
+                    so.Name = "E2_SEL_" & key
+                    so.Fill.Visible = msoFalse
+                    so.Line.ForeColor.RGB = RR4_ACCENT
+                    so.Line.Weight = 1.75
+                    so.Placement = xlMove
+                    Dim bx As Object: Set bx = m_ws.Shapes.AddShape(5, xr(i) - lw / 2, lblY - 7.5, lw, 15)
+                    bx.Name = "E2_LBL_" & key
+                    bx.Fill.ForeColor.RGB = RR4_ACCENT
+                    bx.Line.Visible = msoFalse
+                    bx.Placement = xlMove
+                    With bx.TextFrame2
+                        .MarginLeft = 0: .MarginRight = 0: .MarginTop = 0: .MarginBottom = 0
+                        .WordWrap = msoFalse: .VerticalAnchor = 3
+                        .TextRange.Text = p_tk(j)
+                        .TextRange.Font.Name = FONT_FACE
+                        .TextRange.Font.Size = 7.5
+                        .TextRange.Font.Bold = msoTrue
+                        .TextRange.Font.Fill.ForeColor.RGB = RGB(0, 0, 0)
+                        .TextRange.ParagraphFormat.Alignment = 2
+                    End With
+                Else
+                    Call AddText("E2_LBL_" & key, p_tk(j), xr(i), lblY, lw, 7.5, RR4_ACCENT, True, 2)
+                End If
+            End If
+        Next i
+    Next pass
 End Sub
 
 ' 1-D label spreading: xt ascending true positions -> xr with at least `gap`
