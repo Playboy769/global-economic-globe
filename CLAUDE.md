@@ -454,6 +454,8 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   - **七個指標與口徑**：FEAR & GREED（CNN 0–100；今日＝`fear_and_greed.score`，歷史取 graphdata 依 UTC 日去重）／VIX（Yahoo `^VIX`）／SOX（Yahoo `^SOX` 指數點位）／SOX VOL 20D（SOX 還原收盤**20 日對數報酬樣本標準差（n−1）×√252×100**，整段 2 年歷史逐日算出一條序列）／SOX VOL 20D AVG（該序列**最近 20 日平均**；它自己的滾動 20 日平均序列決定百分位與 1W/1M）／BRENT FUT／WTI FUT（**Yahoo 連續近月期貨 `BZ=F`／`CL=F`，是期貨、不是現貨**；價格＝即時價 `meta.regularMarketPrice`、與最後一根日線同一交易日時把序列最後一點換成它，所以單日變動＝即時價對前一收盤；歷史＝`range=1y&interval=1d` 日收盤）。**百分位＝過去 252 個有效觀察值（含今天；歷史較短就用較少）中 ≤ 現值的比例**，畫面四捨五入成 `P39`。**1W＝往前第 5 個有效點、1M＝往前第 21 個**（有效點會略過 Yahoo null）；**F&G、SOX VOL 20D、SOX VOL 20D AVG 的 1W/1M 是「點差」（畫面 `pt`），VIX、SOX、BRENT FUT、WTI FUT 是 %**；日變動 E 欄對所有指標都是相對 %。**期貨展期（換月）當天價格會跳空（使用者接受、程式不處理）：1W／1M／百分位在展期日附近可能失真。**
   - **來源坑（2026-09-27 實測）**：CNN `production.dataviz.cnn.io` 要**完整瀏覽器 UA ＋ `Referer: https://edition.cnn.com/`**，否則回 418；Yahoo chart 任何 UA 都行，`^` 要編成 `%5E`、`=` 要編成 `%3D`（`BZ%3DF`）；油價下列寫 `as of`＝最後一根 bar 的交易所當地日期，週末／休市時＝上一個交易日。**為什麼油價不用 EIA 現貨（2026-09-27 決定）**：EIA 現貨經 FRED（`fredgraph.csv?id=DCOILBRENTEU／DCOILWTICO`）更新太慢——實測最新只到 2026-09-22、對 09-27 **落後 3 個交易日**（本節原先寫的「落後 1–2 個交易日」低估了），且現貨與期貨有價差（同日 Brent EIA 現貨 114.89 vs `BZ=F` 日線收 104.32），所以這兩列**是期貨、不是現貨**，FRED／EIA 程式碼（curl 樣式 UA、`cosd=`）已移除，且不保留備援：Yahoo 抓不到就整列 `-`。⚠️ **Yahoo `BZ=F` 的日線與盤中序列不一致（2026-09-27 實測）**：2026-09-25 日線收 104.32、但同日盤中最後一小時與 `regularMarketPrice` 是 97.44（Yahoo 自己的 `previousClose` 100.22，日線前一根是 106.60），約差 7%（疑似日線與即時報價用不同合約月份）；`CL=F` 兩者一致（92.41）。因為價格取即時價、前一收盤取日線，Brent 那列的日變動（−9.16／−8.59%）與 1W 會被這個落差污染，數字不可當真——要避開可把 `LoadOil` 的 `FetchYahoo(..., useLive)` 改成 False（純用日線，Brent 會顯示 104.32、−2.13%）。逾時短（連線 5s／接收 10s）、每個請求最多重試一次（網路錯誤／429／5xx），各指標互相隔離。
   - **實機驗證（2026-09-27）**：7 指標全數抓到；F&G 37.0（Fear、P39）、VIX 14.87、SOX 12,668.93、SOX VOL 20D 39.6、AVG 37.2、BRENT FUT 97.44（P76、as of 2026-09-25）、WTI FUT 92.41（P76）；油價改期貨後（同日）以 Python 另抓 Yahoo 自算逐格核對，兩列 last／日變動／日變動%／1W／1M／百分位完全一致（Brent −9.16／−8.59%／1W −6.2%／1M +10.9%、WTI −2.20／−2.33%／1W −7.9%／1M +12.4%，含上述 Brent 落差）；畫面讀回與 `MarketSnapshot` 直接回傳的陣列逐格核對（日變動 %、1W/1M、百分位單位皆對，無 100 倍偏差）。
+- **市場儀表板第 8 指標 S5FI（2026-10-04）**：`S5FI >50DMA`＝S&P 500 成分股站上 50 日均線的百分比（0–100），TradingView `INDEX:S5FI`。**單列**（第 34 列），所以四條手打類別列由 34–37 下移到 **35–38**（`RR4_MK_CAT_FIRST` 35、`RR4_MK_LAST` 38、`RR4_MK_N` 8；`ReadMarketNotes` 改成在整個區塊搜標題，舊版面的備註第一次 UP 會自動搬過去）。資料走 **`RR4/tv_fetch.py`**（匿名 TradingView websocket，協定自己實作、只依賴 `pip install websocket-client`；`modMarket.LoadS5fi` 用 `WScript.Shell.Run` 隱藏同步執行，輸出 `%TEMP%\rr4-market\s5fi.txt` 的 `yyyy-mm-dd<TAB>close` 300 根日 K，再走同一個 `FillStats`，所以 1W／1M／百分位也算好了、只是畫面不顯示）。**非官方介面，TradingView 改版就會壞**：失敗時該列整列 `-`、不影響其他指標。公開 scanner REST（`scanner.tradingview.com`）、Yahoo、StockCharts 都查不到這個指標。實測最新值 24.65／+1.79／+7.83%，與 TradingView 圖表完全一致。
+  ⚠️ **用 Python 產生 .bas 內容時別直接寫 `"\t…"`／`"\r…"` 跳脫**：這次 `"\rr4-market"` 與 `RR4\tv_fetch.py` 變成 CR 與 TAB，VBA 編譯失敗，隱藏 Excel 卡在看不見的對話框（UP 與 `Application.Run` 都無限等待、不報錯）。注入後先看 `grep -nP '[\x00-\x08\x0b-\x1f]'`，或先 `Application.Run` 一個小函式驗證。另外 `PortfolioDashboard_v3.bas` 本來就含中文，注入腳本要用 **UTF-8** 讀檔（ASCII 會把中文字面量變成 `?`）。備份 `Portfolio\backup-pre-s5fi-20261004.xlsm`。
 - **TO-DO（2026-09-27 起在 G58；⚠️ 下面「2026-09-21」那段寫 B36:E39 的位置與列號已過時，只留邏輯描述供參）**：搬到 **RR4 頁 G58 起、與 WATCHLIST 同一條水平帶**——常數 `RR4_TD_TITLE/ENTRY/FIRST/LAST`＝**58／59／60／61**，欄 `RR4_TD_C_TICK`＝7（G 代號）、`RR4_TD_C_TASK`＝8～`RR4_TD_C_TASK2`＝11（**H:K 合併成一格任務**）、`RR4_TD_C_DUE`＝12（L 到期日）、`RR4_TD_C_DTE`＝13（M DTE）。標題 58＝`TO-DO`／`TASK`／`DUE`／`DTE`，輸入列 59，清單 **60–69（2026-09-28 擴成 10 筆，`RR4_TD_LAST = 69`）**。**滿 10 筆再新增＝自動擠掉「既有」清單裡到期日最早的一筆（沒到期日的排最後、最晚被擠；全部沒日期就擠第一筆），新輸入的一定保留**，狀態列會寫 `pushed out: <被擠掉的任務>`（`TodoCommitEntry`）。⚠️ 容量原本寫死在 `ReadTodoAt` 的 `tmp(1 To 8…)`／`n < 8`，只改 `RR4_TD_LAST` 會讓第 9、10 筆在下次 UP 被悄悄丟掉——現在改用 `RR4_TD_LAST - RR4_TD_FIRST + 1`；日後再調上限只需改那一個常數。實測 10 筆全顯示、第 11／12 筆（有日期／無日期）擠掉順序正確、`TodoDeleteRow` 補位正確。**合併儲存格的事件處理**：任務格 H:K 合併，`Worksheet_Change`／`BeforeDoubleClick` 的 `Target` 會是整個 H:K（`CountLarge`＝4），所以兩個事件開頭都是「`CountLarge > 1` 時只放行 `Target.MergeCells`（Change 另要求與輸入列 H:K 相交）」，其餘多格變動直接 Exit Sub；雙擊清單區 G60:M61 仍是完成並刪除（`TodoDeleteRow`）。**`ReadTodo` 先讀 G58，讀不到（標題不是 TO-DO）再退回舊位置 B36:E39 一次**（一次性遷移，2026-09-27 實測 BE〔Book Profit, 2026/9/28〕與 CASH〔ReAllocate, 2026/10/9〕兩筆完整搬入，DTE 依今天重算為 1／12；舊 B36:E39 現在是市場區塊的一部分）。
 - **TO-DO（2026-09-21，舊位置 B36:E39 ⚠️已過時）**：WATCHLIST 正下方 B36:E39，常數 `RR4_TD_TITLE/ENTRY/FIRST/LAST`
   ＝36/37/38/39。第 36 列＝標題「TO-DO」＋欄名 TASK／DUE／DTE（**不另佔表頭列**、無灰色提示字）；
@@ -787,10 +789,32 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
 
-### RR4 頁被 UP 清空、存檔後才發現（2026-09-28 事故紀錄）
+- **HARD RULES 區塊（2026-10-05，`DrawRulesBlock`）**：RR4 頁持倉表下方：兩行 disclaimer 在 `lastDataRow+2/+3`（2026-10-05 由 +3/+4 上移一列，`DrawDisclaimer`），`+4` 空列，**單一列** `lastDataRow+5` 放 HARD RULES，`+6` 空列，再來是 WATCHLIST 標題（`RR4_WL_TITLE`＝58）；目前 8 檔＝disclaimer 53/54、空 55、規則 56、空 57。B 欄標題 `HARD RULES`（`RR4_ACCENT`），C 欄一個字串（Consolas 9、不合併、不換行、靠文字溢出），五條規則以 ` | ` 串接：1 單檔上限 ≤20% 權益｜2 主題上限（同供應鏈）≤40%｜5 贏後降級（累計損益創新高後 5 個交易日內新倉位上限減半）｜6 停損冷卻（單筆虧損 >1% 權益後 3 個交易日內不得買回同商品／類別）｜7 延伸限制（買進價高於 EMA13 達 8% 以上不買）。編號沿用使用者習慣（3、4 未列）。
+  **純靜態文字、無事件、無資料來源**，由 `RebuildPortfolioDashboard` 在 `DrawDisclaimer` 後呼叫重畫（UP 會清整頁，所以不需 read-before-clear）。唯一動態處：持倉表 WT% 最大值 >20% 時，規則 1 那段文字變紅（UP 時判斷，非即時）。規則列若超過 `RR4_WL_TITLE-2`（持倉 ≥10 檔）區塊會**自動略過**並在狀態列提示，不會蓋到 WATCHLIST／TO-DO；屆時得挪版面。中文以 `ChrW` 組字，.bas 維持 ASCII。備份 `Portfolio\backup-pre-rules-20261005-0022.xlsm`。
 
-- **HARD RULES 區塊（2026-10-05，`DrawRulesBlock`）**：RR4 頁持倉表下方兩行 disclaimer（`lastDataRow+3/+4`）之後、WATCHLIST 標題（`RR4_WL_TITLE`＝58）之前，佔 `lastDataRow+5`／`+6` 兩列（目前 8 檔＝56／57，57 緊貼 WATCHLIST 標題、中間沒有空列）。B 欄標題 `HARD RULES`（`RR4_ACCENT`），C 欄起每列一個字串（Consolas 9、不合併、靠文字溢出）：第 1 列＝規則 1 單檔上限 ≤20% 權益｜2 主題上限（同供應鏈）≤40%｜5 贏後降級（累計損益創新高後 5 個交易日內新倉位上限減半）；第 2 列＝6 停損冷卻（單筆虧損 >1% 權益後 3 個交易日內不得買回同商品／類別）｜7 延伸限制（買進價高於 EMA13 達 8% 以上不買）。編號沿用使用者習慣（3、4 未列）。
-  **純靜態文字、無事件、無資料來源**，由 `RebuildPortfolioDashboard` 在 `DrawDisclaimer` 後呼叫重畫（UP 會清整頁，所以不需 read-before-clear）。唯一動態處：持倉表 WT% 最大值 >20% 時，規則 1 那段文字變紅（UP 時判斷，非即時）。第 2 列若超過 `RR4_WL_TITLE-1`（持倉多到 ≥9 檔以上）區塊會**自動略過**並在狀態列提示，不會蓋到 WATCHLIST／TO-DO；屆時得挪版面。中文以 `ChrW` 組字，.bas 維持 ASCII。備份 `Portfolio\backup-pre-rules-20261005-0022.xlsm`。
+### COM 卡死時通知使用者並停手（2026-10-06 起，使用者規則）
+
+**適用**：所有對 RR4 活頁簿的 COM 操作（注入 VBA、`Application.Run`、讀寫儲存格、存檔）。
+
+**判定「卡死」**：`Application.Run`／COM 呼叫超過下列門檻仍無回應（隱藏 Excel 多半是停在看不見的
+VBE 對話框：編譯錯誤、MsgBox、中斷模式）。
+
+| 動作 | 門檻 |
+|---|---|
+| 一般（UP、`V!`、`VA!`、`E!`、注入、煙霧測試等） | 120 秒 |
+| `RGE!` | 600 秒 |
+| `RGT!` | 1000 秒 |
+| `RGI!` | 2000 秒 |
+
+**卡死時**：
+1. **停手等使用者處理**——不重試、不強制結束 Excel、不再對該活頁簿下任何 COM 指令
+   （強殺可能丟掉未存內容，見下方 2026-09-28 事故）。
+2. **只在對話中明確通知**（使用者選的管道；不發 PushNotification），訊息包含：
+   動作（跑了什麼）＋疑似原因（如疑似 VBE 對話框／編譯錯誤）＋建議處理（如到 Excel 按
+   Esc／結束中斷模式、必要時由使用者決定是否重開）。
+3. 如實說明活頁簿目前的存檔狀態與已有的備份路徑；沒備份就直接說沒有。
+
+### RR4 頁被 UP 清空、存檔後才發現（2026-09-28 事故紀錄）
 
 擴充 TO-DO 的 session 在活頁簿上跑 `UP`，`RebuildPortfolioDashboard` 先清空整張 RR4 頁、之後在
 VBE 編譯／中斷模式卡住，**Excel 卻把清空狀態存了檔**（12:21），連 AutoRecover（`%APPDATA%\Microsoft\Excel\*.xlsb`，
@@ -1068,6 +1092,14 @@ tile 顏色、PEER MAP 圓環、GOOGL 的 Rev-guide/EPS-guide＝`Not guided`（�
 ＋67 新，8 家 7/7＋3 家原 6/7 補完＋56 家 5/7；GS 那列沿用舊資料未變動）。清單裡剩下的
 「3-4/7 缺財測」「0-2/7 需重新找素材」兩個分層**刻意還沒寫**，使用者要自己逐一審核再決定，
 不要看到這節就順手填滿。
+
+**2026-10-06 補填半導體 15 家**（備份 `Portfolio\backup-pre-e2-semis-20261006.xlsm`，`tblEarn` 109→124 列）：
+TSM／AVGO／ADI／ASX／MPWR／NXPI／UMC／CBRS／MCHP／CRDO／ON／GFS／TSEM／MTSI／SITM，各取最近一次已公布季。
+TSM、ASX 是以既有 2330、3711 兩列為基礎另開新列（美股 ADR 代號，原列保留）。留白（V 與四欄全空）：
+ADI V7、CRDO V6、CBRS V2／V6、MCHP V3、UMC V2、TSEM V6、SITM V6。共識數字多取自二手摘要
+（MarketBeat／Zacks 等，非 Bloomberg），SOURCE 欄有標註；需人工覆核的判斷：CBRS V1=Miss（GAAP 營收對共識，口徑未確認）、
+ASX V6 由 Neutral 改 Strong（取自 JPM 轉述，非管理層原話）、AVGO V3=Maintained、UMC V1/V3/V7、SITM V7 引句為非逐字摘要。
+Bloomberg 資料夾與 research 對這批僅 TSM／ASX 有素材，其餘全由網路蒐集。
 
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
