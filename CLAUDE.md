@@ -1101,6 +1101,16 @@ ADI V7、CRDO V6、CBRS V2／V6、MCHP V3、UMC V2、TSEM V6、SITM V6。共識�
 ASX V6 由 Neutral 改 Strong（取自 JPM 轉述，非管理層原話）、AVGO V3=Maintained、UMC V1/V3/V7、SITM V7 引句為非逐字摘要。
 Bloomberg 資料夾與 research 對這批僅 TSM／ASX 有素材，其餘全由網路蒐集。
 
+**2026-10-06 補 V1／V2（Revenue／EPS 對共識）**（備份 `Portfolio\backup-pre-e2-v1v2-20261006.xlsm`，沒有新增列）：
+使用者指定**共識只能出自 moomoo／CNBC／Bloomberg**（bloomberg.com 與桌面 Bloomberg 資料夾；實際值可引用公司 IR／8-K），
+門檻**營收 ±1%、EPS ±2% 內為 Inline**；範圍＝每個代號「最新一季」V1 或 V2 空白的列（較舊季度的空列不補），只寫 V1／V2 與
+PRINT/READ/QUOTE/SOURCE_1、_2，已有 V 值的不覆寫。寫入 55 格（約 31 家有填）。CNBC／Bloomberg 網頁抓取一律 403，
+共識多取自搜尋摘要與 moomoo 文章，所以 **QUOTE 大多空白**。**仍空白（來源限制下查不到共識）**：ALAB／STM／TXN／LRCX／HPE／NET／NBIS V2／
+RVMD／NSIT／CLMT／FCEL／ONTO／UMC V2／VRT V2／SKHY V2／FNV V1／MMM V1／SITM 等，以及絕大多數台股（只有 8046 取自 UBS、6239 取自 UBS，
+兩者共識是 Visible Alpha／Refinitiv 口徑，非 Bloomberg）。放寬來源（Barchart／MarketBeat／Zacks）可補多數，但需使用者同意。
+**需覆核**：DELL V2（共識 $4.92 疑偏低，另一來源 $6.91 則為 Inline）、JNJ V1（+0.998%，貼 1% 門檻）、GEV V2（用 GAAP EPS）、
+MRVL（共識只有區間、低信心）、ARM V2（以淨利共識代替每股）、VRT（既有 V1=Miss 與 CNBC 的「營收優於預期」說法衝突）。
+
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
 Strong/Neutral/Weak；7 Industry＝Cyclical/Secular/Defensive。符號 ▲ 好（Beat/Raised/Expansion/
