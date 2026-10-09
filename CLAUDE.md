@@ -1111,6 +1111,14 @@ RVMD／NSIT／CLMT／FCEL／ONTO／UMC V2／VRT V2／SKHY V2／FNV V1／MMM V1�
 **需覆核**：DELL V2（共識 $4.92 疑偏低，另一來源 $6.91 則為 Inline）、JNJ V1（+0.998%，貼 1% 門檻）、GEV V2（用 GAAP EPS）、
 MRVL（共識只有區間、低信心）、ARM V2（以淨利共識代替每股）、VRT（既有 V1=Miss 與 CNBC 的「營收優於預期」說法衝突）。
 
+**2026-10-09 補填 18 家中小型股**（備份 `Portfolio\backup-pre-e2-26cos-20261009.xlsm`，`tblEarn` 124→142 列）：
+ANET／HPQ／LOGI／IONQ／QBTS／RGTI／QUBT／ADIG／CRSR／CRCT／UMAC／SSYS／DDD／VELO／NNDM／CAN／OSS／DPRO，最新已公布季整列填入；
+共識只用 moomoo／CNBC／Bloomberg，查不到的項目 V 與四欄留白（V1／V2 因此大多空白），QUOTE 僅逐字英文。
+**不寫入（無任何 V 值）**：P（無現行上市公司）、IQMX／PSQL／QMCO（無共識）、BRAI／BGIN（查無已公布季）、XTND（2026/9 才上市）、MKFG（已被 Nano Dimension 收購）。
+**需覆核**：RGTI V2（moomoo 舊快照）、IONQ V1（moomoo 共識 $49.74M vs 他處約 $66M）、CRSR Q1 毛利率 32.7 vs 32.75、HPQ V2（含 $0.11 關稅退款，REPORTED 日期有衝突）、
+DDD REPORTED 為推定、CAN／OSS／SSYS／DDD／VELO／NNDM／DPRO／ANET／UMAC 的 V5 由半年數字推算。
+⚠️ PowerShell 踩坑：`1..7|%{ if(...){$has=$true} }` 的 `$has` 不會傳回外層，導致過濾失效、6 列空殼被寫入（已刪）——判斷旗標一律用 `foreach` 迴圈。
+
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
 Strong/Neutral/Weak；7 Industry＝Cyclical/Secular/Defensive。符號 ▲ 好（Beat/Raised/Expansion/
