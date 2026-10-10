@@ -1,29 +1,43 @@
 ' ================================================================
 '  Code-behind of the "Tickers Volatility" worksheet (nav code VT).
-'  The ticker input is B2 in the page's own layout, i.e. B5 while the
-'  nav bar occupies rows 1-3 (modNav.NavOffset). The analysis routine
-'  (modvolatility.UpdateVolatilityAnalysis_Pro) draws the page from row 1
-'  and rebuilds its 12 charts every run, so the bar is taken off around
-'  the call and put back afterwards - also when the routine bails out
-'  early. The charts are xlMove, so NavAdd shifts them down with the rows
-'  instead of shrinking them.
+'  Four typed inputs, in the page's own layout: B2 ticker, E2 segment,
+'  B3 period (bars shown), E3 frequency (D/W/M). With the nav bar on they
+'  sit offset by NavOffset / NavLeft. The routine draws the page from
+'  row 1, so the bar is taken off around the call and put back afterwards
+'  (also when the routine bails out early); the two charts are built by
+'  VtFinish AFTER NavAdd - series references do not follow an insert.
 ' ================================================================
 Private Sub Worksheet_Change(ByVal Target As Range)
     If Target.CountLarge > 1 Then Exit Sub
-    Dim inp As Range: Set inp = Me.Range("B2").Offset(NavOffset(Me), NavLeft(Me))
-    If Intersect(Target, inp) Is Nothing Then Exit Sub
-    If Trim(CStr(inp.Value)) = "" Then Exit Sub
+    Dim offR As Long, offC As Long
+    offR = NavOffset(Me): offC = NavLeft(Me)
+    Dim which As String
+    If Not Intersect(Target, Me.Range("B2").Offset(offR, offC)) Is Nothing Then
+        which = "T"
+    ElseIf Not Intersect(Target, Me.Range("E2").Offset(offR, offC)) Is Nothing Then
+        which = "S"
+    ElseIf Not Intersect(Target, Me.Range("B3").Offset(offR, offC)) Is Nothing Then
+        which = "P"
+    ElseIf Not Intersect(Target, Me.Range("E3").Offset(offR, offC)) Is Nothing Then
+        which = "P"
+    Else
+        Exit Sub
+    End If
+    If which <> "P" Then
+        If Trim(CStr(Target.Value)) = "" Then Exit Sub
+    End If
 
     Application.EnableEvents = False
     On Error GoTo Fin
     Call NavStrip(Me)
-    Call UpdateVolatilityAnalysis_Pro
+    Call UpdateVolatilityAnalysis_Pro(which)
 
 Fin:
     Dim errN As Long: errN = Err.Number
     Dim errD As String: errD = Err.Description
     On Error Resume Next
     Call NavAdd(Me, "VT")
+    Call VtFinish(Me)
     Call NavEcho        ' the routine's NavNotify ran while the bar was off
     Application.EnableEvents = True
     If errN <> 0 Then MsgBox "Tickers Volatility error " & errN & ": " & errD, vbCritical

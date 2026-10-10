@@ -487,6 +487,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   append-only 快照，會因匯率（美股 PnL 用當日 C5 換算）與事後補登／改日期的交易（FIFO 整段
   重配）而跟 Realized 表脫節——2026-09-08/09 曾因此差 −2,070／+2,373，折線圖出現假尖峰。
   C 欄（含未實現）仍是快照，無法重述。
+- **Tickers Volatility（VT）頁 v3（2026-10-10，取代 v2 的三期表＋12 圖）**：`modvolatility.bas`，仿終端機「return history」畫面。輸入 B2 TICKER／E2 SEGMENT（下拉）／B3 PERIOD／E3 FREQ（D/W/M）；Segment＝IndustryMap 美股 plate（市值加權）或 tblGroups 台股族群（等權重），最多取市值前 60 檔合成指數。右側 SD 區間／PROXY CHECK／UP-DOWN／STRETCH／RETURN BANDS／BIGGEST DAYS，左側分布圖＋逐日圖。**圖表由 `VtFinish` 在 NavAdd 之後建**（sheet code 順序 NavStrip→Update→NavAdd→VtFinish）。⚠️ VBA 變數名 `oR` 與 `Or` 運算子同名（不分大小寫）會語法錯誤並卡死隱藏 Excel——這次踩到。實測 CLF／晶圓代工／Airlines 皆通過，備份 `Portfolioackup-pre-vt3-20261010.xlsm`。
 - **Volatility180D（V）頁 v4.12（2026-09-12）**：改成 RR4 配色（橘強調、灰分隔線、8/14 條紋），
   新增 **RISK CONTRIB%**（w_i·cov(r_i,r_p)/var(r_p)，共同視窗算、合計 100%，最大者亮橘）、
   **RISK/WEIGHT**（>1.3 紅、<0.7 綠）、**WEIGHTED AVG STDEV／DIVERSIFICATION RATIO**
