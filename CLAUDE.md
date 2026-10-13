@@ -790,7 +790,7 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
   （document module 不會匯出成 `.bas`），要手動貼進 VBE 或用 `CodeModule` 注入；RR4
   工作表的 code name 每本活頁簿不同，用分頁名稱「RR4」找。
 
-- **HARD RULES 區塊（2026-10-05，`DrawRulesBlock`）**：RR4 頁持倉表下方：兩行 disclaimer 在 `lastDataRow+2/+3`（2026-10-05 由 +3/+4 上移一列，`DrawDisclaimer`），`+4` 空列，**單一列** `lastDataRow+5` 放 HARD RULES，`+6` 空列，再來是 WATCHLIST 標題（`RR4_WL_TITLE`＝58）；目前 8 檔＝disclaimer 53/54、空 55、規則 56、空 57。B 欄標題 `HARD RULES`（`RR4_ACCENT`），C 欄一個字串（Consolas 9、不合併、不換行、靠文字溢出），五條規則以 ` | ` 串接：1 單檔上限 ≤20% 權益｜2 主題上限（同供應鏈）≤40%｜5 贏後降級（累計損益創新高後 5 個交易日內新倉位上限減半）｜6 停損冷卻（單筆虧損 >1% 權益後 3 個交易日內不得買回同商品／類別）｜7 延伸限制（買進價高於 EMA13 達 8% 以上不買）。編號沿用使用者習慣（3、4 未列）。
+- **HARD RULES 區塊（2026-10-05，`DrawRulesBlock`）**：RR4 頁持倉表下方：兩行 disclaimer 在 `lastDataRow+2/+3`（2026-10-05 由 +3/+4 上移一列，`DrawDisclaimer`），`+4` 空列，**單一列** `lastDataRow+5` 放 HARD RULES，`+6` 空列，再來是 WATCHLIST 標題（`RR4_WL_TITLE`＝58）；目前 8 檔＝disclaimer 53/54、空 55、規則 56、空 57。B 欄標題 `HARD RULES`（`RR4_ACCENT`），C 欄一個字串（Consolas 9、不合併、不換行、靠文字溢出），七條規則以 ` | ` 串接（仍是單一列、不換行）：1 單檔上限 ≤20% 權益｜2 主題上限（同供應鏈）≤40%｜5 贏後降級（累計損益創新高後 5 個交易日內新倉位上限減半）｜6 停損冷卻（單筆虧損 >1% 權益後 3 個交易日內不得買回同商品／類別）｜7 延伸限制（買進價高於 EMA13 達 8% 以上不買）｜8 預約單制（平日盤中不下新單，每週六一次寫好預約）｜9 券商限額（單日下單金額上限，向券商申請）。編號沿用使用者習慣（3、4 未列）；**8、9 是行為／券商端規則，沒有任何自動檢查**，只有規則 1 會依 WT% 變紅。2026-10-10 加入 8、9。
   **純靜態文字、無事件、無資料來源**，由 `RebuildPortfolioDashboard` 在 `DrawDisclaimer` 後呼叫重畫（UP 會清整頁，所以不需 read-before-clear）。唯一動態處：持倉表 WT% 最大值 >20% 時，規則 1 那段文字變紅（UP 時判斷，非即時）。規則列若超過 `RR4_WL_TITLE-2`（持倉 ≥10 檔）區塊會**自動略過**並在狀態列提示，不會蓋到 WATCHLIST／TO-DO；屆時得挪版面。中文以 `ChrW` 組字，.bas 維持 ASCII。備份 `Portfolio\backup-pre-rules-20261005-0022.xlsm`。
 
 ### COM 卡死時通知使用者並停手（2026-10-06 起，使用者規則）
@@ -1119,6 +1119,41 @@ ANET／HPQ／LOGI／IONQ／QBTS／RGTI／QUBT／ADIG／CRSR／CRCT／UMAC／SSYS
 **需覆核**：RGTI V2（moomoo 舊快照）、IONQ V1（moomoo 共識 $49.74M vs 他處約 $66M）、CRSR Q1 毛利率 32.7 vs 32.75、HPQ V2（含 $0.11 關稅退款，REPORTED 日期有衝突）、
 DDD REPORTED 為推定、CAN／OSS／SSYS／DDD／VELO／NNDM／DPRO／ANET／UMAC 的 V5 由半年數字推算。
 ⚠️ PowerShell 踩坑：`1..7|%{ if(...){$has=$true} }` 的 `$has` 不會傳回外層，導致過濾失效、6 列空殼被寫入（已刪）——判斷旗標一律用 `foreach` 迴圈。
+
+**2026-10-12 補填煉油／油氣 14 家**（備份 `Portfolio\backup-pre-e2-oil-20261012.xlsm`，`tblEarn` 142→156 列，Excel 未開時用 COM 以 `AutomationSecurity=3` 開檔寫入）：
+VLO／MPC／PSX／PBF／DINO／DK／CVI／PARR／XOM／CVX／COP／OXY／SLB／HAL，皆 2026 Q2。共識只用 moomoo／CNBC／Bloomberg，
+**僅 XOM（V1 Beat／V2 Miss）、CVX（兩項 Beat）取到（CNBC 引 LSEG）**，其餘 V1／V2 留白（其他來源顯示多數為 EPS beat，但依規則未採用）。
+V3／V4 除 HAL 留白外皆 `Not guided`（PRINT 欄記載煉油量／產量／資本支出等實際指引）。
+**需覆核**：V6 多為判斷值（煉油廠與油氣為價格接受者，DINO／DK／PARR／OXY／XOM／CVX／COP 給 Strong、其餘 Neutral；SLB 留白）；
+PBF 調整後 EPS 含約 $250M 保險理賠（二手）；DK adj. EPS 含 $148.6M RVO/SRE 調整；VLO Q3 量與 XOM 資本支出／買回為二手；
+HAL V5 Contraction 為自算分部營業利益率；SLB V3 可能有明確 Q3 營收指引未證實。QUOTE 皆取自新聞稿／8-K，未用逐字稿。
+
+**2026-10-12 V1／V2 放寬來源補白＋黃金 9 家**（備份 `Portfolio\backup-pre-e2-bf-gold-20261012.xlsm`，`tblEarn` 156→165 列）：
+使用者放寬共識來源為 Zacks／MarketBeat／Barchart／Nasdaq.com／Reuters／AP／Benzinga，**每格 SOURCE 必須寫完整引用（出版者、頁面、URL、日期、各數字來自哪個來源），非 moomoo／CNBC／Bloomberg 一律前綴 `[2nd-hand]`**；有衝突時取多數或最近來源並在 READ 列出差異；**已有 V1／V2 值一律不覆寫**。
+範圍＝每個代號最新一季 V1 或 V2 為空的列（64 列），**寫入 65 格**（最新季仍空白的列由 64 降到 33）。
+**仍空白**：台股 19 列（3374／6274／6488／3037／2059／2301／1303／2408／2637／3017／3167／3532／2308／6182／6223／6515／8021／4573／4979，台股共識在允許來源上幾乎沒有；
+3037／2408／2301 只在 Investing.com／Google Finance 有共識，**未採用，若要用須再放寬來源**）、
+3436.T、ADIG、NNDM、CAN、DPRO、FNV V1（只在 Investing.com）、CLMT V2（GAAP／非 GAAP 口徑衝突）、RVMD V1、SKHY V2（ADR 單位不明）、UMAC V1、OSS V2、CVI V2（共識 $0.11–$0.92 方向隨來源翻轉）。
+**需覆核**：NBIS V2（共識 −0.67 對 GAAP −0.68 會是 Inline）、SSYS V1（±1% 邊緣）、VELO V2（低信心）、STM／HPE／CRSR／2330 V1 貼近 ±1% 邊界、
+HAL V2 Inline（+1.9%）、OXY V1（僅 3 位分析師）、UMC V2（2 位分析師）。多數共識來自搜尋摘要而非頁面原文，QUOTE 大多空白。
+**日期疑似有誤（未改）**：DDD 實際 8-K 為 2026-08-03（表中 08-12）、2308 台達電 Q2 為 2026-07-29（表中 08-14）、2408 南亞科疑似申報日；2637 是否為慧洋-KY 待核。
+**黃金（只挑美國本土發行人）9 家新增**：NEM／RGLD／HL／CDE／MUX／IDR／CTGO／HYMC／LODE，皆 Q2 2026（RGLD、CTGO 實為曆年財年）。
+V3／V4 除 LODE V3 外為 Not guided（產量／AISC／資本支出寫在 PRINT）、V5 為自算調整後 EBITDA／毛利率方向、V6 為金價環境判斷值、V7 Cyclical。
+NEM／RGLD／HL／CDE／MUX／IDR 營收皆 Miss。**GORO 未寫入**（與 Goldgroup 合併、無 Q2 2026 公告，只有 Q1 資料）。IAUX／DC／PPTA 依使用者決定拿掉。
+**2026-10-13 再放寬 Investing.com（使用者決定，標 `[2nd-hand]`）**（備份 `Portfolio\backup-pre-e2-inv-20261013.xlsm`）：
+寫入 35 格，來源是 Investing.com 各代號 `…-earnings` 歷史頁（WebFetch 可直接讀，表格含公布日／期間／EPS 與營收的實際與預測；**頁面不顯示分析師人數**，READ 一律註明）。
+台股補上 3374／6274／6488／2059／1303／3017／3532／2308／6182(V2)／6223／6515／8021／3037／2408／2301，另 3436.T、CAN V1、FNV V1、OSS V2、HYMC V1。
+**仍空白**：3167／4573／4979（頁面預測欄為「--」）、6182 V1（無營收預測）、ADIG／NNDM／DPRO／RVMD V1／SKHY V2／UMAC V1／CTGO／CLMT V2、**CVI V2 刻意不填**（Investing.com 預測 $0.12 與他源 $0.11–$0.92 衝突）、2637（使用者要求跳過）。
+**REPORTED 日期一律未改**：使用者規則是「MOPS 公告日＋一個媒體佐證才更正」，這次只有 Investing.com 單一來源、沒做 MOPS 驗證。Investing.com 顯示的公布日供日後核對：
+2408 07-09、3037 07-28、2308 07-29、6274 07-29、3532 08-04、6488 08-04、3374 08-06、2059 08-06、6515 08-06、6223 08-12、3017 08-12、1303 08-11、8021 08-14、6182 08-31、FNV 08-11、CLMT 08-07。
+**EPS 口徑**：台股用公告的稅後 EPS；3037 含約 NT$9.2B 業外評價利益、6488 含矽晶圓業外評價利益，兩者的 Beat 主要是業外。邊界值：3037 V1 +1.06%、6274 V1 +2.0%、1303 V1 +1.5%、6488 V1 −0.8%、2308 兩項 Inline。
+**2026-10-13 台股 REPORTED 以 MOPS 驗證並更正 12 列**（備份 `Portfolio\backup-pre-e2-mops-20261013.xlsm`；定義＝財報公告日＝MOPS 重大訊息「董事會通過 115 年第 2 季合併財務報告」的發言日期）：
+查詢方式是 `POST https://mopsov.twse.com.tw/mops/web/ajax_t05st01`（`co_id`、`year=115`、`month`；上市回應 UTF-8、部分 cp950）——**歷史月份要用 t05st01，`ajax_t05st02` 只查當日、對歷史月份回「月份欄位未輸入」**。
+更正（原值→MOPS）：3374 08-14→08-06、6274 06-30→07-29、3037 07-29→07-28、2059 06-30→08-06、1303 08-14→08-11、2408 08-14→08-05、3017 08-14→08-12、3167 08-14→08-11、3532 08-14→08-04、2308 08-14→07-29、6223 08-14→08-12、6515 08-14→08-06。
+**已正確、未動**：6488 08-04、2301 07-31、6182 08-14、8021 08-14（標題為「累計財務數據」非明確董事會通過，信心略低）、4573 08-12、4979 08-13。2637 依使用者要求未查。
+**Investing.com 公布日不可全信**：2408（07-09，實為月營收／自結）、6182（08-31）、4573（08-13）、4979（08-07，那是董事會日期通知）都與 MOPS 不符。每列有補 V1／V2 的 SOURCE 末尾已附「REPORTED corrected X -> Y per MOPS」。
+**寫入時 Excel 必須關閉**：使用者開著活頁簿（且有未存變更）時不要用第二個 COM 實例寫入；請使用者存檔關閉後再寫。
+**PowerShell COM 踩坑**：`Range.Value2 = 二維 object[,]` 在這個情境丟「Unable to cast Object[,] to String」，改逐格寫入即可；`Workbook.Close($false)` 會連同未存的 Resize 一起丟棄，分階段 `Save()`。
 
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
