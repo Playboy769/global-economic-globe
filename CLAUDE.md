@@ -1165,6 +1165,15 @@ NEM／RGLD／HL／CDE／MUX／IDR 營收皆 Miss。**GORO 未寫入**（與 Gold
 **需覆核**：TPR V3／V4（首次 FY27 數字、無前值，Maintained 為判斷）、AEO V4（新區間含 $161M 退款）、BBWI V1（+1.0% 貼邊）、RH V2（扣退款後遠低於報告值）、BURL V1（Investing.com 與 Zacks 方向不同）、CAL V1（−0.996% 判 Inline）、
 TSCO V2（−2.4% 貼邊）、CASY V1（+0.97%）、MNSO V3／V4（Lowered 來自破碎逐字稿，低信心）、LUXE V2（低信心、混幣別）、REAL／BRLT／WSM／CTRN 的 V4 以調整後 EBITDA 或營益率當 EPS 指引代理。V6／V7 全為判斷值。
 
+**2026-10-13 公用事業 15 家新增**（備份 `Portfolio\backup-pre-e2-utility-20261013.xlsm`＋`…utility2-…`，`tblEarn` 212→227 列）：
+候選來自 IndustryMap 的 Utilities 板塊（Regulated Electric／Gas／Water／Diversified，只取美國本土發行人；排除 NGG、FTS、SBS、NIMC）：
+NEE／SO／DUK／AEP／D／ETR／XEL／EXC／ED／PCG／AWK／WTRG／ATO／NI／SRE，皆各自最新已公布季（多為 Q2 2026，ATO 為 FQ3 FY26）。
+使用者規則：V7 一律 Defensive、V3 填 Not guided（除非真有營收區間）、V4 依全年 EPS 指引區間變化、V5 用調整後 EBITDA 利潤率（多數公司不報，改自算營業利益＋折舊攤銷÷營收，READ_5 標 computed）、V6 依費率案結果判斷、共識沿用所有允許來源。
+**V4 只有 AEP 是 Raised（6.25–6.55，前值 6.15–6.45）**，其餘 Maintained（WTRG 無 2026 EPS 區間填 Not guided）。**V5 留白**：ATO／NI／SRE（發佈稿無營業利益與折舊攤銷）。
+**需覆核**：D V5（約 $820M RNG 減損使自算利潤率−22.9pt，營運盈餘其實上升）、SO V4（區間只來自電話會議摘要）、ETR V2（Investing.com 共識 1.13 與 Zacks 0.94 衝突，採後者）、EXC V2（共識 0.43–0.48）、XEL V5（來自核能延壽折舊減少）、
+NEE／SO V1（營收共識單一來源）、WTRG V1（Zacks 502 對 Benzinga 541 方向相反）、SRE REPORTED 08-06 來自 Investing.com 未經發佈稿確認、AWK／WTRG／NI 的 Investing.com 頁面 404 故共識為搜尋摘要。V5 全自算、V6 全判斷。
+**寫入時 Excel 的處理**：使用者開著活頁簿且 `Saved=True` 時，先確認 `Saved`、`SaveCopyAs` 備份，再用現有實例（`GetActiveObject`）暫時關 `EnableEvents` 寫入並存檔，寫完還原；若 `Saved=False` 就停手。**子代理一次查 5 家若 600 秒無進度會被 watchdog 判失敗**，遇到時縮成「每家 6 次工具呼叫上限、每家寫一次檔」重跑。
+
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
 Strong/Neutral/Weak；7 Industry＝Cyclical/Secular/Defensive。符號 ▲ 好（Beat/Raised/Expansion/
