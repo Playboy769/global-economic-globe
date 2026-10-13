@@ -1155,6 +1155,16 @@ NEM／RGLD／HL／CDE／MUX／IDR 營收皆 Miss。**GORO 未寫入**（與 Gold
 **寫入時 Excel 必須關閉**：使用者開著活頁簿（且有未存變更）時不要用第二個 COM 實例寫入；請使用者存檔關閉後再寫。
 **PowerShell COM 踩坑**：`Range.Value2 = 二維 object[,]` 在這個情境丟「Unable to cast Object[,] to String」，改逐格寫入即可；`Workbook.Close($false)` 會連同未存的 Resize 一起丟棄，分階段 `Save()`。
 
+**2026-10-13 百貨／精品／專賣零售 47 家新增**（備份 `Portfolio\backup-pre-e2-dept-20261013.xlsm`，`tblEarn` 165→212 列）：
+候選來自 RR4 `IndustryMap` 板塊（各取市值前 15，已排除 tblEarn 既有）：Department Stores BK2080、Luxury Goods BK2276、Specialty Retail BK2502、Apparel Retail BK2494；
+**`tblGroups` 沒有任何台股百貨／零售族群**（使用者選的來源不存在），改用 2903／2912／5903／8454／5904 五檔常見台股通路，REPORTED 為 MOPS 董事會通過公告日（8/12、7/29、8/5、7/31、7/27），**V1／V2 全空**（Investing.com 無預測）、V3／V4 填 Not guided 的依據只是找不到數字展望。
+**各公司取自己最新已公布財季**（off-calendar 零售財季）。**未寫入**：SORA（AsiaStrategy，僅 AI 聚合頁、無 6-K）、DDT（資本信託）、PLBL（查無公司）。
+**標示**：公司新聞稿／SEC／MOPS 資料標 `[primary: …]`，第三方共識與逐字稿標 `[2nd-hand]`（與「非 moomoo／CNBC／Bloomberg 一律 2nd-hand」字面規則略有出入，使用者未要求改）。
+**關稅退款（IEEPA）一次性效應普遍存在**：M／KSS／DDS／SIG／ROST／BBWI／RH／ASO／MOV／LULU／ANF／BOOT／AEO／FIVE 等的 EPS 與毛利率被墊高，V5 多數是子代理扣除退款後自算，非公司公布值。
+**留白**：LANV V1／V2、MNSO V1／V2、FIVE V1、GME V2、MUSA V4、BKE V2（共識衝突）、REF V1／V3／V4、台股 5 檔 V1／V2。
+**需覆核**：TPR V3／V4（首次 FY27 數字、無前值，Maintained 為判斷）、AEO V4（新區間含 $161M 退款）、BBWI V1（+1.0% 貼邊）、RH V2（扣退款後遠低於報告值）、BURL V1（Investing.com 與 Zacks 方向不同）、CAL V1（−0.996% 判 Inline）、
+TSCO V2（−2.4% 貼邊）、CASY V1（+0.97%）、MNSO V3／V4（Lowered 來自破碎逐字稿，低信心）、LUXE V2（低信心、混幣別）、REAL／BRLT／WSM／CTRN 的 V4 以調整後 EBITDA 或營益率當 EPS 指引代理。V6／V7 全為判斷值。
+
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
 Strong/Neutral/Weak；7 Industry＝Cyclical/Secular/Defensive。符號 ▲ 好（Beat/Raised/Expansion/
