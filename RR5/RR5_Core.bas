@@ -123,17 +123,8 @@ Attribute VB_Name = "RR5_Core"
         BS_IV = sigma
     End Function
 
-    Public Function Warrant_Delta(S As Double, k As Double, T As Double, r As Double, sigma As Double, convRatio As Double, wType As String) As Double
-        ' wType: "Call Warrant" or "Put Warrant" or "Bull Cert" or "Bear Cert"
-        Dim optT As String
-        If InStr(UCase(wType), "CALL") > 0 Or InStr(UCase(wType), "BULL") > 0 Then
-            optT = "Call"
-        Else
-            optT = "Put"
-        End If
-        If convRatio = 0 Then Warrant_Delta = 0: Exit Function
-        Warrant_Delta = BS_Delta(S, k, T, r, sigma, optT) / convRatio
-    End Function
+    ' 2026-10-18: Warrant_Delta removed with the Warrant asset class - see
+    ' CLAUDE.md "RR5 Warrant 移除".
 
     ' =====================================================================
     ' OPERATIONAL SUBROUTINES
@@ -185,7 +176,7 @@ Attribute VB_Name = "RR5_Core"
     End Sub
 
     Public Sub RefreshGreeks()
-        ' Updates Delta/Gamma/Theta/Vega/Rho for all options and warrants.
+        ' Updates Delta/Gamma/Theta/Vega/Rho for all options.
         ' Called by timer or manually. Reads IV and spot price from input cells.
         '
         ' Fix: _Config OPT_SEC_START=30 points to the header row (row 30).
@@ -261,65 +252,8 @@ Attribute VB_Name = "RR5_Core"
 NextOpt:
         Next i
 
-        ' Warrants section
-        Dim wrtStart As Long, wrtCount As Long
-        wrtStart = CLng(GetConfig(wsC, "WRT_SEC_START"))
-        wrtCount = CLng(GetConfig(wsC, "WRT_INST_COUNT"))
-
-        ' Auto-advance past warrant header row(s). Same trick as options.
-        ' Warrant STRIKE column is K (col 11). If header text, advance up to 3.
-        Dim wHg As Long: wHg = 0
-        Do While Not IsNumeric(wsR.Cells(wrtStart, 11).Value) And wHg < 3
-            wrtStart = wrtStart + 1: wHg = wHg + 1
-        Loop
-
-        For i = 0 To wrtCount - 1
-            row = wrtStart + i
-            Dim wCode As String
-            wCode = wsR.Cells(row, 1).Value
-            If wCode = "" Then GoTo NextWrt
-
-            Dim wS As Double, wK As Double, wDte As Double, wIV As Double
-            Dim convRatio As Double, wType As String
-            wS = wsR.Cells(row, 10).Value         ' UNDL LAST
-            wK = wsR.Cells(row, 11).Value         ' STRIKE
-            wDte = wsR.Cells(row, 5).Value        ' DTE
-            wIV = wsR.Cells(row, 19).Value        ' IV
-            convRatio = wsR.Cells(row, 12).Value  ' CONV RATIO
-            wType = wsR.Cells(row, 7).Value       ' TYPE
-
-            If wS <= 0 Or wK <= 0 Or wIV <= 0 Or convRatio <= 0 Then GoTo NextWrt
-
-            Dim wT As Double
-            wT = wDte / 365
-
-            ' Normalise warrant type to "Call"/"Put" for BS_Theta sign handling
-            Dim wOptT As String
-            If InStr(UCase(wType), "CALL") > 0 Or InStr(UCase(wType), "BULL") > 0 Then
-                wOptT = "Call"
-            Else
-                wOptT = "Put"
-            End If
-
-            ' All Greeks are scaled by /convRatio to express "per warrant unit"
-            wsR.Cells(row, 20).Value = Warrant_Delta(wS, wK, wT, r, wIV, convRatio, wType)
-            wsR.Cells(row, 24).Value = BS_Gamma(wS, wK, wT, r, wIV) / convRatio         ' X GAMMA
-            wsR.Cells(row, 25).Value = BS_Theta(wS, wK, wT, r, wIV, wOptT) / convRatio  ' Y THETA/DAY
-            wsR.Cells(row, 26).Value = BS_Vega(wS, wK, wT, r, wIV) / convRatio          ' Z VEGA
-
-            ' Gearing needs LAST PX (col O) -- guarded separately since a fresh
-            ' position may have S/K/IV/convRatio filled before FetchAllPrices runs.
-            Dim wLastPx As Double: wLastPx = wsR.Cells(row, 15).Value   ' O LAST PX
-            If wLastPx > 0 Then
-                Dim wDelta As Double: wDelta = wsR.Cells(row, 20).Value      ' T DELTA (just written above)
-                wsR.Cells(row, 27).Value = wS / (wLastPx * convRatio)  ' AA NOM GEARING  = UNDL / (LastPx*ConvRatio)
-                wsR.Cells(row, 28).Value = wS * wDelta / wLastPx       ' AB EFF GEARING  = UNDL*Delta / LastPx
-            Else
-                wsR.Cells(row, 27).Value = ""
-                wsR.Cells(row, 28).Value = ""
-            End If
-NextWrt:
-        Next i
+        ' 2026-10-18: Warrants section removed with the Warrant asset class -
+        ' see CLAUDE.md "RR5 Warrant 移除".
 
         LogDebug wsD, "RefreshGreeks", "OK", "Greeks updated at " & Now()
         Exit Sub
@@ -405,15 +339,10 @@ ErrHandler:
         On Error GoTo ErrHandler
         Application.StatusBar = False
 
-        ' --- IV average across active options + warrants (col S=19) ---
+        ' --- IV average across active options (col S=19) ---
+        ' 2026-10-18: Warrants loop removed with the Warrant asset class.
         Dim ivSum As Double, ivCnt As Long, i As Long, ivV As Variant
         For i = 19 To 26   ' Options
-            If Trim(CStr(wsR.Cells(i, 1).Value)) <> "" Then
-                ivV = wsR.Cells(i, 19).Value
-                If IsNumeric(ivV) And CDbl(ivV) > 0 Then ivSum = ivSum + CDbl(ivV): ivCnt = ivCnt + 1
-            End If
-        Next i
-        For i = 31 To 38   ' Warrants
             If Trim(CStr(wsR.Cells(i, 1).Value)) <> "" Then
                 ivV = wsR.Cells(i, 19).Value
                 If IsNumeric(ivV) And CDbl(ivV) > 0 Then ivSum = ivSum + CDbl(ivV): ivCnt = ivCnt + 1
@@ -501,9 +430,10 @@ ErrHandler:
     End Sub
 
     Public Sub ExpiryAlert()
-        ' Scans DTE columns across all three sections and alerts if any
+        ' Scans DTE columns across both sections and alerts if any
         ' <= DTE_WARN_DAYS. Bug B2 fix: row ranges now read from _Config
-        ' (FUT/OPT/WRT_SEC_START + INST_COUNT) instead of hardcoded.
+        ' (FUT/OPT_SEC_START + INST_COUNT) instead of hardcoded.
+        ' 2026-10-18: Warrants section removed with the Warrant asset class.
         On Error GoTo ErrHandler
         Dim wsR As Worksheet, wsC As Worksheet, wsD As Worksheet
         Set wsR = ThisWorkbook.Sheets("RR5")
@@ -520,14 +450,12 @@ ErrHandler:
         ' Load section ranges from _Config
         Dim futStart As Long, futCount As Long
         Dim optStart As Long, optCount As Long
-        Dim wrtStart As Long, wrtCount As Long
         futStart = CLng(GetConfig(wsC, "FUT_SEC_START")): futCount = CLng(GetConfig(wsC, "FUT_INST_COUNT"))
         optStart = CLng(GetConfig(wsC, "OPT_SEC_START")): optCount = CLng(GetConfig(wsC, "OPT_INST_COUNT"))
-        wrtStart = CLng(GetConfig(wsC, "WRT_SEC_START")): wrtCount = CLng(GetConfig(wsC, "WRT_INST_COUNT"))
 
         ' Advance past header row(s) if the start cell isn't actual data.
         ' STRIKE col differs by section: futures has no strike (use A=contract),
-        ' options strike is col 9, warrants strike is col 11.
+        ' options strike is col 9.
         Dim hg As Long
         hg = 0: Do While Len(CStr(wsR.Cells(futStart, 1).Value)) = 0 And IsEmpty(wsR.Cells(futStart, 4).Value) And hg < 3
             futStart = futStart + 1: hg = hg + 1
@@ -535,13 +463,9 @@ ErrHandler:
         hg = 0: Do While Not IsNumeric(wsR.Cells(optStart, 9).Value) And hg < 5
             optStart = optStart + 1: hg = hg + 1
         Loop
-        hg = 0: Do While Not IsNumeric(wsR.Cells(wrtStart, 11).Value) And hg < 5
-            wrtStart = wrtStart + 1: hg = hg + 1
-        Loop
 
         Call ScanExpirySection(wsR, futStart, futCount, "FUTURES", warnDays, alertMsg)
         Call ScanExpirySection(wsR, optStart, optCount, "OPTIONS", warnDays, alertMsg)
-        Call ScanExpirySection(wsR, wrtStart, wrtCount, "WARRANTS", warnDays, alertMsg)
 
         If alertMsg <> "" Then
             MsgBox "EXPIRY ALERT - positions expiring within " & warnDays & " days:" & vbCrLf & vbCrLf & alertMsg, _
@@ -576,8 +500,8 @@ NextI:
     ' =================================================================
     '   Futures  data rows 7-14   (header 6,  subtotal 15)
     '   Options  data rows 19-26  (banner 17, header 18, subtotal 27)
-    '   Warrants data rows 31-38  (banner 29, header 30, subtotal 39)
-    '   GrandTotal row 41
+    '   GrandTotal row ~29 (2026-10-18: Warrants section removed, Grand Total
+    '   moved up from the old row 41 - see CLAUDE.md "RR5 Warrant 移除")
     Public Sub Setup_CompactLayout_Config()
         On Error GoTo Fail
         Dim wsC As Worksheet
@@ -587,13 +511,10 @@ NextI:
         Call SetConfigValue("FUT_INST_COUNT", 8)
         Call SetConfigValue("OPT_SEC_START", 18)
         Call SetConfigValue("OPT_INST_COUNT", 8)
-        Call SetConfigValue("WRT_SEC_START", 30)
-        Call SetConfigValue("WRT_INST_COUNT", 8)
 
         MsgBox "_Config updated to compact layout:" & vbCrLf & _
                "  FUT_SEC_START=6   FUT_INST_COUNT=8   (data 7-14)" & vbCrLf & _
-               "  OPT_SEC_START=18  OPT_INST_COUNT=8   (data 19-26)" & vbCrLf & _
-               "  WRT_SEC_START=30  WRT_INST_COUNT=8   (data 31-38)", _
+               "  OPT_SEC_START=18  OPT_INST_COUNT=8   (data 19-26)", _
                vbInformation, "Compact Layout Config"
         Exit Sub
 Fail:
@@ -661,7 +582,7 @@ Fail:
         Dim i As Long
         For i = 1 To UBound(rowData)   ' dynamic: handles 20-col or 23-col arrays
             ' Col 3 (Ticker) -- force text format so leading zeros survive
-            ' (e.g. warrant code "066669" wouldn't drop to 66669)
+            ' (e.g. a numeric-looking code "066669" wouldn't drop to 66669)
             If i = 3 Then wsT.Cells(nextRow, i).NumberFormat = "@"
             wsT.Cells(nextRow, i).Value = rowData(i)
         Next i
@@ -738,8 +659,6 @@ NoForm:
     '
     '   Future                 => Futures  rows  7-26  (cols A/C-D/F/H-K/R)
     '   Call / Put             => Options  rows 31-70  (cols A/C-D/F/H-N/S-T/AB)
-    '   Call Warrant / Put Warrant
-    '   Bull Cert / Bear Cert  => Warrants rows 75-104 (cols A/C-D/F-G/K-N/S-T)
     '   Equity / ETF           => skipped (no section in RR5)
     '
     ' Action handling:
@@ -751,10 +670,14 @@ NoForm:
     '
     ' NOTE: After running, manually update in RR5:
     '   LAST / UNDL LAST  (current market prices)
-    '   CONV RATIO        (warrants: conversion ratio)
     '   MARGIN REQ        (futures: per-contract margin)
     '   Then re-run RefreshGreeks to update all Greeks.
     '
+    ' 2026-10-18: Warrant/Cert (Call Warrant/Put Warrant/Bull Cert/Bear Cert)
+    ' removed - see CLAUDE.md "RR5 Warrant 移除". Conv_Ratio/Issuer (cols 24/25
+    ' of Transactions, e(17)/e(18) here) are kept in the schema but no longer
+    ' populated by anything upstream - reindexing every generic column read
+    ' in this file was judged riskier than leaving two always-blank fields.
     Public Sub RebuildPositionsFromTransactions()
         Dim wsT As Worksheet, wsR As Worksheet, wsD As Worksheet
         On Error Resume Next
@@ -831,8 +754,6 @@ NoForm:
                     posKey = "FUT|" & ticker & "|" & CStr(expiry)
                 Case "Call", "Put"
                     posKey = "OPT|" & ticker & "|" & txType & "|" & CStr(strike) & "|" & CStr(expiry)
-                Case "Call Warrant", "Put Warrant", "Bull Cert", "Bear Cert"
-                    posKey = "WRT|" & ticker
                 Case Else
                     GoTo SkipRow   ' Equity / ETF / unknown -- no section in RR5
             End Select
@@ -960,8 +881,8 @@ SkipRow:
         ' COMPACT LAYOUT (8 rows per section):
         '   Futures  rows  7-14 (header=6, subtotal=15)
         '   Options  rows 19-26 (banner=17, header=18, subtotal=27)
-        '   Warrants rows 31-38 (banner=29, header=30, subtotal=39)
-        '   GrandTotal at row 41
+        '   GrandTotal row ~29 (2026-10-18: Warrants section removed, Grand
+        '   Total moved up from the old row 41 - see CLAUDE.md "RR5 Warrant 移除")
 
         ' Futures input cols: A B C D F G H I J K L P R T U W
         Dim futInp As Variant
@@ -977,22 +898,18 @@ SkipRow:
             wsR.Range(wsR.Cells(19, CLng(colIdx)), wsR.Cells(26, CLng(colIdx))).ClearContents
         Next colIdx
 
-        ' Warrants input cols: A B C D F G H I J K L M N O S T
-        Dim wrtInp As Variant
-        wrtInp = Array(1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 20)
-        For Each colIdx In wrtInp
-            wsR.Range(wsR.Cells(31, CLng(colIdx)), wsR.Cells(38, CLng(colIdx))).ClearContents
-        Next colIdx
+        ' 2026-10-18: Warrants input-column clear block removed with the
+        ' Warrant asset class - see CLAUDE.md "RR5 Warrant 移除".
 
         ' -- Step 3: Write active positions --------------------------------
-        Dim futRow As Long, optRow As Long, wrtRow As Long
-        futRow = 7: optRow = 19: wrtRow = 31
-        Dim cntFut As Long, cntOpt As Long, cntWrt As Long
-        cntFut = 0: cntOpt = 0: cntWrt = 0
+        Dim futRow As Long, optRow As Long
+        futRow = 7: optRow = 19
+        Dim cntFut As Long, cntOpt As Long
+        cntFut = 0: cntOpt = 0
 
         ' Bug B3 fix: sort dict keys for stable display order across rebuilds.
         ' FUT section sorted by ticker -> expiry; OPT by underlying -> expiry ->
-        ' type (Call before Put) -> strike; WRT by ticker.
+        ' type (Call before Put) -> strike.
         Dim sortedKeys() As String
         sortedKeys = SortPositionKeys(dict)
 
@@ -1050,35 +967,9 @@ SkipRow:
                 wsR.Cells(optRow, 22).Value = pos(16)                      ' V THETA/DAY
                 wsR.Cells(optRow, 28).Value = pos(11)                      ' AB STRATEGY TAG
                 optRow = optRow + 1: cntOpt = cntOpt + 1
-
-            ElseIf Left(ks, 4) = "WRT|" Then
-                ' -- Warrants ----------------------------------------------
-                If wrtRow > 38 Then GoTo SkipPos   ' section full (8 rows, 31-38)
-                ' Pad warrant code to 6 digits (preserves leading zeros lost
-                ' when Transactions stored ticker as Number, e.g. 66669 -> 066669)
-                Dim wCodeStr As String: wCodeStr = CStr(pos(1))
-                If IsNumeric(wCodeStr) And Len(wCodeStr) <= 6 Then
-                    wCodeStr = Format(Val(wCodeStr), "000000")
-                End If
-                wsR.Cells(wrtRow, 1).NumberFormat = "@"
-                wsR.Cells(wrtRow, 1).Value = wCodeStr                       ' A CODE
-                wsR.Cells(wrtRow, 3).Value  = pos(10)                      ' C ENTRY DT
-                wsR.Cells(wrtRow, 4).Value  = pos(4)                       ' D EXPIRY
-                wsR.Cells(wrtRow, 6).Value  = pos(9)                       ' F BROKER
-                wsR.Cells(wrtRow, 7).Value  = pos(2)                       ' G TYPE
-                wsR.Cells(wrtRow, 8).Value  = CStr(pos(18))                ' H ISSUER
-                wsR.Cells(wrtRow, 9).Value  = pos(14)                      ' I UNDERLYING (name)
-                wsR.Cells(wrtRow, 11).Value = CDbl(pos(3))                 ' K STRIKE
-                ' L CONV RATIO -- required for Warrant_Delta = BS_Delta / convRatio
-                If CStr(pos(17)) <> "" And CDbl(pos(17)) > 0 Then
-                    wsR.Cells(wrtRow, 12).Value = CDbl(pos(17))            ' L CONV RATIO
-                End If
-                wsR.Cells(wrtRow, 13).Value = Abs(netQty)                  ' M SHARES (always +)
-                wsR.Cells(wrtRow, 14).Value = entryPx                      ' N ENTRY PX
-                wsR.Cells(wrtRow, 19).Value = pos(12)                      ' S IV
-                wsR.Cells(wrtRow, 20).Value = pos(13)                      ' T DELTA
-                wrtRow = wrtRow + 1: cntWrt = cntWrt + 1
             End If
+            ' 2026-10-18: "WRT|" write block removed with the Warrant asset
+            ' class - see CLAUDE.md "RR5 Warrant 移除".
 SkipPos:
         Next ki
 
@@ -1095,17 +986,12 @@ SkipPos:
         ' for today already exists (idempotent).
         Call DailySnapshot
 
-        ' -- Step 6: Refresh combined RR4+RR5 performance sheet + CPLog -----
-        ' Runs right after DailySnapshot so it reuses the wsR.Calculate that
-        ' DailySnapshot just forced (RR5 summary cells are guaranteed fresh).
-        ' Defensive: CombinedPerf module may not be imported into every copy
-        ' of this workbook, so a missing module must not abort the rebuild.
-        On Error Resume Next
-        Application.Run "CombinedPerf.RefreshCombinedPerf"
-        On Error GoTo ErrHandler
+        ' 2026-10-19: Step 6 (Refresh combined RR4+RR5 performance sheet +
+        ' CPLog via CombinedPerf.RefreshCombinedPerf) removed with the entire
+        ' CombinedPerf feature - see CLAUDE.md "CombinedPerf / CPLog 移除".
 
         LogDebug wsD, "RebuildPositionsFromTransactions", "OK", _
-            "Fut=" & cntFut & " Opt=" & cntOpt & " Wrt=" & cntWrt
+            "Fut=" & cntFut & " Opt=" & cntOpt
 
         ' Count realized rows for the summary box
         Dim rlCount As Long
@@ -1118,16 +1004,14 @@ SkipPos:
         MsgBox "Rebuild + Fetch + Realize + Snapshot complete!" & vbCrLf & vbCrLf & _
                "Open positions:" & vbCrLf & _
                "  Futures : " & cntFut & vbCrLf & _
-               "  Options : " & cntOpt & vbCrLf & _
-               "  Warrants: " & cntWrt & vbCrLf & vbCrLf & _
+               "  Options : " & cntOpt & vbCrLf & vbCrLf & _
                "Realized (from Transactions): " & rlCount & " row(s)" & vbCrLf & vbCrLf & _
                "Auto-filled:" & vbCrLf & _
                "  - UNDL LAST / LAST / LAST PREM  (TPEx + TWSE + Yahoo)" & vbCrLf & _
                "  - Futures MARGIN REQ            (TickerMap)" & vbCrLf & _
                "  - Greeks (Delta/Gamma/Theta/Vega/Rho)" & vbCrLf & _
                "  - Realized PnL                  (BUY/SELL/EXPIRE matching)" & vbCrLf & _
-               "  - HistoryLog snapshot           (TX/SPY/IV_Avg/Summary)" & vbCrLf & _
-               "  - CombinedPerf + CPLog row      (RR4+RR5 combined)", _
+               "  - HistoryLog snapshot           (TX/SPY/IV_Avg/Summary)", _
                vbInformation, "RR5 Rebuild"
         Exit Sub
 
@@ -1222,7 +1106,7 @@ ErrHandler:
 
             Dim ticker As String: ticker = Trim(CStr(txns(r, 3)))
             If ticker = "" Then GoTo NextTx
-            ' Restore leading zeros if numeric warrant code lost them
+            ' Restore leading zeros if a numeric-looking ticker code lost them
             If IsNumeric(ticker) And Len(ticker) < 6 Then
                 Dim numVal As Long: numVal = CLng(Val(ticker))
                 If numVal >= 1000 And numVal <= 999999 Then
@@ -1253,8 +1137,6 @@ ErrHandler:
                     posKey = "FUT|" & ticker & "|" & CStr(expiry) & "|" & broker
                 Case "Call", "Put"
                     posKey = "OPT|" & ticker & "|" & txType & "|" & CStr(strike) & "|" & CStr(expiry) & "|" & broker
-                Case "Call Warrant", "Put Warrant", "Bull Cert", "Bear Cert"
-                    posKey = "WRT|" & ticker & "|" & broker
                 Case Else
                     posKey = "EQTY|" & ticker & "|" & broker
             End Select
@@ -1504,7 +1386,7 @@ Fail:
     End Function
 
     ' Bug B3 helper: produce a stable sort order for position dict keys.
-    ' Section priority FUT < OPT < WRT; within each section, sort by sort key
+    ' Section priority FUT < OPT; within each section, sort by sort key
     ' built from (ticker, expiry, type, strike) padded for lexicographic order.
     Private Function SortPositionKeys(dict As Object) As String()
         Dim n As Long: n = dict.Count
@@ -1523,8 +1405,6 @@ Fail:
                 sectionRank = "1"
             ElseIf Left(CStr(k), 4) = "OPT|" Then
                 sectionRank = "2"
-            ElseIf Left(CStr(k), 4) = "WRT|" Then
-                sectionRank = "3"
             Else
                 sectionRank = "9"
             End If
@@ -1539,10 +1419,6 @@ Fail:
             Select Case CStr(p(2))
                 Case "Call":         typeRank = "1"
                 Case "Put":          typeRank = "2"
-                Case "Call Warrant": typeRank = "1"
-                Case "Put Warrant":  typeRank = "2"
-                Case "Bull Cert":    typeRank = "3"
-                Case "Bear Cert":    typeRank = "4"
                 Case Else:           typeRank = "5"
             End Select
             Dim strikeStr As String
@@ -1853,76 +1729,8 @@ NextRec:
         ExtractJsonNumber = Val(Mid(rec, p, q - p))
     End Function
 
-    ' =================================================================
-    ' DIAGNOSTIC: Inspect what FinMind returns for the position in O31
-    ' -----------------------------------------------------------------
-    ' Run from Alt+F8 or Immediate window. Prints to Debug.Print (Ctrl+G
-    ' Immediate window). Shows contract_code derivation, URL hit, total
-    ' records, how many matched each criterion, sample matched record,
-    ' and final returned price.
-    ' =================================================================
-    ' =================================================================
-    ' DIAGNOSTIC: Inspect why a warrant row didn't fetch / compute
-    ' Pass the actual row number (default 31 in compact layout)
-    ' =================================================================
-    Public Sub Debug_WarrantFetch(Optional wrtRow As Long = 31)
-        Dim wsR As Worksheet: Set wsR = ThisWorkbook.Sheets("RR5")
-        Dim wCode As String: wCode = Trim(CStr(wsR.Cells(wrtRow, 1).Value))
-
-        Debug.Print "=== Debug_WarrantFetch (row " & wrtRow & ") ==="
-        Debug.Print "Code raw  : '" & wCode & "'  (len=" & Len(wCode) & ")"
-        If wCode = "" Then
-            Debug.Print "EMPTY CODE -- this row has no warrant. Did you re-run RebuildPositionsFromTransactions?"
-            Exit Sub
-        End If
-
-        Dim wPad As String
-        If IsNumeric(wCode) Then
-            wPad = Format(Val(wCode), "000000")
-        Else
-            wPad = wCode
-        End If
-        Debug.Print "Code pad  : '" & wPad & "'"
-
-        ' Prints ALL sources (not just the one that wins) so a wrong-price
-        ' report can be diagnosed by comparing them side by side -- e.g. a
-        ' recycled warrant code where Yahoo still serves a stale quote from
-        ' a previous, already-expired warrant that used the same code.
-        Dim pxTPEx As Double, pxTWSE As Double, pxYahooTW As Double, pxYahooTWO As Double
-        pxTPEx = FetchTPExWarrantPrice(wPad)
-        Debug.Print wPad & " (TPEx OTC)  -> " & pxTPEx
-        pxTWSE = FetchTWSEClose(wPad)
-        Debug.Print wPad & " (TWSE)      -> " & pxTWSE
-        pxYahooTW = FetchPrice(wPad & ".TW")
-        Debug.Print wPad & ".TW  (Yahoo) -> " & pxYahooTW
-        pxYahooTWO = FetchPrice(wPad & ".TWO")
-        Debug.Print wPad & ".TWO (Yahoo) -> " & pxYahooTWO
-        Debug.Print "Live priority order: TPEx -> TWSE -> Yahoo .TW -> Yahoo .TWO"
-        Debug.Print "If TPEx/TWSE disagree with Yahoo, trust TPEx/TWSE (Yahoo can serve a stale price for a recycled warrant code)."
-
-        Debug.Print ""
-        Debug.Print "RR5 row " & wrtRow & " current cells:"
-        Debug.Print "  A CODE       : " & wsR.Cells(wrtRow, 1).Value
-        Debug.Print "  G TYPE       : " & wsR.Cells(wrtRow, 7).Value
-        Debug.Print "  I UNDERLYING : " & wsR.Cells(wrtRow, 9).Value
-        Debug.Print "  J UNDL LAST  : " & wsR.Cells(wrtRow, 10).Value
-        Debug.Print "  K STRIKE     : " & wsR.Cells(wrtRow, 11).Value
-        Debug.Print "  L CONV RATIO : " & wsR.Cells(wrtRow, 12).Value
-        Debug.Print "  M SHARES     : " & wsR.Cells(wrtRow, 13).Value
-        Debug.Print "  N ENTRY PX   : " & wsR.Cells(wrtRow, 14).Value
-        Debug.Print "  O LAST PX    : " & wsR.Cells(wrtRow, 15).Value
-        Debug.Print "  S IV         : " & wsR.Cells(wrtRow, 19).Value
-        Debug.Print "  T DELTA      : " & wsR.Cells(wrtRow, 20).Value
-        Debug.Print "  X GAMMA      : " & wsR.Cells(wrtRow, 24).Value
-        Debug.Print "  Y THETA/DAY  : " & wsR.Cells(wrtRow, 25).Value
-        Debug.Print "  Z VEGA       : " & wsR.Cells(wrtRow, 26).Value
-        Debug.Print "  AA NOM GEAR  : " & wsR.Cells(wrtRow, 27).Value
-        Debug.Print "  AB EFF GEAR  : " & wsR.Cells(wrtRow, 28).Value
-
-        Debug.Print ""
-        Debug.Print "RefreshGreeks needs UNDL LAST + STRIKE + IV + CONV RATIO all > 0."
-        Debug.Print "If any is 0/blank, Greeks won't compute."
-    End Sub
+    ' 2026-10-18: Debug_WarrantFetch removed with the Warrant asset class -
+    ' see CLAUDE.md "RR5 Warrant 移除".
 
     Public Sub Debug_TaifexFetch(Optional rrRow As Long = 31)
         On Error GoTo Fail
@@ -2221,106 +2029,8 @@ Fail:
             End If
         Next i
 
-        ' --- Warrants (rows 31-38): I=UNDERLYING, J=UNDL LAST;  A=CODE, O=LAST PX ---
-        ' Price priority: TPEx OTC  ->  TWSE openapi/STOCK_DAY. (Yahoo fallback for
-        ' the warrant's own price was removed -- see note below.)
-        For i = 31 To 38
-            Dim wCode As String
-            wCode = Trim(CStr(wsR.Cells(i, 1).Value))
-            If wCode <> "" Then
-                ' --- Underlying spot price --- (unaffected by this fix: ordinary
-                ' stock tickers aren't recycled the way warrant codes are, so Yahoo
-                ' stays the primary source here.)
-                tkr = Trim(CStr(wsR.Cells(i, 9).Value))    ' I UNDERLYING name/code
-                If tkr <> "" Then
-                    px = 0
-                    Dim wUndlC As String
-                    wUndlC = Replace(Replace(UCase(Trim(tkr)), ".TWO", ""), ".TW", "")
-                    ' Yahoo Finance first
-                    Application.StatusBar = "Fetching UNDL " & tkr & " (Yahoo)..."
-                    px = FetchPrice(NormalizeTicker(tkr))
-                    ' TPEx -> TWSE as backup for TW numeric codes
-                    If px <= 0 And IsNumeric(wUndlC) And Len(wUndlC) >= 4 And Len(wUndlC) <= 6 Then
-                        Application.StatusBar = "Fetching UNDL " & wUndlC & " (TPEx OTC)..."
-                        px = FetchTPExStockPrice(wUndlC)
-                        If px <= 0 Then
-                            Application.StatusBar = "Fetching UNDL " & wUndlC & " (TWSE)..."
-                            px = FetchTWSEClose(wUndlC)
-                        End If
-                    End If
-                    If px > 0 Then
-                        wsR.Cells(i, 10).Value = px   ' J UNDL LAST
-                        okN = okN + 1
-                    Else
-                        failN = failN + 1
-                    End If
-                End If
-
-                Dim wPad As String
-                If IsNumeric(wCode) Then
-                    wPad = Format(Val(wCode), "000000")
-                Else
-                    wPad = wCode
-                End If
-
-                ' --- Warrant name -> col B (fetch when blank; done before the
-                ' status tags below so a fresh name doesn't overwrite a tag) ---
-                If Trim(CStr(wsR.Cells(i, 2).Value)) = "" Then
-                    Application.StatusBar = "Fetching Wrt name " & wPad & "..."
-                    Dim wrtName As String
-                    wrtName = FetchWarrantName(wPad)
-                    If wrtName <> "" Then wsR.Cells(i, 2).Value = wrtName
-                End If
-
-                ' --- Warrant own market price ---
-                ' NOTE: FinMind was evaluated as a potential primary source here but was
-                ' skipped. Every FinMind dataset that includes a warrant closing price
-                ' (TaiwanStockInfoWithWarrantSummary, TaiwanStockWarrantTradingDailyReport)
-                ' requires a paid Sponsor-tier token, and even those either key by the
-                ' underlying mother-stock code (not the warrant's own code) or return
-                ' per-broker trade prices instead of an official daily close. The one
-                ' Free-tier warrant dataset (TaiwanStockInfoWithWarrant) has no price
-                ' field at all. Confirmed 2026-07-01 against https://finmind.github.io/llms-full.txt.
-                '
-                ' Bug fix (2026-07-15): warrant codes are RECYCLED by issuers after a
-                ' warrant expires (the same 6-digit code gets reassigned to a new
-                ' warrant later), and Yahoo Finance's ticker DB can keep serving a
-                ' stale quote left over from a previous, already-expired warrant that
-                ' used the same code -- e.g. code 051812 read back as an old 1.69
-                ' instead of the current listing's real 2.71. That quote looks like a
-                ' successful fetch (px>0) and silently never updates again. TPEx/TWSE
-                ' key off the live exchange record for that code so they're immune to
-                ' this; Yahoo is NOT safe as a fallback here and has been removed. If
-                ' TPEx+TWSE both miss the code, it's now treated as a real failure
-                ' (row marked STALE below) instead of guessing with Yahoo.
-                Dim wDteRaw As Variant: wDteRaw = wsR.Cells(i, 5).Value   ' E DTE
-                Dim wIsExpired As Boolean
-                wIsExpired = IsNumeric(wDteRaw) And CDbl(wDteRaw) <= 0
-
-                If wIsExpired Then
-                    ' Past expiry: don't attempt a live price at all (this is
-                    ' exactly the scenario Yahoo gets wrong via code recycling).
-                    ' LAST PX stays frozen at whatever it last held; row is tagged.
-                    Call MarkWarrantStatus(wsR, i, "EXPIRED")
-                Else
-                    px = 0
-                    Application.StatusBar = "Fetching Wrt " & wPad & " (TPEx OTC)..."
-                    px = FetchTPExWarrantPrice(wPad)
-                    If px <= 0 Then
-                        Application.StatusBar = "Fetching Wrt " & wPad & " (TWSE)..."
-                        px = FetchTWSEClose(wPad)
-                    End If
-                    If px > 0 Then
-                        wsR.Cells(i, 15).Value = px   ' O LAST PX
-                        okN = okN + 1
-                        Call ClearWarrantStatus(wsR, i)
-                    Else
-                        failN = failN + 1
-                        Call MarkWarrantStatus(wsR, i, "STALE")
-                    End If
-                End If
-            End If
-        Next i
+        ' 2026-10-18: Warrants price-fetch loop (rows 31-38) removed with the
+        ' Warrant asset class - see CLAUDE.md "RR5 Warrant 移除".
 
         Application.StatusBar = False
 
@@ -2359,274 +2069,24 @@ ErrHandler:
         End If
     End Sub
 
-    ' =====================================================================
-    ' WARRANT STATUS MARKERS (visual flags used by FetchAllPrices)
-    ' ---------------------------------------------------------------------
-    ' EXPIRED : DTE<=0 -- price fetch was skipped entirely this run, LAST PX
-    '           is frozen at whatever it last held.
-    ' STALE   : still active, but TPEx+TWSE both failed this run -- LAST PX
-    '           is whatever it held before (not refreshed, not necessarily
-    '           wrong).
-    ' Tags are appended to the Name cell (col B -- display-only, not read by
-    ' any formula or other macro) and the LAST PX cell is highlighted.
-    ' ClearWarrantStatus only touches cells this module previously marked
-    ' (matched by our own marker colors), so it never clobbers formatting it
-    ' didn't set.
-    ' Tags are plain ASCII ("[EXPIRED]" / "[STALE]") on purpose -- VBE
-    ' imports .bas files using the system ANSI codepage, not UTF-8, so
-    ' literal multi-byte Chinese characters written into this file by an
-    ' external editor get mangled on import/paste into the VBA project.
-    ' =====================================================================
-    Private Sub MarkWarrantStatus(wsR As Worksheet, row As Long, status As String)
-        Dim cellPx As Range: Set cellPx = wsR.Cells(row, 15)   ' O LAST PX
-        Dim tag As String
-        Select Case status
-            Case "EXPIRED"
-                cellPx.Interior.Color = RGB(90, 90, 90)        ' gray
-                cellPx.Font.Color = RGB(220, 220, 220)
-                tag = " [EXPIRED]"
-            Case "STALE"
-                cellPx.Interior.Color = RGB(153, 102, 0)       ' amber
-                cellPx.Font.Color = RGB(255, 255, 255)
-                tag = " [STALE]"
-            Case Else
-                Exit Sub
-        End Select
-
-        Dim nameCell As Range: Set nameCell = wsR.Cells(row, 2)
-        Dim baseName As String: baseName = CStr(nameCell.Value)
-        baseName = Replace(baseName, " [EXPIRED]", "")
-        baseName = Replace(baseName, " [STALE]", "")
-        nameCell.Value = baseName & tag
-    End Sub
-
-    Private Sub ClearWarrantStatus(wsR As Worksheet, row As Long)
-        Dim cellPx As Range: Set cellPx = wsR.Cells(row, 15)   ' O LAST PX
-        If cellPx.Interior.Color = RGB(90, 90, 90) Or cellPx.Interior.Color = RGB(153, 102, 0) Then
-            cellPx.Interior.ColorIndex = xlColorIndexNone
-            cellPx.Font.ColorIndex = xlColorIndexAutomatic
-        End If
-
-        Dim nameCell As Range: Set nameCell = wsR.Cells(row, 2)
-        Dim baseName As String: baseName = CStr(nameCell.Value)
-        Dim cleaned As String
-        cleaned = Replace(baseName, " [EXPIRED]", "")
-        cleaned = Replace(cleaned, " [STALE]", "")
-        If cleaned <> baseName Then nameCell.Value = cleaned
-    End Sub
+    ' 2026-10-18: removed with the Warrant asset class - see CLAUDE.md
+    ' "RR5 Warrant 移除":
+    '   - MarkWarrantStatus / ClearWarrantStatus (visual status markers)
+    '   - Setup_WarrantsGreeksColumns (already flagged stale/superseded by
+    '     the compact 31-38 layout before this removal, per its own header)
+    '   - Setup_WarrantGearingColumns
+    '   - FetchFinMindStockPrice (confirmed zero call sites anywhere in the
+    '     project - the orphaned FinMind warrant-price attempt; FinMind has
+    '     no free-tier warrant closing-price dataset, see the comment this
+    '     removal also deleted from FetchAllPrices)
 
     ' =====================================================================
-    ' ONE-SHOT SETUP: Add GAMMA / THETA / VEGA columns to RR5 Warrants
-    ' =====================================================================
-    '
-    ' Run this ONCE (Alt+F8 -> Setup_WarrantsGreeksColumns -> Run).
-    ' Idempotent -- safe to re-run.
-    '
-    ' What it does:
-    '   1. Adds headers in row 74:  X=GAMMA  Y=THETA/DAY  Z=VEGA
-    '   2. Formats data cells X75:Z104 with 4-decimal precision
-    '   3. Adds SUMPRODUCT subtotals in row 105 (cols X/Y/Z)
-    '   4. Patches Summary bar (row 1/2) so Net Gamma/Theta/Vega include warrants
-    '
-    Public Sub Setup_WarrantsGreeksColumns()
-        On Error GoTo ErrHandler
-        Dim wsR As Worksheet
-        Set wsR = ThisWorkbook.Sheets("RR5")
-
-        ' -- 1. Headers in row 74 (cols X, Y, Z) ---------------------------
-        Dim hdrSpec As Variant
-        hdrSpec = Array(Array(24, "GAMMA"), _
-                        Array(25, "THETA/DAY"), _
-                        Array(26, "VEGA"))
-        Dim h As Variant
-        For Each h In hdrSpec
-            With wsR.Cells(74, CLng(h(0)))
-                .Value = h(1)
-                .Font.Name = "Consolas"
-                .Font.Size = 9
-                .Font.Bold = True
-                .Font.Color = RGB(255, 165, 0)     ' orange like other headers
-                .Interior.Color = RGB(0, 0, 0)     ' black bg
-                .HorizontalAlignment = xlCenter
-                .Borders.LineStyle = xlContinuous
-                .Borders.Color = RGB(47, 79, 79)
-            End With
-            wsR.Columns(CLng(h(0))).ColumnWidth = 12
-        Next h
-
-        ' -- 2. Format data rows 75-104 (cols X/Y/Z) -----------------------
-        With wsR.Range(wsR.Cells(75, 24), wsR.Cells(104, 26))
-            .NumberFormat = "0.0000;(0.0000);""-"""
-            .Font.Name = "Consolas"
-            .Font.Size = 10
-            .Font.Color = RGB(255, 215, 0)         ' gold (formula style)
-            .Interior.Color = RGB(0, 0, 0)
-            .Borders.LineStyle = xlContinuous
-            .Borders.Color = RGB(47, 79, 79)
-        End With
-
-        ' -- 3. Subtotal row 105 -------------------------------------------
-        ' Each Greek aggregated as SUMPRODUCT(SHARES * Greek_per_warrant)
-        ' to give portfolio-level impact.
-        wsR.Cells(105, 24).Formula = _
-            "=SUMPRODUCT((A75:A104<>"""")*M75:M104*X75:X104)"
-        wsR.Cells(105, 25).Formula = _
-            "=SUMPRODUCT((A75:A104<>"""")*M75:M104*Y75:Y104)"
-        wsR.Cells(105, 26).Formula = _
-            "=SUMPRODUCT((A75:A104<>"""")*M75:M104*Z75:Z104)"
-        With wsR.Range(wsR.Cells(105, 24), wsR.Cells(105, 26))
-            .Font.Name = "Consolas"
-            .Font.Bold = True
-            .Font.Color = RGB(255, 255, 255)
-            .Interior.Color = RGB(0, 0, 0)
-            .NumberFormat = "#,##0.00;(#,##0.00);""-"""
-            .Borders.LineStyle = xlContinuous
-            .Borders.Color = RGB(47, 79, 79)
-        End With
-
-        ' -- 4. Patch Summary bar to include warrants ----------------------
-        ' L1  NET DELTA: original formula was buggy (used IV*ConvRatio for warrants).
-        '                Correct: SHARES * Warrant_Delta-per-warrant
-        wsR.Range("L1").Formula = _
-            "=IFERROR(SUBTOTAL(9,S7:S26)+SUBTOTAL(9,Y31:Y70)" & _
-            "+SUMPRODUCT((A75:A104<>"""")*M75:M104*T75:T104),0)"
-        ' N1  NET GAMMA   :  options (SUMPRODUCT * SHARES * MULT) + warrants X105
-        wsR.Range("N1").Formula = _
-            "=IFERROR(SUMPRODUCT((H31:H70<>"""")*U31:U70*L31:L70*M31:M70)+X105,0)"
-        ' J2  NET THETA/DAY: options SUBTOTAL(Z31:Z70) + warrants Y105
-        wsR.Range("J2").Formula = _
-            "=IFERROR(SUBTOTAL(9,Z31:Z70)+Y105,0)"
-        ' L2  NET VEGA     : options SUBTOTAL(AA31:AA70) + warrants Z105
-        wsR.Range("L2").Formula = _
-            "=IFERROR(SUBTOTAL(9,AA31:AA70)+Z105,0)"
-
-        ' -- 5. Done -------------------------------------------------------
-        MsgBox "Warrants Greeks columns installed:" & vbCrLf & vbCrLf & _
-               "  X = GAMMA      (per warrant)" & vbCrLf & _
-               "  Y = THETA/DAY  (per warrant)" & vbCrLf & _
-               "  Z = VEGA       (per warrant)" & vbCrLf & vbCrLf & _
-               "Row 105: portfolio-level SUMPRODUCT subtotals." & vbCrLf & _
-               "Summary bar patched:" & vbCrLf & _
-               "  L1 NET DELTA  -- bug fixed (was IV*ConvRatio, now SHARES*Delta)" & vbCrLf & _
-               "  N1 NET GAMMA  -- now includes warrants" & vbCrLf & _
-               "  J2 NET THETA  -- now includes warrants" & vbCrLf & _
-               "  L2 NET VEGA   -- now includes warrants" & vbCrLf & vbCrLf & _
-               "Run RefreshGreeks to populate values.", _
-               vbInformation, "RR5 Setup"
-        Exit Sub
-ErrHandler:
-        MsgBox "Setup failed: " & Err.Description, vbCritical
-    End Sub
-
-    ' =====================================================================
-    ' ONE-SHOT SETUP: Add Gearing (leverage) columns to RR5 Warrants
-    ' =====================================================================
-    '
-    ' Run this ONCE (Alt+F8 -> Setup_WarrantGearingColumns -> Run).
-    ' Idempotent -- safe to re-run.
-    ' Compact layout: warrants header row 30, data rows 31-38.
-    '
-    ' What it does:
-    '   1. Adds headers in row 30:  AA=NOM GEARING  AB=EFF GEARING
-    '   2. Formats data cells AA31:AB38 (2-decimal)
-    '   3. Values are computed by RefreshGreeks -- run it after this setup.
-    '
-    Public Sub Setup_WarrantGearingColumns()
-        On Error GoTo ErrHandler
-        Dim wsR As Worksheet
-        Set wsR = ThisWorkbook.Sheets("RR5")
-
-        Dim hdrSpec As Variant
-        hdrSpec = Array(Array(27, "NOM GEARING"), _
-                        Array(28, "EFF GEARING"))
-        Dim h As Variant
-        For Each h In hdrSpec
-            With wsR.Cells(30, CLng(h(0)))
-                .Value = h(1)
-                .Font.Name = "Consolas"
-                .Font.Size = 9
-                .Font.Bold = True
-                .Font.Color = RGB(255, 165, 0)     ' orange like other headers
-                .Interior.Color = RGB(0, 0, 0)     ' black bg
-                .HorizontalAlignment = xlCenter
-                .Borders.LineStyle = xlContinuous
-                .Borders.Color = RGB(47, 79, 79)
-            End With
-            wsR.Columns(CLng(h(0))).ColumnWidth = 12
-        Next h
-
-        With wsR.Range(wsR.Cells(31, 27), wsR.Cells(38, 28))
-            .NumberFormat = "0.00;(0.00);""-"""
-            .Font.Name = "Consolas"
-            .Font.Size = 10
-            .Font.Color = RGB(255, 215, 0)         ' gold (formula style)
-            .Interior.Color = RGB(0, 0, 0)
-            .Borders.LineStyle = xlContinuous
-            .Borders.Color = RGB(47, 79, 79)
-        End With
-
-        MsgBox "Warrant Gearing columns installed:" & vbCrLf & vbCrLf & _
-               "  AA = NOM GEARING  (UNDL LAST / (LAST PX * CONV RATIO))" & vbCrLf & _
-               "  AB = EFF GEARING  (UNDL LAST * DELTA / LAST PX)" & vbCrLf & vbCrLf & _
-               "Run RefreshGreeks to populate values.", _
-               vbInformation, "RR5 Setup"
-        Exit Sub
-ErrHandler:
-        MsgBox "Setup failed: " & Err.Description, vbCritical
-    End Sub
-
-    ' =====================================================================
-    ' FINMIND STOCK / WARRANT PRICE (Taiwan EOD close, TWSE + OTC)
-    ' ---------------------------------------------------------------------
-    ' Uses FinMind TaiwanStockPrice dataset which covers both exchanges with
-    ' no suffix needed. More reliable than Yahoo for warrants because:
-    '   - Official exchange closing price (not last tick)
-    '   - Handles OTC-listed warrants Yahoo misidentifies as TWSE
-    '   - Free, no auth required
-    ' Retries up to 3 previous business days for post-holiday gaps.
-    ' Called as primary source in FetchAllPrices warrant section.
-    ' =====================================================================
-    Public Function FetchFinMindStockPrice(ticker As String) As Double
-        On Error GoTo Fail
-        If Trim(ticker) = "" Then Exit Function
-        Dim startDt As Date: startDt = PreviousBusinessDay(Date)
-        Dim attempt As Long
-        For attempt = 1 To 3
-            Dim dateStr As String: dateStr = Format(startDt, "yyyy-mm-dd")
-            Dim url As String
-            url = "https://api.finmindtrade.com/api/v4/data" & _
-                  "?dataset=TaiwanStockPrice" & _
-                  "&data_id=" & Trim(ticker) & _
-                  "&start_date=" & dateStr & _
-                  "&end_date=" & dateStr
-            Dim req As Object
-            Set req = CreateObject("MSXML2.XMLHTTP")
-            req.Open "GET", url, False
-            req.setRequestHeader "User-Agent", "Mozilla/5.0"
-            req.send
-            If req.Status = 200 Then
-                Dim resp As String: resp = req.responseText
-                If InStr(resp, """data"":[]") = 0 And Len(resp) > 20 Then
-                    Dim cl As Double: cl = ExtractJsonNumber(resp, """close"":")
-                    If cl > 0 Then
-                        FetchFinMindStockPrice = cl
-                        Exit Function
-                    End If
-                End If
-            End If
-            startDt = PreviousBusinessDay(startDt - 1)
-        Next attempt
-Fail:
-        FetchFinMindStockPrice = 0
-    End Function
-
-    ' =====================================================================
-    ' TWSE STOCK / WARRANT CLOSE  (openapi.twse.com.tw STOCK_DAY_ALL, cached)
+    ' TWSE STOCK CLOSE  (openapi.twse.com.tw STOCK_DAY_ALL, cached)
     ' -----------------------------------------------------------------
     ' Primary: bulk download from openapi.twse.com.tw - covers all TWSE
-    '   listed stocks AND warrants with named JSON fields.
-    ' Fallback: rwd/zh/afterTrading/STOCK_DAY for 6-digit warrant codes
-    '   not present in STOCK_DAY_ALL (parses the closing-price field from data array).
+    '   listed stocks with named JSON fields.
+    ' Fallback: rwd/zh/afterTrading/STOCK_DAY for codes not present in
+    '   STOCK_DAY_ALL (parses the closing-price field from data array).
     ' Cache: one download per calendar day to avoid repeated large fetches.
     ' =====================================================================
     Public Function FetchTWSEClose(stockCode As String) As Double
@@ -2755,41 +2215,8 @@ Fail:
         FetchTPExStockPrice = 0
     End Function
 
-    ' =====================================================================
-    ' TPEX OTC WARRANT CLOSE  (tpex_warrant_daily_quts, cached)
-    ' Returns 0 when warrant is TWSE-listed (not in OTC list).
-    ' =====================================================================
-    Public Function FetchTPExWarrantPrice(wCode As String) As Double
-        On Error GoTo Fail
-        If Trim(wCode) = "" Then Exit Function
-
-        Static tpexWrtCache As Object
-        If tpexWrtCache Is Nothing Then Set tpexWrtCache = CreateObject("Scripting.Dictionary")
-        Dim today As String: today = Format(Date, "yyyymmdd")
-
-        Dim resp As String
-        If Not tpexWrtCache.Exists(today) Then
-            Dim req As Object
-            Set req = CreateObject("MSXML2.XMLHTTP")
-            req.Open "GET", "https://www.tpex.org.tw/openapi/v1/tpex_warrant_daily_quts", False
-            req.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-            req.setRequestHeader "Referer", "https://www.tpex.org.tw/openapi/"
-            req.setRequestHeader "Accept", "application/json"
-            req.send
-            If req.Status = 200 Then
-                tpexWrtCache(today) = req.responseText
-            Else
-                tpexWrtCache(today) = ""
-            End If
-        End If
-        resp = CStr(tpexWrtCache(today))
-        If Len(resp) < 10 Then Exit Function
-
-        FetchTPExWarrantPrice = LookupTPExCode(resp, Trim(wCode))
-        Exit Function
-Fail:
-        FetchTPExWarrantPrice = 0
-    End Function
+    ' 2026-10-18: FetchTPExWarrantPrice removed with the Warrant asset class
+    ' - see CLAUDE.md "RR5 Warrant 移除".
 
     ' -----------------------------------------------------------------------
     ' LookupTPExCode: shared helper for TPEx JSON bulk responses.
@@ -2877,29 +2304,8 @@ Fail:
         End If
         Debug.Print "    FetchTPExStockPrice(" & stockCode & ") = " & FetchTPExStockPrice(stockCode)
 
-        ' --- 2. OTC warrant price ---
-        Set req = CreateObject("MSXML2.XMLHTTP")
-        req.Open "GET", "https://www.tpex.org.tw/openapi/v1/tpex_warrant_daily_quts", False
-        req.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        req.setRequestHeader "Accept", "application/json"
-        req.send
-        Debug.Print "[2] tpex_warrant_daily_quts  HTTP=" & req.Status & "  len=" & Len(req.responseText)
-        resp = req.responseText
-        ' Show first object to reveal field names
-        Dim firstObj As Long: firstObj = InStr(resp, "{")
-        Dim firstObjEnd As Long: firstObjEnd = InStr(firstObj, resp, "}")
-        If firstObj > 0 And firstObjEnd > firstObj Then
-            Debug.Print "    First object: " & Mid(resp, firstObj, firstObjEnd - firstObj + 1)
-        End If
-        If wCode <> "" Then
-            idx = InStr(resp, """Code"":""" & wCode & """")
-            If idx > 0 Then
-                Debug.Print "    " & wCode & " found: " & Mid(resp, InStrRev(resp, "{", idx), InStr(idx, resp, "}") - InStrRev(resp, "{", idx) + 1)
-            Else
-                Debug.Print "    " & wCode & " NOT found (likely TWSE-listed)"
-            End If
-            Debug.Print "    FetchTPExWarrantPrice(" & wCode & ") = " & FetchTPExWarrantPrice(wCode)
-        End If
+        ' 2026-10-18: section 2 (OTC warrant price) removed with the Warrant
+        ' asset class - see CLAUDE.md "RR5 Warrant 移除".
 
         ' --- 3. TWSE bulk ---
         Set req = CreateObject("MSXML2.XMLHTTP")
@@ -2909,8 +2315,8 @@ Fail:
         req.send
         Debug.Print "[3] TWSE STOCK_DAY_ALL  HTTP=" & req.Status & "  len=" & Len(req.responseText)
         resp = req.responseText
-        firstObj = InStr(resp, "{")
-        firstObjEnd = InStr(firstObj, resp, "}")
+        Dim firstObj As Long: firstObj = InStr(resp, "{")
+        Dim firstObjEnd As Long: firstObjEnd = InStr(firstObj, resp, "}")
         If firstObj > 0 And firstObjEnd > firstObj Then
             Debug.Print "    First object: " & Mid(resp, firstObj, firstObjEnd - firstObj + 1)
         End If
@@ -2925,100 +2331,8 @@ Fail:
         End If
     End Sub
 
-    ' =====================================================================
-    ' WARRANT NAME FETCH
-    ' ---------------------------------------------------------------------
-    ' Primary:  Yahoo Finance chart API -> meta.longName / meta.shortName
-    '           Tries .TW (TWSE) then .TWO (OTC/TPEx).
-    ' Fallback: FinMind TaiwanStockInfo -> stock_name field
-    ' Returns "" on any failure so caller can skip writing.
-    ' =====================================================================
-    ' =====================================================================
-    ' WARRANT NAME FETCH  (3 sources, in order)
-    ' 1. Yahoo Finance v7/quote  -> shortName  (best for TW warrants)
-    ' 2. FinMind TaiwanStockInfo -> stock_name (needs date param)
-    ' 3. TWSE searchSecurities   -> name       (TWSE-listed only)
-    ' =====================================================================
-    ' =====================================================================
-    ' WARRANT NAME FETCH  (2 sources confirmed working)
-    '
-    ' Method 1: TWSE afterTrading/STOCK_DAY  [TWSE-listed warrants]
-    '   URL: /rwd/zh/afterTrading/STOCK_DAY?response=json&date=YYYYMMDD&stockNo=CODE
-    '   Title format: "115/06 051812 TSMC-YuantaSecurities-5A-Call04 daily trading info"
-    '   Parse: token immediately after the code in the title string.
-    '   Tries current month first, then previous month as fallback.
-    '
-    ' Method 2: TPEx tpex_warrant_issue  [OTC-listed warrants, bulk JSON]
-    '   Searches the bulk list for "Code":"wCode" then extracts Name field.
-    ' =====================================================================
-    Public Function FetchWarrantName(wCode As String) As String
-        On Error GoTo Fail
-        If Trim(wCode) = "" Then Exit Function
-
-        Dim req As Object, resp As String, nm As String
-
-        ' --- Method 1: TWSE STOCK_DAY (listed warrants) ---
-        Dim attempt As Long
-        Dim dt As Date: dt = Date
-        For attempt = 1 To 2
-            Dim dateStr As String
-            dateStr = Format(DateSerial(Year(dt), Month(dt), 1), "yyyymmdd")
-            Set req = CreateObject("MSXML2.XMLHTTP")
-            req.Open "GET", "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY" & _
-                     "?response=json&date=" & dateStr & "&stockNo=" & wCode, False
-            req.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-            req.setRequestHeader "Referer", "https://www.twse.com.tw/"
-            req.send
-            If req.Status = 200 Then
-                resp = req.responseText
-                If InStr(resp, """stat"":""OK""") > 0 Then
-                    nm = JsonStr(resp, "title")
-                    If nm <> "" Then
-                        Dim cTag As String: cTag = wCode & " "
-                        Dim cPos As Long: cPos = InStr(nm, cTag)
-                        If cPos > 0 Then
-                            Dim afterCode As String
-                            afterCode = Mid(nm, cPos + Len(cTag))
-                            Dim spPos As Long: spPos = InStr(afterCode, " ")
-                            If spPos > 1 Then
-                                FetchWarrantName = Trim(Left(afterCode, spPos - 1))
-                                Exit Function
-                            End If
-                        End If
-                    End If
-                End If
-            End If
-            ' Retry with previous month
-            dt = DateSerial(Year(dt), Month(dt) - 1, 1)
-        Next attempt
-
-        ' --- Method 2: TPEx tpex_warrant_issue (OTC-listed warrants, bulk JSON) ---
-        Set req = CreateObject("MSXML2.XMLHTTP")
-        req.Open "GET", "https://www.tpex.org.tw/openapi/v1/tpex_warrant_issue", False
-        req.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        req.setRequestHeader "Referer", "https://www.tpex.org.tw/openapi/"
-        req.setRequestHeader "Accept", "application/json"
-        req.send
-        If req.Status = 200 Then
-            resp = req.responseText
-            Dim codeKey As String: codeKey = """Code"":""" & wCode & """"
-            Dim codeIdx As Long: codeIdx = InStr(resp, codeKey)
-            If codeIdx > 0 Then
-                ' Extract Name from the same JSON object (comes after Code in schema)
-                Dim objEnd As Long: objEnd = InStr(codeIdx, resp, "}")
-                Dim objStr As String
-                objStr = Mid(resp, codeIdx, objEnd - codeIdx + 1)
-                nm = JsonStr(objStr, "Name")
-                If nm <> "" Then
-                    FetchWarrantName = nm
-                    Exit Function
-                End If
-            End If
-        End If
-        Exit Function
-Fail:
-        FetchWarrantName = ""
-    End Function
+    ' 2026-10-18: FetchWarrantName removed with the Warrant asset class -
+    ' see CLAUDE.md "RR5 Warrant 移除".
 
     ' -----------------------------------------------------------------------
     ' JsonStr: extract string value for a given field name from raw JSON.
@@ -3053,44 +2367,5 @@ Fail:
         If q > p Then JsonStr = Mid(json, p, q - p)
     End Function
 
-    ' -----------------------------------------------------------------------
-    ' Debug_WarrantName: run from Alt+F8 to see exactly what each API returns.
-    ' Change wCode to the warrant code you want to test.
-    ' -----------------------------------------------------------------------
-    ' -----------------------------------------------------------------------
-    ' Debug_WarrantName: run from Alt+F8 to verify name fetch for any code.
-    ' -----------------------------------------------------------------------
-    Public Sub Debug_WarrantName(Optional wCode As String = "051812")
-        Dim req As Object, resp As String
-        Debug.Print "=== Debug_WarrantName: " & wCode & " ==="
-
-        ' --- Test 1: TWSE STOCK_DAY (primary, confirmed working) ---
-        Dim dateStr As String: dateStr = Format(DateSerial(Year(Date), Month(Date), 1), "yyyymmdd")
-        Set req = CreateObject("MSXML2.XMLHTTP")
-        req.Open "GET", "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY" & _
-                 "?response=json&date=" & dateStr & "&stockNo=" & wCode, False
-        req.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        req.setRequestHeader "Referer", "https://www.twse.com.tw/"
-        req.send
-        Debug.Print "[1] TWSE STOCK_DAY HTTP=" & req.Status & "  date=" & dateStr
-        resp = req.responseText
-        Dim nm As String: nm = JsonStr(resp, "title")
-        Debug.Print "    title -> [" & nm & "]"
-        Debug.Print "    FetchWarrantName result -> [" & FetchWarrantName(wCode) & "]"
-
-        ' --- Test 2: TPEx tpex_warrant_issue (OTC warrants, bulk search) ---
-        Set req = CreateObject("MSXML2.XMLHTTP")
-        req.Open "GET", "https://www.tpex.org.tw/openapi/v1/tpex_warrant_issue", False
-        req.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        req.setRequestHeader "Referer", "https://www.tpex.org.tw/openapi/"
-        req.setRequestHeader "Accept", "application/json"
-        req.send
-        Debug.Print "[2] TPEx tpex_warrant_issue HTTP=" & req.Status & "  len=" & Len(req.responseText)
-        Dim codeKey As String: codeKey = """Code"":""" & wCode & """"
-        Dim codeIdx As Long: codeIdx = InStr(req.responseText, codeKey)
-        If codeIdx > 0 Then
-            Debug.Print "    FOUND at " & codeIdx & ": " & Mid(req.responseText, codeIdx, 150)
-        Else
-            Debug.Print "    Code " & wCode & " NOT found (likely TWSE-listed, not OTC)"
-        End If
-    End Sub
+    ' 2026-10-18: Debug_WarrantName removed with the Warrant asset class -
+    ' see CLAUDE.md "RR5 Warrant 移除".

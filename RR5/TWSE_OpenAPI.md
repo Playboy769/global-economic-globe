@@ -235,9 +235,9 @@
 | `GET /opendata/t187ap42_L` | 上市認購(售)權證每日成交資料檔 |
 | `GET /opendata/t187ap43_L` | 上市認購(售)權證交易人數檔 |
 
-> **RR5 常用**:
-> - `t187ap37_L` — 上市權證基本資料，含代號、名稱、標的、到期日（查權證名稱最快）
-> - `t187ap42_L` — 每日成交資料，可補強收盤價來源
+> ⚠️ 2026-10-19：RR5 已整個移除 Warrant 資產類別（含牛熊證），上述權證端點
+> 不再被 RR5 的任何程式碼呼叫；本節保留純粹是 TWSE API 的完整參考，不代表
+> RR5 仍在使用。詳見 CLAUDE.md「RR5 Warrant 移除」。
 
 ---
 
@@ -273,7 +273,5 @@
 | 用途 | 端點 | 關鍵欄位 |
 |------|------|----------|
 | 查個股日收盤 + 股名 | `GET /rwd/zh/afterTrading/STOCK_DAY?response=json&date=YYYYMMDD&stockNo=CODE` | `title`（含股名）、`data[][6]`（收盤價） |
-| 上市權證基本資料（名稱/到期日/標的） | `GET /opendata/t187ap37_L` | `SecuritiesCode`, `Name`, `UnderlyingSecurities` |
-| 權證每日成交 | `GET /opendata/t187ap42_L` | `SecuritiesCode`, `ClosingPrice` |
 | 除權除息預告 | `GET /exchangeReport/TWT48U_ALL` | — |
 | 本益比 / 殖利率 / 淨值比 | `GET /exchangeReport/BWIBBU_ALL` | `PriceEarningRatio`, `DividendYield`, `PriceBookRatio` |

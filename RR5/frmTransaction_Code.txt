@@ -11,20 +11,20 @@
 '   - Controls: txtDate txtTicker txtStrike txtExpiry txtShares txtMultiplier
 '               txtPrice txtRiskFreeRate txtFee txtTax txtNetAmount
 '               txtSector txtTarget txtIV txtDelta txtBeta
-'               txtUnderlying txtUndlSpot txtConvRatio txtGamma txtTheta
+'               txtUnderlying txtUndlSpot txtGamma txtTheta
 '               cmbAction cmbType cmbStrategy cmbBroker
-'               btnSave btnClear btnCancel lblConvRatio
+'               btnSave btnClear btnCancel
 ' =============================================================
 
 Option Explicit
 
-' Warrant type names (used for ConvRatio show/hide and validation)
-Private Const WARRANT_TYPES As String = "Call Warrant,Put Warrant,Bull Cert,Bear Cert"
-
 ' --- UserForm_Initialize: populate dropdowns and set defaults on open ---
 Private Sub UserForm_Initialize()
     cmbAction.List = Split("Buy,Sell,AdjustCost,Expire,Exercise", ",")
-    cmbType.List = Split("Call,Put,Future,Call Warrant,Put Warrant,Bull Cert,Bear Cert,Equity,ETF", ",")
+    ' 2026-10-18: Warrant family (Call Warrant/Put Warrant/Bull Cert/Bear Cert)
+    ' removed - see CLAUDE.md "RR5 Warrant 移除". Remaining order is already a
+    ' grouping: options (Call/Put), then Future, then cash instruments.
+    cmbType.List = Split("Call,Put,Future,Equity,ETF", ",")
     cmbStrategy.List = Split("Bull Call,Bear Put,Straddle,Strangle,Iron Condor,Protective,Covered,Calendar,Ratio,Single", ",")
     cmbBroker.List = Split("Fubon,SinoPac,Cathay,KGI,Yuanta,Capital", ",")
 
@@ -32,7 +32,6 @@ Private Sub UserForm_Initialize()
     txtFee.Value        = "0"
     txtTax.Value        = "0"
     txtMultiplier.Value = "1"
-    txtConvRatio.Value  = ""
 
     ' Load current risk-free rate from _Config (drives Black-Scholes Greeks).
     ' Stored as decimal fraction in _Config; e.g. 0.02 = 2 %.
@@ -45,25 +44,6 @@ Private Sub UserForm_Initialize()
     End If
 
     Me.Caption = "Add Transaction - RR5"
-    UpdateConvRatioVisual   ' grey out ConvRatio until warrant type selected
-End Sub
-
-' --- Highlight Conv Ratio label orange when a warrant type is selected ---
-Private Sub cmbType_Change()
-    UpdateConvRatioVisual
-End Sub
-
-Private Sub UpdateConvRatioVisual()
-    Dim isWrt As Boolean
-    isWrt = (InStr(WARRANT_TYPES, cmbType.Value) > 0 And cmbType.Value <> "")
-    If isWrt Then
-        lblConvRatio.ForeColor = &H0080FF   ' orange -- required
-        txtConvRatio.BackColor = &H001A1A   ' slightly different bg
-        If Val(txtConvRatio.Value) = 0 Then txtConvRatio.Value = ""
-    Else
-        lblConvRatio.ForeColor = &H606060   ' grey -- not needed
-        txtConvRatio.Value = ""
-    End If
 End Sub
 
 ' --- Auto-recalc Net Amount when any pricing field changes ---
@@ -97,11 +77,9 @@ End Sub
 Private Sub AutoFillEntryGreeks()
     On Error GoTo SafeExit   ' if txtUndlSpot doesn't exist on form yet, abort silently
 
-    ' Only meaningful for options (Call / Put / Warrants)
+    ' Only meaningful for options (Call / Put)
     Dim t As String: t = cmbType.Value
-    If t <> "Call" And t <> "Put" And _
-       t <> "Call Warrant" And t <> "Put Warrant" And _
-       t <> "Bull Cert" And t <> "Bear Cert" Then Exit Sub
+    If t <> "Call" And t <> "Put" Then Exit Sub
 
     ' All numeric inputs must be present and positive
     If Not IsNumeric(txtUndlSpot.Value) Then Exit Sub
@@ -122,11 +100,10 @@ Private Sub AutoFillEntryGreeks()
     T_years = (CDate(txtExpiry.Value) - CDate(txtDate.Value)) / 365
     If T_years <= 0 Then Exit Sub
 
-    ' Normalise type for warrant variants -> Call/Put
     Dim bsType As String
     Select Case t
-        Case "Call", "Call Warrant", "Bull Cert": bsType = "Call"
-        Case Else:                                bsType = "Put"
+        Case "Call": bsType = "Call"
+        Case Else:   bsType = "Put"
     End Select
 
     ' Only overwrite empty fields so user's manual entries win
@@ -156,15 +133,6 @@ Private Sub btnSave_Click()
     End If
     If Val(txtPrice.Value) = 0 Then
         MsgBox "Price must be > 0.", vbExclamation: txtPrice.SetFocus: Exit Sub
-    End If
-
-    ' Warrant: Conv Ratio required when type is warrant
-    Dim isWarrant As Boolean
-    isWarrant = (InStr(WARRANT_TYPES, cmbType.Value) > 0 And cmbType.Value <> "")
-    If isWarrant And Val(txtConvRatio.Value) <= 0 Then
-        MsgBox "Conv Ratio required for warrants." & vbCrLf & _
-               "e.g. 0.1 means 10 warrants per underlying share.", _
-               vbExclamation: txtConvRatio.SetFocus: Exit Sub
     End If
 
     ' Risk-Free Rate: validate (decimal, 0 < r < 1) and persist to _Config
@@ -210,7 +178,11 @@ Private Sub btnSave_Click()
     rowData(21) = Trim(txtUnderlying.Value)   ' col U: Underlying (e.g. TWII, SPX)
     rowData(22) = SafeNum(txtGamma.Value)     ' col V: Gamma  (manual entry; RefreshGreeks may overwrite)
     rowData(23) = SafeNum(txtTheta.Value)     ' col W: Theta  (manual entry; RefreshGreeks may overwrite)
-    rowData(24) = SafeNum(txtConvRatio.Value) ' col X: Conv_Ratio (warrants only)
+    ' 2026-10-18: col X Conv_Ratio was warrant-only; Warrant removed (see
+    ' CLAUDE.md). Column kept in the sheet schema (reindexing every generic
+    ' column read elsewhere was judged not worth the risk), just never
+    ' written again - always blank from here on.
+    rowData(24) = ""
 
     Call RR5_Core.AppendTransaction(rowData)
     MsgBox "Transaction saved: " & rowData(1), vbInformation, "RR5 Transaction"
@@ -261,8 +233,6 @@ NextCtrl:
     txtFee.Value        = "0"
     txtTax.Value        = "0"
     txtMultiplier.Value = "1"
-    txtConvRatio.Value  = ""
-    UpdateConvRatioVisual
     On Error Resume Next
     txtTicker.SetFocus
 End Sub

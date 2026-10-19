@@ -68,8 +68,8 @@ End Sub
 ' ---------------------------------------------------------------------
 '   Futures  data rows 7-14   (subtotal 15)
 '   Options  data rows 19-26  (subtotal 27)
-'   Warrants data rows 31-38  (subtotal 39)
-'   GrandTotal row 41
+'   GrandTotal row ~29 (2026-10-18: Warrants section removed, Grand Total
+'   moved up from the old row 41 - see CLAUDE.md "RR5 Warrant 移除")
 ' =====================================================================
 Public Sub FixWorksheetFormulas()
     On Error GoTo Fail
@@ -78,33 +78,30 @@ Public Sub FixWorksheetFormulas()
 
     ' --- Row 1 (label / Total MV / Net Delta / Net Gamma / Positions) ---
     wsR.Range("B1").Formula = _
-        "=IFERROR(SUBTOTAL(9,N7:N14)+SUBTOTAL(9,Q19:Q26)+SUBTOTAL(9,Q31:Q38),0)"
+        "=IFERROR(SUBTOTAL(9,N7:N14)+SUBTOTAL(9,Q19:Q26),0)"
     wsR.Range("L1").Formula = _
-        "=IFERROR(SUBTOTAL(9,S7:S14)+SUBTOTAL(9,Y19:Y26)" & _
-        "+SUMPRODUCT((A31:A38<>"""")*M31:M38*T31:T38),0)"
+        "=IFERROR(SUBTOTAL(9,S7:S14)+SUBTOTAL(9,Y19:Y26),0)"
     wsR.Range("N1").Formula = _
-        "=IFERROR(SUMPRODUCT((H19:H26<>"""")*U19:U26*L19:L26*M19:M26)+X39,0)"
-    wsR.Range("P1").Formula = "=COUNTA(A7:A14)+COUNTA(A19:A26)+COUNTA(A31:A38)"
+        "=IFERROR(SUMPRODUCT((H19:H26<>"""")*U19:U26*L19:L26*M19:M26),0)"
+    wsR.Range("P1").Formula = "=COUNTA(A7:A14)+COUNTA(A19:A26)"
 
     ' --- Row 2 (UNRL PNL% / UNRL PNL / RL PNL / NET THETA / NET VEGA / MARGIN) ---
     wsR.Range("D2").Formula = _
-        "=IFERROR((SUBTOTAL(9,O7:O14)+SUBTOTAL(9,R19:R26)+SUBTOTAL(9,R31:R38))/B1,0)"
+        "=IFERROR((SUBTOTAL(9,O7:O14)+SUBTOTAL(9,R19:R26))/B1,0)"
     wsR.Range("F2").Formula = _
-        "=IFERROR(SUBTOTAL(9,O7:O14)+SUBTOTAL(9,R19:R26)+SUBTOTAL(9,R31:R38),0)"
+        "=IFERROR(SUBTOTAL(9,O7:O14)+SUBTOTAL(9,R19:R26),0)"
     wsR.Range("H2").Formula = "=IFERROR(SUM(Realized!I:I),0)"
-    wsR.Range("J2").Formula = "=IFERROR(SUBTOTAL(9,Z19:Z26)+Y39,0)"
-    wsR.Range("L2").Formula = "=IFERROR(SUBTOTAL(9,AA19:AA26)+Z39,0)"
+    wsR.Range("J2").Formula = "=IFERROR(SUBTOTAL(9,Z19:Z26),0)"
+    wsR.Range("L2").Formula = "=IFERROR(SUBTOTAL(9,AA19:AA26),0)"
     wsR.Range("N2").Formula = "=IFERROR(SUBTOTAL(9,Q7:Q14),0)"
 
-    MsgBox "Summary bar formulas rewritten for compact layout:" & vbCrLf & _
+    MsgBox "Summary bar formulas rewritten for compact layout (Warrants removed):" & vbCrLf & _
            "  Futures  N7:N14  (NET EXPOS), O7:O14 (UNRL PNL)" & vbCrLf & _
-           "  Options  Q19:Q26 (NET EXPOS), R19:R26 (UNRL PNL)" & vbCrLf & _
-           "  Warrants Q31:Q38 (NET EXPOS), R31:R38 (UNRL PNL)" & vbCrLf & vbCrLf & _
+           "  Options  Q19:Q26 (NET EXPOS), R19:R26 (UNRL PNL)" & vbCrLf & vbCrLf & _
            "Don't forget to also update:" & vbCrLf & _
            "  - row 15 Subtotal Futures   formulas" & vbCrLf & _
            "  - row 27 Subtotal Options   formulas" & vbCrLf & _
-           "  - row 39 Subtotal Warrants  formulas (X/Y/Z need SUMPRODUCT)" & vbCrLf & _
-           "  - row 41 Grand Total        formulas", _
+           "  - Grand Total formulas (moved up after the Warrants block was removed)", _
            vbInformation, "Worksheet Patch OK"
     Exit Sub
 Fail:
@@ -115,7 +112,7 @@ End Sub
 ' ONE-SHOT: Write all PER-ROW formulas at compact layout rows.
 ' ---------------------------------------------------------------------
 ' Restores DTE / % CHG / NET EXPOS / UNRL PNL / NET DELTA / WT% / etc.
-' formulas at the new positions (Fut 7-14, Opt 19-26, Wrt 31-38).
+' formulas at the new positions (Fut 7-14, Opt 19-26).
 ' Excel auto-adjusts row references when Formula is set on a range,
 ' so each cell ends up with the correct row number.
 ' =====================================================================
@@ -160,26 +157,12 @@ Public Sub Setup_CompactRowFormulas()
     wsR.Range("AC19:AC26").Formula = _
         "=IF(OR(Q19="""",'RR5'!$B$1=0),"""",Q19/'RR5'!$B$1)"
 
-    ' ---------- Warrants rows 31-38 ----------
-    wsR.Range("E31:E38").Formula = _
-        "=IF(D31="""","""",MAX(0,D31-TODAY()))"
-    wsR.Range("P31:P38").Formula = _
-        "=IF(OR(N31="""",O31=""""),"""",IFERROR((O31-N31)/N31,""""))"
-    wsR.Range("Q31:Q38").Formula = _
-        "=IF(OR(M31="""",O31=""""),"""",M31*O31)"
-    wsR.Range("R31:R38").Formula = _
-        "=IF(OR(M31="""",N31="""",O31=""""),"""",M31*(O31-N31))"
-    wsR.Range("U31:U38").Formula = _
-        "=IF(OR(O31="""",J31="""",K31="""",L31="""",O31=0),""""," & _
-        "IFERROR((O31-MAX(0,(J31-K31)/L31))/O31,""""))"
-    wsR.Range("V31:V38").Formula = "=E31"
-    wsR.Range("W31:W38").Formula = _
-        "=IF(OR(Q31="""",'RR5'!$B$1=0),"""",Q31/'RR5'!$B$1)"
+    ' 2026-10-18: "Warrants rows 31-38" formula block removed along with the
+    ' Warrant asset class - see CLAUDE.md "RR5 Warrant 移除".
 
     MsgBox "Per-row formulas restored:" & vbCrLf & _
            "  Futures  rows 7-14   (E/M/N/O/Q/S/V)" & vbCrLf & _
-           "  Options  rows 19-26  (E/P/Q/R/Y/Z/AA/AC)" & vbCrLf & _
-           "  Warrants rows 31-38  (E/P/Q/R/U/V/W)" & vbCrLf & vbCrLf & _
+           "  Options  rows 19-26  (E/P/Q/R/Y/Z/AA/AC)" & vbCrLf & vbCrLf & _
            "Now DTE/% CHG/NET EXPOS/UNRL PNL/WT% etc. auto-compute.", _
            vbInformation, "Compact Row Formulas OK"
     Exit Sub
@@ -189,7 +172,11 @@ End Sub
 
 ' =====================================================================
 ' ONE-SHOT: Write subtotal + grand-total formulas at the COMPACT layout
-' rows (15, 27, 39, 41). Run AFTER FixWorksheetFormulas.
+' rows (15, 27, 29). Run AFTER FixWorksheetFormulas.
+' 2026-10-18: Warrants subtotal (was row 39) removed along with the Warrant
+' asset class; the Warrants row block (29-40) was deleted from the sheet so
+' Grand Total moved up from the old row 41 to row 29 - see CLAUDE.md
+' "RR5 Warrant 移除".
 ' =====================================================================
 Public Sub Setup_CompactSubtotals()
     On Error GoTo Fail
@@ -212,26 +199,15 @@ Public Sub Setup_CompactSubtotals()
     wsR.Range("AA27").Formula = "=SUBTOTAL(9,AA19:AA26)"
     wsR.Range("AC27").Formula = "=SUBTOTAL(9,AC19:AC26)"
 
-    ' --- Row 39: Warrants subtotal (Q=NET EXPOS, R=UNRL PNL, W=WT%, X/Y/Z=SUMPRODUCT Greeks) ---
-    wsR.Range("A39").Value = "  Subtotal  Warrants"
-    wsR.Range("Q39").Formula = "=SUBTOTAL(9,Q31:Q38)"
-    wsR.Range("R39").Formula = "=SUBTOTAL(9,R31:R38)"
-    wsR.Range("W39").Formula = "=SUBTOTAL(9,W31:W38)"
-    ' SUMPRODUCT for warrant Greeks (SHARES × per-warrant Greek)
-    wsR.Range("X39").Formula = "=SUMPRODUCT((A31:A38<>"""")*M31:M38*X31:X38)"
-    wsR.Range("Y39").Formula = "=SUMPRODUCT((A31:A38<>"""")*M31:M38*Y31:Y38)"
-    wsR.Range("Z39").Formula = "=SUMPRODUCT((A31:A38<>"""")*M31:M38*Z31:Z38)"
-
-    ' --- Row 41: Grand Total (sum of the three subtotals) ---
-    wsR.Range("A41").Value = "  GRAND TOTAL"
-    wsR.Range("N41").Formula = "=N15+Q27+Q39"     ' Total NET EXPOS TWD
-    wsR.Range("O41").Formula = "=O15+R27+R39"     ' Total UNRL PNL TWD
+    ' --- Row 29: Grand Total (sum of the two subtotals, right after Options) ---
+    wsR.Range("A29").Value = "  GRAND TOTAL"
+    wsR.Range("N29").Formula = "=N15+Q27"     ' Total NET EXPOS TWD
+    wsR.Range("O29").Formula = "=O15+R27"     ' Total UNRL PNL TWD
 
     MsgBox "Compact subtotals written:" & vbCrLf & _
            "  Row 15: Subtotal Futures"  & vbCrLf & _
            "  Row 27: Subtotal Options"  & vbCrLf & _
-           "  Row 39: Subtotal Warrants (+ SUMPRODUCT for X/Y/Z Greeks)" & vbCrLf & _
-           "  Row 41: Grand Total" & vbCrLf & vbCrLf & _
+           "  Row 29: Grand Total" & vbCrLf & vbCrLf & _
            "(You can still style row heights / banners visually as you like.)", _
            vbInformation, "Compact Subtotals OK"
     Exit Sub
@@ -271,7 +247,7 @@ End Sub
 ' =====================================================================
 ' RefreshAnalysis -- writes Analysis sheet per-position table + aggregates
 ' ---------------------------------------------------------------------
-' Reads RR5 sections (Futures 7-14 / Options 19-26 / Warrants 31-38),
+' Reads RR5 sections (Futures 7-14 / Options 19-26),
 ' writes one row per active position into Analysis starting at row 15
 ' (table headers are at row 14), then appends derived sections:
 '   - DTE Bucket  (rows 40-44):  count + |delta| + theta exposure
@@ -297,9 +273,9 @@ Public Sub RefreshAnalysis()
     Dim stratDict As Object: Set stratDict = CreateObject("Scripting.Dictionary")
     Dim undlDict As Object: Set undlDict = CreateObject("Scripting.Dictionary")
 
-    ' --- Walk 3 sections ---
+    ' --- Walk sections (Warrants removed 2026-10-18) ---
     Dim sections As Variant
-    sections = Array(Array(7, 14, "fut"), Array(19, 26, "opt"), Array(31, 38, "wrt"))
+    sections = Array(Array(7, 14, "fut"), Array(19, 26, "opt"))
     Dim sec As Variant, i As Long
 
     For Each sec In sections
@@ -347,17 +323,6 @@ Public Sub RefreshAnalysis()
                     theta = wsR.Cells(i, 22).Value                 ' V THETA
                     vega = wsR.Cells(i, 23).Value                  ' W VEGA
                     strat = CStr(wsR.Cells(i, 28).Value)           ' AB STRATEGY TAG
-                Case "wrt"
-                    typStr = CStr(wsR.Cells(i, 7).Value)           ' G TYPE
-                    undl = wsR.Cells(i, 9).Value                   ' I UNDERLYING
-                    undlPx = wsR.Cells(i, 10).Value                ' J UNDL LAST
-                    strike = wsR.Cells(i, 11).Value                ' K STRIKE
-                    chgPct = wsR.Cells(i, 16).Value                ' P % CHG
-                    delta = wsR.Cells(i, 20).Value                 ' T DELTA
-                    gamma = wsR.Cells(i, 24).Value                 ' X GAMMA
-                    theta = wsR.Cells(i, 25).Value                 ' Y THETA
-                    vega = wsR.Cells(i, 26).Value                  ' Z VEGA
-                    strat = "Warrant"
             End Select
 
             wsA.Cells(r, 3).Value = typStr
@@ -489,7 +454,7 @@ End Sub
 ' =====================================================================
 ' SCENARIO ANALYSIS (F1)
 ' ---------------------------------------------------------------------
-' Re-evaluates every option / warrant leg under bumped spot / IV scenarios
+' Re-evaluates every option leg under bumped spot / IV scenarios
 ' using Black-Scholes. Aggregates portfolio-level P&L impact and writes
 ' a small grid to Analysis worksheet rows 40-46.
 '
@@ -550,9 +515,6 @@ Public Sub BuildScenarioAnalysis()
 
     stage = "scan Options rows 19-26"
     Call ScanScenarioOptionsSection(wsR, 19, 26, rRate, spotBumps, ivBumps, pnlSpot, pnlIV)
-
-    stage = "scan Warrants rows 31-38"
-    Call ScanScenarioWarrantsSection(wsR, 31, 38, rRate, spotBumps, ivBumps, pnlSpot, pnlIV)
 
     stage = "scan Futures rows 7-14 (linear delta only)"
     Call ScanScenarioFuturesSection(wsR, 7, 14, spotBumps, pnlSpot)
@@ -637,62 +599,6 @@ NextI:
     Exit Sub
 Fail:
     Err.Raise Err.Number, "ScanScenarioOptionsSection / " & stage, Err.Description
-End Sub
-
-Private Sub ScanScenarioWarrantsSection(wsR As Worksheet, rStart As Long, rEnd As Long, _
-    rRate As Double, spotBumps As Variant, ivBumps As Variant, _
-    ByRef pnlSpot() As Double, ByRef pnlIV() As Double)
-
-    Dim stage As String: stage = "wrt init"
-    On Error GoTo Fail
-    Dim i As Long
-    For i = rStart To rEnd
-        stage = "wrt row " & i & " read"
-        Dim code As String: code = Trim(CStr(wsR.Cells(i, 1).Value))
-        If code = "" Then GoTo NextI
-
-        Dim S As Double: S = ToDblD(wsR.Cells(i, 10).Value)     ' J UNDL LAST
-        Dim K As Double: K = ToDblD(wsR.Cells(i, 11).Value)     ' K STRIKE
-        Dim conv As Double: conv = ToDblD(wsR.Cells(i, 12).Value) ' L CONV RATIO
-        Dim shares As Double: shares = ToDblD(wsR.Cells(i, 13).Value)  ' M
-        Dim dte As Double: dte = ToDblD(wsR.Cells(i, 5).Value)
-        Dim iv As Double: iv = ToDblD(wsR.Cells(i, 19).Value)
-        Dim wType As String: wType = CStr(wsR.Cells(i, 7).Value)
-
-        If S <= 0 Or K <= 0 Or conv <= 0 Or shares = 0 Or dte <= 0 Or iv <= 0 Then GoTo NextI
-
-        Dim T As Double: T = dte / 365#
-        Dim oTypeW As String
-        If InStr(UCase(wType), "CALL") > 0 Or InStr(UCase(wType), "BULL") > 0 Then
-            oTypeW = "Call"
-        Else
-            oTypeW = "Put"
-        End If
-
-        stage = "wrt row " & i & " baseline"
-        Dim baseW As Double: baseW = BS_Price(S, K, T, rRate, iv, oTypeW) / conv
-
-        stage = "wrt row " & i & " spot bumps"
-        Dim sb As Long
-        For sb = 0 To UBound(spotBumps)
-            Dim Sn As Double: Sn = S * (1 + CDbl(spotBumps(sb)))
-            Dim newW As Double: newW = BS_Price(Sn, K, T, rRate, iv, oTypeW) / conv
-            pnlSpot(sb) = pnlSpot(sb) + shares * (newW - baseW)
-        Next sb
-
-        stage = "wrt row " & i & " iv bumps"
-        Dim ib As Long
-        For ib = 0 To UBound(ivBumps)
-            Dim ivN As Double: ivN = iv + CDbl(ivBumps(ib))
-            If ivN < 0.001 Then ivN = 0.001
-            Dim ivW As Double: ivW = BS_Price(S, K, T, rRate, ivN, oTypeW) / conv
-            pnlIV(ib) = pnlIV(ib) + shares * (ivW - baseW)
-        Next ib
-NextI:
-    Next i
-    Exit Sub
-Fail:
-    Err.Raise Err.Number, "ScanScenarioWarrantsSection / " & stage, Err.Description
 End Sub
 
 Private Sub ScanScenarioFuturesSection(wsR As Worksheet, rStart As Long, rEnd As Long, _
@@ -1308,9 +1214,9 @@ End Sub
 Private Sub WritePositionMetrics(wsR As Worksheet)
     Dim cntExp As Long, sumDTE As Double, cntDTE As Long
 
-    ' Compact layout: Futures 7-14 / Options 19-26 / Warrants 31-38
+    ' Compact layout: Futures 7-14 / Options 19-26 (Warrants removed 2026-10-18)
     Dim secs As Variant
-    secs = Array(Array(7, 14), Array(19, 26), Array(31, 38))
+    secs = Array(Array(7, 14), Array(19, 26))
 
     Dim r As Variant
     For Each r In secs

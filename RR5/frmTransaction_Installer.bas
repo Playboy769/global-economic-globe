@@ -112,18 +112,9 @@ Public Sub BuildFrmTransaction()
     AddLbl d, "lblUndlSpot",  "Spot Px:",  260, 414,  50, 14
     AddTxt d, "txtUndlSpot",                310, 412,  60, 20
 
-    ' Conv Ratio -- required for warrants; label starts grey, turns orange via cmbType_Change
-    Set c = d.Controls.Add("Forms.Label.1", "lblConvRatio", True)
-    c.Caption = "Conv Ratio:": c.Left = 10: c.Top = 438: c.Width = 80: c.Height = 14
-    c.ForeColor = &H606060   ' grey by default (not a warrant yet)
-    c.BackStyle = 0
-    AddTxt d, "txtConvRatio", 90, 436, 100, 20
-
-    Set c = d.Controls.Add("Forms.Label.1", "lblConvRatioHint", True)
-    c.Caption = "(e.g. 0.1 = 10 warrants per share)"
-    c.Left = 196: c.Top = 440: c.Width = 200: c.Height = 12
-    c.ForeColor = &H808080: c.BackStyle = 0
-    c.Font.Size = 7
+    ' 2026-10-18: Conv Ratio field (lblConvRatio/txtConvRatio/lblConvRatioHint)
+    ' removed - it only ever served the Warrant/Cert types, which are gone.
+    ' See CLAUDE.md "RR5 Warrant 移除".
 
     ' =========================================================================
     ' Buttons (bottom strip)

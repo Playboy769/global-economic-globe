@@ -1030,6 +1030,137 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 - ⚠️ 用 COM 注入使用者已開的活頁簿時，若使用者目前前景視窗是別的活頁簿（例如「活頁簿1」），`Application.Run` 找不到巨集、看起來像整個專案編譯失敗——先 `$wb.Activate()`。
 - 實測（測試複本＋活頁簿）：`W!`、加入 TSLA（entry row）、排序三段循環、雙擊 TICKER→Library、雙擊 R1→Bias、`WatchGoto`、在 WatchData 打小寫 nvda 自動轉大寫並補 ADDED、Library `@WATCH`（8 calls／109 notes）、完整 `UP` 後 RR4 摘要 5 筆正確。
 
+### RR5 Warrant 移除（2026-10-18/19，`Compound RR5 Derivatives.xlsm`）
+
+使用者決定把 RR5（衍生性商品追蹤：Futures／Options／曾有的 Warrant）裡的整個 **Warrant
+資產家族**（`Call Warrant`／`Put Warrant`／`Bull Cert`／`Bear Cert` 四個類型全部，不是只拿掉
+Call/Put Warrant）徹底移除——程式碼、表單、Dashboard 版面、既有歷史交易資料全部清乾淨。
+10 題澄清後確認範圍；過程中發現 **Transactions 表當時 28 列全部是 Warrant 交易**（沒有任何
+Futures/Options 資料）且其中 **3 筆是目前持有中的未平倉位**（未實現損益合計約 +5,622），
+暫停並向使用者二次確認後，使用者明確回覆「已知情，仍然全部刪除（依照原決定)」，於是連同
+這 3 筆未平倉位一起刪除，不做任何遷移或保留。
+
+**刪除範圍**（逐檔）：
+- `GreekCalculator.bas`：查證零呼叫點（孤立待用工具，跟 Options 的 Greeks 引擎
+  `BS_Gamma`/`BS_Theta`/`BS_Vega` 無關），整檔 `git rm`。
+- `RR5_Core.bas`：整支刪除 `Warrant_Delta`／`Debug_WarrantFetch`／`MarkWarrantStatus`／
+  `ClearWarrantStatus`／`Setup_WarrantsGreeksColumns`／`Setup_WarrantGearingColumns`／
+  `FetchTPExWarrantPrice`／`FetchWarrantName`／`Debug_WarrantName`／`FetchFinMindStockPrice`
+  （名字沒有 Warrant 但已確認零呼叫點、因 Warrant 而生的死碼，見
+  [[rr5-finmind-warrant-price-infeasible]]）；`RefreshGreeks`／`DailySnapshot`／
+  `ExpiryAlert`／`Setup_CompactLayout_Config`／`RebuildPositionsFromTransactions`／
+  `RealizeClosedTransactions`／`SortPositionKeys`／`FetchAllPrices`／`Debug_TPExPrices`
+  各刪掉 Warrant 相關分支，其餘邏輯不動。**Conv_Ratio／Issuer（Transactions 第 24/25
+  欄）刻意保留欄位結構、只是不再寫入**——比照 RR4 `P_Target` 欄的既有先例，物理刪欄會
+  牽動多處泛用、連續欄位索引（`txns(r, 6)` 一路到 `(r, 25)`），風險高於效益。
+- `RR5_Dashboard.bas`：整支刪除 `ScanScenarioWarrantsSection`；`FixWorksheetFormulas`／
+  `Setup_CompactRowFormulas`／`Setup_CompactSubtotals`／`RefreshAnalysis`／
+  `WritePositionMetrics` 各刪 Warrant 分支／range term；**Grand Total 從舊 row 41 搬到
+  新 row 29**（緊接 Options 小計 row 27 之後）。
+- `frmTransaction_Code.txt`（ADD 表單，authoritative）：`cmbType.List` 由 9 項縮成
+  `Call, Put, Future, Equity, ETF`（衍生性在前、現股類在後）；刪 `WARRANT_TYPES` 常數、
+  `UpdateConvRatioVisual` 函式與其呼叫點；`btnSave_Click` 刪 `isWarrant` 驗證區塊，
+  `rowData(24)` 固定寫空字串；`AutoFillEntryGreeks` 的 `bsType` 判斷收斂成只剩
+  Call/Put。
+- `frmTransaction_Installer.bas`：移除 `lblConvRatio`／`txtConvRatio`／`lblConvRatioHint`
+  三個控制項的建置程式碼。
+- 工作表（COM 直接操作 `Compound RR5 Derivatives.xlsm`）：**RR5 頁**整段刪除 Warrant 區塊
+  （banner/header/data rows 29–40、小計 row 39），Grand Total 公式／SUMMARY 列（B1/L1/N1/
+  P1/D2/F2/J2/L2）手動改寫拿掉所有 `*31:*38`/`*39` range term 再刪列（**順序是先修公式再刪
+  列**，避免刪列後公式變 `#REF!`）；順手把 row 31 殘留的「FOCUS: TAIFEX TX/MTX/TXO + Taiwan
+  Warrants」備註文字改掉。**Transactions 表**整段 28 列 Warrant 歷史（含 3 筆未平倉位）用
+  `.EntireRow.Delete()` 刪除（`.ClearContents()` 經測對這張表會丟 `0x800A03EC`，改用
+  `.Value2 = ""` 或直接刪列）。**`_Config` 工作表**刪 `WRT_SEC_START`／`WRT_INST_COUNT`
+  兩個鍵。
+- `frmTransaction`（UserForm 元件）：舊元件整個移除，**改用直接 COM 操作重建**（不是走
+  `frmTransaction_Installer.BuildFrmTransaction` 巨集）——因為活頁簿路徑是 OneDrive 雲端
+  網址（`https://d.docs.live.net/...`），`Installer` 內部的 `InsertFormCode` 靠
+  `Dir(ThisWorkbook.Path & "\...")` 找檔案，對雲端路徑的 `Dir()` 一律失敗。重建後用
+  `VBComponent.Export()` 把 `.frm`/`.frx` 重新匯出覆蓋 repo 裡過期的副本（舊檔控制項名還是
+  `txtRiskFree`，跟目前authoritative 的 `txtRiskFreeRate` 不一致，且仍是 9 選項含
+  Warrant 的舊 `cmbType.List`）。
+- 文件：`RR5_UserForm_Guide.md`／`TPEx_OpenAPI.md`／`TWSE_OpenAPI.md` 裡標成「RR5 常用」／
+  「RR5 專用速查」且指向權證端點（`tpex_warrant*`／`t187ap37_L`／`t187ap42_L` 等）的段落已
+  改為註明「RR5 已移除 Warrant，不再使用」或直接刪掉對應表格列；**TPEx/TWSE API 本身仍有
+  這些端點，純粹保留供其他專案參考的表格列沒有動**，只改動宣稱跟 RR5 相關的那幾句。
+
+⚠️ **新踩到的兩個坑（記錄在這裡，之後遇到同類情境可以直接查）**：
+1. **對 OneDrive 雲端路徑的活頁簿，新增 UserForm 元件後立刻改名會失敗**
+   （`HRESULT 0x800A004B CTL_E_PATHFILEACCESSERROR`）——`VBComponents.Add(3)` 新增的
+   UserForm 需要配套的 `.frx` 二進位資源，對雲端路徑第一次嘗試解析/建立會失敗。**修法：
+   先 `wb.Save()`（存兩次、中間留一點間隔）再重試改名**，第二次就會成功。
+2. **`Range.ClearContents()` 透過 COM 晚期繫結對某些範圍會丟 `HRESULT 0x800A03EC`**，
+   即使只是單一儲存格；改用 `.Value2 = ""` 繞過。若要完全清乾淨（`.Value2=""` 會留下
+   零長度字串，讓 `End(xlUp)` 仍判定該列有內容），改用 `.EntireRow.Delete()` 整列刪除。
+
+**COM 卡死偵測坑**：注入 `.bas` 檔前忘了剝掉第一行 `Attribute VB_Name = "..."`
+（又是同一個老坑，見 [[vba-bas-ascii-only]]）這次**沒有卡住 COM**（`AddFromString` 正常
+返回），只是注入內容本身是壞的——整個 VBA 專案編譯失敗，`Application.Run` 任何巨集都報
+「巨集可能無法使用」。用一個輕量唯讀巨集（如 `FetchTWSEClose`）先做煙囪測試才發現；修法
+是重讀原始檔、`-split` 成行陣列、濾掉 `Attribute VB_Name*` 那一行再重新 `Join`／注入。
+
+**跑帶 `MsgBox` 收尾的巨集時的 COM 處理**：`RebuildPositionsFromTransactions`
+收尾一律跳 `MsgBox`（成功或「Transactions sheet has no data.」），直接 `Application.Run`
+會卡住等人為點擊。做法：`Run` 放到背景執行、等幾秒後用
+`[Microsoft.VisualBasic.Interaction]::AppActivate(...)` 啟用視窗再 `WScript.Shell.SendKeys("{ENTER}")`
+送出確認鍵，之後再讀回執行結果。**套用測試資料驗證完後要手動清理殘留**：測試用的
+Call Option 測試列（2454 Call 900）跑完 `RebuildPositionsFromTransactions` 後，因為
+Sub 在「Transactions 無資料」時提早 `Exit Sub`（不會重新清空／重畫各區塊），所以刪掉
+測試列後 RR5 頁上舊的測試倉位列**不會自動消失**，要手動依 `RebuildPositionsFromTransactions`
+Step 2 用的同一組 Options 輸入欄（`Array(1,2,3,4,6,7,8,9,10,11,12,13,14,15,19,20,21,22,23,24,28)`，
+`ClearContents` rows 19–26）清掉；`DailySnapshot` 也會在測試期間多寫一列今天的
+HistoryLog 快照（MV=0 的假資料），一併手動刪除該列才算乾淨復原。
+
+**實測驗證**：① 刪除前先 `SaveCopyAs` 備份
+（`Portfolio\backup-pre-rmwarrant-20261018-2311.xlsm`）；② 注入
+`RR5_Core`/`RR5_Dashboard`（CombinedPerf 這次整個刪除，見下一節）後用
+`RR5_Core.FetchTWSEClose("2330")` 做煙囪測試，回傳 `2420` 確認編譯正常；③ 重建
+`frmTransaction` 後用暫時性測試模組載入／卸載表單，確認 `cmbType.List` 恰好是
+`Call|Put|Future|Equity|ETF` 五項、無 Warrant/Cert；④ Transactions 表清空後插入一筆合成
+Call Option 測試列再跑 `RebuildPositionsFromTransactions`，確認 `Fut=0 Opt=1` 正確寫入
+RR5 頁 Options 區塊（row 19：`2454 Call 900`），證明 Warrant 分支刪除沒有破壞 Futures/
+Options 既有邏輯；⑤ 清除測試資料並重跑一次，確認 RR5 頁／HistoryLog／Realized／
+`_Config` 全部回到空倉位的乾淨狀態；⑥ 全 repo `grep -i "warrant\|權證"`複查，RR5 資料夾
+裡剩下的全部是刻意保留的日期化註解或 TPEx/TWSE API 的客觀端點說明，沒有任何活程式碼
+引用。
+
+### CombinedPerf / CPLog 移除（2026-10-19）
+
+使用者在 Warrant 移除任務進行到一半時，追加指示「CPLOG and combined Pef 也可以刪除」——
+把整個 **CombinedPerf 功能**（合併 RR4+RR5 損益總覽的 `CombinedPerf` 工作表、歷史逐日記錄
+的 `CPLog` 工作表、兩者的圖表、以及 `CombinedPerf.bas` 整個模組）全部移除，不保留備份外
+的任何副本。10 題（分兩輪各 4+4+2）澄清後確認：① 整個功能全刪（不是只拆工作表、保留
+模組）；② CPLog 歷史資料（從 RR4 HistoryLog 匯入的 RL PnL 逐日記錄）直接刪除，不另存
+CSV；③ `CombinedPerf.bas` `git rm` 整檔刪除（比照 `GreekCalculator.bas` 的做法）；④ 這次
+刪除跟進行中的 Warrant 移除任務合併在同一輪做完再存檔；⑤ `RR5_Core.bas` 裡
+`RebuildPositionsFromTransactions` 的「Step 6: Refresh combined RR4+RR5 performance
+sheet + CPLog」呼叫點（`Application.Run "CombinedPerf.RefreshCombinedPerf"`）與完工
+MsgBox 裡的「CombinedPerf + CPLog row」提示文字一併刪除、後續沒有編號需要重排（Step 6
+本來就是最後一步）；⑥ 檢查過 RR4/RR5 其他工作表上沒有任何按鈕/圖形的 `OnAction` 指向
+CombinedPerf 巨集，RR4 的 `.bas` 原始碼（source of truth）裡也完全沒有呼叫 RR5
+CombinedPerf 的程式碼——跨 repo 沒有要清的東西。
+
+**刪除做法**：COM 直接 `Worksheets.Item("CombinedPerf").Delete()` 與
+`Worksheets.Item("CPLog").Delete()`（`DisplayAlerts=False` 跳過確認對話框）；
+`VBProject.VBComponents.Remove` 移除 `CombinedPerf` 模組；`RR5_Core.bas` 刪掉 Step 6
+整段並重新注入；`git rm RR5/CombinedPerf.bas`（該檔案當時已有 Warrant 移除階段留下的
+本地修改，用 `git rm -f` 強制刪除）。刪除順序是**先刪工作表與模組，再重新注入
+`RR5_Core.bas`、再存檔**——如果反過來先存檔會讓活頁簿處於「`RR5_Core` 還在呼叫已不存在
+模組」的中間態（雖然 `On Error Resume Next` 包著不會真的炸，但狀態不乾淨）。
+
+**實測驗證**：① 刪除前活頁簿已有 Warrant 任務的備份點，沒有另開新備份（使用者同意合併
+在同一輪）；② 刪完兩張工作表後跑 `CombinedPerf` 模組移除前最後一次
+`Application.Run "CombinedPerf.BuildCombinedPerf"` 已失去意義（模組已被刪），改用
+直接檢查工作表清單確認兩頁都不在了；③ 重新注入 `RR5_Core.bas` 後再跑一次
+`FetchTWSEClose` 煙囪測試、再跑 `RebuildPositionsFromTransactions`（空 Transactions 表，
+走「no data」MsgBox 分支，正常退出不報錯，代表 Step 6 移除沒有破壞 Sub 的其餘流程）；
+④ 存檔確認 `.Saved = True`。
+
+⚠️ **注意：本節記錄的「跑 BuildCombinedPerf／RefreshAllCombined 重建版面與數字」等中間
+步驟是在使用者追加「CombinedPerf 也可以刪除」指示之前執行的**（當時的計畫還是只做
+Warrant 移除、CombinedPerf 只是因為 Warrants 小計被拿掉需要重算版面）——那些版面重建
+結果已經被本節的「整個功能刪除」取代，CombinedPerf／CPLog 現在在活頁簿裡完全不存在。
+
 ### Yield 頁（Y / Y!，2026-09-30，`RR4/modYield.bas`）
 
 美債殖利率、曲線利差、實質殖利率＋損益兩平通膨、信用利差 OAS、拍賣結果，一頁兩欄（左：殖利率／

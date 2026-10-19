@@ -244,9 +244,9 @@
 | `GET /tpex_warrant_wxy_monthly_quts` | 上櫃外匯權證收盤行情月報表 |
 | `GET /tpex_warrant_wxy_issue` | 上櫃外匯權證發行基本資料 |
 
-> **RR5 常用**:
-> - `/tpex_warrant` — 查上櫃權證名稱最快（回傳全部；搜尋 `"Code":"XXXXXX"` 取 `Name`）
-> - `/tpex_warrant_issue` — 同上，含上市日期和到期日，適合補足 RR5 欄位
+> ⚠️ 2026-10-19：RR5 已整個移除 Warrant 資產類別（含牛熊證），上述權證端點
+> 不再被 RR5 的任何程式碼呼叫；本節保留純粹是 TPEx API 的完整參考，不代表
+> RR5 仍在使用。詳見 CLAUDE.md「RR5 Warrant 移除」。
 
 ---
 
@@ -410,15 +410,12 @@
 
 ## RR5 專用速查（TPEx 上櫃）
 
+> ⚠️ 2026-10-19：原本列在此節的三個權證端點（`tpex_warrant`／`tpex_warrant_issue`／
+> `tpex_warrant_daily_quts`）已隨 Warrant 資產類別整個移除而刪除——RR5 不再查詢
+> 上櫃權證名稱／發行資料／收盤行情。詳見 CLAUDE.md「RR5 Warrant 移除」。
+
 | 用途 | 端點 | 關鍵欄位 |
 |------|------|----------|
-| **查上櫃權證名稱**（現役） | `GET /tpex_warrant` | `Code`, `Name`, `UnderlyingCode`, `ExpirationDate` |
-| **查上櫃權證發行資料**（含到期日） | `GET /tpex_warrant_issue` | `Code`, `Name`, `ListedDate`, `ExpiryDate`, `UnderlyingStockCode`, `Latest ExerciseRatio` |
-| **上櫃權證日收盤行情** | `GET /tpex_warrant_daily_quts` | ClosingPrice 等 |
 | **上櫃個股行情**（含本益比） | `GET /tpex_mainboard_peratio_analysis` | PE ratio, Dividend Yield |
 | **上櫃除權除息預告** | `GET /tpex_exright_prepost` | — |
 | **上櫃基本資料** | `GET /mopsfin_t187ap03_O` | 公司代號、名稱、產業別 |
-
-> **注意**: `tpex_warrant` 和 `tpex_warrant_issue` 均為無參數端點，回傳**全部**上櫃權證。
-> 使用方式：下載後在 JSON 中搜尋 `"Code":"XXXXXX"` 再取 `Name` 欄位。
-> 已到期或下市的權證不會出現在這兩個端點中（改用 TWSE STOCK_DAY 補查）。

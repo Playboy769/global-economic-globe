@@ -88,9 +88,10 @@
 | (Label19) | Label | `Broker:` |
 | **cmbBroker** | ComboBox | |
 | (Label20) | Label | `Underlying:` |
-| **txtUnderlying** | TextBox | （選擇權/權證填標的名稱，如 TWII、SPX、2330） |
+| **txtUnderlying** | TextBox | （選擇權填標的名稱，如 TWII、SPX、2330） |
 
-> **txtUnderlying** 對應 Transactions col U（第 21 欄）。填入後 `RebuildPositionsFromTransactions` 會自動寫到 RR5 Options J（UNDERLYING）與 Warrants I（UNDERLYING）欄。期貨可留空。
+> **txtUnderlying** 對應 Transactions col U（第 21 欄）。填入後 `RebuildPositionsFromTransactions` 會自動寫到 RR5 Options J（UNDERLYING）欄。期貨可留空。
+> 2026-10-19：Warrant 資產類別（含牛熊證）已整個移除，`cmbType` 不再有 Warrant 相關選項，詳見 CLAUDE.md「RR5 Warrant 移除」。
 
 ### 三顆按鈕（最底部，Y 約 510）
 
