@@ -192,7 +192,7 @@ Attribute VB_Name = "RR5_Core"
         If r = 0 Then r = 0.02
 
         Dim optStart As Long, optCount As Long
-        optStart = CLng(GetConfig(wsC, "OPT_SEC_START"))
+        optStart = CLng(GetConfig(wsC, "OPT_SEC_START")) + modNav.NavOffset(wsR)
         optCount = CLng(GetConfig(wsC, "OPT_INST_COUNT"))
 
         ' Auto-advance past header row(s). Bug B6 fix: was single-step (only
@@ -200,7 +200,7 @@ Attribute VB_Name = "RR5_Core"
         ' data would silently write Greeks to header cells. Loop until we land
         ' on numeric STRIKE or hit a safety cap.
         Dim hdrGuard As Long: hdrGuard = 0
-        Do While Not IsNumeric(wsR.Cells(optStart, 9).Value) And hdrGuard < 5
+        Do While Not IsNumeric(wsR.Cells(optStart, 9 + modNav.NavLeft(wsR)).Value) And hdrGuard < 5
             optStart = optStart + 1
             hdrGuard = hdrGuard + 1
         Loop
@@ -210,18 +210,18 @@ Attribute VB_Name = "RR5_Core"
         For i = 0 To optCount - 1
             row = optStart + i
             Dim contract As String
-            contract = wsR.Cells(row, 1).Value
+            contract = wsR.Cells(row, 1 + modNav.NavLeft(wsR)).Value
             If contract = "" Then GoTo NextOpt
             ' Extra guard: skip any non-data row (e.g. if config is off by more)
-            If Not IsNumeric(wsR.Cells(row, 9).Value) Then GoTo NextOpt
+            If Not IsNumeric(wsR.Cells(row, 9 + modNav.NavLeft(wsR)).Value) Then GoTo NextOpt
 
             Dim S As Double, k As Double, dte As Double, iv As Double
             Dim oType As String
-            S = wsR.Cells(row, 11).Value      ' K  UNDL LAST
-            k = wsR.Cells(row, 9).Value       ' I  STRIKE
-            dte = wsR.Cells(row, 5).Value     ' E  DTE (days)
-            iv = wsR.Cells(row, 19).Value     ' S  IV (fraction 0-1)
-            oType = wsR.Cells(row, 8).Value   ' H  TYPE (Call/Put)
+            S = wsR.Cells(row, 11 + modNav.NavLeft(wsR)).Value      ' K  UNDL LAST
+            k = wsR.Cells(row, 9 + modNav.NavLeft(wsR)).Value       ' I  STRIKE
+            dte = wsR.Cells(row, 5 + modNav.NavLeft(wsR)).Value     ' E  DTE (days)
+            iv = wsR.Cells(row, 19 + modNav.NavLeft(wsR)).Value     ' S  IV (fraction 0-1)
+            oType = wsR.Cells(row, 8 + modNav.NavLeft(wsR)).Value   ' H  TYPE (Call/Put)
 
             If S <= 0 Or k <= 0 Or dte < 0 Then GoTo NextOpt
 
@@ -232,23 +232,23 @@ Attribute VB_Name = "RR5_Core"
             ' Stores the implied vol back into col S so subsequent calls reuse it.
             If iv <= 0 Then
                 Dim lastPrem As Double
-                lastPrem = wsR.Cells(row, 15).Value    ' O LAST PREM
+                lastPrem = wsR.Cells(row, 15 + modNav.NavLeft(wsR)).Value    ' O LAST PREM
                 If lastPrem > 0 Then
                     Dim solvedIV As Double
                     solvedIV = BS_IV(lastPrem, S, k, T, r, oType)
                     If solvedIV > 0.001 And solvedIV < 5 Then
                         iv = solvedIV
-                        wsR.Cells(row, 19).Value = iv     ' write back to S IV
+                        wsR.Cells(row, 19 + modNav.NavLeft(wsR)).Value = iv     ' write back to S IV
                     End If
                 End If
             End If
             If iv <= 0 Then GoTo NextOpt
 
-            wsR.Cells(row, 20).Value = BS_Delta(S, k, T, r, iv, oType)  ' T DELTA
-            wsR.Cells(row, 21).Value = BS_Gamma(S, k, T, r, iv)         ' U GAMMA
-            wsR.Cells(row, 22).Value = BS_Theta(S, k, T, r, iv, oType)  ' V THETA/DAY
-            wsR.Cells(row, 23).Value = BS_Vega(S, k, T, r, iv)          ' W VEGA
-            wsR.Cells(row, 24).Value = BS_Rho(S, k, T, r, iv, oType)    ' X RHO
+            wsR.Cells(row, 20 + modNav.NavLeft(wsR)).Value = BS_Delta(S, k, T, r, iv, oType)  ' T DELTA
+            wsR.Cells(row, 21 + modNav.NavLeft(wsR)).Value = BS_Gamma(S, k, T, r, iv)         ' U GAMMA
+            wsR.Cells(row, 22 + modNav.NavLeft(wsR)).Value = BS_Theta(S, k, T, r, iv, oType)  ' V THETA/DAY
+            wsR.Cells(row, 23 + modNav.NavLeft(wsR)).Value = BS_Vega(S, k, T, r, iv)          ' W VEGA
+            wsR.Cells(row, 24 + modNav.NavLeft(wsR)).Value = BS_Rho(S, k, T, r, iv, oType)    ' X RHO
 NextOpt:
         Next i
 
@@ -312,13 +312,13 @@ ErrHandler:
         On Error Resume Next
         wsR.Calculate
         On Error GoTo ErrHandler
-        Dim curMV    As Double: curMV    = ToDbl(wsR.Range("B1").Value)  ' Total Market Value
-        Dim netDelta As Double: netDelta = ToDbl(wsR.Range("L1").Value)  ' Net Delta
-        Dim netGamma As Double: netGamma = ToDbl(wsR.Range("N1").Value)  ' Net Gamma
-        Dim netTheta As Double: netTheta = ToDbl(wsR.Range("J2").Value)  ' Net Theta/Day
-        Dim netVega  As Double: netVega  = ToDbl(wsR.Range("L2").Value)  ' Net Vega
-        Dim rlPnL    As Double: rlPnL    = ToDbl(wsR.Range("H2").Value)  ' Realized PnL
-        Dim unrlPnL  As Double: unrlPnL  = ToDbl(wsR.Range("F2").Value)  ' Unrealized PnL
+        Dim curMV    As Double: curMV    = ToDbl(wsR.Range("B1").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Total Market Value
+        Dim netDelta As Double: netDelta = ToDbl(wsR.Range("L1").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Net Delta
+        Dim netGamma As Double: netGamma = ToDbl(wsR.Range("N1").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Net Gamma
+        Dim netTheta As Double: netTheta = ToDbl(wsR.Range("J2").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Net Theta/Day
+        Dim netVega  As Double: netVega  = ToDbl(wsR.Range("L2").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Net Vega
+        Dim rlPnL    As Double: rlPnL    = ToDbl(wsR.Range("H2").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Realized PnL
+        Dim unrlPnL  As Double: unrlPnL  = ToDbl(wsR.Range("F2").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)  ' Unrealized PnL
 
         ' --- Previous row values for % change ---
         Dim prevMV  As Double: prevMV  = 0
@@ -342,9 +342,9 @@ ErrHandler:
         ' --- IV average across active options (col S=19) ---
         ' 2026-10-18: Warrants loop removed with the Warrant asset class.
         Dim ivSum As Double, ivCnt As Long, i As Long, ivV As Variant
-        For i = 19 To 26   ' Options
-            If Trim(CStr(wsR.Cells(i, 1).Value)) <> "" Then
-                ivV = wsR.Cells(i, 19).Value
+        For i = 19 + modNav.NavOffset(wsR) To 26 + modNav.NavOffset(wsR)   ' Options
+            If Trim(CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value)) <> "" Then
+                ivV = wsR.Cells(i, 19 + modNav.NavLeft(wsR)).Value
                 If IsNumeric(ivV) And CDbl(ivV) > 0 Then ivSum = ivSum + CDbl(ivV): ivCnt = ivCnt + 1
             End If
         Next i
@@ -363,7 +363,7 @@ ErrHandler:
         End If
 
         ' --- Summary text ---
-        Dim posCount As Variant: posCount = wsR.Range("P1").Value
+        Dim posCount As Variant: posCount = wsR.Range("P1").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value
         Dim summaryTxt As String
         summaryTxt = "Pos=" & IIf(IsNumeric(posCount), CStr(CLng(posCount)), "?") & _
                      " MV=" & Format(curMV, "#,##0") & _
@@ -450,17 +450,17 @@ ErrHandler:
         ' Load section ranges from _Config
         Dim futStart As Long, futCount As Long
         Dim optStart As Long, optCount As Long
-        futStart = CLng(GetConfig(wsC, "FUT_SEC_START")): futCount = CLng(GetConfig(wsC, "FUT_INST_COUNT"))
-        optStart = CLng(GetConfig(wsC, "OPT_SEC_START")): optCount = CLng(GetConfig(wsC, "OPT_INST_COUNT"))
+        futStart = CLng(GetConfig(wsC, "FUT_SEC_START")) + modNav.NavOffset(wsR): futCount = CLng(GetConfig(wsC, "FUT_INST_COUNT"))
+        optStart = CLng(GetConfig(wsC, "OPT_SEC_START")) + modNav.NavOffset(wsR): optCount = CLng(GetConfig(wsC, "OPT_INST_COUNT"))
 
         ' Advance past header row(s) if the start cell isn't actual data.
         ' STRIKE col differs by section: futures has no strike (use A=contract),
         ' options strike is col 9.
         Dim hg As Long
-        hg = 0: Do While Len(CStr(wsR.Cells(futStart, 1).Value)) = 0 And IsEmpty(wsR.Cells(futStart, 4).Value) And hg < 3
+        hg = 0: Do While Len(CStr(wsR.Cells(futStart, 1 + modNav.NavLeft(wsR)).Value)) = 0 And IsEmpty(wsR.Cells(futStart, 4 + modNav.NavLeft(wsR)).Value) And hg < 3
             futStart = futStart + 1: hg = hg + 1
         Loop
-        hg = 0: Do While Not IsNumeric(wsR.Cells(optStart, 9).Value) And hg < 5
+        hg = 0: Do While Not IsNumeric(wsR.Cells(optStart, 9 + modNav.NavLeft(wsR)).Value) And hg < 5
             optStart = optStart + 1: hg = hg + 1
         Loop
 
@@ -481,8 +481,8 @@ ErrHandler:
                                   label As String, warnDays As Long, ByRef alertMsg As String)
         Dim i As Long, dte As Variant, contract As String
         For i = startRow To startRow + count - 1
-            dte = wsR.Cells(i, 5).Value
-            contract = CStr(wsR.Cells(i, 1).Value)
+            dte = wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value
+            contract = CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value)
             If contract = "" Then GoTo NextI
             If IsNumeric(dte) Then
                 If CLng(dte) > 0 And CLng(dte) <= warnDays Then
@@ -576,15 +576,15 @@ Fail:
         Set wsT = ThisWorkbook.Sheets("Transactions")
 
         Dim nextRow As Long
-        nextRow = wsT.Cells(wsT.Rows.Count, 1).End(xlUp).row + 1
-        If nextRow < 2 Then nextRow = 2
+        nextRow = wsT.Cells(wsT.Rows.Count, 1 + modNav.NavLeft(wsT)).End(xlUp).row + 1
+        If nextRow < 2 + modNav.NavOffset(wsT) Then nextRow = 2 + modNav.NavOffset(wsT)
 
         Dim i As Long
         For i = 1 To UBound(rowData)   ' dynamic: handles 20-col or 23-col arrays
             ' Col 3 (Ticker) -- force text format so leading zeros survive
             ' (e.g. a numeric-looking code "066669" wouldn't drop to 66669)
-            If i = 3 Then wsT.Cells(nextRow, i).NumberFormat = "@"
-            wsT.Cells(nextRow, i).Value = rowData(i)
+            If i = 3 Then wsT.Cells(nextRow, i + modNav.NavLeft(wsT)).NumberFormat = "@"
+            wsT.Cells(nextRow, i + modNav.NavLeft(wsT)).Value = rowData(i)
         Next i
 
         LogDebug wsD, "AppendTransaction", "OK", "Row " & nextRow & " | " & rowData(1)
@@ -697,8 +697,8 @@ NoForm:
         ' 21=Underlying     22=Gamma     23=Theta      24=Conv_Ratio
 
         Dim lastRow As Long
-        lastRow = wsT.Cells(wsT.Rows.Count, 1).End(xlUp).row
-        If lastRow < 2 Then
+        lastRow = wsT.Cells(wsT.Rows.Count, 1 + modNav.NavLeft(wsT)).End(xlUp).row
+        If lastRow < 2 + modNav.NavOffset(wsT) Then
             MsgBox "Transactions sheet has no data.", vbInformation
             Exit Sub
         End If
@@ -715,7 +715,7 @@ NoForm:
         Dim e(18) As Variant  ' reused for each new entry
 
         Dim i As Long
-        For i = 2 To lastRow
+        For i = 2 + modNav.NavOffset(wsT) To lastRow
             Dim txDate As Variant
             Dim ticker As String, action As String, txType As String
             Dim strike As Variant, expiry As Variant
@@ -725,25 +725,25 @@ NoForm:
             Dim gamma As Variant, theta As Variant, convRatio As Variant
             Dim issuer As String
 
-            txDate     = wsT.Cells(i, 2).Value
-            ticker     = Trim(CStr(wsT.Cells(i, 3).Value))
-            action     = UCase(Trim(CStr(wsT.Cells(i, 4).Value)))
-            txType     = Trim(CStr(wsT.Cells(i, 5).Value))
-            strike     = wsT.Cells(i, 6).Value
-            expiry     = wsT.Cells(i, 7).Value
-            qty        = CDbl(wsT.Cells(i, 8).Value)
-            txMult     = CDbl(wsT.Cells(i, 9).Value)
+            txDate     = wsT.Cells(i, 2 + modNav.NavLeft(wsT)).Value
+            ticker     = Trim(CStr(wsT.Cells(i, 3 + modNav.NavLeft(wsT)).Value))
+            action     = UCase(Trim(CStr(wsT.Cells(i, 4 + modNav.NavLeft(wsT)).Value)))
+            txType     = Trim(CStr(wsT.Cells(i, 5 + modNav.NavLeft(wsT)).Value))
+            strike     = wsT.Cells(i, 6 + modNav.NavLeft(wsT)).Value
+            expiry     = wsT.Cells(i, 7 + modNav.NavLeft(wsT)).Value
+            qty        = CDbl(wsT.Cells(i, 8 + modNav.NavLeft(wsT)).Value)
+            txMult     = CDbl(wsT.Cells(i, 9 + modNav.NavLeft(wsT)).Value)
             If txMult = 0 Then txMult = 1
-            price      = CDbl(wsT.Cells(i, 10).Value)
-            strategy   = Trim(CStr(wsT.Cells(i, 16).Value))
-            iv         = wsT.Cells(i, 17).Value
-            delta      = wsT.Cells(i, 18).Value
-            broker     = Trim(CStr(wsT.Cells(i, 20).Value))
-            UnderLying = Trim(CStr(wsT.Cells(i, 21).Value))  ' col U
-            gamma      = wsT.Cells(i, 22).Value              ' col V
-            theta      = wsT.Cells(i, 23).Value              ' col W
-            convRatio  = wsT.Cells(i, 24).Value              ' col X Conv_Ratio (warrants)
-            issuer     = Trim(CStr(wsT.Cells(i, 25).Value))  ' col Y Issuer (warrants)
+            price      = CDbl(wsT.Cells(i, 10 + modNav.NavLeft(wsT)).Value)
+            strategy   = Trim(CStr(wsT.Cells(i, 16 + modNav.NavLeft(wsT)).Value))
+            iv         = wsT.Cells(i, 17 + modNav.NavLeft(wsT)).Value
+            delta      = wsT.Cells(i, 18 + modNav.NavLeft(wsT)).Value
+            broker     = Trim(CStr(wsT.Cells(i, 20 + modNav.NavLeft(wsT)).Value))
+            UnderLying = Trim(CStr(wsT.Cells(i, 21 + modNav.NavLeft(wsT)).Value))  ' col U
+            gamma      = wsT.Cells(i, 22 + modNav.NavLeft(wsT)).Value              ' col V
+            theta      = wsT.Cells(i, 23 + modNav.NavLeft(wsT)).Value              ' col W
+            convRatio  = wsT.Cells(i, 24 + modNav.NavLeft(wsT)).Value              ' col X Conv_Ratio (warrants)
+            issuer     = Trim(CStr(wsT.Cells(i, 25 + modNav.NavLeft(wsT)).Value))  ' col Y Issuer (warrants)
 
             If ticker = "" Then GoTo SkipRow
 
@@ -888,14 +888,14 @@ SkipRow:
         Dim futInp As Variant
         futInp = Array(1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 16, 18, 20, 21, 23)
         For Each colIdx In futInp
-            wsR.Range(wsR.Cells(7, CLng(colIdx)), wsR.Cells(14, CLng(colIdx))).ClearContents
+            wsR.Range(wsR.Cells(7 + modNav.NavOffset(wsR), CLng(colIdx) + modNav.NavLeft(wsR)), wsR.Cells(14 + modNav.NavOffset(wsR), CLng(colIdx) + modNav.NavLeft(wsR))).ClearContents
         Next colIdx
 
         ' Options input cols: A B C D F G H I J K L M N O S T U V W X AB
         Dim optInp As Variant
         optInp = Array(1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 19, 20, 21, 22, 23, 24, 28)
         For Each colIdx In optInp
-            wsR.Range(wsR.Cells(19, CLng(colIdx)), wsR.Cells(26, CLng(colIdx))).ClearContents
+            wsR.Range(wsR.Cells(19 + modNav.NavOffset(wsR), CLng(colIdx) + modNav.NavLeft(wsR)), wsR.Cells(26 + modNav.NavOffset(wsR), CLng(colIdx) + modNav.NavLeft(wsR))).ClearContents
         Next colIdx
 
         ' 2026-10-18: Warrants input-column clear block removed with the
@@ -903,7 +903,7 @@ SkipRow:
 
         ' -- Step 3: Write active positions --------------------------------
         Dim futRow As Long, optRow As Long
-        futRow = 7: optRow = 19
+        futRow = 7 + modNav.NavOffset(wsR): optRow = 19 + modNav.NavOffset(wsR)
         Dim cntFut As Long, cntOpt As Long
         cntFut = 0: cntOpt = 0
 
@@ -933,39 +933,39 @@ SkipRow:
 
             If Left(ks, 4) = "FUT|" Then
                 ' -- Futures -----------------------------------------------
-                If futRow > 14 Then GoTo SkipPos   ' section full (8 rows, 7-14)
-                wsR.Cells(futRow, 1).Value = pos(1)                        ' A CONTRACT
-                wsR.Cells(futRow, 3).Value = pos(10)                       ' C ENTRY DT
-                wsR.Cells(futRow, 4).Value = pos(4)                        ' D EXPIRY
-                wsR.Cells(futRow, 6).Value = pos(9)                        ' F BROKER
-                wsR.Cells(futRow, 8).Value = IIf(netQty > 0, "Long", "Short")  ' H DIRECTION
-                wsR.Cells(futRow, 9).Value = Abs(netQty)                   ' I CONTRACTS
-                wsR.Cells(futRow, 10).Value = CDbl(pos(8))                 ' J MULTIPLIER
-                wsR.Cells(futRow, 11).Value = entryPx                      ' K ENTRY PX
-                wsR.Cells(futRow, 18).Value = 1                            ' R DELTA = 1
+                If futRow > 14 + modNav.NavOffset(wsR) Then GoTo SkipPos   ' section full (8 rows, 7-14)
+                wsR.Cells(futRow, 1 + modNav.NavLeft(wsR)).Value = pos(1)                        ' A CONTRACT
+                wsR.Cells(futRow, 3 + modNav.NavLeft(wsR)).Value = pos(10)                       ' C ENTRY DT
+                wsR.Cells(futRow, 4 + modNav.NavLeft(wsR)).Value = pos(4)                        ' D EXPIRY
+                wsR.Cells(futRow, 6 + modNav.NavLeft(wsR)).Value = pos(9)                        ' F BROKER
+                wsR.Cells(futRow, 8 + modNav.NavLeft(wsR)).Value = IIf(netQty > 0, "Long", "Short")  ' H DIRECTION
+                wsR.Cells(futRow, 9 + modNav.NavLeft(wsR)).Value = Abs(netQty)                   ' I CONTRACTS
+                wsR.Cells(futRow, 10 + modNav.NavLeft(wsR)).Value = CDbl(pos(8))                 ' J MULTIPLIER
+                wsR.Cells(futRow, 11 + modNav.NavLeft(wsR)).Value = entryPx                      ' K ENTRY PX
+                wsR.Cells(futRow, 18 + modNav.NavLeft(wsR)).Value = 1                            ' R DELTA = 1
                 futRow = futRow + 1: cntFut = cntFut + 1
 
             ElseIf Left(ks, 4) = "OPT|" Then
                 ' -- Options -----------------------------------------------
-                If optRow > 26 Then GoTo SkipPos   ' section full (8 rows, 19-26)
+                If optRow > 26 + modNav.NavOffset(wsR) Then GoTo SkipPos   ' section full (8 rows, 19-26)
                 ' CONTRACT label: e.g. "TXO Call 18000"
-                wsR.Cells(optRow, 1).Value = pos(1) & " " & pos(2) & " " & CStr(pos(3))
-                wsR.Cells(optRow, 3).Value = pos(10)                       ' C ENTRY DT
-                wsR.Cells(optRow, 4).Value = pos(4)                        ' D EXPIRY
-                wsR.Cells(optRow, 6).Value = pos(9)                        ' F BROKER
-                wsR.Cells(optRow, 8).Value = pos(2)                        ' H TYPE (Call/Put)
-                wsR.Cells(optRow, 9).Value = CDbl(pos(3))                  ' I STRIKE
-                wsR.Cells(optRow, 10).Value = pos(14)                      ' J UNDERLYING (name)
+                wsR.Cells(optRow, 1 + modNav.NavLeft(wsR)).Value = pos(1) & " " & pos(2) & " " & CStr(pos(3))
+                wsR.Cells(optRow, 3 + modNav.NavLeft(wsR)).Value = pos(10)                       ' C ENTRY DT
+                wsR.Cells(optRow, 4 + modNav.NavLeft(wsR)).Value = pos(4)                        ' D EXPIRY
+                wsR.Cells(optRow, 6 + modNav.NavLeft(wsR)).Value = pos(9)                        ' F BROKER
+                wsR.Cells(optRow, 8 + modNav.NavLeft(wsR)).Value = pos(2)                        ' H TYPE (Call/Put)
+                wsR.Cells(optRow, 9 + modNav.NavLeft(wsR)).Value = CDbl(pos(3))                  ' I STRIKE
+                wsR.Cells(optRow, 10 + modNav.NavLeft(wsR)).Value = pos(14)                      ' J UNDERLYING (name)
                 ' CONTRACTS is signed: positive=long, negative=short
                 ' NET DELTA formula =IF(H="Put",-L*M*ABS(T),L*M*T) handles sign correctly
-                wsR.Cells(optRow, 12).Value = netQty                       ' L CONTRACTS (signed)
-                wsR.Cells(optRow, 13).Value = CDbl(pos(8))                 ' M MULTIPLIER
-                wsR.Cells(optRow, 14).Value = entryPx                      ' N ENTRY PREM
-                wsR.Cells(optRow, 19).Value = pos(12)                      ' S IV
-                wsR.Cells(optRow, 20).Value = pos(13)                      ' T DELTA
-                wsR.Cells(optRow, 21).Value = pos(15)                      ' U GAMMA
-                wsR.Cells(optRow, 22).Value = pos(16)                      ' V THETA/DAY
-                wsR.Cells(optRow, 28).Value = pos(11)                      ' AB STRATEGY TAG
+                wsR.Cells(optRow, 12 + modNav.NavLeft(wsR)).Value = netQty                       ' L CONTRACTS (signed)
+                wsR.Cells(optRow, 13 + modNav.NavLeft(wsR)).Value = CDbl(pos(8))                 ' M MULTIPLIER
+                wsR.Cells(optRow, 14 + modNav.NavLeft(wsR)).Value = entryPx                      ' N ENTRY PREM
+                wsR.Cells(optRow, 19 + modNav.NavLeft(wsR)).Value = pos(12)                      ' S IV
+                wsR.Cells(optRow, 20 + modNav.NavLeft(wsR)).Value = pos(13)                      ' T DELTA
+                wsR.Cells(optRow, 21 + modNav.NavLeft(wsR)).Value = pos(15)                      ' U GAMMA
+                wsR.Cells(optRow, 22 + modNav.NavLeft(wsR)).Value = pos(16)                      ' V THETA/DAY
+                wsR.Cells(optRow, 28 + modNav.NavLeft(wsR)).Value = pos(11)                      ' AB STRATEGY TAG
                 optRow = optRow + 1: cntOpt = cntOpt + 1
             End If
             ' 2026-10-18: "WRT|" write block removed with the Warrant asset
@@ -1049,19 +1049,19 @@ ErrHandler:
         Set wsD = ThisWorkbook.Sheets("DebugLog")
 
         Dim usdRate As Double
-        usdRate = ToDbl(wsR.Range("D1").Value)
+        usdRate = ToDbl(wsR.Range("D1").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value)
         If usdRate <= 0 Then usdRate = 31.6
 
         Dim lastRow As Long
-        lastRow = wsT.Cells(wsT.Rows.Count, 1).End(xlUp).Row
-        If lastRow < 2 Then
+        lastRow = wsT.Cells(wsT.Rows.Count, 1 + modNav.NavLeft(wsT)).End(xlUp).Row
+        If lastRow < 2 + modNav.NavOffset(wsT) Then
             If Not silent Then MsgBox "Transactions sheet is empty.", vbInformation
             Exit Sub
         End If
 
         ' --- Read all transactions into array ---
         Dim txns As Variant
-        txns = wsT.Range("A2:X" & lastRow).Value
+        txns = wsT.Range(wsT.Cells(2 + modNav.NavOffset(wsT), 1 + modNav.NavLeft(wsT)), wsT.Cells(lastRow, 24 + modNav.NavLeft(wsT))).Value
         Dim nTx As Long: nTx = UBound(txns, 1)
 
         ' --- Sort by date (col 2). Simple bubble sort -- small N. ---
@@ -1738,11 +1738,11 @@ NextRec:
 
         Dim contract As String, expiry As Variant, strike As Variant
         Dim optType As String, underlying As String
-        contract  = CStr(wsR.Cells(rrRow, 1).Value)
-        expiry    = wsR.Cells(rrRow, 4).Value
-        strike    = wsR.Cells(rrRow, 9).Value
-        optType   = Trim(CStr(wsR.Cells(rrRow, 8).Value))
-        underlying = Trim(CStr(wsR.Cells(rrRow, 10).Value))
+        contract  = CStr(wsR.Cells(rrRow, 1 + modNav.NavLeft(wsR)).Value)
+        expiry    = wsR.Cells(rrRow, 4 + modNav.NavLeft(wsR)).Value
+        strike    = wsR.Cells(rrRow, 9 + modNav.NavLeft(wsR)).Value
+        optType   = Trim(CStr(wsR.Cells(rrRow, 8 + modNav.NavLeft(wsR)).Value))
+        underlying = Trim(CStr(wsR.Cells(rrRow, 10 + modNav.NavLeft(wsR)).Value))
 
         Debug.Print "=== Debug_TaifexFetch (row " & rrRow & ") ==="
         Debug.Print "Contract  : " & contract
@@ -1924,13 +1924,13 @@ Fail:
         Dim tkr As String, px As Double
 
         ' --- Futures (rows 7-14): A=CONTRACT, G=PRODUCT, L=LAST, P=MARGIN REQ ---
-        For i = 7 To 14
-            tkr = Trim(CStr(wsR.Cells(i, 1).Value))
+        For i = 7 + modNav.NavOffset(wsR) To 14 + modNav.NavOffset(wsR)
+            tkr = Trim(CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value))
             If tkr <> "" Then
                 Application.StatusBar = "Fetching Futures " & tkr & "..."
                 px = FetchPrice(NormalizeTicker(tkr))
                 If px > 0 Then
-                    wsR.Cells(i, 12).Value = px    ' L LAST
+                    wsR.Cells(i, 12 + modNav.NavLeft(wsR)).Value = px    ' L LAST
                     okN = okN + 1
                 Else
                     failN = failN + 1
@@ -1940,13 +1940,13 @@ Fail:
                 ' did the same lookup. Fill if cell is empty/text OR numeric 0.
                 Dim prod As String, mgn As Double
                 Dim cellP As Variant
-                prod = Trim(CStr(wsR.Cells(i, 7).Value))   ' G PRODUCT
+                prod = Trim(CStr(wsR.Cells(i, 7 + modNav.NavLeft(wsR)).Value))   ' G PRODUCT
                 If prod <> "" Then
-                    cellP = wsR.Cells(i, 16).Value          ' P MARGIN REQ
+                    cellP = wsR.Cells(i, 16 + modNav.NavLeft(wsR)).Value          ' P MARGIN REQ
                     If Not IsNumeric(cellP) Or CDbl(cellP) = 0 Then
                         mgn = LookupFuturesMargin(prod)
                         If mgn > 0 Then
-                            wsR.Cells(i, 16).Value = mgn
+                            wsR.Cells(i, 16 + modNav.NavLeft(wsR)).Value = mgn
                             okN = okN + 1
                         End If
                     End If
@@ -1957,11 +1957,11 @@ Fail:
         ' --- Options (rows 19-26): J=UNDERLYING, K=UNDL LAST, O=LAST PREM ---
         ' UNDL LAST: fetched from underlying ticker (always tries).
         ' LAST PREM: TAIFEX TXO via FinMind, US options via Yahoo.
-        For i = 19 To 26
+        For i = 19 + modNav.NavOffset(wsR) To 26 + modNav.NavOffset(wsR)
             Dim contract As String
-            contract = Trim(CStr(wsR.Cells(i, 1).Value))
+            contract = Trim(CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value))
             If contract <> "" Then
-                tkr = Trim(CStr(wsR.Cells(i, 10).Value))   ' J UNDERLYING name
+                tkr = Trim(CStr(wsR.Cells(i, 10 + modNav.NavLeft(wsR)).Value))   ' J UNDERLYING name
                 If tkr <> "" Then
                     px = 0
                     Dim optUndlC As String
@@ -1979,7 +1979,7 @@ Fail:
                         End If
                     End If
                     If px > 0 Then
-                        wsR.Cells(i, 11).Value = px   ' K UNDL LAST
+                        wsR.Cells(i, 11 + modNav.NavLeft(wsR)).Value = px   ' K UNDL LAST
                         okN = okN + 1
                     Else
                         failN = failN + 1
@@ -1990,9 +1990,9 @@ Fail:
                     '   TWII / 4-digit TW code -> FinMind TAIFEX (EOD close)
                     '   Everything else        -> Yahoo Finance US option chain
                     Dim oStrike As Variant, oExpiry As Variant, oType As String
-                    oStrike = wsR.Cells(i, 9).Value      ' I STRIKE
-                    oExpiry = wsR.Cells(i, 4).Value      ' D EXPIRY
-                    oType   = Trim(CStr(wsR.Cells(i, 8).Value))   ' H TYPE
+                    oStrike = wsR.Cells(i, 9 + modNav.NavLeft(wsR)).Value      ' I STRIKE
+                    oExpiry = wsR.Cells(i, 4 + modNav.NavLeft(wsR)).Value      ' D EXPIRY
+                    oType   = Trim(CStr(wsR.Cells(i, 8 + modNav.NavLeft(wsR)).Value))   ' H TYPE
                     Dim hasOptInputs As Boolean
                     hasOptInputs = (IsNumeric(oStrike) And IsDate(oExpiry) And _
                                     (oType = "Call" Or oType = "Put"))
@@ -2008,7 +2008,7 @@ Fail:
                         taifexPx = FetchTaifexOptionPrice(taifexID, CDate(oExpiry), _
                                                           CDbl(oStrike), oType)
                         If taifexPx > 0 Then
-                            wsR.Cells(i, 15).Value = taifexPx    ' O LAST PREM
+                            wsR.Cells(i, 15 + modNav.NavLeft(wsR)).Value = taifexPx    ' O LAST PREM
                             okN = okN + 1
                         Else
                             failN = failN + 1
@@ -2021,7 +2021,7 @@ Fail:
                         Application.StatusBar = "Fetching Opt PREM " & optTkr & "..."
                         premPx = FetchPrice(optTkr)
                         If premPx > 0 Then
-                            wsR.Cells(i, 15).Value = premPx   ' O LAST PREM
+                            wsR.Cells(i, 15 + modNav.NavLeft(wsR)).Value = premPx   ' O LAST PREM
                             okN = okN + 1
                         End If
                     End If

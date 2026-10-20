@@ -275,7 +275,7 @@ Public Sub RefreshAnalysis()
 
     ' --- Walk sections (Warrants removed 2026-10-18) ---
     Dim sections As Variant
-    sections = Array(Array(7, 14, "fut"), Array(19, 26, "opt"))
+    sections = Array(Array(7 + modNav.NavOffset(wsR), 14 + modNav.NavOffset(wsR), "fut"), Array(19 + modNav.NavOffset(wsR), 26 + modNav.NavOffset(wsR), "opt"))
     Dim sec As Variant, i As Long
 
     For Each sec In sections
@@ -285,17 +285,17 @@ Public Sub RefreshAnalysis()
 
         For i = startR To endR
             Dim code As String
-            code = Trim(CStr(wsR.Cells(i, 1).Value))
+            code = Trim(CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value))
             If code = "" Then GoTo NextRow
 
             ' Common fields
             wsA.Cells(r, 1).Value = code
-            wsA.Cells(r, 2).Value = wsR.Cells(i, 2).Value
+            wsA.Cells(r, 2).Value = wsR.Cells(i, 2 + modNav.NavLeft(wsR)).Value
 
-            Dim entryDt As Variant: entryDt = wsR.Cells(i, 3).Value
+            Dim entryDt As Variant: entryDt = wsR.Cells(i, 3 + modNav.NavLeft(wsR)).Value
             If IsDate(entryDt) Then wsA.Cells(r, 4).Value = Date - CDate(entryDt)
 
-            wsA.Cells(r, 8).Value = wsR.Cells(i, 5).Value   ' H DTE
+            wsA.Cells(r, 8).Value = wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value   ' H DTE
 
             Dim typStr As String, undl As Variant, undlPx As Variant
             Dim strike As Variant, chgPct As Variant
@@ -305,24 +305,24 @@ Public Sub RefreshAnalysis()
             Select Case kind
                 Case "fut"
                     typStr = "Future"
-                    undl = wsR.Cells(i, 7).Value                   ' G PRODUCT
-                    undlPx = wsR.Cells(i, 12).Value                ' L LAST
+                    undl = wsR.Cells(i, 7 + modNav.NavLeft(wsR)).Value                   ' G PRODUCT
+                    undlPx = wsR.Cells(i, 12 + modNav.NavLeft(wsR)).Value                ' L LAST
                     strike = ""
-                    chgPct = wsR.Cells(i, 13).Value                ' M % CHG
-                    delta = wsR.Cells(i, 18).Value                 ' R DELTA
+                    chgPct = wsR.Cells(i, 13 + modNav.NavLeft(wsR)).Value                ' M % CHG
+                    delta = wsR.Cells(i, 18 + modNav.NavLeft(wsR)).Value                 ' R DELTA
                     gamma = "": theta = "": vega = ""
                     strat = "Futures"
                 Case "opt"
-                    typStr = CStr(wsR.Cells(i, 8).Value)           ' H TYPE
-                    undl = wsR.Cells(i, 10).Value                  ' J UNDERLYING
-                    undlPx = wsR.Cells(i, 11).Value                ' K UNDL LAST
-                    strike = wsR.Cells(i, 9).Value                 ' I STRIKE
-                    chgPct = wsR.Cells(i, 16).Value                ' P % CHG
-                    delta = wsR.Cells(i, 20).Value                 ' T DELTA
-                    gamma = wsR.Cells(i, 21).Value                 ' U GAMMA
-                    theta = wsR.Cells(i, 22).Value                 ' V THETA
-                    vega = wsR.Cells(i, 23).Value                  ' W VEGA
-                    strat = CStr(wsR.Cells(i, 28).Value)           ' AB STRATEGY TAG
+                    typStr = CStr(wsR.Cells(i, 8 + modNav.NavLeft(wsR)).Value)           ' H TYPE
+                    undl = wsR.Cells(i, 10 + modNav.NavLeft(wsR)).Value                  ' J UNDERLYING
+                    undlPx = wsR.Cells(i, 11 + modNav.NavLeft(wsR)).Value                ' K UNDL LAST
+                    strike = wsR.Cells(i, 9 + modNav.NavLeft(wsR)).Value                 ' I STRIKE
+                    chgPct = wsR.Cells(i, 16 + modNav.NavLeft(wsR)).Value                ' P % CHG
+                    delta = wsR.Cells(i, 20 + modNav.NavLeft(wsR)).Value                 ' T DELTA
+                    gamma = wsR.Cells(i, 21 + modNav.NavLeft(wsR)).Value                 ' U GAMMA
+                    theta = wsR.Cells(i, 22 + modNav.NavLeft(wsR)).Value                 ' V THETA
+                    vega = wsR.Cells(i, 23 + modNav.NavLeft(wsR)).Value                  ' W VEGA
+                    strat = CStr(wsR.Cells(i, 28 + modNav.NavLeft(wsR)).Value)           ' AB STRATEGY TAG
             End Select
 
             wsA.Cells(r, 3).Value = typStr
@@ -336,7 +336,7 @@ Public Sub RefreshAnalysis()
             wsA.Cells(r, 14).Value = vega
             wsA.Cells(r, 15).Value = DeriveTrend(typStr, undlPx, strike, delta)
             wsA.Cells(r, 16).Value = strat
-            wsA.Cells(r, 17).Value = DeriveNote(wsR.Cells(i, 5).Value, delta, chgPct)
+            wsA.Cells(r, 17).Value = DeriveNote(wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value, delta, chgPct)
 
             ' Number formats
             wsA.Cells(r, 6).NumberFormat = "#,##0.00"
@@ -349,8 +349,8 @@ Public Sub RefreshAnalysis()
 
             ' --- Bucket: DTE ---
             Dim dteBucket As Long: dteBucket = -1
-            If IsNumeric(wsR.Cells(i, 5).Value) Then
-                Dim dteVal As Long: dteVal = CLng(wsR.Cells(i, 5).Value)
+            If IsNumeric(wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value) Then
+                Dim dteVal As Long: dteVal = CLng(wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value)
                 Select Case True
                     Case dteVal <= 7:  dteBucket = 0
                     Case dteVal <= 30: dteBucket = 1
@@ -514,10 +514,10 @@ Public Sub BuildScenarioAnalysis()
     Dim pnlIV() As Double: ReDim pnlIV(0 To nIv - 1)
 
     stage = "scan Options rows 19-26"
-    Call ScanScenarioOptionsSection(wsR, 19, 26, rRate, spotBumps, ivBumps, pnlSpot, pnlIV)
+    Call ScanScenarioOptionsSection(wsR, 19 + modNav.NavOffset(wsR), 26 + modNav.NavOffset(wsR), rRate, spotBumps, ivBumps, pnlSpot, pnlIV)
 
     stage = "scan Futures rows 7-14 (linear delta only)"
-    Call ScanScenarioFuturesSection(wsR, 7, 14, spotBumps, pnlSpot)
+    Call ScanScenarioFuturesSection(wsR, 7 + modNav.NavOffset(wsR), 14 + modNav.NavOffset(wsR), spotBumps, pnlSpot)
 
     stage = "write portfolio P&L row"
     wsA.Cells(42, 1).Value = "Portfolio P&L"
@@ -551,17 +551,17 @@ Private Sub ScanScenarioOptionsSection(wsR As Worksheet, rStart As Long, rEnd As
     Dim i As Long
     For i = rStart To rEnd
         stage = "opt row " & i & " read"
-        Dim contract As String: contract = Trim(CStr(wsR.Cells(i, 1).Value))
+        Dim contract As String: contract = Trim(CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value))
         If contract = "" Then GoTo NextI
 
-        Dim S As Double:   S = ToDblD(wsR.Cells(i, 11).Value)   ' K UNDL LAST
-        Dim K As Double:   K = ToDblD(wsR.Cells(i, 9).Value)    ' I STRIKE
-        Dim dte As Double: dte = ToDblD(wsR.Cells(i, 5).Value)  ' E DTE
-        Dim iv As Double:  iv = ToDblD(wsR.Cells(i, 19).Value)  ' S IV
-        Dim signedContracts As Double: signedContracts = ToDblD(wsR.Cells(i, 12).Value)  ' L
-        Dim mult As Double: mult = ToDblD(wsR.Cells(i, 13).Value)                        ' M
-        Dim oType As String: oType = CStr(wsR.Cells(i, 8).Value)                         ' H
-        Dim curPrem As Double: curPrem = ToDblD(wsR.Cells(i, 15).Value)                  ' O LAST PREM
+        Dim S As Double:   S = ToDblD(wsR.Cells(i, 11 + modNav.NavLeft(wsR)).Value)   ' K UNDL LAST
+        Dim K As Double:   K = ToDblD(wsR.Cells(i, 9 + modNav.NavLeft(wsR)).Value)    ' I STRIKE
+        Dim dte As Double: dte = ToDblD(wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value)  ' E DTE
+        Dim iv As Double:  iv = ToDblD(wsR.Cells(i, 19 + modNav.NavLeft(wsR)).Value)  ' S IV
+        Dim signedContracts As Double: signedContracts = ToDblD(wsR.Cells(i, 12 + modNav.NavLeft(wsR)).Value)  ' L
+        Dim mult As Double: mult = ToDblD(wsR.Cells(i, 13 + modNav.NavLeft(wsR)).Value)                        ' M
+        Dim oType As String: oType = CStr(wsR.Cells(i, 8 + modNav.NavLeft(wsR)).Value)                         ' H
+        Dim curPrem As Double: curPrem = ToDblD(wsR.Cells(i, 15 + modNav.NavLeft(wsR)).Value)                  ' O LAST PREM
 
         If S <= 0 Or K <= 0 Or dte <= 0 Or iv <= 0 Then GoTo NextI
         If signedContracts = 0 Or mult = 0 Then GoTo NextI
@@ -609,13 +609,13 @@ Private Sub ScanScenarioFuturesSection(wsR As Worksheet, rStart As Long, rEnd As
     Dim i As Long
     For i = rStart To rEnd
         stage = "fut row " & i
-        Dim contract As String: contract = Trim(CStr(wsR.Cells(i, 1).Value))
+        Dim contract As String: contract = Trim(CStr(wsR.Cells(i, 1 + modNav.NavLeft(wsR)).Value))
         If contract = "" Then GoTo NextI
 
-        Dim S As Double: S = ToDblD(wsR.Cells(i, 12).Value)    ' L LAST
-        Dim contracts As Double: contracts = ToDblD(wsR.Cells(i, 9).Value)   ' I CONTRACTS
-        Dim mult As Double: mult = ToDblD(wsR.Cells(i, 10).Value)            ' J MULTIPLIER
-        Dim direction As String: direction = CStr(wsR.Cells(i, 8).Value)     ' H DIRECTION
+        Dim S As Double: S = ToDblD(wsR.Cells(i, 12 + modNav.NavLeft(wsR)).Value)    ' L LAST
+        Dim contracts As Double: contracts = ToDblD(wsR.Cells(i, 9 + modNav.NavLeft(wsR)).Value)   ' I CONTRACTS
+        Dim mult As Double: mult = ToDblD(wsR.Cells(i, 10 + modNav.NavLeft(wsR)).Value)            ' J MULTIPLIER
+        Dim direction As String: direction = CStr(wsR.Cells(i, 8 + modNav.NavLeft(wsR)).Value)     ' H DIRECTION
 
         If S <= 0 Or contracts <= 0 Or mult <= 0 Then GoTo NextI
         Dim sign As Long: sign = IIf(UCase(direction) = "LONG", 1, -1)
@@ -886,7 +886,7 @@ Private Sub EnsureDashboardLabels(wsR As Worksheet)
 
     Dim i As Long
     For i = LBound(row3Lbl) To UBound(row3Lbl)
-        With wsR.Range(row3Lbl(i)(0))
+        With wsR.Range(row3Lbl(i)(0)).Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR))
             .Value = row3Lbl(i)(1)
             .Font.Bold = True
             .Font.Color = RGB(150, 150, 150)
@@ -895,7 +895,7 @@ Private Sub EnsureDashboardLabels(wsR As Worksheet)
         End With
     Next i
     For i = LBound(row4Lbl) To UBound(row4Lbl)
-        With wsR.Range(row4Lbl(i)(0))
+        With wsR.Range(row4Lbl(i)(0)).Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR))
             .Value = row4Lbl(i)(1)
             .Font.Bold = True
             .Font.Color = RGB(150, 150, 150)
@@ -948,25 +948,25 @@ Private Sub WriteRealizedMetrics(wsR As Worksheet)
 
 WriteOut:
     With wsR
-        .Range("N3").Value = totalTrades
-        .Range("P3").Value = trades30D
+        .Range("N3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = totalTrades
+        .Range("P3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = trades30D
         If totalTrades > 0 Then
-            .Range("R3").Value = wins / totalTrades
-            .Range("R3").NumberFormat = "0%"
+            .Range("R3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = wins / totalTrades
+            .Range("R3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0%"
         Else
-            .Range("R3").Value = 0
+            .Range("R3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = 0
         End If
         If wins > 0 Then
-            .Range("T3").Value = sumWin / wins
-            .Range("T3").NumberFormat = "#,##0"
+            .Range("T3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = sumWin / wins
+            .Range("T3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "#,##0"
         End If
         If losses > 0 Then
-            .Range("V3").Value = sumLoss / losses
-            .Range("V3").NumberFormat = "#,##0;(#,##0)"
+            .Range("V3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = sumLoss / losses
+            .Range("V3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "#,##0;(#,##0)"
         End If
         If sumLoss <> 0 Then
-            .Range("X3").Value = Abs(sumWin / sumLoss)
-            .Range("X3").NumberFormat = "0.00"
+            .Range("X3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = Abs(sumWin / sumLoss)
+            .Range("X3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00"
         End If
     End With
 End Sub
@@ -1024,10 +1024,10 @@ NextI:
 
     With wsR
         If cnt > 0 Then
-            .Range("B3").Value = sumRank / cnt
-            .Range("B3").NumberFormat = "0.0"
-            .Range("D3").Value = sumPctl / cnt
-            .Range("D3").NumberFormat = "0.0"
+            .Range("B3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = sumRank / cnt
+            .Range("B3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.0"
+            .Range("D3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = sumPctl / cnt
+            .Range("D3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.0"
         End If
     End With
 End Sub
@@ -1118,39 +1118,39 @@ NextRev:
 
     With wsR
         If mv7d <> 0 Then
-            .Range("B4").Value = mv7d
-            .Range("B4").NumberFormat = "#,##0"
+            .Range("B4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = mv7d
+            .Range("B4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "#,##0"
             If mv7d > 0 And foundLatest Then
-                .Range("F4").Value = (curMV - mv7d) / mv7d
-                .Range("F4").NumberFormat = "0.00%"
+                .Range("F4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = (curMV - mv7d) / mv7d
+                .Range("F4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00%"
             End If
         End If
         If mv30d <> 0 Then
-            .Range("D4").Value = mv30d
-            .Range("D4").NumberFormat = "#,##0"
+            .Range("D4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = mv30d
+            .Range("D4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "#,##0"
             If mv30d > 0 And foundLatest Then
-                .Range("H4").Value = (curMV - mv30d) / mv30d
-                .Range("H4").NumberFormat = "0.00%"
+                .Range("H4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = (curMV - mv30d) / mv30d
+                .Range("H4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00%"
             End If
         End If
-        .Range("J4").Value = maxDD
-        .Range("J4").NumberFormat = "0.00%"
+        .Range("J4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = maxDD
+        .Range("J4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00%"
         If ddCnt > 0 Then
-            .Range("L4").Value = sumDD / ddCnt
-            .Range("L4").NumberFormat = "0.00%"
+            .Range("L4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = sumDD / ddCnt
+            .Range("L4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00%"
         End If
         If bestDay > -1 Then
-            .Range("N4").Value = bestDay
-            .Range("N4").NumberFormat = "0.00%"
+            .Range("N4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = bestDay
+            .Range("N4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00%"
         End If
         If worstDay < 1 Then
-            .Range("P4").Value = worstDay
-            .Range("P4").NumberFormat = "0.00%"
+            .Range("P4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = worstDay
+            .Range("P4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.00%"
         End If
-        .Range("R4").Value = daysCnt
+        .Range("R4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = daysCnt
         If ivCnt > 0 Then
-            .Range("T4").Value = ivSum / ivCnt
-            .Range("T4").NumberFormat = "0.0%"
+            .Range("T4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = ivSum / ivCnt
+            .Range("T4").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0.0%"
         End If
     End With
 End Sub
@@ -1199,11 +1199,11 @@ Private Sub WriteGreeksHistoryMetrics(wsR As Worksheet)
     Next i
 
     With wsR
-        .Range("F3").Value = thetaCum
-        .Range("F3").NumberFormat = "#,##0;(#,##0)"
+        .Range("F3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = thetaCum
+        .Range("F3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "#,##0;(#,##0)"
         If foundLatest And found7 Then
-            .Range("H3").Value = curDelta - delta7d
-            .Range("H3").NumberFormat = "+0.00;-0.00;0.00"
+            .Range("H3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = curDelta - delta7d
+            .Range("H3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "+0.00;-0.00;0.00"
         End If
     End With
 End Sub
@@ -1216,13 +1216,13 @@ Private Sub WritePositionMetrics(wsR As Worksheet)
 
     ' Compact layout: Futures 7-14 / Options 19-26 (Warrants removed 2026-10-18)
     Dim secs As Variant
-    secs = Array(Array(7, 14), Array(19, 26))
+    secs = Array(Array(7 + modNav.NavOffset(wsR), 14 + modNav.NavOffset(wsR)), Array(19 + modNav.NavOffset(wsR), 26 + modNav.NavOffset(wsR)))
 
     Dim r As Variant
     For Each r In secs
         Dim i As Long
         For i = CLng(r(0)) To CLng(r(1))
-            Dim dte As Variant: dte = wsR.Cells(i, 5).Value
+            Dim dte As Variant: dte = wsR.Cells(i, 5 + modNav.NavLeft(wsR)).Value
             If IsNumeric(dte) Then
                 If CLng(dte) > 0 Then
                     sumDTE = sumDTE + CLng(dte)
@@ -1234,10 +1234,10 @@ Private Sub WritePositionMetrics(wsR As Worksheet)
     Next r
 
     With wsR
-        .Range("J3").Value = cntExp
+        .Range("J3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = cntExp
         If cntDTE > 0 Then
-            .Range("L3").Value = sumDTE / cntDTE
-            .Range("L3").NumberFormat = "0"
+            .Range("L3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).Value = sumDTE / cntDTE
+            .Range("L3").Offset(modNav.NavOffset(wsR), modNav.NavLeft(wsR)).NumberFormat = "0"
         End If
     End With
 End Sub

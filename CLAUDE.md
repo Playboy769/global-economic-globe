@@ -322,6 +322,76 @@ Filings / TW_Filings 兩張表的欄位 1–48 之後，接著 **49–59 的估�
     （RR4 深橘）並重新套 AutoFilter 到 `B5:O<last>`——注意 `Range.AutoFilter` 是切換式，套之前要先 `AutoFilterMode = False`
     否則會把它關掉。欄寬整欄插入自然保留，A 欄寬 3。實測遷移＋UP 後總值／8 持倉／Realized／HistoryLog 全部不變，
     模擬表單寫入落在第 64 列 B 欄起、整列刪除後復原。
+  - **`frmTransaction`（ADD 表單）2026-10-16 重新設計**：14 個欄位從單一直欄改成四組
+    （交易基本資訊／金額與費用／分類與策略／風險指標），每組前面一條淺灰底分組標題
+    Label（`lblSec1`~`lblSec4`）。**移除了 `txtTarget`（Target Price）欄位**——
+    下游 `BuildPositions` 早已不讀 `P_Target` 欄（見「持倉表 UPSIDE / DOWNSIDE」一節），
+    這個欄位填了也沒人看；`btnSave_Click` 寫入時**刻意不寫 `tc+11` 這格、留白**，
+    後面的 `tc+12`（Strategy）／`tc+13`（Beta）／`tc+14`（Broker）欄位偏移完全不動，
+    避免跟 `TrCol` 既有的欄位對照錯位。順手刪掉一個孤兒重疊控制項 `TextBox8`
+    （疊在 `txtTax` 同一位置、程式碼從未引用，編輯過程留下的殘骸）。
+    新增 **`lblNetPreview`**（金額與費用那組最後一列，淺黃底、粗體、靠右對齊）：
+    `AutoCalculateCosts` 算完 Fee/Tax 後順便即時算一次 Buy/Sell 的預估淨額顯示，
+    不用等按 Save 才知道金額（Buy 顯示「這筆買進本身」的成交金額+手續費+稅，
+    刻意不含 `btnSave_Click` 另外估算的「預估賣出費稅」，避免使用者誤解這筆要付多少）。
+    `cmbAction_Change` 擴充成 **Dividend 模式鎖定無關欄位**
+    （`txtShares`／`cmbSector`／`cmbStrategy`／`txtBeta`／`btnCalcBeta` 設
+    `Enabled=False` 並套淺灰底色，切回 Buy/Sell 還原），避免股利模式誤填。
+    **代號後綴補全泛化**：原本只有 Dividend 路徑的 `ResolveDividendTicker` 改名
+    `ResolveTickerSuffix`、Buy/Sell 寫入時一起呼叫，打裸數字代號時三種 Action
+    現在都會依 Transactions 既有紀錄自動補 `.TW`/`.TWO`。**存檔防呆**：Buy/Sell
+    的 Shares／Price 現在要求是 >0 的數字，否則擋下存檔並提示（原本只查
+    Ticker/Date，空白或打錯字會被 `val()` 靜默當 0 寫入一筆 0 股的交易）。
+    **消除重複算式**：券商折扣率／ETF 判斷／台股美股費率計算原本在
+    `AutoCalculateCosts` 與 `btnSave_Click`（Buy 估算的預估賣出費稅）各寫一份、
+    容易飄移，抽成表單模組內的 Private 共用函式
+    `BrokerFeeRate`／`CalcTwFee`／`CalcTwTax`／`CalcUsFee`，兩處都改呼叫它們，
+    數字與規則完全不變、只是不重複寫兩份。
+    ⚠️ **版面改動只存在於活頁簿本身**（repo 沒有 `.frm` 版面檔），用 Excel COM
+    直接操作 `VBProject.VBComponents("frmTransaction").Designer` 完成（刪除/新增/
+    重新定位控制項）；**透過 PowerShell COM 存取動態新增控制項的 `.Font` 子屬性
+    會失敗**（`Object reference not set to an instance of an object`，Left/Top/
+    Width/Height/Caption/BackColor/BorderStyle 都正常，只有 `Font.Bold`/`Font.Size`
+    這類巢狀屬性不行），改用注入一個暫時性 VBA 模組（`Application.Run` 呼叫一個
+    在 VBA 內部設定 Font 的 Sub）繞過，設完即刪除該模組。改版面時若 Designer
+    控制項被刪除但 CodeModule 還是舊版（仍引用已刪除的控制項名），**`VBA.UserForms.Add`
+    會在背景跳出「編譯錯誤：找不到方法或資料成員」的對話框並讓 COM 呼叫卡住**——
+    這跟「COM 卡死時通知使用者並停手」那條規則的症狀一致，正確處理是請使用者到
+    Excel 手動關掉那個對話框，不要強制結束 Excel；關掉後 COM 立刻恢復正常。
+    先改程式碼再改版面、或改完版面立刻注入新程式碼，兩步中間不要留舊程式碼
+    引用已刪除控制項的空窗期。驗證用 `Function zzTestLoadTransactionForm` 包
+    `On Error GoTo` 呼叫 `VBA.UserForms.Add("frmTransaction")` 再 `Unload`，
+    回傳 "OK" 或錯誤訊息字串，比直接用 PowerShell 捕捉 COM 例外更準確。
+    **2026-10-16 版面再改：單欄改兩欄、表單縮到 520×440**（使用者回報框架超出視窗、
+    同意不照原排列重新設計）。日期/代號、Action/Broker、Shares/Price、Fee/Tax 兩兩並排
+    （左欄 Label L12 W84、輸入 L98 W150；右欄 Label L260 W84、輸入 L346 W150），Sector／
+    Strategy／NetPreview 文字較長維持全寬（L98 W398）。⚠️ **`VBComponent.Designer` 在新
+    PowerShell 行程第一次存取常回 `$null`**（症狀：`$d.Controls($name)` 全部報
+    「You cannot call a method on a null-valued expression」），**先呼叫一次
+    `$comp.DesignerWindow()`（不用管回傳值）強制把設計工具視窗初始化，之後
+    `$comp.Designer` 才會正常回傳**；同一個 PowerShell 行程內只要呼叫過一次就夠，不必
+    每個後續呼叫都重複。⚠️ **UserForm 本身的 Width/Height 不是 `Designer.Width/Height`
+    （那兩個屬性在 Designer 物件上不存在，設定會丟 PropertyNotFound）**，要用
+    `VBComponent.Properties("Width")`／`Properties("Height")` 這個 Extensibility
+    Properties 集合讀寫（`$comp.Properties("Width").Value = 520`），這才是 VBE 物件模型
+    真正公開 UserForm 尺寸的地方。
+    **2026-10-16 中文標籤改標楷體**：`lblSec1~5`／`Label15~19`／`chkMargin`／`cmbSector`
+    （Sector 下拉選項含中文）改 `Font.Name = "DFKai-SB"`（系統實際註冊的字型名稱是英文別名
+    `DFKai-SB`，不是中文「標楷體」四個字——用
+    `(New-Object System.Drawing.Text.InstalledFontCollection).Families` 查過，Windows
+    字型清單裡只看得到 `DFKai-SB`）。⚠️ **踩了一個新坑**：用
+    `VBA.UserForms.Add("frmTransaction")` 建一個執行期 instance、對它的
+    `Controls(name).Font.Name` 賦值，**改的只是那個用完即丟的 instance，完全不會寫回
+    Designer**——下一次 `UserForms.Add` 再建新 instance 讀到的還是舊字型（這次第一輪賦值
+    「看起來」成功（不報錯）但驗證時讀回「新細明體」，就是因為驗證用的是另一個全新
+    instance）。正確做法是直接對 **Designer** 物件賦值：
+    `ThisWorkbook.VBProject.VBComponents("frmTransaction").Designer.Controls(name).Font.Name
+    = "DFKai-SB"`，這樣改的是設計階段的屬性、會真的存檔、下次開表單就看得到。跟前面
+    Width/Height 的坑是同一類教訓：UserForm 的「設計時狀態」只能透過 `.Designer`（或
+    `.Properties` 集合）動，執行期 instance 的改動是臨時的。另外**暫時性 VBA 模組的名稱
+    不能跟模組裡的 Function/Sub 同名**（`zzFontCheckAll` 模組裡放
+    `Function zzFontCheckAll()` 會讓 `Application.Run` 直接報「巨集可能無法使用」，不報
+    編譯錯誤、很難一眼看出），模組名跟巨集名要分開取。
   - ⛔ **Transactions 買單按月合併——2026-09-15 加入、2026-09-18 撤除並還原逐筆明細（使用者決定）**。**每筆成交一律獨立
   一列，不要再加回任何形式的合併。** 它曾讓同一檔同月的 Buy 只留一列（股數加總、Price 改加權均價、Date 留該月第一筆），
   一次性回溯 `MergeMonthlyBuys` 直接 `Rows.Delete` 掉 25 列，逐筆進場紀錄因此永久消失，且下游連帶壞掉：DAILY LOG 因
@@ -1030,6 +1100,75 @@ WATCHLIST 從 RR4 頁 7 格小表升級成完整工作表（使用者要求，�
 - ⚠️ 用 COM 注入使用者已開的活頁簿時，若使用者目前前景視窗是別的活頁簿（例如「活頁簿1」），`Application.Run` 找不到巨集、看起來像整個專案編譯失敗——先 `$wb.Activate()`。
 - 實測（測試複本＋活頁簿）：`W!`、加入 TSLA（entry row）、排序三段循環、雙擊 TICKER→Library、雙擊 R1→Bias、`WatchGoto`、在 WatchData 打小寫 nvda 自動轉大寫並補 ADDED、Library `@WATCH`（8 calls／109 notes）、完整 `UP` 後 RR4 摘要 5 筆正確。
 
+### 融資（Margin Financing）功能（2026-10-16，`frmTransaction` + `Attach.bas` + `PortfolioDashboard_v3.bas`）
+
+10 題澄清後的範圍：**只適用台股（TWD）**；自備款/利率/追繳門檻存成**預設值（自備 60%、
+年息 6.45%、追繳維持率 130%），每筆可覆寫**；融資資料存在 Transactions 既有 14 欄之後
+新增 5 欄；累積利息顯示在 RR4 頁；維持率顯示在 RR4 持倉表新增欄位；賣出還款金額顯示在
+Realized 頁新增欄位。**刻意不動 `TickerInsight.BuildFIFOHistory`（代號面板）**——三份獨立
+FIFO walker 裡只改了兩份（見下方）。
+
+- **Transactions 新增 15–19 欄**（`Attach.TR_NCOL` 14→19）：15 IsMargin(`TRUE`/空白)、
+  16 MarginSelfPct(0.6=60%)、17 MarginRate(0.0645=6.45%/yr)、
+  18 MarginLoanAmt(股數×價格×(1−自備比例))、19 MarginCallRatio(1.3=130%)。只有
+  `frmTransaction` 的 Buy+TWD+勾選融資 才寫真實值，其餘留空字串。`DrawTransactionsHeader`
+  本來就不寫表頭文字（只上色），5 個新表頭文字是用 COM 手動打進工作表的一次性動作。
+- **`frmTransaction` 第 5 組「融資」**（風險指標之後、Save/Close 之前；表單因此從
+  520×440 長高到 520×500）：`chkMargin`（CheckBox，只有 Action=Buy 且 Currency=TWD 才
+  `Enabled`，離開條件時強制取消勾選並鎖灰）、`txtMarginSelfPct`/`txtMarginRate`/
+  `txtMarginCallRatio`（預設 60/6.45/130，勾選融資才解鎖）、`lblMarginLoanPreview`
+  （唯讀即時預覽，比照 `lblNetPreview` 風格）。`UpdateMarginAvailability`／
+  `UpdateMarginFieldsLock` 兩個新 Private Sub 掛在 `cmbAction_Change`／
+  `cmbCurrency_Change`／`chkMargin_Click`。
+- **FIFO 引擎擴充**（`Attach.CalculateRealizedPnL` 與 `PortfolioDashboard_v3.BuildPositions`
+  兩份各自獨立擴充，不是共用函式——跟既有三份 FIFO walker 各自獨立的架構一致）：lot 的
+  Array 字面量從 `(shares, costPerShare)` / `(lotDateSer, shares, cps)` 擴充成帶
+  `isMargin, selfPct, rate, principal, callRatio` 的版本。SELL 迴圈依
+  `fracSold = remaining / lotSh` 比例把本金/利息歸屬到這次賣出，剩餘 lot 的 `principal`
+  乘上 `(1 − fracSold)` 留著給下一次賣出；利息＝`principal × rate × 持有天數 / 365`。
+  `BuildPositions` 的 Transactions 讀取範圍從 `TrCol(...,14)` 延伸到 `TrCol(...,19)`。
+- **RR4 持倉表 MAINT %（T 欄，`RR4_MAINT_COL=20`，`RR4_NCOL` 19→20）**：T/U 欄原本完全
+  沒人用，插在這裡不用搬動 UPSIDE/DOWNSIDE/隱藏排序鍵。`= 該倉位市值 ÷ 還沒還清的融資
+  本金 × 100`，沒有開放中的融資 lot 就留空（顯示 `-`）；<130%（`RR4_MARGIN_CALL_RATIO_
+  DEFAULT`，純視覺門檻，不嘗試依各筆輸入的追繳維持率加權平均）變紅字。`CalcPositions`
+  的 `posData` 因此從 16 欄擴成 17 欄（第 17 欄＝該 position 的剩餘融資本金），新增
+  `Optional ByRef totalMarginInterest As Double` 參數（累加全投組未實現融資利息），
+  `Optional` 是因為 `UpdatePortfolioVolatility`（`V!`）那個既有呼叫點不需要這個值、
+  不用跟著改。
+- **RR4 頁「累積融資利息」（row 25＝`RR4_TOP+21`）**：原本是真正的空白列（SUMMARY 最後
+  一行在 row24、MARKET 儀表板從 row26 起），`DrawSummary` 多一個
+  `Optional ByVal totalMarginInterest As Double` 參數，新增 `Public Function
+  RR4MarginInterest()` 存取器（比照 `RR4NetExposure()`）。
+- **Realized 頁 MARGIN REPAY（`REAL_MARGIN_COL=13`）**：接在 NOTES(12) 之後，**是算出來
+  的、不是手打的**——跟 CAPTION(11) 不同，每次 `CalculateRealizedPnL` 都要清除重寫（NOTES
+  本身完全不清，兩者分開清）。`PaintRealizedFrame` 的格線範圍本來就畫到 `cLoan+1`（NOTES
+  右邊一欄），新欄位剛好落在這個既有範圍內，**不用改 `PaintRealizedFrame`**。
+- ⚠️ **注入 `.bas` 檔前一定要剝掉第一行 `Attribute VB_Name = "..."`**（`vba-bas-ascii-only`
+  那條舊 gotcha 這次又踩了一次）：這次用 `CodeModule.DeleteLines`+`AddFromString` 直接讀
+  `[IO.File]::ReadAllText` 的原始內容整段塞回去，**忘了先濾掉這一行**，導致整個 VBA
+  專案編譯失敗（`Application.Run` 任何巨集都報「巨集可能無法使用」），但本次**沒有卡住
+  COM**（這次 `AddFromString` 本身正常返回，只是注入的內容是壞的）——用
+  `$excel.Run("RR4PositionCount")` 之類的輕量唯讀巨集先做一次煙囪測試才發現；修法是重讀
+  檔案、`-split` 成行陣列後判斷 `$lines[0] -like "Attribute VB_Name*"` 就跳過該行再
+  `Join` 回字串重新注入，兩個模組都要分別處理（`frmTransaction_Code.txt` 不受影響，
+  它本來就沒有這一行——只有完整匯出的 `.bas` 才有，表單的程式碼副本是手動另存的）。
+- ⚠️ **`Workbook.Save()` 第一次回傳後 `.Saved` 仍是 `False`**：這次 `DisplayAlerts=True`
+  時 `wb.Save()` 執行完 `.Saved` 卻還是 `False`（懷疑是相容性檢查之類的對話框被無聲擋
+  掉，存檔沒有真的完成），**先把 `Application.DisplayAlerts` 設 `False` 再 `Save()`
+  一次就正常**（`.Saved` 變 `True`），之後記得把 `DisplayAlerts` 改回 `True`，不要留著
+  關閉狀態讓使用者之後的手動存檔也被影響。
+- **實測**（COM 直接寫一列模擬 `frmTransaction` 會寫的融資 Buy，而非跑表單本身——表單
+  的 UI 邏輯已用 `zzTestLoadTransactionForm` 單獨驗證過能正常載入）：ZZTEST.TW 融資 Buy
+  1000 股@100、手續費 100、自備 60%/年利 6.45%/追繳 130%、30 天前成交 → `UP` 後
+  NET EXPOS 100,100、MAINT% 250.25%、`RR4MarginInterest()` 212.05（＝40,000×6.45%×30/365，
+  與手算一致）；再 Sell 500 股 → Realized 新增一列 MARGIN REPAY 20,106.03
+  （＝20,000 本金歸屬＋106.03 利息歸屬，20,000＝40,000 的一半，20,106.03=20000*1.0645^(30/365)
+  精確對上公式）、剩餘倉位 500 股 MAINT% 仍是 250.25%（比例不變，符合預期）、
+  `RR4MarginInterest()` 降為 106.03（本金減半、利息同步減半）；刪除兩筆測試交易、
+  再跑一次 `UP` 後 `RR4MarginInterest()` 歸零、`RR4PositionCount()` 回到 7（真實持倉）、
+  ZZTEST.TW 確認不在持倉表——真實資料全程未被動到。備份
+  `Portfolio\backup-pre-margin-20261016-1620.xlsm`。
+
 ### RR5 Warrant 移除（2026-10-18/19，`Compound RR5 Derivatives.xlsm`）
 
 使用者決定把 RR5（衍生性商品追蹤：Futures／Options／曾有的 Warrant）裡的整個 **Warrant
@@ -1160,6 +1299,61 @@ CombinedPerf 的程式碼——跨 repo 沒有要清的東西。
 步驟是在使用者追加「CombinedPerf 也可以刪除」指示之前執行的**（當時的計畫還是只做
 Warrant 移除、CombinedPerf 只是因為 Warrants 小計被拿掉需要重算版面）——那些版面重建
 結果已經被本節的「整個功能刪除」取代，CombinedPerf／CPLog 現在在活頁簿裡完全不存在。
+
+### RR5 導覽列（R5 / T 跳頁 + UP 動作碼，2026-10-20，`RR5/modNav.bas`）
+
+比照 RR4 的 modNav 慣例，給 RR5 加上「輸入代碼＋Enter 跳頁」——範圍只有 **RR5 主頁（代碼
+`R5`）與 Transactions（代碼 `T`）**，沿用 RR4 的版面慣例（每頁留空第 1 列／A 欄，bar 佔
+2–4 列，指令格 **C2**，RR4_ACCENT／RR4_INPUT_BG／RR4_INPUT_FG／RR4_LINE 同一組 RGB 值
+原樣搬過來，改名 `RR5_ACCENT` 等）。動作碼只做了 **`UP`**（呼叫既有的
+`RR5_Core.RebuildPositionsFromTransactions`，RR5 這邊沒有像 RR4 那麼多子頁面，不需要
+V!/HC!/RG! 那一整組）。
+
+**跟 RR4 最大的不同：RR5 完全沒有 `TrCol()/TrHdrRow()` 那層欄位轉換包裝**，Transactions
+與 RR5 主頁的讀寫全部是裸座標（`wsT.Cells(i, 6)`、`wsR.Cells(row, 9)`、`wsR.Range("B1")`…），
+插入空白列/欄會讓這些座標全部指錯格。不是重做一次 RR4 當年的遷移（加一層 Col()/HdrRow()
+包裝函式），而是**直接在原有座標上加 `modNav.NavOffset(ws)`／`modNav.NavLeft(ws)`**——
+`RR5_Core.bas`／`RR5_Dashboard.bas` 兩個檔逐一檢查過全部 `wsR.`／`wsT.` 存取點（分別
+99／79 處命中），分三類處理：
+① **迴圈變數列（`row`／`i`／`futRow`／`optRow`）本身不用加**——只要迴圈的起點是從
+`_Config`（`FUT_SEC_START`／`OPT_SEC_START`）或字面常數（`futRow = 7`、`For i = 19 To 26`、
+`sections = Array(Array(7,14,"fut"), Array(19,26,"opt"))` 這類「錨點」）取得時才加一次
+`+ NavOffset(wsR)`，迴圈內部沿用該變數的地方完全不用動；
+② **欄引數是逐欄寫死的（`Cells(row, 9)` 的 `9`）全部要加 `+ NavLeft(ws)`**——這是真正佔
+大宗的部分（兩個檔加起來約 90 處欄位引數），因為 RR5 每個欄位都是獨立字面數字，不像列
+還能集中在少數錨點；
+③ **絕對位址字串（`Range("B1")`、`Range("D1")`、`row3Lbl`/`row4Lbl` 裡的 "A3"/"C3" 等）
+一律補 `.Offset(NavOffset(ws), NavLeft(ws))`**。`txns = wsT.Range("A2:X" & lastRow).Value`
+這種「讀整塊到陣列」的呼叫只有**起點**（"A2"）要校正，`txns(r, N)` 這種事後對陣列的索引
+**完全不用動**（陣列本身就是從校正過的起點開始、天生 1-based，跟它在工作表上原來第幾欄
+無關）。`FixWorksheetFormulas`／`Setup_CompactRowFormulas`／`Setup_CompactSubtotals` 三個
+一次性版面初始化 Sub（寫死 formula 文字裡的 `N7:N14` 之類字串）**刻意完全沒動**——它們不
+在平常的 UP／DashboardRefresh 呼叫鏈上，而且 Excel 對「已經寫在格子上的公式」insert 列/欄
+時會自動校正參照，所以沒有重跑的風險；真正需要小心的是以後**若有人手動重跑這三個 Sub**，
+寫出來的 formula 文字仍是舊座標字串，屆時需要另外處理（已知限制，未修）。
+
+**ThisWorkbook 原本完全沒有事件程式碼**（`CountOfLines = 0`，RR5_Core.bas 裡那段
+「PASTE THE FOLLOWING INTO ThisWorkbook MODULE」的 Workbook_Open／BeforeClose 建議從未
+真的貼進去）——新增的只有一個 `Workbook_SheetChange`，比對 `Target.Address(False, False)`
+是否等於 `modNav.NavCmdCell(ws)` 再轉給 `RunNavCommand`，沒有動到既有（其實是不存在的）
+任何事件。
+
+**實測**（COM 直接操作已開啟的活頁簿；備份 `Portfolio\backup-pre-rr5nav-20261020.xlsm`）：
+① 跳頁兩個方向（RR5→Transactions、Transactions→RR5）打代碼都正確、指令格打完自動清空；
+② 插入空白列/欄後，Excel 原生把 `N7:N14`／`Q19:Q26` 等公式參照自動校正成 `O11:O18`／
+`R23:R30`（列 +4＝NAV_ROWS 3＋留白列 1、欄 +1），GRAND TOTAL 公式 `=N15+Q27` 也正確變成
+`=O19+R31`；③ 寫一筆合成 Call Option 測試交易（2454 Call 900）進 Transactions 後呼叫
+`UP`，新倉位精確落在位移後的正確座標（row 23＝19+4）、`PosCount` 公式（位移後在 Q5）讀到
+1；④ 刪除測試交易、清空對應欄位、再跑一次 `UP`（Transactions 已空，正確命中「no data」
+guard：`lastRow(5) < 2+NavOffset(4)=6`，證明這個邊界判斷的位移算式本身是對的）；⑤ 用
+`UP` 動作碼（打在指令格、非直接 Application.Run）驗證完整的 Workbook_SheetChange 分派
+路徑；⑥ 全程用 `RR4/lint-vba.py` 檢查過三個檔案都過。真實持倉／交易資料本來就是空的
+（Warrant 移除當時已清空，尚未有新交易），全程沒有真實財務資料被動到。
+⚠️ **COM 踩到的坑**：`Range.ClearContents()` 晚期繫結再次丟 `0x800A03EC`（同一個舊坑，
+見 `rr5-excel-com-automation-gotchas` 類筆記），改用 `.Value2 = ""`；`RebuildPositionsFromTransactions`
+收尾的 `MsgBox` 在 `Application.Visible = False` 時 `AppActivate` 找不到視窗（隱藏視窗的
+模態對話框不會出現在可 AppActivate 的清單裡），要先把 `Application.Visible` 設回 `True`
+才能用 `AppActivate("RR5 Rebuild")`＋`SendKeys` 關閉。
 
 ### Yield 頁（Y / Y!，2026-09-30，`RR4/modYield.bas`）
 
@@ -1304,6 +1498,22 @@ NEE／SO／DUK／AEP／D／ETR／XEL／EXC／ED／PCG／AWK／WTRG／ATO／NI／
 **需覆核**：D V5（約 $820M RNG 減損使自算利潤率−22.9pt，營運盈餘其實上升）、SO V4（區間只來自電話會議摘要）、ETR V2（Investing.com 共識 1.13 與 Zacks 0.94 衝突，採後者）、EXC V2（共識 0.43–0.48）、XEL V5（來自核能延壽折舊減少）、
 NEE／SO V1（營收共識單一來源）、WTRG V1（Zacks 502 對 Benzinga 541 方向相反）、SRE REPORTED 08-06 來自 Investing.com 未經發佈稿確認、AWK／WTRG／NI 的 Investing.com 頁面 404 故共識為搜尋摘要。V5 全自算、V6 全判斷。
 **寫入時 Excel 的處理**：使用者開著活頁簿且 `Saved=True` 時，先確認 `Saved`、`SaveCopyAs` 備份，再用現有實例（`GetActiveObject`）暫時關 `EnableEvents` 寫入並存檔，寫完還原；若 `Saved=False` 就停手。**子代理一次查 5 家若 600 秒無進度會被 watchdog 判失敗**，遇到時縮成「每家 6 次工具呼叫上限、每家寫一次檔」重跑。
+
+**2026-10-14 Steel sector 20 家新增**（備份分 5 波：`backup-pre-e2-steel-20261014.xlsm`／`…-wave2-…`／`…-wave3-…`／`…-wave4-…`／`…-wave5-…`，`tblEarn` 227→247 列）：
+使用者從某頁 SEGMENT 清單（steel sector）貼了一份 21 檔候選名單截圖，先用 WebSearch 逐一核對代號真實性（MTUS／LUD／HLP／ZKIN／HUDI／INHD 等非常見代號皆為真實上市公司，無需剔除）；**INHD 經查已於 2024 年底徹底轉型為香港子公司經營的二手消費電子產品（iPhone/iPad）回收貿易業務，不再是冷軋鋼構件/模組化建築公司，且有反向分割、交易暫停、going concern 疑慮等殼股特徵**——不符合「非真實公司/已下市」的既定剔除條件，但使用者決定直接跳過不寫入 tblEarn（非刪除板塊成員，只是這次不建立 tblEarn 列）。
+最終寫入 20 家：NUE／STLD／RS／CLF／WS／NWPX／MTUS／FRD／MSB／LUD／ASTL／MT／PKX／TX／GGB／SID／SIM／HLP／ZKIN／HUDI，皆各自最新已公布季（美股 10-Q／外國私人發行人 20-F+6-K 或 40-F+6-K 皆有）。
+共識來源放寬到 Zacks/MarketBeat/Barchart/Investing.com/Reuters/AP/Benzinga/Nasdaq.com（標 `[2nd-hand]`），**微型股/家族控盤股（FRD／MSB／LUD／HLP／ZKIN／HUDI／SIM）普遍完全查無分析師覆蓋，V1/V2 及其四欄依規則整列留空**，不拿公司財測或二手「估計」湊數字。
+**特殊處理**：WS 經查證即 Worthington Steel（2023 年從原 Worthington Industries 分拆的鋼鐵加工公司，非消費品公司 Worthington Enterprises/WOR），確認代號無誤；MSB（Mesabi Trust）是鐵礦石權利金信託、無傳統營收/EPS概念，V1/V2 改用「權利金收入/每單位淨損」判斷邏輯、V3/V4 的 Not guided 屬信託結構性事實而非判斷；LUD/HLP/ZKIN/HUDI/SIM 皆為外國私人發行人（20-F+6-K，無 10-Q），REPORTED 用申報/公告日而非季末日；ASTL 幣別為 CAD（40-F+6-K 加拿大發行人）、GGB/SID/TX 幣別為 BRL 或美元 ADR 基準，皆在 PRINT 註明幣別。
+**需覆核**：WS V1（212% 營收「優於預期」純粹是 Kloeckner 首次並表效果，非真實成長，標記 FLAGGED）、RS V4/V5（LIFO 費用倍增下 Maintained vs Lowered、GAAP vs 非GAAP FIFO margin 方向相反，皆為判斷call）、MT V1（兩個共識來源 $16.88B vs $17.07B 導致 Inline/Miss 兩種可能）、MTUS V2（Zacks/MarketBeat/Barchart 三方共識不一致）、SID V2（Quiverquant 與 Stock Taper 的 EPS 數字互相矛盾 -$0.11 vs -$0.60/-$0.62，建議查 CSN 官方 IR 核對）、GGB V6／ASTL V5（區域/口徑混合訊號下的判斷call）。
+寫入過程中活頁簿一度被意外關閉（Excel 進程還在、0 個活頁簿，非當機），已停手並由使用者重新開啟確認後才繼續，沒有遺失任何已存資料。
+
+**2026-10-14/15 Big Pharma 15 家新增**（備份分 4 波：`backup-pre-e2-pharma-20261014.xlsm`／`…-wave2-…`／`…-wave3-…`／`…-wave4b-20261015.xlsm`，`tblEarn` 247→262 列）：
+使用者指定「大型處方藥廠 Big Pharma」範圍，批次規模比照半導體/電力同規模；JNJ／LLY／NVO／UNH 是既有列，**不動現有列，只補其他新代號**。
+最終寫入 15 家：PFE／MRK／ABBV／BMY（wave1）、AMGN／GILD／AZN／GSK（wave2）、SNY／NVS／TAK／TEVA（wave3）、VTRS／ZTS／BAYRY（wave4），皆各自最新已公布季。
+共識來源沿用鋼鐵批次的放寬範圍（Zacks/MarketBeat/Barchart/Investing.com/Reuters/AP/Benzinga/Nasdaq.com，標 `[2nd-hand]`；moomoo/CNBC/Bloomberg 無需標註）；查無共識者 V1/V2 及其四欄依規則整列留空（本批次無此情況，15 家皆查到至少二手共識）。V7 Industry 不預設，依各家 agent 實際發現判斷；V6 Pricing 依實際藥價/學名藥侵蝕情況判斷，不統一簡化。
+**特殊處理**：ZTS 經確認不受美國 IRA Medicare 藥價協商影響（動物用藥不在 Medicare 範圍內），V6 判斷改聚焦皮膚科學名藥競爭、Simparica Trio 價格敏感度、Cerenia/Convenia 學名藥侵蝕；BAYRY 為 OTCQX Level I sponsored ADR（非 SEC 申報公司，EDGAR 無現行 10-Q/20-F/6-K），資料全部來自 Bayer 官方德文/EU IFRS 新聞稿與二手彙整，REPORTED 用財報發布日；SNY／NVS／TAK（外國私人發行人，20-F+6-K）與 AZN／GSK（英國發行人）皆在 PRINT 註明幣別與申報慣例。
+**需覆核**：AZN V1（Zacks 稱「優於預期」但依嚴格 ±1% 門檻實為 Inline，判斷與媒體敘事不一致）、ABBV V2（EPS 落在 ±2% Inline 邊界內，但多數媒體仍稱「優於預期」）、AMGN V5（GAAP margin 擴張 vs 非GAAP margin 收縮方向相反，判斷取非GAAP）、ZTS V1/V2（Revenue 落在 ±1% 邊界、EPS 落在 ±2% 邊界，與市場敘事「EPS beat/Revenue miss」的框架不同——嚴格數字規則判定皆為 Inline）、VTRS V6（學名藥/原廠藥雙重性質，類似 TEVA 的判斷取 Neutral）、BAYRY V1/V2（唯一共識來源為德文 AI 聚合網站 goldesel.de，未與第二來源交叉驗證，信心度較低）、BAYRY V4（三個二手來源對 EPS guidance 區間數字互相矛盾，但一致認為「維持不變」，Maintained 判斷穩健）、TEVA V6（學名藥侵蝕與原廠藥定價權並存的雙重性質，類似 VTRS）。
+寫入過程中活頁簿一度被意外關閉（Excel 進程還在、0 個活頁簿，非當機；之後 Excel 進程整個重啟），已停手並由使用者確認重開後才繼續，沒有遺失任何已存資料。
 
 **七項與下拉詞彙**：1 Revenue／2 EPS＝Beat/Inline/Miss；3 Rev guide／4 EPS guide＝
 Raised/Maintained/Lowered/Not guided；5 Margin＝Expansion/Flat/Contraction；6 Pricing＝
