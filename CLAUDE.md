@@ -191,6 +191,30 @@ folder 一律 `globe-invest/app/<x>/index.html`。本地整站 `globe-invest-app
 > 部署（跟 article-db/structural-holes/sector-rotation-system 同模式）。已上架 OutsideFramework
 > Works（Finance & Markets 分類，見 `d87fa67` commit「上架 TW Chips Report 與 Sector Rotation
 > Dashboard」）。
+>
+> **暗色模式（2026-10-21 新增）**：`index.html`／`lookup.html` 右上角固定一顆切換按鈕，手動
+> 切換、**不跟隨系統 prefers-color-scheme**（沒切換時一律亮色），選擇存 `localStorage`
+> `twchips_theme`、靠 `<html data-theme="dark">` 驅動既有的 CSS variable 色票（圖表 SVG
+> 本來就吃 `var(--s-dealer)` 等變數，切換不需要重畫）。⚠️ **`index.html` 會被
+> `build.py` 每日自動部分改寫**（只用 regex 置換 `const A = {...}`／`const L = {...}`／
+> `const MAINT = [...]` 三個資料區塊與幾個 `<span id="live-range">` 等日期欄，其餘原樣寫回，
+> 不是整檔重新產生）——改 `<head>`／CSS／按鈕這類非資料區塊是安全的，但**改完一律跑
+> `git pull --rebase origin master` 再 push**，因為 daily data update workflow 幾乎
+> 每天都會先推一個新 commit，直接 push 必定被拒。
+>
+> ⚠️ **Railway 的 GitHub 自動部署曾卡住（2026-10-21 發現）**：推上面這次暗色模式 commit 後
+> Railway 完全沒有觸發新部署；回頭查 GitHub Deployments API（`gh api repos/Playboy769/
+> twchips-report/deployments`）才發現**在那之前一天（2026-10-20 daily data update commit）
+> 自動部署就已經沒有觸發**，不是這次改動造成的——往回比對每筆 commit 與對應的部署記錄，
+> 一路到 2026-10-19 都是 push 後幾秒內自動建立部署，10-20 跟 10-21 這兩筆完全沒有。根因
+> 尚未查明（有可能是 Railway 那端的 GitHub App 連線出問題、額度、或其他帳務原因），
+> GitHub 側的 commit status／check-runs API 對這個 repo 也回空（Railway 用的是 GitHub App
+> 整合，不是傳統 webhook，`repos/.../hooks` 查不到東西是正常的、不代表線路本身的問題）。
+> **暫時解法**：手動跑 `railway redeploy --from-source -y`（先 `railway link -p
+> twchips-report` 把 CLI 連到對的 project／service，預設可能連到別的 service）強制從
+> GitHub 最新 commit 重新拉取建置，成功後新部署會正常顯示在 `railway deployment list`。
+> **之後每天的排程 commit 可能也不會自動部署**，要嘛每次手動跑一次上面那行指令、要嘛
+> 之後找時間到 Railway 後台檢查這個 service 的 GitHub 整合連線狀態／重新連結。
 
 > **article-db 改法**：編 `article_db/index.html` → 本 repo commit → 跑
 > `scripts/sync-article-db.ps1` 推到 `article-db` remote，否則線上不更新（見下方專節）。
@@ -1354,6 +1378,193 @@ guard：`lastRow(5) < 2+NavOffset(4)=6`，證明這個邊界判斷的位移算�
 收尾的 `MsgBox` 在 `Application.Visible = False` 時 `AppActivate` 找不到視窗（隱藏視窗的
 模態對話框不會出現在可 AppActivate 的清單裡），要先把 `Application.Visible` 設回 `True`
 才能用 `AppActivate("RR5 Rebuild")`＋`SendKeys` 關閉。
+
+## Future and Option Comparison.xlsm（新活頁簿，2026-10-21 起記錄）
+
+`C:\Users\ryan9\OneDrive\桌面\Portfolio\Future and Option Comparison.xlsm`——融資 vs 期貨
+摩擦成本比較工具，不屬於 RR4/RR5 家族，是完全獨立的活頁簿。**VBA 原始碼只存在於活頁簿
+本身**，repo 裡沒有對應 `.bas` 檔（跟 RR4/RR5 不同，這本沒有建立同步機制）；要讀/改程式碼
+一律用 COM 直接連上已開啟的活頁簿（見下方「COM 連線訣竅」）。
+
+**導覽列**：比照 RR4/RR5 的 `modNav` 慣例（NAV CMD、指令格、第 1 列/A 欄留白），三個頁面
+代碼 **M**（融資vs期貨）／**P**（Portfolio彙總）／**F**（期限結構，動作碼 **FC!**＝重新抓取）。
+
+**VBA 模組**：`modHttp`（`HttpPostForm`，WinHttp POST）、`modForwardCurve`（期貨期限結構，見下）、
+`modNav`、`modUnify`、`modMargin`（融資頁）。
+
+### 期限結構 Forward Curve 排版錯誤（2026-10-21，兩個獨立 bug 一次修掉）
+
+使用者回報 F 頁期限結構表格文字重疊看不清楚（截圖：每格裡月份/價格/漲跌幅三行字擠在一起）。
+依本檔「Mandatory pre-task clarification」規則先問滿 10 題確認活頁簿路徑／原始碼位置／
+現況後，用 COM（ROT 枚舉＋**必須 `-STA`**，見下方訣竅）連上已開啟的活頁簿抓出 `modForwardCurve`
+原始碼，發現**兩個各自獨立的 bug**，一次修完：
+
+1. **排版重疊（使用者截圖回報的症狀）**：`RefreshOneProduct` 把月份/價格/漲跌幅三行文字塞進
+   同一格（`vbLf` 分隔，`WrapText` 已是 `True`），但那幾列停在工作表預設列高（17pt，約只夠 1 行
+   10pt 字），3 行文字因此視覺重疊。修法：`RefreshForwardCurve` 寫完資料後對整段資料列呼叫
+   `EntireRow.AutoFit`，列高會依實際內容自動變成約 40pt（3 行）或縮回約 14pt（`ERROR/NO DATA`
+   這種單行內容），不用猜一個固定值。
+2. **即時抓取其實 0/5 成功（排版修好後才發現，F 頁顯示的是 seed data，從沒真正成功抓取過）**：
+   `StripTags`（去除 HTML 標籤後清理文字）用 VBA 內建 `Trim()`，**只會去掉純空白字元
+   (0x20)，不會去掉 tab/換行**。TAIFEX 回傳的月份欄是 `<td><div align="center">\n\t\t...202610
+   </div></td>` 這種巢狀結構，標籤剝掉後殘留的開頭 `\n\t\t\t...` 不會被 `Trim()` 清掉，導致
+   `Len(monthTxt) = 6 And IsNumeric(monthTxt)` 這個驗證**對每一列都失敗**，F 頁因此永遠顯示
+   `ERROR/NO DATA`（跟 HTTP 抓取、正規表示式本身都無關——兩者單獨測試都正常，只有
+   `StripTags` 清理這一步漏了 tab/換行）。修法：改用 `VBScript.RegExp` 的 `^[\s]+|[\s]+$`
+   做二次替換，`\s` 涵蓋 tab/CR/LF，徹底清乾淨。
+   ⚠️ **這類「同一個正規表示式在 PowerShell 測試正常、在 VBA 裡卻不正常」的情境要小心
+   `.Trim()` 語意差異**：PowerShell 裡 `$str.Trim()` 呼叫的是 .NET `String.Trim()`（涵蓋所有
+   空白字元），VBA 的 `Trim()` 只處理空格——用 PowerShell 單獨驗證一段邏輯「看起來沒問題」
+   不代表搬進 VBA 也一樣，兩者對同一個方法名稱的行為並不等價。
+
+**診斷手法**：用 COM 連上即時 Excel 時，`Debug.Print`／F8 單步這類互動式偵錯對隱藏或
+背景視窗不可行，改用**臨時 Public 診斷函式**（`Application.Run` 呼叫、字串組出中間狀態
+回傳）定位問題，一路從「HTML 長度/是否含關鍵字」→「regex 抓到幾個 `<tr>`」→「每個通過
+門檻的列印出 cells(0)/(1)/(2) 原始內容」逐層縮小範圍，才抓到是 `cells(1)` 帶著殘留空白。
+驗證完成後**診斷函式要整個刪除**，不要留在正式模組裡。
+
+⚠️ **踩到的坑：`CodeModule.Find` 的 ByRef 參數用字面值呼叫會靜默失效**——VBA 的
+`Find(Target, StartLine, StartColumn, EndLine, EndColumn)` 回傳的是 Boolean（找到與否），
+真正的行號是透過 **ByRef** 寫回 `StartLine`/`EndLine` 參數；用 PowerShell 以字面整數呼叫
+（`$cm.Find("...", 1, 1, -1, -1)`）時，ByRef 更新沒有变量可承接，拿到的 `$startLine` 其實是
+回傳的 Boolean `True`（之後被當整數用，換算成 1）。結果 `DeleteLines($startLine, ...)` 刪掉的
+是第 1 行（`Option Explicit`）而不是想刪的診斷函式，而且因為後續又 `AddFromString` 加了
+一份同名診斷函式，造成**模組內兩個同名 `Public Function DiagTest`**——VBA 不允許同一模組內
+重複宣告，整個專案因此編譯失敗，`Application.Run` 呼叫任何巨集都報「巨集可能無法使用」
+（跟既有的「project-wide compile failure」症狀一致）。**修法不是去修 `Find`/`DeleteLines` 的
+呼叫方式，而是直接放棄局部刪除**：每次要清掉診斷代碼時，用 `DeleteLines(1, CountOfLines)`
+整個模組清空再 `AddFromString` 貼回已知乾淨的版本（本例是 scratchpad 裡維護的
+`modForwardCurve.bas` 修正版），比在既有程式碼中間做局部增刪可靠得多。
+
+### COM 連線訣竅（OneDrive 路徑 + 多實例，本活頁簿專用，其餘沿用既有 `rr4-excel-com-automation-gotchas`）
+
+這本活頁簿存在 OneDrive（`FullName` 是 `https://d.docs.live.net/...`），一般 PowerShell
+（預設 MTA）用 ROT 枚舉拿到的物件是「空殼」——`.Name` 讀得到，但 `.VBProject`／
+`.Worksheets.Count`／`.FullName` 全部回傳 null/0/空字串，連 `.VBProject` 本身都是 `Nothing`。
+**改用 `powershell.exe -STA` 開子行程執行同一段 ROT 枚舉程式碼就正常**（`ApartmentState`
+印出來確實是 `STA`），`VBComponents.Count`、`CodeModule.Lines()` 全部讀取正常。這是比既有
+筆記提到的「`GetActiveObject` 接到孤兒 Excel 進程」更根本的一層問題——即使用 ROT 枚舉抓對
+了物件，MTA 執行緒對 Office 物件模型的某些集合屬性讀取依然會失敗，Office 要求呼叫端是 STA。
+簡體：**之後任何對這本活頁簿（或其他 OneDrive 路徑活頁簿）的 COM 操作，一律包進
+`powershell.exe -STA -NoProfile -File <script>.ps1` 子行程執行，不要直接在預設的互動式
+PowerShell session 裡跑。**
+
+### 導覽列改成跟 RR4 一模一樣（2026-10-21，使用者要求）
+
+原本 M/P/F/S 四頁的 nav bar 是「每個按鈕各佔一格＋獨立標籤列」的樣式；改成**完全比照
+`RR4/modNav.bas` 的 `DrawNavRows`**：row 2＝徽章（頁面代碼，橘底黑字）＋指令格（C2，不變）、
+row 3＝**全部頁面代碼+名稱打包進同一個溢出儲存格**（`WriteCodeLine`，目前頁亮橘粗體、其他頁
+調暗 60%）、row 4＝全部動作碼同樣打包（`F! FWDCURVE  IV! SOLVEIV  P! MARGINS  S! RECALC`，
+固定青色 RGB(0,200,255)，沒有「目前」概念）。**拿掉原本 D2:G2 的「目前：頁面標題」文字**
+（RR4 v4.4 之後也拿掉了，狀態一律只寫 Excel 下方 StatusBar）。`modUnify.DrawNavBar` 整支換掉，
+新增 `WriteCodeLine`／`DimColor` 兩個輔助函式（從 `RR4/modNav.bas` 逐字搬過來，只是顏色常數
+改呼叫 `cAccent()` 等既有函式而非 RR4 的獨立常數）；`cAccent`／`cBg`／`cInputBg`／`cInputFg`／
+`cLine`／`cText` 六個色票函式從 `Private` 改 `Public`，供 `modOptionStrategy` 共用。
+新增 `modUnify.RefreshNavBarOnly(ws, pageCode, pageTitle)`／`RefreshNavBarOnActiveSheet(pageCode)`
+兩個獨立進入點，只重畫 nav bar（不碰 row 6 以下的內容），四頁都呼叫過一次確認樣式一致。
+
+⚠️ **外部 COM 呼叫 `Application.Run` 時傳 Worksheet 物件當參數會丟 `0x800ADF09`**（VBA 端收到
+`ws As Worksheet` 型別卻型別轉換失敗）：`RefreshNavBarOnly(ws, code, title)` 這種簽章從
+PowerShell 呼叫一律失敗，改成 `RefreshNavBarOnActiveSheet(code)`（內部用 `ActiveSheet`）、
+PowerShell 端先 `ws.Activate()` 再呼叫，只傳字串參數就正常。VBA 呼叫 VBA（如
+`modOptionStrategy.BuildSheetLayout` 內部呼叫 `modUnify.RefreshNavBarOnly`）不受影響，
+只有外部 COM 自動化呼叫才會踩到。
+
+### 區塊標題改為非實心框線 + 補黑色留白（2026-10-21，使用者看截圖後要求）
+
+使用者回報 S 頁有白色留白區塊、且「腳位表 Legs」「計算結果」「Portfolio Greeks」這類區塊
+標題是整塊實心橘底，要求「其他處補黑色，且區塊標題不要整塊橘色，加上框線」，並指定四頁
+（M/P/F/S）都要改。
+
+- **區塊標題新樣式**：黑底（`cBg()`）＋橘色粗體文字（`cAccent()`）＋上下各一條橘色
+  `xlMedium` 框線，取代原本整列實心橘底＋白字。改動點：`modOptionStrategy.DrawSectionHeader`
+  （S 頁「腳位表 Legs」「計算結果」「Portfolio Greeks」三個區塊標題）、`modOptionStrategy.
+  BuildSheetLayout` 的腳位表欄位表頭列（視覺上也是整塊橘底，一併改成同款）、`modUnify.
+  StyleContent` 的 `isHeaderRow` 分支（M/P/F 三頁所有區塊標題共用這支函式，改一處四頁一起變）。
+  四頁的大標題橫幅（如 S 頁 row 6「選擇權組合策略 Option Strategy Builder...」）本來就只是
+  橘字黑底、沒有實心填色，不受影響、不用改。
+- **補黑色**：`modUnify.DrawNavBar` 的 nav bar 固定把畫黑的範圍撐到至少 26 欄（讓打包的
+  code line 溢出有地方可去），但 `StyleContent`／`modOptionStrategy.BuildSheetLayout` 原本
+  畫內容區塊時只畫到自己的內容寬度（通常 <26 欄），bar 下方第 12～26 欄因此是沒畫過的白底
+  ——這就是截圖裡的白色留白。兩處都改成把畫黑範圍的欄數跟著撐到 `max(自己的內容欄數, 26)`
+  （`UnifyOneSheet` 新增 `paintLastCol` 變數、`modOptionStrategy.BuildSheetLayout` 同樣新增）。
+  另外 S 頁是全新建立的工作表，從來沒有像 M/P/F 三頁在 `InsertContentGapRow` 那樣把 nav bar
+  （結尾 row 4）與內容（起始 row 6）之間的 row 5 空白列填黑——新分頁預設是白底，這也是白色
+  留白的一部分，`BuildSheetLayout` 補上跟 M/P/F 同款的 row 5 黑底＋6pt 列高。
+- ⚠️ **意外發現並修復的既有問題**：第一次重跑 `modUnify.UnifyAllSheets` 時整個失敗，
+  PowerShell 收到泛用的 `0x800ADF09`（跟上一節「外部傳 Worksheet 物件」那條錶面上長得一樣，
+  但這次是零參數呼叫，不可能是同一個成因）。寫一個暫時性診斷 Sub 包 `On Error GoTo` 抓
+  `Err.Number/Description` 後才找到真正原因：VBA 執行期錯誤 1004「很抱歉，我們找不到
+  C:\...\0050_融資vs期貨_摩擦成本比較_backup_pre_unify_20261020-111933.xlsm」——`modUnify.
+  StyleContent` 原本靠開啟這份「改版前備份」當唯讀參照，比對每一列的原始底色來判斷是不是
+  區塊標題（因為一旦畫黑了就讀不出原本是不是橘色）。這份備份檔案已經從磁碟上消失（不是
+  改名或搬移——`Portfolio` 資料夾裡完全沒有任何符合這個檔名或 pattern 的檔案），跟這次的
+  樣式改動本身無關、是更早之前就不見的，只是這次重跑 `UnifyAllSheets` 才第一次踩到。
+  **修法是整個拿掉對外部備份檔的依賴**：`StyleContent` 改成在畫黑之前，先掃一遍工作表自己
+  目前每一列（B 欄）的底色/字色/粗體當「參照」存進陣列，再畫黑、再依陣列判斷每列是不是
+  區塊標題——因為 M/P/F 三頁已經跑過至少一次舊版樣式（目前底色正是「橘底＝標題／黑底＝
+  一般列」這組標記本身），用工作表自己當下的狀態當參照，跟用外部備份當參照是等效的，而且
+  對「從來沒跑過」的全新頁面一樣有效（那時目前底色就是 Excel 原生的舊配色）。判斷規則因此
+  多了一條：舊版實心橘底（`RGB(200,100,0)`）＝標題（相容舊的未重畫頁面），**或**黑底＋橘色
+  粗體字（這次改完以後每次重畫留下的新標記）＝標題，兩者都覆蓋。`BackupPath()`／
+  `FindOpenBackup()` 兩個函式與 `UnifyAllSheets`／`UnifyOneSheet`／`StyleContent` 的 `srcWs`
+  參數整個刪除，三個 Sub 的呼叫鏈都簡化成不需要外部活頁簿。
+- **實測**（COM 直接操作已開啟的活頁簿；S 頁先 `modOptionStrategy.RebuildLayout`、M/P/F 三頁
+  再跑 `modUnify.UnifyAllSheets`，兩次都是獨立呼叫，`UnifyAllSheets` 結尾原本就會 `ThisWorkbook.
+  Save`）：四頁所有原本實心橘底的標題列（M 頁 row13/14/41/42、P 頁 row13/14、F 頁 row10/18、
+  S 頁 row16/17/34/40）逐一讀回 `Interior.Color=0`（黑）、`Font.Color=25800`（橘）、
+  `Font.Bold=True`，且 row 的上下框線 `LineStyle=1`（`xlContinuous`）、`Color=25800`；黑底
+  範圍確認延伸到第 20、26 欄（原本的白色留白處）；S 頁 row 5 確認黑底、列高 6.1pt。
+  `wbObj.Saved = True`。備份／還原：沒有另開新的 `SaveCopyAs` 備份點（既有「backup_pre_unify」
+  一份已確認遺失，這次改動本身是格式調整、不涉及任何手打資料，風險低），若日後需要還原
+  樣式調整前的狀態，請自行從 OneDrive 版本記錄找回。
+
+### 選擇權組合策略 Option Strategy Builder（S 頁 / S!＝重算 / IV!＝抓TXO市價反推IV，
+2026-10-21，`modOptionStrategy`）
+
+新增第 4 頁「選擇權策略」，long/short call/put 四種單腳組合＋call spread（Bull）/put spread
+（Bear）兩種價差，腳位表不限腳數（目前 15 腳，表格式輸入：腳號/方向/類型/行使價/權利金/張數/
+IV%/市價），到期損益圖（原生 Excel 折線圖，X 軸以 Spot ±20% 展開 41 點）＋Black-Scholes
+Portfolio Greeks（Delta/Gamma/Vega/Theta）。
+
+- **STRATEGY 下拉＝自動補腳位樣板**：C14 選 6 種內建策略之一，`Worksheet_Change` 觸發
+  `ApplyStrategyTemplate`，只自動填方向/類型（Call Spread→Long Call 低K腳＋Short Call 高K腳，
+  Put Spread→Long Put 高K腳＋Short Put 低K腳），行使價/權利金/張數/IV 永遠留給使用者自己打。
+- **IV! 動作**：GET `https://www.taifex.com.tw/cht/3/optDailyMarketReport`（純 GET 就拿到當日
+  全部 TXO 選擇權鏈，不需要 POST 參數，跟期貨頁不同），解析出 (到期月份,履約價,買賣權,
+  最後成交價,結算價,買價,賣價) 後，依腳位表的 (TAIFEX契約代碼,行使價,類型) 找對應列，
+  市價優先序＝結算價→最後成交價→(買價+賣價)/2，再用 Newton-Raphson（50 次疊代，vega 太小時
+  退二分搜尋 [0.1%, 500%]）反推 IV 填回腳位表，不需要使用者自己去券商 app 查。
+- **Black-Scholes 用 `Application.WorksheetFunction.NormSDist`**（不用自己刻常態分配函式），
+  自己實作 `NormPdf`／`BSPrice`／`BSDelta`／`BSGamma`／`BSVegaRaw`／`BSThetaPerYear`。
+- 實測：Long Call（Spot 46962／Strike 47000／IV 25.35%／30天／Rate 1.5%／點值50）Net Premium
+  67000、Breakeven 48340、MaxProfit 正確標「無限」、Delta/Gamma/Vega/Theta 跟手算完全吻合；
+  Call Spread（47000買/48000賣）Net Premium 22000、MaxProfit 28000、MaxLoss -22000、
+  Breakeven 47440，跟 bull call spread 公式逐項精確對上。
+
+⚠️ **VBA 的 `IIf()` 不是短路運算子，`Or`/`And` 也不是**——這是這次最花時間的坑，三次讓
+Excel 真的跳出「型態不符合」的互動對話框（卡死，見下方「COM 卡死」小節）：
+
+1. `IIf(IsNumeric(cells(8)), CDbl(cells(8)), 0)` 這種寫法，**兩個分支都會先求值**，TAIFEX
+   回傳的未成交格子填 `"-"`，`CDbl("-")` 照樣被呼叫、直接丟 Runtime Error 13。測試時用乾淨的
+   手造數字完全不會踩到，一換成真實的選擇權鏈（大量 `-` 佔位格）就必定爆炸。
+2. `If Not IsNumeric(x) Or CDbl(x) <= 0 Then`——`Or` 一樣不短路，`IsNumeric` 為 False 時
+   `CDbl(x)` 還是會跑。
+3. **修法**：寫一個 `SafeCDbl(s, defaultVal)` 用真正的 `If/Then` 分支（不是布林運算式、
+   不是 IIf），專案裡全部 9 處 `IIf(IsNumeric(...), CDbl(...), ...)` 與 2 處
+   `Or CDbl(...)` 都換掉；唯一還留著的 `IIf` 是兩個分支都只讀變數、不含轉換呼叫的安全情境
+   （如 `IIf(multRaw > 0, multRaw, 1)`）。
+   **這個坑在 RR4 筆記裡其實早就記過一次**（[[vba-variant-empty-string-arithmetic-crash]]：
+   「VBA And 不會短路」），但這次換成 IIf 包 CDbl 的變體又中了一次——以後看到
+   `IIf(IsNumeric(...), CDbl/CLng/CInt(...), ...)` 這個樣式要直接當作地雷，一律改寫成
+   `SafeCDbl`-style 的真分支。
+
+**版面（絕對列號，不用 modNav.NavOffset()/NavLeft() 再疊加——NavOffset()=5／NavLeft()=1
+已經直接體現在「內容從第 6 列開始、B 欄是標籤欄」這個事實裡，跟 modUnify.StyleContent 的
+FIRST_ROW=6 同一套假設）**：Row 8–14 全域輸入（Spot/Rate/到期日/契約代碼/到期天數(公式)/
+點值/STRATEGY）、Row 16–32 腳位表（16 標題、17 表頭、18–32 共 15 腳）、Row 34–38 計算結果
+（淨權利金/MaxProfit/MaxLoss/Breakeven）、Row 40–44 Greeks、Row 46 起原生圖表錨點，隱藏
+圖表來源資料放 T:U 欄（第 20/21 欄）第 6 列起 41 點。
 
 ### Yield 頁（Y / Y!，2026-09-30，`RR4/modYield.bas`）
 
