@@ -1561,10 +1561,93 @@ Excel 真的跳出「型態不符合」的互動對話框（卡死，見下方�
 
 **版面（絕對列號，不用 modNav.NavOffset()/NavLeft() 再疊加——NavOffset()=5／NavLeft()=1
 已經直接體現在「內容從第 6 列開始、B 欄是標籤欄」這個事實裡，跟 modUnify.StyleContent 的
-FIRST_ROW=6 同一套假設）**：Row 8–14 全域輸入（Spot/Rate/到期日/契約代碼/到期天數(公式)/
+FIRST_ROW=6 同一套假設）**：⚠️ 2026-10-21 起已過時，整段 Row 15 起全部 +2，見下一節。
+原始版面 Row 8–14 全域輸入（Spot/Rate/到期日/契約代碼/到期天數(公式)/
 點值/STRATEGY）、Row 16–32 腳位表（16 標題、17 表頭、18–32 共 15 腳）、Row 34–38 計算結果
 （淨權利金/MaxProfit/MaxLoss/Breakeven）、Row 40–44 Greeks、Row 46 起原生圖表錨點，隱藏
 圖表來源資料放 T:U 欄（第 20/21 欄）第 6 列起 41 點。
+
+### S 頁擴充：持股腳位 + TXO/TMO 點值快選 + 27 種策略樣板（2026-10-21，使用者貼期權策略總表要求擴充）
+
+使用者貼了一張涵蓋約 25 種期權策略（看漲/看跌/收租/保護對沖/震盪區間/波動率六大類）的
+參考圖，要求把這些加進 STRATEGY 下拉；追加指示 TXO=50／TMO=10 的點值也要能快選。10 題
+澄清後定案：① Covered Call／Protected Put／Collar／Stock Repair 這 4 個需要「持股」的
+策略**一起做，新增股票腳位**（不是只做純選擇權部分）；② Calendar Spread／Diagonal
+Spread（需要兩個不同到期日）**跳過**，頁面仍是單一全域到期日；③ 下拉維持單一平坦清單、
+不分類；④ Ratio Spread／Back Spread／Butterfly 這類非 1:1 張數的策略，樣板一樣**只填
+方向/類型，張數留白**，不幫忙猜比例。
+
+- **版面全部 +2 列**：新增 `ROW_STOCK_SHARES`＝15、`ROW_STOCK_COST`＝16（持股股數/成本，
+  獨立輸入格，不佔用腳位表的 0–15 腳名額），`ROW_LEG_TITLE` 16→18、`ROW_LEG_HDR` 17→19、
+  `ROW_LEG_FIRST` 18→20（`ROW_LEG_LAST`＝34）、`ROW_RESULT_TITLE` 34→36、`ROW_NETPREM`
+  35→37…`ROW_GREEK_TITLE` 40→42…`ROW_CHART_ANCHOR` 46→48。股票腳**刻意不塞進腳位表**
+  （腳位表只有 Call/Put 類型下拉，股票沒有行使價/IV 這些欄位，混進去語意不通），股數股息
+  成本當全域輸入，RecalcStrategy 讀到非空股數+成本就視為「有持股」疊加進損益曲線與 Delta。
+- **股票損益公式（使用者決定）**：`股數 × (標的價格 − 成本價)`，**不乘點值 mult**——mult
+  是選擇權契約乘數的概念，股票天生乘數＝1；Delta 貢獻同理直接加股數（不乘 mult）。
+- **點值 Multiplier 加下拉**：清單 `50,10`（TXO/TMO），跟其他下拉一樣
+  `ShowError=False`，可以照打其他數字不受限。
+- **STRATEGY 下拉改成 27 筆、不再用字面逗號清單**：Excel Data Validation 的
+  `Formula1:="a,b,c"` 字面字串**上限 255 字元**，27 筆中英並列名稱遠遠超過。改成把清單寫進
+  隱藏區塊（T100:T126，純選擇一個遠低於內容與圖表的空白列段）、Validation 指向這個
+  Range（`=$T$100:$T$126`），不受 255 字元限制。原本 6 個策略名稱順手統一改成「英文
+  (中文)」格式（如 `Bull Call Spread (牛市買權價差)`），與新 21 個策略同一套命名慣例。
+  新增的 21 個樣板（純選擇權 15 個 + 需持股 4 個，另加 Bull Put Spread／Bear Call Spread
+  兩個圖裡原有但先前漏問的常見價差，一併補齊成 27 筆完整清單）：Bear Call Spread、Bull Put
+  Spread、Synthetic Long、Risk Reversal、Synthetic Short、Cash Secured Put、Covered
+  Call(需持股)、Poor Man's Covered Call、Short Strangle、Protected Put(需持股)、
+  Collar(需持股)、Stock Repair(需持股)、Iron Condor、Iron Butterfly、Butterfly、
+  Broken Wing Butterfly、Jade Lizard、Straddle、Strangle、Ratio Spread、Back Spread。
+  `NeedsStock()` 判斷哪 4 個要提醒使用者填持股欄位，`ApplyStrategyTemplate` 套用完会在
+  狀態列附加「⚠ 此策略需搭配持股…」提示。
+- **Wheel Strategy 刻意沒加進清單**（使用者決定）：本質是「賣Put→持股→賣Call→循環」的
+  多階段流程，不是單一靜態部位，跟本頁「選一個樣板＝填好腳位」的模型不符。
+
+⚠️ **這次新踩的三個坑**（都跟 2026-10-21 稍早才記錄的「IIf/Or/And 不短路」是同一類教訓，
+但各自是獨立的新症狀，記錄以免下次又花時間重找）：
+
+1. **27 筆陣列字面量用 `Array(a,b,c,...)` 加 `_` 換行接續會超過 VBA 的 24 行接續上限**，
+   `CodeModule.AddFromString` 丟 `HRESULT 0x800A9D00「換行接續符號過多」`（不是語法錯誤，
+   是行接續數量上限，lint-vba.py 抓不到）。修法：改成 `Dim a(0 To 26) As String` 逐一
+   `a(n) = "..."` 賦值，不用 `_` 接續。
+2. **`ReDim arr(1 To 0)` 對 User-Defined Type 陣列會在呼叫 `UBound()` 時丟 Runtime Error 9
+   「陣列索引超出範圍」**——這是教科書常見的「宣告空陣列」寫法，對 `Long`/`String` 這類
+   原生型別陣列通常沒事，但這次用隔離測試（獨立 throwaway 模組 `zzTempDiag`）實測確認對
+   `Private Type LegData` 這種 UDT 陣列會炸，且不是在 `ReDim` 那行炸、是在之後第一次
+   `UBound(arr)` 才炸。只有在「允許腳位表完全空白、靠持股撐住部位」這個新路徑開通後才第一次
+   被走到（原本腳位表空白一律提早 `Exit Sub`，不會碰到後面所有用到 `UBound(legs)` 的程式碼）。
+   修法：`ReadLegs` 改成**永遠回傳滿額 `(1 To LEG_COUNT)` 陣列**、實際筆數改用
+   `ByRef legCount As Long` 傳出去，呼叫端全面把 `For L = 1 To UBound(legs)` 改成
+   `For L = 1 To nLegs`，徹底不再對可能是空陣列的東西呼叫 `UBound`。
+3. **這兩個新 bug 合起來讓 Excel 卡在一個肉眼看不到的執行期錯誤對話框上超過半小時**——
+   期間 `Get-Process EXCEL` 的 `Responding` 仍顯示 `True`、`MainWindowTitle` 也只顯示
+   正常的活頁簿名稱（不是 VBE 標題），因為對話框是**獨立的頂層視窗**、不反映在主視窗標題
+   上，連續多次 `Application.Run` 全部回傳泛用的 `0x800ADF09`，一度誤判成「專案全域編譯
+   失敗」而嘗試用 `CommandBars.FindControl(1,228).Execute()` 離開中斷模式（未解決問題，
+   因為根本不是中斷模式，是卡在等人為點擊的錯誤對話框）。真正的解法是請使用者看一眼
+   Excel 視窗本身（screenshot 截圖直接看到了「執行階段錯誤 '9'」對話框），點「結束(E)」。
+   **教訓**：往後遇到「OS 層級 Responding=True 但 COM 呼叫持續失敗」的矛盾狀態，優先懷疑
+   有個獨立視窗的錯誤對話框被主視窗蓋住或不在最前景，而不是假設專案編譯壞掉或 Excel 真的
+   凍結——必要時直接請使用者看畫面比繼續用 COM 猜测快。
+4. **對話框被關掉、錯誤修好、模組重新注入後，分頁畫面一度回到舊版面**（腳位表標題又出現在
+   row 16 而非新版的 row 18，股票欄位消失）——成因未完全查明（懷疑是 debug 期間某次
+   `Application.Run` 中斷導致 `BuildSheetLayout` 中途被取消執行，或是某個較早的測試腳本
+   用了尚未套用最新修正的注入內容），但 `modOptionStrategy.RebuildLayout` 本來就是設計
+   成「隨時可重跑，恢復成目前程式碼該有的樣子」的手動修復入口，重跑一次就恢復正常、資料
+   沒有損失（腳位表資料本來就是測試用的空值）。**教訓**：改完版面常數後，除了注入模組，
+   務必額外明確呼叫一次 `RebuildLayout` 並實際讀回儲存格內容核對（不要只憑模組編譯成功
+   或先前某次的驗證結果去推斷目前畫面狀態）。
+- **實測**（COM 操作已開啟的活頁簿，備份狀態：沒有另開新的 `SaveCopyAs`，上一節已說明
+  "backup_pre_unify" 遺失、風險由使用者知情承擔）：Covered Call（1000 股@95＋空
+  1000 口 Call@105 權利金3，mult=1）NetPrem −3000、MaxProfit 13000、MaxLoss −12000、
+  Breakeven 92、Delta 1000，逐項手算吻合；純持股（1000 股@95，無任何選擇權腳）MaxProfit
+  正確顯示「無限」、MaxLoss −15000、Breakeven 95、Delta 1000；全空（無腳無持股）正確回報
+  失敗訊息而不崩潰；透過**真實的下拉儲存格事件路徑**（`Worksheet_Change` 觸發
+  `ApplyStrategyTemplate`，不是外部 COM 直接傳中文字串參數——外部 `Application.Run` 傳
+  含中文的字串引數在這本活頁簿會丟 `0x800ADF09`，是只在自動化測試時才會踩到的呼叫方式
+  問題，不影響正常使用者操作）套用 Iron Condor（4 腳：Put 85/90 ＋ Call 110/115，權利金
+  1/2/2/1，mult=50）NetPrem −100（淨收）、MaxProfit 100、MaxLoss −150、Breakeven
+  88.00/112.00，與 iron condor 公式逐項精確對上。測試資料與全域輸入最後已清空並存檔。
 
 ### Yield 頁（Y / Y!，2026-09-30，`RR4/modYield.bas`）
 
