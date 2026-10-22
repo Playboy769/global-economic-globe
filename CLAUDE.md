@@ -1707,6 +1707,20 @@ Spread（需要兩個不同到期日）**跳過**，頁面仍是單一全域到�
   1/2/2/1，mult=50）NetPrem −100（淨收）、MaxProfit 100、MaxLoss −150、Breakeven
   88.00/112.00，與 iron condor 公式逐項精確對上。測試資料與全域輸入最後已清空並存檔。
 
+#### S 頁區塊重疊修正（2026-10-22，使用者截圖回報）
+
+**症狀**：第 15 腳（row 34）變粗體、上下有橘線，持股股數／成本（row 15–16）周圍也有橘色橫線；
+圖表蓋在 Greeks 的 Theta 列上。**根因**：上一節把版面整體 +2 列後，`BuildSheetLayout` 開頭只
+`ClearContents`，舊標題列（row 16/17/34）的框線、粗體、格式全部殘留到新版面的列上；圖表又只在
+第一次建立時依錨點定位，之後版面位移就留在舊位置（row 46）。
+
+**修法**（`modOptionStrategy`，只動 S 頁）：① `BuildSheetLayout` 改成先把 C8:C16（全域輸入＋持股）
+與腳位表 B:K 的值存進陣列 → `ClearContents`＋`ClearFormats` → 重畫 → 關閉事件寫回值
+（跳過 C12 的天數公式；寫回時必須 `EnableEvents=False`，否則 STRATEGY 格的 Change 會重套樣板蓋掉腳位）。
+② `DrawPayoffChart` 每次都把圖表 `Left/Top` 貼回 `ROW_CHART_ANCHOR`（現為 row 48）。
+**經驗**：之後只要改動任何 `ROW_*` 常數，重建後都要檢查舊列號的框線與圖表位置；用 COM 改
+CodeModule 時行號會因先前的插入而位移，別用寫死行號，改掃描 `Private Sub …` 與鄰近文字定位。
+
 ### Yield 頁（Y / Y!，2026-09-30，`RR4/modYield.bas`）
 
 美債殖利率、曲線利差、實質殖利率＋損益兩平通膨、信用利差 OAS、拍賣結果，一頁兩欄（左：殖利率／
