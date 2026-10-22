@@ -886,6 +886,18 @@
         "dev"
       ],
       "port": 5173
+    },
+    {
+      "name": "options-strategy-guide",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8197",
+        "--directory",
+        "projects/options-strategy-guide"
+      ],
+      "port": 8197
     }
   ]
 }
