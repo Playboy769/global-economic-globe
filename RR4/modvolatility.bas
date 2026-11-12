@@ -11,7 +11,7 @@ Option Explicit
 '                   built into a chain-linked composite index
 '  PERIOD <GO> = how many bars the two left-hand charts show,
 '  FREQ <GO>   = D / W / M bars.  Everything on the right is computed on the
-'  whole sample (daily 520 bars, weekly 260, monthly 60) except the SD, which
+'  whole sample (daily 520 bars, weekly 260, monthly 60, or PERIOD if larger) except the SD, which
 '  is the SD of the PERIOD window (same as the screen this was modelled on).
 '
 '  Segment composite: US plates are market-cap weighted (IndustryMap column
@@ -32,7 +32,7 @@ Option Explicit
 Private Const VT_SHEET      As String = "Tickers Volatility"
 Private Const IND_MAP       As String = "IndustryMap"
 Private Const DC            As Long = 60          ' first chart-data column
-Private Const MAXN          As Long = 1300        ' daily bars kept (~5y)
+Private Const MAXN          As Long = 2600        ' daily bars kept (~10y, Yahoo range=10y)
 Private Const MAXMEM        As Long = 60
 Private Const NBIN          As Long = 41
 
@@ -74,7 +74,7 @@ Sub UpdateVolatilityAnalysis_Pro(Optional ByVal which As String = "")
     v = ws.Range("B3").Value
     If IsNumeric(v) And Not IsEmpty(v) Then per = CLng(v)
     If per < 5 Then per = 180
-    If per > 1200 Then per = 1200
+    If per > MAXN Then per = MAXN
     fq = UCase$(Left$(Trim$(CStr(ws.Range("E3").Value)), 1))
     If fq <> "W" And fq <> "M" Then fq = "D"
 
@@ -670,7 +670,7 @@ Private Sub ResetPage(ws As Worksheet)
     ws.Columns("B:J").ColumnWidth = 11
     ws.Columns("K").ColumnWidth = 3
     ws.Columns("L").ColumnWidth = 16
-    ws.Columns("M:S").ColumnWidth = 11
+    ws.Columns("M:V").ColumnWidth = 11
     With ws.Cells(1, 1)
         .Value = "TICKER / SEGMENT VOLATILITY"
         .HorizontalAlignment = xlLeft: .Font.Size = 14: .Font.Bold = True: .Font.Color = RR4_ACCENT
@@ -696,6 +696,7 @@ Private Sub DrawPage(ws As Worksheet, ByVal mode As String, ByVal tk As String, 
         Case "M": smp = 60
         Case Else: smp = 520
     End Select
+    If per > smp Then smp = per      ' PERIOD longer than the default sample widens the whole sample
     Dim st As Long: st = 0
     If rn > smp + 1 Then st = rn - smp - 1
     Dim m As Long: m = rn - 1 - st
@@ -912,7 +913,7 @@ Private Sub DrawPage(ws As Worksheet, ByVal mode As String, ByVal tk As String, 
 
     ' --- up vs down ---
     Ttl ws, 19, 12, "UP DAYS VS DOWN DAYS", m & " " & unit, 14
-    Hdr ws, 20, 12, "SIDE", "DAYS", "SHARE", "AVERAGE", "WEIGHTED"
+    Hdr ws, 20, 12, "SIDE", "DAYS", "SHARE", "AVERAGE", "WEIGHTED", "UP NEXT", "PAIRS"
     Dim nUp As Long, nDn As Long, sUp As Double, sDn As Double
     For i = 0 To m - 1
         If rr(i) > 0 Then
@@ -958,6 +959,115 @@ Private Sub DrawPage(ws As Worksheet, ByVal mode As String, ByVal tk As String, 
     PutC ws, 29, 12, "FROM HIGH", "@", VT_TXT, True, xlLeft
     PutC ws, 29, 13, px(m) / hiPx - 1, "+0.00%;-0.00%", ColOf(px(m) / hiPx - 1)
     PutC ws, 29, 14, Format(CDate(rd(st + hiI)), "d mmm yy"), "@", VT_DIM
+
+    ' --- continuation: does the previous bar's side say anything about the next bar? ---
+    Dim cUU As Long, cUN As Long, cDU As Long, cDN As Long
+    Dim sq() As Long: ReDim sq(0 To m - 1)
+    Dim rnU As Long, rnuUp As Long, rnuSum As Double
+    Dim rnD As Long, rndUp As Long, rndSum As Double
+    For i = 0 To m - 1
+        If rr(i) > 0 Then
+            sq(i) = 1
+            If i > 0 Then
+                If sq(i - 1) > 0 Then sq(i) = sq(i - 1) + 1
+            End If
+        ElseIf rr(i) < 0 Then
+            sq(i) = -1
+            If i > 0 Then
+                If sq(i - 1) < 0 Then sq(i) = sq(i - 1) - 1
+            End If
+        End If
+        If i > 0 Then
+            If rr(i - 1) > 0 Then
+                cUN = cUN + 1
+                If rr(i) > 0 Then cUU = cUU + 1
+            ElseIf rr(i - 1) < 0 Then
+                cDN = cDN + 1
+                If rr(i) > 0 Then cDU = cDU + 1
+            End If
+            If sq(i - 1) >= 3 Then
+                rnU = rnU + 1: rnuSum = rnuSum + rr(i)
+                If rr(i) > 0 Then rnuUp = rnuUp + 1
+            ElseIf sq(i - 1) <= -3 Then
+                rnD = rnD + 1: rndSum = rndSum + rr(i)
+                If rr(i) > 0 Then rndUp = rndUp + 1
+            End If
+        End If
+    Next i
+    If cUN > 0 Then
+        PutC ws, 21, 17, cUU / cUN, "0.0%", VT_UP
+        PutC ws, 21, 18, cUN, "0", VT_DIM
+    End If
+    If cDN > 0 Then
+        PutC ws, 22, 17, cDU / cDN, "0.0%", VT_DOWN
+        PutC ws, 22, 18, cDN, "0", VT_DIM
+    End If
+    Dim verdict As String: verdict = "too few pairs to judge continuation"
+    If cUN >= 20 And cDN >= 20 Then
+        Dim pCont As Double, seCont As Double, zCont As Double
+        pCont = (cUU + cDU) / (cUN + cDN)
+        If pCont > 0 And pCont < 1 Then
+            seCont = Sqr(pCont * (1 - pCont) * (1 / cUN + 1 / cDN))
+            zCont = (cUU / cUN - cDU / cDN) / seCont
+            If Abs(zCont) < 1.96 Then
+                verdict = "random: the previous bar's side tells nothing (z " & Format(zCont, "+0.0;-0.0") & ")"
+            ElseIf zCont > 0 Then
+                verdict = "momentum: up tends to follow up (z " & Format(zCont, "+0.0;-0.0") & ")"
+            Else
+                verdict = "reversal: up tends to follow down (z " & Format(zCont, "+0.0;-0.0") & ")"
+            End If
+        End If
+    End If
+    PutC ws, 23, 12, verdict, "@", VT_DIM, False, xlLeft
+    ws.Cells(23, 12).Font.Size = 8
+
+    Ttl ws, 24, 16, "AFTER A RUN"
+    Hdr ws, 25, 16, "RUN", "NEXT AVG", "UP %", "N"
+    PutC ws, 26, 16, "3+ up", "@", VT_UP, True, xlLeft
+    PutC ws, 27, 16, "3+ down", "@", VT_DOWN, True, xlLeft
+    If rnU > 0 Then
+        PutC ws, 26, 17, rnuSum / rnU, "+0.00%;-0.00%", ColOf(rnuSum / rnU)
+        PutC ws, 26, 18, rnuUp / rnU, "0.0%", VT_TXT
+        PutC ws, 26, 19, rnU, "0", VT_DIM
+    Else
+        PutC ws, 26, 17, "-", , VT_DIM
+    End If
+    If rnD > 0 Then
+        PutC ws, 27, 17, rndSum / rnD, "+0.00%;-0.00%", ColOf(rndSum / rnD)
+        PutC ws, 27, 18, rndUp / rnD, "0.0%", VT_TXT
+        PutC ws, 27, 19, rnD, "0", VT_DIM
+    Else
+        PutC ws, 27, 17, "-", , VT_DIM
+    End If
+    PutC ws, 28, 16, "NOW", "@", VT_TXT, True, xlLeft
+    PutC ws, 28, 17, IIf(sq(m - 1) > 0, "+", "") & sq(m - 1) & IIf(sq(m - 1) > 0, " up", IIf(sq(m - 1) < 0, " down", " flat")), "@", IIf(sq(m - 1) > 0, VT_UP, IIf(sq(m - 1) < 0, VT_DOWN, VT_DIM)), True
+
+    ' --- streak length: how far runs go (REACH) and whether a run at N goes on (NEXT) ---
+    Dim scUp(1 To 9) As Long, scDn(1 To 9) As Long, skL As Long, sDen As Long
+    For i = 0 To m - 1
+        If sq(i) >= 1 And sq(i) <= 9 Then scUp(sq(i)) = scUp(sq(i)) + 1
+        If sq(i) <= -1 And sq(i) >= -9 Then scDn(-sq(i)) = scDn(-sq(i)) + 1
+    Next i
+    Ttl ws, 44, 16, "STREAK LENGTH", "base: up " & Format(nUp / m, "0.0%") & " / down " & Format(nDn / m, "0.0%"), 19
+    Hdr ws, 45, 16, "RUN", "UP RUNS", "UP REACH", "UP NEXT", "DN RUNS", "DN REACH", "DN NEXT"
+    For skL = 1 To 8
+        r = 45 + skL
+        PutC ws, r, 16, skL, "0", VT_TXT, True, xlLeft
+        If scUp(1) > 0 Then
+            PutC ws, r, 17, scUp(skL), "0", VT_DIM
+            PutC ws, r, 18, scUp(skL) / scUp(1), "0.0%", VT_UP
+            sDen = scUp(skL)
+            If sq(m - 1) = skL Then sDen = sDen - 1
+            If sDen > 0 Then PutC ws, r, 19, scUp(skL + 1) / sDen, "0.0%", IIf(sDen >= 10, VT_TXT, VT_DIM)
+        End If
+        If scDn(1) > 0 Then
+            PutC ws, r, 20, scDn(skL), "0", VT_DIM
+            PutC ws, r, 21, scDn(skL) / scDn(1), "0.0%", VT_DOWN
+            sDen = scDn(skL)
+            If sq(m - 1) = -skL Then sDen = sDen - 1
+            If sDen > 0 Then PutC ws, r, 22, scDn(skL + 1) / sDen, "0.0%", IIf(sDen >= 10, VT_TXT, VT_DIM)
+        End If
+    Next skL
 
     ' --- return bands (0.75 SD steps around the sample mean) ---
     Ttl ws, 31, 12, "RETURN BANDS", fqName & "  .  " & m & " " & unit & "  .  0.75 SD steps", 14
