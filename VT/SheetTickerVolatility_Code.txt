@@ -1,0 +1,13 @@
+' Code-behind of the "Ticker Volatility" worksheet.
+' Inputs: B2 ticker, B3 period (bars shown), E3 frequency (D / W / M).
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Target.CountLarge > 1 Then Exit Sub
+    If Intersect(Target, Me.Range("B2,B3,E3")) Is Nothing Then Exit Sub
+    If Not Intersect(Target, Me.Range("B2")) Is Nothing Then
+        If Trim(CStr(Target.Value)) = "" Then Exit Sub
+    End If
+    Application.EnableEvents = False
+    On Error Resume Next
+    Call RunVT
+    Application.EnableEvents = True
+End Sub
