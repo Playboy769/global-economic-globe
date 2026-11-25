@@ -1,0 +1,925 @@
+# Caterpillar (CAT) Q3 FY2026 Earnings Call Transcript (2026-10-29)
+
+Source: Caterpillar IR captioned transcript PDF (Q&A Reporting, Inc.) https://s25.q4cdn.com/358376879/files/content_files/3Q2026-Transcript-FINAL_PM.pdf
+Verbatim; page headers removed only.
+
+Caterpillar
+10/29/26 Q3 FY26 Earnings Conference Call Q&A
+Captioned by Q&A Reporting, Inc., www.qacaptions.com
+
+ALEX KAPPER: Thank you, Audra. Good morning, everyone, and welcome to
+Caterpillar's third-quarter of 2026 earnings call. I'm Alex Kapper, Vice President of
+Investor Relations. Joining me today are Joe Creed, Chairman and CEO; Kyle Epley,
+Chief Financial Officer; Stephanie Baughman, Senior Vice President of the Global
+Finance Services Division; and Ryan Coleman, Senior Director of IR. During our call,
+we'll be discussing the third-quarter earnings release we issued earlier today. You can
+find our slides, the news release and a webcast recap at investors.caterpillar.com under
+"Events and Presentations."
+
+The content of this call is protected by U.S. and international copyright law. Any
+rebroadcast, retransmission, reproduction, or distribution of all or part of this content
+without Caterpillar's prior written permission is prohibited.
+
+Moving to Slide 2, during our call today we'll make forward-looking statements, which
+are subject to risks and uncertainties. We'll also make assumptions that could cause our
+actual results to be different than the information we're sharing with you on this call.
+Please refer to our recent SEC filings and the forward-looking statements reminder in
+the news release for details on factors that, individually or in aggregate, could cause our
+actual results to vary materially from our forecast. A detailed discussion of the many
+factors that we believe may have a material effect on our business on an ongoing basis
+is contained in our SEC filings.
+
+On today's call, we'll also refer to non-GAAP numbers. For a reconciliation of any non-
+GAAP numbers to the appropriate U.S. GAAP numbers, please see the appendix of the
+earnings call slides.
+
+
+For today's agenda, Joe will begin by sharing his perspectives about our results, and he
+will highlight key initiatives across our segments. Then he will discuss our full-year
+outlook and insights about our end markets. Kyle will provide a detailed overview of
+results and share key assumptions looking forward. We will conclude by taking your
+questions.
+
+Now, let's advance to Slide 3 and turn the call over to Joe Creed.
+
+JOE CREED: Thanks, Alex. Good morning, everyone, and thank you for joining us.
+
+Our third-quarter results reflect the durability of our end markets, with our highest sales
+quarter ever, strong order rates and a record backlog. Our team continues to execute
+our strategic priorities in a dynamic environment, positioning us for a strong year.
+
+Sales and Revenues were $20.7 billion dollars, up 17 percent versus the prior year,
+driven by strong end market demand. We delivered adjusted profit per share of 7 dollars
+and 20 cents, an increase of 45 percent versus last year. Strong order rates across all
+three of our primary segments drove backlog to a record $78 billion dollars. That is an
+increase of approximately $38 billion dollars, or 96 percent, from the third quarter last
+year, and marks the fourth consecutive quarter of sequential backlog growth in all three
+of our primary segments.
+
+The quarter demonstrated the team's ability to execute in a high-growth environment.
+Specifically, our Power & Energy team continued to increase production of large
+reciprocating engines and turbines while simultaneously expanding capacity to meet
+demand. The team is effectively managing the operational challenges that come with
+this rapid growth. Bringing additional capacity online is still the top pacing factor for
+growth in Power & Energy, so we are working diligently to execute our plans and meet
+our customers' needs.
+
+As I mentioned, sales and revenues were $20.7 billion dollars, and they were in line with
+our expectations. The increase from the prior year was primarily driven by strong growth
+in sales volume and favorable price realization in all three of our primary segments.
+
+
+Third-quarter adjusted operating profit margin was 20.6 percent. Excluding IEEPA tariff
+recoveries, adjusted operating profit margin was in line with our expectations.
+
+In the quarter, we generated MP&E free cash flow of 3.8 billion dollars and deployed 2.0
+billion dollars to shareholders through share repurchases and dividends.
+
+Now, I will review third quarter retail statistics.
+
+In Power & Energy, sales to users grew a robust 36 percent. Power Generation grew 75
+percent, driven by continued very strong demand for turbines and large reciprocating
+engines used in data center applications.
+
+Sales to users in Oil & Gas increased 5 percent and were driven by turbines and
+turbine-related services.
+
+Industrial sales to users were down due to softness in the EAME region.
+
+Now for Construction Industries. We have one of the broadest ranges of products,
+technology and services to support customers whether they prefer to own, lease or rent
+equipment. Combined with healthy construction activity, our unique position has allowed
+us to outpace the industry throughout the year. In the third quarter, total sales to users
+increased 20 percent marking the seventh consecutive quarter of year over year growth.
+In North America, sales to users grew a robust 27 percent, in line with expectations.
+Dealers' rental revenue in North America continued to grow, driving increased
+investment in their equipment fleets. We also saw strong customer interest in the Cat
+dealer-owned rental joint venture called Major Projects, which was launched last
+quarter. As a reminder, Major Projects will serve customers developing large scale
+infrastructure across North America, including transportation, energy, manufacturing
+and data center builds. It is a supplemental national rental solution to help deliver larger
+size-class construction equipment and capabilities where existing individual dealer
+rental fleets aren't sufficient to execute at scale. As a result, rental fleet loading was
+exceptionally strong in the third quarter, contributing significantly to sales to users
+growth compared with prior year when fleet loading was a slight headwind. Even
+
+
+excluding the positive impact from rental fleet loading, sales to users growth was strong
+driven by residential and non-residential construction activity.
+
+Sales to users in EAME were above expectations, with growth driven by strength in
+Europe and Africa, partially offset by softness in the Middle East. In Asia-Pacific, sales
+to users outside of China were lower than we anticipated and declined slightly due to
+timing. China, however, continued to grow from a low base, as we expected. Latin
+America continued to grow but at a lower rate than we anticipated.
+
+For Resource Industries, third-quarter sales to users increased 4 percent which was
+below our expectations. Sales to users were higher in Heavy Construction and Quarry &
+Aggregates, but lower in Mining due to delays in shipping and commissioning.
+
+The Rail decrease was driven by lower international locomotive deliveries.
+
+Turning to slide 4, I will cover a few highlights since our last earnings call starting with
+Power & Energy.
+
+We serve customers across the power and energy value chain, and demand for our
+solutions remains strong. To ensure we can meet their needs and maintain operational
+excellence, we are continually evaluating opportunities to re-purpose underutilized
+facilities across our footprint.
+
+In line with that approach, we plan to use a portion of our Winston-Salem, North
+Carolina facility, which currently produces locomotive engines, as a second assembly
+and test location for the 3600 series large reciprocating engine. The footprint will
+support our Oil & Gas customers to meet the growing need for natural gas compression.
+
+The initiative directly supports previously announced plans to increase large
+reciprocating engine capacity to nearly three times the 2024 level by 2030. Utilizing our
+existing footprint and workforce is the most cost-effective and quickest way for us to
+bring additional capacity online.
+
+In Construction Industries, we launched Cat Compact earlier this year, a key part of our
+strategy to reach more small contractors in the growing compact construction
+
+
+equipment industry. To support that growth and meet increasing customer demand, we
+announced a $1 billion dollar investment to expand manufacturing capacity in Sanford,
+North Carolina.
+
+The investment will create a modern, technology-enabled manufacturing environment
+designed to improve safety, quality and operational performance while supporting long-
+term growth. The facility will incorporate advanced manufacturing technologies,
+automation, digital production systems and integrated logistics capabilities to create a
+more connected and efficient operation.
+
+This demonstrates how we're aligning our investments to meet our 2030 targets and
+positioning Caterpillar for long-term profitable growth.
+
+And in Resource Industries, we announced last month that we're working with Luck
+Stone to expand autonomous hauling technology across two additional Virginia
+operations.
+
+The expansion follows a highly successful pilot at the Bull Run quarry, where
+autonomous trucks have hauled more than 3.5 million tons since going live in November
+of 2024.
+
+These deployments also mark the first use of Caterpillar's autonomous technology on a
+Cat 775 truck, expanding our advanced autonomy capabilities beyond large mining
+applications and into quarry and aggregates.
+
+Through this customer collaboration, we gained insights that are helping us refine and
+scale autonomous hauling solutions that deliver measurable value for operations at
+jobsites around the world.
+
+This expansion marks another important step toward our goal of tripling the number of
+Cat autonomous trucks by 2030 compared with 2024.
+
+Now, on slide 5, I'll provide an update on our outlook.
+
+Our strong execution through the first nine months positions us well to meet our full year
+outlook.
+
+
+We continue to expect our full-year 2026 sales and revenues to grow in the mid-to-high
+teens. Strong order rates and a growing backlog reflect continued broad-based
+momentum across our business despite ongoing geopolitical uncertainty.
+
+Excluding the favorable impact from IEEPA tariff recoveries, we continue to expect full-
+year adjusted operating profit margin to be near the bottom of the target range.
+
+Our full-year margin expectation reflects the strategic investments we are making to
+execute our growth strategy as well as the ongoing impact of tariffs and higher freight
+costs due to elevated energy prices.
+
+We remain focused on delivering long-term OPACC growth, and we aim to operate
+around the midpoint of our adjusted operating profit margin target range over time.
+
+We are also maintaining our MP&E free cash flow expectations to be in the top half of
+our annual target range.
+
+Kyle will provide additional details shortly.
+
+I will now discuss our key end markets, starting with Power & Energy.
+
+We continue to work closely with our customers, which allows us to understand and
+respond to their evolving needs. Customers' view of demand for both Oil & Gas and
+Power Generation remains strong. As I mentioned, backlog continues to grow due to
+strong order rates, and we are now taking some large reciprocating orders as far out as
+2029 and turbine orders into 2030.
+
+We continue to anticipate full year growth in Power Generation for both Cat
+reciprocating engines and Solar turbines, driven by increasing energy demand to
+support the data center build-out related to cloud computing and generative AI.
+Additionally, prime power demand continues to trend higher as customers look to
+Caterpillar's turbine and reciprocating engine products to support their need for power
+solutions.
+
+After a record year for sales in 2025, Oil & Gas is expected to grow moderately again
+this year. Reciprocating engine sales are anticipated to increase, driven by strong
+
+
+demand in gas compression applications. We also see continued momentum in demand
+for reciprocating engine aftermarket parts. Solar Turbines' Oil & Gas sales are expected
+to grow, and the backlog remains healthy with solid order and inquiry activity.
+
+Demand for products in Industrial applications is expected to grow moderately in 2026
+as well.
+
+For Construction Industries, we expect strong fourth-quarter and full-year sales to users
+growth supported by healthy end markets.
+
+The outlook for North America remains positive with construction spending at healthy
+levels. Non-residential construction investment continues to be supported by the IIJA,
+critical infrastructure programs and data centers. We expect fourth-quarter dealer rental
+fleet loading to remain strong. However, it will contribute less to sales to user growth
+than in the third quarter due to lapping strong rental loading in the fourth quarter last
+year.
+
+In EAME, Europe is expected to remain stable supported by non-residential
+construction, while construction activity in Africa is projected to remain strong. The
+Middle East continues to face challenges, and we currently anticipate only a limited
+impact on EAME sales to users.
+
+In Asia Pacific, outside of China, stable economic conditions are expected. In China, we
+anticipate moderate conditions, with full-year growth in the above-10-ton excavator
+industry off low levels of activity.
+
+We expect full-year growth in Latin America.
+
+We are seeing continued positive momentum in Resource Industries with robust order
+rates driving strong backlog growth.
+
+Customer product utilization is high, and the age of the fleet remains elevated. Most key
+commodities remain above investment thresholds, and customers are focused on the
+long-term.
+
+
+For full year 2026, we expect strong sales to users growth, primarily driven by rising
+demand for copper and gold; increasing activity in the Canadian oil sands; and positive
+dynamics in heavy construction and quarry & aggregates.
+
+We expect the commissioning delays from the third quarter to catch up, which will
+contribute to strong sales to users growth in the fourth quarter.
+
+We continue to expect rebuild activity to increase moderately compared with last year.
+
+Rail services are anticipated to grow for the year. We now expect locomotive deliveries
+to be slightly lower year over year due to timing of deliveries.
+
+And finally, earlier this month we announced that Derrick York will succeed Denise
+Johnson as Group President of Resource Industries.
+
+I want to congratulate Denise on a remarkable career. Under her leadership, Resource
+Industries returned to profitability and positioned Caterpillar as an industry leader in
+mining autonomy and technology. I am deeply grateful for all she has done to
+strengthen our relationships with customers, develop our people and shape the future of
+our company. Her impact and influence will be remembered long after her retirement.
+
+I've worked closely with Derrick for well over a decade, and I'm confident in his ability to
+lead the Resource Industries team into its next chapter of innovation, growth and
+customer success. He is a highly respected leader who understands our customers, our
+strategy and the industries we serve.
+
+With that, I'll turn it over to Kyle.
+
+
+KYLE EPLEY: Thank you, Joe! Good morning, everyone. I am going to take a few
+minutes to walk you through our third quarter results, including details about segment
+performance as well as the balance sheet and cash flow. I will finish with remarks on
+our expectations for the fourth quarter, and current full-year assumptions.
+
+Beginning on Slide 6, sales and revenues were 20.7 billion dollars, up 17 percent
+versus the prior year, which was in-line with our expectations.
+
+Adjusted operating profit was 4.3 billion dollars, and our adjusted operating profit margin
+was 20.6 percent. Excluding the IEEPA tariff recoveries, both were in-line with our
+expectations.
+
+Moving to Slide 7. The 17 percent increase in sales and revenues compared to the third
+quarter of 2025 was primarily driven by strong growth in sales volume and favorable
+price realization. The stronger sales volume was mainly driven by higher sales of
+equipment to end users, supported by healthy end market demand and strong
+execution by our team. Dealer inventory increased by 300 million dollars in Construction
+Industries compared to an increase of 600 million dollars in the third quarter of 2025.
+This created a modest headwind to sales volume in the quarter, and was in-line with our
+expectations.
+
+Sales and revenues, both at a consolidated level and across all three primary
+segments, were in-line with our expectations.
+
+Moving to operating profit on Slide 8.
+
+Operating profit in the third quarter increased by 38 percent to 4.2 billion dollars.
+Adjusted operating profit of 4.3 billion dollars also increased by 38 percent versus the
+prior year.
+
+The adjusted operating profit margin was 20.6 percent, which was an increase of 310
+basis points compared to the prior year. Margin benefited from the profit impact of
+higher sales volume and favorable price realization. This was partially offset by higher
+manufacturing costs, mainly driven by higher freight and higher expenses related to our
+capacity expansions.
+
+
+In the quarter, we recognized 128 million dollars in IEEPA tariff recoveries. Nearly all of
+this amount is reflected in corporate items.
+
+For tariffs introduced since the beginning of 2025 ­ and excluding IEEPA recoveries --
+our third quarter tariff costs were approximately 600 million dollars, and about flat year-
+over-year, as we anticipated.
+
+Moving to Slide 9, profit per share was 7 dollars and 13 cents in the quarter. Adjusted
+profit per share was 7 dollars and 20 cents.
+
+Excluding discrete items, the provision for income taxes in the third quarter of 2026
+reflected a global estimated annual effective tax rate of 23 percent.
+
+Finally, the year-over-year impact from the reduction in the average number of shares
+outstanding, due to share repurchases, resulted in a favorable impact on adjusted profit
+per share of approximately 15 cents compared to the third quarter of 2025.
+
+On Slide 10, I will now review the third quarter results of our segments, starting with
+Power & Energy.
+For Power & Energy, sales of 8.8 billion dollars increased by 18 percent versus the prior
+year, which was in-line with our expectations. The sales increase versus the prior year
+was mainly due to higher sales volume and favorable price realization. Services
+revenues were also strong in the quarter, especially for sales into Oil & Gas
+applications.
+Third quarter profit for Power & Energy increased by 31 percent versus the prior year to
+2.1 billion dollars.
+The segment's margin of 24.4 percent was an increase of 250 basis points versus the
+prior year. The increase was mainly due to the profit impact of higher sales volume.
+Favorable price realization was mostly offset by unfavorable manufacturing costs,
+driven by spend related to our capacity expansions, including higher depreciation, along
+with higher material and freight costs. Segment margin matched our expectations.
+Now moving to Slide 11, Construction Industries sales increased by 18 percent in the
+third quarter to 8 billion dollars, as we anticipated. The sales increase versus the prior
+year was primarily due to higher sales volume and favorable price realization. Higher
+
+
+sales volume was mainly driven by sales of equipment to end users, which included
+strong contributions from both retail sales and rental fleet loading. Both residential and
+non-residential industries contributed to the growth.
+
+Third-quarter profit for Construction Industries was 1.8 billion dollars, a 33 percent
+increase versus the prior year.
+
+The segment's margin of 22.9 percent was an increase of 250 basis points versus the
+prior year, mainly driven by favorable price realization and the profit impact of higher
+sales volume. This was partially offset by unfavorable manufacturing costs, including
+the impact of [higher] freight and tariff costs (company clarified after the call). SG&A and
+R&D expenses related to our digital and technology investments also increased
+compared to the prior year. Segment margin was also consistent with our expectations.
+
+Turning to Slide 12. Resource Industries sales which were broadly in-line with our
+expectations, increased by 15 percent in the third quarter to 4.6 billion dollars, primarily
+driven by higher sales volume. Price realization was also favorable versus the prior
+year, and slightly better than our expectations, primarily driven by positive geographic
+mix.
+
+Third-quarter profit for Resource Industries increased by 14 percent versus the prior
+year to 622 million dollars.
+
+The segment's margin of 13.5 percent was roughly unchanged versus the prior year.
+This was mainly driven by unfavorable manufacturing costs, primarily due to higher
+material costs, including tariffs, offset by the profit impact of higher sales volume and
+favorable price realization. Overall segment margin was about in-line with our
+expectations.
+
+Moving to Slide 13. Financial Products revenues increased by 9 percent versus the prior
+year to 1.2 billion dollars, mainly due to higher average earning assets across all
+regions.
+
+
+Segment profit increased by 10 percent to 264 million dollars. This increase was
+primarily due to a favorable impact from higher average earning assets, partially offset
+by a higher provision for credit losses.
+
+Our customers' financial health remains strong. Past dues were 1.31 percent in the
+quarter, down 16 basis points versus the prior year, and remains the lowest we have
+recorded since 1998. The allowance rate was 0.91 percent at the end of the third
+quarter.
+
+Business activity within CAT Financial remains healthy. Retail new business volume
+grew by 6 percent versus the prior year. In addition, used equipment inventory levels
+continued to remain low and conversion rates remain above historical averages as
+customers continue to choose to purchase their equipment at the end of their lease
+term.
+
+Moving on to Slide 14. MP&E free cash flow was 3.8 billion dollars in the quarter. This
+was an increase of roughly 600 million dollars versus the prior year, mainly driven by
+stronger profit.
+
+Capex spend was about 700 million dollars in the quarter.
+
+We deployed 2 billion dollars to shareholders in the third quarter, of which share
+repurchases accounted for 1.2 billion dollars, and nearly 750 million for our quarterly
+dividend payment. Earlier this year, we announced our 6th consecutive year of a high
+single digit quarterly dividend increase, and this year will mark 33 consecutive years of
+paying higher annual dividends to our shareholders.
+
+Our balance sheet remains strong. We have ample liquidity, with an enterprise cash
+balance of 7.9 billion dollars. In addition, there is 1.6 billion dollars in slightly longer-
+dated liquid marketable securities to improve yields on our cash.
+
+
+Now for Outlook assumptions. Turning to Slide 15, I will start with the fourth quarter.
+End-user demand remains favorable across all three primary segments, and the team is
+working diligently to deliver on our commitments for the year. At the same time, we are
+aware of the potential headwinds presented by higher cost inflation, which we continue
+to monitor closely.
+
+For the fourth quarter, we anticipate moderate sales growth versus the prior year. As a
+reminder, we are lapping a strong quarter last year, which creates a tougher
+comparison this year. Now, let me walk you through each of our three primary
+segments.
+
+In Power & Energy, we anticipate moderate sales growth in the fourth quarter versus
+the prior year, as we lap a strong prior year fourth quarter, and continue to ramp
+capacity. Volume growth is expected to be driven by continued strength in Power
+Generation, modest growth in Oil & Gas and moderate growth in Industrial applications
+as it continues to recover. We also expect favorable price realization.
+
+In Construction Industries, we expect sales to be similar to the prior year. We anticipate
+the typical seasonal dealer inventory reduction to be roughly 1.6 billion dollars, which
+compares to a decline of 600 million dollars in the fourth quarter of 2025. As a result, we
+expect the year-over-year impact to be about a one billion dollar headwind to sales
+volume in the fourth quarter against a backdrop of continued strong sales to users and
+industry growth. As a result, we expect sales volume in Construction Industries to be
+down modestly versus the prior year. However, we continue to expect favorable price
+realization in the fourth quarter. Despite the drawdown, we continue to expect dealer
+inventories at the end of the year to be higher than the prior year, in anticipation of
+strong sales to users in 2027.
+
+In Resource Industries, we expect strong sales growth in the fourth quarter versus the
+prior year. Volume is expected to be driven by higher sales to users and services
+growth. We also anticipate favorable price realization.
+
+I will now provide some color on our fourth quarter margin expectations versus the prior
+year.
+
+
+At the enterprise level, we expect higher adjusted operating profit margin versus prior
+year. This is primarily due to favorable price realization and the profit impact of higher
+sales volume. Excluding the impact of lower tariffs, we expect unfavorable
+manufacturing costs, driven by higher freight as well as expenses related to our
+capacity expansions. SG&A and R&D expenses are also expected to be higher, driven
+by our continued investment in the strategic initiatives aligned with our 2030 goals.
+
+We anticipate tariff costs, excluding IEEPA recoveries, of around 600 million dollars,
+which is similar to what we incurred in the third quarter, but roughly 200 million dollars
+lower than what we incurred in the fourth quarter of 2025. We continue to expect about
+50 percent of the tariffs to be incurred in Construction Industries and 25 percent in both
+Power & Energy and Resource Industries.
+
+Now for our fourth quarter margin expectations in our three primary segments.
+
+In Power & Energy, we anticipate favorable price realization and stronger volume to
+drive a higher margin percentage compared to the prior year. The higher margin
+compared to the prior year is expected to be partially offset by unfavorable
+manufacturing costs, including depreciation and expenses related to our capacity
+expansion projects, along with higher material and freight costs. We expect fourth
+quarter margin to be similar to the third quarter.
+
+In Construction Industries, we anticipate a higher margin percentage compared to the
+prior year, primarily due to favorable price realization, which is partially offset by lower
+sales volume. Excluding the impact of lower tariffs, manufacturing costs are expected to
+be higher, driven by freight. We also expect higher SG&A and R&D related to our
+technology investments. Also, as a reminder, our Construction Industries fourth quarter
+margin typically has a sequential step-down from the third quarter. We expect this
+seasonality change to be slightly more than our typical average step down due to the
+expected lower sales volumes, higher SG&A and R&D related to our technology and
+digital investments, as well as higher freight costs.
+
+
+In Resource Industries, we anticipate a higher margin percentage compared to the prior
+year driven by favorable price realization and the profit impact of higher sales volume,
+partially offset by unfavorable manufacturing costs, including freight and material.
+
+Now on Slide 16, let me provide a few comments on the full year.
+
+As Joe mentioned, we continue to anticipate sales and revenues growth in the mid-to-
+high-teens for the full year 2026.
+
+Our strong full year sales and revenues expectation is supported by:
+
+Strong sales to users growth across all three primary segments, driven by healthy end
+markets; strong order rates across all three primary segments, driving our backlog
+growth; increased output from our capacity expansion plans, which remain on schedule;
+and a strong year of services growth.
+
+Now for our adjusted operating profit margin for the full year.
+
+Compared to last year, we expect a higher adjusted operating profit margin, which
+reflects profit impact of higher sales volume and favorable price realization, partially
+offset by unfavorable manufacturing costs, including spend related to our capacity
+expansions, which includes higher depreciation expense, as well as higher freight. We
+also expect higher SG&A and R&D.
+
+Excluding IEEPA tariff recoveries, our full year adjusted operating profit margin is
+expected to be near the bottom of our target range.
+
+Excluding our reported year to date IEEPA tariff recoveries of about 520 million dollars,
+we continue to expect full year 2026 tariff costs of around 2.2 billion dollars. Our outlook
+does not include any additional IEEPA tariff recoveries in the fourth quarter.
+
+We now expect restructuring costs of about 300 million dollars in 2026, which is on the
+low end of our prior range. Our estimated global annual effective tax rate remains
+approximately 23 percent for 2026, excluding discrete items.
+
+
+We also continue to expect MP&E free cash flow to be in the top half of our annual
+target range of 6 to 15 billion dollars. Our capex spend for 2026 is now anticipated to be
+about 3.3 billion dollars, which is slightly below our prior expectation of 3.5 billion
+dollars.
+
+So now turning to Slide 17, to summarize:
+
+We delivered another very strong quarter, with year-to-date financial results tracking
+toward another record year for Caterpillar. Our end markets remain healthy, with strong
+order rates and a growing backlog. We continue to drive improved profitability in a
+dynamic operating environment. We will remain disciplined and committed to
+operational excellence and the O&E Model. We will continue to look for ways to invest
+efficiently. We will maintain a strong balance sheet, and continue to return substantially
+all of our MP&E free cash flow to our shareholders through dividends and share
+repurchases over time. And finally, we will continue to execute our strategy for profitable
+growth.
+
+With that, we will take your questions.
+
+Q&A
+
+    OPERATOR: Thank you. We will now begin the question-and-answer session if you
+would like to ask a question please press star one on your telephone keypad to raise
+your hand and enter the queue. If you would like to withdraw your question, simply
+press star one again. Please note, we are only allowing one question per analyst.
+
+    ROB WERTHEIMER: Thank you and good morning, I had a couple of questions
+around power gen. And two quarters ago you detailed some of the prime power
+projects you have done. I think you gave gigawatt numbers. Do you have any update
+there? Is prime power still expanding for you either in general if you have any update
+on gigawatts? And then you mentioned you are taking orders into '29. Does that imply
+that '28 is sold out? Are you selling out current capacity but leaving future capacity for
+future orders? Can you sort of talk about how you manage backlog there? Thank you.
+
+    JOE CREED: Good morning, Rob. We still continue to see trending higher prime
+power, both turbines and reciprocating gen sets. I've had a handful of discussions with
+customers for prime power, you know, just in this last quarter. It's a lot of quoting
+
+
+activity continuing to go on. And I think we will continue to see that trend as we move
+into the future. We are not seeing anything different in that space. When it comes to,
+you know, quarters and sort of backlog, if it's a significant order in gas or prime power
+we are probably looking at 2029. And maybe some, we will probably still roll some
+diesel backup orders in 2028 when we are not completely full. But we have frame
+agreements in the pipeline that kind of convert to orders as we move over time. So,
+again, we continue to have extended backlog. I'm happy that the backlog grew in all
+three segments. And, you know, what we are hearing from our customers is they still
+want more from us if we can get them more power. So we are trying to ramp as quickly
+as we can and still, you know, hit our customers' needs.
+
+    OPERATOR: We will go next to Tami Zakaria at JP Morgan.
+
+    TAMI ZAKARIA: Hi, thank you so much for taking my question. So, I just wanted to
+touch on the backlog comment. I think I heard Joe say that the engines and turbine
+orders are now going as far out as 2029, 2030. So, is it then the total orders you
+receive in the quarter are primarily for the out years? Or are the majority of the orders
+booked still for the next 12 months? And given the new capacity that will be coming
+online, when would you expect this record backlog to start stepping down or is it the
+new normal for the backlog management?
+
+    JOE CREED: Yeah, good morning, Tami. Thanks for the question. So I want to be
+clear. I mean, we are taking our orders into '29. We have some in '29 and 2030. We
+still have more to fill. And this is a bit of a complicated question because it's going to
+depend on the product, right? So for large reciprocating engines and turbines we are
+definitely extended out into late '28, into '29. Smaller gen sets, smaller engines,
+obviously, lead times are much shorter than that. And on the machine side of the
+business, the backlog grew in all three segments aside from a couple of products where
+we are ramping production and operationally trying to ramp production. And even in
+those we are not extended near as far. I would like to produce and get our production
+ramp closer to STU. So when we look at the backlog, we want to make sure we are
+looking at the backlog in the context of sales to users and order rates and the entire
+system and how it works. So if we can, sales to users stay healthy, which is what we
+are expecting and we can produce more product, we will continue to take orders. But I
+would like to see the backlog, if we can get it to even come in on the machine side
+because we can keep up that, would be a good thing. And I also think when you look at
+we've had a few quarters of backlog growth. I think we will continue to see some
+backlog growth. But it's going to really depend. I mean, customers have time to place
+orders, and sort of digest what we have. So I don't know that quarter to quarter it's
+going to be something we look at as a singular metric as we start to move out.
+
+
+Especially as we get extended. We are continuing to do long-term planning with our big
+data center customers and prime power customers. We are seeing demand for cloud
+compute and our backup power continue to be strong. And then AI, obviously, comes in
+on top of that, and the prime power number. So with those frame agreements we have
+line of sight past the backlog and continue to talk to our customers. And then on prime
+power, those are big projects and I think they get negotiated individually and those can
+come in lumpy in the backlog as can mining orders. So, I'm really pleased with the
+backlog growth we saw in this quarter. It was broad based, Oil and Gas, Power
+Generation, Resource Industries and in Construction Industries, so we have good
+momentum.
+
+    KYLE EPLEY: And just for reference we expect 58% of our backlog is expected to
+be sold within the next 12 months. That is comparative to 59% last quarter.
+
+    OPERATOR: We will move next to Jamie Cook at Truist Securities.
+
+    JAMIE COOK: Excuse, me good morning I guess my question, Joe, is just around
+your longer term margin framework that you guys have put out there. You guys have
+done an exceptional job, but the margins have been pushing towards the lower end.
+And, obviously, we have tariffs and inflationary pressures, et cetera. But like what do
+you think with, you know, sort of capacity coming online and price costs in the backlog,
+what is like a reasonable time for us to assume we can get back towards like the mid to
+high end of your longer term target range? And what would be the major drivers behind
+that? And then, last, is there any way you can help us frame how much incremental
+capacity is coming online in 2027 on a dollar basis or any way you can frame it? Thank
+you.
+
+    JOE CREED: Good morning, Jamie. You know, as far as the margin target range,
+I've said many times that I want to operate towards the middle of that range. The sales
+are growing at a really good clip, which is a good thing. And we have been able to, the
+best we can, keep up with customer demand, and it's a progressive target. So as our
+margins are going up, the target continues to increase so we are kind of skipping along
+the bottom. I would expect, and we will talk to you a lot more about 2027 in the next
+quarter, that we start to claw our way off the bottom of that margin target range as we
+go forward while we still are trying to keep up with demand. We also are trying to do
+this with the tariff headwind in a smart way where we are not slowing down investments
+that would impact the growth and the momentum we have in the business. So I'm
+happy with the progress we've made. Our margins continue to go up as our volume
+goes up. And over the next couple of years, we want to try to work our way back to the
+mid point.
+
+
+    OPERATOR: Next we will move to David Raso at Evercore ISI.
+
+    DAVID RASO: Hi. Thank you for the time. I'm trying to figure out the revenue
+sequentially and what it means when we think about '27 revenue. If you look at the
+sequential revenue 3 to 4Q, let's use the guide for the full year, mid to high teens, let's
+call it 17%. It implies that the fourth quarter, even if I give you back the extra billion,
+right, the head wind of the dealer inventory, it implies the revenue is barely up
+sequentially. And over a long period of time fourth quarter is up 5 to 10%. I mean, it
+moves around. But a year where you're adding capacity to big focus and I mean, the
+demand is there. You speak to it in retail, even the backlog is still pretty solid. Just
+trying to understand is there some capacity issue, supplier issue? Why is the revenue
+growth so modest sequentially especially given the capacity adds and any implications
+on how to think about '27 top line would be appreciated as well, thank you.
+
+    JOE CREED: Good morning, David. As we said in prepared remarks, on Power and
+Energy it's really paced by capacity and timing customer delivery. So we're not seeing
+anything different in the business that we would say would impact the fourth quarter.
+But it is hand to mouth, right? The teams are working really hard. We had a test cell go
+down for a little bit in the third quarter. I don't know, we were able to overcome, but
+there is no slack in the system. Then as you mentioned, we kind of said, we're going to
+have the inventory draw down in Construction Industries, which seasonally is not
+unusual. It's going to be a little different than the patterns that we had last year. And
+then Resource Industries, we are, as we mentioned, we think operationally we are trying
+to ramp. So we are going to obviously get as much product out as we can on large
+mining trucks and some of those products. But I don't think there is -- other than typical
+seasonality and things that we talked about on trying to ramp production, we are pretty
+confident. And this is an in line. Our third quarter's results came in line as we expected.
+We haven't really changed our view from what we plan to do in the fourth quarter. As
+you think about how we're going to finish the year, again, we will talk to you more about
+2027 in January, but our backlog continues to increase. We have a longer line of sight.
+We are drawing down Construction Industries' inventory, $1.6 billion. We are going
+finish the year with almost $700 million more of inventory in place than we finished
+2025, heading into 2026. So we feel good about where we sit right now.
+
+KYLE EPLEY: And, David, this is Kyle, I will just remind you, and I said in my prepared
+remarks, when we talk about the growth, it's off a really tough comparison versus our
+4Q last year just from a consolidated level, and then especially from a Power and
+Energy standpoint. But going in 2027, you know, the dealer inventory and increase in
+
+
+Construction Industries, we still expect really strong STU's across all three primary
+segments in 4Q going into 2027.
+
+    OPERATOR: We will take our next question from Michael Feniger at Bank of
+America.
+
+    MICHAEL FENIGER: Hey, everyone. Thanks for taking my question. And just kind
+of following up on David Raso's question, the Q4 implying the moderate sales growth,
+you guys talked about the dealer destock. I know your target is 6 to 9% CAGR on the
+revenue growth side, some years higher, some years lower to get to that average. Just
+with the backlog where it is, the framework agreements, and I understand there is a
+quarter dynamic with destocking, but why would set up for 2027, should we be thinking
+that we are above that 6 to 9% CAGR at the higher end based on where retail sales are
+and where we are seeing it? What would hold us back to be in that line? I'm just kind of
+curious what the set up and the building blocks would look like for next year on that.
+
+    JOE CREED: Yeah, so 2027, again, we -- it's not much different than how I
+answered David's question, right? I mean, we are finishing the year strong. As Kyle
+mentioned, a really strong fourth quarter last year. So when we say moderate growth
+year over year, some of that is a comp issue. We are paced on capacity on Power and
+Energy. We think we will continue to increase capacity. It's not a cliff event, as we've
+said. So every quarter we try to get more and more product out. We expect to continue
+that. When it comes to the dealer inventory draw down, one, dealers are independent
+businesses, just to remind you. We do work with them. And we want to make sure we
+have the right inventory in right place in right regions of the world with the right products.
+And we do feel like we are in a good position heading into 2027, finishing the year with
+more dealer inventory in Construction Industries than we finished last year. So
+Resource Industries' orders continue to go up. We've had three really strong quarters in
+a row of orders in Resource Industries. Having some operational challenges and
+inefficiencies as we ramp. But I think we will continue to work those and get those
+behind us. So we are pretty confident and bullish where we sit right now as we watch
+things. We are focused on delivering a strong fourth quarter and a strong finish to the
+year, and we will talk to you guys more about '27 in January.
+
+    OPERATOR: Next we will go to Chad Dillard at Bernstein.
+
+    CHAD DILLARD: Hey, good morning, guys. Just want to spend some time on the
+mining business. I recall from the beginning of this year you talked about, you know,
+orders being the highest, I think since 2012. So I was wondering if I could get an
+update how that is trending. Talk about, you know, what is driving it more, refurbishment
+
+
+versus replacement. And if you can just give a little more color on some of the ramping
+challenges that you're seeing and if you have a line of sight to seeing that being
+resolved in the quarter?
+
+    JOE CREED: Yeah, good morning. We've had three really good order quarters in a
+row for Resource Industries, which we are really happy about. We mentioned in
+prepared remarks, driven a lot by mining and, you know, both heavy construction, but in
+Mining in particular. Copper and gold we are starting to see activity in the Canadian oil
+sands. Services are continuing to grow. So customers are using the fleet and we are
+seeing aftermarket rebuilds continue to happen. And customers are starting to order
+equipment. So that's all a really good sign. We, as we try to ramp, particularly in large
+mining trucks, is where we have been actually increasing capacity at some of our
+factories where we can inside our four walls and working with the supply base to get
+ramped up. They are just sort of I would say is normal growing pains and operational
+challenges when you are increasing capacity and trying to get product out of the door.
+So we will continue work to work those. I think we will get them behind us as we move
+forward. But it's a great sign that we've had this strength in orders as we have been
+waiting for orders to kind of pick up in mining for quite a while. So really happy with what
+we have seen in the first three months or in the first three quarters of this year.
+
+    OPERATOR: We will go next to Jerry Revich at Wells Fargo Securities.
+
+    JERRY REVICH: Hi. Good morning, everyone. And congratulations to Denise and
+Derrick. Hi. Joe, Kyle, one thing I ask in terms of as you think about production slots
+and lead times out to '29 and '30 for turbines and large reciprocating engines, as you
+folks look at the permit requirements out that far and the counter parties given some
+angst about credit in the market, can you just talk about if you have seen any shifts in
+timing and backlog? And I don't know if you can share what proportion of those
+production slots are backed by hyperscalers, just to build comfort around the moving
+pieces given all of the use on the permitting side?
+
+    JOE CREED: Yeah. I mean, I don't think we would quantify hyperscalers verses
+colo's versus others or IPP's. But we work with all of them. Typically when we roll
+orders from pipeline into backlog and working with other customers, we generally have
+line of sight to the project that they are working on. Our teams are working closely with
+customers. We continue to see strong Oil and Gas activity as well for large engines. So,
+as we think of this, we have always tend to move, if we can, some slots around to meet
+customer needs to deliver on their projects. And we have been doing that the last
+couple of years because we want to make sure we meet our customers' timeline and
+also no need to get product there early, it allows us to meet more customer demand if
+
+
+we are getting it when they need it. We haven't seen really any significant change in
+how we are working with our customers to deliver projects and product to get their
+project timelines. So we continue to talk to our customers. We stay close to them. We
+will follow their lead, but we are not seeing, you know, significant changes. But, as I said
+earlier, as we are extended pretty far out, right, I mean, this is going to be -- this is
+unusual for us. Typically we only had 12 months or less line of sight to our backlog, and
+now in particularly this situation the customers are placing orders pretty far out there.
+We have a lot of quoting activity in '29, '30. We have some quoting activity even beyond
+as we talk to customers. But I think they have time to firm up those orders and place
+the firm orders and move them into our backlog. So we will see our backlog kind of
+move in a lumpy way moving forward. But we will continue to watch sales to users and
+continue to watch order rates, our backlog, all in conjunction together, and stay close to
+our customers as we move into the end of this year and into next year.
+
+    OPERATOR: We will move to our next question from Mig Dobre at Baird.
+
+   MIG DOBRE: Yeah, thank you. Good morning.
+And just to follow-up on these last comments, you know, if we are kind of looking at
+backlog progression or maybe looking at it from the perspective of book to bill, there
+was 1.7 earlier this year, decelerated to about 1.3 in the quarter here. As you look at the
+fourth quarter, based on what you know, how should we think about book to bill here?
+And given that you're taking now orders into '29, maybe even '30 for Solar, is there
+some kind of slippage in terms of bookings given how, you know, constraint from a
+capacity we seem to be? Thank you.
+
+   JOE CREED: Yeah. I mean, one of the things you have to look at book to bill is we
+continue to increase production as well. So our sales are continuing to go up. And, as I
+mentioned, for certain products when you look at our backlog, all three segments are in
+there and all three have been growing. There are some of them we would like to
+actually bring in in increased production. And so as we continue to ramp, book to bill will
+sort of move around. And then in Power and Energy, again, we are extended way
+longer than we have ever been. And so we continue to talk to our customers. That is
+why it's great to have frame agreements and sort of the pipeline view beyond what is in
+the backlog. That is what we are using to plan with customers. And those orders are
+rolling in the backlog at different times as we continue to move forward. Resource
+Industries and prime power projects, as I mentioned earlier, will also probably come in
+in not a smooth, sequential fashion. They will be lumpy depending on when those
+orders get placed, because they are typically big orders. So I think we will continue to
+talk to our customers. And again, you can't just look at one metric like backlog growth in
+a quarter or book to bill in a quarter as we take it into context with continued momentum
+
+
+and sales to users, our ability to produce more and get more product out the door.
+There are a lot of things we are watching on the health of the business, more than just
+book to bill and a singular backlog number.
+
+    OPERATOR: Our next question comes from Kyle Menges at Citi.
+
+    KYLE MENGES: Great. Thanks for taking my question. I would love to hear from you
+guys how the landscape might be changing a little bit as far as the demand you are
+seeing in the data center market. Maybe talk a little bit about how you're seeing things
+evolve in demand for turbine versus nat gas recips and then for diesel backup. Then
+also just, as you're booking into the latter part of this decade and having a lot of
+discussions, it sounds like, a lot of quoting activity to 2030 and even beyond, I would
+love to get just some sense of how you could see your next shifting maybe that mix of
+prime versus backup, where you have been versus maybe where that mix is heading as
+you look to 2030.
+
+    JOE CREED: Yeah. As we talk to our customers, we have not seen really any
+change since the last quarter in our discussions with customers. We continue to see
+momentum in standby diesel backup, which has been the growing base of our business
+for quite a while. Before even really AI started to accelerate the growth even more.
+Driven by a lot of demand for cloud compute. And AI has obviously accelerated that.
+When it comes to prime power versus diesel, that's one of the things that is good about
+the capacity to put in place. It's pretty fungible as long as we have line of sight to those
+orders. If you get the largest 3520 that one they are probably a little more extended on
+the gas 3520K. But keep in mind as well the capacity we have in place and the
+momentum we have, you know, it's more than just Power Generation. We continue to
+see the momentum there. Oil & Gas and I think we will move a lot of natural gas in the
+next few years and we are really strong in gas compression both in solar turbines and in
+our reciprocating engine business. Demand is there for that. It's for marine. And large
+engines also go into our mining products as well. So as the mining picks up, we are
+excited about, you know, making sure that we can serve those customers. And really
+when you talk about, aside from diesel standby, all these other applications, as the field
+population grows, we need to be able to support customers in the aftermarket and
+growth services, so the capacity is all aligned to what we plan to have in place to meet
+our goals in 2030.
+
+    OPERATOR: We will go next to Kristen Owen at Oppenheimer.
+
+KRISTEN OWEN: Hi, good morning. Thank you for the question. You know, we've
+talked a lot about the synchronous growth within the portfolio, but I'm hoping you can
+
+
+maybe double click for us on the construction side. You call that the tough comps here
+in the fourth quarter, but backlog growth in construction, can you maybe help us
+understand or give us some color on the underlying demand, how much of the growth is
+going into rental for your own fleet versus third parties? And maybe some of those other
+sources of demand outside of rental and mega projects? Thank you.
+
+    JOE CREED: Yeah. Good morning, Kristen. Yeah, we have seen really strong order
+rates, strong STUs continue in construction. So we are really excited about the progress
+we have there and the initiatives that we've announced. I think it's the 7th consecutive
+STU growth quarter. And we will see as we move forward, but our goal and our strategy
+really is to get customers in the cabs of Cat machines, whether they want to rent or
+lease or buy. And we are seeing customers do all three. We are really excited and
+heavy in the fleet load in the Major Projects fleet in the third quarter. And basically as
+soon as we can get fleet on the ground, they are moving to projects, so I think that is
+going to be a great initiative for us to continue to drive Rental. And the point of that is to
+supplement, if you think of the strategy, the Major Projects, JV, it supplements the local
+dealer where they wouldn't be able to get on, have the scale to get to projects before, so
+it drives not only Major Projects but allows each of the individual dealers to be in more
+Rental deals as they move forward as well. So we are seeing great progress there. We
+are excited about Cat Compact and how we are taking care of customers and the
+growing compact equipment industry. And, in particular, we have seen, it's the large
+infrastructure projects. IIJA spending still has a lot of money left to be spent in projects
+left to be completed. I'm confident we will continue to prioritize critical infrastructure as
+we move forward. Data centers, obviously, have a little bit of a rollover into Construction
+Industries as well. And so we are seeing really good momentum with the Construction
+Industries team. We are getting closer to customers than we ever have. And that's
+showing in their results. And we are seeing strength in all three of our segments right
+now which is real exciting.
+
+    OPERATOR: And today's final question comes from the line of Stephen Volkmann
+from Jefferies.
+
+    STEVE VOLKMANN: Good morning. Thanks for sneaking me in. Joe, I'm just
+wondering any update on the ten megawatt MaK restart you are doing and how we
+should think about that kind of ramping going forward?
+
+JOE CREED: Good morning, Stephen. Yeah, we plan to ship our first units here in the
+fourth quarter. And we will continue to ramp as we go through next year on restarting
+the ten megawatt MaK engine and using it in Power Generation. I think that's going to
+
+
+be a great opportunity for us as we move into, you know, we will get started here in the
+fourth quarter, but as we move into 2027. So everything is on track with that program.
+
+    JOE CREED: All right. Well, that was the last question. So I just want to say thanks
+for joining us today. We really appreciate your questions. And I'm really proud of our
+team, the Caterpillar team's strong performance in what has been a pretty dynamic
+environment as we try to ramp production, add capacity, and take care of our
+customers. We are well positioned to deliver a strong year and will continue creating
+long-term value for our customers and shareholders. So, thank you. And I will turn it
+back to Alex.
+
+    ALEX KAPPER: Thank you, Joe, Kyle, Stephanie, and everyone who joined us
+today. A replay of the call will be available online later this morning. We will also post a
+transcript on our investor relations website as soon as it's available. You will also find a
+third quarter results video with our CFO and an SEC filing with our sales to users data.
+Visit investors.caterpillar.com and then click on financials to view those materials. If you
+have any questions, please reach out to me or Ryan Coleman. The investor relations
+general phone number is 309-675-4549. Now let's turn it back to Audra to conclude our
+call.
+
+    OPERATOR: Thank you. And that concludes our call. Thank you for joining and
+you may all disconnect.
+
+
+
