@@ -23,3 +23,6 @@ analytics.db-shm
 # even kept locally (see modCharts.ExportTickerSnapshot), not something to track.
 SEC-Filing-Fetcher/exports/
 RR4/.valuation-cache/
+
+# Earnings-call transcripts and filing dumps (copyrighted) -- keep local only
+research/*-analysis-*q3/raw/
